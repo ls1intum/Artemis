@@ -3,9 +3,9 @@
         <div class="col-8">
             <h2>
                 <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
-                <h2 *ngIf="!isExamMode">{{ 'artemisApp.tutorCourseDashboard.pageHeader' | translate }} {{ course?.title }}</h2>
+                <h2 *ngIf="!isExamMode">{{ 'artemisApp.assessmentDashboard.pageHeader' | translate }} {{ course?.title }}</h2>
                 <h2 *ngIf="isExamMode">
-                    {{ !isTestRun ? ('artemisApp.tutorCourseDashboard.pageHeaderExam' | translate) : ('artemisApp.tutorCourseDashboard.pageHeaderExamTestRun' | translate) }}
+                    {{ !isTestRun ? ('artemisApp.assessmentDashboard.pageHeaderExam' | translate) : ('artemisApp.assessmentDashboard.pageHeaderExamTestRun' | translate) }}
                     {{ exam?.title }}
                 </h2>
                 <a
@@ -45,11 +45,11 @@
     <div *ngIf="!isExamMode" id="assessment-statistics" class="guided-tour-assessment-stats">
         <div class="row mt-3 justify-content-around">
             <div class="col-4 text-center">
-                <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.yourAssessments' | translate }}:</p>
+                <p class="font-weight-bold">{{ 'artemisApp.assessmentDashboard.yourAssessments' | translate }}:</p>
                 <p class="h3">{{ numberOfTutorAssessments }}</p>
             </div>
             <div class="col-4 text-center">
-                <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.totalAssessments' | translate }}:</p>
+                <p class="font-weight-bold">{{ 'artemisApp.assessmentDashboard.totalAssessments' | translate }}:</p>
                 <p class="h3">{{ numberOfAssessments.total }} / {{ numberOfSubmissions.total }} ({{ totalAssessmentPercentage }}%)</p>
             </div>
         </div>
@@ -57,12 +57,12 @@
         <div class="row justify-content-around">
             <div class="col-4 text-center">
                 <a [routerLink]="['/course-management', courseId, 'complaints']" [queryParams]="{ tutorId: tutor.id }">
-                    <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.complaintsAboutYourAssessments' | translate }}:</p>
+                    <p class="font-weight-bold">{{ 'artemisApp.assessmentDashboard.complaintsAboutYourAssessments' | translate }}:</p>
                     <p class="h3">{{ numberOfTutorComplaints }}</p>
                 </a>
             </div>
             <div class="col-4 text-center">
-                <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.totalComplaints' | translate }}:</p>
+                <p class="font-weight-bold">{{ 'artemisApp.assessmentDashboard.totalComplaints' | translate }}:</p>
                 <p class="h3">{{ numberOfComplaints }}</p>
             </div>
         </div>
@@ -70,19 +70,19 @@
         <div class="row justify-content-around">
             <div class="col-4 text-center">
                 <a [routerLink]="['/course-management', courseId, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor.id }">
-                    <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.moreFeedbackRequestsForYourAssessments' | translate }}:</p>
+                    <p class="font-weight-bold">{{ 'artemisApp.assessmentDashboard.moreFeedbackRequestsForYourAssessments' | translate }}:</p>
                     <p class="h3">{{ numberOfTutorMoreFeedbackRequests }}</p>
                 </a>
             </div>
             <div class="col-4 text-center">
-                <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.totalMoreFeedbackRequests' | translate }}:</p>
+                <p class="font-weight-bold">{{ 'artemisApp.assessmentDashboard.totalMoreFeedbackRequests' | translate }}:</p>
                 <p class="h3">{{ numberOfMoreFeedbackRequests }}</p>
             </div>
         </div>
         <div class="row justify-content-around">
             <div class="col-4 text-center">
                 <a [routerLink]="['/course-management', courseId, 'assessment-locks']" [queryParams]="{ tutorId: tutor.id }">
-                    <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.yourAssessmentLocks' | translate }}:</p>
+                    <p class="font-weight-bold">{{ 'artemisApp.assessmentDashboard.yourAssessmentLocks' | translate }}:</p>
                     <p class="h3">{{ numberOfAssessmentLocks }}</p>
                 </a>
             </div>
@@ -94,30 +94,30 @@
         <div *ngIf="!isTestRun" class="guided-tour-form-check form-check col-6 align-baseline">
             <input type="checkbox" name="showFinishedExercise" id="field_showFinishedExercise" [ngModel]="showFinishedExercises" (ngModelChange)="triggerFinishedExercises()" />
             <label class="form-check-label" for="field_showFinishedExercise">
-                {{ 'artemisApp.tutorCourseDashboard.showFinishedExercises' | translate }}
+                {{ 'artemisApp.assessmentDashboard.showFinishedExercises' | translate }}
             </label>
         </div>
         <table class="table exercise-table guided-tour-exercise-table">
             <thead>
                 <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="type">
-                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exerciseType' | translate }}</a>
+                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseType' | translate }}</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="title">
-                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exercise' | translate }}</a>
+                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.exercise' | translate }}</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th *ngIf="!isTestRun">{{ 'artemisApp.tutorCourseDashboard.yourStatus' | translate }}</th>
+                    <th *ngIf="!isTestRun">{{ 'artemisApp.assessmentDashboard.yourStatus' | translate }}</th>
                     <th jhiSortBy="dueDate" *ngIf="!isExamMode">
-                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exerciseDueDate' | translate }}</a>
+                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseDueDate' | translate }}</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="assessmentDueDate" *ngIf="!isExamMode">
-                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.assessmentsDueDate' | translate }}</a>
+                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.assessmentsDueDate' | translate }}</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th>{{ 'artemisApp.tutorCourseDashboard.actions' | translate }}</th>
+                    <th>{{ 'artemisApp.assessmentDashboard.actions' | translate }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -133,7 +133,7 @@
                             placement="right"
                             ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | artemisDate }}"
                         >
-                            {{ 'artemisApp.tutorCourseDashboard.notReleased' | translate }}</span
+                            {{ 'artemisApp.assessmentDashboard.notReleased' | translate }}</span
                         >
                         <span class="badge badge-success" [hidden]="!exercise.isActiveQuiz">Live</span>
                     </td>
@@ -191,7 +191,7 @@
                                 class="btn btn-info btn-sm mr-1"
                                 [class.guided-tour]="exercise === exerciseForGuidedTour"
                             >
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.tutorCourseDashboard.exerciseTeams">Exercise Teams</span>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams">Exercise Teams</span>
                             </button>
                         </ng-template>
                     </td>
