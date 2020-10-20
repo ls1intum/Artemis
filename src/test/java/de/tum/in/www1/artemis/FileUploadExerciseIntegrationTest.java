@@ -20,17 +20,9 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     CourseRepository courseRepo;

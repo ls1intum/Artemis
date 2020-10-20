@@ -18,7 +18,7 @@ import {
     ResizeType,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
@@ -81,7 +81,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         private participationService: ParticipationService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private fileService: CodeEditorFileService,
     ) {
         this.initializeProperties();

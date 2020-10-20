@@ -49,6 +49,10 @@
                 "title": "Sequentielle Testläufe",
                 "description": "Aktiviere diese Checkbox um zuerst Struktur- und erst im Anschluss Verhaltenstests duchzuführen. Dieses Feature hilft Studenten dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"
             },
+            "checkoutSolutionRepository": {
+                "title": "Checke Repository der Lösung aus",
+                "description": "Aktiviere diese Checkbox um das Repository der Lösung in ein Verzeichnis 'solution' auszuchecken. Dies ist nützlich, um die Abgabe des Studenten mit der Musterlösung zu vergleichen."
+            },
             "enableStaticCodeAnalysis": {
                 "title": "Aktiviere Statische Code Analyse",
                 "description": "Durch Aktivierung dieser Option werden Abgaben einer Statischen Code Analyse unterzogen. Zusätzliche Optionen stehen in der Bewertungssicht zur Verfügung. Diese Option kann nach der Erstellung der Aufgabe nicht mehr geändert werden."
@@ -100,33 +104,37 @@
                 "ok": "Hinweise ok.",
                 "invalidHint": "Der Hinweis mit Id '{{id}}' konnte nicht in der Datenbank für diese Programmierübung gefunden werden."
             },
-            "manageTestCases": {
-                "title": "Verwalte Testfälle",
-                "hideInactive": "Inaktive Testfälle verbergen",
-                "showInactive": "Inaktive Testfälle anzeigen",
-                "reset": "Testfälle zurücksetzen",
-                "resetSuccessful": "Die Tests wurden erfolgreich zurückgesetzt.",
-                "resetFailed": "Die Tests konnten nicht zurückgesetzt werden.",
-                "save": "Gewichtung speichern",
-                "testsUpdated": "Die Tests wurde erfolgreich gespeichert.",
-                "testsCouldNotBeUpdated": "Die Tests {{id}} konnte nicht übernommen werden: {{error}}.",
-                "saveTestCases": "Testfälle speichern",
-                "testCasesUpdated": "Die Testfälle wurden erfolgreich gespeichert.",
-                "testCasesCouldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}.",
-                "noUnsavedChanges": "Keine ungespeicherten Änderungen",
-                "unsavedChanges": "Ungespeicherte Änderungen",
-                "updatedTestCasesShort": "Veränderte Testfälle",
-                "updatedTestCases": "Achtung: Du hast die Testfälle der Aufgabe verändert, aber nicht alle Einreichungen der Studenten mit den aktualisierten Testfall Einstellungen erneut ausgeführt. Neu erstellte Ergebnisse werden mit den aktualisierten Testfall Einstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Du kannst die erneute Ausführung der Einreichungen auch zu einem späteren Zeitpunkt veranlassen. Willst du wirklich den Bereich verlassen?",
-                "updatedTestCasesTooltip": "Du hast die Testfälle verändert, allerdings hat diese Aktion keine Auswirkungen auf die bereits vorhandenen Ergebnisse der Studenten. Neu erstellte Ergebnisse werden mit den aktualisierten Testfall Einstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Über den Button 'Alle erneut ausführen' kannst du die Einreichungen aller Studenten mit den veränderten Testfällen erneut bewerten.",
-                "noUpdatedTestCases": "Keine veränderten Testfälle",
-                "runAfterDueDateDisabled": "Du kannst diese Option nicht aktivieren, weil für diese Übung kein Build & Test Datum definiert ist. Klicke auf den Button, um in die Bearbeitungsmaske zu wechseln und das Datum zu setzen.",
-                "notReleased": "Nicht veröffentlicht",
-                "notReleasedTooltip": "Die Programmierübung ist nicht veröffentlicht oder ist veröffentlicht und besitzt noch keine Ergebnisse von Studenten. Daher können die Testfälle geändert werden, ohne dass die Studentenabgaben erneut ausgeführt werden müssen."
-            },
             "configureGrading": {
-                "title": "Setze Benotung",
+                "title": "Konfiguration der Bewertung",
+                "shortTitle": "Bewertung",
                 "save": "Speichern",
-                "reset": "Zurücksetzen"
+                "reset": "Zurücksetzen",
+                "status": {
+                    "unsavedChanges": "Ungespeicherte Änderungen",
+                    "unsavedTestCaseChanges": "Ungespeicherte Tests",
+                    "unsavedCategoryChanges": "Ungespeicherte Kategorien",
+                    "noUnsavedChanges": "Keine ungespeicherten Änderungen"
+                },
+                "testCases": {
+                    "resetSuccessful": "Die Tests wurden erfolgreich zurückgesetzt.",
+                    "resetFailed": "Die Tests konnten nicht zurückgesetzt werden.",
+                    "updated": "Die Testfälle wurden erfolgreich gespeichert.",
+                    "couldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}.",
+                    "runAfterDueDateDisabled": "Du kannst diese Option nicht aktivieren, weil für diese Übung kein Build & Test Datum definiert ist. Klicke auf den Button, um in die Bearbeitungsmaske zu wechseln und das Datum zu setzen.",
+                    "showInactive": "Inaktive Testfälle anzeigen"
+                },
+                "categories": {
+                    "notGraded": "Nicht bewertet.",
+                    "noFeedback": "Ohne sichtbares Feedback.",
+                    "updated": "Die Kategorien wurden erfolgreich gespeichert.",
+                    "couldNotBeUpdated": "Die folgenden Kategorien konnten nicht gespeichert werden: {{categories}}."
+                },
+                "updatedGradingConfigShort": "Veränderte Bewertung",
+                "updatedGradingConfig": "Achtung: Du hast die Bewertung der Aufgabe verändert, aber nicht alle Einreichungen der Studenten mit den aktualisierten Testfall Einstellungen erneut ausgeführt. Neu erstellte Ergebnisse werden mit den aktualisierten Bewertungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Du kannst die erneute Ausführung der Einreichungen auch zu einem späteren Zeitpunkt veranlassen. Willst du wirklich den Bereich verlassen?",
+                "updatedGradingConfigTooltip": "Du hast die Bewertung verändert, allerdings hat diese Aktion keine Auswirkungen auf die bereits vorhandenen Ergebnisse der Studenten. Neu erstellte Ergebnisse werden mit den aktualisierten Bewertungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Über den Button 'Alle erneut ausführen' kannst du die Einreichungen aller Studenten mit der veränderten Bewertung erneut bewerten.",
+                "noUpdatedGradingConfig": "Keine veränderte Bewertung",
+                "notReleased": "Nicht veröffentlicht",
+                "notReleasedTooltip": "Die Programmierübung ist nicht veröffentlicht oder ist veröffentlicht und besitzt noch keine Ergebnisse von Studenten. Daher kann die Bewertung geändert werden, ohne dass die Studentenabgaben erneut ausgeführt werden müssen."
             },
             "export": {
                 "downloadAllStudents": "Oder lade die Repositories aller Studenten herunter",

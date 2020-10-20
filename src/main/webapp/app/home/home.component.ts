@@ -11,11 +11,8 @@ import { isOrion } from 'app/shared/orion/orion';
 import { ModalConfirmAutofocusComponent } from 'app/shared/orion/modal-confirm-autofocus/modal-confirm-autofocus.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
-import { TUM_USERNAME_REGEX } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { filter, tap } from 'rxjs/operators';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Component({
     selector: 'jhi-home',
@@ -33,10 +30,12 @@ export class HomeComponent implements OnInit, AfterViewInit {
     username: string;
     captchaRequired = false;
     credentials: Credentials;
+    isRegistrationEnabled = false;
 
-    usernameRegexPattern = TUM_USERNAME_REGEX; // default, might be overridden in ngOnInit
-    signInMessage = 'home.pleaseSignInTUM'; // default, might be overridden in ngOnInit
-    errorMesssageUsername = 'home.errors.tumWarning'; // default, might be overridden in ngOnInit
+    // if the server is not connected to an external user management such as JIRA, we accept all valid username patterns
+    usernameRegexPattern = /^[a-z0-9_-]{3,50}$/; // default, might be overridden in ngOnInit
+    errorMessageUsername = 'home.errors.usernameIncorrect'; // default, might be overridden in ngOnInit
+    accountName?: string; // additional information in the welcome message
 
     externalUserManagementActive = true;
     externalUserManagementUrl: string;
@@ -59,24 +58,25 @@ export class HomeComponent implements OnInit, AfterViewInit {
     ) {}
 
     ngOnInit() {
-        this.profileService
-            .getProfileInfo()
-            .pipe(
-                filter(Boolean),
-                tap((info: ProfileInfo) => {
-                    if (!info.activeProfiles.includes('jira')) {
-                        // if the server is not connected to an external user management such as JIRA, we accept all valid username patterns
-                        this.usernameRegexPattern = /^[a-z0-9_-]{3,100}$/;
-                        this.signInMessage = 'home.pleaseSignIn';
-                        this.errorMesssageUsername = 'home.errors.usernameIncorrect';
-                        this.externalUserManagementActive = false;
-                    } else {
-                        this.externalUserManagementUrl = info.externalUserManagementURL;
-                        this.externalUserManagementName = info.externalUserManagementName;
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                if (profileInfo.activeProfiles.includes('jira')) {
+                    this.externalUserManagementUrl = profileInfo.externalUserManagementURL;
+                    this.externalUserManagementName = profileInfo.externalUserManagementName;
+                    if (profileInfo.allowedLdapUsernamePattern) {
+                        this.usernameRegexPattern = new RegExp(profileInfo.allowedLdapUsernamePattern);
                     }
-                }),
-            )
-            .subscribe();
+                } else {
+                    // TODO: in the future we might also allow external user management for non jira profiles
+                    this.externalUserManagementActive = false;
+                }
+                this.accountName = profileInfo.accountName;
+                if (this.accountName === 'TUM') {
+                    this.errorMessageUsername = 'home.errors.tumWarning';
+                }
+                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
+            }
+        });
         this.accountService.identity().then((user) => {
             this.currentUserCallback(user!);
         });
@@ -139,6 +139,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 }
             })
             .catch((error: HttpErrorResponse) => {
+                // TODO: if registration is enabled, handle the case "User was not activated"
                 this.captchaRequired = error.headers.get('X-artemisApp-error') === 'CAPTCHA required';
                 this.authenticationError = true;
                 this.authenticationAttempts++;
@@ -157,13 +158,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
         return this.accountService.isAuthenticated();
     }
 
-    register() {
-        this.router.navigate(['/register']);
-    }
-
-    requestResetPassword() {
-        this.router.navigate(['/reset', 'request']);
-    }
     inputChange($event: any) {
         if ($event.target && $event.target.name === 'username') {
             this.username = $event.target.value;

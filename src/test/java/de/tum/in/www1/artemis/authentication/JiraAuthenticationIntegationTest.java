@@ -33,8 +33,6 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
@@ -64,12 +62,6 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    protected DatabaseUtilService database;
-
-    @Autowired
-    protected RequestUtilService request;
 
     @Autowired
     protected ProgrammingExerciseRepository programmingExerciseRepository;

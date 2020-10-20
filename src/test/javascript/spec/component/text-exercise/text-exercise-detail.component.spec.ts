@@ -34,7 +34,7 @@ describe('TextExercise Management Detail Component', () => {
         textExerciseWithCourse.id = 123;
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.params = of({ exerciseId: textExerciseWithCourse.id });
         });
 
@@ -66,7 +66,7 @@ describe('TextExercise Management Detail Component', () => {
         textExerciseWithExerciseGroup.id = 123;
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.params = of({ exerciseId: textExerciseWithExerciseGroup.id });
         });
 

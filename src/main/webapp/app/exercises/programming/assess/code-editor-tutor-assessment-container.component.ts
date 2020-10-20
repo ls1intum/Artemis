@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs/Subscription';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
@@ -27,6 +27,8 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Course } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { now } from 'moment';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -61,6 +63,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     loadingParticipation = false;
     participationCouldNotBeFetched = false;
     showEditorInstructions = true;
+    hasAssessmentDueDatePassed: boolean;
 
     private get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
@@ -81,7 +84,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private complaintService: ComplaintService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -98,7 +101,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
         });
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
@@ -117,6 +120,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     // Either submission from latest manual or automatic result
                     this.submission = this.getLatestResult(this.participation.results)?.submission as ProgrammingSubmission;
                     this.exercise = this.participation.exercise as ProgrammingExercise;
+                    this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 
                     this.checkPermissions();
                     this.handleFeedback();

@@ -5,6 +5,7 @@ import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 describe('User Service', () => {
     let service: UserService;
@@ -43,11 +44,11 @@ describe('User Service', () => {
 
         it('should return Authorities', () => {
             service.authorities().subscribe((_authorities) => {
-                expect(_authorities).toEqual(['ROLE_USER', 'ROLE_ADMIN']);
+                expect(_authorities).toEqual([Authority.USER, Authority.ADMIN]);
             });
             const req = httpMock.expectOne({ method: 'GET' });
 
-            req.flush(['ROLE_USER', 'ROLE_ADMIN']);
+            req.flush([Authority.USER, Authority.ADMIN]);
         });
 
         it('should propagate not found response', () => {

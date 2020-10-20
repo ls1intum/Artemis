@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -556,7 +558,7 @@ public class ParticipationService {
             final var buildProjectName = participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " "
                     + participation.getExercise().getTitle();
             // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
-            final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, username.toUpperCase());
+            final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, username.toUpperCase(), true);
             participation.setBuildPlanId(buildPlanId);
             participation.setInitializationState(InitializationState.BUILD_PLAN_COPIED);
             return save(participation);
@@ -568,7 +570,18 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation configureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
-            continuousIntegrationService.get().configureBuildPlan(participation);
+            try {
+                continuousIntegrationService.get().configureBuildPlan(participation);
+            }
+            catch (ContinousIntegrationException ex) {
+                // this means something with the configuration of the build plan is wrong.
+                // we try to recover from typical edge cases by setting the initialization state back, so that the previous action (copy build plan) is tried again, when
+                // the user again clicks on the start / resume exercise button.
+                participation.setInitializationState(InitializationState.REPO_CONFIGURED);
+                save(participation);
+                // rethrow
+                throw ex;
+            }
             participation.setInitializationState(InitializationState.BUILD_PLAN_CONFIGURED);
             return save(participation);
         }
@@ -1122,13 +1135,16 @@ public class ParticipationService {
 
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
             ProgrammingExerciseStudentParticipation programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) participation;
-            if (deleteBuildPlan && programmingExerciseParticipation.getBuildPlanId() != null) {
+            URL repositoryUrl = programmingExerciseParticipation.getRepositoryUrlAsUrl();
+            String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
+
+            if (deleteBuildPlan && buildPlanId != null) {
                 final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
-                continuousIntegrationService.get().deleteBuildPlan(projectKey, programmingExerciseParticipation.getBuildPlanId());
+                continuousIntegrationService.get().deleteBuildPlan(projectKey, buildPlanId);
             }
             if (deleteRepository && programmingExerciseParticipation.getRepositoryUrl() != null) {
                 try {
-                    versionControlService.get().deleteRepository(programmingExerciseParticipation.getRepositoryUrlAsUrl());
+                    versionControlService.get().deleteRepository(repositoryUrl);
                 }
                 catch (Exception ex) {
                     log.error("Could not delete repository: " + ex.getMessage());
@@ -1137,9 +1153,9 @@ public class ParticipationService {
 
             // delete local repository cache
             try {
-                if (programmingExerciseParticipation.getRepositoryUrlAsUrl() != null) {
+                if (repositoryUrl != null && gitService.repositoryAlreadyExists(repositoryUrl)) {
                     // We need to close the possibly still open repository otherwise an IOException will be thrown on Windows
-                    Repository repo = gitService.getOrCheckoutRepository(programmingExerciseParticipation.getRepositoryUrlAsUrl(), false);
+                    Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, false);
                     gitService.deleteLocalRepository(repo);
                 }
             }

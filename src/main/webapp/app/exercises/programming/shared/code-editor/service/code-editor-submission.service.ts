@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { Subject, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
@@ -19,7 +19,7 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
     private isBuildingSubject = new Subject<boolean>();
     private submissionSubscription: Subscription;
 
-    constructor(domainService: DomainService, private submissionService: ProgrammingSubmissionService, private alertService: AlertService) {
+    constructor(domainService: DomainService, private submissionService: ProgrammingSubmissionService, private alertService: JhiAlertService) {
         super(domainService);
         this.initDomainSubscription();
     }

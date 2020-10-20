@@ -1,13 +1,14 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { AlertComponent } from 'app/shared/alert/alert.component';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -17,7 +18,12 @@ describe('AssessmentHeaderComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule],
             declarations: [AssessmentHeaderComponent],
-            providers: [],
+            providers: [
+                {
+                    provide: JhiAlertService,
+                    useClass: JhiAlertService, // use the real one
+                },
+            ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents();
@@ -39,13 +45,22 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should display alerts', () => {
-        const alertService = TestBed.inject(AlertService);
+        const alertService = TestBed.inject(JhiAlertService);
         alertService.success('test-alert-string');
         fixture.detectChanges();
 
         const jhiAlertComponent = fixture.debugElement.query(By.directive(AlertComponent));
         const jhiAlertContent = jhiAlertComponent.nativeElement.textContent;
         expect(jhiAlertContent).toContain('test-alert-string');
+    });
+
+    it('should display alert when assessment due date has passed', () => {
+        component.hasAssessmentDueDatePassed = true;
+        // @ts-ignore
+        component.result = undefined;
+        fixture.detectChanges();
+        const alertComponent = fixture.debugElement.query(By.css('ngb-alert'));
+        expect(alertComponent).toBeTruthy();
     });
 
     it('should show or hide a back button', () => {

@@ -7,7 +7,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ls1intum/Artemis&amp;utm_campaign=Badge_Grade)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&utm_medium=referral&utm_content=ls1intum/Artemis&utm_campaign=Badge_Coverage)
 
-This application was generated using JHipster 6.10.3. ([Documentation and help](http://www.jhipster.tech/documentation-archive/v6.10.3))
+Artemis was initially generated using JHipster 6.10.3. ([Documentation and help](http://www.jhipster.tech/documentation-archive/v6.10.3))
 
 [![Latest version)](https://img.shields.io/github/v/tag/ls1intum/Artemis?label=%20Latest%20version&sort=semver)](https://github.com/ls1intum/Artemis/releases/latest)
 
@@ -28,6 +28,10 @@ Find here a guide on [how to set up your local development environment](docs/dev
 ## Server Setup for Programming Exercises
 
 You can find the guide for setting up Artemis in conjunction with Jenkins and GitLab [here](docs/dev/setup/jenkins-gitlab.rst) and Bamboo/Bitbucket/Jira [here](docs/dev/setup/bamboo-bitbucket-jira.rst)
+
+## Administration setup
+
+You can find information on how to setup user registration [here](docs/admin/registration.rst)
 
 ## Contributing 
 

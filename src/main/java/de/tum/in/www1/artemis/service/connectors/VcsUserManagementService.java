@@ -24,7 +24,7 @@ public interface VcsUserManagementService {
      * </ul>
      *
      * @param user The updated user in Artemis
-     * @param removedGroups Groups that the user does not belong to any longer
+     * @param removedGroups groups that the user does not belong to any longer
      * @param addedGroups The new groups the Artemis user got added to
      * @param shouldSynchronizePassword whether the password should be synchronized between Artemis and the VcsUserManagementService
      */

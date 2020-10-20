@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.TimeService;
 
 class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -33,9 +32,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     TimeService timeService;

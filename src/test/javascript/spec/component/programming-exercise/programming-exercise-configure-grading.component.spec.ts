@@ -1,5 +1,6 @@
 import { async, ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import * as moment from 'moment';
+import { Moment } from 'moment';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import * as sinonChai from 'sinon-chai';
@@ -9,12 +10,12 @@ import { of, Subject } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { CookieService } from 'ngx-cookie-service';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockProgrammingExerciseTestCaseService } from '../../helpers/mocks/service/mock-programming-exercise-test-case.service';
+import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisProgrammingExerciseGradingModule } from 'app/exercises/programming/manage/grading/programming-exercise-grading.module';
@@ -25,45 +26,52 @@ import { ProgrammingBuildRunService } from 'app/exercises/programming/participat
 import { MockProgrammingBuildRunService } from '../../helpers/mocks/service/mock-programming-build-run.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
+import { EditableField, ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseTestCaseService, ProgrammingExerciseTestCaseUpdate } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
+import {
+    ProgrammingExerciseGradingService,
+    ProgrammingExerciseTestCaseUpdate,
+    StaticCodeAnalysisCategoryUpdate,
+} from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { Moment } from 'moment';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-// TODO: Since the update to v.16 all tests for the ngx-swimlane table need to add a 0 tick to avoid the ViewDestroyedError.
-// The issue is a manual call to changeDetector.detectChanges that is triggered on a timeout.
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
     let fixture: ComponentFixture<ProgrammingExerciseConfigureGradingComponent>;
     let debugElement: DebugElement;
 
     let route: ActivatedRoute;
-    let testCaseService: ProgrammingExerciseTestCaseService;
+    let gradingService: ProgrammingExerciseGradingService;
     let programmingExerciseService: ProgrammingExerciseService;
 
     let updateTestCasesStub: SinonStub;
+    let updateCategoriesStub: SinonStub;
+    let resetTestCasesStub: SinonStub;
     let notifyTestCasesSpy: SinonSpy;
     let testCasesChangedStub: SinonStub;
     let getExerciseTestCaseStateStub: SinonStub;
+    let getCodeAnalysisCategoriesStub: SinonStub;
     let loadExerciseStub: SinonStub;
     let programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService;
 
     let routeSubject: Subject<Params>;
     let testCasesChangedSubject: Subject<boolean>;
     let getExerciseTestCaseStateSubject: Subject<{ body: ProgrammingExerciseTestCaseStateDTO }>;
+    let getCodeAnalysisCategoriesSubject: Subject<StaticCodeAnalysisCategory[]>;
 
     const testCaseTableId = '#testCaseTable';
     const tableEditingInput = '.table-editable-field__input';
     const rowClass = 'datatable-body-row';
-    const saveTestCasesButton = '#save-test-cases-button';
+    const saveTableButton = '#save-table-button';
+    const resetTableButton = '#reset-table-button';
     const triggerSubmissionRunButton = '#trigger-all-button > button';
     const testCasesNoUnsavedChanges = '#test-case-status-no-unsaved-changes';
     const testCasesUnsavedChanges = '#test-case-status-unsaved-changes';
@@ -81,6 +89,22 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         { id: 2, testName: 'testMergeSort', active: true, weight: 1, bonusMultiplier: 1, bonusPoints: 0, afterDueDate: true },
         { id: 3, testName: 'otherTest', active: false, weight: 1, bonusMultiplier: 1, bonusPoints: 0, afterDueDate: false },
     ] as ProgrammingExerciseTestCase[];
+    const codeAnalysisCategories1 = [
+        {
+            id: 1,
+            name: 'Bad Practice',
+            state: StaticCodeAnalysisCategoryState.Graded,
+            penalty: 1,
+            maxPenalty: 10,
+        },
+        {
+            id: 2,
+            name: 'Styling',
+            state: StaticCodeAnalysisCategoryState.Feedback,
+            penalty: 0,
+            maxPenalty: 0,
+        },
+    ] as StaticCodeAnalysisCategory[];
 
     const getExerciseTestCasteStateDTO = (released: boolean, hasStudentResult: boolean, testCasesChanged: boolean, buildAndTestStudentSubmissionsAfterDueDate?: Moment) => ({
         body: {
@@ -92,7 +116,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     });
 
     const getSaveButton = () => {
-        return getElement(debugElement, saveTestCasesButton);
+        return getElement(debugElement, saveTableButton);
+    };
+
+    const getResetButton = () => {
+        return getElement(debugElement, resetTableButton);
     };
 
     const getTriggerButton = () => {
@@ -119,10 +147,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisProgrammingExerciseGradingModule],
             providers: [
-                AlertService,
+                JhiAlertService,
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProgrammingExerciseWebsocketService, useClass: MockProgrammingExerciseWebsocketService },
-                { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
+                { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
                 { provide: ProgrammingBuildRunService, useClass: MockProgrammingBuildRunService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -138,14 +166,16 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 debugElement = fixture.debugElement;
                 comp = fixture.componentInstance as ProgrammingExerciseConfigureGradingComponent;
 
-                testCaseService = debugElement.injector.get(ProgrammingExerciseTestCaseService);
+                gradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
                 route = debugElement.injector.get(ActivatedRoute);
                 const router = debugElement.injector.get(Router);
                 programmingExerciseWebsocketService = debugElement.injector.get(ProgrammingExerciseWebsocketService);
                 programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
 
-                updateTestCasesStub = stub(testCaseService, 'updateTestCase');
-                notifyTestCasesSpy = spy(testCaseService, 'notifyTestCases');
+                updateTestCasesStub = stub(gradingService, 'updateTestCase');
+                updateCategoriesStub = stub(gradingService, 'updateCodeAnalysisCategories');
+                notifyTestCasesSpy = spy(gradingService, 'notifyTestCases');
+                resetTestCasesStub = stub(gradingService, 'reset');
 
                 // @ts-ignore
                 (router as MockRouter).setUrl('/');
@@ -155,13 +185,16 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
                 testCasesChangedStub = stub(programmingExerciseWebsocketService, 'getTestCaseState');
                 getExerciseTestCaseStateStub = stub(programmingExerciseService, 'getProgrammingExerciseTestCaseState');
+                getCodeAnalysisCategoriesStub = stub(gradingService, 'getCodeAnalysisCategories');
                 loadExerciseStub = stub(programmingExerciseService, 'find');
 
                 getExerciseTestCaseStateSubject = new Subject();
+                getCodeAnalysisCategoriesSubject = new Subject();
 
                 testCasesChangedSubject = new Subject<boolean>();
                 testCasesChangedStub.returns(testCasesChangedSubject);
                 getExerciseTestCaseStateStub.returns(getExerciseTestCaseStateSubject);
+                getCodeAnalysisCategoriesStub.returns(getCodeAnalysisCategoriesSubject);
                 loadExerciseStub.returns(of({ body: exercise }));
             });
     }));
@@ -174,10 +207,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     it('should create a datatable with the correct amount of rows when test cases come in (hide inactive tests)', fakeAsync(() => {
         comp.ngOnInit();
-        routeSubject.next({ exerciseId });
+        routeSubject.next({ exerciseId, tab: 'test-cases' });
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next(codeAnalysisCategories1);
 
-        (testCaseService as any).next(testCases1);
+        (gradingService as any).next(testCases1);
 
         fixture.detectChanges();
 
@@ -187,7 +221,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(comp.testCases).to.deep.equal(testCases1);
         expect(rows).to.have.lengthOf(testCases1.filter(({ active }) => active).length);
 
-        const saveButton = debugElement.query(By.css(saveTestCasesButton));
+        const saveButton = debugElement.query(By.css(saveTableButton));
         expect(saveButton).to.exist;
         expect(saveButton.nativeElement.disabled).to.be.true;
 
@@ -198,10 +232,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should create a datatable with the correct amount of rows when test cases come in (show inactive tests)', fakeAsync(() => {
         comp.ngOnInit();
         comp.showInactive = true;
-        routeSubject.next({ exerciseId });
+        routeSubject.next({ exerciseId, tab: 'test-cases' });
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next(codeAnalysisCategories1);
 
-        (testCaseService as any).next(testCases1);
+        (gradingService as any).next(testCases1);
 
         fixture.detectChanges();
 
@@ -211,7 +246,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(comp.testCases).to.deep.equal(testCases1);
         expect(rows).to.have.lengthOf(testCases1.length);
 
-        const saveButton = debugElement.query(By.css(saveTestCasesButton));
+        const saveButton = debugElement.query(By.css(saveTableButton));
         expect(saveButton).to.exist;
         expect(saveButton.nativeElement.disabled).to.be.true;
 
@@ -224,10 +259,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         comp.showInactive = true;
         routeSubject.next({ exerciseId, tab: 'test-cases' });
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next(codeAnalysisCategories1);
 
         const orderedTests = _sortBy(testCases1, 'testName');
 
-        (testCaseService as any).next(testCases1);
+        (gradingService as any).next(testCases1);
 
         fixture.detectChanges();
 
@@ -242,7 +278,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         weightInput.focus();
 
         // Set new weight.
-        weightInput.value = 20;
+        weightInput.value = '20';
         weightInput.dispatchEvent(new Event('blur'));
 
         const multiplierInput = editingInputs[1].nativeElement;
@@ -250,7 +286,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         multiplierInput.focus();
 
         // Set new multiplier.
-        multiplierInput.value = 2;
+        multiplierInput.value = '2';
         multiplierInput.dispatchEvent(new Event('blur'));
 
         const bonusInput = editingInputs[2].nativeElement;
@@ -258,7 +294,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         bonusInput.focus();
 
         // Set new bonus.
-        bonusInput.value = 1;
+        bonusInput.value = '1';
         bonusInput.dispatchEvent(new Event('blur'));
 
         fixture.detectChanges();
@@ -286,7 +322,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
-        expect(comp.hasUpdatedTestCases).to.be.true;
+        expect(comp.hasUpdatedGradingConfig).to.be.true;
 
         fixture.detectChanges();
 
@@ -296,21 +332,18 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         tick();
         fixture.destroy();
         flush();
-
-        tick();
-        fixture.destroy();
-        flush();
     }));
 
     it('should be able to update the value of the afterDueDate boolean', async () => {
         comp.ngOnInit();
         comp.showInactive = true;
-        routeSubject.next({ exerciseId });
+        routeSubject.next({ exerciseId, tab: 'test-cases' });
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next(codeAnalysisCategories1);
 
         const orderedTests = _sortBy(testCases1, 'testName');
 
-        (testCaseService as any).next(testCases1);
+        (gradingService as any).next(testCases1);
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -331,7 +364,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         // Save weight.
         updateTestCasesStub.returns(of({ ...orderedTests[0], afterDueDate: true }));
-        const saveTestCases = debugElement.query(By.css(saveTestCasesButton));
+        const saveTestCases = debugElement.query(By.css(saveTableButton));
         expect(saveTestCases).to.exist;
         expect(saveTestCases.nativeElement.disabled).to.be.false;
         saveTestCases.nativeElement.click();
@@ -339,15 +372,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         fixture.detectChanges();
 
         const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
-        expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
-            new ProgrammingExerciseTestCaseUpdate(
-                testThatWasUpdated.id,
-                testThatWasUpdated.weight,
-                testThatWasUpdated.bonusPoints,
-                testThatWasUpdated.bonusMultiplier,
-                testThatWasUpdated.afterDueDate,
-            ),
-        ]);
+        expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [ProgrammingExerciseTestCaseUpdate.from(testThatWasUpdated)]);
 
         await new Promise((resolve) => setTimeout(resolve));
         fixture.destroy();
@@ -356,10 +381,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should not be able to update the value of the afterDueDate boolean if the programming exercise does not have a buildAndTestAfterDueDate', async () => {
         comp.ngOnInit();
         comp.showInactive = true;
-        routeSubject.next({ exerciseId });
+        routeSubject.next({ exerciseId, tab: 'test-cases' });
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, undefined));
+        getCodeAnalysisCategoriesSubject.next(codeAnalysisCategories1);
 
-        (testCaseService as any).next(testCases1);
+        (gradingService as any).next(testCases1);
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -374,10 +400,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     it('should show the updatedTests badge when the exercise is released and has student results', fakeAsync(() => {
         comp.ngOnInit();
-        routeSubject.next({ exerciseId });
+        routeSubject.next({ exerciseId, tab: 'test-cases' });
         // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (gradingService as MockProgrammingExerciseGradingService).next(testCases1);
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next(codeAnalysisCategories1);
 
         fixture.detectChanges();
 
@@ -391,10 +418,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     it('should not show the updatedTests badge when the exercise is released and has no student results', fakeAsync(() => {
         comp.ngOnInit();
-        routeSubject.next({ exerciseId });
+        routeSubject.next({ exerciseId, tab: 'test-cases' });
         // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (gradingService as MockProgrammingExerciseGradingService).next(testCases1);
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, false, false, moment()));
+        getCodeAnalysisCategoriesSubject.next(codeAnalysisCategories1);
 
         fixture.detectChanges();
 
@@ -408,10 +436,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     it('should not show the updatedTests badge when the exercise is not released and has student results (edge case)', fakeAsync(() => {
         comp.ngOnInit();
-        routeSubject.next({ exerciseId });
+        routeSubject.next({ exerciseId, tab: 'test-cases' });
         // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (gradingService as MockProgrammingExerciseGradingService).next(testCases1);
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(false, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next(codeAnalysisCategories1);
 
         fixture.detectChanges();
 
@@ -425,10 +454,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     it('should show that there are updated test cases if the getExerciseTestCaseState call returns this info', fakeAsync(() => {
         comp.ngOnInit();
-        routeSubject.next({ exerciseId });
+        routeSubject.next({ exerciseId, tab: 'test-cases' });
         // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (gradingService as MockProgrammingExerciseGradingService).next(testCases1);
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, true, moment()));
+        getCodeAnalysisCategoriesSubject.next(codeAnalysisCategories1);
 
         fixture.detectChanges();
 
@@ -440,18 +470,79 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         flush();
     }));
 
+    it('should reset all test cases when the reset button is clicked', fakeAsync(() => {
+        comp.ngOnInit();
+        routeSubject.next({ exerciseId, tab: 'test-cases' });
+        getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next(codeAnalysisCategories1);
+
+        (gradingService as any).next(testCases1);
+
+        fixture.detectChanges();
+
+        comp.updateEditedField(3, testCases1[0], EditableField.WEIGHT);
+        comp.updateEditedField(4, testCases1[1], EditableField.WEIGHT);
+
+        comp.updateEditedField(2, testCases1[1], EditableField.BONUS_MULTIPLIER);
+        comp.updateEditedField(3, testCases1[2], EditableField.BONUS_MULTIPLIER);
+
+        comp.updateEditedField(4, testCases1[0], EditableField.BONUS_POINTS);
+        comp.updateEditedField(10, testCases1[2], EditableField.BONUS_POINTS);
+
+        const updatedTestCases: ProgrammingExerciseTestCase[] = [
+            { ...testCases1[0], weight: 3, bonusPoints: 4 },
+            { ...testCases1[1], weight: 4, bonusMultiplier: 2 },
+            { ...testCases1[2], bonusMultiplier: 3, bonusPoints: 10 },
+        ];
+        updateTestCasesStub.returns(of(updatedTestCases));
+
+        // Save tests.
+        comp.saveTestCases();
+
+        fixture.detectChanges();
+
+        expect(updateTestCasesStub).to.have.been.calledOnce;
+
+        expect(comp.changedTestCaseIds).to.have.lengthOf(0);
+        testCasesChangedSubject.next(true);
+
+        // Reset button is now enabled because the tests were saved.
+        expect(comp.hasUpdatedGradingConfig).to.be.true;
+
+        fixture.detectChanges();
+
+        resetTestCasesStub.returns(of(testCases1));
+
+        const resetButton = getResetButton();
+        expectElementToBeEnabled(resetButton);
+        resetButton.click();
+
+        fixture.detectChanges();
+
+        expect(resetTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId);
+        expect(comp.testCases).to.deep.equal(testCases1);
+        expect(comp.changedTestCaseIds).to.have.lengthOf(0);
+
+        tick();
+        fixture.destroy();
+        flush();
+    }));
+
     it('should update sca category when an input field is updated', fakeAsync(() => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId, tab: 'code-analysis' });
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next(codeAnalysisCategories1);
 
         fixture.detectChanges();
 
         const table = debugElement.query(By.css(codeAnalysisTableId));
 
+        const gradedCategories = comp.staticCodeAnalysisCategories.filter((category) => category.state === StaticCodeAnalysisCategoryState.Graded);
+
         // get inputs
         const editingInputs = table.queryAll(By.css(tableEditingInput));
-        expect(editingInputs).to.have.lengthOf(comp.staticCodeAnalysisCategories.length * 2);
+        expect(editingInputs).to.have.lengthOf(gradedCategories.length * 2);
 
         const penaltyInput = editingInputs[0].nativeElement;
         expect(penaltyInput).to.exist;
@@ -471,9 +562,39 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(comp.changedCategoryIds).to.deep.equal([comp.staticCodeAnalysisCategories[0].id]);
-        expect(comp.staticCodeAnalysisCategories[0]).to.deep.equal({ ...comp.staticCodeAnalysisCategories[0], penalty: 20, maxPenalty: 100 });
+        expect(comp.changedCategoryIds).to.deep.equal([gradedCategories[0].id]);
 
+        // Trigger button should be disabled.
+        let triggerButton = getTriggerButton();
+        expectElementToBeDisabled(triggerButton);
+
+        const updatedCategory: StaticCodeAnalysisCategory = { ...gradedCategories[0], penalty: 20, maxPenalty: 100 };
+
+        // Save weight.
+        updateCategoriesStub.returns(of([updatedCategory]));
+        const saveButton = getSaveButton();
+        expectElementToBeEnabled(saveButton);
+        saveButton.click();
+
+        fixture.detectChanges();
+
+        expect(updateCategoriesStub).to.have.been.calledOnceWithExactly(exerciseId, [StaticCodeAnalysisCategoryUpdate.from(updatedCategory)]);
+
+        const categoryThatWasUpdated = comp.staticCodeAnalysisCategories.find((category) => category.id === updatedCategory.id)!;
+        expect(categoryThatWasUpdated.penalty).to.equal(20);
+        expect(categoryThatWasUpdated.maxPenalty).to.equal(100);
+        expect(comp.changedCategoryIds).to.have.lengthOf(0);
+
+        testCasesChangedSubject.next(true);
+        // Trigger button is now enabled because the tests were saved.
+        expect(comp.hasUpdatedGradingConfig).to.be.true;
+
+        fixture.detectChanges();
+
+        triggerButton = getTriggerButton();
+        expectElementToBeEnabled(triggerButton);
+
+        tick();
         fixture.destroy();
         flush();
     }));

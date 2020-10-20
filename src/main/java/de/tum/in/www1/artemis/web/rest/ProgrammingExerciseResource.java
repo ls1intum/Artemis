@@ -127,7 +127,7 @@ public class ProgrammingExerciseResource {
      * @return the error message as response or null if everything is fine
      */
     private ResponseEntity<ProgrammingExercise> checkProgrammingExerciseForError(ProgrammingExercise exercise) {
-        if (!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
+        if (!continuousIntegrationService.get().checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID, "The Template Build Plan ID seems to be invalid."))
                     .body(null);
@@ -137,7 +137,7 @@ public class ProgrammingExerciseResource {
                     HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL, "The Template Repository URL seems to be invalid."))
                     .body(null);
         }
-        if (exercise.getSolutionBuildPlanId() != null && !continuousIntegrationService.get().buildPlanIdIsValid(exercise.getProjectKey(), exercise.getSolutionBuildPlanId())) {
+        if (exercise.getSolutionBuildPlanId() != null && !continuousIntegrationService.get().checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId())) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID, "The Solution Build Plan ID seems to be invalid."))
                     .body(null);
@@ -308,8 +308,8 @@ public class ProgrammingExerciseResource {
         }
 
         // Check if package name is set
-        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-            // only Java needs a valid package name at the moment
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
+            // only Java and Kotlin need a valid package name at the moment
             if (programmingExercise.getPackageName() == null) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
             }
@@ -318,6 +318,15 @@ public class ProgrammingExerciseResource {
             Matcher packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
             if (!packageNameMatcher.matches()) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
+            }
+        }
+
+        // Check if checkout solution repository is enabled
+        if (programmingExercise.getCheckoutSolutionRepository()) {
+            if (programmingExercise.getProgrammingLanguage() != ProgrammingLanguage.HASKELL) {
+                return ResponseEntity.badRequest().headers(
+                        HeaderUtil.createAlert(applicationName, "Checking out the solution repository is only supported for Haskell exercises", "checkoutSolutionNotSupported"))
+                        .body(null);
             }
         }
 
