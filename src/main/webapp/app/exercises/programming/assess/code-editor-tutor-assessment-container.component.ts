@@ -217,7 +217,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    this.onError('artemisApp.tutorExerciseDashboard.noSubmissions');
+                    this.onError('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                 } else {
                     this.onError(error?.message);
                 }
