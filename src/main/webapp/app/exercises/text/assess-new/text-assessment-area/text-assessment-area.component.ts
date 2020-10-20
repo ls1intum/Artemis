@@ -31,8 +31,8 @@ export class TextAssessmentAreaComponent implements OnChanges {
     selectedRef?: TextBlockRef;
     wordCount = 0;
     characterCount = 0;
-    isConflictingFeedbackMap: Map<TextBlockRef, boolean>;
-    conflictTypeMap: Map<TextBlockRef, FeedbackConflictType | undefined>;
+    isConflictingFeedbackMap?: Map<TextBlockRef, boolean>;
+    conflictTypeMap?: Map<TextBlockRef, FeedbackConflictType | undefined>;
 
     constructor(private stringCountService: StringCountService) {
         this.isLeftConflictingFeedback = false;

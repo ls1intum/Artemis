@@ -220,22 +220,4 @@ describe('TextSubmissionAssessmentComponent', () => {
             [component.textBlockRefs[0].block!, textBlockRef.block!],
         );
     });
-
-    it('should set feedback conflict', function () {
-        const feedbackConflict = {
-            id: 1,
-            conflict: true,
-            type: 'INCONSISTENT_COMMENT',
-            firstFeedback: submission.result!.feedbacks![0],
-            secondFeedback: new Feedback(),
-        };
-        feedbackConflict.secondFeedback.id = 42;
-        submission.result!.feedbacks![0]['firstConflicts'] = [feedbackConflict];
-        component['setPropertiesFromServerResponse'](participation);
-        fixture.detectChanges();
-
-        expect(component.textBlockRefs[0]!.feedback!.conflictingTextAssessments).toBeTruthy();
-        expect(component.textBlockRefs[0]!.feedback!.conflictingTextAssessments!.length).toBe(1);
-        expect(component.textBlockRefs[0]!.feedback!.conflictingTextAssessments![0].conflictingFeedbackId).toBe(42);
-    });
 });
