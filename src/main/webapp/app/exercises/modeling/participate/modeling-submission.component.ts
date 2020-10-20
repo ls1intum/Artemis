@@ -3,9 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Selection, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { cloneDeep, omit } from 'lodash';
@@ -84,7 +83,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
         private resultService: ResultService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private route: ActivatedRoute,
         private modalService: NgbModal,
         private translateService: TranslateService,
@@ -436,7 +435,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Retrieves names for displaying the assessment and calculates the total score
      */
     private initializeAssessmentInfo(): void {
-        if (this.assessmentResult && this.assessmentResult.feedbacks && this.submission && this.submission.model) {
+        if (this.assessmentResult && this.assessmentResult.feedbacks && this.umlModel) {
             this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.umlModel);
             let totalScore = 0;
             for (const feedback of this.assessmentResult.feedbacks) {
@@ -485,7 +484,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    canDeactivate(): Observable<boolean> | boolean {
+    canDeactivate(): boolean {
         if (!this.modelingEditor || !this.modelingEditor.isApollonEditorMounted) {
             return true;
         }

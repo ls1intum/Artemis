@@ -11,12 +11,12 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'jhi-programming-exercise-grading-dirty-warning',
     template: `
-        <ng-container *ngIf="hasUpdatedTestCases">
+        <ng-container *ngIf="hasUpdatedGradingConfig">
             <fa-icon
                 icon="exclamation-triangle"
                 class="text-warning"
                 size="2x"
-                ngbTooltip="{{ 'artemisApp.programmingExercise.manageTestCases.updatedTestCasesTooltip' | translate }}"
+                ngbTooltip="{{ 'artemisApp.programmingExercise.configureGrading.updatedGradingConfigTooltip' | translate }}"
             >
             </fa-icon>
         </ng-container>
@@ -24,9 +24,9 @@ import { Subscription } from 'rxjs';
 })
 export class ProgrammingExerciseGradingDirtyWarningComponent implements OnChanges, OnDestroy {
     @Input() programmingExerciseId: number;
-    @Input() hasUpdatedTestCasesInitialValue: boolean;
+    @Input() hasUpdatedGradingConfigInitialValue: boolean;
 
-    hasUpdatedTestCases?: boolean;
+    hasUpdatedGradingConfig?: boolean;
     testCaseStateSubscription: Subscription;
 
     constructor(private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService) {}
@@ -40,13 +40,13 @@ export class ProgrammingExerciseGradingDirtyWarningComponent implements OnChange
     ngOnChanges(changes: SimpleChanges) {
         // When the programming exercise changes, both set the hasUpdatedTestCases property to undefined and set up a subscription.
         if (this.programmingExerciseId && changes.programmingExerciseId.previousValue !== this.programmingExerciseId) {
-            this.hasUpdatedTestCases = undefined;
+            this.hasUpdatedGradingConfig = undefined;
             this.unsubscribeSubscriptions();
             this.testCaseStateSubscription = this.programmingExerciseWebsocketService
                 .getTestCaseState(this.programmingExerciseId)
                 .pipe(
                     tap((hasUpdatedTestCases: boolean) => {
-                        this.hasUpdatedTestCases = hasUpdatedTestCases;
+                        this.hasUpdatedGradingConfig = hasUpdatedTestCases;
                     }),
                 )
                 .subscribe();
@@ -57,7 +57,7 @@ export class ProgrammingExerciseGradingDirtyWarningComponent implements OnChange
             changes.hasUpdatedTestCasesInitialValue.currentValue !== undefined &&
             changes.hasUpdatedTestCasesInitialValue.isFirstChange()
         ) {
-            this.hasUpdatedTestCases = this.hasUpdatedTestCasesInitialValue;
+            this.hasUpdatedGradingConfig = this.hasUpdatedGradingConfigInitialValue;
         }
     }
 

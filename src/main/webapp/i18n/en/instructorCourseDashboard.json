@@ -22,6 +22,8 @@
             "completedAssessments": "Completed assessments",
             "action": "Action",
             "exerciseDashboard": "Exercise dashboard",
+            "rating": "Ratings",
+            "questionsAndAnswers": "Questions",
             "tutorLeaderboard": {
                 "courseTitle": "Tutor Course Leaderboard",
                 "id": "ID",

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ModelingExerciseService, ModelingSubmissionComparisonDTO } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { downloadFile } from 'app/shared/util/download.util';
@@ -13,35 +13,97 @@ import { ExportToCsv } from 'export-to-csv';
     templateUrl: './plagiarism-inspector.component.html',
 })
 export class PlagiarismInspectorComponent implements OnInit {
-    selectedComparisonIndex: number;
-    plagiarismCheckInProgress: boolean;
+    /**
+     * The modeling exercise for which plagiarism is to be detected.
+     */
     modelingExercise: ModelingExercise;
-    modelingSubmissionComparisons: Array<ModelingSubmissionComparisonDTO>;
-    splitControlSubject: Subject<string> = new Subject<string>();
 
-    private subscription: Subscription;
+    /**
+     * Results of the plagiarism detection.
+     */
+    modelingSubmissionComparisons: Array<ModelingSubmissionComparisonDTO>;
+
+    /**
+     * Flag to indicate whether the plagiarism detection is currently in progress.
+     */
+    plagiarismDetectionInProgress: boolean;
+
+    /**
+     * Index of the currently selected plagiarism.
+     */
+    selectedPlagiarismIndex: number;
+
+    /**
+     * Subject to be passed into PlagiarismSplitViewComponent to control the split view.
+     */
+    splitControlSubject: Subject<string> = new Subject<string>();
 
     constructor(private route: ActivatedRoute, private router: Router, private modelingExerciseService: ModelingExerciseService) {}
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe((params) => {
-            this.modelingExerciseService.find(params['exerciseId']).subscribe((response: HttpResponse<ModelingExercise>) => {
-                this.modelingExercise = response.body!;
-            });
+        this.route.params.subscribe((params) => {
+            this.fetchModelingExercise(params['exerciseId']);
         });
     }
 
-    handleTagPlagiarism(confirmed: boolean) {
-        this.modelingSubmissionComparisons[this.selectedComparisonIndex].confirmed = confirmed;
+    /**
+     * Fetch the modeling exercise with the given id.
+     *
+     * @param modelingExerciseId
+     */
+    fetchModelingExercise(modelingExerciseId: number) {
+        this.modelingExerciseService.find(modelingExerciseId).subscribe((response: HttpResponse<ModelingExercise>) => {
+            this.modelingExercise = response.body!;
+        });
     }
 
-    checkPlagiarismJson() {
+    /**
+     * Handle the 'plagiarismStatusChange' event emitted by PlagiarismHeaderComponent.
+     *
+     * @param confirmed
+     */
+    handlePlagiarismStatusChange(confirmed: boolean) {
+        this.modelingSubmissionComparisons[this.selectedPlagiarismIndex].confirmed = confirmed;
+    }
+
+    /**
+     * Handle the 'splitViewChange' event emitted by PlagiarismHeaderComponent.
+     *
+     * @param pane
+     */
+    handleSplitViewChange(pane: string) {
+        this.splitControlSubject.next(pane);
+    }
+
+    /**
+     * Trigger the server-side plagiarism detection and fetch its result.
+     */
+    checkPlagiarism() {
+        this.plagiarismDetectionInProgress = true;
+
+        this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id!).subscribe(
+            (comparisons: Array<ModelingSubmissionComparisonDTO>) => {
+                this.plagiarismDetectionInProgress = false;
+                this.modelingSubmissionComparisons = comparisons.sort((c1, c2) => c2.similarity - c1.similarity);
+            },
+            () => (this.plagiarismDetectionInProgress = false),
+        );
+    }
+
+    /**
+     * Download plagiarism detection results as JSON document.
+     */
+    downloadPlagiarismResultsJson() {
         const json = JSON.stringify(this.modelingSubmissionComparisons);
         const blob = new Blob([json], { type: 'application/json' });
+
         downloadFile(blob, `check-plagiarism-modeling-exercise_${this.modelingExercise.id}.json`);
     }
 
-    checkPlagiarismCsv() {
+    /**
+     * Download plagiarism detection results as CSV document.
+     */
+    downloadPlagiarismResultsCsv() {
         if (this.modelingSubmissionComparisons.length > 0) {
             const csvExporter = new ExportToCsv({
                 fieldSeparator: ';',
@@ -105,21 +167,5 @@ export class PlagiarismInspectorComponent implements OnInit {
 
             csvExporter.generateCsv(csvData);
         }
-    }
-
-    checkPlagiarism() {
-        this.plagiarismCheckInProgress = true;
-
-        this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id!).subscribe(
-            (response: HttpResponse<Array<ModelingSubmissionComparisonDTO>>) => {
-                this.plagiarismCheckInProgress = false;
-                this.modelingSubmissionComparisons = response.body!.sort((c1, c2) => c2.similarity - c1.similarity);
-            },
-            () => (this.plagiarismCheckInProgress = false),
-        );
-    }
-
-    handleSplit(pane: string) {
-        this.splitControlSubject.next(pane);
     }
 }

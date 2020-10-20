@@ -47,6 +47,13 @@ export class ProfileService {
                         profileInfo.externalUserManagementURL = data.externalUserManagementURL;
                         profileInfo.imprint = data.imprint;
                         profileInfo.contact = data.contact;
+                        profileInfo.registrationEnabled = data.registrationEnabled;
+                        profileInfo.allowedEmailPattern = data.allowedEmailPattern;
+                        profileInfo.allowedEmailPatternReadable = data.allowedEmailPatternReadable;
+                        profileInfo.allowedLdapUsernamePattern = data.allowedLdapUsernamePattern;
+                        profileInfo.allowedCourseRegistrationUsernamePattern = data.allowedCourseRegistrationUsernamePattern;
+                        profileInfo.accountName = data.accountName;
+                        profileInfo.versionControlUrl = data.versionControlUrl;
 
                         return profileInfo;
                     }),

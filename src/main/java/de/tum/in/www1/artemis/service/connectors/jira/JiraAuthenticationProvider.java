@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.jira;
 
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
-import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
 
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -65,7 +65,10 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     private final Logger log = LoggerFactory.getLogger(JiraAuthenticationProvider.class);
 
     @Value("${artemis.user-management.external.url}")
-    private URL JIRA_URL;
+    private URL jiraUrl;
+
+    @Value("${artemis.user-management.ldap.allowed-username-pattern:#{null}}")
+    private Optional<Pattern> allowedLdapUsernamePattern;
 
     private final RestTemplate restTemplate;
 
@@ -87,20 +90,19 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     public ConnectorHealth health() {
         ConnectorHealth health;
         try {
-            final var status = restTemplate.getForObject(JIRA_URL + "/status", JsonNode.class);
+            final var status = restTemplate.getForObject(jiraUrl + "/status", JsonNode.class);
             health = status.get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
         }
         catch (Exception emAll) {
             health = new ConnectorHealth(emAll);
         }
 
-        health.setAdditionalInfo(Map.of("url", JIRA_URL));
+        health.setAdditionalInfo(Map.of("url", jiraUrl));
         return health;
     }
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-
         User user = getOrCreateUser(authentication, false);
         List<GrantedAuthority> grantedAuthorities = user.getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).collect(Collectors.toList());
         return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), grantedAuthorities);
@@ -117,13 +119,16 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         String password = authentication.getCredentials().toString();
         ResponseEntity<JiraUserDTO> authenticationResponse = null;
         try {
-            final var path = JIRA_URL + "/rest/api/2/user?username=" + username + "&expand=groups";
+            final var path = jiraUrl + "/rest/api/2/user?username=" + username + "&expand=groups";
             // If we want to skip the password check, we can just use the ADMIN auth, which is already injected in the default restTemplate
             // Otherwise, we create our own authorization and use the credentials of the user.
             if (skipPasswordCheck) {
+                // this is only the case if the systems wants to login a user automatically (e.g. based on Oauth in LTI)
+                // when we provide null, the default restTemplate header will be used automatically
                 authenticationResponse = restTemplate.exchange(path, HttpMethod.GET, null, JiraUserDTO.class);
             }
             else {
+                // this is the normal case, where we use the username and password provided by the user so that JIRA checks for us if this is valid
                 final var entity = new HttpEntity<>(HeaderUtil.createAuthorization(username, password));
                 authenticationResponse = restTemplate.exchange(path, HttpMethod.GET, entity, JiraUserDTO.class);
             }
@@ -148,25 +153,19 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
         if (authenticationResponse != null && authenticationResponse.getBody() != null) {
             final var jiraUserDTO = authenticationResponse.getBody();
-            final var login = jiraUserDTO.getName();
+            username = jiraUserDTO.getName();
             User user;
-            final var optionalUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login);
+            final var optionalUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
             if (optionalUser.isPresent()) {
                 user = optionalUser.get();
             }
             else {
                 // the user does not exist yet, we have to create it in the Artemis database
                 // Note: we use an empty password, so that we don't store the credentials of Jira users in the Artemis DB (Spring enforces a non null password)
-                user = userService.createUser(login, "", jiraUserDTO.getDisplayName(), "", jiraUserDTO.getEmailAddress(), null, null, "en");
-                // load additional details if the ldap service is available and the user follows the TUM pattern
-                if (ldapUserService.isPresent() && TUM_USERNAME_PATTERN.matcher(username).matches()) {
-                    LdapUserDto ldapUserDto = userService.loadUserDetailsFromLdap(username);
-                    if (ldapUserDto != null) {
-                        user.setFirstName(ldapUserDto.getFirstName());
-                        user.setLastName(ldapUserDto.getLastName());
-                        user.setEmail(ldapUserDto.getEmail());
-                        user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
-                    }
+                user = userService.createUser(username, "", jiraUserDTO.getDisplayName(), "", jiraUserDTO.getEmailAddress(), null, null, "en");
+                // load additional details if the ldap service is available and the user follows the allowed username pattern (if specified)
+                if (ldapUserService.isPresent()) {
+                    loadUserDetailsFromLdap(user);
                 }
             }
             final var groups = jiraUserDTO.getGroups().getItems().stream().map(JiraUserGroupDTO::getName).collect(Collectors.toSet());
@@ -174,13 +173,32 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             user.setAuthorities(userService.buildAuthorities(user));
 
             if (!user.getActivated()) {
-                userService.activateRegistration(user.getActivationKey());
+                userService.activateUser(user);
             }
             userRepository.save(user);
             return user;
         }
         else {
             throw new InternalAuthenticationServiceException("JIRA Authentication failed for user " + username);
+        }
+    }
+
+    /**
+     * loads the user details from the provided LDAP in case:
+     * 1) the allowedUsernamePattern is not specified (means all users should be loaded) or
+     * 2) the allowedUsernamePattern is specified and the username matches
+     * Example for TUM: ab12cde
+     * @param user the user for which the additional details (in particular the registration number should be loaded)
+     */
+    private void loadUserDetailsFromLdap(User user) {
+        if (allowedLdapUsernamePattern.isEmpty() || allowedLdapUsernamePattern.get().matcher(user.getLogin()).matches()) {
+            LdapUserDto ldapUserDto = userService.loadUserDetailsFromLdap(user.getLogin());
+            if (ldapUserDto != null) {
+                user.setFirstName(ldapUserDto.getFirstName());
+                user.setLastName(ldapUserDto.getLastName());
+                user.setEmail(ldapUserDto.getEmail());
+                user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
+            }
         }
     }
 
@@ -210,7 +228,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         body.put("name", user.getLogin());
         HttpEntity<?> entity = new HttpEntity<>(body);
         try {
-            restTemplate.exchange(JIRA_URL + "/rest/api/2/group/user?groupname=" + group, HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(jiraUrl + "/rest/api/2/group/user?groupname=" + group, HttpMethod.POST, entity, Map.class);
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST) && e.getResponseBodyAsString().contains("user is already a member of")) {
@@ -233,7 +251,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         body.put("applicationKeys", List.of("jira-software"));
         HttpEntity<?> entity = new HttpEntity<>(body);
         try {
-            restTemplate.exchange(JIRA_URL + "/rest/api/2/user", HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(jiraUrl + "/rest/api/2/user", HttpMethod.POST, entity, Map.class);
             log.info("Creating user " + user.getLogin() + " was successful");
         }
         catch (HttpClientErrorException e) {
@@ -261,7 +279,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         log.info("Create group " + groupName + " in JIRA");
         HttpEntity<?> entity = new HttpEntity<>(Map.of("name", groupName));
         try {
-            restTemplate.exchange(JIRA_URL + "/rest/api/2/group", HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(jiraUrl + "/rest/api/2/group", HttpMethod.POST, entity, Map.class);
         }
         catch (HttpClientErrorException e) {
             // forward this error to the client because we might not want to create the course, if the group already exists
@@ -279,7 +297,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         }
         log.info("Delete group " + groupName + " in JIRA");
         try {
-            restTemplate.exchange(JIRA_URL + "/rest/api/2/group?groupname=" + groupName, HttpMethod.DELETE, null, Map.class);
+            restTemplate.exchange(jiraUrl + "/rest/api/2/group?groupname=" + groupName, HttpMethod.DELETE, null, Map.class);
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
@@ -299,7 +317,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         // then we also make sure to remove it in JIRA so that the synchronization during the next login does not add the group again
         log.info("Remove user {} from group {}", user.getLogin(), group);
         try {
-            final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/group/user").queryParam("groupname", group).queryParam("username", user.getLogin())
+            final var path = UriComponentsBuilder.fromUri(jiraUrl.toURI()).path("/rest/api/2/group/user").queryParam("groupname", group).queryParam("username", user.getLogin())
                     .build().toUri();
             restTemplate.delete(path);
         }
@@ -312,7 +330,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public boolean isGroupAvailable(String group) {
         try {
-            ResponseEntity<Map> response = restTemplate.exchange(JIRA_URL + "/rest/api/2/group/member?groupname=" + group, HttpMethod.GET, null, Map.class);
+            ResponseEntity<Map> response = restTemplate.exchange(jiraUrl + "/rest/api/2/group/member?groupname=" + group, HttpMethod.GET, null, Map.class);
             if (response.getStatusCode().equals(HttpStatus.OK)) {
                 return true;
             }
@@ -359,7 +377,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public Optional<String> getUsernameForEmail(String email) throws ArtemisAuthenticationException {
         try {
-            ResponseEntity<ArrayList> authenticationResponse = restTemplate.exchange(JIRA_URL + "/rest/api/2/user/search?username=" + email, HttpMethod.GET, null, ArrayList.class);
+            ResponseEntity<ArrayList> authenticationResponse = restTemplate.exchange(jiraUrl + "/rest/api/2/user/search?username=" + email, HttpMethod.GET, null, ArrayList.class);
 
             var results = authenticationResponse.getBody();
             if (results == null || results.size() == 0) {

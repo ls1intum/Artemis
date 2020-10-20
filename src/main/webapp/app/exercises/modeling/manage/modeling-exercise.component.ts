@@ -10,7 +10,7 @@ import { CourseExerciseService, CourseManagementService } from 'app/course/manag
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { SortService } from 'app/shared/service/sort.service';
 import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 
@@ -24,7 +24,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     constructor(
         private modelingExerciseService: ModelingExerciseService,
         private courseExerciseService: CourseExerciseService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private sortService: SortService,
         private modalService: NgbModal,

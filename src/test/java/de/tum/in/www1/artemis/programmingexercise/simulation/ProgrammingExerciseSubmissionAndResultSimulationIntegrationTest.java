@@ -23,22 +23,14 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest extends AbstractSpringDevelopmentTest {
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     ProgrammingSubmissionRepository submissionRepository;
 
     @Autowired
     ParticipationRepository participationRepository;
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
@@ -79,8 +71,8 @@ public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest ext
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionWithoutConnectionToVCSandCI() throws Exception {
         assertThat(submissionRepository.findAll()).hasSize(0);
-        final var returnedSubmission = request.postWithResponseBody(ROOT + SUBMISSIONS_SIMULATION.replace("{exerciseId}", exerciseId + ""), null, ProgrammingSubmission.class,
-                HttpStatus.CREATED);
+        final var returnedSubmission = request.postWithResponseBody(ROOT + SUBMISSIONS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null,
+                ProgrammingSubmission.class, HttpStatus.CREATED);
         assertThat(submissionRepository.findAll()).hasSize(1);
         ProgrammingSubmission submission = submissionRepository.findAll().get(0);
         assertThat(returnedSubmission).isEqualTo(submission);
@@ -97,10 +89,10 @@ public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest ext
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateResultWithoutConnectionToVCSandCI() throws Exception {
-        final var returnedSubmission = request.postWithResponseBody(ROOT + SUBMISSIONS_SIMULATION.replace("{exerciseId}", exerciseId + ""), null, ProgrammingSubmission.class,
-                HttpStatus.CREATED);
+        final var returnedSubmission = request.postWithResponseBody(ROOT + SUBMISSIONS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null,
+                ProgrammingSubmission.class, HttpStatus.CREATED);
         assertThat(resultRepository.findAll()).hasSize(0);
-        Result returnedResult = request.postWithResponseBody(ROOT + RESULTS_SIMULATION.replace("{exerciseId}", exerciseId + ""), null, Result.class, HttpStatus.CREATED);
+        Result returnedResult = request.postWithResponseBody(ROOT + RESULTS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null, Result.class, HttpStatus.CREATED);
         ProgrammingSubmission submission = submissionRepository.findAll().get(0);
         assertThat(returnedSubmission).isEqualTo(submission);
         assertThat(resultRepository.findAll()).hasSize(1);

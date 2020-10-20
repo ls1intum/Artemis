@@ -9,8 +9,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { AlertService } from 'app/core/alert/alert.service';
+
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { TextAssessmentEditorComponent } from 'app/exercises/text/assess/text-assessment-editor/text-assessment-editor.component';
@@ -58,7 +57,6 @@ describe('ParticipationSubmissionComponent', () => {
             ],
             providers: [
                 JhiLanguageHelper,
-                { provide: AlertService, useClass: MockAlertService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -75,7 +73,9 @@ describe('ParticipationSubmissionComponent', () => {
                 router = debugElement.injector.get(Router);
                 submissionService = TestBed.inject(SubmissionService);
                 findAllSubmissionsOfParticipationStub = stub(submissionService, 'findAllSubmissionsOfParticipation');
-                router.initialNavigation();
+                fixture.ngZone!.run(() => {
+                    router.initialNavigation();
+                });
             });
     });
 

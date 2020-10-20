@@ -9,8 +9,7 @@ import { By } from '@angular/platform-browser';
 import { JhiEventManager, NgJhipsterModule } from 'ng-jhipster';
 import { FormsModule } from '@angular/forms';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/alert/alert.service';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
@@ -68,7 +67,6 @@ describe('TeamsComponent', () => {
             providers: [
                 JhiEventManager,
                 DifferencePipe,
-                { provide: AlertService, useClass: MockAlertService },
                 { provide: TeamService, useClass: MockTeamService },
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: ActivatedRoute, useValue: route },
@@ -85,7 +83,9 @@ describe('TeamsComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
-                router.initialNavigation();
+                fixture.ngZone!.run(() => {
+                    router.initialNavigation();
+                });
             });
     });
 

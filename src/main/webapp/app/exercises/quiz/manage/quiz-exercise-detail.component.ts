@@ -13,8 +13,7 @@ import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Location } from '@angular/common';
-import { AlertService } from 'app/core/alert/alert.service';
-import { Observable } from 'rxjs/Observable';
+import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
@@ -39,6 +38,7 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
 import * as Sentry from '@sentry/browser';
+import { cloneDeep } from 'lodash';
 
 export interface Reason {
     translateKey: string;
@@ -133,7 +133,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         private translateService: TranslateService,
         private fileUploaderService: FileUploaderService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private location: Location,
         private modalService: NgbModal,
         private changeDetector: ChangeDetectorRef,
@@ -212,7 +212,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         }
         this.prepareEntity(this.entity);
         // Assign savedEntity to identify local changes
-        this.savedEntity = this.entity.id ? JSON.parse(JSON.stringify(this.entity)) : new QuizExercise(undefined, undefined);
+        this.savedEntity = this.entity.id ? cloneDeep(this.entity) : new QuizExercise(undefined, undefined);
         if (!this.quizExercise.course && !this.isExamMode) {
             this.quizExercise.course = this.course;
         }
@@ -271,7 +271,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     /**
      * Returns whether pending changes are present, preventing a deactivation.
      */
-    canDeactivate(): Observable<boolean> | boolean {
+    canDeactivate(): boolean {
         return !this.pendingChangesCache;
     }
 
@@ -636,7 +636,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     question.title !== '' &&
                     shortAnswerQuestion.correctMappings &&
                     shortAnswerQuestion.correctMappings.length > 0 &&
-                    // && this.shortAnswerQuestionUtil.solveShortAnswer(shortAnswerQuestion).length
                     this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion) &&
                     this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots) &&
                     this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
@@ -864,12 +863,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                         translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectMapping',
                         translateValues: { index: index + 1 },
                     });
-                } /*else if (this.shortAnswerQuestionUtil.solveShortAnswer(shortAnswerQuestion, []).length === 0) {
-                    reasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionUnsolvable',
-                        translateValues: { index: index + 1 }
-                    });
-                } */
+                }
                 if (!this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping',
@@ -1007,8 +1001,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         // To make sure all questions are duplicated (new resources are created), we need to remove some fields from the input questions,
         // This contains removing all ids, duplicating images in case of dnd questions, the question statistic and the exercise
         for (const question of questions) {
+            // do not set question.exercise = this.quizExercise, because it will cause a cycle when converting to json
+            question.exercise = undefined;
             question.quizQuestionStatistic = undefined;
-            question.exercise = this.quizExercise;
             question.invalid = false;
             question.id = undefined;
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
@@ -1130,7 +1125,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 },
                 () => this.onSaveError(),
             );
-            this.pendingChangesCache = false;
         } else {
             this.quizExerciseService.create(this.quizExercise).subscribe(
                 (quizExerciseResponse: HttpResponse<QuizExercise>) => {
@@ -1142,7 +1136,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 },
                 () => this.onSaveError(),
             );
-            this.pendingChangesCache = false;
         }
     }
 
@@ -1153,8 +1146,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     private onSaveSuccess(quizExercise: QuizExercise): void {
         this.isSaving = false;
+        this.pendingChangesCache = false;
         this.prepareEntity(quizExercise);
-        this.savedEntity = JSON.parse(JSON.stringify(quizExercise));
+        this.savedEntity = cloneDeep(quizExercise);
         this.quizExercise = quizExercise;
         this.changeDetector.detectChanges();
     }

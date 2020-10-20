@@ -1,8 +1,8 @@
 {
     "artemisApp": {
         "instructorCourseDashboard": {
-            "title": "Instructor Kurs Dashboard",
-            "pageHeader": "Instructor Kurs Dashboard für",
+            "title": "Dozenten Kurs Dashboard",
+            "pageHeader": "Dozenten Kurs Dashboard für",
             "informationAboutCourse": "Informationen zum Kurs",
             "noDescription": "Keine Beschreibung vorhanden",
             "students": "Studenten",
@@ -22,6 +22,8 @@
             "completedAssessments": "Komplette Assessments",
             "action": "Aktion",
             "exerciseDashboard": "Übungs-Dashboard",
+            "rating": "Ratings",
+            "questionsAndAnswers": "Fragen",
             "tutorLeaderboard": {
                 "courseTitle": "Tutor Kurs Bestenliste",
                 "id": "ID",

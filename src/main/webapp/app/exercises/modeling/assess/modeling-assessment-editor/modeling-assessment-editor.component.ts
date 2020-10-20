@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -22,6 +22,8 @@ import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/fee
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { now } from 'moment';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -52,11 +54,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     isLoading = true;
     isTestRun = false;
     hasAutomaticFeedback = false;
+    hasAssessmentDueDatePassed: boolean;
 
     private cancelConfirmationText: string;
 
     constructor(
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
         private router: Router,
         private route: ActivatedRoute,
@@ -85,7 +88,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
 
         this.route.paramMap.subscribe((params) => {
             this.courseId = Number(params.get('courseId'));
@@ -131,7 +134,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
                     this.navigateBack();
-                    this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
+                    this.jhiAlertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
                 } else {
@@ -146,6 +149,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
         this.result = this.submission.result;
+        this.hasAssessmentDueDatePassed = !!this.modelingExercise!.assessmentDueDate && moment(this.modelingExercise!.assessmentDueDate).isBefore(now());
         if (this.result?.hasComplaint) {
             this.getComplaint(this.result.id);
         }
@@ -261,7 +265,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     onError(): void {
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.submission = undefined;
         this.modelingExercise = undefined;
         this.result = undefined;

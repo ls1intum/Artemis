@@ -1,10 +1,19 @@
 <h3 class="top-container">
-    <!--back button only used in tutor dashboard-->
+    <!--back button only used in assessment dashboard-->
     <div class="row-container mr-2">
         <fa-icon *ngIf="!hideBackButton" [icon]="'arrow-left'" (click)="navigateBack.emit()" class="back-button mr-2"></fa-icon>
         <span jhiTranslate="artemisApp.assessment.assessment">Assessment</span>
     </div>
     <jhi-alert></jhi-alert>
+    <ngb-alert
+        *ngIf="hasAssessmentDueDatePassed && !result?.completionDate"
+        [style.fontSize]="'65%'"
+        [type]="'warning'"
+        (close)="hasAssessmentDueDatePassed = false"
+        jhiTranslate="artemisApp.assessment.assessmentDueDateIsOver"
+    >
+        Assessment Due Date is over, the assessment will be published immediately after submitting
+    </ngb-alert>
     <div class="row-container" *ngIf="!isLoading">
         <span
             id="assessmentLocked"

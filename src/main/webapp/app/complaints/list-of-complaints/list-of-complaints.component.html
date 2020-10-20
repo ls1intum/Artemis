@@ -116,8 +116,8 @@
                     <td class="text-center">
                         <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)">
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                            <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.tutorExerciseDashboard.showComplaint' | translate }}</span>
-                            <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.tutorExerciseDashboard.showMoreFeedbackRequests' | translate }}</span>
+                            <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | translate }}</span>
+                            <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | translate }}</span>
                         </button>
                     </td>
                 </tr>
@@ -126,7 +126,7 @@
     </div>
 
     <div class="alert alert-info" [hidden]="complaints.length !== 0">
-        <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.tutorExerciseDashboard.noComplaints' | translate }}</span>
-        <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.tutorExerciseDashboard.noMoreFeedbackRequests' | translate }}</span>
+        <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.exerciseAssessmentDashboard.noComplaints' | translate }}</span>
+        <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests' | translate }}</span>
     </div>
 </div>

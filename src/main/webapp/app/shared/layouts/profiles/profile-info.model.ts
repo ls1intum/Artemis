@@ -17,4 +17,11 @@ export class ProfileInfo {
     contact: string;
     testServer: boolean;
     allowedMinimumOrionVersion: string;
+    registrationEnabled?: boolean;
+    allowedEmailPattern?: string;
+    allowedEmailPatternReadable?: string;
+    allowedLdapUsernamePattern?: string;
+    allowedCourseRegistrationUsernamePattern?: string;
+    accountName?: string;
+    versionControlUrl?: string;
 }

@@ -10,11 +10,9 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { AlertService } from 'app/core/alert/alert.service';
+
 import { Router } from '@angular/router';
 import { FileUploadAssessmentComponent } from 'app/exercises/file-upload/assess/file-upload-assessment.component';
-import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';
 import { DebugElement } from '@angular/core';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -37,6 +35,7 @@ import { By } from '@angular/platform-browser';
 import { throwError } from 'rxjs';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 
 chai.use(sinonChai);
 
@@ -66,12 +65,11 @@ describe('FileUploadAssessmentComponent', () => {
             declarations: [
                 FileUploadAssessmentComponent,
                 MockComponent(UpdatingResultComponent),
-                MockComponent(ResizableInstructionsComponent),
+                MockComponent(CollapsableAssessmentInstructionsComponent),
                 MockComponent(ComplaintsForTutorComponent),
             ],
             providers: [
                 JhiLanguageHelper,
-                { provide: AlertService, useClass: MockAlertService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -88,7 +86,9 @@ describe('FileUploadAssessmentComponent', () => {
                 fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
                 getFileUploadSubmissionForExerciseWithoutAssessmentStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionForExerciseWithoutAssessment');
 
-                router.initialNavigation();
+                fixture.ngZone!.run(() => {
+                    router.initialNavigation();
+                });
             });
     });
 

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
@@ -41,6 +42,8 @@ public class StudentQuestionAnswerResource {
 
     private final StudentQuestionAnswerRepository studentQuestionAnswerRepository;
 
+    private final CourseRepository courseRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final UserService userService;
@@ -50,8 +53,10 @@ public class StudentQuestionAnswerResource {
     SingleUserNotificationService singleUserNotificationService;
 
     public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository, GroupNotificationService groupNotificationService,
-            SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authorizationCheckService, UserService userService) {
+            SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authorizationCheckService, UserService userService,
+            CourseRepository courseRepository) {
         this.studentQuestionAnswerRepository = studentQuestionAnswerRepository;
+        this.courseRepository = courseRepository;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.authorizationCheckService = authorizationCheckService;
@@ -59,21 +64,32 @@ public class StudentQuestionAnswerResource {
     }
 
     /**
-     * POST /question-answers : Create a new studentQuestionAnswer.
+     * POST /courses/{courseId}/question-answers : Create a new studentQuestionAnswer.
      *
+     * @param courseId the id of the course the answer belongs to
      * @param studentQuestionAnswer the studentQuestionAnswer to create
      * @return the ResponseEntity with status 201 (Created) and with body the new studentQuestionAnswer, or with status 400 (Bad Request) if the studentQuestionAnswer has already
      *         an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/student-question-answers")
+    @PostMapping("courses/{courseId}/student-question-answers")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: there are no security checks here. The API endpoint should at least include the course id
-    public ResponseEntity<StudentQuestionAnswer> createStudentQuestionAnswer(@RequestBody StudentQuestionAnswer studentQuestionAnswer) throws URISyntaxException {
+    public ResponseEntity<StudentQuestionAnswer> createStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer)
+            throws URISyntaxException {
         log.debug("REST request to save StudentQuestionAnswer : {}", studentQuestionAnswer);
+        User user = this.userService.getUserWithGroupsAndAuthorities();
         if (studentQuestionAnswer.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestionAnswer cannot already have an ID", ENTITY_NAME, "idexists");
         }
+        Optional<Course> optionalCourse = courseRepository.findById(courseId);
+        if (optionalCourse.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!this.authorizationCheckService.isAtLeastStudentInCourse(optionalCourse.get(), user)) {
+            return forbidden();
+        }
+        // answer to approved if written by an instructor
+        studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(optionalCourse.get(), user));
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
         if (result.getQuestion().getExercise() != null) {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewAnswerForExercise(result);
@@ -83,26 +99,31 @@ public class StudentQuestionAnswerResource {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewAnswerForLecture(result);
             singleUserNotificationService.notifyUserAboutNewAnswerForLecture(result);
         }
-        return ResponseEntity.created(new URI("/api/question-answers/" + result.getId()))
+        return ResponseEntity.created(new URI("/api/courses" + courseId + "/student-question-answers/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
-     * PUT /question-answers : Updates an existing studentQuestionAnswer.
+     * PUT /courses/{courseId}/question-answers : Updates an existing studentQuestionAnswer.
      *
+     * @param courseId the id of the course the answer belongs to
      * @param studentQuestionAnswer the studentQuestionAnswer to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated studentQuestionAnswer, or with status 400 (Bad Request) if the studentQuestionAnswer is not valid,
      *         or with status 500 (Internal Server Error) if the studentQuestionAnswer couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/student-question-answers")
-    // TODO: there are no security checks here. The API endpoint should at least include the course id
+    @PutMapping("courses/{courseId}/student-question-answers")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@RequestBody StudentQuestionAnswer studentQuestionAnswer) throws URISyntaxException {
+    public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer)
+            throws URISyntaxException {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to update StudentQuestionAnswer : {}", studentQuestionAnswer);
         if (studentQuestionAnswer.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+        }
+        Optional<Course> optionalCourse = courseRepository.findById(courseId);
+        if (optionalCourse.isEmpty()) {
+            return ResponseEntity.notFound().build();
         }
         Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(studentQuestionAnswer.getId());
         if (optionalStudentQuestionAnswer.isEmpty()) {
@@ -118,33 +139,45 @@ public class StudentQuestionAnswerResource {
     }
 
     /**
-     * GET /question-answers/:id : get the "id" questionAnswer.
+     * GET /courses/{courseId}/question-answers/:id : get the "id" questionAnswer.
      *
+     * @param courseId the id of the course the answer belongs to
      * @param id the id of the questionAnswer to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the questionAnswer, or with status 404 (Not Found)
      */
-    @GetMapping("/student-question-answers/{id}")
+    @GetMapping("courses/{courseId}/student-question-answers/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    // TODO: there are no security checks here. The API endpoint should at least include the course id
-    public ResponseEntity<StudentQuestionAnswer> getStudentQuestionAnswer(@PathVariable Long id) {
+    public ResponseEntity<StudentQuestionAnswer> getStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long id) {
         log.debug("REST request to get StudentQuestionAnswer : {}", id);
+        User user = this.userService.getUserWithGroupsAndAuthorities();
+        Optional<Course> optionalCourse = courseRepository.findById(courseId);
+        if (optionalCourse.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!this.authorizationCheckService.isAtLeastStudentInCourse(optionalCourse.get(), user)) {
+            return forbidden();
+        }
         Optional<StudentQuestionAnswer> questionAnswer = studentQuestionAnswerRepository.findById(id);
         return ResponseUtil.wrapOrNotFound(questionAnswer);
     }
 
     /**
-     * DELETE /question-answers/:id : delete the "id" questionAnswer.
+     * DELETE /courses/{courseId}/question-answers/:id : delete the "id" questionAnswer.
      *
+     * @param courseId the id of the course the answer belongs to
      * @param id the id of the questionAnswer to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/student-question-answers/{id}")
-    // TODO: there are no security checks here. The API endpoint should at least include the course id
+    @DeleteMapping("courses/{courseId}/student-question-answers/{id}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteStudentQuestionAnswer(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long id) {
         User user = userService.getUserWithGroupsAndAuthorities();
         Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(id);
         if (optionalStudentQuestionAnswer.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Optional<Course> optionalCourse = courseRepository.findById(courseId);
+        if (optionalCourse.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         StudentQuestionAnswer studentQuestionAnswer = optionalStudentQuestionAnswer.get();

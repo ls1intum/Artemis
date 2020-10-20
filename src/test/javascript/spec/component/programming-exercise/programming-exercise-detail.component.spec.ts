@@ -30,7 +30,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         programmingExercise.id = 123;
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.data = of({ programmingExercise });
         });
 
@@ -51,7 +51,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         programmingExercise.exerciseGroup = exerciseGroup;
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.data = of({ programmingExercise });
         });
 
