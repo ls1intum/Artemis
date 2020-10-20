@@ -118,14 +118,11 @@ have to configure the file ``application-artemis.yml`` in the folder
        git:
            name: Artemis
            email: artemis@in.tum.de
-       automatic-text:
-           segmentation-url: http://localhost:8000/segment
+       athene:
+           submit-url: http://localhost/submit
            feedback-consistency-url: http://localhost:8001/feedback_consistency
-           material-upload-url: http://localhost:8001/upload
-           embedding-url: http://localhost:8001/embed
-           embedding-chunk-size: 50
-           clustering-url: http://localhost:8002/cluster
-           secret: null
+           base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
+           token-validity-in-seconds: 10800
 
 Change all entries with ``<...>`` with proper values, e.g. your TUM
 Online account credentials to connect to the given instances of JIRA,
@@ -340,18 +337,18 @@ Other useful commands:
 -  Stop the client: ``docker-compose stop artemis-client`` (restart via
    ``docker-compose start artemis-client``)
 
-Text Assessment Clustering Service
+Athene Service (Text Assessment Clustering)
 ----------------------------------
 
 The semi-automatic text assessment relies on the Athene_ service.
 To enable automatic text assessments, special configuration is required:
 
-Enable the ``automaticText`` Spring profile:
+Enable the ``athene`` Spring profile:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,automaticText
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,athene
 
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -364,12 +361,10 @@ HTTP. We need to extend the configuration in the file
 
    artemis:
      # ...
-     automatic-text:
-       segmentation-url: http://localhost:8000/segment
-       material-upload-url: http://localhost:8001/upload
-       embedding-url: http://localhost:8001/embed
-       embedding-chunk-size: 50
-       clustering-url: http://localhost:8002/cluster
-       secret: null
+     athene:
+       submit-url: http://localhost/submit
+       feedback-consistency-url: http://localhost:8001/feedback_consistency
+       base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
+       token-validity-in-seconds: 10800
 
 .. _Athene: https://github.com/ls1intum/Athene

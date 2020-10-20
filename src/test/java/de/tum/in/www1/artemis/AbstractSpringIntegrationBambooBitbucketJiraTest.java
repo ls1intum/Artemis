@@ -45,8 +45,7 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.Verifiable;
 
 @SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
-        "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=",
-        "artemis.athene.submit-url=http://localhost/submit" })
+        "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
