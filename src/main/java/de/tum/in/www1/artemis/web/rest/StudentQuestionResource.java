@@ -94,6 +94,9 @@ public class StudentQuestionResource {
         if (!this.authorizationCheckService.isAtLeastStudentInCourse(optionalCourse.get(), user)) {
             return forbidden();
         }
+        if (!studentQuestion.getCourse().getId().equals(courseId)) {
+            return forbidden();
+        }
         StudentQuestion question = studentQuestionRepository.save(studentQuestion);
         if (question.getExercise() != null) {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewQuestionForExercise(question);
@@ -129,6 +132,9 @@ public class StudentQuestionResource {
         if (optionalStudentQuestion.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+        if (!studentQuestion.getCourse().getId().equals(courseId)) {
+            return forbidden();
+        }
         if (mayUpdateOrDeleteStudentQuestion(optionalStudentQuestion.get(), user)) {
             StudentQuestion result = studentQuestionRepository.save(studentQuestion);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestion.getId().toString())).body(result);
@@ -161,6 +167,9 @@ public class StudentQuestionResource {
         Optional<Course> optionalCourse = courseRepository.findById(courseId);
         if (optionalCourse.isEmpty()) {
             return ResponseEntity.notFound().build();
+        }
+        if (!optionalStudentQuestion.get().getCourse().getId().equals(courseId)) {
+            return forbidden();
         }
         if (mayUpdateStudentQuestionVotes(optionalStudentQuestion.get(), user)) {
             StudentQuestion updatedStudentQuestion = optionalStudentQuestion.get();
@@ -196,6 +205,9 @@ public class StudentQuestionResource {
         if (!authorizationCheckService.isAtLeastStudentForExercise(exercise.get(), user)) {
             return forbidden();
         }
+        if (!exercise.get().getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
+            return forbidden();
+        }
         List<StudentQuestion> studentQuestions = studentQuestionService.findStudentQuestionsForExercise(exerciseId);
         hideSensitiveInformation(studentQuestions);
 
@@ -222,6 +234,9 @@ public class StudentQuestionResource {
             return ResponseEntity.notFound().build();
         }
         if (!authorizationCheckService.isAtLeastStudentInCourse(lecture.get().getCourse(), user)) {
+            return forbidden();
+        }
+        if (!lecture.get().getCourse().getId().equals(courseId)) {
             return forbidden();
         }
         List<StudentQuestion> studentQuestions = studentQuestionService.findStudentQuestionsForLecture(lectureId);
