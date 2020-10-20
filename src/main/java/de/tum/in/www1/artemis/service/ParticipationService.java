@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -1134,13 +1135,16 @@ public class ParticipationService {
 
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
             ProgrammingExerciseStudentParticipation programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) participation;
-            if (deleteBuildPlan && programmingExerciseParticipation.getBuildPlanId() != null) {
+            URL repositoryUrl = programmingExerciseParticipation.getRepositoryUrlAsUrl();
+            String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
+
+            if (deleteBuildPlan && buildPlanId != null) {
                 final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
-                continuousIntegrationService.get().deleteBuildPlan(projectKey, programmingExerciseParticipation.getBuildPlanId());
+                continuousIntegrationService.get().deleteBuildPlan(projectKey, buildPlanId);
             }
             if (deleteRepository && programmingExerciseParticipation.getRepositoryUrl() != null) {
                 try {
-                    versionControlService.get().deleteRepository(programmingExerciseParticipation.getRepositoryUrlAsUrl());
+                    versionControlService.get().deleteRepository(repositoryUrl);
                 }
                 catch (Exception ex) {
                     log.error("Could not delete repository: " + ex.getMessage());
@@ -1149,9 +1153,9 @@ public class ParticipationService {
 
             // delete local repository cache
             try {
-                if (programmingExerciseParticipation.getRepositoryUrlAsUrl() != null) {
+                if (repositoryUrl != null && gitService.repositoryAlreadyExists(repositoryUrl)) {
                     // We need to close the possibly still open repository otherwise an IOException will be thrown on Windows
-                    Repository repo = gitService.getOrCheckoutRepository(programmingExerciseParticipation.getRepositoryUrlAsUrl(), false);
+                    Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, false);
                     gitService.deleteLocalRepository(repo);
                 }
             }
