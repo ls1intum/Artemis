@@ -62,11 +62,11 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * anymore in the parent component
      */
     cancelFeedback() {
+        this.feedback = this.oldFeedback;
+        this.viewOnly = false;
         if (this.feedback.type === this.MANUAL) {
             this.viewOnly = true;
         }
-        this.feedback = this.oldFeedback;
-        this.viewOnly = false;
         this.onCancelFeedback.emit(this.codeLine);
     }
 
