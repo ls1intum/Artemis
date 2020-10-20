@@ -1,11 +1,11 @@
 {
     "artemisApp": {
-        "tutorCourseDashboard": {
+        "assessmentDashboard": {
             "home": {
-                "title": "Tutor Course Dashboard"
+                "title": "Assessment Dashboard"
             },
-            "pageHeader": "Tutor Course Dashboard for course",
-            "pageHeaderExam": "Tutor Exam Dashboard for exam",
+            "pageHeader": "Assessment Dashboard for course",
+            "pageHeaderExam": "Assessment Dashboard for exam",
             "pageHeaderExamTestRun": "Test Run Assessment Dashboard",
             "yourAssessments": "Your assessments",
             "totalAssessments": "Total assessments",

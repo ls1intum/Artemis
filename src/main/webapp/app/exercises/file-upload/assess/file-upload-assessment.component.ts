@@ -141,7 +141,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
                     this.navigateBack();
-                    this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
+                    this.jhiAlertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
                 } else {
@@ -296,7 +296,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    this.jhiAlertService.error('artemisApp.tutorExerciseDashboard.noSubmissions');
+                    this.jhiAlertService.error('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                 } else {
                     this.onError(error.message);
                 }
