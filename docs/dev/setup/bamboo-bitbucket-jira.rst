@@ -170,7 +170,9 @@ under ``localhost:7990``.
    -  Add capabilities menu → Capability type ``JDK`` → insert ``JDK``
       as JDK label → insert ``/usr/lib/jvm/java-15-oracle`` as Java home.
 
-9. Generate a personal access token for Bamboo.
+9. Generate a personal access token
+
+9.1 Personal access token for Bamboo.
    While username and password can still be used as a fallback, this option is already marked as deprecated and
    will be removed in the future.
 
@@ -185,6 +187,25 @@ under ``localhost:7990``.
 
        artemis:
            continuous-integration:
+               user: <username>
+               password: <password>
+               token: #insert the token here
+
+9.1 Personal access token for Bitbucket.
+   While username and password can still be used as a fallback, this option is already marked as deprecated and
+   will be removed in the future.
+
+   - Log in as the admin user and go to Bitbucket -> View Profile (top right corner) -> Manage Account -> Personal access tokens -> Create token
+
+       .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
+          :align: center
+
+   - Copy the generated token to your ``application-local.yml``:
+
+   .. code:: yaml
+
+       artemis:
+           version-control:
                user: <username>
                password: <password>
                token: #insert the token here
