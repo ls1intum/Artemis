@@ -29,7 +29,8 @@ import org.apache.maven.shared.utils.Os;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -114,64 +115,36 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         solutionRepo.resetLocalRepo();
     }
 
-    @Test
+    @ParameterizedTest
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void runTemplateTests_java_exercise() throws Exception {
-        mockConnectorRequestsForSetup(exercise);
-        request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-
-        moveAssignmentSourcesOf(exerciseRepo);
-        int exitCode = invokeMaven();
-        assertThat(exitCode).isNotEqualTo(0);
-
-        var testResults = readTestReports();
-        assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(TestResult.FAILED, 13));
+    @EnumSource(value = ProgrammingLanguage.class, names = { "KOTLIN", "JAVA" }, mode = EnumSource.Mode.INCLUDE)
+    public void runTemplateTests_exercise(ProgrammingLanguage language) throws Exception {
+        runTests(language, exerciseRepo, TestResult.FAILED);
     }
 
-    @Test
+    @ParameterizedTest
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void runTemplateTests_java_solution() throws Exception {
-        mockConnectorRequestsForSetup(exercise);
-        request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-
-        moveAssignmentSourcesOf(solutionRepo);
-        int exitCode = invokeMaven();
-        assertThat(exitCode).isEqualTo(0);
-
-        var testResults = readTestReports();
-        assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(TestResult.SUCCESSFUL, 13));
+    @EnumSource(value = ProgrammingLanguage.class, names = { "KOTLIN", "JAVA" }, mode = EnumSource.Mode.INCLUDE)
+    public void runTemplateTests_solution(ProgrammingLanguage language) throws Exception {
+        runTests(language, solutionRepo, TestResult.SUCCESSFUL);
     }
 
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void runTemplateTests_kotlin_exercise() throws Exception {
-        exercise.setProgrammingLanguage(ProgrammingLanguage.KOTLIN);
-
+    private void runTests(ProgrammingLanguage language, LocalRepository repository, TestResult testResult) throws Exception {
+        exercise.setProgrammingLanguage(language);
         mockConnectorRequestsForSetup(exercise);
         request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
-        moveAssignmentSourcesOf(exerciseRepo);
+        moveAssignmentSourcesOf(repository);
         int exitCode = invokeMaven();
-        assertThat(exitCode).isNotEqualTo(0);
+        if (TestResult.SUCCESSFUL.equals(testResult)) {
+            assertThat(exitCode).isEqualTo(0);
+        }
+        else {
+            assertThat(exitCode).isNotEqualTo(0);
+        }
 
         var testResults = readTestReports();
-        assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(TestResult.FAILED, 12));
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void runTemplateTests_kotlin_solution() throws Exception {
-        exercise.setProgrammingLanguage(ProgrammingLanguage.KOTLIN);
-
-        mockConnectorRequestsForSetup(exercise);
-        request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-
-        moveAssignmentSourcesOf(solutionRepo);
-        int exitCode = invokeMaven();
-        assertThat(exitCode).isEqualTo(0);
-
-        var testResults = readTestReports();
-        assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(TestResult.SUCCESSFUL, 12));
+        assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(testResult, 12 + (ProgrammingLanguage.JAVA.equals(language) ? 1 : 0)));
     }
 
     private int invokeMaven() throws MavenInvocationException {
