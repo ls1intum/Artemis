@@ -43,11 +43,11 @@ export interface ExampleSubmissionQueryParams {
 
 @Component({
     selector: 'jhi-courses',
-    templateUrl: './tutor-exercise-dashboard.component.html',
+    templateUrl: './exercise-assessment-dashboard.component.html',
     styles: ['jhi-collapsable-assessment-instructions { max-height: 100vh }'],
     providers: [CourseManagementService],
 })
-export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
+export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewInit {
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     courseId: number;
@@ -379,7 +379,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
             this.tutorParticipation = res.body!;
             this.tutorParticipationStatus = this.tutorParticipation.status!;
-            this.jhiAlertService.success('artemisApp.tutorExerciseDashboard.participation.instructionsReviewed');
+            this.jhiAlertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
         }, this.onError);
     }
 
