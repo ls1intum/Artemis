@@ -126,11 +126,7 @@ public class BitbucketRequestMockProvider {
                 .andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
-        mockCopyRepositoryForParticipationWithStatus(exercise, username, HttpStatus.CREATED);
-    }
-
-    public void mockCopyRepositoryForParticipationWithStatus(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
+    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
         final var templateRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         final var clonedRepoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
@@ -181,7 +177,7 @@ public class BitbucketRequestMockProvider {
                         mockAddUserToGroups();
                     }
                 }
-                mockGiveWritePermission(exercise, repoName, user.getLogin());
+                mockGiveWritePermission(exercise, repoName, user.getLogin(), HttpStatus.OK);
             }
             // exam exercises receive write permissions when the exam starts
         }
@@ -208,10 +204,6 @@ public class BitbucketRequestMockProvider {
     public void mockAddUserToGroups() throws URISyntaxException {
         final var path = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/admin/users/add-groups").build().toUri();
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
-    }
-
-    public void mockGiveWritePermission(ProgrammingExercise exercise, String repositoryName, String username) throws URISyntaxException {
-        mockGiveWritePermission(exercise, repositoryName, username, HttpStatus.OK);
     }
 
     public void mockGiveWritePermission(ProgrammingExercise exercise, String repositoryName, String username, HttpStatus status) throws URISyntaxException {
