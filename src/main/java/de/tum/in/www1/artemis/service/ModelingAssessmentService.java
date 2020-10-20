@@ -36,9 +36,9 @@ public class ModelingAssessmentService extends AssessmentService {
     public ModelingAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, CompassService compassService,
             ModelingSubmissionRepository modelingSubmissionRepository, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            ModelingSubmissionService modelingSubmissionService, SubmissionRepository submissionRepository, ExamService examService, AchievementService achievementService) {
-        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository, examService,
-                achievementService);
+            ModelingSubmissionService modelingSubmissionService, SubmissionRepository submissionRepository, ExamService examService) {
+        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository,
+                examService);
         this.userService = userService;
         this.compassService = compassService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -96,8 +96,6 @@ public class ModelingAssessmentService extends AssessmentService {
             modelingSubmission.setResult(result);
             modelingSubmissionRepository.save(modelingSubmission);
         }
-
-        achievementService.checkForAchievements(result);
 
         // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
         return resultRepository.save(result);

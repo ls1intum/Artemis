@@ -26,10 +26,12 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.listeners.ResultListener;
 
 /**
  * A Result.
  */
+@EntityListeners(ResultListener.class)
 @Entity
 @Table(name = "result")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

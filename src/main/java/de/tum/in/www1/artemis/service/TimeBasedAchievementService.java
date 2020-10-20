@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -31,8 +32,8 @@ public class TimeBasedAchievementService {
         this.achievementRepository = achievementRepository;
     }
 
-    public AchievementRank checkForAchievement(Result result) {
-        if (result.getScore() == null || result.getScore() < MIN_SCORE_TO_QUALIFY) {
+    public AchievementRank checkForAchievement(Result result, Set<Achievement> achievements) {
+        if (result.getScore() == null || result.getScore() < achievements.iterator().next().getMinScoreToQualify()) {
             return null;
         }
         var submission = result.getSubmission();
@@ -43,19 +44,17 @@ public class TimeBasedAchievementService {
         var submissionDay = submission.getSubmissionDate().truncatedTo(DAYS);
         var exerciseReleaseDay = result.getParticipation().getExercise().getReleaseDate().truncatedTo(DAYS);
 
-        if (submissionDay.minusDays(DAYS_GOLD).isEqual(exerciseReleaseDay)) {
-            return AchievementRank.GOLD;
+        Set<AchievementRank> ranks = new HashSet<>();
+
+        for (Achievement achievement : achievements) {
+            if (submissionDay.minusDays(achievement.getParameter()).isEqual(exerciseReleaseDay)) {
+                ranks.add(achievement.getRank());
+            }
         }
-        else if (submissionDay.minusDays(DAYS_SILVER).isEqual(exerciseReleaseDay)) {
-            return AchievementRank.SILVER;
-        }
-        else if (submissionDay.minusDays(DAYS_BRONZE).isEqual(exerciseReleaseDay)) {
-            return AchievementRank.BRONZE;
-        }
-        else if (submissionDay.minusDays(DAYS_UNRANKED).isEqual(exerciseReleaseDay)) {
-            return AchievementRank.UNRANKED;
-        }
-        return null;
+
+        var maxRank = ranks.stream().max(Comparator.comparing(AchievementRank::ordinal));
+
+        return maxRank.isPresent() ? maxRank.get() : null;
     }
 
     /**

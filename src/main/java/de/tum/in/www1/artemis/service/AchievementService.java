@@ -4,7 +4,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Achievement;
@@ -87,64 +86,68 @@ public class AchievementService {
     }
 
     /**
+     * Prepares the given set of achievements to be sent to the client by removing exercise, course and users
+     * @param achievements
+     */
+    public void prepareForClient(Set<Achievement> achievements) {
+        for (Achievement achievement : achievements) {
+            achievement.setExercise(null);
+            achievement.setCourse(null);
+            achievement.setUsers(null);
+        }
+    }
+
+    /**
      * Checks the result if it earned any achievements
      * @param result
      */
-    @Transactional
     public void checkForAchievements(Result result) {
         var participation = result.getParticipation();
         if (participation == null) {
             return;
         }
         var exercise = participation.getExercise();
-        if (exercise == null) {
+        if (exercise == null || exercise.getExerciseGroup() != null) {
             return;
         }
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course == null || course.getAchievementsEnabled() == null || !course.getAchievementsEnabled()) {
+        if (course == null || !course.getAchievementsEnabled()) {
             return;
         }
 
         var optionalUser = participationService.findOneStudentParticipation(participation.getId()).getStudent();
-        if (!optionalUser.isPresent()) {
+        if (optionalUser.isEmpty()) {
             return;
         }
         var user = optionalUser.get();
 
-        var pointRank = pointBasedAchievementService.checkForAchievement(result);
-        rewardAchievement(course, exercise, AchievementType.POINT, pointRank, user);
+        var pointBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.POINT);
+        var pointRank = pointBasedAchievementService.checkForAchievement(result, pointBasedAchievements);
+        rewardAchievement(pointBasedAchievements, pointRank, user);
 
-        var timeRank = timeBasedAchievementService.checkForAchievement(result);
-        rewardAchievement(course, exercise, AchievementType.TIME, timeRank, user);
+        var timeBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.TIME);
+        var timeRank = timeBasedAchievementService.checkForAchievement(result, timeBasedAchievements);
+        rewardAchievement(timeBasedAchievements, timeRank, user);
 
-        var progressRank = progressBasedAchievementService.checkForAchievement(course, user);
-        rewardAchievement(course, null, AchievementType.PROGRESS, progressRank, user);
+        var progressBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.PROGRESS);
+        var progressRank = progressBasedAchievementService.checkForAchievement(course, user, progressBasedAchievements);
+        rewardAchievement(progressBasedAchievements, progressRank, user);
     }
 
     /**
      * Rewards or replaces an achievement
      */
-    public void rewardAchievement(Course course, Exercise exercise, AchievementType type, AchievementRank rank, User user) {
-        Set<Achievement> achievements;
-        Achievement achievement;
-
+    private void rewardAchievement(Set<Achievement> achievements, AchievementRank rank, User user) {
         if (rank == null) {
             return;
         }
 
-        if (exercise == null) {
-            achievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), type);
-        }
-        else {
-            achievements = achievementRepository.findAllForRewardedTypeInExercise(course.getId(), exercise.getId(), type);
-        }
-
         var optionalAchievement = achievements.stream().filter(a -> a.getRank().equals(rank)).findAny();
-        if (!optionalAchievement.isPresent()) {
+        if (optionalAchievement.isEmpty()) {
             return;
         }
 
-        achievement = optionalAchievement.get();
+        var achievement = optionalAchievement.get();
         if (achievement.getUsers().contains(user)) {
             return;
         }
@@ -158,24 +161,12 @@ public class AchievementService {
 
         var optionalAchievementsOfLowerRank = achievements.stream().filter(a -> a.getRank().ordinal() < rank.ordinal()).collect(Collectors.toSet());
         for (Achievement a : optionalAchievementsOfLowerRank) {
-            if (a.getUsers().contains(user) && a.getExercise() != null) {
+            if (a.getUsers().contains(user)) {
                 user.removeAchievement(a);
             }
         }
 
         user.addAchievement(achievement);
         userRepository.save(user);
-    }
-
-    /**
-     * Prepares the given set of achievements to be sent to the client by removing exercise, course and users
-     * @param achievements
-     */
-    public void prepareForClient(Set<Achievement> achievements) {
-        for (Achievement achievement : achievements) {
-            achievement.setExercise(null);
-            achievement.setCourse(null);
-            achievement.setUsers(null);
-        }
     }
 }

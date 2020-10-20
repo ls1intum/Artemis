@@ -24,9 +24,9 @@ public class FileUploadAssessmentService extends AssessmentService {
     public FileUploadAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository,
             StudentParticipationRepository studentParticipationRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
-            SubmissionRepository submissionRepository, ExamService examService, AchievementService achievementService) {
-        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository, examService,
-                achievementService);
+            SubmissionRepository submissionRepository, ExamService examService) {
+        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository,
+                examService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.userService = userService;
@@ -85,8 +85,6 @@ public class FileUploadAssessmentService extends AssessmentService {
             fileUploadSubmission.setResult(result);
             fileUploadSubmissionRepository.save(fileUploadSubmission);
         }
-
-        achievementService.checkForAchievements(result);
 
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.

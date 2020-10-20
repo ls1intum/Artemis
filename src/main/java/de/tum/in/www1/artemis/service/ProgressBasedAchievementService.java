@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,9 +25,7 @@ public class ProgressBasedAchievementService {
 
     private final static long EXERCISES_AMOUNT_BRONZE = 5L;
 
-    private final static long MIN_SCORE_TO_QUALIFY = 50L;
-
-    private final static int EXERCISES_AMOUNT_UNRANKED = 1;
+    private final static long EXERCISES_AMOUNT_UNRANKED = 1L;
 
     private final static long MIN_SCORE_TO_QUALIFY = 50L;
 
@@ -35,29 +34,31 @@ public class ProgressBasedAchievementService {
         this.achievementRepository = achievementRepository;
     }
 
-    public AchievementRank checkForAchievement(Course course, User user) {
+    public AchievementRank checkForAchievement(Course course, User user, Set<Achievement> achievements) {
         var participations = studentParticipationRepository.findAllByCourseIdAndUserId(course.getId(), user.getId());
         var numberOfExercises = 0;
         for (var participation : participations) {
-            var score = participation.findLatestResult().getScore();
-            if (score != null && score >= MIN_SCORE_TO_QUALIFY) {
+            var latestResult = participation.findLatestResult();
+            if (latestResult == null) {
+                continue;
+            }
+            var score = latestResult.getScore();
+            if (score != null && score >= achievements.iterator().next().getMinScoreToQualify()) {
                 numberOfExercises++;
             }
         }
 
-        if (numberOfExercises >= EXERCISES_AMOUNT_GOLD) {
-            return AchievementRank.GOLD;
+        Set<AchievementRank> ranks = new HashSet<>();
+
+        for (Achievement achievement : achievements) {
+            if (numberOfExercises >= achievement.getParameter()) {
+                ranks.add(achievement.getRank());
+            }
         }
-        else if (numberOfExercises >= EXERCISES_AMOUNT_SILVER) {
-            return AchievementRank.SILVER;
-        }
-        else if (numberOfExercises >= EXERCISES_AMOUNT_BRONZE) {
-            return AchievementRank.BRONZE;
-        }
-        else if (numberOfExercises == EXERCISES_AMOUNT_UNRANKED) {
-            return AchievementRank.UNRANKED;
-        }
-        return null;
+
+        var maxRank = ranks.stream().max(Comparator.comparing(AchievementRank::ordinal));
+
+        return maxRank.isPresent() ? maxRank.get() : null;
     }
 
     /**
@@ -72,8 +73,8 @@ public class ProgressBasedAchievementService {
                 AchievementType.PROGRESS, EXERCISES_AMOUNT_SILVER, MIN_SCORE_TO_QUALIFY, course, null));
         achievementsToSave.add(new Achievement("Course Beginner", "Solve at least " + EXERCISES_AMOUNT_BRONZE + " exercises", "tasks", AchievementRank.BRONZE,
                 AchievementType.PROGRESS, EXERCISES_AMOUNT_BRONZE, MIN_SCORE_TO_QUALIFY, course, null));
-        achievementsToSave.add(new Achievement("Course Amateur", "Solve your first exercise", "tasks", AchievementRank.UNRANKED, AchievementType.PROGRESS, 1L, MIN_SCORE_TO_QUALIFY,
-                course, null));
+        achievementsToSave.add(new Achievement("Course Amateur", "Solve your first exercise", "tasks", AchievementRank.UNRANKED, AchievementType.PROGRESS,
+                EXERCISES_AMOUNT_UNRANKED, MIN_SCORE_TO_QUALIFY, course, null));
 
         achievementRepository.saveAll(achievementsToSave);
     }

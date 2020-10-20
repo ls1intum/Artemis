@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,26 +28,24 @@ public class PointBasedAchievementService {
         this.achievementRepository = achievementRepository;
     }
 
-    public AchievementRank checkForAchievement(Result result) {
+    public AchievementRank checkForAchievement(Result result, Set<Achievement> achievements) {
         var score = result.getScore();
 
         if (score == null) {
             return null;
         }
 
-        if (score >= PERCENT_GOLD) {
-            return AchievementRank.GOLD;
+        Set<AchievementRank> ranks = new HashSet<>();
+
+        for (Achievement achievement : achievements) {
+            if (score >= achievement.getParameter()) {
+                ranks.add(achievement.getRank());
+            }
         }
-        else if (score >= PERCENT_SILVER) {
-            return AchievementRank.SILVER;
-        }
-        else if (score >= PERCENT_BRONZE) {
-            return AchievementRank.BRONZE;
-        }
-        else if (score >= PERCENT_UNRANKED) {
-            return AchievementRank.UNRANKED;
-        }
-        return null;
+
+        var maxRank = ranks.stream().max(Comparator.comparing(AchievementRank::ordinal));
+
+        return maxRank.isPresent() ? maxRank.get() : null;
     }
 
     /**
