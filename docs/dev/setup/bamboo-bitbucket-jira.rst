@@ -173,6 +173,7 @@ under ``localhost:7990``.
 9. Generate a personal access token
 
    9.1 Personal access token for Bamboo.
+   
       While username and password can still be used as a fallback, this option is already marked as deprecated and
       will be removed in the future.
 
@@ -192,6 +193,7 @@ under ``localhost:7990``.
                   token: #insert the token here
 
    9.2 Personal access token for Bitbucket.
+   
       While username and password can still be used as a fallback, this option is already marked as deprecated and
       will be removed in the future.
 
