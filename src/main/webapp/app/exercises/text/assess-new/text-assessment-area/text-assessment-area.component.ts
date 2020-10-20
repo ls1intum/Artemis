@@ -31,6 +31,8 @@ export class TextAssessmentAreaComponent implements OnChanges {
     selectedRef?: TextBlockRef;
     wordCount = 0;
     characterCount = 0;
+    isConflictingFeedbackMap: Map<TextBlockRef, boolean>;
+    conflictTypeMap: Map<TextBlockRef, FeedbackConflictType | undefined>;
 
     constructor(private stringCountService: StringCountService) {
         this.isLeftConflictingFeedback = false;
@@ -44,6 +46,11 @@ export class TextAssessmentAreaComponent implements OnChanges {
             const { text } = changes.submission.currentValue as TextSubmission;
             this.wordCount = this.stringCountService.countWords(text);
             this.characterCount = this.stringCountService.countCharacters(text);
+        }
+
+        if (changes.textBlockRefs && changes.textBlockRefs.currentValue) {
+            this.isConflictingFeedbackMap = new Map(this.textBlockRefs.map((ref) => [ref, this.getIsConflictingFeedback(ref)]));
+            this.conflictTypeMap = new Map(this.textBlockRefs.map((ref) => [ref, this.getConflictType(ref)]));
         }
 
         this.textBlockRefs.sort((a, b) => a.block!.startIndex! - b.block!.startIndex!);
@@ -87,7 +94,7 @@ export class TextAssessmentAreaComponent implements OnChanges {
      * Returns false for text-submission-assessment component
      * @param ref - TextBlockRef to check if its feedback is conflicting.
      */
-    getIsConflictingFeedback(ref: TextBlockRef): boolean {
+    private getIsConflictingFeedback(ref: TextBlockRef): boolean {
         if (this.isLeftConflictingFeedback && this.selectedFeedbackIdWithConflicts) {
             return this.selectedFeedbackIdWithConflicts === ref.feedback?.id;
         }
@@ -98,12 +105,8 @@ export class TextAssessmentAreaComponent implements OnChanges {
      * Gets FeedbackConflictType from conflicting feedback. Returns undefined for non conflicts.
      * @param ref - TextBlockRef to get FeedbackConflictType of its conflicting feedback.
      */
-    getConflictType(ref: TextBlockRef): FeedbackConflictType | undefined {
-        const conflict = this.feedbackConflicts?.find((feedbackConflict) => feedbackConflict.conflictingFeedbackId === ref.feedback?.id);
-        if (conflict) {
-            return conflict.type!;
-        }
-        return undefined;
+    private getConflictType(ref: TextBlockRef): FeedbackConflictType | undefined {
+        return this.feedbackConflicts?.find((feedbackConflict) => feedbackConflict.conflictingFeedbackId === ref.feedback?.id)?.type;
     }
 
     /**

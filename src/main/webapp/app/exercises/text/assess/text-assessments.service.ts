@@ -98,9 +98,9 @@ export class TextAssessmentsService {
                 tap((response) => {
                     const participation = response.body!;
                     const submission = participation.submissions![0];
-                    const result = participation.results![0];
-                    submission.result = participation.results![0];
                     submission.participation = participation;
+                    const result = participation.results![0];
+                    submission.result = result;
                     result.submission = submission;
                     result.participation = participation;
                     // Make sure Feedbacks Array is initialized

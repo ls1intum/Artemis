@@ -101,14 +101,19 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
 
     async ngOnInit() {
         await super.ngOnInit();
-        this.activatedRoute.data.subscribe(({ conflictingTextSubmissions }) => {
-            if (this.leftSubmission) {
-                this.setPropertiesFromServerResponse(conflictingTextSubmissions);
-            }
-        });
+        if (!this.leftSubmission) {
+            const submissionId = Number(this.activatedRoute.snapshot.paramMap.get('submissionId'));
+            const participation = await this.assessmentsService.getFeedbackDataForExerciseSubmission(submissionId).toPromise();
+            this.leftSubmission = participation.submissions![0];
+        }
+        this.activatedRoute.data.subscribe(({ conflictingTextSubmissions }) => this.setPropertiesFromServerResponse(conflictingTextSubmissions));
     }
 
     private setPropertiesFromServerResponse(conflictingTextSubmissions: TextSubmission[]) {
+        if (!this.leftSubmission) {
+            return;
+        }
+
         this.conflictingSubmissions = conflictingTextSubmissions;
         this.prepareTextBlocksAndFeedbackFor(this.leftSubmission!, this.leftTextBlockRefs, this.leftUnusedTextBlockRefs);
         this.leftTotalScore = this.computeTotalScore(this.leftSubmission!.result!.feedbacks!);

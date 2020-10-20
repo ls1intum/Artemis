@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -147,7 +149,9 @@ public class AutomaticTextAssessmentConflictService {
                 return (TextSubmission) conflict.getFirstFeedback().getResult().getSubmission();
             }
         }).collect(toSet());
-        textSubmissionSet.forEach(textSubmission -> textSubmission.setBlocks(this.textBlockRepository.findAllBySubmissionId(textSubmission.getId())));
+        final Map<Long, List<TextBlock>> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmissionSet.stream().map(TextSubmission::getId).collect(toList())).stream()
+                .collect(groupingBy(b -> b.getSubmission().getId()));
+        textSubmissionSet.forEach(textSubmission -> textSubmission.setBlocks(textBlocks.get(textSubmission.getId())));
         return textSubmissionSet;
     }
 

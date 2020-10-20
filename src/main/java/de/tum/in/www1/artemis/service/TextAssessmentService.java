@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.util.stream.Collectors.toList;
 import static org.hibernate.Hibernate.isInitialized;
 
 import java.util.List;
@@ -166,9 +167,11 @@ public class TextAssessmentService extends AssessmentService {
 
     private List<Feedback> getAssessmentsForResultWithConflicts(Result result) {
         List<Feedback> feedbackList = this.feedbackRepository.findByResult(result);
+        final List<FeedbackConflict> allConflictsByFeedbackList = this.feedbackConflictRepository
+                .findAllConflictsByFeedbackList(feedbackList.stream().map(Feedback::getId).collect(toList()));
         feedbackList.forEach(feedback -> {
-            feedback.setFirstConflicts(this.feedbackConflictRepository.findByFirstFeedbackIdAndConflict(feedback.getId(), true));
-            feedback.setSecondConflicts(this.feedbackConflictRepository.findBySecondFeedbackIdAndConflict(feedback.getId(), true));
+            feedback.setFirstConflicts(allConflictsByFeedbackList.stream().filter(c -> c.getFirstFeedback().getId().equals(feedback.getId())).collect(toList()));
+            feedback.setSecondConflicts(allConflictsByFeedbackList.stream().filter(c -> c.getSecondFeedback().getId().equals(feedback.getId())).collect(toList()));
         });
         return feedbackList;
     }
