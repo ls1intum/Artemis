@@ -36,7 +36,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         return !this.conflictMode ? this.feedback.credits === 0  : !this.isConflictingFeedback;
     }
 
-    @HostBinding('class.alert-success') get setPositiveFeedbackClass(): boolean {
+    @HostBinding('class.alert-success') get positiveFeedbackClass(): boolean {
         return this.feedback.credits! > 0 && !this.conflictMode;
     }
 
