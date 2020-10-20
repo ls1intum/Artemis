@@ -72,53 +72,53 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         course.setStudentGroupName("tumuser");
         course.setTeachingAssistantGroupName("tutor");
         course.setInstructorGroupName("instructor");
-        courseRepo.saveAndFlush(course);
+        courseRepo.save(course);
         // exercise1
         exercise = course.getExercises().stream().findFirst().get();
-        exerciseRepo.saveAndFlush(exercise);
+        exerciseRepo.save(exercise);
 
         // score for student1 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(0);
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipation.setInitializationDate(ZonedDateTime.now());
-        studentParticipationRepo.saveAndFlush(studentParticipation);
+        studentParticipationRepo.save(studentParticipation);
         result = new Result();
         result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(70L);
-        resultRepo.saveAndFlush(result);
+        resultRepo.save(result);
 
         // score for student2 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(1);
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipation.setInitializationDate(ZonedDateTime.now());
-        studentParticipationRepo.saveAndFlush(studentParticipation);
+        studentParticipationRepo.save(studentParticipation);
         result = new Result();
         result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(80L);
-        resultRepo.saveAndFlush(result);
+        resultRepo.save(result);
 
         // course2
         course = database.addCourseWithOneFinishedTextExercise();
         course.setStudentGroupName("tumuser");
         course.setTeachingAssistantGroupName("tutor");
         course.setInstructorGroupName("instructor");
-        courseRepo.saveAndFlush(course);
+        courseRepo.save(course);
         // exercise2
         exercise = course.getExercises().stream().findFirst().get();
-        exerciseRepo.saveAndFlush(exercise);
+        exerciseRepo.save(exercise);
 
         // score for student1 in exercise2 in course2
         user = userRepo.findAllInGroup("tumuser").get(0);
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipation.setInitializationDate(ZonedDateTime.now());
-        studentParticipationRepo.saveAndFlush(studentParticipation);
+        studentParticipationRepo.save(studentParticipation);
         result = new Result();
         result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(60L);
-        resultRepo.saveAndFlush(result);
+        resultRepo.save(result);
     }
 
     @AfterEach
@@ -137,16 +137,16 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         course = courseRepo.findAll().get(0);
         // exercise3
         exercise = new TextExercise().course(course);
-        exerciseRepo.saveAndFlush(exercise);
+        exerciseRepo.save(exercise);
         // score for student2 in exercise3 in course1
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipation.setInitializationDate(ZonedDateTime.now());
-        studentParticipationRepo.saveAndFlush(studentParticipation);
+        studentParticipationRepo.save(studentParticipation);
         result = new Result();
         result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(75L);
-        resultRepo.saveAndFlush(result);
+        resultRepo.save(result);
 
         responseExerciseOne = request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
@@ -162,7 +162,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     public void studentScoresForExerciseTestAccessForbidden() throws Exception {
         course = courseRepo.findAll().get(0);
         course.setStudentGroupName("tutor");
-        courseRepo.saveAndFlush(course);
+        courseRepo.save(course);
 
         request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
     }
@@ -173,7 +173,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         // TODO: change back to student1 USER after releasing feature for students
         course = courseRepo.findAll().get(0);
         course.setInstructorGroupName("test");
-        courseRepo.saveAndFlush(course);
+        courseRepo.save(course);
 
         request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
     }
@@ -192,16 +192,16 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         course = courseRepo.findAll().get(0);
         // exercise3
         exercise = new TextExercise().course(course);
-        exerciseRepo.saveAndFlush(exercise);
+        exerciseRepo.save(exercise);
         // score for student2 in exercise3 in course1
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipation.setInitializationDate(ZonedDateTime.now());
-        studentParticipationRepo.saveAndFlush(studentParticipation);
+        studentParticipationRepo.save(studentParticipation);
         result = new Result();
         result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(30L);
-        resultRepo.saveAndFlush(result);
+        resultRepo.save(result);
 
         responseCourseOne = request.get("/api/student-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseCourseOne.isEmpty()).as("response is not empty").isFalse();
@@ -216,7 +216,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     public void studentScoresForCourseTestAccessForbidden() throws Exception {
         course = courseRepo.findAll().get(0);
         course.setStudentGroupName("tutor");
-        courseRepo.saveAndFlush(course);
+        courseRepo.save(course);
 
         request.get("/api/student-scores/course/" + course.getId(), HttpStatus.FORBIDDEN, List.class);
     }
@@ -227,7 +227,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         // TODO: change back to student1 USER after releasing feature for students
         course = courseRepo.findAll().get(0);
         course.setInstructorGroupName("test");
-        courseRepo.saveAndFlush(course);
+        courseRepo.save(course);
 
         request.get("/api/student-scores/course/" + course.getId(), HttpStatus.FORBIDDEN, List.class);
     }
@@ -245,12 +245,12 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         // score for student3 in exercise1 in course1
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipation.setInitializationDate(ZonedDateTime.now());
-        studentParticipationRepo.saveAndFlush(studentParticipation);
+        studentParticipationRepo.save(studentParticipation);
         result = new Result();
         result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(90L);
-        resultRepo.saveAndFlush(result);
+        resultRepo.save(result);
 
         responseExerciseOne = request.get("/api/student-scores/exercise/" + exercise.getId(), HttpStatus.OK, List.class);
 
@@ -278,7 +278,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         // TODO: change back to student1 USER after releasing feature for students
         course = courseRepo.findAll().get(0);
         course.setInstructorGroupName("test");
-        courseRepo.saveAndFlush(course);
+        courseRepo.save(course);
         user = userRepo.findAllInGroup("tumuser").get(0);
         exercise = exerciseRepo.findAll().get(0);
 
@@ -332,7 +332,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         newResult.setParticipation(studentParticipation);
         newResult.setRated(true);
         newResult.setScore(15L);
-        resultRepo.saveAndFlush(newResult);
+        resultRepo.save(newResult);
         // kleiner umweg
         resultRepo.delete(oldResult);
 
