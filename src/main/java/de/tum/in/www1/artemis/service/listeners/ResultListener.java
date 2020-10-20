@@ -16,16 +16,14 @@ public class ResultListener {
 
     @Autowired
     public void setAchievementService(AchievementService achievementService) {
-        ResultListener.achievementService = achievementService;
+        this.achievementService = achievementService;
     }
 
     @PreUpdate
-    public void preUpdate(Result result) {
-        achievementService.checkForAchievements(result);
-    }
-
     @PrePersist
-    public void prePersist(Result result) {
-        achievementService.checkForAchievements(result);
+    public void checkForAchievements(Result result) {
+        if (result.getScore() != null) {
+            achievementService.checkForAchievements(result);
+        }
     }
 }

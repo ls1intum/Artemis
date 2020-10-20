@@ -103,10 +103,14 @@ public class AchievementService {
      */
     public void checkForAchievements(Result result) {
         var participation = result.getParticipation();
-        if (participation == null) {
+        if (participation == null || participation.getId() == null) {
             return;
         }
-        var exercise = participation.getExercise();
+        var studentParticipation = participationService.findOneWithEagerCourse(participation.getId());
+        if (studentParticipation == null) {
+            return;
+        }
+        var exercise = studentParticipation.getExercise();
         if (exercise == null || exercise.getExerciseGroup() != null) {
             return;
         }
@@ -115,7 +119,7 @@ public class AchievementService {
             return;
         }
 
-        var optionalUser = participationService.findOneStudentParticipation(participation.getId()).getStudent();
+        var optionalUser = studentParticipation.getStudent();
         if (optionalUser.isEmpty()) {
             return;
         }
