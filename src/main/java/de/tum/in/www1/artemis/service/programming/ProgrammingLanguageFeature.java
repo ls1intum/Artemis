@@ -18,8 +18,10 @@ public class ProgrammingLanguageFeature {
 
     private boolean packageNameRequired;
 
+    private boolean checkoutSolutionRepositoryAllowed;
+
     public ProgrammingLanguageFeature(ProgrammingLanguage programmingLanguage, boolean sequentialTestRuns, boolean staticCodeAnalysis, boolean bambooBuildSupported,
-            boolean jenkinsBuildSupported, boolean plagiarismCheckSupported, boolean packageNameRequired) {
+            boolean jenkinsBuildSupported, boolean plagiarismCheckSupported, boolean packageNameRequired, boolean checkoutSolutionRepositoryAllowed) {
         this.programmingLanguage = programmingLanguage;
         this.sequentialTestRuns = sequentialTestRuns;
         this.staticCodeAnalysis = staticCodeAnalysis;
@@ -27,6 +29,7 @@ public class ProgrammingLanguageFeature {
         this.jenkinsBuildSupported = jenkinsBuildSupported;
         this.plagiarismCheckSupported = plagiarismCheckSupported;
         this.packageNameRequired = packageNameRequired;
+        this.checkoutSolutionRepositoryAllowed = checkoutSolutionRepositoryAllowed;
     }
 
     public ProgrammingLanguage getProgrammingLanguage() {
@@ -83,5 +86,13 @@ public class ProgrammingLanguageFeature {
 
     public void setPackageNameRequired(boolean packageNameRequired) {
         this.packageNameRequired = packageNameRequired;
+    }
+
+    public boolean isCheckoutSolutionRepositoryAllowed() {
+        return checkoutSolutionRepositoryAllowed;
+    }
+
+    public void setCheckoutSolutionRepositoryAllowed(boolean checkoutSolutionRepositoryAllowed) {
+        this.checkoutSolutionRepositoryAllowed = checkoutSolutionRepositoryAllowed;
     }
 }

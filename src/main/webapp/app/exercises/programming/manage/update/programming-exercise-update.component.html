@@ -299,7 +299,14 @@
                     </div>
                 </div>
                 <!-- Setting whether the solution repository should be checked out is only supported for Haskell exercises and is only available for new exercises -->
-                <div class="form-group-narrow" *ngIf="!programmingExercise.id && programmingExercise.programmingLanguage === ProgrammingLanguage.HASKELL">
+                <div
+                    class="form-group-narrow"
+                    *ngIf="
+                        !programmingExercise.id &&
+                        programmingExercise.programmingLanguage &&
+                        programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).checkoutSolutionRepositoryAllowed
+                    "
+                >
                     <div class="form-check">
                         <label class="form-check-label" for="field_checkoutSolutionRepository">
                             <input

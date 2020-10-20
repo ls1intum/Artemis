@@ -17,6 +17,7 @@ export type ProgrammingLanguageFeature = {
     jenkinsBuildSupported: boolean;
     plagiarismCheckSupported: boolean;
     packageNameRequired: boolean;
+    checkoutSolutionRepositoryAllowed: boolean;
 };
 
 @Injectable({ providedIn: 'root' })

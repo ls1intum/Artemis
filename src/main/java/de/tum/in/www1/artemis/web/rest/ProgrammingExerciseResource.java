@@ -330,12 +330,11 @@ public class ProgrammingExerciseResource {
         }
 
         // Check if checkout solution repository is enabled
-        if (programmingExercise.getCheckoutSolutionRepository()) {
-            if (programmingExercise.getProgrammingLanguage() != ProgrammingLanguage.HASKELL) {
-                return ResponseEntity.badRequest().headers(
-                        HeaderUtil.createAlert(applicationName, "Checking out the solution repository is only supported for Haskell exercises", "checkoutSolutionNotSupported"))
-                        .body(null);
-            }
+        if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.isCheckoutSolutionRepositoryAllowed()) {
+            return ResponseEntity.badRequest()
+                    .headers(
+                            HeaderUtil.createAlert(applicationName, "Checking out the solution repository is only supported for Haskell exercises", "checkoutSolutionNotSupported"))
+                    .body(null);
         }
 
         // Validate exercise title
