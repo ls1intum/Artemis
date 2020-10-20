@@ -72,53 +72,53 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         course.setStudentGroupName("tumuser");
         course.setTeachingAssistantGroupName("tutor");
         course.setInstructorGroupName("instructor");
-        courseRepo.save(course);
+        courseRepo.saveAndFlush(course);
         // exercise1
         exercise = course.getExercises().stream().findFirst().get();
-        exerciseRepo.save(exercise);
+        exerciseRepo.saveAndFlush(exercise);
 
         // score for student1 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(0);
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipation.setInitializationDate(ZonedDateTime.now());
-        studentParticipationRepo.save(studentParticipation);
+        studentParticipationRepo.saveAndFlush(studentParticipation);
         result = new Result();
         result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(70L);
-        resultRepo.save(result);
+        resultRepo.saveAndFlush(result);
 
         // score for student2 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(1);
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipation.setInitializationDate(ZonedDateTime.now());
-        studentParticipationRepo.save(studentParticipation);
+        studentParticipationRepo.saveAndFlush(studentParticipation);
         result = new Result();
         result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(80L);
-        resultRepo.save(result);
+        resultRepo.saveAndFlush(result);
 
         // course2
         course = database.addCourseWithOneFinishedTextExercise();
         course.setStudentGroupName("tumuser");
         course.setTeachingAssistantGroupName("tutor");
         course.setInstructorGroupName("instructor");
-        courseRepo.save(course);
+        courseRepo.saveAndFlush(course);
         // exercise2
         exercise = course.getExercises().stream().findFirst().get();
-        exerciseRepo.save(exercise);
+        exerciseRepo.saveAndFlush(exercise);
 
         // score for student1 in exercise2 in course2
         user = userRepo.findAllInGroup("tumuser").get(0);
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipation.setInitializationDate(ZonedDateTime.now());
-        studentParticipationRepo.save(studentParticipation);
+        studentParticipationRepo.saveAndFlush(studentParticipation);
         result = new Result();
         result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(60L);
-        resultRepo.save(result);
+        resultRepo.saveAndFlush(result);
     }
 
     @AfterEach
