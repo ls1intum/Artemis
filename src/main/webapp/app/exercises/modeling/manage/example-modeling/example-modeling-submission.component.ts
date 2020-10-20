@@ -76,7 +76,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             this.exampleSubmissionId = +exampleSubmissionId!;
         }
 
-        // if one of the flags is set, we navigated here from the tutor dashboard which means that we are not
+        // if one of the flags is set, we navigated here from the assessment dashboard which means that we are not
         // interested in the modeling editor, i.e. we only wanna use the assessment mode
         if (this.readOnly || this.toComplete) {
             this.assessmentMode = true;
