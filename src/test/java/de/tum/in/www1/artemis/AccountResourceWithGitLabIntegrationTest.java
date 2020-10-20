@@ -83,7 +83,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     }
 
     /**
-     * Tests the registration of a user when can not overwrite and existing user.
+     * Tests the registration of a user can not overwrite and existing user.
      * @throws Exception on unknown failure
      */
     @Test
