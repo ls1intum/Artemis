@@ -219,6 +219,17 @@ public class ProgrammingExerciseGradingService {
                 updatedResults.add(result);
             }
         }
+
+        // Update also manual results
+        List<StudentParticipation> participationsWithManualResult = participationService.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId());
+        for (StudentParticipation studentParticipation : participationsWithManualResult) {
+            Result result = studentParticipation.findLatestResult();
+            if (result != null) {
+                updateResult(testCases, testCasesForCurrentDate, result, exercise);
+                updatedResults.add(result);
+            }
+        }
+
         return updatedResults;
     }
 
