@@ -296,7 +296,8 @@ public class BambooBuildPlanService {
     private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage language) {
         var dockerImage = switch (language) {
             case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-2";
-            case PYTHON, C -> "ls1tum/artemis-python-docker:latest";
+            case PYTHON -> "ls1tum/artemis-python-docker:latest";
+            case C -> "ls1tum/artemis-c-docker:latest";
             case HASKELL -> "tumfpv/fpv-stack:8.4.4";
             case VHDL, ASSEMBLER -> "tizianleonhardt/era-artemis-vhdl:latest";
         };
