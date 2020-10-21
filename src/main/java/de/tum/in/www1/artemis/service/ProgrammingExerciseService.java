@@ -407,11 +407,6 @@ public class ProgrammingExerciseService {
 
         Map<String, String> replacements = new HashMap<>();
 
-        List<String> fileTargets = new ArrayList<>();
-        List<String> fileReplacements = new ArrayList<>();
-        // This is based on the correct order and assumes that boths lists have the same
-        // length, it replaces fileTargets.get(i) with fileReplacements.get(i)
-
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
             replacements.put("${packageName}", programmingExercise.getPackageName());
         }

@@ -312,9 +312,11 @@ public class ProgrammingExerciseImportService {
 
         Map<String, String> replacements = new HashMap<>();
 
-        replacements.put(templateExercise.getTitle().replaceAll(" ", "-"), newExercise.getTitle().replaceAll(" ", "-"));
+        // Used in pom.xml
+        replacements.put("<artifactId>" + templateExercise.getTitle().replaceAll(" ", "-"), "<artifactId>" + newExercise.getTitle().replaceAll(" ", "-"));
 
-        replacements.put(templateExercise.getTitle(), newExercise.getTitle());
+        // Used in .project
+        replacements.put("<name>" + templateExercise.getTitle(), "<name>" + newExercise.getTitle());
 
         final var user = userService.getUser();
 
