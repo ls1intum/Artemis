@@ -150,6 +150,12 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void copyRepository_testConflictError() throws Exception {
+        programmingExerciseTestService.copyRepository_testConflictError();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void configureRepository_testBadRequestError() throws Exception {
         programmingExerciseTestService.configureRepository_testBadRequestError();
     }

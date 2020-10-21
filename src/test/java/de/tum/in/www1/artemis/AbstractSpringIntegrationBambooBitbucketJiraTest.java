@@ -84,10 +84,14 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
+    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
+        bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username, status);
+    }
+
+    @Override
     public List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
             throws IOException, URISyntaxException {
         final var verifications = new LinkedList<Verifiable>();
-        bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username, HttpStatus.CREATED);
         bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists);
         bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
         mockUpdatePlanRepositoryForParticipation(exercise, username);
@@ -208,11 +212,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) throws URISyntaxException {
         final var repositorySlug = (exercise.getProjectKey() + "-" + team.getParticipantIdentifier()).toLowerCase();
         bitbucketRequestMockProvider.mockRemoveMemberFromRepository(repositorySlug, exercise.getProjectKey(), firstStudent);
-    }
-
-    @Override
-    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
-        bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username, status);
     }
 
     @Override
