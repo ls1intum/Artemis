@@ -144,7 +144,7 @@ public class ProgrammingExerciseImportService {
             // Adjust placeholders that were replaced during creation of template exercise
             adjustProjectNames(templateExercise, newExercise);
         }
-        catch (Exception e) {
+        catch (GitAPIException | IOException | InterruptedException e) {
             log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newExercise.getTitle(), e);
         }
     }
