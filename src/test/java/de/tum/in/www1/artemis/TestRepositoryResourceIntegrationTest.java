@@ -40,9 +40,6 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     private final String testRepoBaseUrl = "/api/test-repository/";
 
     @Autowired
-    private RequestUtilService request;
-
-    @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
 
     private Course course;

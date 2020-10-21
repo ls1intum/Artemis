@@ -12,6 +12,7 @@ import { TextBlock } from 'app/entities/text-block.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { cloneDeep } from 'lodash';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { FeedbackConflict } from 'app/entities/feedback-conflict';
 
 type EntityResponseType = HttpResponse<Result>;
 type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
@@ -97,13 +98,14 @@ export class TextAssessmentsService {
                 tap((response) => {
                     const participation = response.body!;
                     const submission = participation.submissions![0];
-                    const result = participation.results![0];
-                    submission.result = participation.results![0];
                     submission.participation = participation;
+                    const result = participation.results![0];
+                    submission.result = result;
                     result.submission = submission;
                     result.participation = participation;
                     // Make sure Feedbacks Array is initialized
                     result.feedbacks = result.feedbacks || [];
+                    TextAssessmentsService.convertFeedbackConflictsFromServer(result.feedbacks);
                     (submission as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
                 }),
                 map((response) => response.body!),
@@ -119,10 +121,31 @@ export class TextAssessmentsService {
         return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/example-result`);
     }
 
+    /**
+     * Gets an array of text submissions that contains conflicting feedback with the given feedback id.
+     *
+     * @param submissionId id of the submission feedback belongs to of type {number}
+     * @param feedbackId id of the feedback to search for conflicts of type {number}
+     */
+    public getConflictingTextSubmissions(submissionId: number, feedbackId: number): Observable<TextSubmission[]> {
+        return this.http.get<TextSubmission[]>(`${this.resourceUrl}/submission/${submissionId}/feedback/${feedbackId}/feedback-conflicts`);
+    }
+
+    /**
+     * Set feedback conflict as solved. (Tutor decides it is not a conflict)
+     *
+     * @param exerciseId id of the exercise feedback conflict belongs to
+     * @param feedbackConflictId id of the feedback conflict to be solved
+     */
+    public solveFeedbackConflict(exerciseId: number, feedbackConflictId: number): Observable<FeedbackConflict> {
+        return this.http.get<FeedbackConflict>(`${this.resourceUrl}/exercise/${exerciseId}/feedbackConflict/${feedbackConflictId}/solve-feedback-conflict`);
+    }
+
     private static prepareFeedbacksAndTextblocksForRequest(feedbacks: Feedback[], textBlocks: TextBlock[]): TextAssessmentDTO {
         feedbacks = feedbacks.map((feedback) => {
             feedback = Object.assign({}, feedback);
-            feedback.result = undefined;
+            delete feedback.result;
+            delete feedback.conflictingTextAssessments;
             return feedback;
         });
         textBlocks = textBlocks.map((textBlock) => {
@@ -152,6 +175,24 @@ export class TextAssessmentsService {
 
     private static convertItemFromServer(result: Result): Result {
         return Object.assign({}, result);
+    }
+
+    /**
+     * Convert Feedback elements to use single array of FeedbackConflicts in the Feedback class.
+     * It is stored with two references on the server side.
+     *
+     * @param feedbacks list of Feedback elements to convert.
+     */
+    private static convertFeedbackConflictsFromServer(feedbacks: Feedback[]): void {
+        feedbacks.forEach((feedback) => {
+            feedback.conflictingTextAssessments = [...(feedback['firstConflicts'] || []), ...(feedback['secondConflicts'] || [])];
+            delete feedback['firstConflicts'];
+            delete feedback['secondConflicts'];
+            feedback.conflictingTextAssessments.forEach((textAssessmentConflict) => {
+                textAssessmentConflict.conflictingFeedbackId =
+                    textAssessmentConflict['firstFeedback'].id === feedback.id ? textAssessmentConflict['secondFeedback'].id : textAssessmentConflict['firstFeedback'].id;
+            });
+        });
     }
 
     /**
