@@ -2,6 +2,10 @@ package de.tum.in.www1.artemis.service.programming;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
+/**
+ * Store configuration of a specific programming language.
+ * The configuration is also available in the client as the {@link ProgrammingLanguageFeatureContributor} exposes them.
+ */
 public class ProgrammingLanguageFeature {
 
     private ProgrammingLanguage programmingLanguage;

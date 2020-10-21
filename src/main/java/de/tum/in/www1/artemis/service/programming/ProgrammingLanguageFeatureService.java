@@ -9,6 +9,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
+/**
+ * This service provides information about features the different ProgrammingLanguages support.
+ * The configuration is also available in the client as the {@link ProgrammingLanguageFeatureContributor} exposes them.
+ */
 @Service
 public class ProgrammingLanguageFeatureService {
 
@@ -17,6 +21,7 @@ public class ProgrammingLanguageFeatureService {
     private final Map<ProgrammingLanguage, ProgrammingLanguageFeature> programmingLanguageFeatures = new HashMap<>();
 
     public ProgrammingLanguageFeatureService() {
+        // Must be extended once a new programming language is added
         programmingLanguageFeatures.put(ProgrammingLanguage.JAVA, new ProgrammingLanguageFeature(ProgrammingLanguage.JAVA, true, true, true, true, true, true, false));
         programmingLanguageFeatures.put(ProgrammingLanguage.PYTHON, new ProgrammingLanguageFeature(ProgrammingLanguage.PYTHON, true, false, true, true, true, false, false));
         programmingLanguageFeatures.put(ProgrammingLanguage.C, new ProgrammingLanguageFeature(ProgrammingLanguage.C, false, false, true, true, true, false, false));
