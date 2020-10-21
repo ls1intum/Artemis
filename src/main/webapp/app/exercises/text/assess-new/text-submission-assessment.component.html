@@ -33,8 +33,10 @@
                 [submission]="submission"
                 [(textBlockRefs)]="textBlockRefs"
                 [readOnly]="readOnly"
+                [conflictMode]="false"
                 (textBlockRefsChange)="validateFeedback()"
                 (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
+                (onConflictsClicked)="navigateToConflictingSubmissions($event)"
             ></jhi-text-assessment-area>
             <!--endregion-->
 

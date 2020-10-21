@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.security.Principal;
 import java.time.Duration;
@@ -27,19 +30,11 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
-
-    @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     CourseRepository courseRepository;
@@ -422,12 +417,13 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
          * The time we wait in between needs to be relatively high to make sure the concurrent tasks are finished in time, especially sending out the exercise can easily take up to
          * 100 ms, so we should leave about 200 ms for that, similar for the completion of all saving/updating/scheduling operations.
          */
+        int timeFactor = 30;
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         String publishQuizPath = "/topic/courses/" + course.getId() + "/quizExercises";
         long time = System.currentTimeMillis();
         log.debug("// Creating the quiz exercise");
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plus(600, ChronoUnit.MILLIS), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plus(60 * timeFactor, ChronoUnit.MILLIS), null);
         quizExercise.duration(60);
         quizExercise.setIsPlannedToStart(true);
         quizExercise.setIsVisibleBeforeStart(true);
@@ -440,16 +436,16 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         verify(messagingTemplate, never()).send(eq(publishQuizPath), any());
 
         // wait a bit
-        TimeUnit.MILLISECONDS.sleep(400 - (System.currentTimeMillis() - time));
+        TimeUnit.MILLISECONDS.sleep(30 * timeFactor - (System.currentTimeMillis() - time));
         time = System.currentTimeMillis();
 
         // reschedule
         log.debug("// Rescheduling the quiz");
-        quizExercise.releaseDate(ZonedDateTime.now().plus(700, ChronoUnit.MILLIS));
+        quizExercise.releaseDate(ZonedDateTime.now().plus(70 * timeFactor, ChronoUnit.MILLIS));
         quizExercise = quizExerciseService.save(quizExercise);
 
         // wait for the old release date to pass
-        TimeUnit.MILLISECONDS.sleep(400 - (System.currentTimeMillis() - time));
+        TimeUnit.MILLISECONDS.sleep(40 * timeFactor - (System.currentTimeMillis() - time));
         time = System.currentTimeMillis();
 
         // check that quiz has still not started now
@@ -464,7 +460,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(quizSubmissionRepository.count()).isZero();
 
         // wait for the new release date to pass
-        TimeUnit.MILLISECONDS.sleep(600 - (System.currentTimeMillis() - time));
+        TimeUnit.MILLISECONDS.sleep(60 * timeFactor - (System.currentTimeMillis() - time));
 
         // check that quiz has started
         log.debug("// Check that the quiz has started");
@@ -497,6 +493,9 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         quizScheduleService.updateQuizExercise(quizExercise);
         // ... directly delete the quiz
         exerciseRepository.delete(quizExercise);
+
+        // wait a little bit
+        TimeUnit.MILLISECONDS.sleep(100);
 
         // the deleted quiz should get removed, no submissions should be saved
         quizScheduleService.processCachedQuizSubmissions();

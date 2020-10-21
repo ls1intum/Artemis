@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
@@ -11,7 +11,6 @@ import * as moment from 'moment';
 import { merge, Subject } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Observable } from 'rxjs/Observable';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -45,6 +44,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     // Is submitting always enabled?
     isAlwaysActive: boolean;
     isAllowedToSubmitAfterDeadline: boolean;
+    // answer is the text that is stored in the user interface
     answer: string;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
@@ -60,7 +60,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private textSubmissionService: TextSubmissionService,
         private textService: TextEditorService,
         private resultService: ResultService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private artemisMarkdown: ArtemisMarkdownService,
         private location: Location,
         private translateService: TranslateService,
@@ -112,7 +112,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     ngOnDestroy() {
-        if (this.canDeactivate() && this.textExercise.id) {
+        if (!this.canDeactivate() && this.textExercise.id) {
             let newSubmission = new TextSubmission();
             if (this.submission) {
                 newSubmission = this.submission;
@@ -200,13 +200,16 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     // Displays the alert for confirming refreshing or closing the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification($event: any) {
-        if (this.canDeactivate()) {
+        if (!this.canDeactivate()) {
             $event.returnValue = this.translateService.instant('pendingChanges');
         }
     }
 
-    canDeactivate(): Observable<boolean> | boolean {
-        return this.submission.text !== this.answer;
+    canDeactivate(): boolean {
+        if (!this.submission) {
+            return true;
+        }
+        return this.submission.text === this.answer;
     }
 
     submit() {

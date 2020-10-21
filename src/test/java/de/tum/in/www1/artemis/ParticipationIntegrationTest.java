@@ -32,9 +32,7 @@ import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -55,12 +53,6 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     UserRepository userRepo;
-
-    @Autowired
-    RequestUtilService request;
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     FeatureToggleService featureToggleService;
@@ -99,7 +91,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         course.addExercises(programmingExercise);
         course = courseRepo.save(course);
 
-        doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any());
+        doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any());
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
     }
@@ -478,6 +470,8 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void cleanupBuildPlan() throws Exception {
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.mockDeleteBambooBuildPlan(participation.getBuildPlanId());
         var actualParticipation = request.putWithResponseBody("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, Participation.class, HttpStatus.OK);
         assertThat(actualParticipation).isEqualTo(participation);
     }

@@ -14,7 +14,7 @@
                 "noCommitHash": "Kein Commit wurde gemacht",
                 "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
                 "viewResult": " Ergebnis ansehen",
-                "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere deinen Instruktor.",
+                "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere deinen Dozenten.",
                 "points": {
                     "exercise": "Aufgabe",
                     "overview": "Übersicht",
@@ -90,7 +90,7 @@
         },
         "examParticipation": {
             "timer": "Restzeit: ",
-            "timerEndView": "Restzeit bis zur Prüfungsabgabe: ",
+            "timerEndView": "Restzeit: ",
             "connected": "Deine Antworten werden alle 30s gespeichert.",
             "ideConnected": "",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
@@ -106,9 +106,10 @@
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
-            "greeting": "Willkommen zu {{ title }}. Ihr voller Name ist: ",
-            "finish": "Das ist das Ende von {{ title }}. Ihr voller Name ist: ",
-            "submitFinalExam": "Bitte bestätige den Text unten und klicke innerhalb der verbleibenden Zeit auf 'Beenden', um die Prüfung abzugeben.<br />(Hinweis: Wenn du diesen Schritt versäumst, wird deine Prüfung nicht benotet)",
+            "greeting": "Willkommen zu {{ title }}.",
+            "finish": "Das ist das Ende von {{ title }}.",
+            "nameDisplay": "Dein voller Name ist: {{ fullName }}",
+            "submitFinalExam": "Bitte bestätige und klicke innerhalb der verbleibenden Zeit auf 'Beenden'.<br />",
             "preparingParticipation": "Aufgabe wird vorbereitet. Dies kann ein paar Sekunden dauern.",
             "generateParticipationFailed": "Das Vorbereiten der Aufgabe ist fehlgeschlagen.",
             "generateParticipationRetry": "Erneut versuchen",
@@ -123,7 +124,8 @@
             "handInEarly": "Vorzeitig abgeben",
             "continueAfterHandInEarly": "Weitermachen",
             "continueAfterHandInEarlyDescription": "Du willst doch nicht vorzeitig abgeben?",
-            "handInEarlyNotice": "Du bist dabei die Klausur vorzeitig abzugeben. Du kannst danach nicht mehr an der Klausur teilnehmen.",
+            "handInEarlyNoticeFirstSentence": "Du bist dabei die Klausur vorzeitig abzugeben.",
+            "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
             "namePlaceholder": "Trage deinen vollen Namen hier ein"
         },
         "exerciseGroup": {
@@ -196,7 +198,7 @@
             "endText": "Klausurende Text",
             "confirmationStartText": "Klausurbeginn Bestätigungstext",
             "confirmationEndText": "Klausurende Bestätigungstext",
-            "assessmentDashboard": "Bewertungstafel",
+            "assessmentDashboard": "Bewertungs-Dashboard",
             "studentExams": "Klausuren der Studenten",
             "students": "Studenten",
             "testRun": {
@@ -274,8 +276,7 @@
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studenten. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
-            },
-            "tutorDashboard": "Tutor Klausur Dashboard"
+            }
         },
         "studentExamDetail": {
             "studentExam": "Klausur ({{ examTitle }})",

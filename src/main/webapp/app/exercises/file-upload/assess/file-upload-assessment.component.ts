@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import interact from 'interactjs';
 import * as moment from 'moment';
 import * as $ from 'jquery';
@@ -73,7 +73,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     constructor(
         private changeDetectorRef: ChangeDetectorRef,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
         private router: Router,
         private route: ActivatedRoute,
@@ -141,7 +141,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
                     this.navigateBack();
-                    this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
+                    this.jhiAlertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
                 } else {
@@ -296,7 +296,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    this.jhiAlertService.error('artemisApp.tutorExerciseDashboard.noSubmissions');
+                    this.jhiAlertService.error('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                 } else {
                     this.onError(error.message);
                 }

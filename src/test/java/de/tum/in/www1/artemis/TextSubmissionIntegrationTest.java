@@ -27,9 +27,7 @@ import de.tum.in.www1.artemis.domain.text.TextExercise;
 import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionComparisonDTO;
 
 public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -45,12 +43,6 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Autowired
     StudentParticipationRepository participationRepository;
-
-    @Autowired
-    RequestUtilService request;
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     UserService userService;

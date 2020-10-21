@@ -4,7 +4,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { User } from 'app/core/user/user.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course, CourseGroup, courseGroups } from 'app/entities/course.model';
@@ -52,7 +52,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     constructor(
         private router: Router,
         private route: ActivatedRoute,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private courseService: CourseManagementService,
         private userService: UserService,

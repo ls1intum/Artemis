@@ -18,7 +18,7 @@ import {
     ResizeType,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
@@ -81,7 +81,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         private participationService: ParticipationService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private fileService: CodeEditorFileService,
     ) {
         this.initializeProperties();
@@ -94,7 +94,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     /**
      * Setting unsaved files also updates the editorState / commitState.
      * - unsaved files empty -> EditorState.CLEAN
-     * - unsaved files NOT empty -> EditorState.UNSAVED_CHANGES
+     * - unsaved files NOT empty -> EditorState.UNSAVED_CHANGES & CommitState.UNCOMMITTED_CHANGES
      * - unsaved files empty AND editorState.SAVING -> CommitState.UNCOMMITTED_CHANGES
      * @param unsavedFiles
      */
@@ -102,11 +102,14 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         this.unsavedFilesValue = unsavedFiles;
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.SAVING) {
             this.editorState = EditorState.CLEAN;
-            this.commitState = CommitState.UNCOMMITTED_CHANGES;
+            if (this.commitState !== CommitState.COMMITTING) {
+                this.commitState = CommitState.UNCOMMITTED_CHANGES;
+            }
         } else if (_isEmpty(this.unsavedFiles)) {
             this.editorState = EditorState.CLEAN;
         } else {
             this.editorState = EditorState.UNSAVED_CHANGES;
+            this.commitState = CommitState.UNCOMMITTED_CHANGES;
         }
     }
 

@@ -4,7 +4,7 @@ import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-ex
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 
@@ -15,7 +15,7 @@ import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-au
 export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     constructor(
         submissionService: ProgrammingSubmissionService,
-        alertService: AlertService,
+        alertService: JhiAlertService,
         participationWebsocketService: ParticipationWebsocketService,
         private translateService: TranslateService,
         private modalService: NgbModal,

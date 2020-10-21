@@ -23,23 +23,25 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
      * src/test/resources/test-data
      */
 
-    private static final String FILE_WITH_UNIX_LINE_ENDINGS = //
-            "public class LineEndings {\n" + //
-                    "\n" + //
-                    "    public void someMethod() {\n" + //
-                    "        // Some logic inside here\n" + //
-                    "        someService.call();\n" + //
-                    "    }\n" + //
-                    "}\n";
+    private static final String FILE_WITH_UNIX_LINE_ENDINGS = """
+            public class LineEndings {
 
-    private static final String FILE_WITH_WINDOWS_LINE_ENDINGS = //
-            "public class LineEndings {\r\n" + //
-                    "\r\n" + //
-                    "    public void someMethod() {\r\n" + //
-                    "        // Some logic inside here\r\n" + //
-                    "        someService.call();\r\n" + //
-                    "    }\r\n" + //
-                    "}\r\n";
+                public void someMethod() {
+                    // Some logic inside here
+                    someService.call();
+                }
+            }
+            """;
+
+    private static final String FILE_WITH_WINDOWS_LINE_ENDINGS = """
+            public class LineEndings {\r
+            \r
+                public void someMethod() {\r
+                    // Some logic inside here\r
+                    someService.call();\r
+                }\r
+            }\r
+            """;
 
     @Autowired
     FileService fileService;

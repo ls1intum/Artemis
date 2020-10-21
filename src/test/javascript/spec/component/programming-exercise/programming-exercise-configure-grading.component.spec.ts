@@ -10,7 +10,7 @@ import { of, Subject } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { CookieService } from 'ngx-cookie-service';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -147,7 +147,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisProgrammingExerciseGradingModule],
             providers: [
-                AlertService,
+                JhiAlertService,
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProgrammingExerciseWebsocketService, useClass: MockProgrammingExerciseWebsocketService },
                 { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },

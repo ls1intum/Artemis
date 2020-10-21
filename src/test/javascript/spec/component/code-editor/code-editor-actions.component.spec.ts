@@ -1,9 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { DebugElement } from '@angular/core';
+import { DebugElement, SimpleChange } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonStub, spy, stub } from 'sinon';
@@ -268,7 +268,7 @@ describe('CodeEditorActionsComponent', () => {
         expect(commitButton.nativeElement.disabled).to.be.false;
     });
 
-    it('should not commit if unsavedFiles exist, instead should save files with commit set to true', () => {
+    it('should not commit if unsavedFiles exist, instead should save files with commit set to true', fakeAsync(() => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
         const saveObservable = new Subject<null>();
         const saveChangedFilesStub = stub(comp, 'saveChangedFiles');
@@ -294,11 +294,22 @@ describe('CodeEditorActionsComponent', () => {
 
         // save + commit completed
         saveObservable.next(null);
+        expect(comp.commitState).to.equal(CommitState.COMMITTING);
+
+        // Simulate that all files were saved
+        comp.ngOnChanges({
+            editorState: new SimpleChange(EditorState.SAVING, EditorState.CLEAN, true),
+        });
+
+        tick();
 
         expect(comp.isBuilding).to.be.true;
         expect(comp.commitState).to.equal(CommitState.CLEAN);
 
         fixture.detectChanges();
         expect(commitButton.nativeElement.disabled).to.be.false;
-    });
+
+        fixture.destroy();
+        flush();
+    }));
 });

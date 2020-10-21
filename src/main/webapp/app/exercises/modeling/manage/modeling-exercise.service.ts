@@ -80,7 +80,9 @@ export class ModelingExerciseService {
      * Check for plagiarism
      * @param exerciseId of the programming exercise
      */
-    checkPlagiarism(exerciseId: number): Observable<HttpResponse<Array<ModelingSubmissionComparisonDTO>>> {
-        return this.http.get<Array<ModelingSubmissionComparisonDTO>>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response' });
+    checkPlagiarism(exerciseId: number): Observable<Array<ModelingSubmissionComparisonDTO>> {
+        return this.http
+            .get<Array<ModelingSubmissionComparisonDTO>>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response' })
+            .pipe(map((response: HttpResponse<Array<ModelingSubmissionComparisonDTO>>) => response.body!));
     }
 }

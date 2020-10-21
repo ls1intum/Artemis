@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.6.1"
+version = "4.6.4"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -107,8 +107,8 @@ task integrationTest(type: Test) {
     include "**/*IT*", "**/*IntTest*"
     exclude "**/*CucumberIT*"
 
-    maxHeapSize = '2048m'
-    jvmArgs '-XX:MaxPermSize=256m'
+    maxHeapSize = "2048m"
+    jvmArgs "-XX:MaxPermSize=256m"
     // uncomment if the tests reports are not generated
     // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
     // ignoreFailures true
@@ -141,10 +141,10 @@ jacocoTestCoverageVerification {
     violationRules {
         rule {
             limit {
-                counter = 'LINE'
-                value = 'COVEREDRATIO'
-                // TODO: in the future the following value should become at least 0.80
-                minimum = 0.78
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                // TODO: in the future the following value should become at least 0.90
+                minimum = 0.80
             }
         }
     }
@@ -166,14 +166,10 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
-    implementation 'org.gitlab4j:gitlab4j-api:4.15.7'
+    implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
+    implementation "org.gitlab4j:gitlab4j-api:4.15.7"
 
-    // TODO: at the moment we cannot upgrade to a higher version of acli due to conflicts with the used LoggerFactory
-    // the problem is that newer versions integrate the logging framework directly into the jar file instead of referencing
-    // a dependency. This leads to 2 logging frameworks available at the same time.
-    implementation files('libs/acli-9.0.0.jar')
-    implementation files('libs/jplag-2.12.1.jar')
+    implementation files("libs/jplag-2.12.1.jar")
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r"
@@ -184,8 +180,9 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.3.1"
     implementation "com.atlassian.bamboo:bamboo-specs:7.1.2"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
-    implementation 'io.sentry:sentry-spring-boot-starter:3.0.0'
-    implementation 'io.sentry:sentry-logback:3.0.0'
+    implementation "io.sentry:sentry-spring-boot-starter:3.1.1"
+    implementation "io.sentry:sentry-logback:3.1.1"
+    implementation "org.jsoup:jsoup:1.13.1"
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
@@ -210,7 +207,7 @@ dependencies {
     implementation "org.hibernate:hibernate-jcache"
     implementation "org.hibernate:hibernate-entitymanager"
     implementation "org.hibernate.validator:hibernate-validator:6.1.2.Final"
-    implementation "org.liquibase:liquibase-core:${liquibase_hibernate5_version}"
+    implementation "org.liquibase:liquibase-core:${liquibase_version}"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
@@ -251,12 +248,12 @@ dependencies {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
-    implementation "mysql:mysql-connector-java:8.0.21"
+    implementation "mysql:mysql-connector-java:8.0.22"
 
     implementation "org.zalando:problem-spring-web:0.26.2"
     implementation "com.ibm.icu:icu4j:67.1"
-    implementation 'com.github.seancfoley:ipaddress:5.3.3'
-    implementation 'info.debatty:java-string-similarity:2.0.0'
+    implementation "com.github.seancfoley:ipaddress:5.3.3"
+    implementation "info.debatty:java-string-similarity:2.0.0"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
@@ -272,18 +269,18 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.assertj:assertj-core:3.17.2"
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
-    testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.14.1'
-    testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.14.1'
+    testImplementation "com.tngtech.archunit:archunit-junit5-api:0.14.1"
+    testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:0.14.1"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
     testImplementation "org.hamcrest:hamcrest-library:2.2"
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.0.3"
-    testImplementation 'org.apache.maven.shared:maven-invoker:3.0.1'
-    testImplementation 'org.apache.maven.surefire:surefire-report-parser:2.22.2'
+    testImplementation "org.apache.maven.shared:maven-invoker:3.0.1"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:2.22.2"
 
     // Java's lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation 'org.json:json:20200518'
+    testImplementation "org.json:json:20200518"
 }
 
 task cleanResources(type: Delete) {
@@ -331,7 +328,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.6.1"
+    gradleVersion = "6.7"
 }
 
 task stage(dependsOn: "bootWar") {

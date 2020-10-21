@@ -138,7 +138,7 @@ public class FeedbackService {
      * @return A filtered and better formatted error message
      */
     private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final String message) {
-        if (programmingLanguage == ProgrammingLanguage.JAVA) {
+        if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
             // Splitting string at the first linebreak to only get the first line of the Exception
             // TODO Improve this to support multi-line exceptions
             return message.split("\\n", 2)[0]

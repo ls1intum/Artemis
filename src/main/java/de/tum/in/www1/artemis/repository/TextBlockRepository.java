@@ -28,4 +28,7 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
     List<TextBlock> findAllBySubmission_Participation_Exercise_IdAndTreeIdNotNull(Long exerciseId);
 
     List<TextBlock> findAllBySubmissionId(Long id);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submission" })
+    List<TextBlock> findAllBySubmissionIdIn(List<Long> submissionIdList);
 }

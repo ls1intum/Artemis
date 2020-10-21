@@ -30,18 +30,11 @@ import de.tum.in.www1.artemis.domain.text.TextExercise;
 import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 
 public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     UserRepository userRepository;
@@ -90,7 +83,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void testGetStatsForTutorExerciseDashboardTest() throws Exception {
+    public void testGetStatsForExerciseAssessmentDashboardTest() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(e -> e instanceof TextExercise).findFirst().get();
@@ -377,35 +370,35 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void testGetExerciseForTutorDashboard() throws Exception {
+    public void testGetExerciseForAssessmentDashboard() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
-                Exercise exerciseForTutorDashboard = request.get("/api/exercises/" + exercise.getId() + "/for-tutor-dashboard", HttpStatus.OK, Exercise.class);
-                assertThat(exerciseForTutorDashboard.getTutorParticipations().size()).as("Tutor participation was created").isEqualTo(1);
-                assertThat(exerciseForTutorDashboard.getExampleSubmissions().size()).as("Example submissions are not null").isZero();
+                Exercise exerciseForAssessmentDashboard = request.get("/api/exercises/" + exercise.getId() + "/for-tutor-dashboard", HttpStatus.OK, Exercise.class);
+                assertThat(exerciseForAssessmentDashboard.getTutorParticipations().size()).as("Tutor participation was created").isEqualTo(1);
+                assertThat(exerciseForAssessmentDashboard.getExampleSubmissions().size()).as("Example submissions are not null").isZero();
 
                 // Test that certain properties were set correctly
-                assertThat(exerciseForTutorDashboard.getReleaseDate()).as("Release date is present").isNotNull();
-                assertThat(exerciseForTutorDashboard.getDueDate()).as("Due date is present").isNotNull();
-                assertThat(exerciseForTutorDashboard.getMaxScore()).as("Max score was set correctly").isEqualTo(5.0);
-                assertThat(exerciseForTutorDashboard.getDifficulty()).as("Difficulty was set correctly").isEqualTo(DifficultyLevel.MEDIUM);
+                assertThat(exerciseForAssessmentDashboard.getReleaseDate()).as("Release date is present").isNotNull();
+                assertThat(exerciseForAssessmentDashboard.getDueDate()).as("Due date is present").isNotNull();
+                assertThat(exerciseForAssessmentDashboard.getMaxScore()).as("Max score was set correctly").isEqualTo(5.0);
+                assertThat(exerciseForAssessmentDashboard.getDifficulty()).as("Difficulty was set correctly").isEqualTo(DifficultyLevel.MEDIUM);
 
                 // Test presence of exercise type specific properties
-                if (exerciseForTutorDashboard instanceof FileUploadExercise) {
-                    FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseForTutorDashboard;
+                if (exerciseForAssessmentDashboard instanceof FileUploadExercise) {
+                    FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseForAssessmentDashboard;
                     assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
                 }
-                if (exerciseForTutorDashboard instanceof ModelingExercise) {
-                    ModelingExercise modelingExercise = (ModelingExercise) exerciseForTutorDashboard;
+                if (exerciseForAssessmentDashboard instanceof ModelingExercise) {
+                    ModelingExercise modelingExercise = (ModelingExercise) exerciseForAssessmentDashboard;
                     assertThat(modelingExercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
                 }
-                if (exerciseForTutorDashboard instanceof ProgrammingExercise) {
-                    ProgrammingExercise programmingExerciseExercise = (ProgrammingExercise) exerciseForTutorDashboard;
+                if (exerciseForAssessmentDashboard instanceof ProgrammingExercise) {
+                    ProgrammingExercise programmingExerciseExercise = (ProgrammingExercise) exerciseForAssessmentDashboard;
                     assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
                 }
-                if (exerciseForTutorDashboard instanceof QuizExercise) {
-                    QuizExercise quizExercise = (QuizExercise) exerciseForTutorDashboard;
+                if (exerciseForAssessmentDashboard instanceof QuizExercise) {
+                    QuizExercise quizExercise = (QuizExercise) exerciseForAssessmentDashboard;
                     assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(10);
                     assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(1);
                 }
@@ -415,8 +408,8 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void testGetExerciseForTutorDashboard_submissionsWithoutAssessments() throws Exception {
-        var validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
+    public void testGetExerciseForAssessmentDashboard_submissionsWithoutAssessments() throws Exception {
+        var validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         database.addCourseWithOneModelingExercise();
         var exercise = exerciseRepository.findAll().get(0);
         var exampleSubmission = database.generateExampleSubmission(validModel, exercise, true);
@@ -427,21 +420,21 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(value = "tutor6", roles = "TA")
-    public void testGetExerciseForTutorDashboard_forbidden() throws Exception {
+    public void testGetExerciseForAssessmentDashboard_forbidden() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/for-tutor-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void testGetExerciseForTutorDashboard_programmingExerciseWithAutomaticAssessment() throws Exception {
+    public void testGetExerciseForAssessmentDashboard_programmingExerciseWithAutomaticAssessment() throws Exception {
         database.addCourseWithOneProgrammingExercise();
         request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/for-tutor-dashboard", HttpStatus.BAD_REQUEST, Exercise.class);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void testGetExerciseForTutorDashboard_exerciseWithTutorParticipation() throws Exception {
+    public void testGetExerciseForAssessmentDashboard_exerciseWithTutorParticipation() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         var exercise = exerciseRepository.findAll().get(0);
         var tutorParticipation = new TutorParticipation().tutor(database.getUserByLogin("tutor1")).assessedExercise(exercise)
@@ -464,7 +457,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void testGetStatsForTutorExerciseDashboard() throws Exception {
+    public void testGetStatsForExerciseAssessmentDashboard() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             var tutors = findTutors(course);
@@ -502,7 +495,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(value = "tutor6", roles = "TA")
-    public void testGetStatsForTutorExerciseDashboard_forbidden() throws Exception {
+    public void testGetStatsForExerciseAssessmentDashboard_forbidden() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/stats-for-tutor-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
