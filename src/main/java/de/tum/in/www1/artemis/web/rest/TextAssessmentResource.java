@@ -102,7 +102,9 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound");
         }
 
-        StudentParticipation studentParticipation = (StudentParticipation) optionalTextSubmission.get().getParticipation();
+        TextSubmission textSubmission = optionalTextSubmission.get();
+        StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
+
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
 
         if (!assessmentService.isAllowedToCreateOrOverrideResult(optionalTextSubmission.get().getResult(), textExercise, studentParticipation, user, isAtLeastInstructor)) {
@@ -140,7 +142,8 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound");
         }
 
-        StudentParticipation studentParticipation = (StudentParticipation) optionalTextSubmission.get().getParticipation();
+        TextSubmission textSubmission = optionalTextSubmission.get();
+        StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
 
         if (!assessmentService.isAllowedToCreateOrOverrideResult(optionalTextSubmission.get().getResult(), textExercise, studentParticipation, user, isAtLeastInstructor)) {

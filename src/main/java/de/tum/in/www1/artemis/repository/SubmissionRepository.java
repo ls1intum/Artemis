@@ -27,7 +27,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     Optional<Submission> findExampleSubmissionByIdWithEagerResult(long submissionId);
 
     /* Get all submissions from a participation_id and load result at the same time */
-    @EntityGraph(type = LOAD, attributePaths = { "result" })
+    @EntityGraph(type = LOAD, attributePaths = { "results" })
     List<Submission> findAllByParticipationId(Long participationId);
 
     /**

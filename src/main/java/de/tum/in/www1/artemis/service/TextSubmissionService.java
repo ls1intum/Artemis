@@ -184,6 +184,8 @@ public class TextSubmissionService extends SubmissionService {
      */
     public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
         final List<TextSubmission> submissions = textSubmissionRepository.findByParticipation_ExerciseIdAndResultsIsNullAndSubmittedIsTrue(exercise.getId());
+        Map<Long, List<TextBlock>> textBlocksOfSubmissions = textSubmissionRepository.findByParticipation_ExerciseIdAndResultsIsNullAndSubmittedIsTrue_WithTextBlock(exercise.getId()).stream().collect(toMap(x -> x.getId(), x -> x.getBlocks()));
+        submissions.stream().forEach(x -> x.setBlocks(textBlocksOfSubmissions.get(x.getId())));
 
         final Set<Long> clusterIds = submissions.stream().flatMap(submission -> submission.getBlocks().stream()).map(TextBlock::getCluster).filter(Objects::nonNull)
                 .map(TextCluster::getId).collect(toSet());
