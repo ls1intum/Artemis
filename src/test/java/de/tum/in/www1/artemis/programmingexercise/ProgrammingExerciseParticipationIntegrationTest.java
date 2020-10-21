@@ -78,12 +78,12 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
                 Arguments.of(AssessmentType.AUTOMATIC, someDate, futureDate, true), Arguments.of(AssessmentType.AUTOMATIC, someDate, pastDate, true),
                 Arguments.of(AssessmentType.AUTOMATIC, null, futureDate, true), Arguments.of(AssessmentType.AUTOMATIC, null, pastDate, true),
                 // Manual result without completion date (assessment was only saved but no submitted) is not returned
-                Arguments.of(AssessmentType.MANUAL, null, null, false), Arguments.of(AssessmentType.MANUAL, null, futureDate, false),
-                Arguments.of(AssessmentType.MANUAL, null, pastDate, false),
+                Arguments.of(AssessmentType.SEMI_AUTOMATIC, null, null, false), Arguments.of(AssessmentType.SEMI_AUTOMATIC, null, futureDate, false),
+                Arguments.of(AssessmentType.SEMI_AUTOMATIC, null, pastDate, false),
                 // Manual result is not returned if completed and assessment due date has not passed
-                Arguments.of(AssessmentType.MANUAL, someDate, futureDate, false),
+                Arguments.of(AssessmentType.SEMI_AUTOMATIC, someDate, futureDate, false),
                 // Manual result is returned if completed and assessmentDue date has passed
-                Arguments.of(AssessmentType.MANUAL, someDate, pastDate, true));
+                Arguments.of(AssessmentType.SEMI_AUTOMATIC, someDate, pastDate, true));
     }
 
     @ParameterizedTest
@@ -131,7 +131,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getParticipationWithLatestResultAsAnInstructor_noCompletionDate_notFound() throws Exception {
-        addStudentParticipationWithResult(AssessmentType.MANUAL, null);
+        addStudentParticipationWithResult(AssessmentType.SEMI_AUTOMATIC, null);
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.NOT_FOUND,
                 ProgrammingExerciseStudentParticipation.class);

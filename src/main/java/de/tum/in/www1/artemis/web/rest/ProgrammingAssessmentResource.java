@@ -120,8 +120,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
-
-        Optional<Result> latestExistingResult = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.MANUAL).findFirst();
+        // Manual result can either be from type MANUAL or SEMI_AUTOMATIC
+        Optional<Result> latestExistingResult = participation.getResults().stream().filter(result -> (result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || result.getAssessmentType() == AssessmentType.MANUAL)).findFirst();
         if (latestExistingResult.isPresent()) {
             // prevent that tutors create multiple manual results
             newResult.setId(latestExistingResult.get().getId());

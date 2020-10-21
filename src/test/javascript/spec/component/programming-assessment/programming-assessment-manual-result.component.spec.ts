@@ -73,7 +73,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         submission: new ProgrammingSubmission(),
         assessor: user,
         hasComplaint: true,
-        assessmentType: AssessmentType.MANUAL,
+        assessmentType: AssessmentType.SEMI_AUTOMATIC,
         id: 1,
     };
     result.submission!.id = 1;

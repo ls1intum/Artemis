@@ -463,9 +463,9 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             var results = participation.getResults();
             assertThat(results).hasSize(2);
 
-            var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.MANUAL).findAny();
+            var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findAny();
             assertThat(manualResultOptional).isPresent();
-            testParticipationResult(manualResultOptional.get(), 100L, "nice job", true, 0, AssessmentType.MANUAL);
+            testParticipationResult(manualResultOptional.get(), 100L, "nice job", true, 0, AssessmentType.SEMI_AUTOMATIC);
             assertThat(manualResultOptional.get()).isEqualTo(participation.findLatestResult());
 
             var automaticResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC).findAny();
@@ -565,7 +565,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
                     .hasFeedback(true) //
                     .successful(true) //
                     .completionDate(ZonedDateTime.now()) //
-                    .assessmentType(AssessmentType.MANUAL);
+                    .assessmentType(AssessmentType.SEMI_AUTOMATIC);
             result2b = resultRepository.save(result2b);
             participation2.setResults(Set.of(result2a, result2b));
         }

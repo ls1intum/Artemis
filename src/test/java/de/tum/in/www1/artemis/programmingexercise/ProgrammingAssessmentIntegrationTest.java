@@ -305,7 +305,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         result.setParticipation(participation);
         result.setSubmission(programmingSubmission);
         // Result has to be manual to be updated
-        result.setAssessmentType(AssessmentType.MANUAL);
+        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result = resultRepository.save(result);
 
         // Remove feedbacks, change text and score.

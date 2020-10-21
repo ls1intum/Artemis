@@ -1782,7 +1782,7 @@ public class DatabaseUtilService {
         participation.addSubmissions(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
-        result.setAssessmentType(AssessmentType.MANUAL);
+        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setScore(50L);
         result.setCompletionDate(ZonedDateTime.now());
         result = resultRepo.save(result);

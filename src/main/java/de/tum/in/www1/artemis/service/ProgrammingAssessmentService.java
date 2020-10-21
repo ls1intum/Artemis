@@ -42,7 +42,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
         User user = userService.getUserWithGroupsAndAuthorities();
         result.setHasComplaint(false);
-        result.setAssessmentType(AssessmentType.MANUAL);
+        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(user);
 
         result.setCompletionDate(null);
