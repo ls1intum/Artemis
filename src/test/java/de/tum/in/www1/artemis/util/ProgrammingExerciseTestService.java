@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
+import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 
 /**
@@ -80,6 +81,9 @@ public class ProgrammingExerciseTestService {
     @Autowired
     @Qualifier("staticCodeAnalysisConfiguration")
     private Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
+
+    @Autowired
+    private ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
     public Course course;
 
@@ -257,7 +261,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void importExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
-        boolean staticCodeAnalysisEnabled = programmingLanguage == ProgrammingLanguage.JAVA;
+        boolean staticCodeAnalysisEnabled = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).isStaticCodeAnalysis();
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceExercise.setProgrammingLanguage(programmingLanguage);
