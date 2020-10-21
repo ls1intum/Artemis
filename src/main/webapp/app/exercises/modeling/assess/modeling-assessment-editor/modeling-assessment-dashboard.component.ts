@@ -16,7 +16,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Authority } from 'app/shared/constants/authority.constants';
@@ -56,7 +56,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     constructor(
         private route: ActivatedRoute,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private router: Router,
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,

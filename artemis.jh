@@ -98,7 +98,12 @@ entity ProgrammingExercise {        //extends Exercise
 
 enum ProgrammingLanguage {
     JAVA,
-    PYTHON
+    PYTHON,
+    C,
+    HASKELL,
+    KOTLIN,
+    VHDL,
+    ASSEMBLER
 }
 
 entity ModelingExercise {           //extends Exercise

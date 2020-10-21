@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -53,7 +54,8 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
 
     private final RestTemplate bitbucketRestTemplate;
 
-    private List<ApplicationLinksDTO.ApplicationLinkDTO> cachedApplicationLinks = new ArrayList<>();
+    // url --> Link
+    private final Map<String, ApplicationLinksDTO.ApplicationLinkDTO> cachedApplicationLinks = new ConcurrentHashMap<>();
 
     public BitbucketBambooUpdateService(@Qualifier("bambooRestTemplate") RestTemplate bambooRestTemplate, @Qualifier("bitbucketRestTemplate") RestTemplate bitbucketRestTemplate) {
         this.bambooRestTemplate = bambooRestTemplate;
@@ -140,23 +142,24 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
             return cachedLink;
         }
         // if there is no local application link available, load them Bamboo server
-        cachedApplicationLinks = loadApplicationLinkList();
+        loadApplicationLinkList();
         return findCachedLinkForUrl(applicationLinkUrl);
     }
 
-    public Optional<ApplicationLinksDTO.ApplicationLinkDTO> findCachedLinkForUrl(String url) {
-        return cachedApplicationLinks.stream().filter(link -> url.equalsIgnoreCase(link.getRpcUrl())).findFirst();
+    private Optional<ApplicationLinksDTO.ApplicationLinkDTO> findCachedLinkForUrl(String url) {
+        return Optional.ofNullable(cachedApplicationLinks.get(url));
     }
 
-    private List<ApplicationLinksDTO.ApplicationLinkDTO> loadApplicationLinkList() {
+    private void loadApplicationLinkList() {
         String requestUrl = bambooServerUrl + "/rest/applinks/latest/applicationlink";
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "");
         ApplicationLinksDTO links = bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, ApplicationLinksDTO.class).getBody();
-        if (links != null) {
-            return links.getApplicationLinks();
-        }
-        else {
-            return List.of();
+        if (links != null && links.getApplicationLinks() != null && links.getApplicationLinks().size() > 0) {
+            for (var link : links.getApplicationLinks()) {
+                if (link.getRpcUrl() != null) {
+                    cachedApplicationLinks.put(link.getRpcUrl(), link);
+                }
+            }
         }
     }
 
@@ -281,17 +284,19 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
         String response = bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.GET, entity, String.class).getBody();
 
-        Document document = Jsoup.parse(response);
+        if (response != null) {
+            Document document = Jsoup.parse(response);
 
-        for (Element element : document.getElementsByClass("item")) {
-            Long id = NumberUtils.isCreatable(element.attr("data-item-id")) ? Long.parseLong(element.attr("data-item-id")) : 0L;
-            String name = getText(element.getElementsByClass("item-title").first());
-            String description = getText(element.getElementsByClass("item-description").first());
-            BambooTriggerDTO entry = new BambooTriggerDTO(id, name, description);
-            if ("Disabled".equalsIgnoreCase(getText(element.getElementsByClass("lozenge").first()))) {
-                entry.setEnabled(false);
+            for (Element element : document.getElementsByClass("item")) {
+                Long id = NumberUtils.isCreatable(element.attr("data-item-id")) ? Long.parseLong(element.attr("data-item-id")) : 0L;
+                String name = getText(element.getElementsByClass("item-title").first());
+                String description = getText(element.getElementsByClass("item-description").first());
+                BambooTriggerDTO entry = new BambooTriggerDTO(id, name, description);
+                if ("Disabled".equalsIgnoreCase(getText(element.getElementsByClass("lozenge").first()))) {
+                    entry.setEnabled(false);
+                }
+                list.add(entry);
             }
-            list.add(entry);
         }
 
         return list;

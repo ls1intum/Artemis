@@ -178,7 +178,7 @@ Other run / debug configurations
 
 
 Typical problems with Liquibase checksums
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 One typical problem in the development setup is that an exception occurs
 during the database initialization. Artemis uses
@@ -215,7 +215,7 @@ profiles by
 * Choosing ``Run | Edit Configurations...``
 * Going to the ``Configuration Tab``
 * Expanding the ``Environment`` section to reveal ``VM Options`` and setting them to
-``-Dspring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling``
+  ``-Dspring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling``
 
 Set Spring profiles with IntelliJ Ultimate
 """"""""""""""""""""""""""""""""""""""""""

@@ -9,8 +9,7 @@ import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-ro
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { AlertService } from 'app/core/alert/alert.service';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { of, throwError } from 'rxjs';
@@ -32,7 +31,7 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
-import { TutorExerciseDashboardComponent } from 'app/exercises/shared/dashboards/tutor/tutor-exercise-dashboard.component';
+import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
@@ -46,11 +45,11 @@ import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashb
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('TutorExerciseDashboardComponent', () => {
+describe('ExerciseAssessmentDashboardComponent', () => {
     // needed to make sure ace is defined
     ace.acequire('ace/ext/modelist.js');
-    let comp: TutorExerciseDashboardComponent;
-    let fixture: ComponentFixture<TutorExerciseDashboardComponent>;
+    let comp: ExerciseAssessmentDashboardComponent;
+    let fixture: ComponentFixture<ExerciseAssessmentDashboardComponent>;
     let modelingSubmissionService: ModelingSubmissionService;
     let modelingSubmissionStub: SinonStub;
     let guidedTourService: GuidedTourService;
@@ -77,7 +76,7 @@ describe('TutorExerciseDashboardComponent', () => {
                 ArtemisAssessmentSharedModule,
             ],
             declarations: [
-                TutorExerciseDashboardComponent,
+                ExerciseAssessmentDashboardComponent,
                 MockComponent(TutorLeaderboardComponent),
                 MockComponent(TutorParticipationGraphComponent),
                 MockComponent(HeaderExercisePageWithDetailsComponent),
@@ -91,7 +90,6 @@ describe('TutorExerciseDashboardComponent', () => {
             providers: [
                 JhiLanguageHelper,
                 DeviceDetectorService,
-                { provide: AlertService, useClass: MockAlertService },
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -122,7 +120,7 @@ describe('TutorExerciseDashboardComponent', () => {
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(TutorExerciseDashboardComponent);
+                fixture = TestBed.createComponent(ExerciseAssessmentDashboardComponent);
                 comp = fixture.componentInstance;
 
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);

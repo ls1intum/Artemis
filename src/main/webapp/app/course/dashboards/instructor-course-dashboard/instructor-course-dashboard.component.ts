@@ -1,4 +1,4 @@
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { Component, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../../manage/course-management.service';
@@ -41,7 +41,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
         private courseService: CourseManagementService,
         private resultService: ResultService,
         private route: ActivatedRoute,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private sortService: SortService,
         private accountService: AccountService,
     ) {}
