@@ -29,7 +29,6 @@ import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util'
 import { Course } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { now } from 'moment';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
@@ -413,13 +412,18 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         const maxPoints = this.exercise.maxScore! + this.exercise.bonusPoints! ?? 0.0;
         let totalScore = 0.0;
         let scoreAutomaticTests = 0.0;
+        const gradingInstructions = {}; // { instructionId: noOfEncounters }
 
         feedbacks.forEach((feedback) => {
+            // Check for feedback from automatic tests and store them separately
             if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isStaticCodeAnalysisFeedback(feedback)) {
                 scoreAutomaticTests += feedback.credits!;
             } else {
-                // TODO: Take SGI into account
-                totalScore += feedback.credits!;
+                if (feedback.gradingInstruction) {
+                    this.structuredGradingCriterionService.calculateScoreForGradingInstructions(feedback, totalScore, gradingInstructions);
+                } else {
+                    totalScore += feedback.credits!;
+                }
             }
         });
 
