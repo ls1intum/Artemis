@@ -419,7 +419,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         // re-evaluate
         final var endpoint = ProgrammingExerciseGradingResource.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
         final var response = request.putWithResponseBody(ROOT + endpoint, "{}", Integer.class, HttpStatus.OK);
-        assertThat(response).isEqualTo(6);
+        assertThat(response).isEqualTo(7);
 
         // this fixes an issue with the authentication context after a mock request
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
