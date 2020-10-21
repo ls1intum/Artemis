@@ -6,20 +6,28 @@ Programming Exercise Setup
 - `https://artemis.ase.in.tum.de/#/course-management <https://artemis.ase.in.tum.de/#/course-management>`_
 - Navigate into **Exercises** of your preferred course
 
-    TODO: Add picture
+    .. figure:: programming/course-management-course-dashboard.png
+              :align: center
 
 2. **Generate programming exercise**
 
 - Click on **Generate new programming exercise**
 
-    TODO: Add picture
+    .. figure:: programming/course-management-exercise-dashboard.png
+              :align: center
 
 - Fill out all required values and click on **Generate**
 
-    TODO: Add two pictures
+    .. figure:: programming/create-programming-1.png
+              :align: center
+
+    .. figure:: programming/create-programming-2.png
+              :align: center
 
   Result: **Programming Exercise**
-    TODO: Add picture
+
+    .. figure:: programming/course-dashboard-exercise-programming.png
+              :align: center
 
   Artemis creates the repositories:
 
@@ -32,7 +40,12 @@ Programming Exercise Setup
   - **Template:** also called BASE, basic configuration for the test + template repository, used to create student build plans
   - **Solution:** also called SOLUTION, configuration for the test + solution repository, used to manage test cases and to verify the exercise configuration
 
-  TODO: Add pictures
+  .. figure:: programming/programming-view-1.png
+            :align: center
+  .. figure:: programming/programming-view-2.png
+            :align: center
+  .. figure:: programming/programming-view-2.png
+            :align: center
 
 3. **Update exercise code in repositories**
 
@@ -49,7 +62,8 @@ Programming Exercise Setup
 
   **Edit in Editor**
 
-  TODO: Add picture
+  .. figure:: programming/instructor-editor.png
+            :align: center
 
 - Check the results of the template and the solution build plan
 - They should not have the status **build failed**
@@ -64,20 +78,23 @@ Programming Exercise Setup
 
 5. Adapt the interactive problem statement
 
-  TODO: Add picture
+  .. figure:: programming/course-dashboard-programming-edit.png
+            :align: center
 
 - Click the Edit button of the programming exercise or navigate into Edit in Editor and adapt the interactive problem statement.
 - The initial example shows how to integrate tasks, link tests and integrate interactive UML diagrams
 
-6. Manage test cases
+6. Configure Grading
 
-  TODO: Add picture
+  .. figure:: programming/configure-grading.png
+            :align: center
 
 7. Verify the exercise configuration
 
 - Open the **View** page of the programming exercise
 
-  TODO: Add picture
+    .. figure:: programming/solution-template-result.png
+              :align: center
 
 - The template result should have a score of **0%** with **0 of X passed**
 - The solution result should have a score of **100%** with **X of X passed**
@@ -86,4 +103,5 @@ Programming Exercise Setup
 
   - Below the problem statement, you should see **Test cases** ok and **Hints** ok
 
-  TODO: Add picture
+  .. figure:: programming/programming-edit-status.png
+            :align: center
