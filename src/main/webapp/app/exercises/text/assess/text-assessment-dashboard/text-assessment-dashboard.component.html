@@ -24,7 +24,7 @@
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="language">
-                        <a class="th-link" jhiTranslate="artemisApp.tutorExerciseDashboard.language">Language</a>
+                        <a class="th-link" jhiTranslate="artemisApp.exerciseAssessmentDashboard.language">Language</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="durationInMinutes">
@@ -60,7 +60,7 @@
                     <td>
                         <span *ngIf="submission.result && submission.result.score != null">{{ submission.result.score }} %</span>
                     </td>
-                    <td>{{ 'artemisApp.tutorExerciseDashboard.languages.' + (submission.language || 'UNKNOWN') | translate }}</td>
+                    <td>{{ 'artemisApp.exerciseAssessmentDashboard.languages.' + (submission.language || 'UNKNOWN') | translate }}</td>
                     <td>
                         {{ submission.durationInMinutes }}
                         {{ 'artemisApp.assessment.dashboard.minutes' | translate }}
