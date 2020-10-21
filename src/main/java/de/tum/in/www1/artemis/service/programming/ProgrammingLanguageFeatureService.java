@@ -27,7 +27,13 @@ public class ProgrammingLanguageFeatureService {
                 new ProgrammingLanguageFeature(ProgrammingLanguage.ASSEMBLER, false, false, true, false, false, false, false));
     }
 
-    public ProgrammingLanguageFeature getProgrammingLanguageFeatures(ProgrammingLanguage programmingLanguage) {
+    /**
+     * Get the ProgrammingLanguageFeature configured for the given ProgrammingLanguage.
+     * @param programmingLanguage for which the ProgrammingLanguageFeature should be returned
+     * @return the ProgrammingLanguageFeature for the requested ProgrammingLanguage
+     * @throws IllegalArgumentException if no ProgrammingLanguageFeature for the specified ProgrammingLanguage could be found
+     */
+    public ProgrammingLanguageFeature getProgrammingLanguageFeatures(ProgrammingLanguage programmingLanguage) throws IllegalArgumentException {
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatures.get(programmingLanguage);
 
         if (programmingLanguageFeature == null) {
