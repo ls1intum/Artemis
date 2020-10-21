@@ -12,6 +12,7 @@ import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentatio
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-instructions-editor.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
+import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 
 @NgModule({
     imports: [
@@ -24,6 +25,7 @@ import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/cate
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisMarkdownEditorModule,
         ArtemisCategorySelectorModule,
+        StructuredGradingCriterionModule,
     ],
     declarations: [
         ProgrammingExerciseLifecycleComponent,

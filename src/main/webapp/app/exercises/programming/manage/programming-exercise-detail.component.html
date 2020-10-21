@@ -64,6 +64,10 @@
                     <dd class="editor-outline-background">
                         <span [innerHTML]="gradingInstructions"></span>
                     </dd>
+                    <jhi-structured-grading-instructions-assessment-layout
+                        [readonly]="true"
+                        [criteria]="programmingExercise.gradingCriteria"
+                    ></jhi-structured-grading-instructions-assessment-layout>
                 </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span></dt>
                 <dd>
