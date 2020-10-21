@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.domain.Lecture;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of lecture-content when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = AttachmentUnit.class, name = "attachment"), @JsonSubTypes.Type(value = ExerciseUnit.class, name = "exercise"),
-        @JsonSubTypes.Type(value = HTMLUnit.class, name = "html"), @JsonSubTypes.Type(value = VideoUnit.class, name = "video"), })
+        @JsonSubTypes.Type(value = TextUnit.class, name = "text"), @JsonSubTypes.Type(value = VideoUnit.class, name = "video"), })
 public abstract class LectureUnit extends DomainObject {
 
     @Column(name = "name")
