@@ -22,6 +22,12 @@ public class JiraUserDTO {
 
     private List<String> applicationKeys = new ArrayList<>();
 
+    /**
+     * needed for Jackson
+     */
+    public JiraUserDTO() {
+    }
+
     public JiraUserDTO(String name) {
         this.name = name;
     }

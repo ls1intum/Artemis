@@ -91,7 +91,7 @@ public class JiraRequestMockProvider {
 
     public void mockGetUsernameForEmail(String email, String usernameToBeReturned) throws IOException, URISyntaxException {
         final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/user/search").queryParam("username", email).build().toUri();
-        final var response = List.of(new JiraUserDTO(usernameToBeReturned));
+        final var response = new ArrayList(List.of(new JiraUserDTO(usernameToBeReturned)));
 
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
