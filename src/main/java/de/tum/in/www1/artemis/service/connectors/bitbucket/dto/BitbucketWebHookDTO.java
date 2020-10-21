@@ -9,9 +9,9 @@ public class BitbucketWebHookDTO {
 
     private Integer id;
 
-    private String webHookName;
+    private String name;
 
-    private String notificationUrl;
+    private String url;
 
     private ArrayList<String> events;
 
@@ -23,20 +23,20 @@ public class BitbucketWebHookDTO {
         this.id = id;
     }
 
-    public String getWebHookName() {
-        return webHookName;
+    public String getName() {
+        return name;
     }
 
-    public void setWebHookName(String webHookName) {
-        this.webHookName = webHookName;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getNotificationUrl() {
-        return notificationUrl;
+    public String getUrl() {
+        return url;
     }
 
-    public void setNotificationUrl(String notificationUrl) {
-        this.notificationUrl = notificationUrl;
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     public ArrayList<String> getEvents() {
@@ -53,9 +53,9 @@ public class BitbucketWebHookDTO {
     public BitbucketWebHookDTO() {
     }
 
-    public BitbucketWebHookDTO(String webHookName, String notificationUrl, ArrayList<String> events) {
-        this.webHookName = webHookName;
-        this.notificationUrl = notificationUrl;
+    public BitbucketWebHookDTO(String name, String url, ArrayList<String> events) {
+        this.name = name;
+        this.url = url;
         this.events = events;
     }
 }

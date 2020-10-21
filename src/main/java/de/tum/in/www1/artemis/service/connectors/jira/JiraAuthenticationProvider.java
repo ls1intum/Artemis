@@ -373,7 +373,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public Optional<String> getUsernameForEmail(String email) throws ArtemisAuthenticationException {
         try {
-            ResponseEntity<ArrayList<JiraUserDTO>> authenticationResponse = restTemplate.exchange(jiraUrl + "/rest/api/2/user/search?username=" + email, HttpMethod.GET, null,
+            var authenticationResponse = restTemplate.exchange(jiraUrl + "/rest/api/2/user/search?username=" + email, HttpMethod.GET, null,
                     new ParameterizedTypeReference<ArrayList<JiraUserDTO>>() {
                     });
 

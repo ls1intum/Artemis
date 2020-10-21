@@ -9,7 +9,7 @@ public class BitbucketUserDTO {
 
     private String user;
 
-    private Set<String> group;
+    private Set<String> groups;
 
     public String getUser() {
         return user;
@@ -19,16 +19,16 @@ public class BitbucketUserDTO {
         this.user = username;
     }
 
-    public Set<String> getGroup() {
-        return group;
+    public Set<String> getGroups() {
+        return groups;
     }
 
-    public void setGroup(Set<String> group) {
-        this.group = group;
+    public void setGroups(Set<String> groups) {
+        this.groups = groups;
     }
 
-    public BitbucketUserDTO(String username, Set<String> group) {
+    public BitbucketUserDTO(String username, Set<String> groups) {
         this.user = username;
-        this.group = group;
+        this.groups = groups;
     }
 }
