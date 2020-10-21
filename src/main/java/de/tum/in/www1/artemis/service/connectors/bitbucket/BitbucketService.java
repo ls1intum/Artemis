@@ -585,7 +585,7 @@ public class BitbucketService extends AbstractVersionControlService {
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
         ResponseEntity<BitbucketSearchDTO<BitbucketWebHookDTO>> response;
         try {
-            response = restTemplate.exchange(baseUrl, HttpMethod.GET, null, new ParameterizedTypeReference<BitbucketSearchDTO<BitbucketWebHookDTO>>() {
+            response = restTemplate.exchange(baseUrl, HttpMethod.GET, null, new ParameterizedTypeReference<>() {
             });
         }
         catch (Exception e) {
@@ -599,10 +599,8 @@ public class BitbucketService extends AbstractVersionControlService {
             if (response.getBody() != null && response.getBody().getSize() > 0) {
                 // TODO: BitBucket uses a pagination API to split up the responses, so we might have to check all pages
                 List<BitbucketWebHookDTO> rawWebHooks = response.getBody().getSearchResults();
-                // List<Map<String, Object>> rawWebHooks = (List<Map<String, Object>>) response.getBody().get("values");
                 for (BitbucketWebHookDTO rawWebHook : rawWebHooks) {
                     webHooks.put(rawWebHook.getId(), rawWebHook.getUrl());
-                    // webHooks.put((Integer) rawWebHook.get("id"), (String) rawWebHook.get("url"));
                 }
             }
             return webHooks;
