@@ -247,7 +247,7 @@ public class ProgrammingExerciseResource {
         }
 
         // Static code analysis is only supported for Java at the moment
-        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && programmingLanguageFeature.isStaticCodeAnalysis()) {
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.isStaticCodeAnalysis()) {
             return Optional.of(ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "The static code analysis can only be enabled for Java", "staticCodeAnalysisOnlyAvailableForJava"))
                     .body(null));
@@ -292,8 +292,6 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-
         // Check if max score is set
         if (programmingExercise.getMaxScore() == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
@@ -314,6 +312,8 @@ public class ProgrammingExerciseResource {
         if (programmingExercise.getProgrammingLanguage() == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "No programming language was specified", "programmingLanguageNotSet")).body(null);
         }
+
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
         // Check if package name is set
         if (programmingLanguageFeature.isPackageNameRequired()) {

@@ -44,6 +44,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
+import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 
@@ -73,6 +74,9 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @Autowired
     @Qualifier("staticCodeAnalysisConfiguration")
     private Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
+
+    @Autowired
+    private ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
     private Course course;
 
@@ -211,7 +215,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @EnumSource(ProgrammingLanguage.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
-        boolean staticCodeAnalysisEnabled = programmingLanguage == ProgrammingLanguage.JAVA;
+        boolean staticCodeAnalysisEnabled = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).isStaticCodeAnalysis();
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceExercise.setProgrammingLanguage(programmingLanguage);
