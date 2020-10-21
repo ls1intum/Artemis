@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -238,10 +239,11 @@ public class AssessmentService {
      */
     public Double calculateTotalScore(List<Feedback> assessments) {
         double totalScore = 0.0;
+        var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
 
         for (Feedback feedback : assessments) {
             if (feedback.getGradingInstruction() != null) {
-                totalScore = gradingCriterionService.computeTotalScore(feedback, totalScore);
+                totalScore = gradingCriterionService.computeTotalScore(feedback, totalScore, gradingInstructions);
             }
             else {
                 // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -81,10 +82,11 @@ public class ProgrammingAssessmentService extends AssessmentService {
         double scoreAutomaticTests = 0.0;
         ProgrammingExercise programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
         List<Feedback> assessments = result.getFeedbacks();
+        var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
 
         for (Feedback feedback : assessments) {
             if (feedback.getGradingInstruction() != null) {
-                totalScore = gradingCriterionService.computeTotalScore(feedback, totalScore);
+                totalScore = gradingCriterionService.computeTotalScore(feedback, totalScore, gradingInstructions);
             }
             else {
                 /*

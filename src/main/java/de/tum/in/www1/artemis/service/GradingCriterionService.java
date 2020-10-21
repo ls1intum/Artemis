@@ -54,8 +54,7 @@ public class GradingCriterionService {
      * @param totalScore totalScore which is summed up. Starts from 0.0
      * @return calculated total score from feedback elements set by SGI
      */
-    public double computeTotalScore(Feedback feedback, double totalScore) {
-        var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
+    public double computeTotalScore(Feedback feedback, double totalScore, HashMap<Long, Integer> gradingInstructions) {
         if (gradingInstructions.get(feedback.getGradingInstruction().getId()) != null) {
             // We Encountered this grading instruction before
             var maxCount = feedback.getGradingInstruction().getUsageCount();
