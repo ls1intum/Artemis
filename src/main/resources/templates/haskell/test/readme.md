@@ -31,8 +31,6 @@ You can use the following command to safely test a student's submission on Artem
 stack build --allow-different-user --flag test:Prod && rm -rf solution && rm -rf test && (stack exec test --allow-different-user || exit 0)
 ```
 
-When testing the solution repository, you additionally need to provide the `test:Solution` flag to `stack build`.
-
 ## Updating Dependencies
 
 If you plan to update the stack resolver including its GHC version, you also have to create a new docker image and update the corresponding Bamboo configuration.
