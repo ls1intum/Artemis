@@ -34,12 +34,9 @@ public class BitbucketCloneDTO {
      * Creating a description for the console log
      * @return description with name and project key
      */
+    @Override
     public String toString() {
-        String description = String.format("name=%s", name);
-        if (cloneDetails != null) {
-            description = description + "," + cloneDetails.toString();
-        }
-        return description;
+        return "BitbucketCloneDTO{" + "name='" + name + '\'' + ", cloneDetails=" + cloneDetails.toString() + '}';
     }
 
     public static final class CloneDetailsDTO {
@@ -58,8 +55,9 @@ public class BitbucketCloneDTO {
             this.key = key;
         }
 
+        @Override
         public String toString() {
-            return String.format("project={key=%s}", key);
+            return "CloneDetailsDTO{" + "key='" + key + '\'' + '}';
         }
     }
 }

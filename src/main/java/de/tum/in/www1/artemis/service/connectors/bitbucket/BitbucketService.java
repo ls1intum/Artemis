@@ -581,7 +581,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @return A map of all ids of the WebHooks to the URL they notify.
      * @throws BitbucketException if the request to get the WebHooks failed
      */
-    private Map<Integer, String> getExistingWebHooks(String projectKey, String repositorySlug) throws BitbucketException {
+    private List<BitbucketWebHookDTO> getExistingWebHooks(String projectKey, String repositorySlug) throws BitbucketException {
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
         ResponseEntity<BitbucketSearchDTO<BitbucketWebHookDTO>> response;
         try {
@@ -593,24 +593,16 @@ public class BitbucketService extends AbstractVersionControlService {
             throw new BitbucketException("Error while getting existing WebHooks", e);
         }
 
-        Map<Integer, String> webHooks = new HashMap<>();
-
-        if (response.getStatusCode().equals(HttpStatus.OK)) {
-            if (response.getBody() != null && response.getBody().getSize() > 0) {
-                // TODO: BitBucket uses a pagination API to split up the responses, so we might have to check all pages
-                List<BitbucketWebHookDTO> rawWebHooks = response.getBody().getSearchResults();
-                for (BitbucketWebHookDTO rawWebHook : rawWebHooks) {
-                    webHooks.put(rawWebHook.getId(), rawWebHook.getUrl());
-                }
-            }
-            return webHooks;
+        if (response.getStatusCode().equals(HttpStatus.OK) && response.getBody() != null) {
+            // TODO: BitBucket uses a pagination API to split up the responses, so we might have to check all pages
+            return response.getBody().getSearchResults();
         }
         log.error("Error while getting existing WebHooks for {}-{}: Invalid response", projectKey, repositorySlug);
         throw new BitbucketException("Error while getting existing WebHooks: Invalid response");
     }
 
     private boolean webHookExists(String projectKey, String repositorySlug) {
-        Map<Integer, String> webHooks = getExistingWebHooks(projectKey, repositorySlug);
+        List<BitbucketWebHookDTO> webHooks = getExistingWebHooks(projectKey, repositorySlug);
         return !webHooks.isEmpty();
     }
 
