@@ -168,7 +168,7 @@ public class BitbucketRequestMockProvider {
                 String loginName = user.getLogin();
                 if ((userPrefixEdx.isPresent() && loginName.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && loginName.startsWith((userPrefixU4I.get())))) {
                     if (ltiUserExists) {
-                        mockUserExists((loginName));
+                        mockUserExists(loginName);
                     }
                     else {
                         mockUserDoesNotExist(loginName);

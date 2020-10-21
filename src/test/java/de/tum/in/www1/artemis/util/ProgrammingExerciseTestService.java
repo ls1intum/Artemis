@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -559,7 +560,7 @@ public class ProgrammingExerciseTestService {
         try {
             participationService.startExercise(exercise, team, false);
         }
-        catch (Exception e) {
+        catch (BitbucketException e) {
             assertThat(e.getMessage()).isEqualTo("Error while forking repository");
         }
     }
@@ -585,7 +586,7 @@ public class ProgrammingExerciseTestService {
         try {
             participationService.startExercise(exercise, team, false);
         }
-        catch (Exception e) {
+        catch (BitbucketException e) {
             assertThat(e.getMessage()).isEqualTo("Error while forking repository");
         }
     }
@@ -615,7 +616,7 @@ public class ProgrammingExerciseTestService {
         try {
             participationService.startExercise(exercise, team, false);
         }
-        catch (Exception e) {
+        catch (BitbucketException e) {
             assertThat(e.getMessage()).isEqualTo("Error while giving repository permissions");
         }
     }
