@@ -420,7 +420,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 scoreAutomaticTests += feedback.credits!;
             } else {
                 if (feedback.gradingInstruction) {
-                    this.structuredGradingCriterionService.calculateScoreForGradingInstructions(feedback, totalScore, gradingInstructions);
+                    totalScore = this.structuredGradingCriterionService.calculateScoreForGradingInstructions(feedback, totalScore, gradingInstructions);
                 } else {
                     totalScore += feedback.credits!;
                 }
