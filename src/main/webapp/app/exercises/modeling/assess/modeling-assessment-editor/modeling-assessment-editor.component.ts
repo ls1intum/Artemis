@@ -503,5 +503,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      */
     calculateTotalScore() {
         this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
+        // Cap totalScore to maxPoints
+        const maxPoints = this.modelingExercise!.maxScore! + this.modelingExercise!.bonusPoints! ?? 0.0;
+        if (this.totalScore > maxPoints) {
+            this.totalScore = maxPoints;
+        }
     }
 }

@@ -46,7 +46,12 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     }
 
     protected computeTotalScore(assessments: Feedback[]): number {
-        return this.structuredGradingCriterionService.computeTotalScore(assessments);
+        const maxPoints = this.exercise?.maxScore! + this.exercise?.bonusPoints! ?? 0.0;
+        let totalScore = this.structuredGradingCriterionService.computeTotalScore(assessments);
+        if (totalScore > maxPoints) {
+            totalScore = maxPoints;
+        }
+        return totalScore;
     }
 
     protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
