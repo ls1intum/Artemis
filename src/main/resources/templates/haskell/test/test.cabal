@@ -12,13 +12,6 @@ Flag Prod
   Default: False
   Manual: True
 
--- Set this flag to specify whether the submission is the sample solution or a normal submission.
--- This flag is needed as the solution and template repositories use different file names for their submissions.
-Flag Solution
-  Description: Set to True to test the solution repository submitted as an assignment
-  Default: False
-  Manual: True
-
 -- dependencies for all targets
 common common-all
   default-language: Haskell2010
@@ -40,6 +33,9 @@ common common-tests
     tasty-hunit == 0.*,
     tasty-ant-xml == 1.*,
     solution
+  mixins:
+    -- rename module exported by the solution to avoid a naming conflict
+    solution (Exercise as Solution)
   ghc-options:
     -main-is Test
     -- this flag is necessary as it allows interrupts of non-allocating loops
@@ -56,10 +52,7 @@ library submission
   -- for a description of the flags.
   ghc-options: -fpackage-trust -trust base
   hs-source-dirs: assignment/src
-  if flag(Solution)
-    exposed-modules: Solution
-  else
-    exposed-modules: Exercise
+  exposed-modules: Exercise
 
 -- build the local template
 library template
@@ -77,16 +70,13 @@ library template
 library solution
   import: common-all
   hs-source-dirs: solution/src
-  exposed-modules: Solution
+  exposed-modules: Exercise
 
 -- run tests for a submission
 executable test
   import: common-tests
   build-depends: submission
   main-is: Test.hs
-  if flag(Solution)
-    -- rename the submission's Solution module as the tests expect an Exercise module instead
-    mixins: submission (Solution as Exercise)
 
 -- run tests for local template
 executable test-template
@@ -102,7 +92,7 @@ executable test-solution
   main-is: Test.hs
   mixins:
     -- use solution as both submission and solution
-    solution (Solution as Exercise),
-    solution (Solution as Solution)
+    solution (Exercise as Exercise),
+    solution (Exercise as Solution)
   if flag(Prod)
     buildable: False

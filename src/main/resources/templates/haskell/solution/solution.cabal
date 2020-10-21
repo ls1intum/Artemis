@@ -11,4 +11,4 @@ common common-all
 library
   import: common-all
   hs-source-dirs: src/
-  exposed-modules: Solution
+  exposed-modules: Exercise

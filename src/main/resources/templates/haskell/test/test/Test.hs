@@ -1,7 +1,7 @@
 module Test where
 
-import qualified Interface as Submission
-import qualified Solution
+import qualified Interface as Sub
+import qualified Solution as Sol
 
 import Test.Tasty
 import Test.Tasty.Runners.AntXML 
@@ -23,12 +23,12 @@ prop_scMap sub sol xs = map snd (sub (minBound, maxBound) xs) == map snd (sol (m
 
 scProps :: TestTree
 scProps = localOption (SC.SmallCheckDepth 3) $ testGroup "Checked by SmallCheck" [
-    SC.testProperty "Testing filtering in A" $ prop_scFilter Submission.selectAndReflectA Solution.selectAndReflectA,
-    SC.testProperty "Testing mapping in A" $ prop_scMap Submission.selectAndReflectA Solution.selectAndReflectA,
-    SC.testProperty "Testing filtering in B" $ prop_scFilter Submission.selectAndReflectB Solution.selectAndReflectB,
-    SC.testProperty "Testing mapping in B" $ prop_scMap Submission.selectAndReflectB Solution.selectAndReflectB,
-    SC.testProperty "Testing filtering in C" $ prop_scFilter Submission.selectAndReflectC Solution.selectAndReflectC,
-    SC.testProperty "Testing mapping in C" $ prop_scMap Submission.selectAndReflectC Solution.selectAndReflectC
+    SC.testProperty "Testing filtering in A" $ prop_scFilter Sub.selectAndReflectA Sol.selectAndReflectA,
+    SC.testProperty "Testing mapping in A" $ prop_scMap Sub.selectAndReflectA Sol.selectAndReflectA,
+    SC.testProperty "Testing filtering in B" $ prop_scFilter Sub.selectAndReflectB Sol.selectAndReflectB,
+    SC.testProperty "Testing mapping in B" $ prop_scMap Sub.selectAndReflectB Sol.selectAndReflectB,
+    SC.testProperty "Testing filtering in C" $ prop_scFilter Sub.selectAndReflectC Sol.selectAndReflectC,
+    SC.testProperty "Testing mapping in C" $ prop_scMap Sub.selectAndReflectC Sol.selectAndReflectC
   ]
 
 -- QuickChecks
@@ -38,18 +38,18 @@ prop_qcSampleSolution sub sol interval xs = sub interval xs ?== sol interval xs
 
 qcProps :: TestTree
 qcProps = testGroup "Checked by QuickCheck" [
-    QC.testProperty "Testing A against sample solution" $ prop_qcSampleSolution Submission.selectAndReflectA Solution.selectAndReflectA,
-    QC.testProperty "Testing B against sample solution" $ prop_qcSampleSolution Submission.selectAndReflectB Solution.selectAndReflectB,
-    QC.testProperty "Testing C against sample solution" $ prop_qcSampleSolution Submission.selectAndReflectC Solution.selectAndReflectC
+    QC.testProperty "Testing A against sample solution" $ prop_qcSampleSolution Sub.selectAndReflectA Sol.selectAndReflectA,
+    QC.testProperty "Testing B against sample solution" $ prop_qcSampleSolution Sub.selectAndReflectB Sol.selectAndReflectB,
+    QC.testProperty "Testing C against sample solution" $ prop_qcSampleSolution Sub.selectAndReflectC Sol.selectAndReflectC
   ]
 
 -- UnitTests
 
 unitTests :: TestTree
 unitTests = testGroup "Unit Tests" [
-    testCase "Testing selectAndReflectA (0,0) []" $ Submission.selectAndReflectA (0,0) [] @?= Solution.selectAndReflectA (0,0) [],
-    testCase "Testing selectAndReflectB (0,1) [(0,0)]" $ Submission.selectAndReflectB (0,1) [(0,0)] @?= Solution.selectAndReflectB (0,1) [(0,0)],
-    testCase "Testing selectAndReflectC (0,1) [(-1,-1)]" $ Submission.selectAndReflectC (0,1) [(-1,-1)] @?= Solution.selectAndReflectC (0,1) [(-1,-1)]
+    testCase "Testing selectAndReflectA (0,0) []" $ Sub.selectAndReflectA (0,0) [] @?= Sol.selectAndReflectA (0,0) [],
+    testCase "Testing selectAndReflectB (0,1) [(0,0)]" $ Sub.selectAndReflectB (0,1) [(0,0)] @?= Sol.selectAndReflectB (0,1) [(0,0)],
+    testCase "Testing selectAndReflectC (0,1) [(-1,-1)]" $ Sub.selectAndReflectC (0,1) [(-1,-1)] @?= Sol.selectAndReflectC (0,1) [(-1,-1)]
   ]
 
 -- Final tests wrap up and main

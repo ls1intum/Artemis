@@ -1,4 +1,4 @@
-module Solution where
+module Exercise where
 
 selectAndReflectA :: (Int,Int) -> [(Int,Int)] -> [(Int,Int)]
 selectAndReflectA (i,j) xs = [(x,-y) | (x,y) <- xs, i <= x, x <= j]
