@@ -319,8 +319,8 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether the manual result will be displayed before the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                exercise.getStudentParticipations().iterator().next().setResults(Set
-                        .of(database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
+                exercise.getStudentParticipations().iterator().next().setResults(Set.of(database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC,
+                        ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
             }
             exerciseService.filterForCourseDashboard(exercise, List.copyOf(exercise.getStudentParticipations()), "student1", true);
             // Programming exercises should only have one automatic result
@@ -345,7 +345,8 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add an manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                Result result = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next());
+                Result result = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
+                        exercise.getStudentParticipations().iterator().next());
                 exercise.getStudentParticipations().iterator().next().setResults(Set.of(result));
                 exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().setResult(result);
             }

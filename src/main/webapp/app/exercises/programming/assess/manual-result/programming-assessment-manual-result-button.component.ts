@@ -1,14 +1,14 @@
-import {Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges} from '@angular/core';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {Result} from 'app/entities/result.model';
-import {Subscription} from 'rxjs';
-import {ParticipationWebsocketService} from 'app/overview/participation-websocket.service';
-import {filter} from 'rxjs/operators';
-import {User} from 'app/core/user/user.model';
-import {ButtonSize, ButtonType} from 'app/shared/components/button.component';
-import {AssessmentType} from 'app/entities/assessment-type.model';
-import {ProgrammingExercise} from 'app/entities/programming-exercise.model';
-import {Router} from '@angular/router';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Result } from 'app/entities/result.model';
+import { Subscription } from 'rxjs';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { filter } from 'rxjs/operators';
+import { User } from 'app/core/user/user.model';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-programming-assessment-manual-result',

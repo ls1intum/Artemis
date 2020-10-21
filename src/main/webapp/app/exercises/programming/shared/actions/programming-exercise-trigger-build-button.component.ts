@@ -1,22 +1,19 @@
-import {Component, Input, OnChanges, OnDestroy, SimpleChanges} from '@angular/core';
-import {filter, tap} from 'rxjs/operators';
-import {Subscription} from 'rxjs';
-import {compose, head, orderBy} from 'lodash/fp';
-import {
-    ProgrammingSubmissionService,
-    ProgrammingSubmissionState
-} from 'app/exercises/programming/participate/programming-submission.service';
-import {InitializationState, Participation} from 'app/entities/participation/participation.model';
-import {ButtonSize, ButtonType} from 'app/shared/components/button.component';
-import {ParticipationWebsocketService} from 'app/overview/participation-websocket.service';
-import {hasDeadlinePassed} from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import {Result} from 'app/entities/result.model';
-import {FeatureToggle} from 'app/shared/feature-toggle/feature-toggle.service';
-import {AssessmentType} from 'app/entities/assessment-type.model';
-import {SubmissionType} from 'app/entities/submission.model';
-import {ProgrammingExercise} from 'app/entities/programming-exercise.model';
-import {hasParticipationChanged} from 'app/overview/participation-utils';
-import {JhiAlertService} from 'ng-jhipster';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { filter, tap } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { compose, head, orderBy } from 'lodash/fp';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
+import { InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { hasDeadlinePassed } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { Result } from 'app/entities/result.model';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { SubmissionType } from 'app/entities/submission.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { hasParticipationChanged } from 'app/overview/participation-utils';
+import { JhiAlertService } from 'ng-jhipster';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
