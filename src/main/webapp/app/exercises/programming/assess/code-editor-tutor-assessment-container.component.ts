@@ -423,12 +423,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (scoreAutomaticTests > maxPoints) {
             scoreAutomaticTests = maxPoints;
         }
-
         totalScore += scoreAutomaticTests;
-
+        // Do not allow negative score
         if (totalScore < 0) {
             totalScore = 0;
         }
-        this.totalScore = totalScore;
+        // Cap totalScore to maxPoints
+        if (totalScore > maxPoints) {
+            totalScore = maxPoints;
+        }
+        this.totalScore = +totalScore.toFixed(2);
     }
 }
