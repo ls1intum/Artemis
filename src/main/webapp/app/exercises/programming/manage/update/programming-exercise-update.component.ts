@@ -83,7 +83,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     set selectedProgrammingLanguage(language: ProgrammingLanguage) {
         this.selectedProgrammingLanguageValue = language;
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
-        if (language !== ProgrammingLanguage.JAVA) {
+        if (!this.programmingLanguageFeatureService.getProgrammingLanguageFeature(language).staticCodeAnalysis) {
             this.programmingExercise.staticCodeAnalysisEnabled = false;
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
