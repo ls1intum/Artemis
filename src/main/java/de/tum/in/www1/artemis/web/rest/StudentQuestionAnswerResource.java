@@ -88,6 +88,9 @@ public class StudentQuestionAnswerResource {
         if (!this.authorizationCheckService.isAtLeastStudentInCourse(optionalCourse.get(), user)) {
             return forbidden();
         }
+        if (!studentQuestionAnswer.getQuestion().getCourse().getId().equals(courseId)) {
+            return forbidden();
+        }
         // answer to approved if written by an instructor
         studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(optionalCourse.get(), user));
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
@@ -127,6 +130,9 @@ public class StudentQuestionAnswerResource {
         if (optionalStudentQuestionAnswer.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+        if (!optionalStudentQuestionAnswer.get().getQuestion().getCourse().getId().equals(courseId)) {
+            return forbidden();
+        }
         if (mayUpdateOrDeleteStudentQuestionAnswer(optionalStudentQuestionAnswer.get(), user)) {
             StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
@@ -156,6 +162,12 @@ public class StudentQuestionAnswerResource {
             return forbidden();
         }
         Optional<StudentQuestionAnswer> questionAnswer = studentQuestionAnswerRepository.findById(id);
+        if (questionAnswer.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!questionAnswer.get().getQuestion().getCourse().getId().equals(courseId)) {
+            return forbidden();
+        }
         return ResponseUtil.wrapOrNotFound(questionAnswer);
     }
 
@@ -189,6 +201,9 @@ public class StudentQuestionAnswerResource {
         }
         if (course == null) {
             return ResponseEntity.badRequest().build();
+        }
+        if (!course.getId().equals(courseId)) {
+            return forbidden();
         }
         if (mayUpdateOrDeleteStudentQuestionAnswer(studentQuestionAnswer, user)) {
             log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + studentQuestionAnswer.getAnswerText() + " for " + entity, user.getLogin());
