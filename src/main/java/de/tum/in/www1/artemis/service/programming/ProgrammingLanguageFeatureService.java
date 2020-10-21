@@ -18,9 +18,9 @@ public class ProgrammingLanguageFeatureService {
 
     public ProgrammingLanguageFeatureService() {
         programmingLanguageFeatures.put(ProgrammingLanguage.JAVA, new ProgrammingLanguageFeature(ProgrammingLanguage.JAVA, true, true, true, true, true, true, false));
-        programmingLanguageFeatures.put(ProgrammingLanguage.PYTHON, new ProgrammingLanguageFeature(ProgrammingLanguage.PYTHON, false, false, true, true, true, false, false));
+        programmingLanguageFeatures.put(ProgrammingLanguage.PYTHON, new ProgrammingLanguageFeature(ProgrammingLanguage.PYTHON, true, false, true, true, true, false, false));
         programmingLanguageFeatures.put(ProgrammingLanguage.C, new ProgrammingLanguageFeature(ProgrammingLanguage.C, false, false, true, true, true, false, false));
-        programmingLanguageFeatures.put(ProgrammingLanguage.HASKELL, new ProgrammingLanguageFeature(ProgrammingLanguage.HASKELL, false, false, true, true, false, false, true));
+        programmingLanguageFeatures.put(ProgrammingLanguage.HASKELL, new ProgrammingLanguageFeature(ProgrammingLanguage.HASKELL, true, false, true, true, false, false, true));
         programmingLanguageFeatures.put(ProgrammingLanguage.KOTLIN, new ProgrammingLanguageFeature(ProgrammingLanguage.KOTLIN, true, false, true, false, false, true, false));
         programmingLanguageFeatures.put(ProgrammingLanguage.VHDL, new ProgrammingLanguageFeature(ProgrammingLanguage.VHDL, false, false, true, false, false, false, false));
         programmingLanguageFeatures.put(ProgrammingLanguage.ASSEMBLER,
