@@ -32,13 +32,14 @@ import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
 
 public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    AtheneService atheneService;
-
     @Autowired
     RestTemplate restTemplate;
 
     @Autowired
     TextBlockService textBlockService;
+
+    @Autowired
+    TextAssessmentQueueService textAssessmentQueueService;
 
     @Mock
     TextExerciseRepository textExerciseRepository;
@@ -52,16 +53,23 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Mock
     TextClusterRepository textClusterRepository;
 
-    @Autowired
-    TextAssessmentQueueService textAssessmentQueueService;
+    private final String API_ENDPOINT = "http://localhost/submit";
+
+    AtheneService atheneService;
 
     TextExercise exercise1;
 
-    private final String API_ENDPOINT = "http://localhost/submit";
-
+    /**
+     * Initializes atheneService and example exercise
+     */
     @BeforeEach
     public void init() {
+        // Create atheneService and inject @Value fields
         atheneService = new AtheneService(textSubmissionService, textBlockRepository, textBlockService, textClusterRepository, textExerciseRepository, textAssessmentQueueService);
+        ReflectionTestUtils.setField(atheneService, "ARTEMIS_SERVER_URL", ARTEMIS_SERVER_URL);
+        ReflectionTestUtils.setField(atheneService, "API_ENDPOINT", API_ENDPOINT);
+        String API_SECRET = "YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=";
+        ReflectionTestUtils.setField(atheneService, "API_SECRET", API_SECRET);
 
         // Create example exercise
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
@@ -71,29 +79,29 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         exercise1 = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureTimestamp, course1);
         exercise1.setId(1L);
 
-        // Inject @Value fields to atheneService
-        ReflectionTestUtils.setField(atheneService, "ARTEMIS_SERVER_URL", ARTEMIS_SERVER_URL);
-        ReflectionTestUtils.setField(atheneService, "API_ENDPOINT", API_ENDPOINT);
-        String API_SECRET = "YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=";
-        ReflectionTestUtils.setField(atheneService, "API_SECRET", API_SECRET);
-
         when(textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exercise1.getId())).thenReturn(Optional.ofNullable(exercise1));
     }
 
+    /**
+     * Submits a job to atheneService without any submissions
+     */
     @Test
     public void submitJobWithoutSubmissions() {
         // Catch call of atheneService to the textBlockRepository
         when(textBlockRepository.saveAll(anyIterable())).thenAnswer(invocation -> {
             ArrayList<TextBlock> set = invocation.getArgument(0);
             // Check for correct number of textBlocks
-            assert (set.size() == 0);
+            assert set.size() == 0;
             return set;
         });
 
         atheneService.submitJob(exercise1);
-        assert (!atheneService.isTaskRunning(exercise1.getId()));
+        assert !atheneService.isTaskRunning(exercise1.getId());
     }
 
+    /**
+     * Submits a job to atheneService with less than 10 submissions (will use fallback segmentation without athene)
+     */
     @Test
     public void submitJobWithLessThan10Submissions() {
         // Let textSubmissionService return 9 generated submissions
@@ -103,14 +111,17 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         when(textBlockRepository.saveAll(anyIterable())).thenAnswer(invocation -> {
             ArrayList<TextBlock> set = invocation.getArgument(0);
             // Check for correct number of textBlocks
-            assert (set.size() == 32);
+            assert set.size() == 32;
             return set;
         });
 
         atheneService.submitJob(exercise1);
-        assert (!atheneService.isTaskRunning(exercise1.getId()));
+        assert !atheneService.isTaskRunning(exercise1.getId());
     }
 
+    /**
+     * Submits a job to atheneService with 10 submissions (will trigger athene)
+     */
     @Test
     public void submitJobWith10Submissions() {
         // Let textSubmissionService return 10 generated submissions
@@ -118,7 +129,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         // Inject restTemplate to connector of atheneService
         RemoteArtemisServiceConnector conn = (RemoteArtemisServiceConnector) ReflectionTestUtils.getField(atheneService, "connector");
-        assert (conn != null);
+        assert conn != null;
         ReflectionTestUtils.setField(conn, "restTemplate", restTemplate);
 
         // Create mock server
@@ -127,12 +138,15 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
                 .andRespond(withSuccess("{ \"detail\": \"Submission successful\" }", MediaType.APPLICATION_JSON));
 
         atheneService.submitJob(exercise1);
-        assert (atheneService.isTaskRunning(exercise1.getId()));
+        assert atheneService.isTaskRunning(exercise1.getId());
 
         // Check if mock server received specified requests
         mockServer.verify();
     }
 
+    /**
+     * Tests parseTextBlock of atheneService
+     */
     @Test
     public void parseTextBlocks() {
         // Let textSubmissionService return 10 generated submissions
@@ -140,14 +154,17 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         List<AtheneDTO.TextBlock> blocks = generateTextBlocks(10);
         List<TextBlock> textBlocks = atheneService.parseTextBlocks(blocks, exercise1.getId());
         for (TextBlock t : textBlocks) {
-            assert (t.getId() != null);
-            assert (t.getText() != null);
-            assert (t.getType() == TextBlockType.AUTOMATIC);
-            assert (t.getSubmission() != null);
+            assert t.getId() != null;
+            assert t.getText() != null;
+            assert t.getType() == TextBlockType.AUTOMATIC;
+            assert t.getSubmission() != null;
         }
-        assert (textBlocks.size() == 10);
+        assert textBlocks.size() == 10;
     }
 
+    /**
+     * Tests processResult of atheneService
+     */
     @Test
     public void processResult() {
         // Inject running task into atheneService
@@ -155,7 +172,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         runningAtheneTasks.add(exercise1.getId());
         ReflectionTestUtils.setField(atheneService, "runningAtheneTasks", runningAtheneTasks);
         // Verify injection
-        assert (atheneService.isTaskRunning(exercise1.getId()));
+        assert atheneService.isTaskRunning(exercise1.getId());
 
         // Let textSubmissionService return 10 generated submissions
         when(textSubmissionService.getTextSubmissionsByExerciseId(exercise1.getId(), true, false)).thenReturn(generateSubmissions(10));
@@ -169,10 +186,10 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
             List<TextBlock> set = invocation.getArgument(0);
             // Check for correct number of textBlocks
             if (set instanceof LinkedList) {
-                assert (set.size() == 10);
+                assert set.size() == 10;
             }
             else if (set instanceof ArrayList) {
-                assert (set.size() == 0);
+                assert set.size() == 0;
             }
             return set;
         });
@@ -181,15 +198,20 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         when(textClusterRepository.saveAll(anyIterable())).thenAnswer(invocation -> {
             Collection<TextCluster> clusterCollection = invocation.getArgument(0);
             // Check for correct number of clusters
-            assert (clusterCollection.size() == clusters.size());
+            assert clusterCollection.size() == clusters.size();
             return new ArrayList<>(clusterCollection);
         });
 
         // Call test method
         atheneService.processResult(clusters, blocks, exercise1.getId());
-        assert (!atheneService.isTaskRunning(exercise1.getId()));
+        assert !atheneService.isTaskRunning(exercise1.getId());
     }
 
+    /**
+     * Generates example AtheneDTO TextBlocks
+     * @param count How many blocks should be generated
+     * @return A list containing the generated TextBlocks
+     */
     private List<AtheneDTO.TextBlock> generateTextBlocks(int count) {
         List<AtheneDTO.TextBlock> blocks = new ArrayList<>();
         for (int i = 0; i < count; i++) {
@@ -207,6 +229,10 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         return blocks;
     }
 
+    /**
+     * Generates example TextClusters
+     * @return A Map with the generated TextClusters
+     */
     private Map<Integer, TextCluster> generateClusters() {
         Map<Integer, TextCluster> clusters = new HashMap<>();
         TextCluster c1 = new TextCluster();
@@ -214,9 +240,14 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         return clusters;
     }
 
+    /**
+     * Generates example TextSubmissions
+     * @param count How many submissions should be generated (max. 10)
+     * @return A list containing the generated TextSubmissions
+     */
     private List<TextSubmission> generateSubmissions(int count) {
         // Example texts for submissions
-        String[] submissionTexts = new String[] {
+        String[] submissionTexts = {
                 "Differences: \nAntipatterns: \n-Have one problem and two solutions(one problematic and one refactored)\n-Antipatterns are a sign of bad architecture and bad coding \nPattern:\n-Have one problem and one solution\n-Patterns are a sign of elaborated architecutre and coding",
                 "The main difference between patterns and antipatterns is, that patterns show you a good way to do something and antipatterns show a bad way to do something. Nevertheless patterns may become antipatterns in the course of changing understanding of how good software engineering looks like. One example for that is functional decomposition, which used to be a pattern and \"good practice\". Over the time it turned out that it is not a goog way to solve problems, so it became a antipattern.\n\nA pattern itsself is a proposed solution to a problem that occurs often and in different situations.\nIn contrast to that a antipattern shows commonly made mistakes when dealing with a certain problem. Nevertheless a refactored solution is aswell proposed.",
                 "1.Patterns can evolve into Antipatterns when change occurs\\n2. Pattern has one solution, whereas anti pattern can have subtypes of solution\\n3. Antipattern has negative consequences and symptom, where as patterns looks only into benefits and consequences",
