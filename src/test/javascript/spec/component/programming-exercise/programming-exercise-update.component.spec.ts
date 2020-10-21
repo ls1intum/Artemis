@@ -7,7 +7,7 @@ import * as moment from 'moment';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -17,6 +17,10 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import {
+    ProgrammingLanguageFeature,
+    ProgrammingLanguageFeatureService,
+} from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 
 describe('ProgrammingExercise Management Update Component', () => {
     let comp: ProgrammingExerciseUpdateComponent;
@@ -24,6 +28,7 @@ describe('ProgrammingExercise Management Update Component', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let courseService: CourseManagementService;
     let exerciseGroupService: ExerciseGroupService;
+    let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -44,6 +49,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
         courseService = fixture.debugElement.injector.get(CourseManagementService);
         exerciseGroupService = fixture.debugElement.injector.get(ExerciseGroupService);
+        programmingExerciseFeatureService = fixture.debugElement.injector.get(ProgrammingLanguageFeatureService);
     });
 
     describe('save', () => {
@@ -115,6 +121,17 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
             spyOn(exerciseGroupService, 'find').and.returnValue(of(new HttpResponse({ body: exerciseGroup })));
+            const programmingLanguageFeature: ProgrammingLanguageFeature = {
+                programmingLanguage: ProgrammingLanguage.JAVA,
+                sequentialTestRuns: true,
+                staticCodeAnalysis: true,
+                bambooBuildSupported: true,
+                jenkinsBuildSupported: true,
+                plagiarismCheckSupported: true,
+                packageNameRequired: true,
+                checkoutSolutionRepositoryAllowed: true,
+            };
+            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(of(programmingLanguageFeature));
 
             // WHEN
             comp.ngOnInit();
@@ -145,6 +162,17 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should not be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
             spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
+            const programmingLanguageFeature: ProgrammingLanguageFeature = {
+                programmingLanguage: ProgrammingLanguage.JAVA,
+                sequentialTestRuns: true,
+                staticCodeAnalysis: true,
+                bambooBuildSupported: true,
+                jenkinsBuildSupported: true,
+                plagiarismCheckSupported: true,
+                packageNameRequired: true,
+                checkoutSolutionRepositoryAllowed: true,
+            };
+            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(of(programmingLanguageFeature));
 
             // WHEN
             comp.ngOnInit();
