@@ -125,7 +125,8 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ value.format('MMMM Do YYYY, h:mm:ss a') }}
+                        <!-- TODO: Had to Remove Date Pipe as UI did not update when sorting. Investigate the reason -->
+                        {{ value.format('MMM DD YYYY, HH:mm:ss') }}
                     </ng-template>
                 </ngx-datatable-column>
 

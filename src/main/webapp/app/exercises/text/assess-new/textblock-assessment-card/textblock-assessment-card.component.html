@@ -7,9 +7,10 @@
     (click)="select()"
     [class.text-with-feedback]="!!textBlockRef.feedback"
     [class.active]="selected"
-    [class.positive-feedback]="textBlockRef.feedback?.credits! > 0"
-    [class.negative-feedback]="textBlockRef.feedback?.credits! < 0"
-    [class.neutral-feedback]="textBlockRef.feedback?.credits === 0"
+    [class.positive-feedback]="textBlockRef.feedback?.credits! > 0 && !conflictMode"
+    [class.negative-feedback]="textBlockRef.feedback?.credits! < 0 && !conflictMode"
+    [class.neutral-feedback]="!conflictMode ? textBlockRef.feedback?.credits === 0 : !isConflictingFeedback"
+    [class.conflicting-feedback]="isConflictingFeedback"
 ></span>
 <!-- Display Feedback Editor -->
 <jhi-textblock-feedback-editor
@@ -21,6 +22,12 @@
     (onFocus)="select(false)"
     (close)="unselect()"
     (feedbackChange)="feedbackDidChange()"
+    (onConflictsClicked)="onConflictsClicked.emit($event)"
     [disableEditScore]="disableEditScore"
     [readOnly]="readOnly"
+    [isConflictingFeedback]="isConflictingFeedback"
+    [conflictType]="conflictType"
+    [conflictMode]="conflictMode"
+    [isLeftConflictingFeedback]="isLeftConflictingFeedback"
+    [isSelectedConflict]="conflictMode && isConflictingFeedback && !isLeftConflictingFeedback && selected"
 ></jhi-textblock-feedback-editor>

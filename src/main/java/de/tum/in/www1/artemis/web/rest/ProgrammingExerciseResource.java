@@ -35,6 +35,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -95,6 +96,8 @@ public class ProgrammingExerciseResource {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
+    private final GradingCriterionService gradingCriterionService;
+
     private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
     /**
@@ -109,7 +112,8 @@ public class ProgrammingExerciseResource {
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
-            ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingLanguageFeatureService programmingLanguageFeatureService) {
+            ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionService gradingCriterionService,
+            ProgrammingLanguageFeatureService programmingLanguageFeatureService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -123,6 +127,7 @@ public class ProgrammingExerciseResource {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.exerciseGroupService = exerciseGroupService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
+        this.gradingCriterionService = gradingCriterionService;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
     }
 
@@ -673,6 +678,10 @@ public class ProgrammingExerciseResource {
             return notFound();
         }
         ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
+
+        // Fetch grading criterion into exercise of participation
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        programmingExercise.setGradingCriteria(gradingCriteria);
 
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
         if (programmingExercise.hasExerciseGroup()) {

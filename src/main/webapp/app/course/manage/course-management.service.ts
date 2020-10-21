@@ -156,7 +156,7 @@ export class CourseManagementService {
     }
 
     /**
-     * returns the course with the provided unique identifier for the tutor dashboard
+     * returns the course with the provided unique identifier for the assessment dashboard
      * @param courseId - the id of the course
      */
     getCourseWithInterestingExercisesForTutors(courseId: number): Observable<EntityResponseType> {
@@ -167,7 +167,7 @@ export class CourseManagementService {
     }
 
     /**
-     * returns the stats of the course with the provided unique identifier for the tutor dashboard
+     * returns the stats of the course with the provided unique identifier for the assessment dashboard
      * @param courseId - the id of the course
      */
     getStatsForTutors(courseId: number): Observable<HttpResponse<StatsForDashboard>> {
