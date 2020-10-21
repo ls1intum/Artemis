@@ -371,8 +371,7 @@ public class ProgrammingExerciseGradingService {
 
         double codeAnalysisPenaltyPoints = 0;
 
-        var feedbackByCategory = staticCodeAnalysisFeedback.stream()
-                .collect(Collectors.groupingBy(feedback -> feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length())));
+        var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(Feedback::getStaticCodeAnalysisCategory));
 
         for (var category : staticCodeAnalysisService.findByExerciseId(programmingExercise.getId())) {
 
