@@ -13,6 +13,8 @@ import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess-new/manual-textblock-selection/manual-textblock-selection.component';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
+import { TextFeedbackConflictsComponent } from 'app/exercises/text/assess-new/conflicts/text-feedback-conflicts.component';
+import { TextFeedbackConflictsHeaderComponent } from 'app/exercises/text/assess-new/conflicts/conflicts-header/text-feedback-conflicts-header.component';
 
 const ENTITY_STATES = [...textSubmissionAssessmentRoutes];
 
@@ -32,6 +34,8 @@ const ENTITY_STATES = [...textSubmissionAssessmentRoutes];
         TextblockAssessmentCardComponent,
         TextblockFeedbackEditorComponent,
         ManualTextblockSelectionComponent,
+        TextFeedbackConflictsComponent,
+        TextFeedbackConflictsHeaderComponent,
     ],
 })
 export class ArtemisTextSubmissionAssessmentModule {}

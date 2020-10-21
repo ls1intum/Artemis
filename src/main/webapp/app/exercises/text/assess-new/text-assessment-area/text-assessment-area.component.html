@@ -4,9 +4,14 @@
         [textBlockRef]="ref"
         [selected]="selectedRef === ref"
         [readOnly]="readOnly"
-        (didSelect)="selectedRef = $event"
+        [isConflictingFeedback]="isConflictingFeedbackMap?.get(ref)"
+        [conflictType]="conflictTypeMap?.get(ref)"
+        [conflictMode]="conflictMode"
+        [isLeftConflictingFeedback]="isLeftConflictingFeedback"
+        (didSelect)="didSelectRef($event)"
         (didChange)="textBlockRefsChangeEmit()"
         (didDelete)="removeTextBlockRef($event)"
+        (onConflictsClicked)="onConflictsClicked.emit($event)"
     ></jhi-textblock-assessment-card>
 </ng-container>
 <ng-template #manualTextBlockSelection>
