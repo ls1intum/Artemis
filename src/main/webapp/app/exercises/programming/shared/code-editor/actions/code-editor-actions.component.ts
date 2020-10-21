@@ -98,13 +98,15 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
      * @param changes
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.editorState && changes.editorState.previousValue === EditorState.SAVING && this.commitState === CommitState.COMMITTING) {
-            if (changes.editorState.currentValue === EditorState.CLEAN) {
-                this.commitState = CommitState.CLEAN;
-            } else {
-                this.commitState = CommitState.UNCOMMITTED_CHANGES;
+        setTimeout(() => {
+            if (changes.editorState && changes.editorState.previousValue === EditorState.SAVING && this.commitState === CommitState.COMMITTING) {
+                if (changes.editorState.currentValue === EditorState.CLEAN) {
+                    this.commitState = CommitState.CLEAN;
+                } else {
+                    this.commitState = CommitState.UNCOMMITTED_CHANGES;
+                }
             }
-        }
+        });
     }
 
     ngOnDestroy(): void {

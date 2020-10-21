@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
 import { TranslateModule } from '@ngx-translate/core';
@@ -268,7 +268,7 @@ describe('CodeEditorActionsComponent', () => {
         expect(commitButton.nativeElement.disabled).to.be.false;
     });
 
-    it('should not commit if unsavedFiles exist, instead should save files with commit set to true', () => {
+    it('should not commit if unsavedFiles exist, instead should save files with commit set to true', fakeAsync(() => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
         const saveObservable = new Subject<null>();
         const saveChangedFilesStub = stub(comp, 'saveChangedFiles');
@@ -301,10 +301,15 @@ describe('CodeEditorActionsComponent', () => {
             editorState: new SimpleChange(EditorState.SAVING, EditorState.CLEAN, true),
         });
 
+        tick();
+
         expect(comp.isBuilding).to.be.true;
         expect(comp.commitState).to.equal(CommitState.CLEAN);
 
         fixture.detectChanges();
         expect(commitButton.nativeElement.disabled).to.be.false;
-    });
+
+        fixture.destroy();
+        flush();
+    }));
 });
