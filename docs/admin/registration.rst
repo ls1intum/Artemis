@@ -1,3 +1,6 @@
+User Registration
+=================
+
 Artemis supports user registration based on the Jhipster template.
 User registration has to be enabled in one ``application-*.yml`` file and can be customized.
 

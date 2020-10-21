@@ -8,7 +8,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { User } from 'app/core/user/user.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-team',
@@ -30,7 +30,7 @@ export class TeamComponent implements OnInit {
 
     constructor(
         private route: ActivatedRoute,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private exerciseService: ExerciseService,
         private teamService: TeamService,
         private accountService: AccountService,

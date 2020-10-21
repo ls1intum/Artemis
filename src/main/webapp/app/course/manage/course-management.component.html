@@ -41,16 +41,16 @@
                         <span>{{ 'artemisApp.course.accessGroups' | translate }}</span>
                     </th>
                     <th jhiSortBy="startDate">
-                        <span>{{ 'artemisApp.course.startDate' | translate }}</span
-                        ><fa-icon [icon]="'sort'"></fa-icon>
+                        <span>{{ 'artemisApp.course.startDate' | translate }}</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="endDate">
-                        <span>{{ 'artemisApp.course.endDate' | translate }}</span
-                        ><fa-icon [icon]="'sort'"></fa-icon>
+                        <span>{{ 'artemisApp.course.endDate' | translate }}</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="onlineCourse">
-                        <span>{{ 'artemisApp.course.onlineCourse' | translate }}</span
-                        ><fa-icon [icon]="'sort'"></fa-icon>
+                        <span>{{ 'artemisApp.course.onlineCourse.title' | translate }}</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="presentationScore">
                         <span>{{ 'artemisApp.course.presentationScoreEnabled.title' | translate }}</span>
@@ -176,7 +176,7 @@
                                         [class.guided-tour]="course === courseForGuidedTour"
                                     >
                                         <fa-icon [icon]="'th-list'"></fa-icon>
-                                        <span class="d-none d-md-inline">{{ 'entity.action.tutorCourseDashboard' | translate }}</span>
+                                        <span class="d-none d-md-inline">{{ 'entity.action.assessmentDashboard' | translate }}</span>
                                     </button>
                                     <button
                                         type="submit"

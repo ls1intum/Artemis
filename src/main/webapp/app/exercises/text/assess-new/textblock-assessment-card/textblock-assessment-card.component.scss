@@ -46,6 +46,16 @@ span {
                 text-decoration-color: #1a1a1a;
             }
         }
+
+        &.conflicting-feedback {
+            color: #1a1a1a;
+            background-color: #ffd20a;
+
+            &.active {
+                text-decoration-style: dashed;
+                text-decoration-color: #1a1a1a;
+            }
+        }
     }
 }
 

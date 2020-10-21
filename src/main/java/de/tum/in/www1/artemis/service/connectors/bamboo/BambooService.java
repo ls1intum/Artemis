@@ -50,6 +50,7 @@ import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.FeedbackService;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 
@@ -81,9 +82,11 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final ObjectMapper mapper;
 
+    private final UrlService urlService;
+
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackService feedbackService,
-            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, ObjectMapper mapper) {
+            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, ObjectMapper mapper, UrlService urlService) {
         this.gitService = gitService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
@@ -92,47 +95,13 @@ public class BambooService implements ContinuousIntegrationService {
         this.feedbackService = feedbackService;
         this.restTemplate = restTemplate;
         this.mapper = mapper;
+        this.urlService = urlService;
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, URL sourceCodeRepositoryURL, URL testRepositoryURL) {
-        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, getRepositorySlugFromUrl(sourceCodeRepositoryURL),
-                getRepositorySlugFromUrl(testRepositoryURL));
-    }
-
-    /**
-     * TODO: this method is not ideal here, but should als not be static in some util class. Think about improving the passing of URL arguments with slugs between
-     * programming exercise generation and the CI services (BambooService and JenkinsService) who need to handle these
-     *
-     * Gets the repository slug from the given URL
-     *
-     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
-     * @return The repository slug
-     */
-    public String getRepositorySlugFromUrl(URL repositoryUrl) {
-        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        String[] urlParts = repositoryUrl.getFile().split("/");
-        String repositorySlug = urlParts[urlParts.length - 1];
-        if (repositorySlug.endsWith(".git")) {
-            repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
-        }
-        else {
-            throw new IllegalArgumentException("No repository slug could be found");
-        }
-
-        return repositorySlug;
-    }
-
-    /**
-     * Parse the project key from the repoUrl of the given repositoryUrl.
-     *
-     * @param repositoryUrl of the repo on the VCS server.
-     * @return the project key that was parsed.
-     */
-    // TODO: this method has moved to BitbucketService, but missed the toUpperCase() there, so we reactivated it here
-    public String getProjectKeyFromUrl(URL repositoryUrl) {
-        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        return repositoryUrl.getFile().split("/")[2].toUpperCase();
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, URL sourceCodeRepositoryURL, URL testRepositoryURL, URL solutionRepositoryURL) {
+        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromUrl(sourceCodeRepositoryURL),
+                urlService.getRepositorySlugFromUrl(testRepositoryURL), urlService.getRepositorySlugFromUrl(solutionRepositoryURL));
     }
 
     @Override
@@ -141,7 +110,7 @@ public class BambooService implements ContinuousIntegrationService {
         URL repositoryUrl = participation.getRepositoryUrlAsUrl();
         String planProject = getProjectKeyFromBuildPlanId(buildPlanId);
         String planKey = participation.getBuildPlanId();
-        updatePlanRepository(planProject, planKey, ASSIGNMENT_REPO_NAME, getProjectKeyFromUrl(repositoryUrl), repositoryUrl.toString(), Optional.empty());
+        updatePlanRepository(planProject, planKey, ASSIGNMENT_REPO_NAME, urlService.getProjectKeyFromUrl(repositoryUrl), repositoryUrl.toString(), Optional.empty());
         enablePlan(planProject, planKey);
     }
 

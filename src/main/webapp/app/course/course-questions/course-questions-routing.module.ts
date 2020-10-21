@@ -9,7 +9,7 @@ const routes: Routes = [
         component: CourseQuestionsComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'artemisApp.tutorCourseDashboard.home.title',
+            pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

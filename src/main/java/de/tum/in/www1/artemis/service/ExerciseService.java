@@ -356,7 +356,7 @@ public class ExerciseService {
     }
 
     /**
-     * Calculates the number of unevaluated complaints and feedback requests for tutor dashboard participation graph
+     * Calculates the number of unevaluated complaints and feedback requests for assessment dashboard participation graph
      *
      * @param examMode should be set to ignore the test run submissions
      * @param exercise the exercise for which the number of unevaluated complaints should be calculated
