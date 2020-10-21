@@ -30,6 +30,14 @@ public class BitbucketCloneDTO {
         this.cloneDetails = cloneDetails;
     }
 
+    public String toString() {
+        String description = String.format("name=%s", name);
+        if (cloneDetails != null) {
+            description = description + "," + cloneDetails.toString();
+        }
+        return description;
+    }
+
     public static final class CloneDetailsDTO {
 
         private String key;
@@ -44,6 +52,10 @@ public class BitbucketCloneDTO {
 
         public void setKey(String key) {
             this.key = key;
+        }
+
+        public String toString() {
+            return String.format("project={key=%s}", key);
         }
     }
 }

@@ -85,7 +85,7 @@ public class BitbucketRequestMockProvider {
     public void mockCreateProjectForExercise(ProgrammingExercise exercise) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var projectName = exercise.getProjectName();
-        final var body = Map.of("key", projectKey, "name", projectName);
+        final var body = new BitbucketProjectDTO(projectKey, projectName);
 
         mockServer.expect(ExpectedCount.once(), requestTo(bitbucketServerUrl + "/rest/api/latest/projects")).andExpect(method(HttpMethod.POST))
                 .andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
@@ -107,7 +107,7 @@ public class BitbucketRequestMockProvider {
 
     public void mockCreateRepository(ProgrammingExercise exercise, String repositoryName) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
-        final var body = Map.of("name", repositoryName);
+        final var body = new BitbucketRepositoryDTO(repositoryName);
         final var createRepoPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/repos");
 
         mockServer.expect(requestTo(createRepoPath.build().toUri())).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(body)))
@@ -116,7 +116,7 @@ public class BitbucketRequestMockProvider {
 
     public void mockAddWebHooks(ProgrammingExercise exercise) throws IOException {
         final var projectKey = exercise.getProjectKey();
-        final var searchResult = new BitbucketSearchDTO<BitbucketProjectDTO>();
+        final var searchResult = new BitbucketSearchDTO<BitbucketWebHookDTO>();
         searchResult.setSize(0);
         searchResult.setSearchResults(new ArrayList<>());
 
@@ -275,19 +275,21 @@ public class BitbucketRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(searchResults)));
     }
 
-    public void mockGetExistingWebhooks(String projectKey, String repositoryName) throws URISyntaxException {
+    public void mockGetExistingWebhooks(String projectKey, String repositoryName) throws URISyntaxException, JsonProcessingException {
         final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").pathSegment(projectKey).path("repos").pathSegment(repositoryName)
                 .path("webhooks").build().toUri();
-        final var existingHooks = "{\"values\": []}";
+        final var searchResult = new BitbucketSearchDTO<BitbucketWebHookDTO>();
+        searchResult.setSize(0);
+        searchResult.setSearchResults(new ArrayList<>());
 
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).body(existingHooks).contentType(MediaType.APPLICATION_JSON));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(searchResult)).contentType(MediaType.APPLICATION_JSON));
     }
 
     public void mockAddWebhook(String projectKey, String repositoryName, String url) throws JsonProcessingException, URISyntaxException {
         final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").pathSegment(projectKey).path("repos").pathSegment(repositoryName)
                 .path("webhooks").build().toUri();
-        final var body = Map.of("name", "Artemis WebHook", "url", url, "events", List.of("repo:refs_changed"));
-
+        final var body = new BitbucketWebHookDTO("Artemis WebHook", url, new ArrayList<>(List.of("repo:refs_changed")));
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
     }
