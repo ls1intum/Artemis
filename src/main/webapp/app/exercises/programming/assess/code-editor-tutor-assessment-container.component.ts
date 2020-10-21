@@ -29,6 +29,8 @@ import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util'
 import { Course } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { now } from 'moment';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -86,6 +88,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private translateService: TranslateService,
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
+        private structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -415,6 +418,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isStaticCodeAnalysisFeedback(feedback)) {
                 scoreAutomaticTests += feedback.credits!;
             } else {
+                // TODO: Take SGI into account
                 totalScore += feedback.credits!;
             }
         });
