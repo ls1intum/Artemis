@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -31,6 +32,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 
 @Component
@@ -46,6 +48,9 @@ public class BitbucketRequestMockProvider {
     private final RestTemplate restTemplate;
 
     private final ObjectMapper mapper = new ObjectMapper();
+
+    @Autowired
+    private UrlService urlService;
 
     private MockRestServiceServer mockServer;
 
@@ -179,33 +184,11 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockRepositoryUrlIsValid(final URL repositoryUrl, final String projectKey, final boolean isValid) throws URISyntaxException {
-        final var repositoryName = getRepositorySlugFromUrl(repositoryUrl);
+        final var repositoryName = urlService.getRepositorySlugFromUrl(repositoryUrl);
         final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).pathSegment("repos")
                 .pathSegment(repositoryName).build().toUri();
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(isValid ? HttpStatus.OK : HttpStatus.BAD_REQUEST));
-    }
-
-    /**
-     * TODO: this method is currently copied from BambooService for testing purposes. Think about how to properly reuse this method while allowing it to be mocked during testing
-     *
-     * Gets the repository slug from the given URL
-     *
-     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
-     * @return The repository slug
-     */
-    public String getRepositorySlugFromUrl(URL repositoryUrl) {
-        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        String[] urlParts = repositoryUrl.getFile().split("/");
-        String repositorySlug = urlParts[urlParts.length - 1];
-        if (repositorySlug.endsWith(".git")) {
-            repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
-        }
-        else {
-            throw new IllegalArgumentException("No repository slug could be found");
-        }
-
-        return repositorySlug;
     }
 
     /**

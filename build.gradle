@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.6.3"
+version = "4.6.4"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -143,8 +143,8 @@ jacocoTestCoverageVerification {
             limit {
                 counter = "LINE"
                 value = "COVEREDRATIO"
-                // TODO: in the future the following value should become at least 0.80
-                minimum = 0.79
+                // TODO: in the future the following value should become at least 0.90
+                minimum = 0.80
             }
         }
     }

@@ -24,6 +24,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { now } from 'moment';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -71,6 +72,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         private location: Location,
         private translateService: TranslateService,
         private complaintService: ComplaintService,
+        private structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -500,6 +502,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * and instead set the score boundaries on the server.
      */
     calculateTotalScore() {
-        this.totalScore = (this.feedback || []).reduce((totalScore, feedback) => totalScore + feedback.credits!, 0);
+        this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
     }
 }

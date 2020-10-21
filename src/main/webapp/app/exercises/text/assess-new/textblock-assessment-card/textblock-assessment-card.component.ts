@@ -3,6 +3,7 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/textblock-feedback-editor/textblock-feedback-editor.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { TextBlockType } from 'app/entities/text-block.model';
+import { FeedbackConflictType } from 'app/entities/feedback-conflict';
 
 type OptionalTextBlockRef = TextBlockRef | null;
 
@@ -15,19 +16,38 @@ export class TextblockAssessmentCardComponent {
     @Input() textBlockRef: TextBlockRef;
     @Input() selected = false;
     @Input() readOnly: boolean;
+    @Input() isConflictingFeedback: boolean;
+    @Input() conflictMode: boolean;
+    @Input() conflictType?: FeedbackConflictType;
+    @Input() isLeftConflictingFeedback: boolean;
     @Output() didSelect = new EventEmitter<OptionalTextBlockRef>();
     @Output() didChange = new EventEmitter<TextBlockRef>();
     @Output() didDelete = new EventEmitter<TextBlockRef>();
+    @Output() onConflictsClicked = new EventEmitter<number>();
     @ViewChild(TextblockFeedbackEditorComponent) feedbackEditor: TextblockFeedbackEditorComponent;
     disableEditScore = false;
+
+    private get isSelectableConflict(): boolean {
+        return this.conflictMode && this.isConflictingFeedback && !this.isLeftConflictingFeedback;
+    }
 
     constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     /**
      * Select a text block
+     * If it is conflict mode and this text block is already selected, then send null block to unselect it.
      * @param {boolean} autofocus - Enable autofocus (defaults to true)
      */
     select(autofocus = true): void {
+        if (this.readOnly && !this.isSelectableConflict) {
+            return;
+        }
+
+        if (this.isSelectableConflict && this.selected) {
+            this.didSelect.emit(null);
+            return;
+        }
+
         this.didSelect.emit(this.textBlockRef);
         this.textBlockRef.initFeedback();
 
