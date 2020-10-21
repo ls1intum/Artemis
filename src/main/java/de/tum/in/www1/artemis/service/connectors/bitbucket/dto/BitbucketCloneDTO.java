@@ -30,6 +30,10 @@ public class BitbucketCloneDTO {
         this.cloneDetails = cloneDetails;
     }
 
+    /**
+     * Creating a description for the console log
+     * @return description with name and project key
+     */
     public String toString() {
         String description = String.format("name=%s", name);
         if (cloneDetails != null) {
