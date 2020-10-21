@@ -3,21 +3,29 @@ name: test
 version: 0.1
 build-type: Simple
 
+-- Set this flag when building on the Artemis production server.
+-- This flag is needed as cabal tries to build all specified libraries
+-- even though some of them are not needed to run the executable
+-- and in our case are not even available on the server.
 Flag Prod
-  Description: Enable production mode
+  Description: Enable production mode to avoid compilation of unneeded libraries
   Default: False
   Manual: True
 
+-- Set this flag to specify whether the submission is the sample solution or a normal submission.
+-- This flag is needed as the solution and template repositories use different file names for their submissions.
 Flag Solution
-  Description: Set to True to test solution submitted as an assignment
+  Description: Set to True to test the solution repository submitted as an assignment
   Default: False
   Manual: True
 
+-- dependencies for all targets
 common common-all
   default-language: Haskell2010
   build-depends:
     base == 4.*
 
+-- dependencies for test targets
 common common-tests
   import: common-all
   hs-source-dirs: test
@@ -34,15 +42,18 @@ common common-tests
     solution
   ghc-options:
     -main-is Test
-    -- necessary to allow interrupts of non-allocating loops
+    -- this flag is necessary as it allows interrupts of non-allocating loops
     -- https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/bugs.html#bugs-in-ghc
     -fno-omit-yields
 
--- build a normal submission
+-- build a submission
 library submission
   import: common-all
-  -- Safe Haskell mode; disallow unsafe features
+  -- enables safe Haskell mode; that is, disallow unsafe features -- see https://wiki.haskell.org/Safe_Haskell
   default-extensions: Safe
+  -- The base package by Haskell can be trusted.
+  -- See https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/safe_haskell.html#package-trust
+  -- for a description of the flags.
   ghc-options: -fpackage-trust -trust base
   hs-source-dirs: assignment/src
   if flag(Solution)
@@ -50,12 +61,12 @@ library submission
   else
     exposed-modules: Exercise
 
--- build the template
+-- build the local template
 library template
   import: common-all
   -- There is no template folder on the production server, but cabal tries to build all executables
-  -- without exception (https://github.com/commercialhaskell/stack/issues/3486). We hence disable
-  -- the build explicitly with a flag.
+  -- without exception (https://github.com/commercialhaskell/stack/issues/3486).
+  -- We hence disable the build explicitly with a flag.
   if flag(Prod)
     buildable: False
   else
@@ -74,10 +85,10 @@ executable test
   build-depends: submission
   main-is: Test.hs
   if flag(Solution)
-    -- rename the solution module so that it can be picked up by the interface
+    -- rename the submission's Solution module as the tests expect an Exercise module instead
     mixins: submission (Solution as Exercise)
 
--- run tests for template (locally)
+-- run tests for local template
 executable test-template
   import: common-tests
   build-depends: template
@@ -85,14 +96,13 @@ executable test-template
   if flag(Prod)
     buildable: False
 
--- run tests for solution (locally)
+-- run tests for solution locally
 executable test-solution
   import: common-tests
   main-is: Test.hs
   mixins:
-    -- use solution as both, submission and solution
+    -- use solution as both submission and solution
     solution (Solution as Exercise),
     solution (Solution as Solution)
   if flag(Prod)
     buildable: False
-
