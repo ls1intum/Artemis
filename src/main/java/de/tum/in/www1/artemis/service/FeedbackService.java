@@ -7,6 +7,7 @@ import static java.util.stream.Collectors.toMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -31,6 +32,8 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 public class FeedbackService {
 
     public static final String DEFAULT_FILEPATH = "notAvailable";
+
+    private static final Pattern JVM_RESULT_MESSAGE_MATCHER = prepareJVMResultMessageMatcher(List.of("java.lang.AssertionError", "org.opentest4j.AssertionFailedError"));
 
     private final Logger log = LoggerFactory.getLogger(FeedbackService.class);
 
@@ -140,19 +143,7 @@ public class FeedbackService {
      */
     private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final String message) {
         if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
-            // Replace all Junit Prefixes:
-            // if it is the first line of the feedback, do not add empty newline at the start;
-            // otherwise, insert additional newline to visually separate different exceptions.
-            final boolean[] isFirst = { true };
-            return message.trim().lines().map(line -> {
-                String replaceBy = isFirst[0] ? "" : "\n";
-                isFirst[0] = false;
-                return line
-                        // junit 4
-                        .replace("java.lang.AssertionError: ", replaceBy)
-                        // junit 5
-                        .replace("org.opentest4j.AssertionFailedError: ", replaceBy);
-            }).collect(Collectors.joining("\n"));
+            return JVM_RESULT_MESSAGE_MATCHER.matcher(message.trim()).replaceAll("");
         }
 
         return message;
@@ -173,5 +164,20 @@ public class FeedbackService {
             return sourcePath;
         }
         return sourcePath.substring(workingDirectoryStart + Constants.ASSIGNMENT_DIRECTORY.length());
+    }
+
+    /**
+     * Builds the regex used in {@link #processResultErrorMessage(ProgrammingLanguage, String)} on results from JVM languages.
+     *
+     * @param jvmExceptionsToFilter Exceptions at the start of lines that should be filtered out in the processing step
+     * @return A regex that can be used to process result messages
+     */
+    private static Pattern prepareJVMResultMessageMatcher(List<String> jvmExceptionsToFilter) {
+        // Replace all "." with "\\." and join with regex alternative symbol "|"
+        String assertionRegex = jvmExceptionsToFilter.stream().map(s -> s.replaceAll("\\.", "\\\\.")).reduce("", (a, b) -> String.join("|", a, b));
+        // Match any of the exceptions at the start of the line and with ": " after it
+        String pattern = String.format("^(?:%s): \n*", assertionRegex);
+
+        return Pattern.compile(pattern, Pattern.MULTILINE);
     }
 }

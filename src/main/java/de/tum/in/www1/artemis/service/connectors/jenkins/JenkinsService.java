@@ -380,8 +380,9 @@ public class JenkinsService implements ContinuousIntegrationService {
                     var errorType = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getType());
                     var failureType = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getType());
                     var message = errorType.or(() -> failureType).map(t -> String.format("Unsuccessful due to an error of type: %s", t));
-                    if (message.isPresent())
+                    if (message.isPresent()) {
                         errorList = List.of(message.get());
+                    }
                 }
 
                 result.addFeedback(feedbackService.createFeedbackFromTestCase(testCase.getName(), errorList, successful, programmingLanguage));
