@@ -34,6 +34,12 @@ The following activity diagram shows this exercise workflow.
 
    Exercise Workflow
 
+Creation
+--------
+
+More information about the exercise creation and the various options and features
+is available under :doc:`programming-exercise-setup`.
+
 Online Editor
 -------------
 
