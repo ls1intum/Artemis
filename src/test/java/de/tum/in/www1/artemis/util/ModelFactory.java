@@ -751,6 +751,11 @@ public class ModelFactory {
         return notification;
     }
 
+    public static Feedback createSCAFeedbackWithInactiveCategory(Result result) {
+        return new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("{\"category\": \"miscellaneous\"}")
+                .type(FeedbackType.AUTOMATIC).positive(false);
+    }
+
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
             List<String> failedTestNames) {
         var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
