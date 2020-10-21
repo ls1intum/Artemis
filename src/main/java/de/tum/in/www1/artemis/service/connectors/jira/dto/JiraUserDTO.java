@@ -1,12 +1,16 @@
 package de.tum.in.www1.artemis.service.connectors.jira.dto;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JiraUserDTO {
+
+    private String key;
 
     private String name;
 
@@ -15,6 +19,35 @@ public class JiraUserDTO {
     private String displayName;
 
     private JiraUserGroupsDTO groups;
+
+    private List<String> applicationKeys = new ArrayList<>();
+
+    public JiraUserDTO(String name) {
+        this.name = name;
+    }
+
+    public JiraUserDTO(String name, String displayName, String emailAddress, JiraUserGroupsDTO groups) {
+        this.name = name;
+        this.displayName = displayName;
+        this.emailAddress = emailAddress;
+        this.groups = groups;
+    }
+
+    public JiraUserDTO(String key, String name, String displayName, String emailAddress, List<String> applicationKeys) {
+        this.key = key;
+        this.name = name;
+        this.displayName = displayName;
+        this.emailAddress = emailAddress;
+        this.applicationKeys = applicationKeys;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
 
     public String getName() {
         return name;
@@ -46,6 +79,14 @@ public class JiraUserDTO {
 
     public void setGroups(JiraUserGroupsDTO groups) {
         this.groups = groups;
+    }
+
+    public List<String> getApplicationKeys() {
+        return applicationKeys;
+    }
+
+    public void setApplicationKeys(List<String> applicationKeys) {
+        this.applicationKeys = applicationKeys;
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
