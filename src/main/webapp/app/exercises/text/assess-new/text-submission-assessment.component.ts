@@ -237,11 +237,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         response.body!.feedbacks?.forEach((newFeedback) => {
             newFeedback.conflictingTextAssessments = this.result?.feedbacks?.find((feedback) => feedback.id === newFeedback.id)?.conflictingTextAssessments;
         });
-        response.body!.completionDate = this.result?.completionDate;
-        response.body!.submission = undefined;
-        response.body!.participation = undefined;
         this.result = response.body!;
-        this.participation!.results![0] = this.result;
         this.submission!.result = this.result;
         this.saveBusy = this.submitBusy = false;
     }
@@ -270,7 +266,11 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * @param feedbackId - selected feedback id with conflicts.
      */
     async navigateToConflictingSubmissions(feedbackId: number): Promise<void> {
-        const navigationExtras: NavigationExtras = { state: { submission: this.submission } };
+        const tempSubmission = this.submission!;
+        tempSubmission!.result!.completionDate = undefined;
+        tempSubmission!.result!.submission = undefined;
+        tempSubmission!.result!.participation = undefined;
+        const navigationExtras: NavigationExtras = { state: { submission: tempSubmission } };
         await this.router.navigate(
             ['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'text-feedback-conflict', feedbackId],
             navigationExtras,
