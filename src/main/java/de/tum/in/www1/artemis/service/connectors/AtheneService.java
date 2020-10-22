@@ -88,7 +88,7 @@ public class AtheneService {
          * Create new TextSubmission as DTO.
          */
         @NotNull
-        private List<TextSubmission> submissionDTOs(@NotNull List<TextSubmission> submissions) {
+        private static List<TextSubmission> submissionDTOs(@NotNull List<TextSubmission> submissions) {
             return submissions.stream().map(textSubmission -> {
                 final TextSubmission submission = new TextSubmission();
                 submission.setText(textSubmission.getText());
