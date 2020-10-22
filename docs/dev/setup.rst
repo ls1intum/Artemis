@@ -339,7 +339,7 @@ Other useful commands:
 -  Stop the client: ``docker-compose stop artemis-client`` (restart via
    ``docker-compose start artemis-client``)
 
-Athene Service (Text Assessment Clustering)
+Athene Service
 ----------------------------------
 
 The semi-automatic text assessment relies on the Athene_ service.
