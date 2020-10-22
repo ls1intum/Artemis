@@ -46,6 +46,8 @@ The following activity diagram shows this exercise workflow.
 Setup
 --------
 
+The following sections describe the supported features and the process of creating a new programming exercise.
+
 .. include:: programming-exercise-setup.rst
 
 Online Editor
