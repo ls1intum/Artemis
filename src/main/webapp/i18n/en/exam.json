@@ -60,6 +60,7 @@
         },
         "examScores": {
             "xAxes": "Score in %",
+            "yAxes": "Number of Participants",
             "maxPoints": "Maximum Points",
             "title": "Exam Scores",
             "examStatisticsTitle": "Exam Statistics",

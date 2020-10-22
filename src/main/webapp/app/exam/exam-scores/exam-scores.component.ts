@@ -145,6 +145,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             scales: {
                 yAxes: [
                     {
+                        scaleLabel: {
+                            display: true,
+                            labelString: this.translateService.instant('artemisApp.examScores.yAxes'),
+                        },
                         ticks: {
                             maxTicksLimit: 11,
                             beginAtZero: true,
