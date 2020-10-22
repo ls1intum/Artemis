@@ -1,5 +1,6 @@
 import { ActiveFeatureToggles } from 'app/shared/feature-toggle/feature-toggle.service';
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
+import { ProgrammingLanguageFeature } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 
 export class ProfileInfo {
     activeProfiles: string[];
@@ -24,4 +25,5 @@ export class ProfileInfo {
     allowedCourseRegistrationUsernamePattern?: string;
     accountName?: string;
     versionControlUrl?: string;
+    programmingLanguageFeatures: ProgrammingLanguageFeature[];
 }
