@@ -14,6 +14,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 public class DevProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {
 
     public DevProgrammingLanguageFeatureService() {
-        programmingLanguageFeatures.put(ProgrammingLanguage.JAVA, new ProgrammingLanguageFeature(ProgrammingLanguage.JAVA, true, true, true, true, true));
+        programmingLanguageFeatures.put(ProgrammingLanguage.JAVA, new ProgrammingLanguageFeature(ProgrammingLanguage.JAVA, true, true, true, true, false));
     }
 }
