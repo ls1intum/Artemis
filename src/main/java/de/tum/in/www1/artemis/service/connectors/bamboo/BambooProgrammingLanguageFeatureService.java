@@ -1,10 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -14,11 +9,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureServ
 
 @Service
 @Profile("bamboo")
-public class BambooProgrammingLanguageFeatureService implements ProgrammingLanguageFeatureService {
-
-    private final Logger log = LoggerFactory.getLogger(BambooProgrammingLanguageFeatureService.class);
-
-    private final Map<ProgrammingLanguage, ProgrammingLanguageFeature> programmingLanguageFeatures = new HashMap<>();
+public class BambooProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {
 
     public BambooProgrammingLanguageFeatureService() {
         // Must be extended once a new programming language is added
@@ -29,19 +20,5 @@ public class BambooProgrammingLanguageFeatureService implements ProgrammingLangu
         programmingLanguageFeatures.put(ProgrammingLanguage.KOTLIN, new ProgrammingLanguageFeature(ProgrammingLanguage.KOTLIN, true, false, false, true, false));
         programmingLanguageFeatures.put(ProgrammingLanguage.VHDL, new ProgrammingLanguageFeature(ProgrammingLanguage.VHDL, false, false, false, false, false));
         programmingLanguageFeatures.put(ProgrammingLanguage.ASSEMBLER, new ProgrammingLanguageFeature(ProgrammingLanguage.ASSEMBLER, false, false, false, false, false));
-    }
-
-    public ProgrammingLanguageFeature getProgrammingLanguageFeatures(ProgrammingLanguage programmingLanguage) throws IllegalArgumentException {
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatures.get(programmingLanguage);
-
-        if (programmingLanguageFeature == null) {
-            log.error("ProgrammingLanguage " + programmingLanguage + " does not have ProgrammingLanguageFeature");
-            throw new IllegalArgumentException("ProgrammingLanguage " + programmingLanguage + " does not have ProgrammingLanguageFeature");
-        }
-        return programmingLanguageFeature;
-    }
-
-    public Map<ProgrammingLanguage, ProgrammingLanguageFeature> getProgrammingLanguageFeatures() {
-        return programmingLanguageFeatures;
     }
 }

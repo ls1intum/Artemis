@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import java.util.HashMap;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
@@ -8,7 +12,11 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
  * This service provides information about features the different ProgrammingLanguages support.
  * The configuration is also available in the client as the {@link ProgrammingLanguageFeatureContributor} exposes them.
  */
-public interface ProgrammingLanguageFeatureService {
+public abstract class ProgrammingLanguageFeatureService {
+
+    private final Logger log = LoggerFactory.getLogger(ProgrammingLanguageFeatureService.class);
+
+    protected final Map<ProgrammingLanguage, ProgrammingLanguageFeature> programmingLanguageFeatures = new HashMap<>();
 
     /**
      * Get the ProgrammingLanguageFeature configured for the given ProgrammingLanguage.
@@ -16,7 +24,17 @@ public interface ProgrammingLanguageFeatureService {
      * @return the ProgrammingLanguageFeature for the requested ProgrammingLanguage
      * @throws IllegalArgumentException if no ProgrammingLanguageFeature for the specified ProgrammingLanguage could be found
      */
-    ProgrammingLanguageFeature getProgrammingLanguageFeatures(ProgrammingLanguage programmingLanguage) throws IllegalArgumentException;
+    public ProgrammingLanguageFeature getProgrammingLanguageFeatures(ProgrammingLanguage programmingLanguage) throws IllegalArgumentException {
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatures.get(programmingLanguage);
 
-    Map<ProgrammingLanguage, ProgrammingLanguageFeature> getProgrammingLanguageFeatures();
+        if (programmingLanguageFeature == null) {
+            log.error("ProgrammingLanguage " + programmingLanguage + " does not have ProgrammingLanguageFeature");
+            throw new IllegalArgumentException("ProgrammingLanguage " + programmingLanguage + " does not have ProgrammingLanguageFeature");
+        }
+        return programmingLanguageFeature;
+    }
+
+    public Map<ProgrammingLanguage, ProgrammingLanguageFeature> getProgrammingLanguageFeatures() {
+        return programmingLanguageFeatures;
+    }
 }
