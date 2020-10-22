@@ -44,32 +44,45 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
             }))
             .map((category) => {
                 const issuesMap = this.categoryIssuesMap ? this.categoryIssuesMap[category.name] || {} : {};
+
+                // total number of issues in this category
                 const issuesSum = Object.entries(issuesMap).reduce((sum, [issues, students]) => sum + parseInt(issues, 10) * students, 0);
-                let penaltySum = Object.entries(issuesMap)
+
+                // total number of penalty points in this category
+                let penaltyPointsSum = Object.entries(issuesMap)
                     .map(([issues, students]) => students * Math.min(parseInt(issues, 10) * category.penalty, category.maxPenalty))
-                    .reduce((sum, penalty) => sum + penalty, 0);
-                if ((this.exercise.maxStaticCodeAnalysisPenalty || Infinity) < penaltySum) {
-                    penaltySum = this.exercise.maxStaticCodeAnalysisPenalty!;
+                    .reduce((sum, penaltyPoints) => sum + penaltyPoints, 0);
+
+                if ((this.exercise.maxStaticCodeAnalysisPenalty || Infinity) < penaltyPointsSum) {
+                    penaltyPointsSum = this.exercise.maxStaticCodeAnalysisPenalty!;
                 }
-                return { category, issues: issuesSum || 0, penalty: penaltySum };
+
+                return { category, issues: issuesSum || 0, penaltyPoints: penaltyPointsSum };
             })
             .filter(({ category, issues }) => category.state !== StaticCodeAnalysisCategoryState.Inactive && (category.penalty !== 0 || issues !== 0));
 
+        // sum of all penalties
         const totalPenalty = categoryPenalties.reduce((sum, { category }) => sum + Math.min(category.penalty, category.maxPenalty), 0);
+        // sum of all issues
         const totalIssues = categoryPenalties.reduce((sum, { issues }) => sum + issues, 0);
-        const totalPenaltyPoints = categoryPenalties.reduce((sum, { penalty }) => sum + penalty, 0);
+        // sum of all penalty points
+        const totalPenaltyPoints = categoryPenalties.reduce((sum, { penaltyPoints }) => sum + penaltyPoints, 0);
 
         this.chartDatasets = categoryPenalties.map((element, i) => ({
             label: element.category.name,
             data: [
+                // relative penalty percentage
                 (totalPenalty > 0 ? Math.min(element.category.penalty, element.category.maxPenalty) / totalPenalty : 0) * 100,
+                // relative issues percentage
                 (totalIssues > 0 ? element.issues / totalIssues : 0) * 100,
-                (totalPenaltyPoints > 0 ? element.penalty / totalPenaltyPoints : 0) * 100,
+                // relative penalty points percentage
+                (totalPenaltyPoints > 0 ? element.penaltyPoints / totalPenaltyPoints : 0) * 100,
             ],
             backgroundColor: this.getColor(i / this.categories.length, 50),
             hoverBackgroundColor: this.getColor(i / this.categories.length, 60),
         }));
 
+        // update colors for category table
         this.categoryColors = {};
         this.chartDatasets.forEach(({ label, backgroundColor }) => (this.categoryColors[label!] = backgroundColor));
         this.categoryColorsChange.emit(this.categoryColors);

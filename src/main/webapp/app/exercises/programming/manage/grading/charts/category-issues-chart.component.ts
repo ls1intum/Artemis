@@ -33,7 +33,10 @@ export class CategoryIssuesChartComponent implements OnChanges {
             return;
         }
 
+        // set a minimum of 10 columns
         const numColumns = Math.max(this.maxNumberOfIssues, 10) + 1;
+
+        // display properties
         const columnGap = 2;
         const columnWidth = (100 + columnGap) / numColumns - columnGap;
 

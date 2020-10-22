@@ -435,16 +435,28 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         return confirm(warning);
     }
 
+    /**
+     * Switch tabs
+     * @param tab The target tab
+     */
     selectTab(tab: string) {
         const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
         this.location.replaceState(`${parentUrl}/${tab}`);
         this.activeTab = tab;
     }
 
+    /**
+     * Get the stats for a specific test case
+     * @param testName The name of the test case
+     */
     getTestCaseStats(testName: string): TestCaseStats | undefined {
         return this.gradingStatistics?.testCaseStatsMap ? this.gradingStatistics?.testCaseStatsMap[testName] : undefined;
     }
 
+    /**
+     * Get the issues map for a specific category
+     * @param categoryName The name of the category
+     */
     getIssuesMap(categoryName: string): IssuesMap | undefined {
         return this.gradingStatistics?.categoryIssuesMap ? this.gradingStatistics?.categoryIssuesMap[categoryName] : undefined;
     }

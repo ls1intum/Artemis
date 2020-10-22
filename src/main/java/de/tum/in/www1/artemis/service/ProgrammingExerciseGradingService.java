@@ -527,31 +527,46 @@ public class ProgrammingExerciseGradingService {
         var statistics = new ProgrammingExerciseGradingStatisticsDTO();
 
         var results = resultService.findLatestAutomaticResultsWithFeedbacksForExercise(exerciseId);
+
         statistics.setNumParticipations(results.size());
 
         var testCases = testCaseService.findByExerciseId(exerciseId);
         var categories = staticCodeAnalysisService.findByExerciseId(exerciseId);
 
+        // number of passed and failed tests per test case
         var testCaseStatsMap = new HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats>();
+
+        // number of students per amount of detected issues per category
         var categoryIssuesStudentsMap = new HashMap<String, HashMap<Integer, Integer>>();
+
+        // maximum amount of issues per category per student
         var maxIssuesPerCategory = 0;
 
+        // init for each test case
         for (var testCase : testCases) {
             testCaseStatsMap.put(testCase.getTestName(), new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(0, 0));
         }
 
+        // init for each category
         for (var category : categories) {
             categoryIssuesStudentsMap.put(category.getName(), new HashMap<>());
         }
 
         for (var result : results) {
 
+            // number of detected issues per category for this result
             var categoryIssuesMap = new HashMap<String, Integer>();
 
             for (var feedback : result.getFeedbacks()) {
                 if (feedback.getType().equals(FeedbackType.AUTOMATIC) && feedback.isStaticCodeAnalysisFeedback()) {
+                    // sca feedback
 
                     var categoryName = feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
+                    if (categoryName.equals("")) {
+                        continue; // this feedback belongs to no category
+                    }
+
+                    // add 1 to the issues for this category
                     if (categoryIssuesMap.containsKey(categoryName)) {
                         categoryIssuesMap.merge(categoryName, 1, Integer::sum);
                     } else {
@@ -559,8 +574,12 @@ public class ProgrammingExerciseGradingService {
                     }
 
                 } else if (feedback.getType().equals(FeedbackType.AUTOMATIC)) {
+                    // test case feedback
 
                     var testName = feedback.getText();
+
+                    // add 1 to the passed or failed amount for this test case
+                    // dependant on the positive flag of the feedback
                     if (testCaseStatsMap.containsKey(testName)) {
                         if (feedback.isPositive()) {
                             testCaseStatsMap.get(testName).increaseNumPassed();
@@ -574,21 +593,26 @@ public class ProgrammingExerciseGradingService {
                 }
             }
 
+            // merge the result issues map with the overall issues map
             for (var entry : categoryIssuesMap.entrySet()) {
+                // key: category, value: number of issues
 
                 if (categoryIssuesStudentsMap.containsKey(entry.getKey())) {
                     var issuesStudentsMap = categoryIssuesStudentsMap.get(entry.getKey());
+                    // add 1 to the number of students for the category & issues
                     if (issuesStudentsMap.containsKey(entry.getValue())) {
                         issuesStudentsMap.merge(entry.getValue(), 1, Integer::sum);
                     } else {
                         issuesStudentsMap.put(entry.getValue(), 1);
                     }
                 } else {
+                    // create a new issues map for this category
                     var issuesStudentsMap = new HashMap<Integer, Integer>();
                     issuesStudentsMap.put(entry.getValue(), 1);
                     categoryIssuesStudentsMap.put(entry.getKey(), issuesStudentsMap);
                 }
 
+                // check max issues
                 if (entry.getValue() > maxIssuesPerCategory) {
                     maxIssuesPerCategory = entry.getValue();
                 }
@@ -601,7 +625,6 @@ public class ProgrammingExerciseGradingService {
         statistics.setMaxIssuesPerCategory(maxIssuesPerCategory);
 
         return statistics;
-
     }
 
 }

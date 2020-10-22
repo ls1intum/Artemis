@@ -4,15 +4,20 @@ import { TestCaseStats } from 'app/entities/programming-exercise-test-case-stati
 @Component({
     selector: 'jhi-test-case-passed-builds-chart',
     template: `
-        <div placement="left" [ngbTooltip]="passedPercent.toFixed(0) + '% passed, ' + failedPercent.toFixed(0) + '% failed of ' + totalParticipations + ' students.'">
-            <svg viewBox="0 0 100 10" style="border-radius: 4px">
-                <rect x="0" y="0" width="100" height="10" fill="#ddd"></rect>
-
-                <rect x="0" y="0" [attr.width]="passedPercent" height="10" fill="#28a745"></rect>
-                <rect [attr.x]="passedPercent" y="0" [attr.width]="failedPercent" height="10" fill="#dc3545"></rect>
-            </svg>
+        <div
+            class="chart-body"
+            placement="left"
+            [ngbTooltip]="passedPercent.toFixed(0) + '% passed, ' + failedPercent.toFixed(0) + '% failed of ' + totalParticipations + ' students.'"
+        >
+            <div class="passed-bar" [style]="{ width: passedPercent + '%' }"></div>
+            <div class="failed-bar" [style]="{ left: passedPercent + '%', width: failedPercent + '%' }"></div>
         </div>
     `,
+    styles: [
+        '.chart-body { border-radius: 4px; background-color: #ddd; height: 10px; width: 100px; overflow: hidden; position: relative; }',
+        '.passed-bar { position: absolute; top: 0; left: 0; height: 10px; color: #28a745 }',
+        '.failed-bar { position: absolute; top: 0; height: 10px; color: #dc3545 }',
+    ],
 })
 export class TestCasePassedBuildsChartComponent implements OnChanges {
     @Input() testCaseStats?: TestCaseStats;
