@@ -62,6 +62,19 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public inProductionEnvironment: boolean;
     checkedFlagForStructuredGradingInstructions = false;
 
+    public supportsJava = true;
+    public supportsPython = false;
+    public supportsC = false;
+    public supportsHaskell = false;
+    public supportsKotlin = false;
+    public supportsVHDL = false;
+    public supportsAssembler = false;
+
+    public packageNameRequired = true;
+    public staticCodeAnalysisAllowed = false;
+    public checkoutSolutionRepositoryAllowed = false;
+    public sequentialTestRunsAllowed = false;
+
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseService: CourseManagementService,
@@ -73,7 +86,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private profileService: ProfileService,
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
         private exerciseGroupService: ExerciseGroupService,
-        public programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
+        private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
     ) {}
 
     /**
@@ -83,8 +96,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     set selectedProgrammingLanguage(language: ProgrammingLanguage) {
         this.selectedProgrammingLanguageValue = language;
+
+        const programmingLanguageFeature = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(language);
+        this.packageNameRequired = programmingLanguageFeature.packageNameRequired;
+        this.staticCodeAnalysisAllowed = programmingLanguageFeature.staticCodeAnalysis;
+        this.checkoutSolutionRepositoryAllowed = programmingLanguageFeature.checkoutSolutionRepositoryAllowed;
+        this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
+
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
-        if (!this.programmingLanguageFeatureService.getProgrammingLanguageFeature(language).staticCodeAnalysis) {
+        if (!this.staticCodeAnalysisAllowed) {
             this.programmingExercise.staticCodeAnalysisEnabled = false;
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
