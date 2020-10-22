@@ -42,7 +42,8 @@ public class StaticCodeAnalysisConfigurer {
     private List<StaticCodeAnalysisDefaultCategory> createDefaultCategoriesForJava() {
         return List.of(
                 new StaticCodeAnalysisDefaultCategory("Bad Practice", 0.5D, 5D, CategoryState.FEEDBACK,
-                        List.of(createMapping(StaticCodeAnalysisTool.SPOTBUGS, "BAD_PRACTICE"), createMapping(StaticCodeAnalysisTool.PMD, "Best Practices"))),
+                        List.of(createMapping(StaticCodeAnalysisTool.SPOTBUGS, "BAD_PRACTICE"), createMapping(StaticCodeAnalysisTool.SPOTBUGS, "I18N"),
+                                createMapping(StaticCodeAnalysisTool.PMD, "Best Practices"))),
                 new StaticCodeAnalysisDefaultCategory("Code Style", 0.2D, 2D, CategoryState.FEEDBACK,
                         List.of(createMapping(StaticCodeAnalysisTool.SPOTBUGS, "STYLE"), createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "blocks"),
                                 createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "coding"), createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "modifier"),
@@ -60,8 +61,8 @@ public class StaticCodeAnalysisConfigurer {
                 new StaticCodeAnalysisDefaultCategory("Code Metrics", 0D, 0D, CategoryState.INACTIVE,
                         List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "metrics"), createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "sizes"))),
                 new StaticCodeAnalysisDefaultCategory("Documentation", 0D, 0D, CategoryState.INACTIVE,
-                        List.of(createMapping(StaticCodeAnalysisTool.SPOTBUGS, "I18N"), createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "javadoc"),
-                                createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "annotation"), createMapping(StaticCodeAnalysisTool.PMD, "Documentation"))),
+                        List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "javadoc"), createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "annotation"),
+                                createMapping(StaticCodeAnalysisTool.PMD, "Documentation"))),
                 new StaticCodeAnalysisDefaultCategory("Naming & Formatting", 0D, 0D, CategoryState.INACTIVE,
                         List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "imports"), createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "indentation"),
                                 createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "naming"), createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "whitespace"))),
