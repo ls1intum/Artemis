@@ -340,13 +340,13 @@ Other useful commands:
    ``docker-compose start artemis-client``)
 
 Athene Service
-----------------------------------
+--------------
 
 The semi-automatic text assessment relies on the Athene_ service.
 To enable automatic text assessments, special configuration is required:
 
 Enable the ``athene`` Spring profile:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
