@@ -29,10 +29,6 @@ export class CategoryIssuesChartComponent implements OnChanges {
     columns: IssueColumn[] = [];
 
     ngOnChanges(): void {
-        if (!this.totalStudents) {
-            return;
-        }
-
         // set a minimum of 10 columns
         const numColumns = Math.max(this.maxNumberOfIssues, 10) + 1;
 
@@ -40,12 +36,12 @@ export class CategoryIssuesChartComponent implements OnChanges {
         const columnGap = 2;
         const columnWidth = (100 + columnGap) / numColumns - columnGap;
 
-        const columns = new Array(numColumns).fill(0).map((column, i, { length }) => {
+        const columns = new Array(numColumns).fill(0).map((column, i) => {
             const numIssues = i + 1;
             const numStudents = this.issuesMap ? this.issuesMap[numIssues] || 0 : 0;
             return {
                 w: columnWidth + '%',
-                h: (numStudents / this.totalStudents) * 95 + 5 + '%',
+                h: (this.totalStudents > 0 ? (numStudents / this.totalStudents) * 95 : 0) + 4 + '%',
                 color: numStudents === 0 ? '#28a745' : numIssues > this.maxGradedIssues ? '#dc3545' : '#ffc107',
                 tooltip: `${numStudents} student${numStudents !== 1 ? 's' : ''} have ${numIssues} issue${numIssues !== 1 ? 's' : ''}.`,
             };
