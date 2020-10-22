@@ -13,18 +13,21 @@ pipeline {
             }
             stage('Build') {
                 steps {
-                    sh 'pytest --junitxml=test-reports/results.xml
-                        exit 0'
+                    sh '''
+                        pytest --junitxml=test-reports/results.xml
+                        exit 0
+                        '''
                 }
             }
         }
         post {
             always {
-                sh 'rm -rf results'
-                sh 'mkdir results'
-                sh 'sed -i "s/&lt;testsuites&gt;//g ; s/&lt;\/testsuites&gt;//g" test-reports/results.xml&#xd;
-                    mkdir results&#xd;
-                    cp "test-reports/*.xml" $WORKSPACE/results/'
+                sh '''
+                   rm -rf results
+                   mkdir results
+                   sed -i 's/<testsuites>//g ; s/<\/testsuites>//g' test-reports/results.xml
+                   cp test-reports/*.xml $WORKSPACE/results/
+                   '''
                 sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
                 cleanWs()
             }

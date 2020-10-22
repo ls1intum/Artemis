@@ -84,6 +84,10 @@ public abstract class AbstractJenkinsBuildPlanCreator implements JenkinsXmlConfi
 
         String pipeLineScript = getPipelineScript(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled);
         pipeLineScript = pipeLineScript.replace("'", "&apos;");
+        pipeLineScript = pipeLineScript.replace("<", "&lt;");
+        pipeLineScript = pipeLineScript.replace(">", "&gt;");
+        pipeLineScript = pipeLineScript.replace("\\", "\\\\");
+
         Map<String, String> replacements = Map.of(REPLACE_PIPELINE_SCRIPT, pipeLineScript, REPLACE_PUSH_TOKEN, pushToken);
 
         final var xmlResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:" + resourcePath);
