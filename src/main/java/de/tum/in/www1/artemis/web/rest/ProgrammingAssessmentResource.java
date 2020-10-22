@@ -149,8 +149,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         if (newResult.getScore() != null && newResult.getScore() < 100 && newResult.isSuccessful()) {
             throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         }
+        // All not automatically generated result must have a detail text
         else if (!newResult.getFeedbacks().isEmpty()
-                && newResult.getFeedbacks().stream().anyMatch(feedback -> !feedback.getType().equals(FeedbackType.AUTOMATIC) && feedback.getDetailText() == null)) {
+                && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.isNotAutomaticFeedback() && feedback.getDetailText() == null)) {
             throw new BadRequestAlertException("In case tutor feedback is present, a feedback detail text is mandatory.", ENTITY_NAME, "feedbackDetailTextNull");
         }
         else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getCredits() == null)) {

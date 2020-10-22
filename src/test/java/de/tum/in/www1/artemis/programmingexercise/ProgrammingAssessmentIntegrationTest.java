@@ -293,17 +293,23 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     @WithMockUser(value = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_resultPropertyMissing() throws Exception {
         Result result = new Result();
+        Feedback feedback = new Feedback();
 
-        // Feedbacks have empty text
-        result.setScore(100L);
-        List<Feedback> feedbacks = ModelFactory.generateFeedback();
-        // Make one feedback type of manual
-        feedbacks.get(0).setType(FeedbackType.MANUAL);
-        result.setFeedbacks(feedbacks);
+        // Check that not automatically created feedbacks must have a detail text
+        // Manual feedback
+        result.addFeedback(feedback.type(FeedbackType.MANUAL));
+        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
+        // Unreferenced feedback
+        result.removeFeedback(feedback);
+        result.addFeedback(feedback.type(FeedbackType.MANUAL_UNREFERENCED));
+        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
+        // General feedback
+        result.removeFeedback(feedback);
+        result.addFeedback(feedback.type(null));
         request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
 
         // A feedback has no points
-        result.getFeedbacks().get(0).setCredits(null);
+        result.addFeedback(feedback.credits(null));
         request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
     }
 

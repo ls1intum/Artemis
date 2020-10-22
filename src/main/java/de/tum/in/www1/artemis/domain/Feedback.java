@@ -226,6 +226,16 @@ public class Feedback extends DomainObject {
         return this.text != null && this.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
     }
 
+    /**
+     * Checks whether the feedback is not an automatically generated feedback (test cases or SCA). We check for
+     * manual (FeedbackType.MANUAL), unreferenced (FeedbackType.MANUAL_UNREFERENCED) and general (null) feedback.
+     * @return true if the it is not an automatically generated feedback else false
+     */
+    @JsonIgnore
+    public boolean isNotAutomaticFeedback() {
+        return this.type != FeedbackType.AUTOMATIC || this.type == null;
+    }
+
     public boolean referenceEquals(Feedback otherFeedback) {
         return reference.equals(otherFeedback.reference);
     }
