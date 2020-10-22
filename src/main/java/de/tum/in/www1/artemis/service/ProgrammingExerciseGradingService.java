@@ -17,6 +17,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -46,9 +47,11 @@ public class ProgrammingExerciseGradingService {
 
     private StaticCodeAnalysisService staticCodeAnalysisService;
 
+    private ProgrammingAssessmentService programmingAssessmentService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService) {
+            SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.participationService = participationService;
@@ -56,6 +59,7 @@ public class ProgrammingExerciseGradingService {
         this.resultRepository = resultRepository;
         this.messagingTemplate = messagingTemplate;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
+        this.programmingAssessmentService = programmingAssessmentService;
     }
 
     /**
@@ -255,7 +259,7 @@ public class ProgrammingExerciseGradingService {
         List<Feedback> testCaseFeedback = new ArrayList<>();
         List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
         for (var feedback : result.getFeedbacks()) {
-            if (feedback.getType() == FeedbackType.MANUAL) {
+            if (feedback.isNotAutomaticFeedback()) {
                 continue;
             }
             if (feedback.isStaticCodeAnalysisFeedback()) {
@@ -284,7 +288,7 @@ public class ProgrammingExerciseGradingService {
             updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            updateResultString(result, successfulTestCases, testCasesForCurrentDate);
+            updateResultString(result, successfulTestCases, testCasesForCurrentDate, exercise);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0 && testCaseFeedback.size() > 0) {
@@ -490,10 +494,21 @@ public class ProgrammingExerciseGradingService {
      * @param successfulTestCases test cases with positive feedback.
      * @param allTests of the given programming exercise.
      */
-    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests) {
-        // Create a new result string that reflects passed, failed & not executed test cases.
-        String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
-        result.setResultString(newResultString);
+    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests, ProgrammingExercise exercise) {
+        if (result.getAssessmentType() == AssessmentType.AUTOMATIC) {
+            // Create a new result string that reflects passed, failed & not executed test cases.
+            String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
+            result.setResultString(newResultString);
+        }
+        else {
+            // Calculate different scores for totalScore calculation and set resultString for manual results
+            double maxScore = exercise.getMaxScore();
+            double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
+            double calculatedScore = programmingAssessmentService.calculateTotalScore(result.getFeedbacks());
+            double totalScore = programmingAssessmentService.calculateTotalScore(calculatedScore, maxScore + bonusPoints);
+
+            result.setResultString(totalScore, maxScore);
+        }
     }
 
     /**
