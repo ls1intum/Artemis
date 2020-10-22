@@ -70,7 +70,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    private JenkinsServer jenkinsServer;
+    private final JenkinsServer jenkinsServer;
 
     private final FeedbackService feedbackService;
 
