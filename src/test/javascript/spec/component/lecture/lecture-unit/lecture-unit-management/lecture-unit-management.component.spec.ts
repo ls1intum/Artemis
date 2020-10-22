@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-module-management/lecture-unit-management.component';
+import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
 
 describe('LectureUnitManagementComponent', () => {
     let component: LectureUnitManagementComponent;

@@ -31,6 +31,10 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     @Input() course: Course;
     @Input() extendedLink = false;
     @Input() hasGuidedTour: boolean;
+    /**
+     * PresentationMode deactivates the interactivity of the component
+     */
+    @Input() isPresentationMode = false;
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
@@ -108,7 +112,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     showDetails(event: any) {
         const isClickOnAction = event.target.closest('jhi-exercise-details-student-actions') && event.target.closest('.btn');
         const isClickResult = event.target.closest('jhi-result') && event.target.closest('.result');
-        if (!isClickOnAction && !isClickResult) {
+        if (!isClickOnAction && !isClickResult && !this.isPresentationMode) {
             if (this.extendedLink) {
                 this.router.navigate(['courses', this.course.id, 'exercises', this.exercise.id]);
             } else {

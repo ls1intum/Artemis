@@ -31,6 +31,7 @@ import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
+import { ExerciseUnitComponent } from './course-lectures/exercise-unit/exercise-unit.component';
 
 @NgModule({
     imports: [
@@ -68,7 +69,8 @@ import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam
         ProgrammingExerciseStudentIdeActionsComponent,
         CourseExamsComponent,
         CourseExamDetailComponent,
+        ExerciseUnitComponent,
     ],
-    exports: [ExerciseActionButtonComponent, ExerciseDetailsStudentActionsComponent],
+    exports: [ExerciseActionButtonComponent, ExerciseDetailsStudentActionsComponent, ExerciseUnitComponent],
 })
 export class ArtemisCoursesModule {}

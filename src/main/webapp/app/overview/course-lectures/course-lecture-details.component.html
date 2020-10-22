@@ -27,6 +27,13 @@
             <div class="row mb-2 markdown-preview" *ngIf="lecture!.description">
                 <div class="col-12 col-md-12 markdown-preview editor-outline-background" [innerHTML]="lecture.description | htmlForMarkdown"></div>
             </div>
+            <!-- LECTURE UNITS START-->
+            <div class="row" *ngFor="let lectureUnit of lectureUnits">
+                <div class="col-12 mx-auto mb-2" [ngSwitch]="lectureUnit.type">
+                    <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit"></jhi-exercise-unit>
+                </div>
+            </div>
+            <!-- LECTURE UNITS END-->
             <div class="row mb-2 mt-2 align-items-baseline">
                 <div class="col-auto">
                     <h3>{{ 'artemisApp.courseOverview.lectureDetails.attachments' | translate }}</h3>

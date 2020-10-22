@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-module-management/unit-creation-card/unit-creation-card.component';
+import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 
 describe('UnitCreationCardComponent', () => {
     let component: UnitCreationCardComponent;
