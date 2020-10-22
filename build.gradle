@@ -29,7 +29,7 @@ plugins {
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
-    id "com.diffplug.spotless" version "5.6.1"
+    id "com.diffplug.spotless" version "5.7.0"
 }
 
 group = "de.tum.in.www1.artemis"

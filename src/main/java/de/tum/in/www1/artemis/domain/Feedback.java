@@ -229,11 +229,25 @@ public class Feedback extends DomainObject {
     /**
      * Checks whether the feedback is not an automatically generated feedback (test cases or SCA). We check for
      * manual (FeedbackType.MANUAL), unreferenced (FeedbackType.MANUAL_UNREFERENCED) and general (null) feedback.
+     * 
      * @return true if the it is not an automatically generated feedback else false
      */
     @JsonIgnore
     public boolean isNotAutomaticFeedback() {
         return this.type != FeedbackType.AUTOMATIC || this.type == null;
+    }
+    /**
+     * Returns the Artemis static code analysis category to which this feedback belongs. The method returns an empty
+     * String, if the feedback is not static code analysis feedback.
+     *
+     * @return The Artemis static code analysis category to which this feedback belongs
+     */
+    @JsonIgnore
+    public String getStaticCodeAnalysisCategory() {
+        if (isStaticCodeAnalysisFeedback()) {
+            return this.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
+        }
+        return "";
     }
 
     public boolean referenceEquals(Feedback otherFeedback) {
