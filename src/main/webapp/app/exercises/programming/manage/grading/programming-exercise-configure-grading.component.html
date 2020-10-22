@@ -65,7 +65,7 @@
                         >
                             <ngx-datatable-column name="Test Name" prop="testName">
                                 <ng-template ngx-datatable-cell-template let-value="value">
-                                    <fa-icon [icon]="'square'" [style]="{ color: testCaseColors[value] }" class="mr-2"></fa-icon>
+                                    <fa-icon [icon]="'square'" [styles]="{ color: testCaseColors[value] }" class="mr-2"></fa-icon>
                                     {{ value }}
                                 </ng-template>
                             </ngx-datatable-column>
@@ -98,13 +98,12 @@
                                         [icon]="'question-circle'"
                                         class="text-secondary ml-2"
                                         [ngbPopover]="popoverContent"
-                                        triggers="mouseenter:mouseleave"
                                         placement="bottom"
                                         container="body"
                                     ></fa-icon>
                                     <ng-template #popoverContent>
                                         <div class="d-flex flex-column run-after-due-date-disabled">
-                                            <pre jhiTranslate="artemisApp.programmingExercise.manageTestCases.runAfterDueDateDisabled"></pre>
+                                            <pre jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.runAfterDueDateDisabled"></pre>
                                             <a [routerLink]="['/course/', this.courseId, 'programming-exercise', this.exercise.id!, 'edit']" class="ml-auto">
                                                 <jhi-button [icon]="'arrow-right'" ngbTooltip="{{ 'entity.action.edit' | translate }}"></jhi-button>
                                             </a>
@@ -176,7 +175,8 @@
                         >
                             <ngx-datatable-column name="Category" prop="name">
                                 <ng-template ngx-datatable-cell-template let-value="value">
-                                    <fa-icon [icon]="'square'" [style]="{ color: categoryColors[value] }" class="mr-2"></fa-icon>
+                                    <span style="white-space: nowrap"
+                                    <fa-icon [icon]="'square'" [styles]="{ color: categoryColors[value] }" class="mr-2"></fa-icon>
                                     {{ value }}
                                 </ng-template>
                             </ngx-datatable-column>
@@ -256,7 +256,6 @@
                         <jhi-sca-category-distribution-chart
                             [categories]="staticCodeAnalysisCategories"
                             [categoryIssuesMap]="gradingStatistics?.categoryIssuesMap"
-                            [totalParticipations]="gradingStatistics?.numParticipations"
                             [exercise]="exercise"
                             [(categoryColors)]="categoryColors"
                         ></jhi-sca-category-distribution-chart>

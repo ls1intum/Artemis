@@ -22,7 +22,6 @@ import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-s
 export class ScaCategoryDistributionChartComponent implements OnChanges {
     @Input() categories: StaticCodeAnalysisCategory[];
     @Input() categoryIssuesMap?: CategoryIssuesMap;
-    @Input() totalParticipations?: number;
     @Input() exercise: ProgrammingExercise;
 
     @Input() categoryColors = {};
@@ -32,10 +31,6 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
     chartDatasets: ChartDataSets[] = [];
 
     ngOnChanges(): void {
-        if (!this.totalParticipations) {
-            return;
-        }
-
         const categoryPenalties = this.categories
             .map((category) => ({
                 ...category,
@@ -72,11 +67,11 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
             label: element.category.name,
             data: [
                 // relative penalty percentage
-                (totalPenalty > 0 ? Math.min(element.category.penalty, element.category.maxPenalty) / totalPenalty : 0) * 100,
+                totalPenalty > 0 ? (Math.min(element.category.penalty, element.category.maxPenalty) / totalPenalty) * 100 : 0,
                 // relative issues percentage
-                (totalIssues > 0 ? element.issues / totalIssues : 0) * 100,
+                totalIssues > 0 ? (element.issues / totalIssues) * 100 : 0,
                 // relative penalty points percentage
-                (totalPenaltyPoints > 0 ? element.penaltyPoints / totalPenaltyPoints : 0) * 100,
+                totalPenaltyPoints > 0 ? (element.penaltyPoints / totalPenaltyPoints) * 100 : 0,
             ],
             backgroundColor: this.getColor(i / this.categories.length, 50),
             hoverBackgroundColor: this.getColor(i / this.categories.length, 60),

@@ -153,7 +153,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     catchError(() => of(null)),
                 );
 
-                const loadCodeAnalysisCategories = this.gradingService
+                this.gradingService
                     .getCodeAnalysisCategories(exerciseId)
                     .pipe(
                         tap((categories) => (this.staticCodeAnalysisCategories = categories)),
@@ -161,13 +161,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     )
                     .subscribe();
 
-                this.gradingService
-                    .getGradingStatistics(exerciseId)
-                    .pipe(
-                        tap((statistics) => (this.gradingStatistics = statistics)),
-                        catchError(() => of(null)),
-                    )
-                    .subscribe();
+                this.loadStatistics(exerciseId);
 
                 zip(loadExercise, loadExerciseTestCaseState)
                     .pipe(take(1))
@@ -219,6 +213,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 tap((testCases: ProgrammingExerciseTestCase[]) => {
                     this.testCases = testCases;
                 }),
+                tap(() => this.loadStatistics(this.exercise.id!)),
             )
             .subscribe();
     }
@@ -465,5 +460,15 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     getIssuesMap(categoryName: string): IssuesMap | undefined {
         return this.gradingStatistics?.categoryIssuesMap ? this.gradingStatistics.categoryIssuesMap[categoryName] : undefined;
+    }
+
+    private loadStatistics(exerciseId: number) {
+        this.gradingService
+            .getGradingStatistics(exerciseId)
+            .pipe(
+                tap((statistics) => (this.gradingStatistics = statistics)),
+                catchError(() => of(null)),
+            )
+            .subscribe();
     }
 }

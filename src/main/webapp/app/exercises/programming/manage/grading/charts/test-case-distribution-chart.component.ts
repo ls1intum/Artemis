@@ -32,9 +32,6 @@ export class TestCaseDistributionChartComponent implements OnChanges {
     chartDatasets: ChartDataSets[] = [];
 
     ngOnChanges(): void {
-        if (!this.totalParticipations) {
-            return;
-        }
 
         // sum of all weights
         const totalWeight = this.testCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
@@ -51,10 +48,8 @@ export class TestCaseDistributionChartComponent implements OnChanges {
             };
         });
 
-        // sum of all scores of test cases
-        const totalScore = testCaseScores.map(({ score, stats }) => (stats ? score * stats.numPassed! : 0)).reduce((sum, points) => sum + points, 0);
         // total of achievable points for this exercise
-        const totalPoints = this.exercise.maxScore! * this.totalParticipations;
+        const totalPoints = this.exercise.maxScore! * (this.totalParticipations || 0);
 
         this.chartDatasets = testCaseScores.map((element, i) => ({
             label: element.testCase.testName!,
@@ -64,7 +59,7 @@ export class TestCaseDistributionChartComponent implements OnChanges {
                 // relative score percentage
                 element.score * 100,
                 // relative points percentage
-                element.stats && totalScore > 0 ? ((element.stats.numPassed! * element.score) / totalPoints) * 100 : 0,
+                element.stats && totalPoints > 0 ? ((element.stats.numPassed! * element.score) / totalPoints) * 100 : 0,
             ],
             backgroundColor: this.getColor(i / this.testCases.length, 50),
             hoverBackgroundColor: this.getColor(i / this.testCases.length, 60),
