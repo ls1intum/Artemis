@@ -3,7 +3,7 @@ Exercise Creation
 
 1. **Open Course Management**
 
-- Open **Course Management**
+- Open |course-management|
 - Navigate into **Exercises** of your preferred course
 
     .. figure:: programming/course-management-course-dashboard.png
@@ -52,9 +52,9 @@ Exercise Creation
 - **Alternative 1:** Clone the 3 repositories and adapt the code on your local computer in your preferred development environment (e.g. Eclipse)
 
   - To execute tests, copy the template (or solution) code into a folder **assignment** in the test repository and execute the tests (e.g. using maven clean test)
-  - Commit and push your changes
+  - Commit and push your changes |submit|
 
-- **Alternative 2:** Open Edit in Editor in Artemis (in the browser) and adapt the code in online code editor
+- **Alternative 2:** Open |edit-in-editor| in Artemis (in the browser) and adapt the code in online code editor
 
   - You can change between the different repos and submit the code when needed
 
@@ -66,8 +66,8 @@ Exercise Creation
             :align: center
 
 - Check the results of the template and the solution build plan
-- They should not have the status **build failed**
-- In case of a **build failed** result, some configuration is wrong, please check the build errors on the corresponding build plan.
+- They should not have the status |build_failed|
+- In case of a |build_failed| result, some configuration is wrong, please check the build errors on the corresponding build plan.
 - **Hints:** Test cases should only reference code, that is available in the template repository. In case this is **not** possible, please try out the option **Sequential Test Runs**
 
 4. **Optional:** Adapt the build plans
@@ -81,7 +81,7 @@ Exercise Creation
   .. figure:: programming/course-dashboard-programming-edit.png
             :align: center
 
-- Click the Edit button of the programming exercise or navigate into Edit in Editor and adapt the interactive problem statement.
+- Click the |edit| button of the programming exercise or navigate into |edit-in-editor| and adapt the interactive problem statement.
 - The initial example shows how to integrate tasks, link tests and integrate interactive UML diagrams
 
 6. Configure Grading
@@ -91,7 +91,7 @@ Exercise Creation
 
 7. Verify the exercise configuration
 
-- Open the **View** page of the programming exercise
+- Open the |view| page of the programming exercise
 
     .. figure:: programming/solution-template-result.png
               :align: center
@@ -99,9 +99,17 @@ Exercise Creation
 - The template result should have a score of **0%** with **0 of X passed**
 - The solution result should have a score of **100%** with **X of X passed**
 
-- Click on **Edit**
+- Click on |edit|
 
   - Below the problem statement, you should see **Test cases** ok and **Hints** ok
 
   .. figure:: programming/programming-edit-status.png
             :align: center
+
+
+.. |build_failed| image:: ../exams/student/buttons/build_failed.png
+.. |edit| image:: programming/edit.png
+.. |view| image:: programming/view.png
+.. |edit-in-editor| image:: programming/edit-in-editor.png
+.. |submit| image:: programming/submit.png
+.. |course-management| image:: programming/course-management.png
