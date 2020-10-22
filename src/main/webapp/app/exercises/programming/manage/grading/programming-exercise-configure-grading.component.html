@@ -35,7 +35,7 @@
                     <div>
                         <div class="d-flex justify-content-between mb-3">
                             <div>
-                                <h2 class="mb-1">Test Cases</h2>
+                                <h2 class="mb-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.title">Test Cases</h2>
                                 <label class="d-flex align-items-center mb-2">
                                     <input type="checkbox" [checked]="showInactive" (change)="showInactive = !showInactive" />
                                     <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.showInactive">Show inactive</span>
@@ -135,7 +135,14 @@
                         </ngx-datatable>
                     </div>
                     <div>
-                        <h2 class="mb-5">Charts <span *ngIf="!!changedTestCaseIds.length" class="badge badge-primary"></span></h2>
+                        <h2 class="mb-5">
+                            <span>{{ 'programmingExercise.configureGrading.charts.title' | translate }}</span>
+                            <span
+                                *ngIf="!!changedTestCaseIds.length"
+                                class="badge badge-primary"
+                                jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"
+                            ></span>
+                        </h2>
 
                         <jhi-test-case-distribution-chart
                             [testCases]="filteredTestCases"
@@ -151,7 +158,7 @@
                 <div class="grading-table-layout">
                     <div>
                         <div class="d-flex align-items-center justify-content-between mb-4">
-                            <h2>Code Analysis Categories</h2>
+                            <h2 jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.title">Code Analysis Categories</h2>
                             <!-- TODO currently the reset button is permanently disabled -->
                             <jhi-programming-exercise-grading-table-actions
                                 [exercise]="exercise"
@@ -175,7 +182,6 @@
                         >
                             <ngx-datatable-column name="Category" prop="name">
                                 <ng-template ngx-datatable-cell-template let-value="value">
-                                    <span style="white-space: nowrap"
                                     <fa-icon [icon]="'square'" [styles]="{ color: categoryColors[value] }" class="mr-2"></fa-icon>
                                     {{ value }}
                                 </ng-template>
@@ -187,7 +193,7 @@
                                         [icon]="'question-circle'"
                                         class="text-secondary ml-2"
                                         placement="bottom"
-                                        [ngbTooltip]="'Determines whether issues in this category should be shown to the students and used for grading.'"
+                                        [ngbTooltip]="'programmingExercise.configureGrading.help.state' | translate"
                                     ></fa-icon>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
@@ -203,7 +209,7 @@
                                         [icon]="'question-circle'"
                                         class="text-secondary ml-2"
                                         placement="bottom"
-                                        [ngbTooltip]="'Penalty points given on each detected issue of this category.'"
+                                        [ngbTooltip]="'programmingExercise.configureGrading.help.penalty' | translate"
                                     ></fa-icon>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
@@ -223,7 +229,7 @@
                                         [icon]="'question-circle'"
                                         class="text-secondary ml-2"
                                         placement="bottom"
-                                        [ngbTooltip]="'Maximum applied penalty across all issues of this category for one student.'"
+                                        [ngbTooltip]="'programmingExercise.configureGrading.help.maxPenalty' | translate"
                                     ></fa-icon>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
@@ -251,7 +257,14 @@
                         </ngx-datatable>
                     </div>
                     <div>
-                        <h2 class="mb-5">Charts <span *ngIf="!!changedCategoryIds.length" class="badge badge-primary"></span></h2>
+                        <h2 class="mb-5">
+                            <span>{{ 'programmingExercise.configureGrading.charts.title' | translate }}</span>
+                            <span
+                                *ngIf="!!changedCategoryIds.length"
+                                class="badge badge-primary"
+                                jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"
+                            ></span>
+                        </h2>
 
                         <jhi-sca-category-distribution-chart
                             [categories]="staticCodeAnalysisCategories"

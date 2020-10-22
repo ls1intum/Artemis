@@ -9,7 +9,6 @@ import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-ca
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 
 export class MockProgrammingExerciseGradingService implements IProgrammingExerciseGradingService {
-
     private testCaseSubject = new BehaviorSubject<ProgrammingExerciseTestCase[] | undefined>(undefined);
     private categorySubject = new BehaviorSubject<StaticCodeAnalysisCategory[] | undefined>(undefined);
 

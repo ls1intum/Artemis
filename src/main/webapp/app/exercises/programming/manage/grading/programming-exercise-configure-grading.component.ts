@@ -137,7 +137,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     map((res) => res.body!),
                     tap((exercise) => (this.exercise = exercise)),
                     tap(() => {
-                        if (!this.exercise.staticCodeAnalysisEnabled) {
+                        if (this.exercise.staticCodeAnalysisEnabled) {
+                            this.loadStaticCodeAnalysisCategories();
+                        } else if (this.activeTab !== 'test-cases') {
                             this.selectTab('test-cases');
                         }
                     }),
@@ -152,14 +154,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     }),
                     catchError(() => of(null)),
                 );
-
-                this.gradingService
-                    .getCodeAnalysisCategories(exerciseId)
-                    .pipe(
-                        tap((categories) => (this.staticCodeAnalysisCategories = categories)),
-                        catchError(() => of(null)),
-                    )
-                    .subscribe();
 
                 this.loadStatistics(exerciseId);
 
@@ -460,6 +454,16 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     getIssuesMap(categoryName: string): IssuesMap | undefined {
         return this.gradingStatistics?.categoryIssuesMap ? this.gradingStatistics.categoryIssuesMap[categoryName] : undefined;
+    }
+
+    private loadStaticCodeAnalysisCategories() {
+        this.gradingService
+            .getCodeAnalysisCategories(this.exercise.id!)
+            .pipe(
+                tap((categories) => (this.staticCodeAnalysisCategories = categories)),
+                catchError(() => of(null)),
+            )
+            .subscribe();
     }
 
     private loadStatistics(exerciseId: number) {

@@ -32,7 +32,6 @@ export class TestCaseDistributionChartComponent implements OnChanges {
     chartDatasets: ChartDataSets[] = [];
 
     ngOnChanges(): void {
-
         // sum of all weights
         const totalWeight = this.testCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
         // exercise max score with bonus in percent

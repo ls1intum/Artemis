@@ -81,10 +81,12 @@ public class ProgrammingExerciseGradingStatisticsDTO {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o)
+            if (this == o) {
                 return true;
-            if (o == null || getClass() != o.getClass())
+            }
+            if (o == null || getClass() != o.getClass()) {
                 return false;
+            }
             TestCaseStats that = (TestCaseStats) o;
             return Objects.equals(numPassed, that.numPassed) && Objects.equals(numFailed, that.numFailed);
         }
