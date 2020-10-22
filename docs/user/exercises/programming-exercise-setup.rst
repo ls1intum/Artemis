@@ -1,55 +1,51 @@
 Features
 ^^^^^^^^
 
-- The support for a specific programming language depends on the used ``Continuous Integration`` system. The table cis_language_support_ gives an overview:
+- The support for a specific programming language depends on the used ``Continuous Integration`` system. The table below gives an overview:
 
 .. table:: ``Continuous Integration`` system support of programming languages
 
-  .. _cis_language_support:
-
-  +----------------------+--------+---------+
-  | Programming Language | Bamboo | Jenkins |
-  +======================+========+=========+
-  | Java                 | true   | true    |
-  +----------------------+--------+---------+
-  | Python               | true   | true    |
-  +----------------------+--------+---------+
-  | C                    | true   | true    |
-  +----------------------+--------+---------+
-  | Haskell              | true   | true    |
-  +----------------------+--------+---------+
-  | Kotlin               | true   | false   |
-  +----------------------+--------+---------+
-  | VHDL                 | true   | false   |
-  +----------------------+--------+---------+
-  | Assembler            | true   | false   |
-  +----------------------+--------+---------+
++----------------------+--------+---------+
+| Programming Language | Bamboo | Jenkins |
++======================+========+=========+
+| Java                 | true   | true    |
++----------------------+--------+---------+
+| Python               | true   | true    |
++----------------------+--------+---------+
+| C                    | true   | true    |
++----------------------+--------+---------+
+| Haskell              | true   | true    |
++----------------------+--------+---------+
+| Kotlin               | true   | false   |
++----------------------+--------+---------+
+| VHDL                 | true   | false   |
++----------------------+--------+---------+
+| Assembler            | true   | false   |
++----------------------+--------+---------+
 
 - Not all programming languages support the same feature set.
   Depending on the feature set, some options might not be available during the creation of the programming exercise.
-  The table feature_sets_ provides an overview of the supported features.
+  The table below provides an overview of the supported features.
 
 .. table:: Programming language feature sets
 
-  .. _feature_sets:
-
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Solution Repository Checkout |
-  +======================+======================+======================+==================+==============+==============================+
-  | Java                 | true                 | true                 | true             | true         | false                        |
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Python               | true                 | false                | true             | false        | false                        |
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | C                    | false                | false                | true             | false        | false                        |
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Haskell              | true                 | false                | false            | false        | true                         |
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Kotlin               | true                 | false                | false            | true         | false                        |
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | VHDL                 | false                | false                | false            | false        | false                        |
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Assembler            | false                | false                | false            | false        | false                        |
-  +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
++----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
+| Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Solution Repository Checkout |
++======================+======================+======================+==================+==============+==============================+
+| Java                 | true                 | true                 | true             | true         | false                        |
++----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
+| Python               | true                 | false                | true             | false        | false                        |
++----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
+| C                    | false                | false                | true             | false        | false                        |
++----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
+| Haskell              | true                 | false                | false            | false        | true                         |
++----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
+| Kotlin               | true                 | false                | false            | true         | false                        |
++----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
+| VHDL                 | false                | false                | false            | false        | false                        |
++----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
+| Assembler            | false                | false                | false            | false        | false                        |
++----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
 
   - *Sequential Test Runs*: ``Artemis`` can generate a build plan which first executes structural and then behavioral tests. This feature can help students to better concentrate on the immediate challenge at hand.
   - *Static Code Analysis*: ``Artemis`` can generate a build plan which additionally executes static code analysis tools.
