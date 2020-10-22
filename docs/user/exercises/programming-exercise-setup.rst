@@ -1,20 +1,5 @@
-Exercise Creation
-^^^^^^^^^^^^^^^^^
-
-1. **Open Course Management**
-
-- Open |course-management|
-- Navigate into **Exercises** of your preferred course
-
-    .. figure:: programming/course-management-course-dashboard.png
-              :align: center
-
-2. **Generate programming exercise**
-
-- Click on **Generate new programming exercise**
-
-    .. figure:: programming/course-management-exercise-dashboard.png
-              :align: center
+Features
+^^^^^^^^
 
 - The support for a specific programming language depends on the used ``Continuous Integration`` system. The table cis_language_support_ gives an overview:
 
@@ -75,6 +60,26 @@ Exercise Creation
 
 .. note::
   Only ``Bamboo`` supports ``Sequential Test Runs`` at the moment.
+
+Exercise Creation
+^^^^^^^^^^^^^^^^^
+
+1. **Open Course Management**
+
+- Open |course-management|
+- Navigate into **Exercises** of your preferred course
+
+    .. figure:: programming/course-management-course-dashboard.png
+              :align: center
+
+2. **Generate programming exercise**
+
+- Click on **Generate new programming exercise**
+
+    .. figure:: programming/course-management-exercise-dashboard.png
+              :align: center
+
+- Fill out all mandatory values and click on |generate|
 
     .. figure:: programming/create-programming-1.png
               :align: center
@@ -171,3 +176,4 @@ Exercise Creation
 .. |edit-in-editor| image:: programming/edit-in-editor.png
 .. |submit| image:: programming/submit.png
 .. |course-management| image:: programming/course-management.png
+.. |generate| image:: programming/generate-button.png
