@@ -6,6 +6,7 @@ import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -249,6 +250,14 @@ public class TextSubmissionService extends SubmissionService {
             textSubmissions.add((TextSubmission) optionalTextSubmission.get());
         }
         return textSubmissions;
+    }
+
+    public List<TextSubmission> getTextSubmissionsWithTextBlocksByExerciseId(Long exerciseId) {
+        return textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exerciseId);
+    }
+
+    public List<TextSubmission> getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(Long exerciseId, Language language) {
+        return textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrueAndLanguage(exerciseId, language);
     }
 
     /**

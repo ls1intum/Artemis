@@ -149,28 +149,26 @@ public class AtheneService {
         log.debug("Start Athene Service for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
 
         // Find all submissions for Exercise
-        List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exercise.getId(), true, false);
-
         // We only support english languages so far, to prevent corruption of the clustering
-        textSubmissions.removeIf(textSubmission -> textSubmission.getLanguage() != Language.ENGLISH);
+        List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(exercise.getId(), Language.ENGLISH);
 
         // Athene only works with 10 or more submissions
-        if (textSubmissions.size() >= 10) {
+        if (textSubmissions.size() < 10) {
+            return;
+        }
 
-            log.info("Calling Remote Service to calculate automatic feedback for " + textSubmissions.size() + " submissions.");
+        log.info("Calling Remote Service to calculate automatic feedback for " + textSubmissions.size() + " submissions.");
 
-            try {
-                final Request request = new Request(exercise.getId(), textSubmissions, ARTEMIS_SERVER_URL + ATHENE_RESULT_API_PATH + exercise.getId());
-                Response response = connector.invokeWithRetry(API_ENDPOINT, request, authorizationHeaderForSymmetricSecret(API_SECRET), maxRetries);
-                log.info("Remote Service to calculate automatic feedback responded: " + response.detail);
+        try {
+            final Request request = new Request(exercise.getId(), textSubmissions, ARTEMIS_SERVER_URL + ATHENE_RESULT_API_PATH + exercise.getId());
+            Response response = connector.invokeWithRetry(API_ENDPOINT, request, authorizationHeaderForSymmetricSecret(API_SECRET), maxRetries);
+            log.info("Remote Service to calculate automatic feedback responded: " + response.detail);
 
-                // Register task for exercise as running, AtheneResource calls finishTask on result receive
-                startTask(exercise.getId());
-            }
-            catch (NetworkingError networkingError) {
-                log.error("Error while calling Remote Service", networkingError);
-            }
-
+            // Register task for exercise as running, AtheneResource calls finishTask on result receive
+            startTask(exercise.getId());
+        }
+        catch (NetworkingError networkingError) {
+            log.error("Error while calling Remote Service", networkingError);
         }
     }
 
@@ -180,7 +178,6 @@ public class AtheneService {
      * @param blocks the list of calculated textBlocks to save to the database
      * @param exerciseId the exercise the automatic feedback suggestions were calculated for
      */
-    @Transactional
     public void processResult(Map<Integer, TextCluster> clusters, List<AtheneDTO.TextBlock> blocks, Long exerciseId) {
         log.info("Start processing incoming Athene results");
 
@@ -209,7 +206,7 @@ public class AtheneService {
      */
     public List<TextBlock> parseTextBlocks(List<AtheneDTO.TextBlock> blocks, Long exerciseId) {
         // Create submissionsMap for lookup
-        List<TextSubmission> submissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, true, false);
+        List<TextSubmission> submissions = textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseId(exerciseId);
         Map<Long, TextSubmission> submissionsMap = submissions.stream().collect(toMap(/* Key: */ Submission::getId, /* Value: */ submission -> submission));
 
         // Map textBlocks to submissions
@@ -245,9 +242,9 @@ public class AtheneService {
         final List<TextCluster> savedClusters = textClusterRepository.saveAll(clusterMap.values());
 
         // Find exercise, which the clusters belong to
-        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
+        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
         if (optionalTextExercise.isEmpty()) {
-            log.error("Error while processing Athene clusters. Exercise with id " + exerciseId + "not found", new Error());
+            log.error("Error while processing Athene clusters. Exercise with id " + exerciseId + " not found", new Error());
             return;
         }
         TextExercise textExercise = optionalTextExercise.get();

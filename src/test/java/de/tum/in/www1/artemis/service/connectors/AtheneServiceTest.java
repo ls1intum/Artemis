@@ -82,7 +82,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         exercise1 = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureTimestamp, course1);
         exercise1.setId(1L);
 
-        when(textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exercise1.getId())).thenReturn(Optional.ofNullable(exercise1));
+        when(textExerciseRepository.findById(exercise1.getId())).thenReturn(Optional.ofNullable(exercise1));
     }
 
     /**
@@ -100,7 +100,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Test
     public void submitJobWithLessThan10Submissions() {
         // Let textSubmissionService return 9 generated submissions
-        when(textSubmissionService.getTextSubmissionsByExerciseId(exercise1.getId(), true, false)).thenReturn(generateSubmissions(9));
+        when(textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseId(exercise1.getId())).thenReturn(generateSubmissions(9));
 
         atheneService.submitJob(exercise1);
         assertThat(atheneService.isTaskRunning(exercise1.getId()));
@@ -112,7 +112,8 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Test
     public void submitJobWith10Submissions() {
         // Let textSubmissionService return 10 generated submissions
-        when(textSubmissionService.getTextSubmissionsByExerciseId(exercise1.getId(), true, false)).thenReturn(generateSubmissions(10));
+
+        when(textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(exercise1.getId(), Language.ENGLISH)).thenReturn(generateSubmissions(10));
 
         // Inject restTemplate to connector of atheneService
         RemoteArtemisServiceConnector conn = (RemoteArtemisServiceConnector) ReflectionTestUtils.getField(atheneService, "connector");
@@ -137,7 +138,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Test
     public void parseTextBlocks() {
         // Let textSubmissionService return 10 generated submissions
-        when(textSubmissionService.getTextSubmissionsByExerciseId(exercise1.getId(), true, false)).thenReturn(generateSubmissions(10));
+        when(textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseId(exercise1.getId())).thenReturn(generateSubmissions(10));
         List<AtheneDTO.TextBlock> blocks = generateTextBlocks(10);
         List<TextBlock> textBlocks = atheneService.parseTextBlocks(blocks, exercise1.getId());
         for (TextBlock t : textBlocks) {
@@ -155,14 +156,13 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Test
     public void processResult() {
         // Inject running task into atheneService
-        List<Long> runningAtheneTasks = new ArrayList<>();
-        runningAtheneTasks.add(exercise1.getId());
+        List<Long> runningAtheneTasks = new ArrayList<>() {{ add(exercise1.getId()); }};
         ReflectionTestUtils.setField(atheneService, "runningAtheneTasks", runningAtheneTasks);
         // Verify injection
         assertThat(atheneService.isTaskRunning(exercise1.getId()));
 
         // Let textSubmissionService return 10 generated submissions
-        when(textSubmissionService.getTextSubmissionsByExerciseId(exercise1.getId(), true, false)).thenReturn(generateSubmissions(10));
+        when(textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseId(exercise1.getId())).thenReturn(generateSubmissions(10));
 
         // generate required parameters
         List<AtheneDTO.TextBlock> blocks = generateTextBlocks(10);
