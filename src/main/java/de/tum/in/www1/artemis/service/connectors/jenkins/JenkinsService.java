@@ -306,6 +306,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         result.setScore((long) calculateResultScore(report, testSum));
         result.setParticipation(participation);
         addFeedbackToResult(result, report);
+        // We assume the build has failed if no test case feedback has been sent. Static code analysis feedback might exist even though the build failed
         boolean hasTestCaseFeedback = result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isStaticCodeAnalysisFeedback());
         result.setResultString(hasTestCaseFeedback ? report.getSuccessful() + " of " + testSum + " passed" : "No tests found");
 
