@@ -149,7 +149,7 @@
                             [testCaseStatsMap]="gradingStatistics?.testCaseStatsMap"
                             [totalParticipations]="gradingStatistics?.numParticipations"
                             [exercise]="exercise"
-                            [(testCaseColors)]="testCaseColors"
+                            (testCaseColorsChange)="testCaseColors = $event"
                         ></jhi-test-case-distribution-chart>
                     </div>
                 </div>
@@ -273,7 +273,7 @@
                             [categories]="staticCodeAnalysisCategories"
                             [categoryIssuesMap]="gradingStatistics?.categoryIssuesMap"
                             [exercise]="exercise"
-                            [(categoryColors)]="categoryColors"
+                            (categoryColorsChange)="categoryColors = $event"
                         ></jhi-sca-category-distribution-chart>
                     </div>
                 </div>

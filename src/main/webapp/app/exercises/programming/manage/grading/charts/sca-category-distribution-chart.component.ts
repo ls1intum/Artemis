@@ -24,7 +24,6 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
     @Input() categoryIssuesMap?: CategoryIssuesMap;
     @Input() exercise: ProgrammingExercise;
 
-    @Input() categoryColors = {};
     @Output() categoryColorsChange = new EventEmitter<{}>();
 
     chartPreset = new HorizontalStackedBarChartPreset(['Penalty', 'Issues', 'Deductions'], ['all penalties', 'all detected issues', 'all deducted points']);
@@ -77,9 +76,9 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
         }));
 
         // update colors for category table
-        this.categoryColors = {};
-        this.chartDatasets.forEach(({ label, backgroundColor }) => (this.categoryColors[label!] = backgroundColor));
-        this.categoryColorsChange.emit(this.categoryColors);
+        const categoryColors = {};
+        this.chartDatasets.forEach(({ label, backgroundColor }) => (categoryColors[label!] = backgroundColor));
+        this.categoryColorsChange.emit(categoryColors);
     }
 
     getColor(i: number, l: number): string {

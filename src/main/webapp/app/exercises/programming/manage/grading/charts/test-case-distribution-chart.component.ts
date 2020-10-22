@@ -25,7 +25,6 @@ export class TestCaseDistributionChartComponent implements OnChanges {
     @Input() totalParticipations?: number;
     @Input() exercise: ProgrammingExercise;
 
-    @Input() testCaseColors = {};
     @Output() testCaseColorsChange = new EventEmitter<{}>();
 
     chartPreset = new HorizontalStackedBarChartPreset(['Weight', 'Weight & Bonus', 'Points'], ['all weights', 'all weights and bonuses', 'all achievable points']);
@@ -65,9 +64,9 @@ export class TestCaseDistributionChartComponent implements OnChanges {
         }));
 
         // update colors for test case table
-        this.testCaseColors = {};
-        this.chartDatasets.forEach(({ label, backgroundColor }) => (this.testCaseColors[label!] = backgroundColor));
-        this.testCaseColorsChange.emit(this.testCaseColors);
+        const testCaseColors = {};
+        this.chartDatasets.forEach(({ label, backgroundColor }) => (testCaseColors[label!] = backgroundColor));
+        this.testCaseColorsChange.emit(testCaseColors);
     }
 
     getColor(i: number, l: number): string {
