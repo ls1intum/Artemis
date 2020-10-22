@@ -13,8 +13,10 @@ pipeline {
             }
             stage('Build') {
                 steps {
-                    withMaven {
-                        sh 'mvn clean test'
+                    timestamps {
+                        withMaven {
+                            sh 'mvn clean test'
+                        }
                     }
                 }
             }

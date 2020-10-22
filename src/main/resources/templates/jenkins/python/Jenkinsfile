@@ -13,10 +13,12 @@ pipeline {
             }
             stage('Build') {
                 steps {
-                    sh '''
-                        pytest --junitxml=test-reports/results.xml
-                        exit 0
-                        '''
+                    timestamps {
+                        sh '''
+                            pytest --junitxml=test-reports/results.xml
+                            exit 0
+                            '''
+                    }
                 }
             }
         }

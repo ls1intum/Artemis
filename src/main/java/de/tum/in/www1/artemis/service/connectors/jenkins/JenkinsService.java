@@ -16,6 +16,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.slf4j.Logger;
@@ -433,26 +434,15 @@ public class JenkinsService implements ContinuousIntegrationService {
         try {
             final var build = getJob(projectKey, buildPlanId).getLastBuild();
             final var logHtml = Jsoup.parse(build.details().getConsoleOutputHtml()).body();
-            final var buildLog = new LinkedList<BuildLogEntry>();
-            final var iterator = logHtml.childNodes().iterator();
-            while (iterator.hasNext()) {
-                final var node = iterator.next();
-                final String log;
-                // For timestamps, parse the <b> tag containing the time as hh:mm:ss
-                if (node.attributes().get("class").contains("timestamp")) {
-                    final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
-                    final var time = ZonedDateTime.parse(timeAsString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX"));
-                    log = reduceToText(iterator.next());
-                    buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log)));
-                }
-                else {
-                    // Log is from the same line as the last
-                    // Look for next text node in children
-                    log = reduceToText(node);
-                    final var lastLog = buildLog.getLast();
-                    lastLog.setLog(lastLog.getLog() + stripLogEndOfLine(log));
-                }
+
+            List<BuildLogEntry> buildLog;
+            try {
+                buildLog = parsePipelineLogs(logHtml);
             }
+            catch (IllegalArgumentException e) {
+                buildLog = parseLogsLegacy(logHtml);
+            }
+
             // Jenkins logs all steps of the build pipeline. We remove those as they are irrelevant to the students
             LinkedList<BuildLogEntry> prunedBuildLog = new LinkedList<>();
             final Iterator<BuildLogEntry> buildlogIterator = buildLog.iterator();
@@ -482,6 +472,72 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
     }
 
+    private List<BuildLogEntry> parsePipelineLogs(Element logHtml) throws IllegalArgumentException {
+        final var buildLog = new LinkedList<BuildLogEntry>();
+        if (logHtml.childNodes().stream().noneMatch(child -> child.attr("class").contains("pipeline"))) {
+            throw new IllegalArgumentException("Log is not pipeline log");
+        }
+        for (Element elem : logHtml.children()) {
+            // Only pipeline-node-ID elements contain actual log entries
+            if (elem.attributes().get("class").contains("pipeline-node")) {
+                // At least one child must have a timestamp class
+                if (elem.childNodes().stream().anyMatch(child -> child.attr("class").contains("timestamp"))) {
+                    Iterator<Node> nodeIterator = elem.childNodes().iterator();
+
+                    while (nodeIterator.hasNext()) {
+                        Node node = nodeIterator.next();
+                        final String log;
+                        if (node.attributes().get("class").contains("timestamp")) {
+                            final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
+                            final var time = ZonedDateTime.parse(timeAsString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX"));
+                            var contentCandidate = nodeIterator.next();
+
+                            // Skip invisible entries (they contain only the timestamp, but we already got that above)
+                            if (contentCandidate.attr("style").contains("display: none")) {
+                                contentCandidate = nodeIterator.next();
+                            }
+                            log = reduceToText(contentCandidate);
+                            buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log).trim()));
+                        }
+                        else {
+                            // Log is from the same line as the last
+                            // Look for next text node in children
+                            log = reduceToText(node);
+                            final var lastLog = buildLog.getLast();
+                            lastLog.setLog(lastLog.getLog() + stripLogEndOfLine(log).trim());
+                        }
+                    }
+                }
+            }
+        }
+        return buildLog;
+
+    }
+
+    private List<BuildLogEntry> parseLogsLegacy(Element logHtml) {
+        final var buildLog = new LinkedList<BuildLogEntry>();
+        final var iterator = logHtml.childNodes().iterator();
+        while (iterator.hasNext()) {
+            final var node = iterator.next();
+            final String log;
+            // For timestamps, parse the <b> tag containing the time as hh:mm:ss
+            if (node.attributes().get("class").contains("timestamp")) {
+                final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
+                final var time = ZonedDateTime.parse(timeAsString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX"));
+                log = reduceToText(iterator.next());
+                buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log)));
+            }
+            else {
+                // Log is from the same line as the last
+                // Look for next text node in children
+                log = reduceToText(node);
+                final var lastLog = buildLog.getLast();
+                lastLog.setLog(lastLog.getLog() + stripLogEndOfLine(log));
+            }
+        }
+        return buildLog;
+    }
+
     private String stripLogEndOfLine(String log) {
         return log.replaceAll("\\r|\\n", "");
     }
@@ -491,7 +547,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             return ((TextNode) node).getWholeText();
         }
 
-        return reduceToText(node.childNode(0));
+        return reduceToText(node.childNode(node.childNodeSize() - 1));
     }
 
     @Override
