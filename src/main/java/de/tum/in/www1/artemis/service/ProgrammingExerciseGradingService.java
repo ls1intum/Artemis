@@ -537,7 +537,7 @@ public class ProgrammingExerciseGradingService {
         var testCaseStatsMap = new HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats>();
 
         // number of students per amount of detected issues per category
-        var categoryIssuesStudentsMap = new HashMap<String, HashMap<Integer, Integer>>();
+        var categoryIssuesStudentsMap = new HashMap<String, Map<Integer, Integer>>();
 
         // maximum amount of issues per category per student
         var maxIssuesPerCategory = 0;
@@ -562,7 +562,7 @@ public class ProgrammingExerciseGradingService {
                     // sca feedback
 
                     var categoryName = feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
-                    if (categoryName.equals("")) {
+                    if ("".equals(categoryName)) {
                         continue; // this feedback belongs to no category
                     }
 

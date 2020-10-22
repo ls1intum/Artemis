@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This is a dto for providing statistics for the programming exercise test cases & sca categories.
@@ -10,9 +10,9 @@ public class ProgrammingExerciseGradingStatisticsDTO {
     // number of the participations with a result
     private Integer numParticipations;
     // statistics for each test case
-    private HashMap<String, TestCaseStats> testCaseStatsMap;
+    private Map<String, TestCaseStats> testCaseStatsMap;
     // statistics for each category
-    private HashMap<String, HashMap<Integer, Integer>> categoryIssuesMap;
+    private Map<String, Map<Integer, Integer>> categoryIssuesMap;
     // highest number of issues a student has in one category
     private Integer maxIssuesPerCategory;
 
@@ -24,19 +24,19 @@ public class ProgrammingExerciseGradingStatisticsDTO {
         return numParticipations;
     }
 
-    public void setTestCaseStatsMap(HashMap<String, TestCaseStats> testCaseStatsMap) {
+    public void setTestCaseStatsMap(Map<String, TestCaseStats> testCaseStatsMap) {
         this.testCaseStatsMap = testCaseStatsMap;
     }
 
-    public HashMap<String, TestCaseStats> getTestCaseStatsMap() {
+    public Map<String, TestCaseStats> getTestCaseStatsMap() {
         return testCaseStatsMap;
     }
 
-    public void setCategoryIssuesMap(HashMap<String, HashMap<Integer, Integer>> categoryIssuesMap) {
+    public void setCategoryIssuesMap(Map<String, Map<Integer, Integer>> categoryIssuesMap) {
         this.categoryIssuesMap = categoryIssuesMap;
     }
 
-    public HashMap<String, HashMap<Integer, Integer>> getCategoryIssuesMap() {
+    public Map<String, Map<Integer, Integer>> getCategoryIssuesMap() {
         return categoryIssuesMap;
     }
 
