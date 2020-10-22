@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -87,16 +90,8 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
      */
     @Test
     public void submitJobWithoutSubmissions() {
-        // Catch call of atheneService to the textBlockRepository
-        when(textBlockRepository.saveAll(anyIterable())).thenAnswer(invocation -> {
-            ArrayList<TextBlock> set = invocation.getArgument(0);
-            // Check for correct number of textBlocks
-            assert set.size() == 0;
-            return set;
-        });
-
         atheneService.submitJob(exercise1);
-        assert !atheneService.isTaskRunning(exercise1.getId());
+        assertThat(!atheneService.isTaskRunning(exercise1.getId()));
     }
 
     /**
@@ -107,16 +102,8 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         // Let textSubmissionService return 9 generated submissions
         when(textSubmissionService.getTextSubmissionsByExerciseId(exercise1.getId(), true, false)).thenReturn(generateSubmissions(9));
 
-        // Catch call of atheneService to the textBlockRepository
-        when(textBlockRepository.saveAll(anyIterable())).thenAnswer(invocation -> {
-            ArrayList<TextBlock> set = invocation.getArgument(0);
-            // Check for correct number of textBlocks
-            assert set.size() == 32;
-            return set;
-        });
-
         atheneService.submitJob(exercise1);
-        assert !atheneService.isTaskRunning(exercise1.getId());
+        assertThat(atheneService.isTaskRunning(exercise1.getId()));
     }
 
     /**
@@ -129,7 +116,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         // Inject restTemplate to connector of atheneService
         RemoteArtemisServiceConnector conn = (RemoteArtemisServiceConnector) ReflectionTestUtils.getField(atheneService, "connector");
-        assert conn != null;
+        assertThat(conn).isNotNull();
         ReflectionTestUtils.setField(conn, "restTemplate", restTemplate);
 
         // Create mock server
@@ -138,7 +125,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
                 .andRespond(withSuccess("{ \"detail\": \"Submission successful\" }", MediaType.APPLICATION_JSON));
 
         atheneService.submitJob(exercise1);
-        assert atheneService.isTaskRunning(exercise1.getId());
+        assertThat(atheneService.isTaskRunning(exercise1.getId()));
 
         // Check if mock server received specified requests
         mockServer.verify();
@@ -154,12 +141,12 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         List<AtheneDTO.TextBlock> blocks = generateTextBlocks(10);
         List<TextBlock> textBlocks = atheneService.parseTextBlocks(blocks, exercise1.getId());
         for (TextBlock t : textBlocks) {
-            assert t.getId() != null;
-            assert t.getText() != null;
-            assert t.getType() == TextBlockType.AUTOMATIC;
-            assert t.getSubmission() != null;
+            assertThat(t.getId()).isNotNull();
+            assertThat(t.getText()).isNotNull();
+            assertThat(t.getType()).isEqualTo(TextBlockType.AUTOMATIC);
+            assertThat(t.getSubmission()).isNotNull();
         }
-        assert textBlocks.size() == 10;
+        assertThat(textBlocks, hasSize(10));
     }
 
     /**
@@ -172,7 +159,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         runningAtheneTasks.add(exercise1.getId());
         ReflectionTestUtils.setField(atheneService, "runningAtheneTasks", runningAtheneTasks);
         // Verify injection
-        assert atheneService.isTaskRunning(exercise1.getId());
+        assertThat(atheneService.isTaskRunning(exercise1.getId()));
 
         // Let textSubmissionService return 10 generated submissions
         when(textSubmissionService.getTextSubmissionsByExerciseId(exercise1.getId(), true, false)).thenReturn(generateSubmissions(10));
@@ -186,10 +173,10 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
             List<TextBlock> set = invocation.getArgument(0);
             // Check for correct number of textBlocks
             if (set instanceof LinkedList) {
-                assert set.size() == 10;
+                assertThat(set, hasSize(10));
             }
             else if (set instanceof ArrayList) {
-                assert set.size() == 0;
+                assertThat(set, hasSize(0));
             }
             return set;
         });
@@ -198,13 +185,13 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         when(textClusterRepository.saveAll(anyIterable())).thenAnswer(invocation -> {
             Collection<TextCluster> clusterCollection = invocation.getArgument(0);
             // Check for correct number of clusters
-            assert clusterCollection.size() == clusters.size();
+            assertThat(clusterCollection, hasSize(clusters.size()));
             return new ArrayList<>(clusterCollection);
         });
 
         // Call test method
         atheneService.processResult(clusters, blocks, exercise1.getId());
-        assert !atheneService.isTaskRunning(exercise1.getId());
+        assertThat(!atheneService.isTaskRunning(exercise1.getId()));
     }
 
     /**

@@ -88,7 +88,7 @@ public class AtheneService {
          * Create new TextSubmission as DTO.
          */
         @NotNull
-        private List<TextSubmission> submissionDTOs(@NotNull List<TextSubmission> submissions) {
+        private static List<TextSubmission> submissionDTOs(@NotNull List<TextSubmission> submissions) {
             return submissions.stream().map(textSubmission -> {
                 final TextSubmission submission = new TextSubmission();
                 submission.setText(textSubmission.getText());
@@ -154,8 +154,7 @@ public class AtheneService {
         // We only support english languages so far, to prevent corruption of the clustering
         textSubmissions.removeIf(textSubmission -> textSubmission.getLanguage() != Language.ENGLISH);
 
-        // Athene only works if more than 10 submissions are available
-        // else textBlockService is used
+        // Athene only works with 10 or more submissions
         if (textSubmissions.size() >= 10) {
 
             log.info("Calling Remote Service to calculate automatic feedback for " + textSubmissions.size() + " submissions.");
@@ -171,24 +170,6 @@ public class AtheneService {
             catch (NetworkingError networkingError) {
                 log.error("Error while calling Remote Service", networkingError);
             }
-
-        }
-        else {
-
-            log.info("More than 10 submissions needed to calculate automatic feedback. Falling back to naive splitting");
-
-            List<TextBlock> set = new ArrayList<>();
-
-            // Split Submissions into Blocks
-            for (TextSubmission textSubmission : textSubmissions) {
-
-                final List<TextBlock> blocks = textBlockService.splitSubmissionIntoBlocks(textSubmission);
-                textSubmission.setBlocks(blocks);
-                set.addAll(blocks);
-
-            }
-
-            textBlockRepository.saveAll(set);
 
         }
     }
