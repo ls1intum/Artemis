@@ -1,1 +1,15 @@
-Implement the fibonacci numbers function with initial values `fib 0 = 0` and `fib 1 = 1`
+# Do It Once, Do It Twice, Do It Thrice!
+
+Your task is to implement a function of type `(Int,Int) -> [(Int,Int)] -> [(Int,Int)]` which takes a range `(i,j)` and a list `xs` of pairs `(x,y)` representing points in the euclidean plane as arguments.
+The function should select only those elements in `xs` whose x-component lies in the inclusive range $$[i,j]$$.
+It should then reflect the remaining points along the x-axis and return the resulting list.
+
+Implement the function in three different ways:
+
+1. [1P] As a list comprehension without using any higher-order functions or recursion.
+   Call this function ```selectAndReflectA```.
+2. [1P] As a recursive function with the help of pattern matching.
+   You are not allowed to use list comprehensions or higher-order functions.
+   Call this function ```selectAndReflectB```.
+3. [1P] Use higher-order functions (e.g. `map`, `filter`, etc.) but no recursion or list comprehensions.
+   Call this function ```selectAndReflectB```.

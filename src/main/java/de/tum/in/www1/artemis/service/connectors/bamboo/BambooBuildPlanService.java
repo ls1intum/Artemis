@@ -298,7 +298,7 @@ public class BambooBuildPlanService {
             case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-2";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
             case C -> "ls1tum/artemis-c-docker:latest";
-            case HASKELL -> "tumfpv/fpv-stack:8.4.4";
+            case HASKELL -> "tumfpv/fpv-stack:8.8.4";
             case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
             case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
         };
