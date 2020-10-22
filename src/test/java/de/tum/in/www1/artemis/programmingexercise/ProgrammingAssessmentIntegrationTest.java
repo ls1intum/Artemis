@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -39,6 +40,9 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     ResultRepository resultRepository;
+
+    @Autowired
+    ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -268,6 +272,14 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     @WithMockUser(value = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_resultExists() throws Exception {
         // Save result in order to generate a new id
+        result = resultRepository.save(result);
+        // Create submission for result and save
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setResult(result);
+        submission = programmingSubmissionRepository.save(submission);
+
+        // Set submission and save again
+        result.setSubmission(submission);
         result = resultRepository.save(result);
         Long id = result.getId();
 
