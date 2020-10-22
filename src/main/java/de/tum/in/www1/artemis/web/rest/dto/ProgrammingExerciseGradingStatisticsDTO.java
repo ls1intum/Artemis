@@ -1,70 +1,58 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 /**
  * This is a dto for providing statistics for the programming exercise test cases.
  */
 public class ProgrammingExerciseGradingStatisticsDTO {
 
-    private Integer numTestCases;
-
     private Integer numParticipations;
+    private HashMap<String, TestCaseStats> testCaseStatsMap;
+    private HashMap<String, HashMap<Integer, Integer>> categoryIssuesMap;
+    private Integer maxIssuesPerCategory;
 
-    private List<TestCaseStats> testCaseStatsList = new ArrayList<>();
-
-    private List<HashMap<String, Integer>> categoryHitMap;
-
-    public Integer getNumTestCases() {
-        return numTestCases;
-    }
-
-    public void setNumTestCases(Integer numTestCases) {
-        this.numTestCases = numTestCases;
+    public void setNumParticipations(Integer numParticipations) {
+        this.numParticipations = numParticipations;
     }
 
     public Integer getNumParticipations() {
         return numParticipations;
     }
 
-    public void setNumParticipations(Integer numParticipations) {
-        this.numParticipations = numParticipations;
+    public void setTestCaseStatsMap(HashMap<String, TestCaseStats> testCaseStatsMap) {
+        this.testCaseStatsMap = testCaseStatsMap;
     }
 
-    public List<TestCaseStats> getTestCaseStatsList() {
-        return testCaseStatsList;
+    public HashMap<String, TestCaseStats> getTestCaseStatsMap() {
+        return testCaseStatsMap;
     }
 
-    public void addTestCaseStats(TestCaseStats testCaseStats) {
-        testCaseStatsList.add(testCaseStats);
+    public void setCategoryIssuesMap(HashMap<String, HashMap<Integer, Integer>> categoryIssuesMap) {
+        this.categoryIssuesMap = categoryIssuesMap;
     }
 
-    public List<HashMap<String, Integer>> getCategoryHitMap() {
-        return categoryHitMap;
+    public HashMap<String, HashMap<Integer, Integer>> getCategoryIssuesMap() {
+        return categoryIssuesMap;
     }
 
-    public void setCategoryHitMap(List<HashMap<String, Integer>> categoryHitMap) {
-        this.categoryHitMap = categoryHitMap;
+    public void setMaxIssuesPerCategory(Integer maxIssuesPerCategory) {
+        this.maxIssuesPerCategory = maxIssuesPerCategory;
+    }
+
+    public int getMaxIssuesPerCategory() {
+        return maxIssuesPerCategory;
     }
 
     public static class TestCaseStats {
-
-        private String testName;
 
         private Integer numPassed;
 
         private Integer numFailed;
 
-        public TestCaseStats(String name, Integer passed, Integer failed) {
-            this.testName = name;
+        public TestCaseStats(Integer passed, Integer failed) {
             this.numPassed = passed;
             this.numFailed = failed;
-        }
-
-        public String getTestName() {
-            return testName;
         }
 
         public Integer getNumPassed() {
@@ -75,5 +63,12 @@ public class ProgrammingExerciseGradingStatisticsDTO {
             return numFailed;
         }
 
+        public void increaseNumPassed() {
+            numPassed++;
+        }
+
+        public void increaseNumFailed() {
+            numFailed++;
+        }
     }
 }

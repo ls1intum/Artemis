@@ -3,6 +3,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { HorizontalStackedBarChartPreset } from 'app/shared/chart/presets/horizontalStackedBarChartPreset';
 import { ChartDataSets } from 'chart.js';
+import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 
 @Component({
     selector: 'jhi-sca-category-distribution-chart',
@@ -20,7 +21,7 @@ import { ChartDataSets } from 'chart.js';
 })
 export class ScaCategoryDistributionChartComponent implements OnChanges {
     @Input() categories: StaticCodeAnalysisCategory[];
-    @Input() categoryHitMap?: { [category: string]: number }[];
+    @Input() categoryIssuesMap?: CategoryIssuesMap;
     @Input() totalParticipations?: number;
     @Input() exercise: ProgrammingExercise;
 
@@ -42,9 +43,14 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
                 maxPenalty: category.state === StaticCodeAnalysisCategoryState.Graded ? category.maxPenalty : 0,
             }))
             .map((category) => {
-                const issuesSum = this.categoryHitMap?.reduce((sum, issues) => sum + (issues[category.name] || 0), 0);
-                let penaltySum = this.categoryHitMap?.reduce((sum, issues) => sum + Math.min((issues[category.name] || 0) * category.penalty, category.maxPenalty), 0);
-                penaltySum = Math.min(penaltySum || 0, this.exercise.maxStaticCodeAnalysisPenalty || penaltySum || 0);
+                const issuesMap = this.categoryIssuesMap ? this.categoryIssuesMap[category.name] || {} : {};
+                const issuesSum = Object.entries(issuesMap).reduce((sum, [issues, students]) => sum + parseInt(issues, 10) * students, 0);
+                let penaltySum = Object.entries(issuesMap)
+                    .map(([issues, students]) => students * Math.min(parseInt(issues, 10) * category.penalty, category.maxPenalty))
+                    .reduce((sum, penalty) => sum + penalty, 0);
+                if ((this.exercise.maxStaticCodeAnalysisPenalty || Infinity) < penaltySum) {
+                    penaltySum = this.exercise.maxStaticCodeAnalysisPenalty!;
+                }
                 return { category, issues: issuesSum || 0, penalty: penaltySum };
             })
             .filter(({ category, issues }) => category.state !== StaticCodeAnalysisCategoryState.Inactive && (category.penalty !== 0 || issues !== 0));

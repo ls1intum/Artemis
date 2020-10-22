@@ -1,12 +1,15 @@
 export class ProgrammingExerciseGradingStatistics {
-    numTestCases?: number;
     numParticipations?: number;
-    testCaseStatsList?: TestCaseStats[];
-    categoryHitMap?: { [category: string]: number }[];
+    testCaseStatsMap?: TestCaseStatsMap;
+    categoryIssuesMap?: CategoryIssuesMap;
+    maxIssuesPerCategory?: number;
 }
 
+export type TestCaseStatsMap = { [testCase: string]: TestCaseStats };
+export type IssuesMap = { [issues: string]: number };
+export type CategoryIssuesMap = { [category: string]: IssuesMap };
+
 export class TestCaseStats {
-    testName?: string;
     numPassed?: number;
     numFailed?: number;
 }

@@ -140,7 +140,7 @@
 
                         <jhi-test-case-distribution-chart
                             [testCases]="filteredTestCases"
-                            [testCaseStats]="gradingStatistics?.testCaseStatsList"
+                            [testCaseStatsMap]="gradingStatistics?.testCaseStatsMap"
                             [totalParticipations]="gradingStatistics?.numParticipations"
                             [exercise]="exercise"
                             [(testCaseColors)]="testCaseColors"
@@ -240,10 +240,10 @@
                                 <ng-template ngx-datatable-cell-template let-row="row">
                                     <jhi-category-issues-chart
                                         *ngIf="row.state !== CategoryState.Inactive"
-                                        [categoryIssuesStats]="categoryStats ? categoryStats[row.name] : null"
+                                        [issuesMap]="getIssuesMap(row.name)"
                                         [maxGradedIssues]="row.penalty > 0 ? row.maxPenalty / row.penalty : 0"
                                         [totalStudents]="gradingStatistics?.numParticipations || 0"
-                                        [maxNumberOfIssues]="maxIssuesInCategory"
+                                        [maxNumberOfIssues]="gradingStatistics?.maxIssuesPerCategory || 0"
                                     >
                                     </jhi-category-issues-chart>
                                 </ng-template>
@@ -255,7 +255,7 @@
 
                         <jhi-sca-category-distribution-chart
                             [categories]="staticCodeAnalysisCategories"
-                            [categoryHitMap]="gradingStatistics?.categoryHitMap"
+                            [categoryIssuesMap]="gradingStatistics?.categoryIssuesMap"
                             [totalParticipations]="gradingStatistics?.numParticipations"
                             [exercise]="exercise"
                             [(categoryColors)]="categoryColors"

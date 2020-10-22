@@ -1,4 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
+import { IssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 
 export class IssueColumn {
     w: string;
@@ -20,7 +21,7 @@ export class IssueColumn {
     `,
 })
 export class CategoryIssuesChartComponent implements OnChanges {
-    @Input() categoryIssuesStats?: { [numIssues: string]: number };
+    @Input() issuesMap?: IssuesMap;
     @Input() maxGradedIssues: number;
     @Input() totalStudents: number;
     @Input() maxNumberOfIssues: number;
@@ -38,7 +39,7 @@ export class CategoryIssuesChartComponent implements OnChanges {
 
         const columns = new Array(numColumns).fill(0).map((column, i, { length }) => {
             const numIssues = i + 1;
-            const numStudents = this.categoryIssuesStats ? this.categoryIssuesStats[numIssues] || 0 : 0;
+            const numStudents = this.issuesMap ? this.issuesMap[numIssues] || 0 : 0;
             return {
                 w: columnWidth + '%',
                 h: (numStudents / this.totalStudents) * 95 + 5 + '%',

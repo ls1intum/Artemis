@@ -530,41 +530,75 @@ public class ProgrammingExerciseGradingService {
         statistics.setNumParticipations(results.size());
 
         var testCases = testCaseService.findByExerciseId(exerciseId);
-        statistics.setNumTestCases(testCases.size());
+        var categories = staticCodeAnalysisService.findByExerciseId(exerciseId);
+
+        var testCaseStatsMap = new HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats>();
+        var categoryIssuesStudentsMap = new HashMap<String, HashMap<Integer, Integer>>();
+        var maxIssuesPerCategory = 0;
 
         for (var testCase : testCases) {
-            int passed = 0;
-            int failed = 0;
-
-            for (var result : results) {
-                for (var feedback : result.getFeedbacks()) {
-                    if (feedback.getType().equals(FeedbackType.AUTOMATIC) && feedback.getText().equals(testCase.getTestName())) {
-                        if (feedback.isPositive()) {
-                            passed++;
-                        }
-                        else {
-                            failed++;
-                        }
-                        break;
-                    }
-                }
-            }
-            statistics.addTestCaseStats(new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(testCase.getTestName(), passed, failed));
+            testCaseStatsMap.put(testCase.getTestName(), new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(0, 0));
         }
 
-        var categoryHitMap = results.stream()
-                .map((result) -> result.getFeedbacks().stream().filter(Feedback::isStaticCodeAnalysisFeedback)
-                        .map((feedback) -> feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length()))
-                        .reduce(new HashMap<String, Integer>(), (map, category) -> {
-                            map.merge(category, 1, Integer::sum);
-                            return map;
-                        }, (map1, map2) -> {
-                            map2.forEach((key, value) -> map1.merge(key, value, Integer::sum));
-                            return map1;
-                        }))
-                .collect(Collectors.toList());
+        for (var category : categories) {
+            categoryIssuesStudentsMap.put(category.getName(), new HashMap<>());
+        }
 
-        statistics.setCategoryHitMap(categoryHitMap);
+        for (var result : results) {
+
+            var categoryIssuesMap = new HashMap<String, Integer>();
+
+            for (var feedback : result.getFeedbacks()) {
+                if (feedback.getType().equals(FeedbackType.AUTOMATIC) && feedback.isStaticCodeAnalysisFeedback()) {
+
+                    var categoryName = feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
+                    if (categoryIssuesMap.containsKey(categoryName)) {
+                        categoryIssuesMap.merge(categoryName, 1, Integer::sum);
+                    } else {
+                        categoryIssuesMap.put(categoryName, 1);
+                    }
+
+                } else if (feedback.getType().equals(FeedbackType.AUTOMATIC)) {
+
+                    var testName = feedback.getText();
+                    if (testCaseStatsMap.containsKey(testName)) {
+                        if (feedback.isPositive()) {
+                            testCaseStatsMap.get(testName).increaseNumPassed();
+                        } else {
+                            testCaseStatsMap.get(testName).increaseNumFailed();
+                        }
+                    } else {
+                        testCaseStatsMap.put(testName, new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(feedback.isPositive() ? 1 : 0, feedback.isPositive() ? 0 : 1));
+                    }
+
+                }
+            }
+
+            for (var entry : categoryIssuesMap.entrySet()) {
+
+                if (categoryIssuesStudentsMap.containsKey(entry.getKey())) {
+                    var issuesStudentsMap = categoryIssuesStudentsMap.get(entry.getKey());
+                    if (issuesStudentsMap.containsKey(entry.getValue())) {
+                        issuesStudentsMap.merge(entry.getValue(), 1, Integer::sum);
+                    } else {
+                        issuesStudentsMap.put(entry.getValue(), 1);
+                    }
+                } else {
+                    var issuesStudentsMap = new HashMap<Integer, Integer>();
+                    issuesStudentsMap.put(entry.getValue(), 1);
+                    categoryIssuesStudentsMap.put(entry.getKey(), issuesStudentsMap);
+                }
+
+                if (entry.getValue() > maxIssuesPerCategory) {
+                    maxIssuesPerCategory = entry.getValue();
+                }
+
+            }
+        }
+
+        statistics.setTestCaseStatsMap(testCaseStatsMap);
+        statistics.setCategoryIssuesMap(categoryIssuesStudentsMap);
+        statistics.setMaxIssuesPerCategory(maxIssuesPerCategory);
 
         return statistics;
 

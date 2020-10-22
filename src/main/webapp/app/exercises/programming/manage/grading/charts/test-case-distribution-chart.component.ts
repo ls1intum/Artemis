@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { HorizontalStackedBarChartPreset } from 'app/shared/chart/presets/horizontalStackedBarChartPreset';
 import { ChartDataSets } from 'chart.js';
 
@@ -21,7 +21,7 @@ import { ChartDataSets } from 'chart.js';
 })
 export class TestCaseDistributionChartComponent implements OnChanges {
     @Input() testCases: ProgrammingExerciseTestCase[];
-    @Input() testCaseStats?: TestCaseStats[];
+    @Input() testCaseStatsMap?: TestCaseStatsMap;
     @Input() totalParticipations?: number;
     @Input() exercise: ProgrammingExercise;
 
@@ -41,7 +41,7 @@ export class TestCaseDistributionChartComponent implements OnChanges {
 
         const testCaseScores = this.testCases.map((testCase) => {
             const testCaseScore = (totalWeight > 0 ? (testCase.weight! * testCase.bonusMultiplier!) / totalWeight : 0) + testCase.bonusPoints! / this.exercise.maxScore!;
-            return { testCase, score: Math.min(testCaseScore, maxScore), stats: this.testCaseStats?.find((stats) => stats.testName === testCase.testName) };
+            return { testCase, score: Math.min(testCaseScore, maxScore), stats: this.testCaseStatsMap ? this.testCaseStatsMap[testCase.testName!] : undefined };
         });
 
         const totalScore = testCaseScores.map(({ score, stats }) => (stats ? score * stats.numPassed! : 0)).reduce((sum, points) => sum + points, 0);

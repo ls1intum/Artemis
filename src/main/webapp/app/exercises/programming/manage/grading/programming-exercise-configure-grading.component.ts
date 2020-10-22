@@ -10,7 +10,7 @@ import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/m
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { IssuesMap, ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { Location } from '@angular/common';
 import {
@@ -64,8 +64,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     activeTab: string;
 
     gradingStatistics?: ProgrammingExerciseGradingStatistics;
-    categoryStats?: {};
-    maxIssuesInCategory: number;
 
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
 
@@ -162,7 +160,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
                 const loadGradingStatistics = this.gradingService.getGradingStatistics(exerciseId).pipe(
                     tap((statistics) => (this.gradingStatistics = statistics)),
-                    tap(() => this.groupCategoryStats()),
                     catchError(() => of(null)),
                 );
 
@@ -445,26 +442,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     getTestCaseStats(testName: string): TestCaseStats | undefined {
-        return this.gradingStatistics?.testCaseStatsList?.find((testCaseStats) => testCaseStats.testName === testName);
+        return this.gradingStatistics?.testCaseStatsMap ? this.gradingStatistics?.testCaseStatsMap[testName] : undefined;
     }
 
-    groupCategoryStats() {
-        const categoryStats = {};
-        if (this.gradingStatistics?.categoryHitMap) {
-            this.gradingStatistics.categoryHitMap.forEach((categoryMap) =>
-                Object.keys(categoryMap).forEach((category) => {
-                    const numIssuesInCategory = categoryMap[category];
-                    this.maxIssuesInCategory = Math.max(this.maxIssuesInCategory || 0, numIssuesInCategory);
-                    if (!categoryStats[category]) {
-                        categoryStats[category] = {};
-                    }
-                    if (!categoryStats[category][numIssuesInCategory]) {
-                        categoryStats[category][numIssuesInCategory] = 0;
-                    }
-                    categoryStats[category][numIssuesInCategory] += 1;
-                }),
-            );
-        }
-        this.categoryStats = categoryStats;
+    getIssuesMap(categoryName: string): IssuesMap | undefined {
+        return this.gradingStatistics?.categoryIssuesMap ? this.gradingStatistics?.categoryIssuesMap[categoryName] : undefined;
     }
 }
