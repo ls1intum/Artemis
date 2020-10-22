@@ -251,10 +251,13 @@ public class ProgrammingExerciseGradingService {
     private Result updateResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
             ProgrammingExercise exercise) {
 
-        // Distinguish between static code analysis feedback and test case feedback
+        // Distinguish between static code analysis feedback, test case feedback and manual feedback
         List<Feedback> testCaseFeedback = new ArrayList<>();
         List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
         for (var feedback : result.getFeedbacks()) {
+            if (feedback.getType() == FeedbackType.MANUAL) {
+                continue;
+            }
             if (feedback.isStaticCodeAnalysisFeedback()) {
                 staticCodeAnalysisFeedback.add(feedback);
             }
@@ -310,8 +313,8 @@ public class ProgrammingExerciseGradingService {
      */
     private void removeFeedbacksForAfterDueDateTests(Result result, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate) {
         // Find feedback which is not associated with test cases for the current date. Does not remove static code analysis feedback
-        List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream().filter(
-                feedback -> !feedback.isStaticCodeAnalysisFeedback() && testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText())))
+        List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback()
+                && feedback.getType() != FeedbackType.MANUAL && testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText())))
                 .collect(Collectors.toList());
         feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
         // If there are no feedbacks left after filtering those not valid for the current date, also setHasFeedback to false.
