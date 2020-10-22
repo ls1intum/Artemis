@@ -30,6 +30,7 @@ export interface IProgrammingExerciseGradingService {
     reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
     getCodeAnalysisCategories(exerciseId: number): Observable<StaticCodeAnalysisCategory[]>;
     updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<StaticCodeAnalysisCategoryUpdate[]>;
+    getGradingStatistics(exerciseId: number): Observable<ProgrammingExerciseGradingStatistics>;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -67,8 +67,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
 
-    testCaseColors: {};
-    categoryColors: {};
+    testCaseColors = {};
+    categoryColors = {};
 
     /**
      * Returns the value of testcases
@@ -153,17 +153,23 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     catchError(() => of(null)),
                 );
 
-                const loadCodeAnalysisCategories = this.gradingService.getCodeAnalysisCategories(exerciseId).pipe(
-                    tap((categories) => (this.staticCodeAnalysisCategories = categories)),
-                    catchError(() => of(null)),
-                );
+                const loadCodeAnalysisCategories = this.gradingService
+                    .getCodeAnalysisCategories(exerciseId)
+                    .pipe(
+                        tap((categories) => (this.staticCodeAnalysisCategories = categories)),
+                        catchError(() => of(null)),
+                    )
+                    .subscribe();
 
-                const loadGradingStatistics = this.gradingService.getGradingStatistics(exerciseId).pipe(
-                    tap((statistics) => (this.gradingStatistics = statistics)),
-                    catchError(() => of(null)),
-                );
+                this.gradingService
+                    .getGradingStatistics(exerciseId)
+                    .pipe(
+                        tap((statistics) => (this.gradingStatistics = statistics)),
+                        catchError(() => of(null)),
+                    )
+                    .subscribe();
 
-                zip(loadExercise, loadExerciseTestCaseState, loadCodeAnalysisCategories, loadGradingStatistics)
+                zip(loadExercise, loadExerciseTestCaseState)
                     .pipe(take(1))
                     .subscribe(() => {
                         // This subscription e.g. adds new new tests to the table that were just created.
@@ -450,7 +456,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param testName The name of the test case
      */
     getTestCaseStats(testName: string): TestCaseStats | undefined {
-        return this.gradingStatistics?.testCaseStatsMap ? this.gradingStatistics?.testCaseStatsMap[testName] : undefined;
+        return this.gradingStatistics?.testCaseStatsMap ? this.gradingStatistics.testCaseStatsMap[testName] : undefined;
     }
 
     /**
@@ -458,6 +464,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param categoryName The name of the category
      */
     getIssuesMap(categoryName: string): IssuesMap | undefined {
-        return this.gradingStatistics?.categoryIssuesMap ? this.gradingStatistics?.categoryIssuesMap[categoryName] : undefined;
+        return this.gradingStatistics?.categoryIssuesMap ? this.gradingStatistics.categoryIssuesMap[categoryName] : undefined;
     }
 }
