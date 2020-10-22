@@ -13,6 +13,8 @@ public class BambooBuildResultNotificationDTO {
 
     private String notificationType;
 
+    private BambooBuildPlanDTO plan;
+
     private BambooBuildDTO build;
 
     public String getSecret() {
@@ -29,6 +31,14 @@ public class BambooBuildResultNotificationDTO {
 
     public void setNotificationType(String notificationType) {
         this.notificationType = notificationType;
+    }
+
+    public BambooBuildPlanDTO getPlan() {
+        return plan;
+    }
+
+    public void setPlan(BambooBuildPlanDTO plan) {
+        this.plan = plan;
     }
 
     public BambooBuildDTO getBuild() {
