@@ -10,12 +10,12 @@ import de.tum.in.www1.artemis.domain.TextCluster;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AtheneDTO {
 
-    public List<TextBlock> blocks = new ArrayList<>();
+    public List<TextBlockDTO> blocks = new ArrayList<>();
 
     public Map<Integer, TextCluster> clusters = new LinkedHashMap<>();
 
     // Inner DTO
-    public static class TextBlock {
+    public static class TextBlockDTO {
 
         public String id;
 

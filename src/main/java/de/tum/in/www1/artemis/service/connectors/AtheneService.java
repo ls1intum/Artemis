@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
@@ -178,7 +177,7 @@ public class AtheneService {
      * @param blocks the list of calculated textBlocks to save to the database
      * @param exerciseId the exercise the automatic feedback suggestions were calculated for
      */
-    public void processResult(Map<Integer, TextCluster> clusters, List<AtheneDTO.TextBlock> blocks, Long exerciseId) {
+    public void processResult(Map<Integer, TextCluster> clusters, List<AtheneDTO.TextBlockDTO> blocks, Long exerciseId) {
         log.info("Start processing incoming Athene results");
 
         // Parse textBlocks (blocks will come as AtheneDTO.TextBlock with their submissionId and need to be parsed)
@@ -204,14 +203,14 @@ public class AtheneService {
      * @param exerciseId The exerciseId of the exercise the blocks belong to
      * @return list of TextBlocks
      */
-    public List<TextBlock> parseTextBlocks(List<AtheneDTO.TextBlock> blocks, Long exerciseId) {
+    public List<TextBlock> parseTextBlocks(List<AtheneDTO.TextBlockDTO> blocks, Long exerciseId) {
         // Create submissionsMap for lookup
         List<TextSubmission> submissions = textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseId(exerciseId);
         Map<Long, TextSubmission> submissionsMap = submissions.stream().collect(toMap(/* Key: */ Submission::getId, /* Value: */ submission -> submission));
 
         // Map textBlocks to submissions
         List<TextBlock> textBlocks = new LinkedList();
-        for (AtheneDTO.TextBlock t : blocks) {
+        for (AtheneDTO.TextBlockDTO t : blocks) {
             // Convert DTO-TextBlock (including the submissionId) to TextBlock Entity
             TextBlock newBlock = new TextBlock();
             newBlock.setId(t.id);

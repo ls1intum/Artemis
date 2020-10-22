@@ -139,7 +139,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     public void parseTextBlocks() {
         // Let textSubmissionService return 10 generated submissions
         when(textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseId(exercise1.getId())).thenReturn(generateSubmissions(10));
-        List<AtheneDTO.TextBlock> blocks = generateTextBlocks(10);
+        List<AtheneDTO.TextBlockDTO> blocks = generateTextBlocks(10);
         List<TextBlock> textBlocks = atheneService.parseTextBlocks(blocks, exercise1.getId());
         for (TextBlock t : textBlocks) {
             assertThat(t.getId()).isNotNull();
@@ -165,7 +165,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         when(textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseId(exercise1.getId())).thenReturn(generateSubmissions(10));
 
         // generate required parameters
-        List<AtheneDTO.TextBlock> blocks = generateTextBlocks(10);
+        List<AtheneDTO.TextBlockDTO> blocks = generateTextBlocks(10);
         Map<Integer, TextCluster> clusters = generateClusters();
 
         // Catch call of atheneService to the textBlockRepository
@@ -199,10 +199,10 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @param count How many blocks should be generated
      * @return A list containing the generated TextBlocks
      */
-    private List<AtheneDTO.TextBlock> generateTextBlocks(int count) {
-        List<AtheneDTO.TextBlock> blocks = new ArrayList<>();
+    private List<AtheneDTO.TextBlockDTO> generateTextBlocks(int count) {
+        List<AtheneDTO.TextBlockDTO> blocks = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            AtheneDTO.TextBlock newBlock = new AtheneDTO.TextBlock();
+            AtheneDTO.TextBlockDTO newBlock = new AtheneDTO.TextBlockDTO();
             newBlock.submissionId = i;
             newBlock.startIndex = 0;
             newBlock.endIndex = 30;
