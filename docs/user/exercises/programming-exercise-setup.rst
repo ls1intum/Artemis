@@ -1,7 +1,13 @@
 Features
 ^^^^^^^^
+Artemis and its version control and continuous integration infrastructure is independent of the programming language and thus supports
+teaching and learning with any programming language that can be compiled and tested on the command line.
+Instructors have a lot of freedom in defining the environment (e.g. using build agents and Docker images) in which student code is executed and tested.
+To simplify the setup of programming exercises, Artemis supports several ``templates`` that show how the setup works.
+Instructors can still use those templates to generate programming exercises and then adapt and customize the settings in the repositories and build plans.
 
-- The support for a specific programming language depends on the used ``Continuous Integration`` system. The table below gives an overview:
+
+- The support for a specific programming language ``templates`` depends on the used ``continuous integration`` system. The table below gives an overview:
 
   +----------------------+--------+---------+
   | Programming Language | Bamboo | Jenkins |
@@ -21,7 +27,7 @@ Features
   | Assembler            | true   | false   |
   +----------------------+--------+---------+
 
-- Not all programming languages support the same feature set.
+- Not all ``templates`` support the same feature set.
   Depending on the feature set, some options might not be available during the creation of the programming exercise.
   The table below provides an overview of the supported features:
 
@@ -48,10 +54,16 @@ Features
     ``Artemis`` categorizes the found issues and provides them as feedback for the students. This feature makes students aware of code quality issues in their submissions.
   - *Plagiarism Checks*: ``Artemis`` is able to automatically calculate the similarity between student submissions. A side-by-side view of similar submissions is available to confirm the plagiarism suspicion.
   - *Package Name*: A package name has to be provided
-  - *Solution Repository Checkout*: Instructors are able to compare a students submissions against a sample solution
+  - *Solution Repository Checkout*: Instructors are able to compare a student submission against a sample solution in the solution repository
 
 .. note::
-  Only ``Bamboo`` supports ``Sequential Test Runs`` at the moment.
+  Only some ``templates`` for ``Bamboo`` support ``Sequential Test Runs`` at the moment.
+
+.. note::
+  Instructors are still able to extend the generated programming exercises with additional features that are not available in one specific template.
+
+We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the Github repository.
+
 
 Exercise Creation
 ^^^^^^^^^^^^^^^^^
