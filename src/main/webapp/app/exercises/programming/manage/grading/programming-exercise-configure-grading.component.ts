@@ -347,13 +347,17 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 // Find out if there are test cases that were not updated, show an error.
                 const notUpdatedCategories = _differenceBy(categoriesToUpdate, updatedCategories, 'id');
                 if (notUpdatedCategories.length) {
-                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.couldNotBeUpdated`, { categories: notUpdatedCategories });
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.couldNotBeUpdated`, {
+                        categories: notUpdatedCategories.map((c) => c.name).join(', '),
+                    });
                 } else {
                     this.alertService.success(`artemisApp.programmingExercise.configureGrading.categories.updated`);
                 }
             }),
             catchError(() => {
-                this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.couldNotBeUpdated`, { categories: categoriesToUpdate });
+                this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.couldNotBeUpdated`, {
+                    categories: categoriesToUpdate.map((c) => c.name).join(', '),
+                });
                 return of(null);
             }),
         );

@@ -65,7 +65,7 @@
                         >
                             <ngx-datatable-column name="Test Name" prop="testName">
                                 <ng-template ngx-datatable-cell-template let-value="value">
-                                    <fa-icon [icon]="'square'" [styles]="{ color: testCaseColors[value] }" class="mr-2"></fa-icon>
+                                    <fa-icon [icon]="'square'" [styles]="{ color: testCaseColors[value] || 'white' }" class="mr-2"></fa-icon>
                                     {{ value }}
                                 </ng-template>
                             </ngx-datatable-column>
@@ -105,7 +105,7 @@
                                         <div class="d-flex flex-column run-after-due-date-disabled">
                                             <pre jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.runAfterDueDateDisabled"></pre>
                                             <a [routerLink]="['/course/', this.courseId, 'programming-exercise', this.exercise.id!, 'edit']" class="ml-auto">
-                                                <jhi-button [icon]="'arrow-right'" ngbTooltip="{{ 'entity.action.edit' | translate }}"></jhi-button>
+                                                <jhi-button [icon]="'arrow-right'" placement="top" ngbTooltip="{{ 'entity.action.edit' | translate }}"></jhi-button>
                                             </a>
                                         </div>
                                     </ng-template>
@@ -136,7 +136,7 @@
                     </div>
                     <div>
                         <h2 class="mb-5">
-                            <span>{{ 'programmingExercise.configureGrading.charts.title' | translate }}</span>
+                            <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | translate }}</span>
                             <span
                                 *ngIf="!!changedTestCaseIds.length"
                                 class="badge badge-primary"
@@ -182,7 +182,7 @@
                         >
                             <ngx-datatable-column name="Category" prop="name">
                                 <ng-template ngx-datatable-cell-template let-value="value">
-                                    <fa-icon [icon]="'square'" [styles]="{ color: categoryColors[value] }" class="mr-2"></fa-icon>
+                                    <fa-icon [icon]="'square'" [styles]="{ color: categoryColors[value] || 'white' }" class="mr-2"></fa-icon>
                                     {{ value }}
                                 </ng-template>
                             </ngx-datatable-column>
@@ -193,7 +193,8 @@
                                         [icon]="'question-circle'"
                                         class="text-secondary ml-2"
                                         placement="bottom"
-                                        [ngbTooltip]="'programmingExercise.configureGrading.help.state' | translate"
+                                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.state' | translate"
+                                        container="body"
                                     ></fa-icon>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
@@ -209,7 +210,8 @@
                                         [icon]="'question-circle'"
                                         class="text-secondary ml-2"
                                         placement="bottom"
-                                        [ngbTooltip]="'programmingExercise.configureGrading.help.penalty' | translate"
+                                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.penalty' | translate"
+                                        container="body"
                                     ></fa-icon>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
@@ -229,7 +231,8 @@
                                         [icon]="'question-circle'"
                                         class="text-secondary ml-2"
                                         placement="bottom"
-                                        [ngbTooltip]="'programmingExercise.configureGrading.help.maxPenalty' | translate"
+                                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.maxPenalty' | translate"
+                                        container="body"
                                     ></fa-icon>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
@@ -258,7 +261,7 @@
                     </div>
                     <div>
                         <h2 class="mb-5">
-                            <span>{{ 'programmingExercise.configureGrading.charts.title' | translate }}</span>
+                            <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | translate }}</span>
                             <span
                                 *ngIf="!!changedCategoryIds.length"
                                 class="badge badge-primary"

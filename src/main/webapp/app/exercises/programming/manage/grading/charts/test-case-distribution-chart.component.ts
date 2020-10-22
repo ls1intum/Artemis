@@ -54,7 +54,7 @@ export class TestCaseDistributionChartComponent implements OnChanges {
             label: element.testCase.testName!,
             data: [
                 // relative weight percentage
-                (totalWeight > 0 ? element.testCase.weight! / totalWeight : 0) * 100,
+                totalWeight > 0 ? (element.testCase.weight! / totalWeight) * 100 : 0,
                 // relative score percentage
                 element.score * 100,
                 // relative points percentage

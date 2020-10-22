@@ -53,8 +53,7 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
                 }
 
                 return { category, issues: issuesSum || 0, penaltyPoints: penaltyPointsSum };
-            })
-            .filter(({ category, issues }) => category.state !== StaticCodeAnalysisCategoryState.Inactive && (category.penalty !== 0 || issues !== 0));
+            });
 
         // sum of all penalties
         const totalPenalty = categoryPenalties.reduce((sum, { category }) => sum + Math.min(category.penalty, category.maxPenalty), 0);
