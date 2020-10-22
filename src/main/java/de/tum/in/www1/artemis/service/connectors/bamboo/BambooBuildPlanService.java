@@ -299,7 +299,8 @@ public class BambooBuildPlanService {
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
             case C -> "ls1tum/artemis-c-docker:latest";
             case HASKELL -> "tumfpv/fpv-stack:8.4.4";
-            case VHDL, ASSEMBLER -> "tizianleonhardt/era-artemis-vhdl:latest";
+            case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
+            case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
         };
         return new DockerConfiguration().image(dockerImage);
     }
