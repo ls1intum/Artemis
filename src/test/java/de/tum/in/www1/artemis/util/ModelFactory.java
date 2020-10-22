@@ -780,7 +780,7 @@ public class ModelFactory {
         // Use a category which is not invisible in the default configuration
         String category = switch (tool) {
             case SPOTBUGS -> "BAD_PRACTICE";
-            case PMD -> "Best-Practices";
+            case PMD -> "Best Practices";
             case CHECKSTYLE -> "coding";
         };
 
