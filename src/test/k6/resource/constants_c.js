@@ -1,6 +1,4 @@
-export const programmingExerciseProblemStatementC =
-    '### Tests\n' +
-    '\n'
+export const programmingExerciseProblemStatementC = '### Tests\n' + '\n';
 '#### Allgemein\n' +
     '1. [task][Kompilieren](TestCompile)\n' +
     '2. [task][Rot0 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutput_0)\n' +
