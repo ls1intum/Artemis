@@ -1,0 +1,66 @@
+<div class="container">
+    <div class="row">
+        <div class="col-12 mx-auto">
+            <h2>Create Exercise Units</h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6 mx-auto">
+            <p>Please select all the exercises for which an exercise unit should be created.</p>
+        </div>
+        <div class="col-sm-6 mx-auto text-right">
+            <button type="button" class="btn btn-primary" [disabled]="selectedExercises.length === 0" (click)="submit()">Submit</button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 mx-auto">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="thead-dark">
+                        <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
+                            <th jhiSortBy="id">
+                                id
+                                <fa-icon [icon]="'sort'"></fa-icon>
+                            </th>
+                            <th jhiSortBy="type">
+                                type
+                                <fa-icon [icon]="'sort'"></fa-icon>
+                            </th>
+                            <th jhiSortBy="title">
+                                title
+                                <fa-icon [icon]="'sort'"></fa-icon>
+                            </th>
+                            <th jhiSortBy="shortName">
+                                Short Name
+                                <fa-icon [icon]="'sort'"></fa-icon>
+                            </th>
+                            <th jhiSortBy="releaseDate">
+                                Release Date
+                                <fa-icon [icon]="'sort'"></fa-icon>
+                            </th>
+                            <th jhiSortBy="dueDate">
+                                Due Date
+                                <fa-icon [icon]="'sort'"></fa-icon>
+                            </th>
+                            <th jhiSortBy="assessmentDueDate">
+                                Assessment Due Date
+                                <fa-icon [icon]="'sort'"></fa-icon>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let exercise of exercises" (click)="handleRowClick(exercise)" [class.table-primary]="isSelected(exercise)">
+                            <td>{{ exercise.id ? exercise.id : '' }}</td>
+                            <td>{{ exercise.type ? exercise.type : '' }}</td>
+                            <td>{{ exercise.title ? exercise.title : '' }}</td>
+                            <td>{{ exercise.shortName ? exercise.shortName : '' }}</td>
+                            <td>{{ exercise.releaseDate ? exercise.releaseDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                            <td>{{ exercise.dueDate ? exercise.dueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                            <td>{{ exercise.assessmentDueDate ? exercise.assessmentDueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

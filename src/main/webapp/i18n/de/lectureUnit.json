@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "lectureUnit": {
+            "home": {
+                "title": "Vorlesungseinheiten"
+            },
+            "unitCreationCard": {
+                "title": "Erzeuge ein neues Vorlesungseinheit",
+                "html": "HTML",
+                "exercise": "Aufgabe",
+                "video": "Video",
+                "file": "Datei"
+            },
+            "createExerciseUnit": {
+                "title": "Erzeuge eine neue Aufgabeneinheit"
+            }
+        },
+        "exerciseUnit": {
+            "created": "Aufgabeneinheit erstellt"
+        }
+    }
+}

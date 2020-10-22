@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "lectureUnit": {
+            "home": {
+                "title": "Lecture Modules"
+            },
+            "unitCreationCard": {
+                "title": "Add a new Lecture Unit",
+                "html": "HTML",
+                "exercise": "Exercise",
+                "video": "Video",
+                "file": "File"
+            },
+            "createExerciseUnit": {
+                "title": "Create a new Exercise Unit"
+            }
+        },
+        "exerciseUnit": {
+            "created": "Exercise Unit Created"
+        }
+    }
+}
