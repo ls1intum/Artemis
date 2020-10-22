@@ -183,6 +183,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 this.inProductionEnvironment = profileInfo.inProduction;
             }
         });
+
+        this.supportsJava = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.JAVA);
+        this.supportsPython = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.PYTHON);
+        this.supportsC = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.C);
+        this.supportsHaskell = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.HASKELL);
+        this.supportsKotlin = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.KOTLIN);
+        this.supportsVHDL = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.VHDL);
+        this.supportsAssembler = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.ASSEMBLER);
     }
 
     /**
