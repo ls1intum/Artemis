@@ -4,6 +4,7 @@ Features
 - The support for a specific programming language depends on the used ``Continuous Integration`` system. The table below gives an overview:
 
 .. table:: ``Continuous Integration`` system support of programming languages
+
   +----------------------+--------+---------+
   | Programming Language | Bamboo | Jenkins |
   +======================+========+=========+
@@ -27,6 +28,7 @@ Features
   The table below provides an overview of the supported features:
 
 .. table:: Programming language feature sets
+
   +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
   | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Solution Repository Checkout |
   +======================+======================+======================+==================+==============+==============================+
