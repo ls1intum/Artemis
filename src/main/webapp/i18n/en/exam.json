@@ -59,6 +59,7 @@
             }
         },
         "examScores": {
+            "xAxes": "Score in %",
             "maxPoints": "Maximum Points",
             "title": "Exam Scores",
             "examStatisticsTitle": "Exam Statistics",

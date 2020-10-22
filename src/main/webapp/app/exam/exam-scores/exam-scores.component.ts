@@ -23,6 +23,7 @@ import * as Chart from 'chart.js';
 import { ChartDataSets, ChartOptions, ChartType, LinearTickOptions } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -68,6 +69,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private changeDetector: ChangeDetectorRef,
         private languageHelper: JhiLanguageHelper,
         private localeConversionService: LocaleConversionService,
+        private translateService: TranslateService,
     ) {}
 
     ngOnInit() {
@@ -150,6 +152,14 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                             min: 0,
                             max: this.calculateTickMax(),
                         } as LinearTickOptions,
+                    },
+                ],
+                xAxes: [
+                    {
+                        scaleLabel: {
+                            display: true,
+                            labelString: this.translateService.instant('artemisApp.examScores.xAxes'),
+                        },
                     },
                 ],
             },
