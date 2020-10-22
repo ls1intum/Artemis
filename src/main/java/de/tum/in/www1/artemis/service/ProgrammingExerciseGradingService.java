@@ -569,11 +569,13 @@ public class ProgrammingExerciseGradingService {
                     // add 1 to the issues for this category
                     if (categoryIssuesMap.containsKey(categoryName)) {
                         categoryIssuesMap.merge(categoryName, 1, Integer::sum);
-                    } else {
+                    }
+                    else {
                         categoryIssuesMap.put(categoryName, 1);
                     }
 
-                } else if (feedback.getType().equals(FeedbackType.AUTOMATIC)) {
+                }
+                else if (feedback.getType().equals(FeedbackType.AUTOMATIC)) {
                     // test case feedback
 
                     var testName = feedback.getText();
@@ -583,10 +585,12 @@ public class ProgrammingExerciseGradingService {
                     if (testCaseStatsMap.containsKey(testName)) {
                         if (feedback.isPositive()) {
                             testCaseStatsMap.get(testName).increaseNumPassed();
-                        } else {
+                        }
+                        else {
                             testCaseStatsMap.get(testName).increaseNumFailed();
                         }
-                    } else {
+                    }
+                    else {
                         testCaseStatsMap.put(testName, new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(feedback.isPositive() ? 1 : 0, feedback.isPositive() ? 0 : 1));
                     }
 
@@ -602,10 +606,12 @@ public class ProgrammingExerciseGradingService {
                     // add 1 to the number of students for the category & issues
                     if (issuesStudentsMap.containsKey(entry.getValue())) {
                         issuesStudentsMap.merge(entry.getValue(), 1, Integer::sum);
-                    } else {
+                    }
+                    else {
                         issuesStudentsMap.put(entry.getValue(), 1);
                     }
-                } else {
+                }
+                else {
                     // create a new issues map for this category
                     var issuesStudentsMap = new HashMap<Integer, Integer>();
                     issuesStudentsMap.put(entry.getValue(), 1);

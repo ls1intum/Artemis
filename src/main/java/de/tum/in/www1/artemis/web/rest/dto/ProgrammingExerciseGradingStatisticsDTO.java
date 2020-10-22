@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * This is a dto for providing statistics for the programming exercise test cases & sca categories.
@@ -9,10 +10,13 @@ public class ProgrammingExerciseGradingStatisticsDTO {
 
     // number of the participations with a result
     private Integer numParticipations;
+
     // statistics for each test case
     private Map<String, TestCaseStats> testCaseStatsMap;
+
     // statistics for each category
     private Map<String, Map<Integer, Integer>> categoryIssuesMap;
+
     // highest number of issues a student has in one category
     private Integer maxIssuesPerCategory;
 
@@ -73,6 +77,21 @@ public class ProgrammingExerciseGradingStatisticsDTO {
 
         public void increaseNumFailed() {
             numFailed++;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            TestCaseStats that = (TestCaseStats) o;
+            return Objects.equals(numPassed, that.numPassed) && Objects.equals(numFailed, that.numFailed);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(numPassed, numFailed);
         }
     }
 }

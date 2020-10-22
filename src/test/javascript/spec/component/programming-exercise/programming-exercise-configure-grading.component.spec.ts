@@ -19,7 +19,7 @@ import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/servi
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisProgrammingExerciseGradingModule } from 'app/exercises/programming/manage/grading/programming-exercise-grading.module';
-import { expectElementToBeDisabled, expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
+import { expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { MockProgrammingExerciseWebsocketService } from '../../helpers/mocks/service/mock-programming-exercise-websocket.service';
 import { ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
