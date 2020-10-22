@@ -4,16 +4,14 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.Map;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.stereotype.Component;
-import org.w3c.dom.Document;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
-import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
 @Component
@@ -21,34 +19,30 @@ public class JavaJenkinsBuildPlanCreator extends AbstractJenkinsBuildPlanCreator
 
     private static final String STATIC_CODE_ANALYSIS_REPORT_DIR = "staticCodeAnalysisReports";
 
-    public JavaJenkinsBuildPlanCreator(ResourceLoader resourceLoader) {
-        super(resourceLoader);
+    public JavaJenkinsBuildPlanCreator(ResourceLoader resourceLoader, @Lazy JenkinsService jenkinsService) {
+        super(resourceLoader, jenkinsService);
     }
 
     @Override
-    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
-        final var buildPlan = isStaticCodeAnalysisEnabled ? "configWithStaticCodeAnalysis.xml" : "config.xml";
+    public String getPipelineScript(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
+        final var buildPlan = isStaticCodeAnalysisEnabled ? "Jenkinsfile-staticCodeAnalysis" : "Jenkinsfile";
         final var resourcePath = Path.of("templates", "jenkins", "java", buildPlan);
 
-        /*
-         * Create replacements for the build config XML files. Build plans with static code analysis have an additional post build task with a script running the static code
-         * analysis tools and copying the created reports to a specific directory.
-         */
         Map<String, String> replacements;
         if (isStaticCodeAnalysisEnabled) {
             String staticCodeAnalysisScript = createStaticCodeAnalysisScript();
             replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
-                    gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_PUSH_TOKEN, pushToken, REPLACE_ARTEMIS_NOTIFICATION_URL,
-                    artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY, REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript);
+                    gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl,
+                    REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY, REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript, REPLACE_DOCKER_IMAGE_NAME,
+                    jenkinsService.getDockerImageName(ProgrammingLanguage.JAVA));
         }
         else {
             replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
-                    gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_PUSH_TOKEN, pushToken, REPLACE_ARTEMIS_NOTIFICATION_URL,
-                    artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
+                    gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl,
+                    REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY, REPLACE_DOCKER_IMAGE_NAME, jenkinsService.getDockerImageName(ProgrammingLanguage.JAVA));
         }
 
-        final var xmlResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:" + resourcePath);
-        return XmlFileUtils.readXmlFile(xmlResource, replacements);
+        return replacePipelineScriptParameters(resourcePath, replacements);
     }
 
     private String createStaticCodeAnalysisScript() {

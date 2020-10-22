@@ -275,4 +275,19 @@ public interface ContinuousIntegrationService {
          */
         String forProgrammingLanguage(ProgrammingLanguage language);
     }
+
+    /**
+     * Name of the docker image used for the given programming language.
+     *
+     * @param language The programming language for which the docker image name is requested
+     * @return The name of the image (published on hub.docker.com)
+     */
+    default String getDockerImageName(ProgrammingLanguage language) {
+        return switch (language) {
+            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-2";
+            case PYTHON, C -> "ls1tum/artemis-python-docker:latest";
+            case HASKELL -> "tumfpv/fpv-stack:8.4.4";
+            case VHDL, ASSEMBLER -> "tizianleonhardt/era-artemis-vhdl:latest";
+        };
+    }
 }

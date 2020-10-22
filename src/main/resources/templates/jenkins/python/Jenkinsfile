@@ -1,0 +1,32 @@
+pipeline {
+        agent {
+            docker { image '#dockerImage' }
+        }
+        stages {
+            stage('Checkout') {
+                steps {
+                    checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'tests', url: '#testRepository']]])
+                    dir('#assignmentCheckoutPath') {
+                        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'assignment', url: '#assignmentRepository']]])
+                    }
+                }
+            }
+            stage('Build') {
+                steps {
+                    sh 'pytest --junitxml=test-reports/results.xml
+                        exit 0'
+                }
+            }
+        }
+        post {
+            always {
+                sh 'rm -rf results'
+                sh 'mkdir results'
+                sh 'sed -i "s/&lt;testsuites&gt;//g ; s/&lt;\/testsuites&gt;//g" test-reports/results.xml&#xd;
+                    mkdir results&#xd;
+                    cp "test-reports/*.xml" $WORKSPACE/results/'
+                sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
+                cleanWs()
+            }
+        }
+}

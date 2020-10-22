@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
@@ -79,10 +80,13 @@ public class BambooBuildPlanService {
 
     private final Environment env;
 
-    public BambooBuildPlanService(ResourceLoader resourceLoader, BambooServer bambooServer, Environment env) {
+    private final BambooService bambooService;
+
+    public BambooBuildPlanService(ResourceLoader resourceLoader, BambooServer bambooServer, Environment env, @Lazy BambooService bambooService) {
         this.resourceLoader = resourceLoader;
         this.bambooServer = bambooServer;
         this.env = env;
+        this.bambooService = bambooService;
     }
 
     /**
@@ -296,12 +300,7 @@ public class BambooBuildPlanService {
     }
 
     private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage language) {
-        var dockerImage = switch (language) {
-            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-2";
-            case PYTHON, C -> "ls1tum/artemis-python-docker:latest";
-            case HASKELL -> "tumfpv/fpv-stack:8.4.4";
-            case VHDL, ASSEMBLER -> "tizianleonhardt/era-artemis-vhdl:latest";
-        };
+        var dockerImage = bambooService.getDockerImageName(language);
         return new DockerConfiguration().image(dockerImage);
     }
 }

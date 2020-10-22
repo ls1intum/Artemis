@@ -88,7 +88,8 @@ public class JenkinsService implements ContinuousIntegrationService {
         try {
             // TODO support sequential test runs
             final var configBuilder = buildPlanCreatorProvider.builderFor(exercise.getProgrammingLanguage());
-            Document jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL, Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
+            Document jobConfig = configBuilder.buildBasicConfig(exercise.getProgrammingLanguage(), testRepositoryURL, repositoryURL,
+                    Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
             planKey = exercise.getProjectKey() + "-" + planKey;
 
             jenkinsServer.createJob(getFolderJob(exercise.getProjectKey()), planKey, writeXmlToString(jobConfig), useCrumb);
@@ -137,13 +138,49 @@ public class JenkinsService implements ContinuousIntegrationService {
         // remove potential username from repo URL. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URL
         final var repoUrl = vcsRepositoryUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
         final var jobXmlDocument = getJobXmlForBuildPlanWith(projectKey, planName);
+
+        try {
+            replaceScriptParameters(jobXmlDocument, repoUrl, repoNameInCI);
+        }
+        catch (IllegalArgumentException e) {
+            log.info("Falling back to old Jenkins setup replacement");
+            replaceRemoteURLs(jobXmlDocument, repoUrl, repoNameInCI);
+        }
+
+        final var errorMessage = "Error trying to configure build plan in Jenkins " + planName;
+        postXml(jobXmlDocument, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planName);
+    }
+
+    private void replaceScriptParameters(Document jobXmlDocument, String repoUrl, String repoNameInCI) throws IllegalArgumentException {
+        final var scriptNode = findScriptNode(jobXmlDocument);
+        if (scriptNode == null || scriptNode.getFirstChild() == null) {
+            log.info("Pipeline Script not found");
+            throw new IllegalArgumentException("Pipeline Script not found");
+        }
+        String pipeLineScript = scriptNode.getFirstChild().getTextContent();
+        // Replace repo URL
+        pipeLineScript = pipeLineScript.replaceAll("name: '" + repoNameInCI + "', url: '.*\\.git'", "name: '" + repoNameInCI + "', url: '" + repoUrl + "'");
+
+        scriptNode.getFirstChild().setTextContent(pipeLineScript);
+    }
+
+    /**
+     * Replace old XML files that are not based on pipelines.
+     * Will be removed in the future
+     * @param jobXmlDocument the Document where the remote config should replaced
+     */
+    @Deprecated
+    private void replaceRemoteURLs(Document jobXmlDocument, String repoUrl, String repoNameInCI) throws IllegalArgumentException {
         final var remoteUrlNode = findUserRemoteConfigFor(jobXmlDocument, repoNameInCI);
         if (remoteUrlNode == null || remoteUrlNode.getFirstChild() == null) {
             throw new IllegalArgumentException("Url to replace not found in job xml document");
         }
         remoteUrlNode.getFirstChild().setNodeValue(repoUrl);
-        final var errorMessage = "Error trying to configure build plan in Jenkins " + planName;
-        postXml(jobXmlDocument, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planName);
+    }
+
+    private org.w3c.dom.Node findScriptNode(Document jobXmlDocument) {
+        final var userRemoteConfigs = jobXmlDocument.getElementsByTagName("script");
+        return userRemoteConfigs.item(0);
     }
 
     private org.w3c.dom.Node findUserRemoteConfigFor(Document jobXmlDocument, String repoNameInCI) {
