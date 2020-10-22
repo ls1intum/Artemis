@@ -156,8 +156,8 @@ public class AtheneService {
         log.info("Calling Remote Service to calculate automatic feedback for " + textSubmissions.size() + " submissions.");
 
         try {
-            final Request request = new Request(exercise.getId(), textSubmissions, ARTEMIS_SERVER_URL + ATHENE_RESULT_API_PATH + exercise.getId());
-            Response response = connector.invokeWithRetry(API_ENDPOINT, request, authorizationHeaderForSymmetricSecret(API_SECRET), maxRetries);
+            final Request request = new Request(exercise.getId(), textSubmissions, artemisServerUrl + ATHENE_RESULT_API_PATH + exercise.getId());
+            Response response = connector.invokeWithRetry(submitApiEndpoint, request, authorizationHeaderForSymmetricSecret(apiSecret), maxRetries);
             log.info("Remote Service to calculate automatic feedback responded: " + response.detail);
 
             // Register task for exercise as running, AtheneResource calls finishTask on result receive
