@@ -111,8 +111,6 @@ Exercise Creation
             :align: center
   .. figure:: programming/programming-view-2.png
             :align: center
-  .. figure:: programming/programming-view-2.png
-            :align: center
 
 3. **Update exercise code in repositories**
 
