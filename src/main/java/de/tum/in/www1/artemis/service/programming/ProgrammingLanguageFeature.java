@@ -14,23 +14,17 @@ public class ProgrammingLanguageFeature {
 
     private boolean staticCodeAnalysis;
 
-    private boolean bambooBuildSupported;
-
-    private boolean jenkinsBuildSupported;
-
     private boolean plagiarismCheckSupported;
 
     private boolean packageNameRequired;
 
     private boolean checkoutSolutionRepositoryAllowed;
 
-    public ProgrammingLanguageFeature(ProgrammingLanguage programmingLanguage, boolean sequentialTestRuns, boolean staticCodeAnalysis, boolean bambooBuildSupported,
-            boolean jenkinsBuildSupported, boolean plagiarismCheckSupported, boolean packageNameRequired, boolean checkoutSolutionRepositoryAllowed) {
+    public ProgrammingLanguageFeature(ProgrammingLanguage programmingLanguage, boolean sequentialTestRuns, boolean staticCodeAnalysis, boolean plagiarismCheckSupported,
+            boolean packageNameRequired, boolean checkoutSolutionRepositoryAllowed) {
         this.programmingLanguage = programmingLanguage;
         this.sequentialTestRuns = sequentialTestRuns;
         this.staticCodeAnalysis = staticCodeAnalysis;
-        this.bambooBuildSupported = bambooBuildSupported;
-        this.jenkinsBuildSupported = jenkinsBuildSupported;
         this.plagiarismCheckSupported = plagiarismCheckSupported;
         this.packageNameRequired = packageNameRequired;
         this.checkoutSolutionRepositoryAllowed = checkoutSolutionRepositoryAllowed;
@@ -58,22 +52,6 @@ public class ProgrammingLanguageFeature {
 
     public void setStaticCodeAnalysis(boolean staticCodeAnalysis) {
         this.staticCodeAnalysis = staticCodeAnalysis;
-    }
-
-    public boolean isBambooBuildSupported() {
-        return bambooBuildSupported;
-    }
-
-    public void setBambooBuildSupported(boolean bambooBuildSupported) {
-        this.bambooBuildSupported = bambooBuildSupported;
-    }
-
-    public boolean isJenkinsBuildSupported() {
-        return jenkinsBuildSupported;
-    }
-
-    public void setJenkinsBuildSupported(boolean jenkinsBuildSupported) {
-        this.jenkinsBuildSupported = jenkinsBuildSupported;
     }
 
     public boolean isPlagiarismCheckSupported() {
