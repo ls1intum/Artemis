@@ -9,6 +9,12 @@ public class BitbucketCloneDTO {
     @JsonProperty("project")
     private CloneDetailsDTO cloneDetails;
 
+    /**
+     * needed for Jackson
+     */
+    public BitbucketCloneDTO() {
+    }
+
     public BitbucketCloneDTO(String name, CloneDetailsDTO cloneDetails) {
         this.name = name;
         this.cloneDetails = cloneDetails;

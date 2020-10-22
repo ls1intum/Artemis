@@ -27,6 +27,12 @@ public class BitbucketUserDTO {
         this.groups = groups;
     }
 
+    /**
+     * needed for Jackson
+     */
+    public BitbucketUserDTO() {
+    }
+
     public BitbucketUserDTO(String username, Set<String> groups) {
         this.user = username;
         this.groups = groups;
