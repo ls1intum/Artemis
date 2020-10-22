@@ -17,49 +17,36 @@ export class ApollonDiagramService {
     /**
      * Creates diagram.
      * @param apollonDiagram - apollonDiagram to be created.
+     * @param courseId - id of the course.
      */
     create(apollonDiagram: ApollonDiagram, courseId: number): Observable<EntityResponseType> {
         const copy = this.convert(apollonDiagram);
-        return this.http
-            .post<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams`, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http.post<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams`, copy, { observe: 'response' });
     }
 
     /**
      * Updates diagram.
      * @param apollonDiagram - apollonDiagram to be updated.
+     * @param courseId - id of the course.
      */
     update(apollonDiagram: ApollonDiagram, courseId: number): Observable<EntityResponseType> {
         const copy = this.convert(apollonDiagram);
-        return this.http
-            .put<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams`, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http.put<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams`, copy, { observe: 'response' });
     }
 
     /**
      * Finds diagram.
      * @param id - id of diagram to be found.
+     * @param courseId - id of the course.
      */
     find(id: number, courseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
-    }
-
-    /**
-     * Query for all diagrams with option req.
-     * @param req? - options of the query.
-     */
-    query(req?: any): Observable<HttpResponse<ApollonDiagram[]>> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<ApollonDiagram[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .map((res: HttpResponse<ApollonDiagram[]>) => this.convertArrayResponse(res));
+        return this.http.get<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams/${id}`, { observe: 'response' });
     }
 
     /**
      * Deletes diagram with that id.
      * @param id - id of diagram to be deleted.
+     * @param courseId - id of the course.
      */
     delete(id: number, courseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams/${id}`, { observe: 'response' });
@@ -70,38 +57,10 @@ export class ApollonDiagramService {
      */
     getDiagramsByCourse(courseId: number): Observable<HttpResponse<ApollonDiagram[]>> {
         const options = createRequestOption(courseId);
-        return this.http
-            .get<ApollonDiagram[]>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams`, { params: options, observe: 'response' })
-            .map((res: HttpResponse<ApollonDiagram[]>) => this.convertArrayResponse(res));
+        return this.http.get<ApollonDiagram[]>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams`, { params: options, observe: 'response' });
     }
 
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: ApollonDiagram = this.convertItemFromServer(res.body!);
-        return res.clone({ body });
-    }
-
-    private convertArrayResponse(res: HttpResponse<ApollonDiagram[]>): HttpResponse<ApollonDiagram[]> {
-        const jsonResponse: ApollonDiagram[] = res.body!;
-        const body: ApollonDiagram[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
-        }
-        return res.clone({ body });
-    }
-
-    /**
-     * Convert a returned JSON object to ApollonDiagram.
-     */
-    private convertItemFromServer(apollonDiagram: ApollonDiagram): ApollonDiagram {
-        const copy: ApollonDiagram = Object.assign({}, apollonDiagram);
-        return copy;
-    }
-
-    /**
-     * Convert a ApollonDiagram to a JSON which can be sent to the server.
-     */
     private convert(apollonDiagram: ApollonDiagram): ApollonDiagram {
-        const copy: ApollonDiagram = Object.assign({}, apollonDiagram);
-        return copy;
+        return Object.assign({}, apollonDiagram);
     }
 }
