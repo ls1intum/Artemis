@@ -5,9 +5,8 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { tap } from 'rxjs/operators';
 
 /**
- * FeatureToggle, currently only supports PROGRAMMING_EXERCISES
+ * ProgrammingLanguageFeature, defined on the server, allows to customize the user interface during programming exercise generation
  * @readonly
- * @enum {string}
  */
 export type ProgrammingLanguageFeature = {
     programmingLanguage: ProgrammingLanguage;
