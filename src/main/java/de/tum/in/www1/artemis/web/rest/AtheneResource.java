@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
 public class AtheneResource {
 
     @Value("${artemis.athene.base64-secret}")
-    private String API_SECRET;
+    private String atheneApiSecret;
 
     private final Logger log = LoggerFactory.getLogger(AtheneResource.class);
 
@@ -47,7 +47,7 @@ public class AtheneResource {
         log.debug("REST call to inform about new Athene results for exercise: {}", exerciseId);
 
         // Check Authorization header
-        if (!auth.equals(API_SECRET)) {
+        if (!atheneApiSecret.equals(auth)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
@@ -57,7 +57,7 @@ public class AtheneResource {
         }
 
         // The atheneService will manage the processing and database saving
-        atheneService.processResult(requestBody.clusters, requestBody.blocks, exerciseId);
+        atheneService.processResult(requestBody.getClusters(), requestBody.getBlocks(), exerciseId);
 
         log.debug("REST call for new Athene results for exercise {} finished", exerciseId);
 

@@ -10,22 +10,86 @@ import de.tum.in.www1.artemis.domain.TextCluster;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AtheneDTO {
 
-    public List<TextBlock> blocks = new ArrayList<>();
+    public List<TextBlockDTO> getBlocks() {
+        return blocks;
+    }
 
-    public Map<Integer, TextCluster> clusters = new LinkedHashMap<>();
+    public void setBlocks(List<TextBlockDTO> blocks) {
+        this.blocks = blocks;
+    }
+
+    public Map<Integer, TextCluster> getClusters() {
+        return clusters;
+    }
+
+    public void setClusters(Map<Integer, TextCluster> clusters) {
+        this.clusters = clusters;
+    }
+
+    private List<TextBlockDTO> blocks = new ArrayList<>();
+
+    private Map<Integer, TextCluster> clusters = new LinkedHashMap<>();
 
     // Inner DTO
-    public static class TextBlock {
+    public static class TextBlockDTO {
 
-        public String id;
+        private String id;
 
-        public long submissionId;
+        private long submissionId;
 
-        public String text;
+        private String text;
 
-        public int startIndex;
+        private int startIndex;
 
-        public int endIndex;
+        private int endIndex;
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public long getSubmissionId() {
+            return submissionId;
+        }
+
+        public void setSubmissionId(long submissionId) {
+            this.submissionId = submissionId;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
+
+        public int getStartIndex() {
+            return startIndex;
+        }
+
+        public void setStartIndex(int startIndex) {
+            this.startIndex = startIndex;
+        }
+
+        public int getEndIndex() {
+            return endIndex;
+        }
+
+        public void setEndIndex(int endIndex) {
+            this.endIndex = endIndex;
+        }
+
+        public TextBlockType getType() {
+            return type;
+        }
+
+        public void setType(TextBlockType type) {
+            this.type = type;
+        }
 
         public TextBlockType type = TextBlockType.AUTOMATIC;
 

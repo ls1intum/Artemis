@@ -9,6 +9,7 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +24,6 @@ import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.TextAssessmentQueueService;
-import de.tum.in.www1.artemis.service.TextBlockService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
 
@@ -34,19 +34,17 @@ public class AtheneService {
     private final Logger log = LoggerFactory.getLogger(AtheneService.class);
 
     @Value("${server.url}")
-    protected String ARTEMIS_SERVER_URL;
+    private String artemisServerUrl;
 
     @Value("${artemis.athene.submit-url}")
-    private String API_ENDPOINT;
+    private String submitApiEndpoint;
 
     @Value("${artemis.athene.base64-secret}")
-    private String API_SECRET;
+    private String apiSecret;
 
     private final TextAssessmentQueueService textAssessmentQueueService;
 
     private final TextBlockRepository textBlockRepository;
-
-    private final TextBlockService textBlockService;
 
     private final TextClusterRepository textClusterRepository;
 
@@ -59,11 +57,10 @@ public class AtheneService {
     // Contains tasks submitted to Athene and currently processing
     private final List<Long> runningAtheneTasks = new ArrayList<>();
 
-    public AtheneService(TextSubmissionService textSubmissionService, TextBlockRepository textBlockRepository, TextBlockService textBlockService,
-            TextClusterRepository textClusterRepository, TextExerciseRepository textExerciseRepository, TextAssessmentQueueService textAssessmentQueueService) {
+    public AtheneService(TextSubmissionService textSubmissionService, TextBlockRepository textBlockRepository, TextClusterRepository textClusterRepository,
+            TextExerciseRepository textExerciseRepository, TextAssessmentQueueService textAssessmentQueueService) {
         this.textSubmissionService = textSubmissionService;
         this.textBlockRepository = textBlockRepository;
-        this.textBlockService = textBlockService;
         this.textClusterRepository = textClusterRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
@@ -81,14 +78,14 @@ public class AtheneService {
         Request(@NotNull long courseId, @NotNull List<TextSubmission> submissions, @NotNull String callbackUrl) {
             this.courseId = courseId;
             this.callbackUrl = callbackUrl;
-            this.submissions = submissionDTOs(submissions);
+            this.submissions = createSubmissionDTOs(submissions);
         }
 
         /**
-         * Create new TextSubmission as DTO.
+         * Converts TextSubmissions to DTO objects to prepare for sending them to Athene in a REST call.
          */
         @NotNull
-        private static List<TextSubmission> submissionDTOs(@NotNull List<TextSubmission> submissions) {
+        private static List<TextSubmission> createSubmissionDTOs(@NotNull List<TextSubmission> submissions) {
             return submissions.stream().map(textSubmission -> {
                 final TextSubmission submission = new TextSubmission();
                 submission.setText(textSubmission.getText());
@@ -160,8 +157,8 @@ public class AtheneService {
             log.info("Calling Remote Service to calculate automatic feedback for " + textSubmissions.size() + " submissions.");
 
             try {
-                final Request request = new Request(exercise.getId(), textSubmissions, ARTEMIS_SERVER_URL + ATHENE_RESULT_API_PATH + exercise.getId());
-                Response response = connector.invokeWithRetry(API_ENDPOINT, request, authorizationHeaderForSymmetricSecret(API_SECRET), maxRetries);
+                final Request request = new Request(exercise.getId(), textSubmissions, artemisServerUrl + ATHENE_RESULT_API_PATH + exercise.getId());
+                Response response = connector.invokeWithRetry(submitApiEndpoint, request, authorizationHeaderForSymmetricSecret(apiSecret), maxRetries);
                 log.info("Remote Service to calculate automatic feedback responded: " + response.detail);
 
                 // Register task for exercise as running, AtheneResource calls finishTask on result receive
@@ -181,8 +178,8 @@ public class AtheneService {
      * @param exerciseId the exercise the automatic feedback suggestions were calculated for
      */
     @Transactional
-    public void processResult(Map<Integer, TextCluster> clusters, List<AtheneDTO.TextBlock> blocks, Long exerciseId) {
-        log.info("Start processing incoming Athene results");
+    public void processResult(Map<Integer, TextCluster> clusters, List<AtheneDTO.TextBlockDTO> blocks, Long exerciseId) {
+        log.debug("Start processing incoming Athene results for exercise with id {}", exerciseId);
 
         // Parse textBlocks (blocks will come as AtheneDTO.TextBlock with their submissionId and need to be parsed)
         List<TextBlock> textBlocks = parseTextBlocks(blocks, exerciseId);
@@ -197,7 +194,7 @@ public class AtheneService {
         // Notify atheneService of finished task
         finishTask(exerciseId);
 
-        log.info("Finished processing incoming Athene results");
+        log.debug("Finished processing incoming Athene results for exercise with id {}", exerciseId);
     }
 
     /**
@@ -207,25 +204,26 @@ public class AtheneService {
      * @param exerciseId The exerciseId of the exercise the blocks belong to
      * @return list of TextBlocks
      */
-    public List<TextBlock> parseTextBlocks(List<AtheneDTO.TextBlock> blocks, Long exerciseId) {
+    public List<TextBlock> parseTextBlocks(List<AtheneDTO.TextBlockDTO> blocks, Long exerciseId) {
         // Create submissionsMap for lookup
         List<TextSubmission> submissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, true, false);
         Map<Long, TextSubmission> submissionsMap = submissions.stream().collect(toMap(/* Key: */ Submission::getId, /* Value: */ submission -> submission));
 
         // Map textBlocks to submissions
         List<TextBlock> textBlocks = new LinkedList();
-        for (AtheneDTO.TextBlock t : blocks) {
+        for (AtheneDTO.TextBlockDTO textBlockDTO : blocks) {
             // Convert DTO-TextBlock (including the submissionId) to TextBlock Entity
             TextBlock newBlock = new TextBlock();
-            newBlock.setId(t.id);
-            newBlock.setText(t.text);
-            newBlock.setStartIndex(t.startIndex);
-            newBlock.setEndIndex(t.endIndex);
+            newBlock.setId(textBlockDTO.getId());
+            newBlock.setText(textBlockDTO.getText());
+            newBlock.setStartIndex(textBlockDTO.getStartIndex());
+            newBlock.setEndIndex(textBlockDTO.getEndIndex());
             newBlock.automatic();
 
             // take the corresponding TextSubmission and add the text blocks.
             // The addBlocks method also sets the submission in the textBlock
-            submissionsMap.get(t.submissionId).addBlock(newBlock);
+            Hibernate.initialize(submissionsMap.get(textBlockDTO.getSubmissionId()).addBlock(newBlock));
+            submissionsMap.get(textBlockDTO.getSubmissionId()).addBlock(newBlock);
             textBlocks.add(newBlock);
         }
 
@@ -233,7 +231,7 @@ public class AtheneService {
     }
 
     /**
-     * Process clusters and save to database
+     * Process clusters, link them with text blocks and vice versa, and save all in the database
      *
      * @param clusterMap The map of clusters to process
      * @param textBlockMap The map of textBlocks belonging to the clusters

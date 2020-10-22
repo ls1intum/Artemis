@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.TextAssessmentQueueService;
-import de.tum.in.www1.artemis.service.TextBlockService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
@@ -37,9 +36,6 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Autowired
     RestTemplate restTemplate;
-
-    @Autowired
-    TextBlockService textBlockService;
 
     @Autowired
     TextAssessmentQueueService textAssessmentQueueService;
@@ -68,7 +64,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @BeforeEach
     public void init() {
         // Create atheneService and inject @Value fields
-        atheneService = new AtheneService(textSubmissionService, textBlockRepository, textBlockService, textClusterRepository, textExerciseRepository, textAssessmentQueueService);
+        atheneService = new AtheneService(textSubmissionService, textBlockRepository, textClusterRepository, textExerciseRepository, textAssessmentQueueService);
         ReflectionTestUtils.setField(atheneService, "ARTEMIS_SERVER_URL", ARTEMIS_SERVER_URL);
         ReflectionTestUtils.setField(atheneService, "API_ENDPOINT", API_ENDPOINT);
         String API_SECRET = "YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=";
@@ -138,7 +134,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     public void parseTextBlocks() {
         // Let textSubmissionService return 10 generated submissions
         when(textSubmissionService.getTextSubmissionsByExerciseId(exercise1.getId(), true, false)).thenReturn(generateSubmissions(10));
-        List<AtheneDTO.TextBlock> blocks = generateTextBlocks(10);
+        List<AtheneDTO.TextBlockDTO> blocks = generateTextBlocks(10);
         List<TextBlock> textBlocks = atheneService.parseTextBlocks(blocks, exercise1.getId());
         for (TextBlock t : textBlocks) {
             assertThat(t.getId()).isNotNull();
@@ -165,7 +161,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         when(textSubmissionService.getTextSubmissionsByExerciseId(exercise1.getId(), true, false)).thenReturn(generateSubmissions(10));
 
         // generate required parameters
-        List<AtheneDTO.TextBlock> blocks = generateTextBlocks(10);
+        List<AtheneDTO.TextBlockDTO> blocks = generateTextBlocks(10);
         Map<Integer, TextCluster> clusters = generateClusters();
 
         // Catch call of atheneService to the textBlockRepository
@@ -199,17 +195,17 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @param count How many blocks should be generated
      * @return A list containing the generated TextBlocks
      */
-    private List<AtheneDTO.TextBlock> generateTextBlocks(int count) {
-        List<AtheneDTO.TextBlock> blocks = new ArrayList<>();
+    private List<AtheneDTO.TextBlockDTO> generateTextBlocks(int count) {
+        List<AtheneDTO.TextBlockDTO> blocks = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            AtheneDTO.TextBlock newBlock = new AtheneDTO.TextBlock();
-            newBlock.submissionId = i;
-            newBlock.startIndex = 0;
-            newBlock.endIndex = 30;
-            newBlock.text = "This is an example text";
+            AtheneDTO.TextBlockDTO newBlock = new AtheneDTO.TextBlockDTO();
+            newBlock.setSubmissionId(i);
+            newBlock.setStartIndex(0);
+            newBlock.setEndIndex(30);
+            newBlock.setText("This is an example text");
             // Calculate realistic hash (also see TextBlock.computeId())
-            final String idString = newBlock.submissionId + ";" + newBlock.startIndex + "-" + newBlock.endIndex + ";" + newBlock.text;
-            newBlock.id = sha1Hex(idString);
+            final String idString = newBlock.getSubmissionId() + ";" + newBlock.getStartIndex() + "-" + newBlock.getEndIndex() + ";" + newBlock.getText();
+            newBlock.setId(sha1Hex(idString));
             blocks.add(newBlock);
         }
 
