@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { HorizontalStackedBarChartPreset } from 'app/shared/chart/presets/horizontalStackedBarChartPreset';
@@ -23,6 +23,9 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
     @Input() categoryHitMap?: { [category: string]: number }[];
     @Input() totalParticipations?: number;
     @Input() exercise: ProgrammingExercise;
+
+    @Input() categoryColors = {};
+    @Output() categoryColorsChange = new EventEmitter<{}>();
 
     chartPreset = new HorizontalStackedBarChartPreset(['Penalty', 'Issues', 'Deductions'], ['all penalties', 'all detected issues', 'all deducted points']);
     chartDatasets: ChartDataSets[] = [];
@@ -60,6 +63,10 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
             backgroundColor: this.getColor(i / this.categories.length, 50),
             hoverBackgroundColor: this.getColor(i / this.categories.length, 60),
         }));
+
+        this.categoryColors = {};
+        this.chartDatasets.forEach(({ label, backgroundColor }) => (this.categoryColors[label!] = backgroundColor));
+        this.categoryColorsChange.emit(this.categoryColors);
     }
 
     getColor(i: number, l: number): string {

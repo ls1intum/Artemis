@@ -65,6 +65,7 @@
                         >
                             <ngx-datatable-column name="Test Name" prop="testName">
                                 <ng-template ngx-datatable-cell-template let-value="value">
+                                    <fa-icon [icon]="'square'" [style]="{ color: testCaseColors[value] }" class="mr-2"></fa-icon>
                                     {{ value }}
                                 </ng-template>
                             </ngx-datatable-column>
@@ -142,6 +143,7 @@
                             [testCaseStats]="gradingStatistics?.testCaseStatsList"
                             [totalParticipations]="gradingStatistics?.numParticipations"
                             [exercise]="exercise"
+                            [(testCaseColors)]="testCaseColors"
                         ></jhi-test-case-distribution-chart>
                     </div>
                 </div>
@@ -174,6 +176,7 @@
                         >
                             <ngx-datatable-column name="Category" prop="name">
                                 <ng-template ngx-datatable-cell-template let-value="value">
+                                    <fa-icon [icon]="'square'" [style]="{ color: categoryColors[value] }" class="mr-2"></fa-icon>
                                     {{ value }}
                                 </ng-template>
                             </ngx-datatable-column>
@@ -181,11 +184,11 @@
                                 <ng-template ngx-datatable-header-template>
                                     <span>State</span
                                     ><fa-icon
-                                    [icon]="'question-circle'"
-                                    class="text-secondary ml-2"
-                                    placement="bottom"
-                                    [ngbTooltip]="'Determines whether issues in this category should be shown to the students and used for grading.'"
-                                ></fa-icon>
+                                        [icon]="'question-circle'"
+                                        class="text-secondary ml-2"
+                                        placement="bottom"
+                                        [ngbTooltip]="'Determines whether issues in this category should be shown to the students and used for grading.'"
+                                    ></fa-icon>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                                     <select [ngModel]="value" class="p-1" (change)="updateEditedCategoryField($event.target.value, row, EditableField.STATE)">
@@ -217,11 +220,11 @@
                                 <ng-template ngx-datatable-header-template>
                                     <span>Max Penalty</span
                                     ><fa-icon
-                                    [icon]="'question-circle'"
-                                    class="text-secondary ml-2"
-                                    placement="bottom"
-                                    [ngbTooltip]="'Maximum applied penalty across all issues of this category for one student.'"
-                                ></fa-icon>
+                                        [icon]="'question-circle'"
+                                        class="text-secondary ml-2"
+                                        placement="bottom"
+                                        [ngbTooltip]="'Maximum applied penalty across all issues of this category for one student.'"
+                                    ></fa-icon>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                                     <jhi-table-editable-field
@@ -255,6 +258,7 @@
                             [categoryHitMap]="gradingStatistics?.categoryHitMap"
                             [totalParticipations]="gradingStatistics?.numParticipations"
                             [exercise]="exercise"
+                            [(categoryColors)]="categoryColors"
                         ></jhi-sca-category-distribution-chart>
                     </div>
                 </div>

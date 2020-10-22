@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
@@ -24,6 +24,9 @@ export class TestCaseDistributionChartComponent implements OnChanges {
     @Input() testCaseStats?: TestCaseStats[];
     @Input() totalParticipations?: number;
     @Input() exercise: ProgrammingExercise;
+
+    @Input() testCaseColors = {};
+    @Output() testCaseColorsChange = new EventEmitter<{}>();
 
     chartPreset = new HorizontalStackedBarChartPreset(['Weight', 'Weight & Bonus', 'Points'], ['all weights', 'all weights and bonuses', 'all achievable points']);
     chartDatasets: ChartDataSets[] = [];
@@ -54,6 +57,10 @@ export class TestCaseDistributionChartComponent implements OnChanges {
             backgroundColor: this.getColor(i / this.testCases.length, 50),
             hoverBackgroundColor: this.getColor(i / this.testCases.length, 60),
         }));
+
+        this.testCaseColors = {};
+        this.chartDatasets.forEach(({ label, backgroundColor }) => (this.testCaseColors[label!] = backgroundColor));
+        this.testCaseColorsChange.emit(this.testCaseColors);
     }
 
     getColor(i: number, l: number): string {
