@@ -7,6 +7,7 @@ import { TestCaseStats } from 'app/entities/programming-exercise-test-case-stati
         <div
             class="chart-body"
             placement="left"
+            container="body"
             [ngbTooltip]="passedPercent.toFixed(0) + '% passed, ' + failedPercent.toFixed(0) + '% failed of ' + totalParticipations + ' students.'"
         >
             <div class="passed-bar" [style]="{ width: passedPercent + '%' }"></div>
@@ -27,8 +28,8 @@ export class TestCasePassedBuildsChartComponent implements OnChanges {
     failedPercent = 0;
 
     ngOnChanges(): void {
-        const passedPercent = ((this.testCaseStats?.numPassed || 0) / this.totalParticipations) * 100;
-        const failedPercent = ((this.testCaseStats?.numFailed || 0) / this.totalParticipations) * 100;
+        const passedPercent = this.totalParticipations > 0 ? ((this.testCaseStats?.numPassed || 0) / this.totalParticipations) * 100 : 0;
+        const failedPercent = this.totalParticipations > 0 ? ((this.testCaseStats?.numFailed || 0) / this.totalParticipations) * 100 : 0;
 
         setTimeout(() => {
             this.passedPercent = passedPercent;

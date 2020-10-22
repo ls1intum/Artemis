@@ -13,7 +13,7 @@ export class IssueColumn {
     template: `
         <div style="max-width: 120px; margin: auto;">
             <div style="height: 30px;" class="d-flex justify-content-between">
-                <div *ngFor="let column of columns" class="d-flex align-items-end" [style]="{ width: column.w, height: '30px' }" [ngbTooltip]="column.tooltip" placement="bottom">
+                <div *ngFor="let column of columns" class="d-flex align-items-end" [style]="{ width: column.w, height: '30px' }" [ngbTooltip]="column.tooltip" placement="bottom" container="body">
                     <div [style]="{ width: '100%', height: column.h, background: column.color }"></div>
                 </div>
             </div>

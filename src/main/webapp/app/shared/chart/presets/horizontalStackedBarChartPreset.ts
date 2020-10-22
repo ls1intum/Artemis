@@ -12,6 +12,8 @@ export class HorizontalStackedBarChartPreset implements ChartPreset {
     }
 
     applyTo(chart: ChartComponent): void {
+        const preset = this;
+
         chart.setType('horizontalBar');
         chart.setLabels(this.labels);
         chart.setYAxe(0, { stacked: true }, false);
@@ -27,7 +29,7 @@ export class HorizontalStackedBarChartPreset implements ChartPreset {
                     },
                     label(item: ChartTooltipItem, data: ChartData) {
                         return (
-                            item.yLabel + ': ' + (data.datasets![item.datasetIndex!].data![item.index!] as number).toFixed(2) + '% of ' + this.totalText[item.datasetIndex!] + '.'
+                            item.yLabel + ': ' + (data.datasets![item.datasetIndex!].data![item.index!] as number).toFixed(2) + '% of ' + preset.totalText[item.datasetIndex!] + '.'
                         );
                     },
                 },
