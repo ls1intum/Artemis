@@ -256,6 +256,8 @@ public class BambooBuildResultNotificationDTO {
 
         private String repositoryName;
 
+        private List<BambooCommitDTO> commits;
+
         public String getId() {
             return id;
         }
@@ -270,6 +272,38 @@ public class BambooBuildResultNotificationDTO {
 
         public void setRepositoryName(String repositoryName) {
             this.repositoryName = repositoryName;
+        }
+
+        public List<BambooCommitDTO> getCommits() {
+            return commits;
+        }
+
+        public void setCommits(List<BambooCommitDTO> commits) {
+            this.commits = commits;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static final class BambooCommitDTO {
+
+        private String comment;
+
+        private String id;
+
+        public String getComment() {
+            return comment;
+        }
+
+        public void setComment(String comment) {
+            this.comment = comment;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
         }
     }
 

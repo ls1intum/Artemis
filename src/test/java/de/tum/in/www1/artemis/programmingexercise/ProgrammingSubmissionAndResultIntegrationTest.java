@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +27,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -38,6 +40,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
 import de.tum.in.www1.artemis.web.rest.ResultResource;
 
@@ -520,29 +523,26 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         postResult(exercise.getProjectKey().toUpperCase() + "-" + buildPlanStudentId, expectedStatus, additionalCommit);
     }
 
-    @SuppressWarnings("unchecked")
     private void postResult(String participationId, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BAMBOO_REQUEST);
 
-        Map<String, Object> requestBodyMap = (Map<String, Object>) obj;
-        Map<String, Object> planMap = (Map<String, Object>) requestBodyMap.get("plan");
-        planMap.put("key", participationId.toUpperCase());
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        final var requestBodyMap = mapper.convertValue(obj, BambooBuildResultNotificationDTO.class);
+        requestBodyMap.getPlan().setKey(participationId.toUpperCase());
 
         if (additionalCommit) {
-            Map<String, Object> buildMap = (Map<String, Object>) requestBodyMap.get("build");
-            List<Object> vcsList = (List<Object>) buildMap.get("vcs");
-            JSONObject repo = (JSONObject) vcsList.get(0); // Assignment Repo
-            List<Object> commitList = (List<Object>) repo.get("commits");
-            Map<String, Object> newCommit = new HashMap<>();
-            newCommit.put("comment", "Some commit that occurred before");
-            newCommit.put("id", "90b6af5650c30d35a0836fd58c677f8980e1df27");
-            commitList.add(newCommit);
+            var newCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO();
+            newCommit.setComment("Some commit that occurred before");
+            newCommit.setId("90b6af5650c30d35a0836fd58c677f8980e1df27");
+            requestBodyMap.getBuild().getVcs().get(0).getCommits().add(newCommit);
         }
 
+        final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
-        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, obj, expectedStatus, httpHeaders);
+        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, expectedStatus, httpHeaders);
     }
 
     private String getStudentLoginFromParticipation(int participationNumber) {
