@@ -43,7 +43,7 @@ The following activity diagram shows this exercise workflow.
 
    Exercise Workflow
 
-Creation
+Setup
 --------
 
 .. include:: programming-exercise-setup.rst
