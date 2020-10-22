@@ -1,8 +1,5 @@
-Exercise Setup
-==============
-
 Exercise Creation
------------------
+^^^^^^^^^^^^^^^^^
 
 1. **Open Course Management**
 

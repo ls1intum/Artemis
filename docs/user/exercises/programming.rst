@@ -1,6 +1,15 @@
 Programming Exercise
 ====================
 
+.. contents:: Content of this document
+    :local:
+    :depth: 2
+
+|
+
+Overview
+--------
+
 Conducting a programming exercise consists of 7 steps distributed among
 instructor, Artemis and students:
 
@@ -37,8 +46,7 @@ The following activity diagram shows this exercise workflow.
 Creation
 --------
 
-More information about the exercise creation and the various options and features
-is available under :doc:`programming-exercise-setup`.
+.. include:: programming-exercise-setup.rst
 
 Online Editor
 -------------
