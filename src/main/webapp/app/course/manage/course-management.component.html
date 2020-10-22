@@ -106,7 +106,8 @@
                         </td>
                         <td>{{ course.startDate | artemisDate }}</td>
                         <td>{{ course.endDate | artemisDate }}</td>
-                        <td>{{ course.semester }}</td>
+                        <td *ngIf="course.testCourse">{{ 'artemisApp.course.testCourse.title' | translate }}</td>
+                        <td *ngIf="!course.testCourse">{{ course.semester }}</td>
                         <td class="d-none d-md-table-cell">
                             <span *ngIf="course.onlineCourse">{{ 'artemisApp.course.onlineCourseTrue' | translate }}</span>
                             <span *ngIf="!course.onlineCourse">{{ 'artemisApp.course.onlineCourseFalse' | translate }}</span>

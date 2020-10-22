@@ -97,6 +97,7 @@ export class CourseUpdateComponent implements OnInit {
                 startDate: new FormControl(this.course.startDate),
                 endDate: new FormControl(this.course.endDate),
                 semester: new FormControl(this.course.semester),
+                testCourse: new FormControl(this.course.testCourse),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
                 maxComplaints: new FormControl(this.course.maxComplaints, {
@@ -311,6 +312,13 @@ export class CourseUpdateComponent implements OnInit {
             this.courseForm.controls['teachingAssistantGroupName'].setValue(undefined);
             this.courseForm.controls['instructorGroupName'].setValue(undefined);
         }
+    }
+
+    /**
+     * Enable or disable test course
+     */
+    changeTestCourseEnabled() {
+        this.course.testCourse = !this.course.testCourse;
     }
 
     /**

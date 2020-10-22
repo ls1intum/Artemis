@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
@@ -73,6 +74,15 @@ public class Course extends DomainObject {
     @Column(name = "semester")
     @JsonView(QuizView.Before.class)
     private String semester;
+
+    @Column(name = "test_course")
+    @JsonView(QuizView.Before.class)
+    private boolean testCourse = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "language")
+    @JsonView(QuizView.Before.class)
+    private Language language;
 
     @Column(name = "online_course")
     @JsonView(QuizView.Before.class)
@@ -223,6 +233,22 @@ public class Course extends DomainObject {
 
     public void setSemester(String semester) {
         this.semester = semester;
+    }
+
+    public boolean isTestCourse() {
+        return testCourse;
+    }
+
+    public void setTestCourse(boolean testCourse) {
+        this.testCourse = testCourse;
+    }
+
+    public Language getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(Language language) {
+        this.language = language;
     }
 
     public Boolean isOnlineCourse() {

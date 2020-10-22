@@ -54,6 +54,10 @@
             "startDate": "Start",
             "endDate": "End",
             "semester": "Semester",
+            "testCourse": {
+                "title": "Test Course",
+                "description": "Activate this checkbox for test courses which do not belong to a single semester."
+            },
             "accessGroups": "Access Groups",
             "onlineCourse": {
                 "title": "Online Course",

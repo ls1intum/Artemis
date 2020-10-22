@@ -6,6 +6,11 @@ import { TutorGroup } from 'app/entities/tutor-group.model';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { Exam } from 'app/entities/exam.model';
 
+export const enum Language {
+    ENGLISH = 'ENGLISH',
+    GERMAN = 'GERMAN',
+}
+
 export class Course implements BaseEntity {
     public id?: number;
     public title?: string;
@@ -17,6 +22,8 @@ export class Course implements BaseEntity {
     public startDate?: Moment;
     public endDate?: Moment;
     public semester: string;
+    public testCourse: boolean;
+    public language?: Language;
     public color?: string;
     public courseIcon?: string;
     public onlineCourse?: boolean;
