@@ -8,7 +8,7 @@ import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/ap
 import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
@@ -40,7 +40,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
     constructor(
         private apollonDiagramService: ApollonDiagramService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private languageService: JhiLanguageService,
         private languageHelper: JhiLanguageHelper,
         private modalService: NgbModal,

@@ -25,17 +25,12 @@ import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     ExamQuizService examQuizService;
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     ExamService examService;
@@ -54,9 +49,6 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     QuizExerciseService quizExerciseService;
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     UserRepository userRepository;

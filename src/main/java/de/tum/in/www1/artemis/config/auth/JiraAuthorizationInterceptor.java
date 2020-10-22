@@ -24,11 +24,10 @@ public class JiraAuthorizationInterceptor implements ClientHttpRequestIntercepto
 
     @NotNull
     @Override
-    public ClientHttpResponse intercept(HttpRequest request, @NotNull byte[] body, ClientHttpRequestExecution execution) throws IOException {
+    public ClientHttpResponse intercept(HttpRequest request, @NotNull byte[] body, @NotNull ClientHttpRequestExecution execution) throws IOException {
         if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
             request.getHeaders().setBasicAuth(JIRA_USER, JIRA_PASSWORD);
         }
-
         return execution.execute(request, body);
     }
 }

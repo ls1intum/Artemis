@@ -20,7 +20,6 @@ public class BambooBuildPlanLinkInfoContributor implements InfoContributor {
     @Override
     public void contribute(Info.Builder builder) {
         final var buildPlanURLTemplate = bambooServerUrl + "/browse/{buildPlanId}";
-
         builder.withDetail(Constants.INFO_BUILD_PLAN_URL_DETAIL, buildPlanURLTemplate);
     }
 }

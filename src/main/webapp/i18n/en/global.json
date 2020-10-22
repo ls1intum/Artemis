@@ -208,7 +208,7 @@
             "attachments": "Attachments",
             "saveAttachment": "Save attachment",
             "addAttachment": "Add attachment",
-            "tutorCourseDashboard": "Tutor Course Dashboard",
+            "assessmentDashboard": "Assessment Dashboard",
             "exerciseDashboard": "Exercise Dashboard",
             "newResult": "New Result",
             "updateResult": "Update Result",
@@ -218,7 +218,8 @@
             "exercise": "Exercises",
             "scores": "Scores",
             "manageHints": "Manage Hints",
-            "addExternalSubmission": "Add External Submission"
+            "addExternalSubmission": "Add External Submission",
+            "questionsAndAnswers": "Q&A"
         },
         "detail": {
             "field": "Field",

@@ -24,8 +24,7 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.FileUtils;
 
 public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -37,12 +36,6 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
 
     @Autowired
     ExampleSubmissionRepository exampleSubmissionRepo;
-
-    @Autowired
-    RequestUtilService request;
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     AssessmentService assessmentService;
@@ -60,8 +53,8 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         database.addUsers(1, 1, 1);
         Course course = database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
-        emptyModel = database.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
-        validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
+        emptyModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
+        validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
     }
 
     @AfterEach

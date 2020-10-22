@@ -29,6 +29,7 @@ import com.google.common.base.Joiner;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -36,7 +37,6 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermiss
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketBranchProtectionDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketProjectDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketSearchDTO;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Service
 @Profile("bitbucket")
@@ -49,33 +49,30 @@ public class BitbucketService extends AbstractVersionControlService {
     private final Logger log = LoggerFactory.getLogger(BitbucketService.class);
 
     @Value("${artemis.user-management.external.admin-group-name}")
-    private String ADMIN_GROUP_NAME;
+    private String adminGroupName;
 
     @Value("${artemis.version-control.url}")
-    private URL BITBUCKET_SERVER_URL;
-
-    @Value("${artemis.version-control.user}")
-    private String BITBUCKET_USER;
-
-    @Value("${artemis.version-control.password}")
-    private String BITBUCKET_PASSWORD;
+    private URL bitbucketServerUrl;
 
     @Value("${artemis.lti.user-prefix-edx:#{null}}")
-    private Optional<String> USER_PREFIX_EDX;
+    private Optional<String> userPrefixEdx;
 
     @Value("${artemis.lti.user-prefix-u4i:#{null}}")
-    private Optional<String> USER_PREFIX_U4I;
+    private Optional<String> userPrefixU4I;
 
     @Value("${artemis.git.name}")
-    private String ARTEMIS_GIT_NAME;
+    private String artemisGitName;
 
     private final UserService userService;
 
     private final RestTemplate restTemplate;
 
-    public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate) {
+    private final UrlService urlService;
+
+    public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UrlService urlService) {
         this.userService = userService;
         this.restTemplate = restTemplate;
+        this.urlService = urlService;
     }
 
     @Override
@@ -83,7 +80,7 @@ public class BitbucketService extends AbstractVersionControlService {
         for (User user : users) {
             String username = user.getLogin();
 
-            if ((USER_PREFIX_EDX.isPresent() && username.startsWith(USER_PREFIX_EDX.get())) || (USER_PREFIX_U4I.isPresent() && username.startsWith((USER_PREFIX_U4I.get())))) {
+            if ((userPrefixEdx.isPresent() && username.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && username.startsWith((userPrefixU4I.get())))) {
                 // It is an automatically created user
 
                 if (!userExists(username)) {
@@ -114,17 +111,17 @@ public class BitbucketService extends AbstractVersionControlService {
             }
         }
 
-        protectBranches(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
+        protectBranches(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl));
     }
 
     @Override
     public void addMemberToRepository(URL repositoryUrl, User user) {
-        giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), user.getLogin());
+        giveWritePermission(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl), user.getLogin());
     }
 
     @Override
     public void removeMemberFromRepository(URL repositoryUrl, User user) {
-        removeStudentRepositoryAccess(repositoryUrl, getProjectKeyFromUrl(repositoryUrl), user.getLogin());
+        removeStudentRepositoryAccess(repositoryUrl, urlService.getProjectKeyFromUrl(repositoryUrl), user.getLogin());
     }
 
     /**
@@ -134,7 +131,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @param repositorySlug The slug of the repository that should be protected
      */
     private void protectBranches(String projectKey, String repositorySlug) {
-        String baseUrl = BITBUCKET_SERVER_URL + "/rest/branch-permissions/2.0/projects/" + projectKey + "/repos/" + repositorySlug + "/restrictions";
+        String baseUrl = bitbucketServerUrl + "/rest/branch-permissions/2.0/projects/" + projectKey + "/repos/" + repositorySlug + "/restrictions";
         log.debug("Setting up branch protection for repository " + repositorySlug);
 
         // Payload according to https://docs.atlassian.com/bitbucket-server/rest/4.2.0/bitbucket-ref-restriction-rest.html
@@ -147,7 +144,7 @@ public class BitbucketService extends AbstractVersionControlService {
         final var noDeletesProtection = new BitbucketBranchProtectionDTO("no-deletes", matcher);
         final var body = List.of(fastForwardOnlyProtection, noDeletesProtection);
 
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        HttpHeaders headers = new HttpHeaders();
         headers.setContentType(new MediaType("application", "vnd.atl.bitbucket.bulk+json")); // Set content-type manually as required by Bitbucket
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
         try {
@@ -162,8 +159,8 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     protected void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
-        if (!webHookExists(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl))) {
-            createWebHook(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl, webHookName);
+        if (!webHookExists(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl))) {
+            createWebHook(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl), notificationUrl, webHookName);
         }
     }
 
@@ -175,12 +172,11 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public void deleteProject(String projectKey) {
-        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey;
-        log.info("Delete bitbucket project " + projectKey);
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
+        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey;
+        log.info("Try to delete bitbucket project " + projectKey);
         try {
-            restTemplate.exchange(baseUrl, HttpMethod.DELETE, entity, Map.class);
+            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
+            log.info("Delete bitbucket project " + projectKey + " was successful");
         }
         catch (Exception e) {
             log.error("Could not delete project", e);
@@ -189,7 +185,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public void deleteRepository(URL repositoryUrl) {
-        deleteRepositoryImpl(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
+        deleteRepositoryImpl(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl));
     }
 
     @Override
@@ -209,11 +205,9 @@ public class BitbucketService extends AbstractVersionControlService {
         final var projectMap = new HashMap<>();
         projectMap.put("key", targetProjectKey);
         body.put("project", projectMap);
-        final var headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(body, headers);
-
+        HttpEntity<?> entity = new HttpEntity<>(body, null);
         log.info("Try to copy repository " + sourceProjectKey + "/repos/" + sourceRepositoryName + " into " + targetRepoSlug);
-        final String repoUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + sourceProjectKey + "/repos/" + sourceRepositoryName;
+        final String repoUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + sourceProjectKey + "/repos/" + sourceRepositoryName;
 
         try {
             /*
@@ -224,6 +218,7 @@ public class BitbucketService extends AbstractVersionControlService {
              */
             for (int i = 0; i < MAX_FORK_RETRIES; i++) {
                 try {
+                    // TODO: either use Void.class or create a proper DTO
                     final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
                     if (response.getStatusCode().equals(HttpStatus.CREATED)) {
                         return getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
@@ -281,48 +276,8 @@ public class BitbucketService extends AbstractVersionControlService {
         throw new BitbucketException("Max retries for forking reached. Could not fork repository " + sourceRepositoryName + " to " + targetRepositoryName);
     }
 
-    /**
-     * Gets the project key from the given URL
-     *
-     * TODO: rework this!
-     *
-     * Example: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git will return EIST2016RME
-     *
-     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
-     * @return The project key
-     * @throws BitbucketException if the URL is invalid and no project key could be extracted
-     */
-    public String getProjectKeyFromUrl(URL repositoryUrl) throws BitbucketException {
-        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        String[] urlParts = repositoryUrl.getFile().split("/");
-        if (urlParts.length > 2) {
-            return urlParts[2];
-        }
-
-        log.error("No project key could be found for repository {}", repositoryUrl);
-        throw new BitbucketException("No project key could be found");
-    }
-
-    /**
-     * TODO: this is duplicated code from BambooService. Think about how to reuse it while being able to test and mock it properly
-     *
-     * Gets the repository slug from the given URL.
-     * Example: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git will return RMEXERCISE-ga42xab
-     *
-     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
-     * @return The repository slug
-     * @throws BitbucketException if the URL is invalid and no repository slug could be extracted
-     */
-    public String getRepositorySlugFromUrl(URL repositoryUrl) throws BitbucketException {
-        String[] urlParts = repositoryUrl.getFile().split("/");
-        if (urlParts[urlParts.length - 1].endsWith(".git")) {
-            String repositorySlug = urlParts[urlParts.length - 1];
-            repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
-            return repositorySlug;
-        }
-
-        log.error("No repository slug could be found for repository {}", repositoryUrl);
-        throw new BitbucketException("No repository slug could be found");
+    private BitbucketProjectDTO getBitbucketProject(String projectKey) {
+        return restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey, HttpMethod.GET, null, BitbucketProjectDTO.class).getBody();
     }
 
     /**
@@ -333,10 +288,8 @@ public class BitbucketService extends AbstractVersionControlService {
      * @throws BitbucketException any exception occurred on the Bitbucket server
      */
     private Boolean userExists(String username) throws BitbucketException {
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
         try {
-            restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/users/" + username, HttpMethod.GET, entity, Map.class);
+            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/users/" + username, HttpMethod.GET, null, Void.class);
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
@@ -358,18 +311,15 @@ public class BitbucketService extends AbstractVersionControlService {
      * @throws BitbucketException if the rest request to Bitbucket for creating the user failed.
      */
     public void createUser(String username, String password, String emailAddress, String displayName) throws BitbucketException {
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(BITBUCKET_SERVER_URL + "/rest/api/1.0/admin/users").queryParam("name", username)
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").queryParam("name", username)
                 .queryParam("email", emailAddress).queryParam("emailAddress", emailAddress).queryParam("password", password).queryParam("displayName", displayName)
                 .queryParam("addToDefaultGroup", "true").queryParam("notify", "false");
-
-        HttpEntity<?> entity = new HttpEntity<>(headers);
 
         log.debug("Creating Bitbucket user {} ({})", username, emailAddress);
 
         try {
-            restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, null, Void.class);
         }
         catch (HttpClientErrorException e) {
             log.error("Could not create Bitbucket user " + username, e);
@@ -385,17 +335,15 @@ public class BitbucketService extends AbstractVersionControlService {
      * @throws BitbucketException if the rest request to Bitbucket for adding the user to the specified groups failed.
      */
     public void addUserToGroups(String username, Set<String> groups) throws BitbucketException {
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-
         Map<String, Object> body = new HashMap<>();
         body.put("user", username);
         body.put("groups", groups);
-        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+        HttpEntity<?> entity = new HttpEntity<>(body, null);
 
         log.debug("Adding Bitbucket user {} to groups {}", username, groups);
 
         try {
-            restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/admin/users/add-groups", HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/admin/users/add-groups", HttpMethod.POST, entity, Void.class);
         }
         catch (HttpClientErrorException e) {
             log.error("Could not add Bitbucket user " + username + " to groups" + groups, e);
@@ -412,9 +360,7 @@ public class BitbucketService extends AbstractVersionControlService {
      */
     // TODO: Refactor to also use setStudentRepositoryPermission.
     private void giveWritePermission(String projectKey, String repositorySlug, String username) throws BitbucketException {
-        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";// NAME&PERMISSION
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
+        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";// NAME&PERMISSION
         String url = baseUrl + username + "&permission=REPO_WRITE";
 
         try {
@@ -424,7 +370,7 @@ public class BitbucketService extends AbstractVersionControlService {
             User user = null;
             for (int i = 0; i < MAX_GIVE_PERMISSIONS_RETRIES; i++) {
                 try {
-                    restTemplate.exchange(url, HttpMethod.PUT, entity, Map.class);
+                    restTemplate.exchange(url, HttpMethod.PUT, null, Void.class);
                 }
                 catch (HttpClientErrorException e) {
 
@@ -485,12 +431,10 @@ public class BitbucketService extends AbstractVersionControlService {
             throws BitbucketException {
         String permissionString = repositoryPermission == VersionControlRepositoryPermission.READ_ONLY ? "READ" : "WRITE";
         String repositorySlug = getRepositoryName(repositoryUrl);
-        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME&PERMISSION
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
+        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME&PERMISSION
         String url = baseUrl + username + "&permission=REPO_" + permissionString;
         try {
-            restTemplate.exchange(url, HttpMethod.PUT, entity, Map.class);
+            restTemplate.exchange(url, HttpMethod.PUT, null, Void.class);
         }
         catch (Exception e) {
             log.error("Could not give " + repositoryPermission + " permissions using " + url, e);
@@ -507,12 +451,10 @@ public class BitbucketService extends AbstractVersionControlService {
      */
     private void removeStudentRepositoryAccess(URL repositoryUrl, String projectKey, String username) throws BitbucketException {
         String repositorySlug = getRepositoryName(repositoryUrl);
-        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
+        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME
         String url = baseUrl + username;
         try {
-            restTemplate.exchange(url, HttpMethod.DELETE, entity, Map.class);
+            restTemplate.exchange(url, HttpMethod.DELETE, null, Void.class);
         }
         catch (Exception e) {
             log.error("Could not remove repository access using " + url, e);
@@ -522,12 +464,10 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public boolean checkIfProjectExists(String projectKey, String projectName) {
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
         try {
-            // first check that the project key is unique
-            restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey, HttpMethod.GET, entity, Map.class);
-            log.warn("Bitbucket project with key " + projectKey + " already exists");
+            // first check that the project key is unique, if the project does not exist, we expect a 404 Not Found status
+            var project = getBitbucketProject(projectKey);
+            log.warn("Bitbucket project with key " + projectKey + " already exists: " + project.getName());
             return true;
         }
         catch (HttpClientErrorException e) {
@@ -535,7 +475,7 @@ public class BitbucketService extends AbstractVersionControlService {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 // only if this is the case, we additionally check that the project name is unique
 
-                final var response = restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects?name=" + projectName, HttpMethod.GET, entity,
+                final var response = restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects?name=" + projectName, HttpMethod.GET, null,
                         new ParameterizedTypeReference<BitbucketSearchDTO<BitbucketProjectDTO>>() {
                         });
 
@@ -549,27 +489,28 @@ public class BitbucketService extends AbstractVersionControlService {
 
                 return false;
             }
+            else {
+                // rethrow so that other errors are not hidden
+                log.error(e.getMessage(), e);
+                throw e;
+            }
         }
-        return true;
     }
 
     /**
      * Create a new project
      *
-     * @param programmingExercise
+     * @param programmingExercise the programming exercise for which the Bitbucket Project should be created
      * @throws BitbucketException if the project could not be created
      */
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws BitbucketException {
         String projectKey = programmingExercise.getProjectKey();
         String projectName = programmingExercise.getProjectName();
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-
         Map<String, Object> body = new HashMap<>();
         body.put("key", projectKey);
         body.put("name", projectName);
-        // TODO: add a description
-        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+        HttpEntity<?> entity = new HttpEntity<>(body, null);
 
         log.debug("Creating Bitbucket project {} with key {}", projectName, projectKey);
 
@@ -577,8 +518,8 @@ public class BitbucketService extends AbstractVersionControlService {
             // Get course over exerciseGroup in exam mode
             Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
 
-            restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects", HttpMethod.POST, entity, Map.class);
-            grantGroupPermissionToProject(projectKey, ADMIN_GROUP_NAME, "PROJECT_ADMIN"); // admins get administrative permissions
+            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects", HttpMethod.POST, entity, Void.class);
+            grantGroupPermissionToProject(projectKey, adminGroupName, "PROJECT_ADMIN"); // admins get administrative permissions
 
             if (course.getInstructorGroupName() != null && !course.getInstructorGroupName().isEmpty()) {
                 grantGroupPermissionToProject(projectKey, course.getInstructorGroupName(), "PROJECT_ADMIN"); // instructors get administrative permissions
@@ -599,14 +540,14 @@ public class BitbucketService extends AbstractVersionControlService {
     public ConnectorHealth health() {
         ConnectorHealth health;
         try {
-            final var status = restTemplate.getForObject(BITBUCKET_SERVER_URL + "/status", JsonNode.class);
+            final var status = restTemplate.getForObject(bitbucketServerUrl + "/status", JsonNode.class);
             health = status.get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
         }
         catch (Exception emAll) {
             health = new ConnectorHealth(emAll);
         }
 
-        health.setAdditionalInfo(Map.of("url", BITBUCKET_SERVER_URL));
+        health.setAdditionalInfo(Map.of("url", bitbucketServerUrl));
         return health;
     }
 
@@ -618,16 +559,14 @@ public class BitbucketService extends AbstractVersionControlService {
      * @throws BitbucketException if the repo could not be created
      */
     private void createRepository(String projectKey, String repoName) throws BitbucketException {
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-
         Map<String, Object> body = new HashMap<>();
         body.put("name", repoName.toLowerCase());
-        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+        HttpEntity<?> entity = new HttpEntity<>(body, null);
 
         log.debug("Creating Bitbucket repo {} with parent key {}", repoName, projectKey);
 
         try {
-            restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos", HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos", HttpMethod.POST, entity, Void.class);
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.CONFLICT) {
@@ -640,11 +579,9 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     private void grantGroupPermissionToProject(String projectKey, String groupName, String permission) {
-        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/permissions/groups/?name="; // GROUPNAME&PERMISSION
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
+        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/permissions/groups/?name="; // GROUPNAME&PERMISSION
         try {
-            restTemplate.exchange(baseUrl + groupName + "&permission=" + permission, HttpMethod.PUT, entity, Map.class);
+            restTemplate.exchange(baseUrl + groupName + "&permission=" + permission, HttpMethod.PUT, null, Void.class);
         }
         catch (Exception e) {
             log.error("Could not give project permission", e);
@@ -661,13 +598,10 @@ public class BitbucketService extends AbstractVersionControlService {
      * @throws BitbucketException if the request to get the WebHooks failed
      */
     private Map<Integer, String> getExistingWebHooks(String projectKey, String repositorySlug) throws BitbucketException {
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
-
-        HttpEntity<?> entity = new HttpEntity<>(headers);
+        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
         ResponseEntity<Map> response;
         try {
-            response = restTemplate.exchange(baseUrl, HttpMethod.GET, entity, Map.class);
+            response = restTemplate.exchange(baseUrl, HttpMethod.GET, null, Map.class);
         }
         catch (Exception e) {
             log.error("Error while getting existing WebHooks", e);
@@ -695,9 +629,9 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private void createWebHook(String projectKey, String repositorySlug, String notificationUrl, String webHookName) {
         log.debug("Creating WebHook for Repository {}-{} ({})", projectKey, repositorySlug, notificationUrl);
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
+        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
 
+        // TODO: use a proper DTO here
         Map<String, Object> body = new HashMap<>();
         body.put("name", webHookName);
         body.put("url", notificationUrl);
@@ -705,10 +639,10 @@ public class BitbucketService extends AbstractVersionControlService {
         ((List) body.get("events")).add("repo:refs_changed"); // Inform on push
         // TODO: We might want to add a token to ensure the notification is valid
 
-        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+        HttpEntity<?> entity = new HttpEntity<>(body, null);
 
         try {
-            restTemplate.exchange(baseUrl, HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(baseUrl, HttpMethod.POST, entity, Void.class);
         }
         catch (HttpClientErrorException e) {
             log.error("Could not add create WebHook for {}-{} ({})", projectKey, repositorySlug, notificationUrl, e);
@@ -717,12 +651,10 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     private void deleteWebHook(String projectKey, String repositorySlug, Integer webHookId) {
-        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks/" + webHookId;
+        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks/" + webHookId;
         log.info("Delete WebHook {} on project {}-{}", webHookId, projectKey, repositorySlug);
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
         try {
-            restTemplate.exchange(baseUrl, HttpMethod.DELETE, entity, Map.class);
+            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
         }
         catch (Exception e) {
             log.error("Could not delete WebHook", e);
@@ -743,12 +675,10 @@ public class BitbucketService extends AbstractVersionControlService {
      * @param repositorySlug The repository's slug.
      */
     private void deleteRepositoryImpl(String projectKey, String repositorySlug) {
-        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase();
+        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase();
         log.info("Delete repository " + baseUrl);
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
         try {
-            restTemplate.exchange(baseUrl, HttpMethod.DELETE, entity, Map.class);
+            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
         }
         catch (Exception e) {
             log.error("Could not delete repository", e);
@@ -760,18 +690,16 @@ public class BitbucketService extends AbstractVersionControlService {
         String projectKey;
         String repositorySlug;
         try {
-            projectKey = getProjectKeyFromUrl(repositoryUrl);
-            repositorySlug = getRepositorySlugFromUrl(repositoryUrl);
+            projectKey = urlService.getProjectKeyFromUrl(repositoryUrl);
+            repositorySlug = urlService.getRepositorySlugFromUrl(repositoryUrl);
         }
         catch (BitbucketException e) {
             // Either the project Key or the repository slug could not be extracted, therefor this can't be a valid URL
             return false;
         }
 
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
         try {
-            restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug, HttpMethod.GET, entity, Map.class);
+            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug, HttpMethod.GET, null, Void.class);
         }
         catch (Exception e) {
             return false;
@@ -799,7 +727,7 @@ public class BitbucketService extends AbstractVersionControlService {
             var actor = commitData.get("actor");
             String name = actor.get("name").asText();
             String email = actor.get("emailAddress").asText();
-            if (ARTEMIS_GIT_NAME.equalsIgnoreCase(name)) {
+            if (artemisGitName.equalsIgnoreCase(name)) {
                 final var commitInfo = fetchCommitInfo(commitData, hash);
                 if (commitInfo != null) {
                     commit.setMessage(commitInfo.get("message").asText());
@@ -831,14 +759,11 @@ public class BitbucketService extends AbstractVersionControlService {
             else {
                 repositoryURL = new URL(cloneLinks.get(0).get("href").asText());
             }
-            final var projectKey = getProjectKeyFromUrl(repositoryURL);
-            final var slug = getRepositorySlugFromUrl(repositoryURL);
-            final var uriBuilder = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI())
+            final var projectKey = urlService.getProjectKeyFromUrl(repositoryURL);
+            final var slug = urlService.getRepositorySlugFromUrl(repositoryURL);
+            final var uriBuilder = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI())
                     .pathSegment("rest", "api", "1.0", "projects", projectKey, "repos", slug, "commits", hash).build();
-            final var headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-            final var entity = new HttpEntity<>(headers);
-
-            final var commitInfo = restTemplate.exchange(uriBuilder.toUri(), HttpMethod.GET, entity, JsonNode.class).getBody();
+            final var commitInfo = restTemplate.exchange(uriBuilder.toUri(), HttpMethod.GET, null, JsonNode.class).getBody();
             if (commitInfo == null) {
                 throw new BitbucketException("Unable to fetch commit info from Bitbucket for hash " + hash);
             }
@@ -858,14 +783,14 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public String getRepositoryName(URL repositoryUrl) {
-        return getRepositorySlugFromUrl(repositoryUrl);
+        return urlService.getRepositorySlugFromUrl(repositoryUrl);
     }
 
     public final class BitbucketRepositoryUrl extends VcsRepositoryUrl {
 
         public BitbucketRepositoryUrl(String projectKey, String repositorySlug) {
             super();
-            final var urlString = BITBUCKET_SERVER_URL.getProtocol() + "://" + BITBUCKET_SERVER_URL.getAuthority() + buildRepositoryPath(projectKey, repositorySlug);
+            final var urlString = bitbucketServerUrl.getProtocol() + "://" + bitbucketServerUrl.getAuthority() + buildRepositoryPath(projectKey, repositorySlug);
             try {
                 this.url = new URL(urlString);
             }
@@ -890,7 +815,7 @@ public class BitbucketService extends AbstractVersionControlService {
         }
 
         private String buildRepositoryPath(String projectKey, String repositorySlug) {
-            return BITBUCKET_SERVER_URL.getPath() + "/scm/" + projectKey + "/" + repositorySlug + ".git";
+            return bitbucketServerUrl.getPath() + "/scm/" + projectKey + "/" + repositorySlug + ".git";
         }
     }
 }

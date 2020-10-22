@@ -75,12 +75,12 @@ public class ExamResource {
 
     private final TutorParticipationService tutorParticipationService;
 
-    private final TutorDashboardService tutorDashboardService;
+    private final AssessmentDashboardService assessmentDashboardService;
 
     public ExamResource(UserService userService, CourseService courseService, ExamRepository examRepository, ExamService examService, ExamAccessService examAccessService,
             ExerciseService exerciseService, AuditEventRepository auditEventRepository, InstanceMessageSendService instanceMessageSendService,
             StudentExamService studentExamService, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            TutorParticipationService tutorParticipationService, TutorDashboardService tutorDashboardService) {
+            TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService) {
         this.userService = userService;
         this.courseService = courseService;
         this.examRepository = examRepository;
@@ -93,7 +93,7 @@ public class ExamResource {
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
-        this.tutorDashboardService = tutorDashboardService;
+        this.assessmentDashboardService = assessmentDashboardService;
     }
 
     /**
@@ -261,7 +261,7 @@ public class ExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/for-exam-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Exam> getExamForTutorDashboard(@PathVariable long courseId, @PathVariable long examId) {
+    public ResponseEntity<Exam> getExamForAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request /courses/{courseId}/exams/{examId}/for-exam-tutor-dashboard");
 
         Exam exam = examService.findOneWithExerciseGroupsAndExercises(examId);
@@ -289,7 +289,7 @@ public class ExamResource {
         }
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
-        tutorDashboardService.prepareExercisesForTutorDashboard(exercises, tutorParticipations, true);
+        assessmentDashboardService.prepareExercisesForAssessmentDashboard(exercises, tutorParticipations, true);
 
         return ResponseEntity.ok(exam);
     }

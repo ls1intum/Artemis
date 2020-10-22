@@ -20,4 +20,8 @@ export class ProfileInfo {
     registrationEnabled?: boolean;
     allowedEmailPattern?: string;
     allowedEmailPatternReadable?: string;
+    allowedLdapUsernamePattern?: string;
+    allowedCourseRegistrationUsernamePattern?: string;
+    accountName?: string;
+    versionControlUrl?: string;
 }
