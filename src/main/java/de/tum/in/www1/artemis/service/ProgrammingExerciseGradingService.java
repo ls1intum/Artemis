@@ -13,9 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -256,6 +253,9 @@ public class ProgrammingExerciseGradingService {
             }
         }
 
+        // Remove feedback that is in an invisible sca category
+        staticCodeAnalysisFeedback = staticCodeAnalysisService.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
+
         // Case 1: There are tests and test case feedback, find out which tests were not executed or should only count to the score after the due date.
         if (testCasesForCurrentDate.size() > 0 && testCaseFeedback.size() > 0 && result.getFeedbacks().size() > 0) {
             // Remove feedbacks that the student should not see yet because of the due date.
@@ -265,9 +265,6 @@ public class ProgrammingExerciseGradingService {
 
             // Add feedbacks for tests that were not executed ("test was not executed").
             createFeedbackForNotExecutedTests(result, testCasesForCurrentDate);
-
-            // Remove feedback that is in an invisible sca category
-            staticCodeAnalysisFeedback = removeInvisibleScaFeedback(result, staticCodeAnalysisFeedback, exercise);
 
             // Recalculate the achieved score by including the test cases individual weight.
             // The score is always calculated from ALL test cases, regardless of the current date!
@@ -311,58 +308,6 @@ public class ProgrammingExerciseGradingService {
         if (result.getFeedbacks().stream().noneMatch(feedback -> Boolean.FALSE.equals(feedback.isPositive())
                 || feedback.getType() != null && (feedback.getType().equals(FeedbackType.MANUAL) || feedback.getType().equals(FeedbackType.MANUAL_UNREFERENCED))))
             result.setHasFeedback(false);
-    }
-
-    /**
-     * Sets the category for each feedback and removes feedback with no or an inactive category.
-     * The feedback is removed permanently, which has the advantage that the server or client doesn't have to filter out
-     * invisible feedback every time it is requested. The drawback is that the re-evaluate functionality can't take
-     * the removed feedback into account.
-     *
-     * @param result of the build run
-     * @param staticCodeAnalysisFeedback List of feedback objects
-     * @param programmingExercise The current exercise
-     * @return The filtered list of feedback objects
-     */
-    private List<Feedback> removeInvisibleScaFeedback(Result result, List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
-        var categoryPairs = staticCodeAnalysisService.getCategoriesWithMappingForExercise(programmingExercise);
-
-        return staticCodeAnalysisFeedback.stream().filter(feedback -> {
-            // ObjectMapper to extract the static code analysis issue from the feedback
-            ObjectMapper mapper = new ObjectMapper();
-            // the category for this feedback
-            Optional<StaticCodeAnalysisCategory> category = Optional.empty();
-            try {
-
-                // extract the sca issue
-                var issue = mapper.readValue(feedback.getDetailText(), StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue.class);
-
-                // find the category for this issue
-                for (var categoryPair : categoryPairs) {
-                    var categoryMappings = categoryPair.right;
-                    if (categoryMappings.stream()
-                            .anyMatch(mapping -> mapping.getTool().name().equals(feedback.getReference()) && mapping.getCategory().equals(issue.getCategory()))) {
-                        category = Optional.of(categoryPair.left);
-                        break;
-                    }
-                }
-
-            }
-            catch (JsonProcessingException exception) {
-                log.debug("Error occurred parsing feedback " + feedback + " to static code analysis issue: " + exception.getMessage());
-            }
-
-            if (category.isEmpty() || category.get().getState().equals(CategoryState.INACTIVE)) {
-                // remove feedback in no or inactive category
-                result.removeFeedback(feedback);
-                return false; // filter this feedback
-            }
-            else {
-                // add the category name to the feedback text
-                feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + category.get().getName());
-                return true; // keep this feedback
-            }
-        }).collect(Collectors.toList());
     }
 
     /**
@@ -431,8 +376,7 @@ public class ProgrammingExerciseGradingService {
 
         double codeAnalysisPenaltyPoints = 0;
 
-        var feedbackByCategory = staticCodeAnalysisFeedback.stream()
-                .collect(Collectors.groupingBy(feedback -> feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length())));
+        var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(Feedback::getStaticCodeAnalysisCategory));
 
         for (var category : staticCodeAnalysisService.findByExerciseId(programmingExercise.getId())) {
 

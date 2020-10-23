@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.SystemNotificationType;
 
 /**
@@ -11,6 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SystemNotificationType;
  */
 @Entity
 @DiscriminatorValue(value = "S")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class SystemNotification extends Notification {
 
     @Column(name = "expire_date")

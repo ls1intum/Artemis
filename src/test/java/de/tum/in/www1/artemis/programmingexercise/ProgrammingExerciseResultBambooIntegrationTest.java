@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -20,32 +19,32 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     private ProgrammingExerciseResultTestService programmingExerciseResultTestService;
 
     @BeforeEach
-    void setup() throws Exception {
+    void setup() {
         programmingExerciseResultTestService.setup();
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() {
         programmingExerciseResultTestService.tearDown();
     }
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() throws Exception {
+    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() {
         var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of());
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification);
     }
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport() throws Exception {
+    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport() {
         var notification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
         programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification);
     }
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void shouldStoreBuildLogsForSubmission() throws Exception {
+    public void shouldStoreBuildLogsForSubmission() {
         var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
         programmingExerciseResultTestService.shouldStoreBuildLogsForSubmission(resultNotification);
     }

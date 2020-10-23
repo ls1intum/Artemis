@@ -46,7 +46,7 @@ def resetStdoutLimit(limit: int = 15000):
     """
     Resets the stout limit to the given limit (default = 15.000 chars).
     """
-    global stdoutCharsLeft # Required since we want to modify stdoutCharsLeft
+    global stdoutCharsLeft  # Required since we want to modify stdoutCharsLeft
     stdoutCharsLeft = limit
 
 
@@ -65,7 +65,7 @@ def __printStdout(text: str):
     Only if there are still enough chars in stdoutCharsLeft left.
     Else will not print anything.
     """
-    global stdoutCharsLeft # Required since we want to modify stdoutCharsLeft
+    global stdoutCharsLeft  # Required since we want to modify stdoutCharsLeft
 
     if not __stdoutLimitEnabled:
         print(text)
@@ -104,7 +104,7 @@ def __getCurDateTimeStr():
     return datetime.now().strftime("%d.%m.%Y_%H:%M:%S")
 
 
-def printTester(text: str, addToCache: bool=True):
+def printTester(text: str, addToCache: bool = True):
     """
     Prints the given string with the '[TESTER]: ' tag in front.
     Should be used instead of print() to make it easier for students
@@ -116,7 +116,7 @@ def printTester(text: str, addToCache: bool=True):
         testerOutputCache.append(msg)
 
 
-def printProg(text: str, addToCache: bool=True):
+def printProg(text: str, addToCache: bool = True):
     """
     Prints the given string with the '[PROG]: ' tag in front.
     Should be used instead of print() to make it easier for students
@@ -137,11 +137,12 @@ def shortenText(text: str, maxNumChars: int):
 
     if len(text) > maxNumChars:
         s: str = "\n[And {} chars more...]".format(len(text) - maxNumChars)
-        l: int = maxNumChars - len(s)        
+        l: int = maxNumChars - len(s)
         if l > 0:
             return "{}{}".format(text[:l], s)
         else:
-            printTester("Unable to limit output to {} chars! Not enough space.".format(maxNumChars), False)
+            printTester("Unable to limit output to {} chars! Not enough space.".format(
+                maxNumChars), False)
             return ""
     return text
 
@@ -195,7 +196,8 @@ class ReadCache(Thread):
         while self.__shouldRun and self.__isFdValid(self.__outSlaveFd):
             try:
                 # Wait with a timeout for self.__outSlaveFd to be ready to read from:
-                result: Tuple[List[Any], List[Any], List[Any]] = select([self.__outSlaveFd], list(), list(), 0)
+                result: Tuple[List[Any], List[Any], List[Any]] = select(
+                    [self.__outSlaveFd], list(), list(), 0)
                 if self.__outSlaveFd in result[0]:
                     data: bytes = os.read(self.__outSlaveFd, 4096)
                 else:
@@ -208,7 +210,8 @@ class ReadCache(Thread):
                 try:
                     self.__cacheFile.write(dataStr)
                 except UnicodeEncodeError:
-                    printTester("Invalid ASCII character read. Skipping line...")
+                    printTester(
+                        "Invalid ASCII character read. Skipping line...")
                     continue
                 self.__cacheFile.flush()
                 self.__cache(dataStr)
@@ -240,7 +243,7 @@ class PWrap:
 
     __stdOutLineCache: ReadCache
     __stdErrLineCache: ReadCache
-    
+
     __terminatedTime: Optional[datetime]
 
     def __init__(self, cmd: List[str], stdoutFilePath: str = "/tmp/stdout.txt", stderrFilePath: str = "/tmp/stderr.txt",
@@ -253,7 +256,7 @@ class PWrap:
 
         self.__stdOutLineCache = ReadCache(stdoutFilePath)
         self.__stdErrLineCache = ReadCache(stderrFilePath)
-        
+
         self.__terminatedTime = None
 
     def __del__(self):
@@ -293,10 +296,13 @@ class PWrap:
         """
         while blocking:
             if not lineCache.canReadLine():
+                if self.hasTerminated():
+                    break
                 sleep(0.1)
             else:
                 line: str = lineCache.readLine()
                 return line
+        return ""
 
     def readLineStdout(self, blocking: bool = True):
         """
@@ -345,13 +351,13 @@ class PWrap:
         """
         if self.prog is None:
             return True
-        
+
         # Make sure we wait 0.25 seconds after the process has terminated to
         # make sure all the output arrived:
         elif self.prog.poll() is not None:
             if self.__terminatedTime:
                 if (datetime.now() - self.__terminatedTime).total_seconds() > 0.25:
-                    return True 
+                    return True
             else:
                 self.__terminatedTime = datetime.now()
         return False
@@ -400,7 +406,8 @@ class PWrap:
             os.killpg(os.getpgid(self.prog.pid), signal)
             return True
         except ProcessLookupError:
-            printTester("No need to kill process. Process does not exist any more.")
+            printTester(
+                "No need to kill process. Process does not exist any more.")
         return False
 
     def cleanup(self):

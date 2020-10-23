@@ -226,6 +226,20 @@ public class Feedback extends DomainObject {
         return this.text != null && this.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
     }
 
+    /**
+     * Returns the Artemis static code analysis category to which this feedback belongs. The method returns an empty
+     * String, if the feedback is not static code analysis feedback.
+     *
+     * @return The Artemis static code analysis category to which this feedback belongs
+     */
+    @JsonIgnore
+    public String getStaticCodeAnalysisCategory() {
+        if (isStaticCodeAnalysisFeedback()) {
+            return this.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
+        }
+        return "";
+    }
+
     public boolean referenceEquals(Feedback otherFeedback) {
         return reference.equals(otherFeedback.reference);
     }
