@@ -5,18 +5,25 @@
                 "title": "Vorlesungseinheiten"
             },
             "unitCreationCard": {
-                "title": "Erzeuge ein neues Vorlesungseinheit",
-                "html": "HTML",
+                "title": "Vorlesungseinheit hinzufügen",
+                "text": "Text",
                 "exercise": "Aufgabe",
                 "video": "Video",
                 "file": "Datei"
-            },
-            "createExerciseUnit": {
-                "title": "Erzeuge eine neue Aufgabeneinheit"
             }
         },
         "exerciseUnit": {
-            "created": "Aufgabeneinheit erstellt"
+            "created": "Aufgabe mit Vorlesung verknüpft",
+            "createExerciseUnit": {
+                "title": "Aufgabeneinheit",
+                "headline": "Verknüpfung einer Aufgabe mit der Vorlesung",
+                "description": "Wähle die Aufgaben aus, welche mit der Vorlesung verknüpft werden sollen."
+            },
+            "delete": {
+                "question": "Verknüpfung mit der Aufgabe <strong>{{ title }}</strong> wirklich auflösen? Die Aufgabe bleibt erhalten! Diese Aktion kann nicht rückgängig gemacht werden!",
+                "typeNameToConfirm": "Zur Bestätigung den Namen der Aufgabe eingeben.",
+                "buttonText": "Entknüpfen"
+            }
         }
     }
 }

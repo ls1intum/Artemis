@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.lecture_unit.ExerciseUnit;
+import de.tum.in.www1.artemis.repository.lecture_unit.ExerciseUnitRepository;
 import de.tum.in.www1.artemis.service.lecture_unit.ExerciseUnitService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -28,8 +30,11 @@ public class ExerciseUnitResource {
 
     private final ExerciseUnitService exerciseUnitService;
 
-    public ExerciseUnitResource(ExerciseUnitService exerciseUnitService) {
+    private final ExerciseUnitRepository exerciseUnitRepository;
+
+    public ExerciseUnitResource(ExerciseUnitService exerciseUnitService, ExerciseUnitRepository exerciseUnitRepository) {
         this.exerciseUnitService = exerciseUnitService;
+        this.exerciseUnitRepository = exerciseUnitRepository;
     }
 
     @Value("${jhipster.clientApp.name}")
@@ -58,6 +63,17 @@ public class ExerciseUnitResource {
         ExerciseUnit persistedExerciseUnit = exerciseUnitService.createExerciseUnit(lectureId, exerciseUnit);
         return ResponseEntity.created(new URI("/api/exercise-units/" + persistedExerciseUnit.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, persistedExerciseUnit.getId().toString())).body(persistedExerciseUnit);
+
+    }
+
+    @GetMapping("/lectures/{lectureId}/exercise-units")
+    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    public ResponseEntity<List<ExerciseUnit>> getExerciseUnitsByLecture(@PathVariable Long lectureId) {
+        log.debug("REST request to get all exercise units for lecture : {}", lectureId);
+
+        List<ExerciseUnit> exerciseUnitsOfLecture = exerciseUnitRepository.findByLectureId(lectureId);
+
+        return ResponseEntity.ok().body(exerciseUnitsOfLecture);
 
     }
 

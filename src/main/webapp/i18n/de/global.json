@@ -170,6 +170,7 @@
             "back": "Zurück",
             "cancel": "Abbrechen",
             "delete": "Löschen",
+            "unlink": "Trennen",
             "confirm": "Bestätigen",
             "download": "Herunterladen",
             "dashboard": "Dashboard",
@@ -227,6 +228,9 @@
         },
         "delete": {
             "title": "Löschen bestätigen"
+        },
+        "unlink": {
+            "title": "Trennen bestätigen"
         },
         "reset": {
             "title": "Zurücksetzen bestätigen"

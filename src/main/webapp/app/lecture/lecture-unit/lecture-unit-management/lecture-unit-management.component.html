@@ -8,23 +8,37 @@
 
 <div *ngIf="!isLoading" class="container">
     <!-- Lecture Unit Rows-->
-    <div class="row mb-4" *ngFor="let lectureUnit of lectureUnits; index as i; trackBy: identify" (click)="selectUnselectUnit(i)">
-        <div class="col-10 mx-auto" [ngSwitch]="lectureUnit.type">
+    <div class="row mb-4" *ngFor="let lectureUnit of lectureUnits; index as i; trackBy: identify">
+        <div class="col-10 col-md-6 offset-md-3" [ngSwitch]="lectureUnit.type">
             <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true"></jhi-exercise-unit>
         </div>
-        <div class="col-2" [hidden]="i !== selectedUnitIndex">
+        <div class="col-1">
             <div class="container">
-                <div class="row mb-1">
-                    <button type="button" class="btn btn-primary btn-circle btn-sm" (click)="moveUp(i)" [disabled]="i === 0">
-                        <fa-icon [icon]="'arrow-up'"></fa-icon>
+                <div class="row mx-auto mb-1">
+                    <button type="button" class="btn btn-primary btn-circle" (click)="moveUp(i)" [disabled]="i === 0">
+                        <fa-icon [icon]="'arrow-up'" [fixedWidth]="true" [size]="'lg'"></fa-icon>
                     </button>
                 </div>
-                <div class="row">
-                    <button type="button" class="btn btn-primary btn-circle btn-sm" (click)="moveDown(i)" [disabled]="i === lectureUnits.length - 1">
-                        <fa-icon [icon]="'arrow-down'"></fa-icon>
+                <div class="row mx-auto">
+                    <button type="button" class="btn btn-primary btn-circle" (click)="moveDown(i)" [disabled]="i === lectureUnits.length - 1">
+                        <fa-icon [icon]="'arrow-down'" [fixedWidth]="true" [size]="'lg'"></fa-icon>
                     </button>
                 </div>
             </div>
+        </div>
+        <div class="col-1 my-auto">
+            <button
+                *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
+                jhiDeleteButton
+                [actionType]="getActionType(lectureUnit)"
+                [entityTitle]="lectureUnit.name"
+                [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
+                [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
+                (delete)="deleteLectureUnit(lectureUnit.id)"
+                [dialogError]="dialogError$"
+            >
+                <fa-icon [icon]="'times'"></fa-icon>
+            </button>
         </div>
     </div>
 

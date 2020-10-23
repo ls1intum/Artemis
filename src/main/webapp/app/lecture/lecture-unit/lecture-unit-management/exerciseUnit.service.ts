@@ -3,8 +3,8 @@ import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Observable } from 'rxjs';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import * as moment from 'moment';
 import { map } from 'rxjs/operators';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 
 type EntityResponseType = HttpResponse<ExerciseUnit>;
 type EntityArrayResponseType = HttpResponse<ExerciseUnit[]>;
@@ -15,38 +15,17 @@ type EntityArrayResponseType = HttpResponse<ExerciseUnit[]>;
 export class ExerciseUnitService {
     private resourceURL = SERVER_API_URL + 'api';
 
-    constructor(private httpClient: HttpClient) {}
+    constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
 
-    /**
-     * Creates a new ExerciseUnit on the server using a POST request.
-     * @param exerciseUnit - the ExerciseUnit to create
-     * @param lectureId - the id of the lecture to connect the ExerciseUnit to
-     */
     create(exerciseUnit: ExerciseUnit, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient
             .post<ExerciseUnit>(`${this.resourceURL}/lectures/${lectureId}/exercise-units`, exerciseUnit, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServer(res)));
     }
 
-    private convertDateFromClient(exerciseUnit: ExerciseUnit): ExerciseUnit {
-        return Object.assign({}, exerciseUnit, {
-            releaseDate: exerciseUnit.releaseDate && moment(exerciseUnit.releaseDate).isValid() ? exerciseUnit.releaseDate.toJSON() : undefined,
-        });
-    }
-
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            res.body.releaseDate = res.body.releaseDate ? moment(res.body.releaseDate) : undefined;
-        }
-        return res;
-    }
-
-    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((exerciseUnit: ExerciseUnit) => {
-                exerciseUnit.releaseDate = exerciseUnit.releaseDate ? moment(exerciseUnit.releaseDate) : undefined;
-            });
-        }
-        return res;
+    findAllByLectureId(lectureId: number): Observable<EntityArrayResponseType> {
+        return this.httpClient
+            .get<ExerciseUnit[]>(`${this.resourceURL}/lectures/${lectureId}/exercise-units`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.lectureUnitService.convertDateArrayFromServer(res)));
     }
 }

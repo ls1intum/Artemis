@@ -1,16 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { forkJoin, Observable } from 'rxjs';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
-import { concatMap, finalize } from 'rxjs/operators';
+import { concatMap, finalize, switchMap, take } from 'rxjs/operators';
 import { Exercise } from 'app/entities/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
+import { forkJoin, Observable } from 'rxjs';
+import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
+import { LectureService } from 'app/lecture/lecture.service';
 
 @Component({
     selector: 'jhi-create-exercise-unit',
@@ -24,86 +24,85 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     lectureId: number;
     courseId: number;
-    exercises: Exercise[] = [];
-    selectedExercises: Exercise[] = [];
+    exercisesAvailableForUnitCreation: Exercise[] = [];
+    exercisesToCreateUnitFor: Exercise[] = [];
 
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
-        private exerciseUnitService: ExerciseUnitService,
-        private courseExerciseService: CourseExerciseService,
-        private quizExerciseService: QuizExerciseService,
+        private courseManagementService: CourseManagementService,
+        private lectureService: LectureService,
         private alertService: AlertService,
         private sortService: SortService,
+        private exerciseUnitService: ExerciseUnitService,
     ) {}
 
     ngOnInit(): void {
         this.isLoading = true;
-        this.activatedRoute.params.subscribe((params: any) => {
-            this.lectureId = +params['lectureId'];
-            this.courseId = +params['courseId'];
+        this.activatedRoute.paramMap
+            .pipe(
+                take(1),
+                switchMap((params) => {
+                    this.lectureId = Number(params.get('lectureId'));
+                    this.courseId = Number(params.get('courseId'));
 
-            const programmingObservable = this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId);
-            const modelingObservable = this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId);
-            const textObservable = this.courseExerciseService.findAllTextExercisesForCourse(this.courseId);
-            const uploadObservable = this.courseExerciseService.findAllFileUploadExercisesForCourse(this.courseId);
-            const quizObservable = this.quizExerciseService.findForCourse(this.courseId);
-
-            forkJoin([programmingObservable, modelingObservable, textObservable, uploadObservable, quizObservable])
-                .pipe(
-                    finalize(() => {
-                        this.isLoading = false;
-                    }),
-                )
-                .subscribe(
-                    (results) => {
-                        const programmingExercises = results[0].body!;
-                        const modelingExercises = results[1].body!;
-                        const textExercises = results[2].body!;
-                        const uploadExercises = results[3].body!;
-                        const quizExercises = results[4].body!;
-                        this.exercises = [].concat.apply([], [programmingExercises, modelingExercises, textExercises, uploadExercises, quizExercises]);
-                    },
-
-                    (res: HttpErrorResponse) => onError(this.alertService, res),
-                );
-        });
-    }
-
-    submit(): void {
-        const exerciseUnits = this.selectedExercises.map((exercise: Exercise) => {
-            const unit = new ExerciseUnit();
-            unit.exercise = exercise;
-            return unit;
-        });
-
-        Observable.from(exerciseUnits)
-            .pipe(concatMap((unit) => this.exerciseUnitService.create(unit, this.lectureId)))
+                    const courseObservable = this.courseManagementService.findWithExercises(this.courseId);
+                    const exerciseUnitObservable = this.exerciseUnitService.findAllByLectureId(this.lectureId);
+                    return forkJoin([courseObservable, exerciseUnitObservable]);
+                }),
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
             .subscribe(
-                () => {
-                    this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                ([courseResult, exerciseUnitResult]) => {
+                    const allExercisesOfCourse = courseResult?.body?.exercises ? courseResult?.body?.exercises : [];
+                    const idsOfExercisesAlreadyConnectedToUnit = exerciseUnitResult?.body
+                        ? exerciseUnitResult?.body?.map((exerciseUnit: ExerciseUnit) => exerciseUnit.exercise?.id)
+                        : [];
+                    this.exercisesAvailableForUnitCreation = allExercisesOfCourse.filter((exercise: Exercise) => !idsOfExercisesAlreadyConnectedToUnit.includes(exercise.id));
                 },
                 (res: HttpErrorResponse) => onError(this.alertService, res),
             );
     }
 
-    sortRows() {
-        this.sortService.sortByProperty(this.exercises, this.predicate, this.reverse);
+    createExerciseUnits() {
+        const exerciseUnitsToCreate = this.exercisesToCreateUnitFor.map((exercise: Exercise) => {
+            const unit = new ExerciseUnit();
+            unit.exercise = exercise;
+            return unit;
+        });
+
+        Observable.from(exerciseUnitsToCreate)
+            .pipe(
+                concatMap((unit) => this.exerciseUnitService.create(unit, this.lectureId)),
+                finalize(() => {
+                    this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                }),
+            )
+            .subscribe(
+                () => {},
+                (res: HttpErrorResponse) => onError(this.alertService, res),
+            );
     }
 
-    handleRowClick(exercise: Exercise) {
-        if (this.isSelected(exercise)) {
-            this.selectedExercises.forEach((selectedExercise, index) => {
+    sortRows() {
+        this.sortService.sortByProperty(this.exercisesAvailableForUnitCreation, this.predicate, this.reverse);
+    }
+
+    selectExerciseForUnitCreation(exercise: Exercise) {
+        if (this.isExerciseSelectedForUnitCreation(exercise)) {
+            this.exercisesToCreateUnitFor.forEach((selectedExercise, index) => {
                 if (selectedExercise === exercise) {
-                    this.selectedExercises.splice(index, 1);
+                    this.exercisesToCreateUnitFor.splice(index, 1);
                 }
             });
         } else {
-            this.selectedExercises.push(exercise);
+            this.exercisesToCreateUnitFor.push(exercise);
         }
     }
 
-    isSelected(exercise: Exercise) {
-        return this.selectedExercises.includes(exercise);
+    isExerciseSelectedForUnitCreation(exercise: Exercise) {
+        return this.exercisesToCreateUnitFor.includes(exercise);
     }
 }

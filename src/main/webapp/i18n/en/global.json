@@ -173,6 +173,7 @@
             "dashboard": "Dashboard",
             "exportRepos": "Download Repositories",
             "delete": "Delete",
+            "unlink": "Unlink",
             "confirm": "Confirm",
             "download": "Download",
             "edit": "Edit",
@@ -228,6 +229,9 @@
         },
         "delete": {
             "title": "Confirm delete operation"
+        },
+        "unlink": {
+            "title": "Confirm unlink operation"
         },
         "reset": {
             "title": "Confirm reset operation"

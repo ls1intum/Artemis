@@ -23,20 +23,24 @@ export class LectureUnitService {
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
-    private convertDateFromClient(lectureUnit: LectureUnit): LectureUnit {
+    delete(lectureUnitId: number, lectureId: number) {
+        return this.httpClient.delete(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}`, { observe: 'response' });
+    }
+
+    convertDateFromClient<T extends LectureUnit>(lectureUnit: T): T {
         return Object.assign({}, lectureUnit, {
             releaseDate: lectureUnit.releaseDate && moment(lectureUnit.releaseDate).isValid() ? lectureUnit.releaseDate.toJSON() : undefined,
         });
     }
 
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    convertDateFromServer<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
         if (res.body) {
             res.body.releaseDate = res.body.releaseDate ? moment(res.body.releaseDate) : undefined;
         }
         return res;
     }
 
-    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+    convertDateArrayFromServer<T extends LectureUnit>(res: HttpResponse<T[]>): HttpResponse<T[]> {
         if (res.body) {
             res.body.forEach((lectureUnit: LectureUnit) => {
                 lectureUnit.releaseDate = lectureUnit.releaseDate ? moment(lectureUnit.releaseDate) : undefined;
