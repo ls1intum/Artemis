@@ -9,7 +9,6 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { hasDeadlinePassed } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { Result } from 'app/entities/result.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { hasParticipationChanged } from 'app/overview/participation-utils';
