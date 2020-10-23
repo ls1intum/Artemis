@@ -61,9 +61,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             if (hasDeadlinePassed(this.exercise)) {
                 // If the last result was manual, the instructor might not want to override it with a new automatic result.
                 const newestResult = !!this.participation.results && compose(head, orderBy('id', 'desc'))(this.participation.results);
-                // Manual result can either be from type MANUAL or SEMI_AUTOMATIC
-                this.lastResultIsManual =
-                    !!newestResult && (newestResult.assessmentType === AssessmentType.MANUAL || newestResult.assessmentType === AssessmentType.SEMI_AUTOMATIC);
+                this.lastResultIsManual = !!newestResult && Result.isManualResult(newestResult);
             }
             // We can trigger the build only if the participation is active (has build plan) or if the build plan was archived (new build plan will be created).
             this.participationBuildCanBeTriggered =
@@ -122,13 +120,12 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
         }
-        // Manual result can either be from type MANUAL or SEMI_AUTOMATIC
         this.resultSubscription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(this.participation.id!, this.personalParticipation, this.exercise.id)
             .pipe(
                 filter((result) => !!result),
                 tap((result: Result) => {
-                    this.lastResultIsManual = !!result && (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC);
+                    this.lastResultIsManual = !!result && Result.isManualResult(result);
                 }),
             )
             .subscribe();

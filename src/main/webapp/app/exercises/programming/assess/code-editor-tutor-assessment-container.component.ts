@@ -333,8 +333,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private getLatestManualResult(results?: Result[]): Result {
-        // Manual result can either be from type MANUAL or SEMI_AUTOMATIC
-        const manualResults = (results || []).filter((result) => result.assessmentType === AssessmentType.SEMI_AUTOMATIC || result.assessmentType === AssessmentType.MANUAL);
+        const manualResults = (results || []).filter((result) => Result.isManualResult(result));
         const sortedResults = this.sortResults(manualResults);
         const initialManualResult = new Result();
         return sortedResults.length > 0 ? sortedResults[0] : initialManualResult;

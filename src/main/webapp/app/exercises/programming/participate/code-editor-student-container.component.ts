@@ -154,8 +154,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
         let hasTutorFeedback = false;
         if (!!this.latestResult) {
             // latest result is the first element of results, see loadParticipationWithLatestResult
-            // Manual result can either be from type MANUAL or SEMI_AUTOMATIC
-            isManualResult = this.latestResult.assessmentType === AssessmentType.SEMI_AUTOMATIC || this.latestResult.assessmentType === AssessmentType.MANUAL;
+            isManualResult = Result.isManualResult(this.latestResult);
             if (isManualResult) {
                 hasTutorFeedback = this.latestResult.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL);
             }

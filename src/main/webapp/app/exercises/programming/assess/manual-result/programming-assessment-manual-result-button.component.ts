@@ -43,13 +43,7 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
      * @param changes
      */
     ngOnChanges(changes: SimpleChanges): void {
-        // Manual result can either be from type MANUAL or SEMI_AUTOMATIC
-        if (
-            changes.latestResult &&
-            this.latestResult &&
-            this.latestResult.assessmentType !== AssessmentType.MANUAL &&
-            this.latestResult.assessmentType !== AssessmentType.SEMI_AUTOMATIC
-        ) {
+        if (changes.latestResult && this.latestResult && !Result.isManualResult(this.latestResult)) {
             // The assessor can't update the automatic result of the student.
             this.latestResult = null;
         }
@@ -57,10 +51,9 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
             if (this.latestResultSubscription) {
                 this.latestResultSubscription.unsubscribe();
             }
-            // Manual result can either be from type MANUAL or SEMI_AUTOMATIC
             this.latestResultSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.participationId, false, this.exercise.id)
-                .pipe(filter((result: Result) => result && (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC)))
+                .pipe(filter((result: Result) => result && Result.isManualResult(result)))
                 .subscribe((manualResult) => {
                     let assessor: User | undefined;
                     // TODO: workaround to fix an issue when the assessor gets lost due to the websocket update
