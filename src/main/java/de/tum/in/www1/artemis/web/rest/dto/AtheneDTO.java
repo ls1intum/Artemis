@@ -10,6 +10,10 @@ import de.tum.in.www1.artemis.domain.TextCluster;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AtheneDTO {
 
+    private List<TextBlockDTO> blocks = new ArrayList<>();
+
+    private Map<Integer, TextCluster> clusters = new LinkedHashMap<>();
+
     public List<TextBlockDTO> getBlocks() {
         return blocks;
     }
@@ -26,10 +30,6 @@ public class AtheneDTO {
         this.clusters = clusters;
     }
 
-    private List<TextBlockDTO> blocks = new ArrayList<>();
-
-    private Map<Integer, TextCluster> clusters = new LinkedHashMap<>();
-
     // Inner DTO
     public static class TextBlockDTO {
 
@@ -42,6 +42,8 @@ public class AtheneDTO {
         private int startIndex;
 
         private int endIndex;
+
+        private TextBlockType type = TextBlockType.AUTOMATIC;
 
         public String getId() {
             return id;
@@ -90,8 +92,6 @@ public class AtheneDTO {
         public void setType(TextBlockType type) {
             this.type = type;
         }
-
-        public TextBlockType type = TextBlockType.AUTOMATIC;
 
     }
 

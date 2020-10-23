@@ -52,7 +52,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Mock
     TextClusterRepository textClusterRepository;
 
-    private final String API_ENDPOINT = "http://localhost/submit";
+    private final static String submitApiEndpoint = "http://localhost/submit";
 
     AtheneService atheneService;
 
@@ -65,10 +65,10 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     public void init() {
         // Create atheneService and inject @Value fields
         atheneService = new AtheneService(textSubmissionService, textBlockRepository, textClusterRepository, textExerciseRepository, textAssessmentQueueService);
-        ReflectionTestUtils.setField(atheneService, "ARTEMIS_SERVER_URL", ARTEMIS_SERVER_URL);
-        ReflectionTestUtils.setField(atheneService, "API_ENDPOINT", API_ENDPOINT);
-        String API_SECRET = "YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=";
-        ReflectionTestUtils.setField(atheneService, "API_SECRET", API_SECRET);
+        ReflectionTestUtils.setField(atheneService, "artemisServerUrl", artemisServerUrl);
+        ReflectionTestUtils.setField(atheneService, "submitApiEndpoint", submitApiEndpoint);
+        String apiSecret = "YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=";
+        ReflectionTestUtils.setField(atheneService, "apiSecret", apiSecret);
 
         // Create example exercise
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
@@ -118,7 +118,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         // Create mock server
         MockRestServiceServer mockServer = MockRestServiceServer.bindTo(restTemplate).build();
-        mockServer.expect(ExpectedCount.once(), requestTo(API_ENDPOINT)).andExpect(method(HttpMethod.POST))
+        mockServer.expect(ExpectedCount.once(), requestTo(submitApiEndpoint)).andExpect(method(HttpMethod.POST))
                 .andRespond(withSuccess("{ \"detail\": \"Submission successful\" }", MediaType.APPLICATION_JSON));
 
         atheneService.submitJob(exercise1);
@@ -153,12 +153,8 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Test
     public void processResult() {
         // Inject running task into atheneService
-        List<Long> runningAtheneTasks = new ArrayList<>() {
-
-            {
-                add(exercise1.getId());
-            }
-        };
+        List<Long> runningAtheneTasks = new ArrayList<>();
+        runningAtheneTasks.add(exercise1.getId());
         ReflectionTestUtils.setField(atheneService, "runningAtheneTasks", runningAtheneTasks);
         // Verify injection
         assertThat(atheneService.isTaskRunning(exercise1.getId()));
