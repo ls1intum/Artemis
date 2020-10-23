@@ -275,6 +275,33 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(storedResult.getParticipation()).isNotNull();
     }
 
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testManualAssessmentSubmit_withResultOver100Percent() throws Exception {
+        useCaseExercise = (ModelingExercise) database.addMaxScoreAndBonusPointsToExercise(useCaseExercise);
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        // Check that result is over 100% -> 105
+        feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
+        feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
+
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
+
+        assertThat(storedResult.getScore()).isEqualTo(105);
+
+        // Check that result is capped to maximum of maxScore + bonus points -> 110
+        feedbacks.add(new Feedback().credits(20.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
+
+        storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
+
+        assertThat(storedResult.getScore()).isEqualTo(110);
+    }
+
     // region Automatic Assessment Tests
     @Test
     @WithMockUser(username = "student2")

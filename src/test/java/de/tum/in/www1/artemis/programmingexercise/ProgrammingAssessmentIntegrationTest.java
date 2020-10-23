@@ -261,6 +261,49 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_withResultOver100Percent() throws Exception {
+        programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
+        List<Feedback> feedbacks = new ArrayList<>();
+        // Check that result is over 100% -> 105
+        feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
+        feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
+        result.setFeedbacks(feedbacks);
+
+        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", result,
+                Result.class, HttpStatus.OK);
+
+        assertThat(response.getScore()).isEqualTo(105);
+
+        // Check that result is capped to maximum of maxScore + bonus points -> 110
+        feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
+
+        response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", result, Result.class,
+                HttpStatus.OK);
+
+        assertThat(response.getScore()).isEqualTo(110);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_resultHasAutomaticFeedback() throws Exception {
+        programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
+        feedbacks.add(new Feedback().credits(1.00).detailText("nice submission 2"));
+        feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.MANUAL).detailText("nice submission 1").text("manual feedback"));
+
+        result.setFeedbacks(feedbacks);
+
+        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", result,
+                Result.class, HttpStatus.OK);
+
+        assertThat(response.getScore()).isEqualTo(4);
+        assertThat(response.getFeedbacks().stream().anyMatch(feedback -> feedback.getType().equals(FeedbackType.AUTOMATIC))).isTrue();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_manualResultsNotAllowed() throws Exception {
         var participation = setParticipationForProgrammingExercise(AssessmentType.AUTOMATIC);
         result.setParticipation(participation);

@@ -519,6 +519,43 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", false);
     }
 
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testSubmitAssessment_withResultOver100Percent() throws Exception {
+        textExercise = (TextExercise) database.addMaxScoreAndBonusPointsToExercise(textExercise);
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        database.addTextSubmission(textExercise, textSubmission, "student1");
+        exerciseDueDatePassed();
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, params);
+
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
+        feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
+        textAssessmentDTO.setFeedbacks(feedbacks);
+
+        // Check that result is over 100% -> 105
+        Result response = request.putWithResponseBody(
+                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getResult().getId() + "/submit", textAssessmentDTO,
+                Result.class, HttpStatus.OK);
+
+        assertThat(response.getScore()).isEqualTo(105);
+
+        feedbacks.add(new Feedback().credits(20.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
+        textAssessmentDTO.setFeedbacks(feedbacks);
+
+        // Check that result is capped to maximum of maxScore + bonus points -> 110
+        response = request.putWithResponseBody("/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getResult().getId() + "/submit",
+                textAssessmentDTO, Result.class, HttpStatus.OK);
+
+        assertThat(response.getScore()).isEqualTo(110);
+    }
+
     private void exerciseDueDatePassed() {
         database.updateExerciseDueDate(textExercise.getId(), ZonedDateTime.now().minusHours(2));
     }

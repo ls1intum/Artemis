@@ -285,8 +285,8 @@ public class DatabaseUtilService {
      * numberOfStudents Tutors login is a concatenation of the prefix "tutor" and a number counting from 1 to numberOfStudents Tutors are all in the "tutor" group and students in
      * the "tumuser" group
      *
-     * @param numberOfStudents the number of students that will be added to the database
-     * @param numberOfTutors the number of tutors that will be added to the database
+     * @param numberOfStudents    the number of students that will be added to the database
+     * @param numberOfTutors      the number of tutors that will be added to the database
      * @param numberOfInstructors the number of instructors that will be added to the database
      */
     public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
@@ -1183,11 +1183,25 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
+    public Result addFeedbackToResults(Result result) {
+        List<Feedback> feedback = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
+        feedback.addAll(ModelFactory.generateFeedback());
+        feedback = feedbackRepo.saveAll(feedback);
+        result.addFeedbacks(feedback);
+        return resultRepo.save(result);
+    }
+
     public Result addResultToSubmission(Submission submission, AssessmentType assessmentType) {
         Result result = new Result().participation(submission.getParticipation()).submission(submission).resultString("x of y passed").rated(true).score(100L)
                 .assessmentType(assessmentType);
         resultRepo.save(result);
         return result;
+    }
+
+    public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
+        exercise.setMaxScore(100.0);
+        exercise.setBonusPoints(10.0);
+        return exerciseRepo.save(exercise);
     }
 
     public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
