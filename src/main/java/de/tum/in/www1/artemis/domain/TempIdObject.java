@@ -4,6 +4,9 @@ import java.util.Objects;
 
 import javax.persistence.Transient;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class TempIdObject extends DomainObject {
 
     /**

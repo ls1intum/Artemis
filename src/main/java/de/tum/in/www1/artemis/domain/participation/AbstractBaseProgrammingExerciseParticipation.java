@@ -6,6 +6,7 @@ import java.net.URL;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -13,6 +14,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @MappedSuperclass
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class AbstractBaseProgrammingExerciseParticipation extends Participation implements ProgrammingExerciseParticipation {
 
     @Column(name = "repository_url")

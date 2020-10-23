@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "S")
 @DiscriminatorOptions(force = true)
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class QuizStatistic extends DomainObject {
 

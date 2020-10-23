@@ -77,7 +77,6 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     });
 
     it('should update feedback with SGI and emit to parent', () => {
-        const onUpdateFeedbackSpy = spy(comp.onUpdateFeedback, 'emit');
         const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
         // Fake call as a DragEvent cannot be created programmatically
         spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').and.callFake(() => {
