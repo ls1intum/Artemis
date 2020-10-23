@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,7 +149,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
         // All not automatically generated result must have a detail text
         else if (!newResult.getFeedbacks().isEmpty()
-                && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.isNotAutomaticFeedback() && feedback.getDetailText() == null)) {
+                && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getType() != FeedbackType.AUTOMATIC && feedback.getDetailText() == null)) {
             throw new BadRequestAlertException("In case tutor feedback is present, a feedback detail text is mandatory.", ENTITY_NAME, "feedbackDetailTextNull");
         }
         else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getCredits() == null)) {

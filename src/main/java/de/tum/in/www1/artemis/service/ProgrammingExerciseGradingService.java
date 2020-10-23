@@ -255,7 +255,7 @@ public class ProgrammingExerciseGradingService {
         List<Feedback> testCaseFeedback = new ArrayList<>();
         List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
         for (var feedback : result.getFeedbacks()) {
-            if (feedback.isNotAutomaticFeedback()) {
+            if (feedback.getType() != FeedbackType.AUTOMATIC) {
                 continue;
             }
             if (feedback.isStaticCodeAnalysisFeedback()) {
@@ -314,7 +314,7 @@ public class ProgrammingExerciseGradingService {
     private void removeFeedbacksForAfterDueDateTests(Result result, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate) {
         // Find feedback which is not associated with test cases for the current date. Does not remove static code analysis feedback
         List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback()
-                && !feedback.isNotAutomaticFeedback() && testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText())))
+                && feedback.getType() == FeedbackType.AUTOMATIC && testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText())))
                 .collect(Collectors.toList());
         feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
         // If there are no feedbacks left after filtering those not valid for the current date, also setHasFeedback to false.
@@ -343,7 +343,7 @@ public class ProgrammingExerciseGradingService {
                 double testPoints = testWeight / weightSum * programmingExercise.getMaxScore();
                 double testPointsWithBonus = testPoints + test.getBonusPoints();
                 // update credits of related feedback
-                result.getFeedbacks().stream().filter(fb -> !fb.isNotAutomaticFeedback() && fb.getText().equals(test.getTestName())).findFirst()
+                result.getFeedbacks().stream().filter(fb -> fb.getType() == FeedbackType.AUTOMATIC && fb.getText().equals(test.getTestName())).findFirst()
                         .ifPresent(feedback -> feedback.setCredits(testPointsWithBonus));
                 return testPointsWithBonus;
             }).sum();
@@ -483,7 +483,7 @@ public class ProgrammingExerciseGradingService {
      * @return true if there is no feedback for a given test.
      */
     private Predicate<ProgrammingExerciseTestCase> wasNotExecuted(Result result) {
-        return testCase -> result.getFeedbacks().stream().noneMatch(feedback -> !feedback.isNotAutomaticFeedback() && feedback.getText().equals(testCase.getTestName()));
+        return testCase -> result.getFeedbacks().stream().noneMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC && feedback.getText().equals(testCase.getTestName()));
     }
 
 }

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -92,7 +93,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
                  * In case no structured grading instruction was applied on the assessment model we just sum the feedback credit. We differentiate between automatic test and
                  * automatic SCA feedback (automatic test feedback has to be capped)
                  */
-                if (!feedback.isNotAutomaticFeedback() && !feedback.isStaticCodeAnalysisFeedback()) {
+                if (feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()) {
                     scoreAutomaticTests += feedback.getCredits();
                 }
                 else {
