@@ -57,7 +57,7 @@ public class LectureUnitResource {
     public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<LectureUnit> orderedLectureUnits) {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
         List<LectureUnit> persistedOrderedLectureUnits = lectureUnitService.updateLectureUnitsOrder(lectureId, orderedLectureUnits);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "lectureUnitOrder", lectureId.toString())).body(persistedOrderedLectureUnits);
+        return ResponseEntity.ok(persistedOrderedLectureUnits);
     }
 
     @DeleteMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}")

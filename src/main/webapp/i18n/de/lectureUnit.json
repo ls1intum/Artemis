@@ -12,9 +12,6 @@
                 "file": "Datei"
             }
         },
-        "lectureUnitOrder": {
-            "updated": "Reihenfolge der Vorlesungseinheiten gespeichert"
-        },
         "exerciseUnit": {
             "created": "Aufgabe mit Vorlesung verknüpft",
             "createExerciseUnit": {

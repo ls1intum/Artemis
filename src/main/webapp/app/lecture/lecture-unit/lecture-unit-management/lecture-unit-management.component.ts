@@ -57,7 +57,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.updateOrderSubjectSubscription = this.updateOrderSubject.pipe(debounceTime(1500)).subscribe(() => {
+        this.updateOrderSubjectSubscription = this.updateOrderSubject.pipe(debounceTime(1000)).subscribe(() => {
             this.updateOrder();
         });
     }

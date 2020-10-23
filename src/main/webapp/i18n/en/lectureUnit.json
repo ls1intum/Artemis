@@ -12,9 +12,6 @@
                 "file": "File"
             }
         },
-        "lectureUnitOrder": {
-            "updated": "Order of Lecture Units saved"
-        },
         "exerciseUnit": {
             "created": "Exercise connected with Lecture",
             "createExerciseUnit": {
