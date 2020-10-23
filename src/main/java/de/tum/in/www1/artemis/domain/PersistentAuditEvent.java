@@ -7,6 +7,11 @@ import java.util.Map;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Persist AuditEvent managed by the Spring Boot actuator.
  *
@@ -14,6 +19,8 @@ import javax.validation.constraints.NotNull;
  */
 @Entity
 @Table(name = "jhi_persistent_audit_event")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PersistentAuditEvent extends DomainObject {
 
     @NotNull

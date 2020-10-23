@@ -59,6 +59,8 @@
             }
         },
         "examScores": {
+            "xAxes": "Ergebnis in %",
+            "yAxes": "Teilnehmeranzahl",
             "maxPoints": "Maximale Punktzahl",
             "title": "Klausur Ergebnisse",
             "examStatisticsTitle": "Klausur Statistik",

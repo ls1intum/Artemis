@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 
 public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -887,8 +888,8 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
                     .type(FeedbackType.AUTOMATIC).positive(false));
         }
 
-        result.addFeedback(new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE")
-                .detailText("{\"category\": \"miscellaneous\"}").type(FeedbackType.AUTOMATIC).positive(false));
+        var feedbackForInactiveCategory = ModelFactory.createSCAFeedbackWithInactiveCategory(result);
+        result.addFeedback(feedbackForInactiveCategory);
 
         result.addFeedback(new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS").detailText("{\"category\": \"CORRECTNESS\"}")
                 .type(FeedbackType.AUTOMATIC).positive(false));

@@ -4,6 +4,10 @@ import java.time.ZonedDateTime;
 
 import javax.persistence.*;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackConflictType;
 
 /**
@@ -11,6 +15,8 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackConflictType;
  */
 @Entity
 @Table(name = "feedback_conflict")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class FeedbackConflict extends DomainObject {
 
     @Column(name = "conflict", nullable = false)

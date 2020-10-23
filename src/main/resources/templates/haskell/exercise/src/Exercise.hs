@@ -1,5 +1,10 @@
 module Exercise where
 
--- Implement the fibonacci numbers function with initial values fib 0 = 0 and fib 1 = 1
-fib :: Integer -> Integer
-fib = undefined
+selectAndReflectA :: (Int,Int) -> [(Int,Int)] -> [(Int,Int)]
+selectAndReflectA = undefined
+
+selectAndReflectB :: (Int,Int) -> [(Int,Int)] -> [(Int,Int)]
+selectAndReflectB = undefined
+
+selectAndReflectC :: (Int,Int) -> [(Int,Int)] -> [(Int,Int)]
+selectAndReflectC = undefined

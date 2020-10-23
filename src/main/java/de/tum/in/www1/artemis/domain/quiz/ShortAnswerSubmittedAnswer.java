@@ -8,6 +8,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Entity
 @DiscriminatorValue(value = "SA")
 @JsonTypeName("short-answer")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
