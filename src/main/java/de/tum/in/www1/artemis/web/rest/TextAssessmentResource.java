@@ -343,7 +343,11 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         final TextExercise textExercise = (TextExercise) textSubmission.get().getParticipation().getExercise();
-        final Result result = textSubmission.get().getResult();
+        var results = textSubmission.get().getResults();
+        Result result = null;
+        if (results != null && !results.isEmpty()) {
+            result = results.get(results.size() - 1);
+        }
 
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkTextExerciseForRequest(textExercise, user);
