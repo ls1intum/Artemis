@@ -70,7 +70,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    private JenkinsServer jenkinsServer;
+    private final JenkinsServer jenkinsServer;
 
     private final FeedbackService feedbackService;
 
@@ -84,11 +84,11 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL, URL solutionRepositoryURL) {
         try {
             // TODO support sequential test runs
             final var configBuilder = buildPlanCreatorProvider.builderFor(exercise.getProgrammingLanguage());
-            final var jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL);
+            Document jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL, Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
             planKey = exercise.getProjectKey() + "-" + planKey;
 
             jenkinsServer.createJob(getFolderJob(exercise.getProjectKey()), planKey, writeXmlToString(jobConfig), useCrumb);
@@ -306,7 +306,9 @@ public class JenkinsService implements ContinuousIntegrationService {
         result.setScore((long) calculateResultScore(report, testSum));
         result.setParticipation(participation);
         addFeedbackToResult(result, report);
-        result.setResultString(result.getHasFeedback() ? report.getSuccessful() + " of " + testSum + " passed" : "No tests found");
+        // We assume the build has failed if no test case feedback has been sent. Static code analysis feedback might exist even though the build failed
+        boolean hasTestCaseFeedback = result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isStaticCodeAnalysisFeedback());
+        result.setResultString(hasTestCaseFeedback ? report.getSuccessful() + " of " + testSum + " passed" : "No tests found");
 
         return result;
     }
@@ -364,14 +366,10 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private void addFeedbackToResult(Result result, TestResultsDTO report) {
-        // No feedback for build errors
-        if (report.getResults() == null || report.getResults().isEmpty()) {
-            result.setHasFeedback(false);
-            return;
-        }
+        final ProgrammingExercise programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
+        final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
 
-        final ProgrammingLanguage programmingLanguage = ((ProgrammingExercise) result.getParticipation().getExercise()).getProgrammingLanguage();
-
+        // Extract test case feedback
         for (final var testSuite : report.getResults()) {
             for (final var testCase : testSuite.getTestCases()) {
                 var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMessage());
@@ -382,7 +380,13 @@ public class JenkinsService implements ContinuousIntegrationService {
             }
         }
 
-        result.setHasFeedback(true);
+        // Extract static code analysis feedback if option was enabled
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && report.getStaticCodeAnalysisReports() != null) {
+            var scaFeedback = feedbackService.createFeedbackFromStaticCodeAnalysisReports(report.getStaticCodeAnalysisReports());
+            result.addFeedbacks(scaFeedback);
+        }
+
+        result.setHasFeedback(!result.getFeedbacks().isEmpty());
     }
 
     @Override

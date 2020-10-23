@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.util.stream.Collectors.toList;
 import static org.hibernate.Hibernate.isInitialized;
 
 import java.util.List;
@@ -24,16 +25,20 @@ public class TextAssessmentService extends AssessmentService {
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
+    private final FeedbackConflictRepository feedbackConflictRepository;
+
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
             StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionRepository submissionRepository,
-            TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ExamService examService) {
+            TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ExamService examService,
+            FeedbackConflictRepository feedbackConflictRepository) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository,
                 examService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
         this.textBlockService = textBlockService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
+        this.feedbackConflictRepository = feedbackConflictRepository;
     }
 
     /**
@@ -134,14 +139,14 @@ public class TextAssessmentService extends AssessmentService {
 
         if (result != null) {
             // Load Feedback already created for this assessment
-            final List<Feedback> assessments = getAssessmentsForResult(result);
+            final List<Feedback> assessments = exercise.isAutomaticAssessmentEnabled() ? getAssessmentsForResultWithConflicts(result) : getAssessmentsForResult(result);
             result.setFeedbacks(assessments);
             if (assessments.isEmpty() && computeFeedbackSuggestions) {
                 automaticTextFeedbackService.get().suggestFeedback(result);
             }
         }
         else {
-            // We we are the first ones to open assess this submission, we want to lock it.
+            // We are the first ones to open assess this submission, we want to lock it.
             result = new Result();
             result.setParticipation(participation);
             result.setSubmission(textSubmission);
@@ -167,5 +172,16 @@ public class TextAssessmentService extends AssessmentService {
         if (textSubmission.getBlocks() == null || !isInitialized(textSubmission.getBlocks()) || textSubmission.getBlocks().isEmpty()) {
             textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
+    }
+
+    private List<Feedback> getAssessmentsForResultWithConflicts(Result result) {
+        List<Feedback> feedbackList = this.feedbackRepository.findByResult(result);
+        final List<FeedbackConflict> allConflictsByFeedbackList = this.feedbackConflictRepository
+                .findAllConflictsByFeedbackList(feedbackList.stream().map(Feedback::getId).collect(toList()));
+        feedbackList.forEach(feedback -> {
+            feedback.setFirstConflicts(allConflictsByFeedbackList.stream().filter(c -> c.getFirstFeedback().getId().equals(feedback.getId())).collect(toList()));
+            feedback.setSecondConflicts(allConflictsByFeedbackList.stream().filter(c -> c.getSecondFeedback().getId().equals(feedback.getId())).collect(toList()));
+        });
+        return feedbackList;
     }
 }

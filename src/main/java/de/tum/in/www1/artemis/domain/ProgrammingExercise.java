@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -36,6 +37,7 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 @Entity
 @DiscriminatorValue(value = "P")
 @SecondaryTable(name = "programming_exercise_details")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExercise extends Exercise {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
@@ -99,6 +101,16 @@ public class ProgrammingExercise extends Exercise {
 
     @Transient
     private boolean isLocalSimulationTransient;
+
+    /**
+     * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
+     * This property is only used when creating the exercise (the client sets this value when POSTing the new exercise to the server).
+     * It is not persisted as this setting can not be changed afterwards.
+     * This is currently only supported for HASKELL on BAMBOO, thus the default value is false.
+     */
+    @Transient
+    @JsonProperty
+    private boolean checkoutSolutionRepository = false;
 
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -561,5 +573,13 @@ public class ProgrammingExercise extends Exercise {
 
     public void setIsLocalSimulation(Boolean isLocalSimulationTransient) {
         this.isLocalSimulationTransient = isLocalSimulationTransient;
+    }
+
+    public boolean getCheckoutSolutionRepository() {
+        return this.checkoutSolutionRepository;
+    }
+
+    public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
+        this.checkoutSolutionRepository = checkoutSolutionRepository;
     }
 }
