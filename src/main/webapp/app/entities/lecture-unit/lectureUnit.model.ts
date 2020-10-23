@@ -8,7 +8,7 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 export enum LectureUnitType {
     ATTACHMENT = 'attachment',
     EXERCISE = 'exercise',
-    HTML = 'html',
+    TEXT = 'text',
     VIDEO = 'video',
 }
 

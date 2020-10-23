@@ -7,7 +7,7 @@ import { Component, EventEmitter, Output } from '@angular/core';
 })
 export class UnitCreationCardComponent {
     @Output()
-    createHTMLUnit: EventEmitter<any> = new EventEmitter<any>();
+    createTextUnit: EventEmitter<any> = new EventEmitter<any>();
 
     @Output()
     createExerciseUnit: EventEmitter<any> = new EventEmitter<any>();

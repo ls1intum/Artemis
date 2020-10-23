@@ -5,7 +5,7 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { debounceTime, filter, finalize, map } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription } from 'rxjs';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
@@ -33,7 +33,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private lectureService: LectureService,
-        private alertService: AlertService,
+        private alertService: JhiAlertService,
         private lectureUnitService: LectureUnitService,
     ) {}
 

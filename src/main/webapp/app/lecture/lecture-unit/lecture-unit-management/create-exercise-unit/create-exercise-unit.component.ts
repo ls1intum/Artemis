@@ -4,7 +4,7 @@ import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { concatMap, finalize, switchMap, take } from 'rxjs/operators';
 import { Exercise } from 'app/entities/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
@@ -32,7 +32,7 @@ export class CreateExerciseUnitComponent implements OnInit {
         private router: Router,
         private courseManagementService: CourseManagementService,
         private lectureService: LectureService,
-        private alertService: AlertService,
+        private alertService: JhiAlertService,
         private sortService: SortService,
         private exerciseUnitService: ExerciseUnitService,
     ) {}

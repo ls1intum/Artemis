@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("/api")
 public class LectureUnitResource {
 
-    private final Logger log = LoggerFactory.getLogger(HTMLUnitResource.class);
+    private final Logger log = LoggerFactory.getLogger(LectureUnitResource.class);
 
     private static final String ENTITY_NAME = "lectureUnit";
 
