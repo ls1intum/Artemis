@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -93,7 +92,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
                  * In case no structured grading instruction was applied on the assessment model we just sum the feedback credit. We differentiate between automatic test and
                  * automatic SCA feedback (automatic test feedback has to be capped)
                  */
-                if (feedback.getType().equals(FeedbackType.AUTOMATIC) && !feedback.isStaticCodeAnalysisFeedback()) {
+                if (!feedback.isNotAutomaticFeedback() && !feedback.isStaticCodeAnalysisFeedback()) {
                     scoreAutomaticTests += feedback.getCredits();
                 }
                 else {

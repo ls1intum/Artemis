@@ -314,7 +314,7 @@ public class ProgrammingExerciseGradingService {
     private void removeFeedbacksForAfterDueDateTests(Result result, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate) {
         // Find feedback which is not associated with test cases for the current date. Does not remove static code analysis feedback
         List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback()
-                && feedback.getType() != FeedbackType.MANUAL && testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText())))
+                && !feedback.isNotAutomaticFeedback() && testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText())))
                 .collect(Collectors.toList());
         feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
         // If there are no feedbacks left after filtering those not valid for the current date, also setHasFeedback to false.
@@ -449,7 +449,7 @@ public class ProgrammingExerciseGradingService {
             double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
             double calculatedScore = programmingAssessmentService.calculateTotalScore(result.getFeedbacks());
             double totalScore = programmingAssessmentService.calculateTotalScore(calculatedScore, maxScore + bonusPoints);
-
+            result.setScore(totalScore, maxScore);
             result.setResultString(totalScore, maxScore);
         }
     }
