@@ -3,6 +3,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
+import { CreateAttachmentUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-attachment-unit/create-attachment-unit.component';
 
 export const lectureUnitRoute: Routes = [
     {
@@ -19,15 +20,15 @@ export const lectureUnitRoute: Routes = [
         component: CreateExerciseUnitComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.lectureUnit.createExerciseUnit.title',
+            pageTitle: 'artemisApp.exerciseUnit.createExerciseUnit.title',
         },
     },
     {
         path: ':courseId/lectures/:lectureId/unit-management/attachment-units/create',
-        component: CreateExerciseUnitComponent,
+        component: CreateAttachmentUnitComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: '',
+            pageTitle: 'artemisApp.attachmentUnit.createAttachmentUnit.title',
         },
     },
 ];

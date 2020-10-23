@@ -12,6 +12,11 @@
                 "file": "Datei"
             }
         },
+        "attachmentUnit": {
+            "createAttachmentUnit": {
+                "title": "Dateianhang Einheit"
+            }
+        },
         "exerciseUnit": {
             "created": "Aufgabe mit Vorlesung verknüpft",
             "createExerciseUnit": {

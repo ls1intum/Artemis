@@ -12,6 +12,11 @@
                 "file": "File"
             }
         },
+        "attachmentUnit": {
+            "createAttachmentUnit": {
+                "title": "Attachment Unit"
+            }
+        },
         "exerciseUnit": {
             "created": "Exercise connected with Lecture",
             "createExerciseUnit": {
