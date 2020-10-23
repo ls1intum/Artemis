@@ -16,9 +16,6 @@ public class FilePathService {
     private static String FILE_UPLOAD_PATH;
 
     @Value("${artemis.file-upload-path}")
-    private String fileUploadPath;
-
-    @Value("${artemis.file-upload-path}")
     public void setFileUploadPathStatic(String fileUploadPath) {
         FilePathService.FILE_UPLOAD_PATH = fileUploadPath;
     }

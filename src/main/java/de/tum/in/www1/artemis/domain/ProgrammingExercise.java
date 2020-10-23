@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -35,6 +36,7 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 @Entity
 @DiscriminatorValue(value = "P")
 @SecondaryTable(name = "programming_exercise_details")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExercise extends Exercise {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);

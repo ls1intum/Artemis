@@ -9,6 +9,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.service.FileService;
 @Entity
 @Table(name = "drag_item")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragItem extends TempIdObject {
 
     @Transient

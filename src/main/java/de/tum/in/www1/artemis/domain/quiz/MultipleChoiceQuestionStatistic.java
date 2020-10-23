@@ -8,6 +8,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @Entity
 @DiscriminatorValue(value = "MC")
 @JsonTypeName("multiple-choice")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "multipleChoiceQuestionStatistic")
