@@ -15,7 +15,7 @@ shift $((OPTIND-1))
 # build the libraries - do not forget to set the right compilation flag (Prod)
 stack build --allow-different-user --flag test:Prod && \
   # delete the solution and tests (so that students cannot access it) when in safe mode
-  ($safe && 
+  ($safe && \
     (rm -rf solution && rm -rf test) \
   ) \
   # run the test executable and return 0
