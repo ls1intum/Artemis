@@ -46,7 +46,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
     @Value("${artemis.version-control.url}")
     private URL bitbucketServerUrl;
 
-    @Value("${artemis.version-control.vcs-application-link-name}")
+    @Value("${artemis.continuous-integration.vcs-application-link-name}")
     private String vcsApplicationLinkName;
 
     private static final String OLD_ASSIGNMENT_REPO_NAME = "Assignment";
