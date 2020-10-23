@@ -110,6 +110,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.router.navigate(['exercise-units', 'create'], { relativeTo: this.activatedRoute });
     }
 
+    createAttachmentUnit() {
+        this.router.navigate(['attachment-units', 'create'], { relativeTo: this.activatedRoute });
+    }
+
     identify(_: any, lectureUnit: LectureUnit) {
         return lectureUnit.id;
     }

@@ -22,4 +22,12 @@ export const lectureUnitRoute: Routes = [
             pageTitle: 'artemisApp.lectureUnit.createExerciseUnit.title',
         },
     },
+    {
+        path: ':courseId/lectures/:lectureId/unit-management/attachment-units/create',
+        component: CreateExerciseUnitComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: '',
+        },
+    },
 ];
