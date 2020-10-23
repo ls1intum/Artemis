@@ -5,11 +5,14 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Lob;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * A FileUploadExercise.
  */
 @Entity
 @DiscriminatorValue(value = "F")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class FileUploadExercise extends Exercise {
 
     @Column(name = "sample_solution")

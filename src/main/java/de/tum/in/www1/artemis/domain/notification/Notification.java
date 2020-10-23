@@ -25,8 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "N")
 @DiscriminatorOptions(force = true)
-// NOTE: Use strict cache to prevent lost updates
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "notificationType")
 // Annotation necessary to distinguish between concrete implementations of Notification when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = GroupNotification.class, name = "group"), @JsonSubTypes.Type(value = SingleUserNotification.class, name = "single"),
