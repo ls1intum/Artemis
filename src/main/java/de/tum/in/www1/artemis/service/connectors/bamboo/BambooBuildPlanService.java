@@ -301,6 +301,7 @@ public class BambooBuildPlanService {
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";
             case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
             case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
+            case SWIFT -> "swift:latest";
         };
         return new DockerConfiguration().image(dockerImage);
     }

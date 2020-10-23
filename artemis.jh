@@ -103,7 +103,8 @@ enum ProgrammingLanguage {
     HASKELL,
     KOTLIN,
     VHDL,
-    ASSEMBLER
+    ASSEMBLER,
+    SWIFT
 }
 
 entity ModelingExercise {           //extends Exercise
