@@ -185,7 +185,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     };
 
     /** Call to server to update files.
-     * Checks all returned files submissions for submissionerrors, see {@link checkIfSubmissionIsError}
+     * Checks all returned files submissions for submission errors, see {@link checkIfSubmissionIsError}
      * Currently we only handle {@link GitConflictState#CHECKOUT_CONFLICT}
      *
      * @param fileUpdates the Array of updated files

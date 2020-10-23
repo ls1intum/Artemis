@@ -8,24 +8,24 @@
     <div class="container-fluid mt-3">
         <div class="row">
             <div class="col-md-8">
-                <jhi-side-panel [panelHeader]="'artemisApp.tutorExerciseDashboard.exerciseInformation' | translate">
+                <jhi-side-panel [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exerciseInformation' | translate">
                     <div class="row mb-1 small" *ngIf="stats.numberOfSubmissions.late > 0">
                         <div class="col-8"></div>
                         <div class="col-4">
-                            {{ 'artemisApp.tutorExerciseDashboard.stats.intime' | translate }}
-                            <span class="ml-1 result--late text-nowrap">| {{ 'artemisApp.tutorExerciseDashboard.stats.late' | translate }} </span>
+                            {{ 'artemisApp.exerciseAssessmentDashboard.stats.intime' | translate }}
+                            <span class="ml-1 result--late text-nowrap">| {{ 'artemisApp.exerciseAssessmentDashboard.stats.late' | translate }} </span>
                         </div>
                     </div>
 
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfSubmissions' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfSubmissions' | translate }}</div>
                         <div class="col-4">
                             {{ stats.numberOfSubmissions.inTime }}
                             <span *ngIf="stats.numberOfSubmissions.late > 0" class="ml-1 result--late text-nowrap">| {{ stats.numberOfSubmissions.late }}</span>
                         </div>
                     </div>
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfManualAssessedSubmissions' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions' | translate }}</div>
                         <div class="col-4">
                             {{ stats.numberOfAssessments.inTime - stats.numberOfAutomaticAssistedAssessments.inTime }} ({{ totalManualAssessmentPercentage.inTime }}%)
                             <span *ngIf="stats.numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
@@ -34,7 +34,7 @@
                         </div>
                     </div>
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfAutomaticAssistedSubmissions' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions' | translate }}</div>
                         <div class="col-4">
                             {{ stats.numberOfAutomaticAssistedAssessments.inTime }} ({{ totalAutomaticAssessmentPercentage.inTime }}%)
                             <span *ngIf="stats.numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
@@ -43,7 +43,7 @@
                         </div>
                     </div>
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfUnassessedSubmissions' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions' | translate }}</div>
                         <div class="col-4">
                             {{ stats.numberOfSubmissions.inTime - stats.numberOfAssessments.inTime }} ({{
                                 100 - totalAutomaticAssessmentPercentage.inTime - totalManualAssessmentPercentage.inTime
@@ -56,13 +56,13 @@
                         </div>
                     </div>
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'artemisApp.tutorCourseDashboard.totalComplaints' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.assessmentDashboard.totalComplaints' | translate }}</div>
                         <div class="col-4">
                             <a [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'complaints']">{{ stats.numberOfComplaints }}</a>
                         </div>
                     </div>
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'artemisApp.tutorCourseDashboard.totalMoreFeedbackRequests' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.assessmentDashboard.totalMoreFeedbackRequests' | translate }}</div>
                         <div class="col-4">
                             <a [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'more-feedback-requests']">{{ stats.numberOfMoreFeedbackRequests }}</a>
                         </div>

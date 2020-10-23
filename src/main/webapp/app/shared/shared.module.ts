@@ -6,7 +6,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ResizeableContainerComponent } from './resizeable-container/resizeable-container.component';
 import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
@@ -16,6 +16,7 @@ import { JhiConnectionStatusComponent } from 'app/shared/connection-status/conne
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { DebounceClickDirective } from 'app/shared/directives/DebounceClickDirective';
+import { AlertComponent } from 'app/shared/alert/alert.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],

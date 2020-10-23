@@ -38,7 +38,7 @@
             </column>
             <column name="name" type="VARCHAR(255)"/>
             <column name="release_date" type="datetime(6)"/>
-            <column name="markdown" type="LONGTEXT"/>
+            <column name="content" type="LONGTEXT"/>
             <column name="description" type="LONGTEXT"/>
             <column name="source" type="LONGTEXT"/>
             <column name="lecture_id" type="BIGINT"/>

@@ -151,16 +151,6 @@ public interface VersionControlService {
     void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, Set<User> users) throws VersionControlException;
 
     /**
-     * Gets the repository slug from the given URL
-     *
-     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
-     * @return The repository slug
-     * @throws VersionControlException if the URL is invalid and no repository slug could be extracted
-     */
-    // TODO: we need this functionality in ParticipationService, but it is really really Bitbucket specific, so we should find a better way to handle this in the future
-    String getRepositorySlugFromUrl(URL repositoryUrl) throws VersionControlException;
-
-    /**
      * Checks if the underlying VCS server is up and running and gives some additional information about the running
      * services if available
      *
