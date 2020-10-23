@@ -296,6 +296,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
+        result.assessmentType(AssessmentType.AUTOMATIC);
         Long scoreBeforeUpdate = result.getScore();
 
         gradingService.updateResult(result, programmingExercise, true);
@@ -322,6 +323,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
+        result.assessmentType(AssessmentType.AUTOMATIC);
         Long scoreBeforeUpdate = result.getScore();
 
         gradingService.updateResult(result, programmingExercise, false);
@@ -347,6 +349,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
+        result.assessmentType(AssessmentType.AUTOMATIC);
         Long scoreBeforeUpdate = result.getScore();
 
         gradingService.updateResult(result, programmingExercise, true);
