@@ -343,7 +343,7 @@ public class ProgrammingExerciseGradingService {
                 double testPoints = testWeight / weightSum * programmingExercise.getMaxScore();
                 double testPointsWithBonus = testPoints + test.getBonusPoints();
                 // update credits of related feedback
-                result.getFeedbacks().stream().filter(fb -> fb.getText().equals(test.getTestName())).findFirst().ifPresent(feedback -> feedback.setCredits(testPointsWithBonus));
+                result.getFeedbacks().stream().filter(fb -> !fb.isNotAutomaticFeedback() && fb.getText().equals(test.getTestName())).findFirst().ifPresent(feedback -> feedback.setCredits(testPointsWithBonus));
                 return testPointsWithBonus;
             }).sum();
 
@@ -482,7 +482,7 @@ public class ProgrammingExerciseGradingService {
      * @return true if there is no feedback for a given test.
      */
     private Predicate<ProgrammingExerciseTestCase> wasNotExecuted(Result result) {
-        return testCase -> result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals(testCase.getTestName()));
+        return testCase -> result.getFeedbacks().stream().noneMatch(feedback -> !feedback.isNotAutomaticFeedback() && feedback.getText().equals(testCase.getTestName()));
     }
 
 }
