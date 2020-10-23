@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,11 +51,12 @@ public class GradingCriterionService {
     /**
      * Calculates the score over all feedback elements that were set using structured grading instructions (SGI)
      * @param feedback feedback element that was set by SGI
-     * @param totalScore totalScore which is summed up. Starts from 0.0
+     * @param inputScore totalScore which is summed up.
      * @param gradingInstructions empty grading instruction Map to collect the used gradingInstructions
      * @return calculated total score from feedback elements set by SGI
      */
-    public double computeTotalScore(Feedback feedback, double totalScore, HashMap<Long, Integer> gradingInstructions) {
+    public double computeTotalScore(Feedback feedback, double inputScore, Map<Long, Integer> gradingInstructions) {
+        double totalScore = inputScore;
         if (gradingInstructions.get(feedback.getGradingInstruction().getId()) != null) {
             // We Encountered this grading instruction before
             var maxCount = feedback.getGradingInstruction().getUsageCount();
