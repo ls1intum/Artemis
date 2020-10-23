@@ -54,4 +54,14 @@ public class ExerciseUnit extends LectureUnit {
     public void setExercise(Exercise exercise) {
         this.exercise = exercise;
     }
+
+    @Override
+    public boolean isVisibleToStudents() {
+        if (exercise == null) {
+            return true;
+        }
+        else {
+            return exercise.isVisibleToStudents();
+        }
+    }
 }

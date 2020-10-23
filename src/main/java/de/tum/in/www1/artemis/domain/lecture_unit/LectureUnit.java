@@ -84,4 +84,11 @@ public abstract class LectureUnit extends DomainObject {
         this.learningGoals.remove(learningGoal);
         learningGoal.getLectureUnits().remove(this);
     }
+
+    public boolean isVisibleToStudents() {
+        if (releaseDate == null) {
+            return true;
+        }
+        return releaseDate.isBefore(ZonedDateTime.now());
+    }
 }
