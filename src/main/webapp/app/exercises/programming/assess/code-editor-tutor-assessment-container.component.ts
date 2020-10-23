@@ -117,15 +117,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     this.automaticResult = this.getLatestAutomaticResult(this.participation.results);
                     this.manualResult = this.getLatestManualResult(this.participation.results);
 
-                    // Setup automatic feedback
-                    this.automaticFeedback = this.automaticResult?.feedbacks!;
-                    this.automaticFeedback.forEach((feedback) => {
-                        feedback.id = undefined;
-                        if (!feedback.credits) {
-                            feedback.credits = 0;
-                        }
-                    });
-
                     // Add participation with manual results to display manual result
                     this.participationForManualResult = cloneDeep(this.participation);
                     this.participationForManualResult.results = this.manualResult.hasFeedback ? [this.manualResult] : [];
@@ -380,7 +371,16 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleFeedback(): void {
-        // Setup feedbacks
+        // Setup automatic feedback
+        this.automaticFeedback = this.automaticResult?.feedbacks!;
+        this.automaticFeedback.forEach((feedback) => {
+            feedback.id = undefined;
+            if (!feedback.credits) {
+                feedback.credits = 0;
+            }
+        });
+
+        // Setup not automatically generated feedbacks
         const feedbacks = this.manualResult?.feedbacks || [];
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
 
