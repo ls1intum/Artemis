@@ -525,7 +525,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 submission = new QuizSubmission();
             }
             if (submission != null) {
-                submission.setResult(new Result());
+                submission.setResults(new Result());
                 Set<Submission> submissions = new HashSet<>();
                 submissions.add(submission);
                 participation.setSubmissions(submissions);
@@ -545,7 +545,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             var iterator = participation.getSubmissions().iterator();
             if (iterator.hasNext()) {
                 var submission = iterator.next();
-                assertThat(submission.getResult()).isNull();
+                assertThat(submission.getResults()).isNull();
             }
         }
         deleteExam1WithInstructor();

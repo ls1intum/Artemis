@@ -535,8 +535,15 @@ public abstract class Exercise extends DomainObject {
         if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
             return null;
         }
+
+        Result result = null;
+        List<Result> results;
+        List<Result> resultsOfLatestSubmission;
         for (var submission : participation.getSubmissions()) {
-            var result = submission.getResult();
+           results = submission.getResults();
+            if (results != null && !results.isEmpty()) {
+                result = results.get(results.size() - 1);
+            }
             if (result == null) {
                 continue;
             }
@@ -548,8 +555,13 @@ public abstract class Exercise extends DomainObject {
                     latestSubmission = submission;
                 }
                 // take newer results and thus disregard older ones
-                else if (latestSubmission.getResult().getCompletionDate().isBefore(result.getCompletionDate())) {
-                    latestSubmission = submission;
+                else {
+                    resultsOfLatestSubmission = latestSubmission.getResults();
+                    Result latestResultOfLatestSubmission = null;
+                    latestResultOfLatestSubmission = resultsOfLatestSubmission.get(resultsOfLatestSubmission.size()-1);
+                    if (latestResultOfLatestSubmission.getCompletionDate().isBefore(result.getCompletionDate())) {
+                        latestSubmission = submission;
+                    }
                 }
             }
         }
@@ -613,7 +625,11 @@ public abstract class Exercise extends DomainObject {
         List<Submission> submissionsWithoutResult = new ArrayList<>();
 
         for (Submission submission : submissions) {
-            Result result = submission.getResult();
+            Result result = null;
+            List<Result> results = submission.getResults();
+            if (results != null && !results.isEmpty()) {
+                result = results.get(results.size() - 1);
+            }
             if (result != null) {
                 if (Boolean.TRUE.equals(result.isRated())) {
                     submissionsWithRatedResult.add(submission);

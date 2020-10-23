@@ -174,7 +174,7 @@ public class ExerciseResource {
         // TODO CZ: load results of submissions eagerly to prevent additional database calls
         List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exerciseId);
         // Do not provide example submissions without any assessment
-        exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getResult() == null);
+        exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getResults() == null);
         exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
 
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);

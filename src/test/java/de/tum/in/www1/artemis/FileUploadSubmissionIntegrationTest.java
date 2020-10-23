@@ -213,7 +213,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
                 FileUploadSubmission.class);
 
         assertThat(storedSubmission).as("in-time submission was found").isEqualToIgnoringGivenFields(submission, "result", "submissionDate", "fileService");
-        assertThat(storedSubmission.getResult()).as("result is not set").isNull();
+        assertThat(storedSubmission.getResults()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
     }
 
@@ -233,7 +233,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
                 FileUploadSubmission.class);
 
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "result", "submissionDate", "fileService");
-        assertThat(storedSubmission.getResult()).as("result is not set").isNull();
+        assertThat(storedSubmission.getResults()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
     }
 
@@ -273,9 +273,9 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
                 FileUploadSubmission.class);
         assertThat(submission).isNotNull();
-        assertThat(submission.getResult()).isNotNull();
+        assertThat(submission.getResults()).isNotNull();
         assertThat(submission.isSubmitted()).isTrue();
-        assertThat(submission.getResult().getFeedbacks().size()).as("No feedback should be returned for editor").isEqualTo(0);
+        assertThat(submission.getResults().getFeedbacks().size()).as("No feedback should be returned for editor").isEqualTo(0);
     }
 
     @Test
@@ -284,12 +284,12 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
         fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessorFeedback(releasedFileUploadExercise, fileUploadSubmission, "student1", "tutor1", feedbacks);
-        database.updateResultCompletionDate(fileUploadSubmission.getResult().getId(), null);
+        database.updateResultCompletionDate(fileUploadSubmission.getResults().getId(), null);
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
                 FileUploadSubmission.class);
-        assertThat(submission.getResult()).isNull();
+        assertThat(submission.getResults()).isNull();
     }
 
     @Test
@@ -360,7 +360,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     private void checkDetailsHidden(FileUploadSubmission submission, boolean isStudent) {
         assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
         if (isStudent) {
-            assertThat(submission.getResult()).isNull();
+            assertThat(submission.getResults()).isNull();
         }
     }
 

@@ -98,7 +98,7 @@ public class ModelingSubmissionService extends SubmissionService {
     public ModelingSubmission getLockedModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
-        if (modelingSubmission.getResult() == null || modelingSubmission.getResult().getAssessor() == null) {
+        if (modelingSubmission.getResults() == null || modelingSubmission.getResults().stream().anyMatch(result -> result.getAssessor() == null)) {
             checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
         }
@@ -197,7 +197,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        modelingSubmission.setResult(null);
+        modelingSubmission.setResults(null);
 
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here!
@@ -266,8 +266,8 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return the updated modeling submission
      */
     private ModelingSubmission assignAutomaticResultToSubmission(ModelingSubmission modelingSubmission) {
-        Result existingResult = modelingSubmission.getResult();
-        if (existingResult != null && existingResult.getAssessmentType() != null && existingResult.getAssessmentType().equals(AssessmentType.MANUAL)) {
+        List<Result> existingResult = modelingSubmission.getResults();
+        if (existingResult != null && existingResult.stream().anyMatch(result -> result.getAssessmentType() != null && result.getAssessmentType().equals(AssessmentType.MANUAL))) {
             return modelingSubmission;
         }
         StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
@@ -275,7 +275,7 @@ public class ModelingSubmissionService extends SubmissionService {
         Result automaticResult = compassService.getAutomaticResultForSubmission(modelingSubmission.getId(), exerciseId);
         if (automaticResult != null) {
             automaticResult.setSubmission(modelingSubmission);
-            modelingSubmission.setResult(automaticResult);
+            modelingSubmission.addResult(automaticResult);
             modelingSubmission.getParticipation().addResult(automaticResult);
             modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
             resultRepository.save(automaticResult);

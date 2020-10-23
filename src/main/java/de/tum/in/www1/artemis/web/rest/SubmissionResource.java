@@ -74,9 +74,9 @@ public class SubmissionResource {
 
         checkAccessPermissionAtInstructor(submission.get());
 
-        Result result = submission.get().getResult();
-        if (result != null) {
-            resultService.deleteResultWithComplaint(result.getId());
+        List<Result> results = submission.get().getResults();
+        if (results != null) {
+            results.stream().forEach(result -> resultService.deleteResultWithComplaint(result.getId()));
         }
         submissionRepository.deleteById(id);
 

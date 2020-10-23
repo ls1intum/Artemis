@@ -127,7 +127,7 @@ public class TextPlagiarismDetectionService {
 
         textSubmissions.forEach(submission -> {
             submission.getParticipation().setExercise(null);
-            submission.setResult(null);
+            submission.setResults(null);
             submission.getParticipation().setSubmissions(null);
 
             try {

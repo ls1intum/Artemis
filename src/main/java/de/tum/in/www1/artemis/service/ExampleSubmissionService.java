@@ -48,8 +48,10 @@ public class ExampleSubmissionService {
         if (submission != null) {
             submission.setExampleSubmission(true);
             // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
-            if (submission.getResult() != null && submission.getResult().getSubmission() == null) {
-                submission.getResult().setSubmission(submission);
+            // only possible for the exampleSubmission having only one or none result
+            List<Result> resultsOfSubmission = submission.getResults();
+            if (resultsOfSubmission != null && !resultsOfSubmission.isEmpty() && resultsOfSubmission.get(resultsOfSubmission.size() - 1).getSubmission() == null) {
+                resultsOfSubmission.get(resultsOfSubmission.size() - 1).setSubmission(submission);
             }
             submissionRepository.save(submission);
         }
@@ -70,7 +72,12 @@ public class ExampleSubmissionService {
             return null;
         }
 
-        Result result = submission.getResult();
+        // exampleSubmission can only have one result
+        Result result = null;
+        List<Result> results = submission.getResults();
+        if (results != null && !results.isEmpty()) {
+            result = results.get(results.size() - 1);
+        }
 
         // result.isExampleResult() can have 3 values: null, false, true. We return if it is not true
         if (result == null || !Boolean.TRUE.equals(result.isExampleResult())) {

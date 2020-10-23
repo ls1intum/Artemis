@@ -207,7 +207,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         final var optionalSubmission = isGraded
                 ? programmingSubmissionRepository.findGradedByParticipationIdOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst()
                 : programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
-        if (optionalSubmission.isEmpty() || optionalSubmission.get().getResult() != null) {
+        if (optionalSubmission.isEmpty() || optionalSubmission.get().getResults() != null) {
             // This is not an error case, it is very likely that there is no pending submission for a participation.
             return Optional.empty();
         }

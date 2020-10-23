@@ -103,11 +103,13 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         TextSubmission textSubmission = optionalTextSubmission.get();
-        StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
+        List<Result> results = textSubmission.getResults();
+        TextSubmission textSubmissionWithTextBlock = textSubmissionRepository.findByIdWithEagerTextBlocks(textSubmission.getId()).get();
+        StudentParticipation studentParticipation = (StudentParticipation) textSubmissionWithTextBlock.getParticipation();
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
 
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(optionalTextSubmission.get().getResult(), textExercise, studentParticipation, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(results.get(results.size() - 1), textExercise, studentParticipation, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
@@ -143,10 +145,14 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         TextSubmission textSubmission = optionalTextSubmission.get();
-        StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
+        List<Result> results = textSubmission.getResults();
+        Result resultToSubmit = results.stream().filter(result -> result.getId().equals(resultId)).findFirst().get();
+        TextSubmission textSubmissionWithTextBlock = textSubmissionRepository.findByIdWithEagerTextBlocks(textSubmission.getId()).get();
+        StudentParticipation studentParticipation = (StudentParticipation) textSubmissionWithTextBlock.getParticipation();
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
 
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(optionalTextSubmission.get().getResult(), textExercise, studentParticipation, user, isAtLeastInstructor)) {
+
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(resultToSubmit, textExercise, studentParticipation, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
@@ -189,7 +195,9 @@ public class TextAssessmentResource extends AssessmentResource {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkAuthorization(textExercise, user);
         saveTextBlocks(assessmentUpdate.getTextBlocks(), textSubmission);
-        Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getResult(), textExercise, assessmentUpdate);
+        //TODO： Override an assessment for complaint can only be set for the last Assessment for exam Exercise with second correction. Either create a new one or override the last one
+        List<Result> results = textSubmission.getResults();
+        Result result = textAssessmentService.updateAssessmentAfterComplaint(results.get(results.size() - 1), textExercise, assessmentUpdate);
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
             ((StudentParticipation) result.getParticipation()).setParticipant(null);
@@ -235,7 +243,12 @@ public class TextAssessmentResource extends AssessmentResource {
         final TextSubmission textSubmission = optionalTextSubmission.get();
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        Result result = textSubmission.getResult();
+        // TODO: For same exam exercise, second correction should start after first correction is finish
+        Result result = null;
+        List<Result> results = textSubmission.getResults();
+        if(results != null && !results.isEmpty()) {
+            result = results.get(results.size() - 1);
+        }
 
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
@@ -253,14 +266,16 @@ public class TextAssessmentResource extends AssessmentResource {
         exercise.setGradingCriteria(gradingCriteria);
         // Remove sensitive information of submission depending on user
         textSubmissionService.hideDetails(textSubmission, user);
-        result = textSubmission.getResult();
+        //As mentioned above, we get here the last result in the result list
+        List<Result> resultsNew = textSubmission.getResults();
+        result = resultsNew.get(resultsNew.size() - 1);
 
         // Prepare for Response: Set Submissions and Results of Participation to include requested only.
         participation.setSubmissions(Set.of(textSubmission));
         participation.setResults(Set.of(result));
 
         // Remove Result from Submission, as it is send in participation.results[0]
-        textSubmission.setResult(null);
+        textSubmission.setResults(null);
 
         // Remove Submission from Result
         result.setSubmission(null);
@@ -299,7 +314,8 @@ public class TextAssessmentResource extends AssessmentResource {
         if (!submission.isExampleSubmission() && !isAtLeastInstructor) {
             return forbidden();
         }
-        return ResponseEntity.ok(submission.getResult());
+        // TODO: Example submission should have only one result, take care of the cases where you want to make example reassessment
+        return ResponseEntity.ok(submission.getResults().get(0));
     }
 
     @Override

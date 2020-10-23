@@ -132,8 +132,13 @@ public class TextSubmissionService extends SubmissionService {
         textSubmission.setType(SubmissionType.MANUAL);
 
         // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
-        if (textSubmission.getResult() != null && textSubmission.getResult().getSubmission() == null) {
-            textSubmission.getResult().setSubmission(textSubmission);
+       List<Result> results = textSubmission.getResults();
+
+        if (results != null && !results.isEmpty()) {
+            Result result = results.get(results.size() - 1);
+            if (result.getSubmission() == null) {
+                result.setSubmission(textSubmission);
+            }
         }
 
         textSubmission = textSubmissionRepository.save(textSubmission);

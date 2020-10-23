@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.hibernate.Hibernate;
@@ -73,7 +74,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             return forbidden();
         }
 
-        Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getResult(), programmingExercise, assessmentUpdate);
+        List<Result> results = programmingSubmission.getResults();
+        if (results == null || results.isEmpty()) {
+            return forbidden();
+        }
+        Result result = programmingAssessmentService.updateAssessmentAfterComplaint(results.get(results.size() - 1), programmingExercise, assessmentUpdate);
         // make sure the submission is reconnected with the result to prevent problems when the object is used for other calls in the client
         result.setSubmission(programmingSubmission);
         // remove circular dependencies if the results of the participation are there

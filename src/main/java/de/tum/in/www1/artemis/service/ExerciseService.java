@@ -452,20 +452,22 @@ public class ExerciseService {
 
             Set<Result> results = Set.of();
 
-            if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getResult() != null) {
-                results = Set.of(latestSubmissionWithRatedResult.getResult());
-                // remove inner participation from result
-                latestSubmissionWithRatedResult.getResult().setParticipation(null);
-                // filter sensitive information about the assessor if the current user is a student
-                if (isStudent) {
-                    latestSubmissionWithRatedResult.getResult().filterSensitiveInformation();
-                }
+            if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getResults() != null) {
+                Set<Result> finalResults = results;
+                latestSubmissionWithRatedResult.getResults().stream().forEach(result -> {
+                    finalResults.add(result);
+                    // remove inner participation from result
+                    result.setParticipation(null);
+                    // filter sensitive information about the assessor if the current user is a student
+                    if(isStudent) { result.filterSensitiveInformation(); }
+                    // filter sensitive information in submission's result
+                    if (isStudent && submission != null && submission.getResults() != null) {
+                        result.filterSensitiveInformation();
+                    }
+                });
+                results = finalResults;
             }
 
-            // filter sensitive information in submission's result
-            if (isStudent && submission != null && submission.getResult() != null) {
-                submission.getResult().filterSensitiveInformation();
-            }
 
             // add submission to participation
             if (submission != null) {

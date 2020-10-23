@@ -5,6 +5,7 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -287,9 +288,11 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         return submissions.stream().filter(submission -> {
-            if (submission.getResult() != null) {
-                return (submission.getResult().isRated() && !submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL))
-                        || submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)
+            List<Result> results = submission.getResults();
+            if (results != null && !results.isEmpty()) {
+                Result latestResult = results.get(results.size() - 1);
+                return (latestResult.isRated() && !latestResult.getAssessmentType().equals(AssessmentType.MANUAL))
+                        || latestResult.getAssessmentType().equals(AssessmentType.MANUAL)
                                 && (this.getAssessmentDueDate() == null || this.getAssessmentDueDate().isBefore(ZonedDateTime.now()));
             }
             return this.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
@@ -503,8 +506,15 @@ public class ProgrammingExercise extends Exercise {
         if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
             return null;
         }
+
+        Result result = null;
+        List<Result> results;
+        List<Result> latestResults;
         for (var submission : participation.getSubmissions()) {
-            var result = submission.getResult();
+            results = submission.getResults();
+            if (results != null && !results.isEmpty()) {
+                result = results.get(results.size() - 1);
+            }
             if (result == null) {
                 continue;
             }
@@ -516,8 +526,11 @@ public class ProgrammingExercise extends Exercise {
                     latestSubmission = submission;
                 }
                 // take newer results and thus disregard older ones
-                else if (latestSubmission.getResult().getCompletionDate().isBefore(result.getCompletionDate())) {
-                    latestSubmission = submission;
+                else {
+                    latestResults = latestSubmission.getResults();
+                    if (latestResults.get(latestResults.size() - 1).getCompletionDate().isBefore(result.getCompletionDate())) {
+                        latestSubmission = submission;
+                    }
                 }
             }
         }

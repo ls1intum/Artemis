@@ -81,9 +81,9 @@ public class TextAssessmentService extends AssessmentService {
         // TODO: how can the result be connected with the submission, if the result is newly created?
         // TODO: where is the relationship between result and participation established?
 
-        if (result.getSubmission() instanceof TextSubmission && result.getSubmission().getResult() == null) {
+        if (result.getSubmission() instanceof TextSubmission && (result.getSubmission().getResults() == null || result.getSubmission().getResults().isEmpty())) {
             TextSubmission textSubmission = (TextSubmission) result.getSubmission();
-            textSubmission.setResult(result);
+            textSubmission.addResult(result);
             textSubmissionRepository.save(textSubmission);
         }
 
@@ -114,14 +114,23 @@ public class TextAssessmentService extends AssessmentService {
      *   3. Load Text Blocks
      *   4. Compute Fallback Text Blocks if needed
      *
+     * With the implementation of second correction in exam mode, the second correction should be allowed in exam mode,
+     * instead of working with the existing result further like here.
      * @param textSubmission Text Submission to be assessed
      */
     public void prepareSubmissionForAssessment(TextSubmission textSubmission) {
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        Result result = textSubmission.getResult();
+
+        //TODO: add changes when exam mode is comming
+        Result result = null;
+        List<Result> results = textSubmission.getResults();
+        if (results != null && !results.isEmpty()) {
+            result = results.get(results.size()-1);
+        }
 
         final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
+
 
         if (result != null) {
             // Load Feedback already created for this assessment
@@ -139,7 +148,7 @@ public class TextAssessmentService extends AssessmentService {
             resultService.createNewRatedManualResult(result, false);
             result.setCompletionDate(null);
             result = resultRepository.save(result);
-            textSubmission.setResult(result);
+            textSubmission.addResult(result);
 
             // If enabled, we want to compute feedback suggestions using Athene.
             if (computeFeedbackSuggestions) {

@@ -347,7 +347,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
             if (exercise instanceof ProgrammingExercise) {
                 Result result = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next());
                 exercise.getStudentParticipations().iterator().next().setResults(Set.of(result));
-                exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().setResult(result);
+                exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().setResults(result);
             }
             exerciseService.filterForCourseDashboard(exercise, List.copyOf(exercise.getStudentParticipations()), "student1", true);
             // All exercises have one result

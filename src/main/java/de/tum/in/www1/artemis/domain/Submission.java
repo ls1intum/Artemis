@@ -98,21 +98,29 @@ public abstract class Submission extends DomainObject {
      * Method used before changing relationship, first set to return the first in the ArrayList
      * @return First Element in the ArrayList
      */
-    public Result getResult() {
-        if(results.isEmpty()) {
-            return null;
-        } else {
-            return results.get(results.size() - 1);
-        }
+    public List<Result> getResults() {
+       return results;
     }
+
 
 
     /**
      * Method use before changing relationship between result and submission, add one result to the List of the result
-     * @param result
+     * @param results
      */
-    public void setResult(Result result) {
-        this.results.add(result);
+    public void setResults(List<Result> results) {
+        this.results = results;
+    }
+
+    public void addResult(Result result) {
+        if(this.results == null) {
+            results = new ArrayList<Result>();
+        }
+        if(result != null) {
+            var existed = results.stream().filter(result1 -> result1.getId().equals(result.getId())).findFirst();
+            existed.ifPresent(value -> results.remove(value));
+            results.add(result);
+        }
     }
 
     public Participation getParticipation() {

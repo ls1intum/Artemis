@@ -91,7 +91,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     public void testUpdateFileUploadAssessmentAfterComplaint_studentHidden() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise, fileUploadSubmission, "student1", "tutor1");
-        Result fileUploadAssessment = fileUploadSubmission.getResult();
+        Result fileUploadAssessment = fileUploadSubmission.getResults();
         Complaint complaint = new Complaint().result(fileUploadAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
@@ -244,8 +244,8 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     private void overrideAssessment(String student, String originalAssessor, HttpStatus httpStatus, String submit, boolean originalAssessmentSubmitted) throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise, fileUploadSubmission, student, originalAssessor);
-        fileUploadSubmission.getResult().setCompletionDate(originalAssessmentSubmitted ? ZonedDateTime.now() : null);
-        resultRepo.save(fileUploadSubmission.getResult());
+        fileUploadSubmission.getResults().setCompletionDate(originalAssessmentSubmitted ? ZonedDateTime.now() : null);
+        resultRepo.save(fileUploadSubmission.getResults());
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
@@ -255,7 +255,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
         submission = database.addFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise, submission, "student1", "tutor1");
-        database.addSampleFeedbackToResults(submission.getResult());
+        database.addSampleFeedbackToResults(submission.getResults());
         request.put(API_FILE_UPLOAD_SUBMISSIONS + submission.getId() + "/cancel-assessment", null, expectedStatus);
     }
 

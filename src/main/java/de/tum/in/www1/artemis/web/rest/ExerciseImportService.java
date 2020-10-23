@@ -88,22 +88,26 @@ public abstract class ExerciseImportService {
      * @param newSubmission The submission in which we link the result clone
      * @return The cloned result
      */
-    Result copyExampleResult(Result originalResult, Submission newSubmission) {
-        Result newResult = new Result();
-        newResult.setAssessmentType(originalResult.getAssessmentType());
-        newResult.setAssessor(originalResult.getAssessor());
-        newResult.setCompletionDate(originalResult.getCompletionDate());
-        newResult.setExampleResult(true);
-        newResult.setRated(true);
-        newResult.setResultString(originalResult.getResultString());
-        newResult.setHasFeedback(originalResult.getHasFeedback());
-        newResult.setScore(originalResult.getScore());
-        newResult.setFeedbacks(copyFeedback(originalResult.getFeedbacks(), newResult));
-        newResult.setSubmission(newSubmission);
+    List<Result> copyExampleResult(List<Result> originalResults, Submission newSubmission) {
+        List<Result> newResults = new ArrayList<>();
+        originalResults.stream().forEach(originalResult -> {
+            Result newResult = new Result();
+            newResult.setAssessmentType(originalResult.getAssessmentType());
+            newResult.setAssessor(originalResult.getAssessor());
+            newResult.setCompletionDate(originalResult.getCompletionDate());
+            newResult.setExampleResult(true);
+            newResult.setRated(true);
+            newResult.setResultString(originalResult.getResultString());
+            newResult.setHasFeedback(originalResult.getHasFeedback());
+            newResult.setScore(originalResult.getScore());
+            newResult.setFeedbacks(copyFeedback(originalResult.getFeedbacks(), newResult));
+            newResult.setSubmission(newSubmission);
 
-        resultRepository.save(newResult);
+            resultRepository.save(newResult);
+            newResults.add(newResult);
+        });
 
-        return newResult;
+        return newResults;
     }
 
     /** This helper functions does a hard copy of the feedbacks.

@@ -241,15 +241,17 @@ public class ResultResource {
             }
 
             Submission relevantSubmissionWithResult = exercise.findLatestSubmissionWithRatedResultWithCompletionDate(participation, true);
-            if (relevantSubmissionWithResult == null || relevantSubmissionWithResult.getResult() == null) {
+            if (relevantSubmissionWithResult == null || relevantSubmissionWithResult.getResults() == null) {
                 continue;
             }
 
             participation.setSubmissionCount(participation.getSubmissions().size());
             if (withSubmissions) {
-                relevantSubmissionWithResult.getResult().setSubmission(relevantSubmissionWithResult);
+                relevantSubmissionWithResult.getResults().stream().forEach(result -> {
+                    result.setSubmission(relevantSubmissionWithResult);
+                });
             }
-            results.add(relevantSubmissionWithResult.getResult());
+            results.addAll(relevantSubmissionWithResult.getResults());
         }
 
         log.info("getResultsForExercise took " + (System.currentTimeMillis() - start) + "ms for " + results.size() + " results.");

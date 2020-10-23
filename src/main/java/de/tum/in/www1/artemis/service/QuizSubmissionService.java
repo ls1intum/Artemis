@@ -99,7 +99,7 @@ public class QuizSubmissionService {
         // calculate score and update result accordingly
         result.evaluateSubmission();
         // save result
-        quizSubmission.setResult(result);
+        quizSubmission.addResult(result);
         quizSubmission.setParticipation(participation);
         quizSubmissionRepository.save(quizSubmission);
         result = resultRepository.save(result);

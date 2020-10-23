@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jplag.ExitException;
@@ -389,19 +388,21 @@ public class TextExerciseResource {
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);
 
-            Result result = textSubmission.getResult();
-            if (result != null) {
+            List<Result> results = textSubmission.getResults();
+            if (results != null  && !results.isEmpty()) {
                 // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
                 final List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
                 textSubmission.setBlocks(textBlocks);
 
-                if (textSubmission.isSubmitted() && result.getCompletionDate() != null) {
-                    List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
-                    result.setFeedbacks(assessments);
+                if (textSubmission.isSubmitted() && results.stream().noneMatch(result -> result.getCompletionDate() == null)) {
+                    results.forEach(result -> {
+                        List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+                        result.setFeedbacks(assessments);
+                    });
                 }
 
                 if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
-                    result.setAssessor(null);
+                    results.forEach(result -> result.setAssessor(null));
                 }
             }
 
@@ -586,7 +587,7 @@ public class TextExerciseResource {
         final List<TextSubmission> textSubmissions = textPlagiarismDetectionService.textSubmissionsForComparison(textExercise);
         textSubmissions.forEach(submission -> {
             submission.getParticipation().setExercise(null);
-            submission.setResult(null);
+            submission.setResults(null);
             submission.getParticipation().setSubmissions(null);
         });
 

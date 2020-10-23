@@ -75,8 +75,14 @@ public class CompassCalculationEngine implements CalculationEngine {
      * @return true if the submission already has a completed manual assessment, false otherwise
      */
     private boolean hasCompletedManualAssessment(ModelingSubmission modelingSubmission) {
-        return modelingSubmission.getResult() != null && modelingSubmission.getResult().getCompletionDate() != null
-                && modelingSubmission.getResult().getAssessmentType().equals(AssessmentType.MANUAL);
+        List<Result> results = modelingSubmission.getResults();
+        Result result = null;
+        if (results != null && !results.isEmpty()) {
+            result = results.get(results.size() - 1);
+        }
+
+        return result != null && result.getCompletionDate() != null
+                && result.getAssessmentType().equals(AssessmentType.MANUAL);
     }
 
     /**
@@ -118,13 +124,18 @@ public class CompassCalculationEngine implements CalculationEngine {
      */
     private void addManualAssessmentForSubmission(ModelingSubmission submission) {
         UMLDiagram model = modelIndex.getModelMap().get(submission.getId());
-
-        if (model == null || submission.getResult() == null || submission.getResult().getCompletionDate() == null) {
+        // TODO: Variation for exam exercise with second correction
+        List<Result> results = submission.getResults();
+        Result result = null;
+        if (results != null && !results.isEmpty()) {
+            result = results.get(results.size() - 1);
+        }
+        if (model == null || result == null || result.getCompletionDate() == null) {
             log.error("Could not build assessment for submission {}", submission.getId());
             return;
         }
 
-        addNewManualAssessment(submission.getResult().getFeedbacks(), model);
+        addNewManualAssessment(result.getFeedbacks(), model);
 
         modelSelector.removeModelWaitingForAssessment(submission.getId());
         modelSelector.addAlreadyHandledModel(submission.getId());

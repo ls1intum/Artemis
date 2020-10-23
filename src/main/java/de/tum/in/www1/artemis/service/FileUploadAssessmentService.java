@@ -62,7 +62,12 @@ public class FileUploadAssessmentService extends AssessmentService {
      */
     @Transactional
     public Result saveAssessment(FileUploadSubmission fileUploadSubmission, List<Feedback> fileUploadAssessment) {
-        Result result = fileUploadSubmission.getResult();
+        Result result = null;
+        List<Result> results  = fileUploadSubmission.getResults();
+        if (results != null && !results.isEmpty()) {
+            result = results.get(results.size() - 1);
+        }
+
         if (result == null) {
             result = fileUploadSubmissionService.setNewResult(fileUploadSubmission);
         }
@@ -82,7 +87,7 @@ public class FileUploadAssessmentService extends AssessmentService {
 
         if (result.getSubmission() == null) {
             result.setSubmission(fileUploadSubmission);
-            fileUploadSubmission.setResult(result);
+            fileUploadSubmission.addResult(result);
             fileUploadSubmissionRepository.save(fileUploadSubmission);
         }
         // Note: This also saves the feedback objects in the database because of the 'cascade =

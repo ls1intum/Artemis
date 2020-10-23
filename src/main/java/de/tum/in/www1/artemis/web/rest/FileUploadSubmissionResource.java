@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -335,16 +336,18 @@ public class FileUploadSubmissionResource {
         participation.setSubmissions(null);
         participation.setResults(null);
 
+        List<Result> resultsOfLatestSubmission = fileUploadSubmission.getResults();
         // do not send the result to the client if the assessment is not finished
-        if (fileUploadSubmission.getResult() != null && (fileUploadSubmission.getResult().getCompletionDate() == null || fileUploadSubmission.getResult().getAssessor() == null)) {
-            fileUploadSubmission.setResult(null);
-        }
+        if (resultsOfLatestSubmission != null) {
+            List<Result> ListOfResults = resultsOfLatestSubmission.stream().filter(result -> result.getCompletionDate() != null && result.getAssessor() != null).collect(Collectors.toList());
+            fileUploadSubmission.setResults(ListOfResults);
 
-        // do not send the assessor information to students
-        if (fileUploadSubmission.getResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
-            fileUploadSubmission.getResult().setAssessor(null);
+            resultsOfLatestSubmission.stream().forEach(result -> {
+                if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
+                    result.setAssessor(null);
+                }
+            });
         }
-
         return ResponseEntity.ok(fileUploadSubmission);
     }
 }

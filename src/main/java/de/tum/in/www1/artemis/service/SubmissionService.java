@@ -154,7 +154,7 @@ public class SubmissionService {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
         }
 
-        submissions.forEach(submission -> submission.getResult().setSubmission(null));
+        submissions.forEach(submission -> submission.getResults().stream().forEach(result -> result.setSubmission(null)));
         return submissions;
     }
 
@@ -255,7 +255,7 @@ public class SubmissionService {
                 // make sure that sensitive information is not sent to the client for students
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                     exercise.filterSensitiveInformation();
-                    submission.setResult(null);
+                    submission.setResults(null);
                 }
                 // remove information about the student or team from the submission for tutors to ensure a double-blind assessment
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
@@ -278,7 +278,7 @@ public class SubmissionService {
     public Result setNewResult(Submission submission) {
         Result result = new Result();
         result.setSubmission(submission);
-        submission.setResult(result);
+        submission.addResult(result);
         result.setParticipation(submission.getParticipation());
         result = resultRepository.save(result);
         submissionRepository.save(submission);
@@ -292,7 +292,12 @@ public class SubmissionService {
      * @param submission the submission to lock
      */
     protected Result lockSubmission(Submission submission) {
-        Result result = submission.getResult();
+        Result result = null;
+        List<Result> results = submission.getResults();
+        if (results != null && !results.isEmpty()) {
+            result = results.get(results.size() - 1);
+        }
+        //TODO: In Exam Mode how to lock the submission
         if (result == null) {
             result = setNewResult(submission);
         }
@@ -318,7 +323,7 @@ public class SubmissionService {
             Optional<Submission> optionalSubmission = participation.findLatestSubmission();
             if (optionalSubmission.isPresent() && (!submittedOnly || optionalSubmission.get().isSubmitted())) {
                 participation.setSubmissions(Set.of(optionalSubmission.get()));
-                Optional.ofNullable(optionalSubmission.get().getResult()).ifPresent(result -> participation.setResults(Set.of(result)));
+                Optional.ofNullable(optionalSubmission.get().getResults()).ifPresent(results -> participation.setResults(Set.copyOf(results)));
             }
             else {
                 participation.setSubmissions(Set.of());

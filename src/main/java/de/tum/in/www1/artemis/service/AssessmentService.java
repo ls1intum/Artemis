@@ -159,7 +159,8 @@ public class AssessmentService {
 
     /**
      * Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
-     * again.
+     * again. After the relationship changes, there can have multiple results to one submission. with this cancelAssessmentOfSubmission, we delete the last assessment of this submission for now,
+     * because the result of last assessment represent the final result
      *
      * @param submission the submission for which the current assessment should be canceled
      */
@@ -167,7 +168,13 @@ public class AssessmentService {
     public void cancelAssessmentOfSubmission(Submission submission) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerResults(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
-        Result result = submission.getResult();
+
+        Result result = new Result();
+        List<Result> resultsFromSubmission = submission.getResults();
+        if (resultsFromSubmission != null && !resultsFromSubmission.isEmpty()) {
+            result = resultsFromSubmission.get(resultsFromSubmission.size()-1);
+        }
+
 
         // For programming exercise the first result is always automatic and must not be deleted
         if (participation instanceof ProgrammingExerciseStudentParticipation) {

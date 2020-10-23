@@ -134,7 +134,7 @@ public class StudentParticipation extends Participation {
     @JsonIgnore
     public boolean isTestRunParticipation() {
         if (this.getExercise().hasExerciseGroup() && this.getStudent().isPresent()) {
-            return this.getSubmissions().stream().filter(submission -> submission.getResult() != null).map(Submission::getResult)
+            return this.getSubmissions().stream().filter(submission -> submission.getResults() != null).flatMap(submission -> submission.getResults().stream())
                     .anyMatch(result -> result.getAssessor() != null && result.getAssessor().equals(this.getStudent().get()));
         }
         return false;

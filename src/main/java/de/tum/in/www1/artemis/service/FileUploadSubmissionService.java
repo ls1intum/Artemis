@@ -235,7 +235,7 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmission getLockedFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise) {
         FileUploadSubmission fileUploadSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
-        if (fileUploadSubmission.getResult() == null || fileUploadSubmission.getResult().getAssessor() == null) {
+        if (fileUploadSubmission.getResults() == null || fileUploadSubmission.getResults().isEmpty() || fileUploadSubmission.getResults().stream().anyMatch(result -> result.getAssessor() == null)) {
             checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         }
 
@@ -270,8 +270,13 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmission.setType(SubmissionType.MANUAL);
 
         // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
-        if (fileUploadSubmission.getResult() != null && fileUploadSubmission.getResult().getSubmission() == null) {
-            fileUploadSubmission.getResult().setSubmission(fileUploadSubmission);
+        if (fileUploadSubmission.getResults() != null ) {
+            FileUploadSubmission finalFileUploadSubmission = fileUploadSubmission;
+            fileUploadSubmission.getResults().stream().forEach(result -> {
+                if (result.getSubmission() == null) {
+                    result.setSubmission(finalFileUploadSubmission);
+                }
+            });
         }
 
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);

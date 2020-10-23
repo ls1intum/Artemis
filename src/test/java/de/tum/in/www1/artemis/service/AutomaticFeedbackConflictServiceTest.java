@@ -202,7 +202,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         assertThat(feedbackConflictRepository.findAll(), hasSize(0));
 
         textSubmission = this.createTextSubmissionWithResultFeedbackAndConflicts();
-        resultRepository.deleteById(textSubmission.getResult().getId());
+        resultRepository.deleteById(textSubmission.getResults().getId());
         assertThat(feedbackConflictRepository.findAll(), hasSize(0));
 
         this.createTextSubmissionWithResultFeedbackAndConflicts();

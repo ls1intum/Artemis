@@ -161,9 +161,11 @@ public class TextSubmissionResource {
 
         // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
-        if (textSubmission.getResult() != null) {
+        List<Result> results = textSubmission.getResults();
+        // TODO: Add jwt token to both Assessment?
+        if (results != null && !results.isEmpty()) {
             this.atheneTrackingTokenProvider
-                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getResult()));
+                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, results.get(results.size() - 1)));
         }
 
         return bodyBuilder.body(textSubmission);
@@ -290,9 +292,10 @@ public class TextSubmissionResource {
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
 
         // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
-        if (textSubmission.getResult() != null) {
+        List<Result> results = textSubmission.getResults();
+        if (results != null && !results.isEmpty()) {
             this.atheneTrackingTokenProvider
-                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getResult()));
+                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, results.get(results.size() - 1)));
         }
         return bodyBuilder.body(textSubmission);
     }

@@ -185,7 +185,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         Participation updatedParticipation = participationRepository.findWithEagerSubmissionsById(participation.getId()).get();
         submission = submissionRepository.findWithEagerResultById(submission.getId()).get();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
-        assertThat(submission.getResult().getId()).isEqualTo(createdResult.getId());
+        assertThat(submission.getResults().getId()).isEqualTo(createdResult.getId());
         assertThat(updatedParticipation.getSubmissions()).hasSize(1);
         assertThat(updatedParticipation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submissionId))).isTrue();
     }
@@ -216,7 +216,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         Participation participation = participationRepository.findWithEagerSubmissionsById(participationId).get();
         submission = submissionRepository.findWithEagerResultById(submission.getId()).get();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(participation.getId());
-        assertThat(submission.getResult().getId()).isEqualTo(createdResult.getId());
+        assertThat(submission.getResults().getId()).isEqualTo(createdResult.getId());
         assertThat(participation.getSubmissions()).hasSize(1);
         assertThat(participation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submissionId))).isTrue();
     }
@@ -258,8 +258,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         Result result2 = resultRepository.findWithEagerSubmissionAndFeedbackById(results.get(1).getId()).get();
         assertThat(result1.getSubmission()).isNotNull();
         assertThat(result2.getSubmission()).isNotNull();
-        assertThat(submission1.getResult().getId()).isEqualTo(result1.getId());
-        assertThat(submission2.getResult().getId()).isEqualTo(result2.getId());
+        assertThat(submission1.getResults().getId()).isEqualTo(result1.getId());
+        assertThat(submission2.getResults().getId()).isEqualTo(result2.getId());
     }
 
     /**
@@ -285,8 +285,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         submission = submissionRepository.findById(submission.getId()).get();
         assertThat(result.getSubmission()).isNotNull();
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
-        assertThat(submission.getResult()).isNotNull();
-        assertThat(submission.getResult().getId()).isEqualTo(result.getId());
+        assertThat(submission.getResults()).isNotNull();
+        assertThat(submission.getResults().getId()).isEqualTo(result.getId());
     }
 
     // TODO: write a test case that invokes notifyPush on ProgrammingSubmissionService with two identical commits. This test should then expect an IllegalStateException
@@ -438,7 +438,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
             assertThat(p.getSubmissions()).hasSize(1);
             assertThat(p.getResults()).hasSize(1);
             Result participationResult = new ArrayList<>(p.getResults()).get(0);
-            Result submissionResult = new ArrayList<>(p.getSubmissions()).get(0).getResult();
+            Result submissionResult = new ArrayList<>(p.getSubmissions()).get(0).getResults();
             assertThat(participationResult.getId()).isEqualTo(submissionResult.getId());
             // Submissions with type TEST and no buildAndTestAfterDueDate should be rated.
             assertThat(participationResult.isRated()).isTrue();
