@@ -14,7 +14,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -120,8 +119,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        Optional<Result> latestExistingResult = participation.getResults().stream()
-                .filter(result -> result.isManualResult()).findFirst();
+        Optional<Result> latestExistingResult = participation.getResults().stream().filter(result -> result.isManualResult()).findFirst();
         if (latestExistingResult.isPresent()) {
             // prevent that tutors create multiple manual results
             newResult.setId(latestExistingResult.get().getId());

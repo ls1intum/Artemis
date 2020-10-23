@@ -343,7 +343,8 @@ public class ProgrammingExerciseGradingService {
                 double testPoints = testWeight / weightSum * programmingExercise.getMaxScore();
                 double testPointsWithBonus = testPoints + test.getBonusPoints();
                 // update credits of related feedback
-                result.getFeedbacks().stream().filter(fb -> !fb.isNotAutomaticFeedback() && fb.getText().equals(test.getTestName())).findFirst().ifPresent(feedback -> feedback.setCredits(testPointsWithBonus));
+                result.getFeedbacks().stream().filter(fb -> !fb.isNotAutomaticFeedback() && fb.getText().equals(test.getTestName())).findFirst()
+                        .ifPresent(feedback -> feedback.setCredits(testPointsWithBonus));
                 return testPointsWithBonus;
             }).sum();
 
