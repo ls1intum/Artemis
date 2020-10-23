@@ -271,8 +271,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
         Result latestResult = latestSubmission.getResult();
         // We don't try to fetch build logs for manual results (they were not created through the build but manually by an assessor)!
-        // Manual result can either be from type MANUAL or SEMI_AUTOMATIC
-        if (latestResult != null && (latestResult.getAssessmentType().equals(AssessmentType.MANUAL) || latestResult.getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC))) {
+        if (latestResult != null && latestResult.isManualResult()) {
             // Don't throw an error here, just return an empty list.
             return ResponseEntity.ok(new ArrayList<>());
         }

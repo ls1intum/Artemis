@@ -10,6 +10,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -456,6 +457,16 @@ public class Result extends DomainObject {
      */
     public void filterSensitiveInformation() {
         setAssessor(null);
+    }
+
+    /**
+     * Checks whether the result is a manual result. A manual result can be from type MANUAL or SEMI_AUTOMATIC
+     *
+     * @return true if the result is a manual result
+     */
+    @JsonIgnore
+    public boolean isManualResult() {
+        return assessmentType == AssessmentType.MANUAL || assessmentType == AssessmentType.SEMI_AUTOMATIC;
     }
 
     @Override
