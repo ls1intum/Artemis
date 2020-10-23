@@ -56,7 +56,7 @@
             "semester": "Semester",
             "testCourse": {
                 "title": "Test Course",
-                "description": "Activate this checkbox for test courses which do not belong to a single semester."
+                "description": "Activate this checkbox for courses used for testing."
             },
             "accessGroups": "Access Groups",
             "onlineCourse": {
@@ -82,8 +82,6 @@
             "student": "Student",
             "tutor": "Tutor",
             "instructor": "Instructor",
-            "onlineCourseFalse": "No",
-            "onlineCourseTrue": "Yes",
             "form": {
                 "shortname": {
                     "minlength": "Short Name must have a length of 3 or more characters.",

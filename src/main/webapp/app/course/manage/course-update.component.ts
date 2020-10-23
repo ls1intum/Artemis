@@ -327,10 +327,11 @@ export class CourseUpdateComponent implements OnInit {
     getSemesters() {
         // 2018 is the first year we offer semesters for and go one year into the future
         const years = moment().year() - 2018 + 1;
-        const semesters: string[] = [];
+        // Add an empty semester as default value
+        const semesters: string[] = [''];
         for (let i = 0; i <= years; i++) {
-            semesters[2 * i] = 'SS' + (18 + i);
-            semesters[2 * i + 1] = 'WS' + (18 + i) + '/' + (19 + i);
+            semesters[2 * i + 1] = 'SS' + (18 + i);
+            semesters[2 * i + 2] = 'WS' + (18 + i) + '/' + (19 + i);
         }
         return semesters;
     }

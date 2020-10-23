@@ -56,7 +56,7 @@
             "semester": "Semester",
             "testCourse": {
                 "title": "Testkurs",
-                "description": "Aktiviere diese Checkbox für Testkurse die keinem Semester zugehören."
+                "description": "Aktiviere diese Checkbox für Kurse die für Testzwecke sind."
             },
             "accessGroups": "Zugriffsrechte",
             "onlineCourse": {
@@ -82,8 +82,6 @@
             "student": "Student",
             "tutor": "Tutor",
             "instructor": "Dozent",
-            "onlineCourseFalse": "Nein",
-            "onlineCourseTrue": "Ja",
             "form": {
                 "shortname": {
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
