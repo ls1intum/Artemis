@@ -29,7 +29,7 @@ export class HorizontalStackedBarChartPreset implements ChartPreset {
                     },
                     label(item: ChartTooltipItem, data: ChartData) {
                         return (
-                            item.yLabel + ': ' + (data.datasets![item.datasetIndex!].data![item.index!] as number).toFixed(2) + '% of ' + preset.totalText[item.datasetIndex!] + '.'
+                            item.yLabel + ': ' + (data.datasets![item.datasetIndex!].data![item.index!] as number).toFixed(2) + '% of ' + preset.totalText[item.index!] + '.'
                         );
                     },
                 },
