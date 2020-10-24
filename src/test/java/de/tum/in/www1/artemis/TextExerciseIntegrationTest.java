@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -466,30 +467,33 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
         Course course2 = database.addEmptyCourse();
-        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
-        textExercise = textExerciseRepository.save(textExercise);
+        TextExercise sourceExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        sourceExercise = textExerciseRepository.save(sourceExercise);
 
-        var textExercise2 = new TextExercise();
-        textExercise2.setMode(ExerciseMode.TEAM);
+        var exerciseToBeImported = new TextExercise();
+        exerciseToBeImported.setMode(ExerciseMode.TEAM);
 
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(textExercise2);
+        teamAssignmentConfig.setExercise(exerciseToBeImported);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
-        textExercise2.setTeamAssignmentConfig(teamAssignmentConfig);
-        textExercise2.setCourse(course2);
+        exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
+        exerciseToBeImported.setCourse(course2);
 
-        textExercise2 = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise2, TextExercise.class, HttpStatus.CREATED);
+        exerciseToBeImported = request.postWithResponseBody("/api/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class, HttpStatus.CREATED);
 
         SecurityUtils.setAuthorizationObject();
-        assertEquals(course2.getId(), textExercise2.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
-        assertEquals(ExerciseMode.TEAM, textExercise2.getMode());
-        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(textExercise2, null).size());
+        assertEquals(course2.getId(), exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
+        assertEquals(ExerciseMode.TEAM, exerciseToBeImported.getMode());
+        assertEquals(teamAssignmentConfig.getMinTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize());
+        assertEquals(teamAssignmentConfig.getMaxTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize());
+        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
 
-        textExercise = textExerciseRepository.findById(textExercise.getId()).get();
-        assertEquals(course1.getId(), textExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        assertEquals(ExerciseMode.INDIVIDUAL, textExercise.getMode());
-        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(textExercise, null).size());
+        sourceExercise = textExerciseRepository.findById(sourceExercise.getId()).get();
+        assertEquals(course1.getId(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        assertEquals(ExerciseMode.INDIVIDUAL, sourceExercise.getMode());
+        assertNull(sourceExercise.getTeamAssignmentConfig());
+        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
     }
 
     @Test
@@ -498,32 +502,33 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
         Course course2 = database.addEmptyCourse();
-        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
-        textExercise.setMode(ExerciseMode.TEAM);
+        TextExercise sourceExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        sourceExercise.setMode(ExerciseMode.TEAM);
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(textExercise);
+        teamAssignmentConfig.setExercise(sourceExercise);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
-        textExercise.setTeamAssignmentConfig(teamAssignmentConfig);
-        textExercise.setCourse(course1);
+        sourceExercise.setTeamAssignmentConfig(teamAssignmentConfig);
+        sourceExercise.setCourse(course1);
 
-        textExercise = textExerciseRepository.save(textExercise);
-        teamService.save(textExercise, new Team());
+        sourceExercise = textExerciseRepository.save(sourceExercise);
+        teamService.save(sourceExercise, new Team());
 
-        var textExercise2 = new TextExercise();
-        textExercise2.setMode(ExerciseMode.INDIVIDUAL);
-        textExercise2.setCourse(course2);
+        var exerciseToBeImported = new TextExercise();
+        exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
+        exerciseToBeImported.setCourse(course2);
 
-        textExercise2 = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise2, TextExercise.class, HttpStatus.CREATED);
+        exerciseToBeImported = request.postWithResponseBody("/api/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class, HttpStatus.CREATED);
 
         SecurityUtils.setAuthorizationObject();
-        assertEquals(course2.getId(), textExercise2.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
-        assertEquals(ExerciseMode.INDIVIDUAL, textExercise2.getMode());
-        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(textExercise2, null).size());
+        assertEquals(course2.getId(), exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
+        assertEquals(ExerciseMode.INDIVIDUAL, exerciseToBeImported.getMode());
+        assertNull(exerciseToBeImported.getTeamAssignmentConfig());
+        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
 
-        textExercise = textExerciseRepository.findById(textExercise.getId()).get();
-        assertEquals(course1.getId(), textExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        assertEquals(ExerciseMode.TEAM, textExercise.getMode());
-        assertEquals(1, teamService.findAllByExerciseIdWithEagerStudents(textExercise, null).size());
+        sourceExercise = textExerciseRepository.findById(sourceExercise.getId()).get();
+        assertEquals(course1.getId(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        assertEquals(ExerciseMode.TEAM, sourceExercise.getMode());
+        assertEquals(1, teamService.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
     }
 }
