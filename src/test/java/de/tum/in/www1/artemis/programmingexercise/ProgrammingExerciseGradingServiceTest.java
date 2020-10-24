@@ -295,6 +295,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
+        result.assessmentType(AssessmentType.AUTOMATIC);
         Long scoreBeforeUpdate = result.getScore();
 
         gradingService.updateResult(result, programmingExercise, true);
@@ -321,6 +322,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
+        result.assessmentType(AssessmentType.AUTOMATIC);
         Long scoreBeforeUpdate = result.getScore();
 
         gradingService.updateResult(result, programmingExercise, false);
@@ -346,6 +348,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
+        result.assessmentType(AssessmentType.AUTOMATIC);
         Long scoreBeforeUpdate = result.getScore();
 
         gradingService.updateResult(result, programmingExercise, true);
@@ -397,6 +400,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldReEvaluateScoreOfTheCorrectResults() throws Exception {
+        programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
@@ -419,7 +423,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         // re-evaluate
         final var endpoint = ProgrammingExerciseGradingResource.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
         final var response = request.putWithResponseBody(ROOT + endpoint, "{}", Integer.class, HttpStatus.OK);
-        assertThat(response).isEqualTo(6);
+        assertThat(response).isEqualTo(7);
 
         // this fixes an issue with the authentication context after a mock request
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
@@ -457,15 +461,15 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
-        // student2 100 % / 75 %
+        // student2 61% % / 75 %
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[1].getId()).get();
             var results = participation.getResults();
             assertThat(results).hasSize(2);
 
-            var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.MANUAL).findAny();
+            var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findAny();
             assertThat(manualResultOptional).isPresent();
-            testParticipationResult(manualResultOptional.get(), 100L, "nice job", true, 0, AssessmentType.MANUAL);
+            testParticipationResult(manualResultOptional.get(), 86, "86 of 100 points", true, 6, AssessmentType.SEMI_AUTOMATIC);
             assertThat(manualResultOptional.get()).isEqualTo(participation.findLatestResult());
 
             var automaticResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC).findAny();
@@ -557,15 +561,18 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             var result2a = new Result().participation(participation2).resultString("x of y passed").successful(false).rated(true).score(100L);
             result2a = updateAndSaveAutomaticResult(result2a, true, false, true);
 
-            // score 100 %
-            var result2b = new Result().participation(participation2).resultString("nice job").successful(false).rated(true).score(100L);
-            result2b.feedbacks(List.of(new Feedback().text("Well done!").positive(true).type(FeedbackType.MANUAL))) //
-                    .score(100L) //
-                    .rated(true) //
-                    .hasFeedback(true) //
-                    .successful(true) //
-                    .completionDate(ZonedDateTime.now()) //
-                    .assessmentType(AssessmentType.MANUAL);
+            // score 61 %
+            var result2b = new Result().participation(participation2).score(61L).successful(false).rated(true).hasFeedback(true).completionDate(ZonedDateTime.now())
+                    .assessmentType(AssessmentType.SEMI_AUTOMATIC);
+            result2b.addFeedback(new Feedback().result(result2b).text("test1").positive(false).type(FeedbackType.AUTOMATIC).credits(0.00));
+            result2b.addFeedback(new Feedback().result(result2b).text("test2").positive(false).type(FeedbackType.AUTOMATIC).credits(0.00));
+            result2b.addFeedback(new Feedback().result(result2b).text("test3").positive(true).type(FeedbackType.AUTOMATIC).credits(0.00));
+            result2b.addFeedback(new Feedback().result(result2b).detailText("Well done referenced!").credits(1.00).type(FeedbackType.MANUAL));
+            result2b.addFeedback(new Feedback().result(result2b).detailText("Well done unreferenced!").credits(10.00).type(FeedbackType.MANUAL_UNREFERENCED));
+            result2b.addFeedback(new Feedback().result(result2b).detailText("Well done general!").credits(0.00));
+
+            gradingService.updateResult(result2b, programmingExercise, true);
+            assertThat(result2b.getScore()).isEqualTo(61);
             result2b = resultRepository.save(result2b);
             participation2.setResults(Set.of(result2a, result2b));
         }

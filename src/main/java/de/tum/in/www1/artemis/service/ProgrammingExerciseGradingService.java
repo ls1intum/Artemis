@@ -14,6 +14,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -41,13 +42,16 @@ public class ProgrammingExerciseGradingService {
 
     private final ParticipationService participationService;
 
-    private StaticCodeAnalysisService staticCodeAnalysisService;
+    private final StaticCodeAnalysisService staticCodeAnalysisService;
 
-    private ResultService resultService;
+    private final ProgrammingAssessmentService programmingAssessmentService;
+
+    private final ResultService resultService;
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ResultService resultService) {
+            SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
+            ResultService resultService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.participationService = participationService;
@@ -55,6 +59,7 @@ public class ProgrammingExerciseGradingService {
         this.resultRepository = resultRepository;
         this.messagingTemplate = messagingTemplate;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
+        this.programmingAssessmentService = programmingAssessmentService;
         this.resultService = resultService;
     }
 
@@ -219,6 +224,17 @@ public class ProgrammingExerciseGradingService {
                 updatedResults.add(result);
             }
         }
+
+        // Update also manual results
+        List<StudentParticipation> participationsWithManualResult = participationService.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId());
+        for (StudentParticipation studentParticipation : participationsWithManualResult) {
+            Result result = studentParticipation.findLatestResult();
+            if (result != null) {
+                updateResult(testCases, testCasesForCurrentDate, result, exercise);
+                updatedResults.add(result);
+            }
+        }
+
         return updatedResults;
     }
 
@@ -240,10 +256,13 @@ public class ProgrammingExerciseGradingService {
     private Result updateResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
             ProgrammingExercise exercise) {
 
-        // Distinguish between static code analysis feedback and test case feedback
+        // Distinguish between static code analysis feedback, test case feedback and manual feedback
         List<Feedback> testCaseFeedback = new ArrayList<>();
         List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
         for (var feedback : result.getFeedbacks()) {
+            if (feedback.getType() != FeedbackType.AUTOMATIC) {
+                continue;
+            }
             if (feedback.isStaticCodeAnalysisFeedback()) {
                 staticCodeAnalysisFeedback.add(feedback);
             }
@@ -270,7 +289,7 @@ public class ProgrammingExerciseGradingService {
             updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            updateResultString(result, successfulTestCases, testCasesForCurrentDate);
+            updateResultString(result, successfulTestCases, testCasesForCurrentDate, exercise);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0 && testCaseFeedback.size() > 0) {
@@ -299,8 +318,8 @@ public class ProgrammingExerciseGradingService {
      */
     private void removeFeedbacksForAfterDueDateTests(Result result, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate) {
         // Find feedback which is not associated with test cases for the current date. Does not remove static code analysis feedback
-        List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream().filter(
-                feedback -> !feedback.isStaticCodeAnalysisFeedback() && testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText())))
+        List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback()
+                && feedback.getType() == FeedbackType.AUTOMATIC && testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText())))
                 .collect(Collectors.toList());
         feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
         // If there are no feedbacks left after filtering those not valid for the current date, also setHasFeedback to false.
@@ -329,7 +348,8 @@ public class ProgrammingExerciseGradingService {
                 double testPoints = testWeight / weightSum * programmingExercise.getMaxScore();
                 double testPointsWithBonus = testPoints + test.getBonusPoints();
                 // update credits of related feedback
-                result.getFeedbacks().stream().filter(fb -> fb.getText().equals(test.getTestName())).findFirst().ifPresent(feedback -> feedback.setCredits(testPointsWithBonus));
+                result.getFeedbacks().stream().filter(fb -> fb.getType() == FeedbackType.AUTOMATIC && fb.getText().equals(test.getTestName())).findFirst()
+                        .ifPresent(feedback -> feedback.setCredits(testPointsWithBonus));
                 return testPointsWithBonus;
             }).sum();
 
@@ -423,10 +443,21 @@ public class ProgrammingExerciseGradingService {
      * @param successfulTestCases test cases with positive feedback.
      * @param allTests of the given programming exercise.
      */
-    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests) {
-        // Create a new result string that reflects passed, failed & not executed test cases.
-        String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
-        result.setResultString(newResultString);
+    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests, ProgrammingExercise exercise) {
+        if (result.getAssessmentType() == AssessmentType.AUTOMATIC) {
+            // Create a new result string that reflects passed, failed & not executed test cases.
+            String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
+            result.setResultString(newResultString);
+        }
+        else {
+            // Calculate different scores for totalScore calculation and set resultString for manual results
+            double maxScore = exercise.getMaxScore();
+            double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
+            double calculatedScore = programmingAssessmentService.calculateTotalScore(result.getFeedbacks());
+            double totalScore = programmingAssessmentService.calculateTotalScore(calculatedScore, maxScore + bonusPoints);
+            result.setScore(totalScore, maxScore);
+            result.setResultString(totalScore, maxScore);
+        }
     }
 
     /**
@@ -457,7 +488,7 @@ public class ProgrammingExerciseGradingService {
      * @return true if there is no feedback for a given test.
      */
     private Predicate<ProgrammingExerciseTestCase> wasNotExecuted(Result result) {
-        return testCase -> result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals(testCase.getTestName()));
+        return testCase -> result.getFeedbacks().stream().noneMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC && feedback.getText().equals(testCase.getTestName()));
     }
 
     /**
