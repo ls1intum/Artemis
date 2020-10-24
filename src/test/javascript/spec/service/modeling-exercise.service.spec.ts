@@ -10,7 +10,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { routes } from 'app/exercises/modeling/manage/modeling-exercise.route';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
-import { expect } from '../helpers/jasmine.jest.fix';
+import { expect } from '../helpers/jest.fix';
 
 describe('ModelingExercise Service', () => {
     let injector: TestBed;
