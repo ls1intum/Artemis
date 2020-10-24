@@ -22,7 +22,7 @@ pipeline {
             }
         }
         post {
-            success {
+            always {
                 sh '''
                 #staticCodeAnalysisScript
                 '''
