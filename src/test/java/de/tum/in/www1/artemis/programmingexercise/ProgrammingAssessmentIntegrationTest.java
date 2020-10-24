@@ -63,7 +63,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.save(programmingExercise);
         programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
-        programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1");
+        programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1",
+                AssessmentType.SEMI_AUTOMATIC);
 
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
 
@@ -85,7 +86,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     @WithMockUser(value = "tutor2", roles = "TA")
     public void updateAssessmentAfterComplaint_studentHidden() throws Exception {
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
-        programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1");
+        programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1",
+                AssessmentType.SEMI_AUTOMATIC);
         Result programmingAssessment = programmingSubmission.getResult();
         double score = programmingAssessment.getFeedbacks().stream().mapToDouble(Feedback::getCredits).sum();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
@@ -404,6 +406,30 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(response.getFeedbacks().size()).isEqualTo(result.getFeedbacks().size());
     }
 
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void cancelOwnAssessmentAsStudent() throws Exception {
+        cancelAssessment(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void cancelOwnAssessmentAsTutor() throws Exception {
+        cancelAssessment(HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
+        cancelAssessment(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
+        cancelAssessment(HttpStatus.OK);
+    }
+
     private void assessmentDueDatePassed() {
         database.updateAssessmentDueDate(programmingExercise.getId(), ZonedDateTime.now().minusSeconds(10));
     }
@@ -433,5 +459,11 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         double maxScore = programmingExercise.getMaxScore();
         double score = result.getFeedbacks().stream().mapToDouble(Feedback::getCredits).sum();
         return formatter.format(score) + " of " + formatter.format(maxScore) + " points";
+    }
+
+    private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
+        ProgrammingSubmission submission = database.createProgrammingSubmission(null, false);
+        submission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submission, "student1", "tutor1", AssessmentType.AUTOMATIC);
+        request.put("/api/programming-submissions/" + submission.getId() + "/cancel-assessment", null, expectedStatus);
     }
 }

@@ -896,6 +896,17 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime publishResultDate) {
+        Exam exam = ModelFactory.generateExam(course);
+        exam.setVisibleDate(visibleDate);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        exam.setPublishResultsDate(publishResultDate);
+        exam.setGracePeriod(180);
+        examRepository.save(exam);
+        return exam;
+    }
+
     public Exam addActiveExamWithRegisteredUser(Course course, User user) {
         Exam exam = ModelFactory.generateExam(course);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
@@ -1791,12 +1802,13 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    public ProgrammingSubmission addProgrammingSubmissionWithResultAndAssessor(ProgrammingExercise exercise, ProgrammingSubmission submission, String login, String assessorLogin) {
+    public ProgrammingSubmission addProgrammingSubmissionWithResultAndAssessor(ProgrammingExercise exercise, ProgrammingSubmission submission, String login, String assessorLogin,
+            AssessmentType assessmentType) {
         StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
-        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        result.setAssessmentType(assessmentType);
         result.setScore(50L);
         result.setCompletionDate(ZonedDateTime.now());
         result = resultRepo.save(result);
