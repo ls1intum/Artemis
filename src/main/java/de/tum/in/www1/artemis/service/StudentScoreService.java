@@ -112,15 +112,21 @@ public class StudentScoreService {
         }
 
         if (updatedResult.getStudentScore() != null) {
-            log.info("Delete old StudentScore");
-            studentScoreRepository.delete(updatedResult.getStudentScore());
+            // log.info("Delete old StudentScore");
+            // studentScoreRepository.delete(updatedResult.getStudentScore());
+
+            StudentScore studentScore = updatedResult.getStudentScore();
+            studentScore.setResult(updatedResult);
+            studentScore.setScore(updatedResult.getScore());
+
+            studentScoreRepository.save(studentScore);
+        } else {
+            StudentScore studentScore = new StudentScore(student.get(), exercise.get(), updatedResult);
+            studentScore.setScore(updatedResult.getScore());
+
+            log.info("Insert StudentScore: " + studentScore + " mit Exercise: " + exercise.get() + ", Student: " + student.get() + " und Result: " + updatedResult);
+            studentScore = studentScoreRepository.save(studentScore);
+            log.info("StudentScore: " + studentScore + " with Score: " + studentScore.getScore());
         }
-
-        StudentScore studentScore = new StudentScore(student.get(), exercise.get(), updatedResult);
-        studentScore.setScore(updatedResult.getScore());
-
-        log.info("Insert StudentScore: " + studentScore + " mit Exercise: " + exercise.get() + ", Student: " + student.get() + " und Result: " + updatedResult);
-        studentScore = studentScoreRepository.save(studentScore);
-        log.info("StudentScore: " + studentScore + " with Score: " + studentScore.getScore());
     }
 }

@@ -123,26 +123,4 @@ public class TutorScoreResource {
         Optional<TutorScore> tutorScore = tutorScoreService.getTutorScoreForTutorAndExercise(tutor.get(), exercise);
         return ResponseEntity.ok(tutorScore);
     }
-
-    /**
-     * DELETE /tutor-scores/exercise/{exerciseId}/ : Delete TutorScores by exercise id.
-     *
-     * @param exerciseId id of the exercise
-     * @return the ResponseEntity with status 200 (OK) and with the found tutor score as body
-     */
-    @DeleteMapping("/tutor-scores/exercise/{exerciseId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
-    public ResponseEntity<Void> deleteTutorScoresForExercise(@PathVariable Long exerciseId) {
-        log.debug("REST request to delete tutor scores exercise {}", exerciseId);
-        Exercise exercise = exerciseService.findOne(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            return forbidden();
-        }
-
-        tutorScoreService.deleteTutorScoresForExercise(exercise);
-
-        return ResponseEntity.ok().body(null);
-    }
 }

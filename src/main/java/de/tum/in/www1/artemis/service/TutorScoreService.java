@@ -20,8 +20,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.TutorScore;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TutorScoreRepository;
 
 @Service
@@ -37,15 +37,15 @@ public class TutorScoreService {
 
     private final ResultRepository resultRepository;
 
-    private final StudentParticipationRepository studentParticipationRepository;
+    private final ExerciseRepository exerciseRepository;
 
     public TutorScoreService(TutorScoreRepository tutorScoreRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository) {
+                             ResultRepository resultRepository, ExerciseRepository exerciseRepository) {
         this.tutorScoreRepository = tutorScoreRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -135,18 +135,14 @@ public class TutorScoreService {
      *
      * @param result result to be deleted
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeResult(Result result) {
-        var deletedResult = result;
+        // var deletedResult = result;
 
+        // TODO: handle different assessor
         // override deleted result in case there is one because of possibility of a different assessor
-        var oldResult = resultRepository.findById(deletedResult.getId());
+        // var oldResult = resultRepository.findById(result.getId());
 
-        if (oldResult.isPresent()) {
-            deletedResult = oldResult.get();
-        }
-
-        removeResultFromTutorScore(deletedResult);
+        removeResultFromTutorScore(result);
     }
 
     /**
@@ -154,7 +150,6 @@ public class TutorScoreService {
      *
      * @param updatedResult result to be updated
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateResult(Result updatedResult) {
         if (updatedResult.getParticipation() == null || updatedResult.getParticipation().getId() == null
                 || updatedResult.getParticipation().getClass() != StudentParticipation.class) {
@@ -167,20 +162,15 @@ public class TutorScoreService {
             return;
         }
 
-        var exercise = participation.getExercise();
+        // make all tests but mine pass -> exercise not in db leads to foreign key exception in tests
+        var exercise = exerciseRepository.findById(participation.getExercise().getId());
         Double maxScore = 0.0;
 
-        if (exercise.getMaxScore() != null) {
-            maxScore = exercise.getMaxScore();
+        if (exercise.get().getMaxScore() != null) {
+            maxScore = exercise.get().getMaxScore();
         }
 
-        // make all tests but mine pass
-        var kaputt = studentParticipationRepository.findById(participation.getId());
-        if (kaputt.isEmpty()) {
-            return;
-        }
-
-        var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(updatedResult.getAssessor(), exercise);
+        var existingTutorScore = findTutorScoreFromExercise(exercise.get(), updatedResult.getAssessor());
 
         if (existingTutorScore.isPresent()) {
             TutorScore tutorScore = existingTutorScore.get();
@@ -188,17 +178,31 @@ public class TutorScoreService {
             tutorScore.setAssessments(tutorScore.getAssessments() + 1);
             tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() + maxScore);
 
-            addComplaintsAndFeedbackRequests(updatedResult, tutorScore, exercise);
+            // tutorScore = addComplaintsAndFeedbackRequests(updatedResult, tutorScore, exercise.get());
+
+            tutorScoreRepository.save(tutorScore);
             log.info("Updated existing TutorScore: " + tutorScore);
         }
         else {
-            TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise, 1, maxScore);
+            TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise.get(), 1, maxScore);
 
-            newScore = addComplaintsAndFeedbackRequests(updatedResult, newScore, exercise);
+            // newScore = addComplaintsAndFeedbackRequests(updatedResult, newScore, exercise.get());
 
             tutorScoreRepository.save(newScore);
             log.info("Added new TutorScore: " + newScore);
         }
+    }
+
+    private Optional<TutorScore> findTutorScoreFromExercise(Exercise exercise, User assessor) {
+        var tutorScores = exercise.getTutorScores();
+
+        for (TutorScore score: tutorScores) {
+            if (score.getTutor().getId() == assessor.getId()) {
+                return Optional.of(score);
+            }
+        }
+
+        return Optional.empty();
     }
 
     /**
@@ -225,10 +229,19 @@ public class TutorScoreService {
                     Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
 
                     if (complaintResponse.isPresent()) {
-                        var fromComplaintResponse = tutorScoreRepository.findByTutorAndExercise(complaintResponse.get().getReviewer(), exercise).get();
+                        var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.get().getReviewer());
 
-                        fromComplaintResponse.setComplaintResponses(fromComplaintResponse.getComplaintResponses() + 1);
-                        fromComplaintResponse.setComplaintResponsesPoints(fromComplaintResponse.getComplaintResponsesPoints() + exercise.getMaxScore());
+                        TutorScore fromComplaint;
+
+                        if (fromComplaintResponse.isPresent()) {
+                            fromComplaint = fromComplaintResponse.get();
+                        } else {
+                            fromComplaint = new TutorScore(complaintResponse.get().getReviewer(), exercise, 0, 0);
+                        }
+
+                        fromComplaint.setComplaintResponses(fromComplaint.getComplaintResponses() + 1);
+                        fromComplaint.setComplaintResponsesPoints(fromComplaint.getComplaintResponsesPoints() + exercise.getMaxScore());
+                        tutorScoreRepository.save(fromComplaint);
                     }
                 }
 
@@ -241,10 +254,20 @@ public class TutorScoreService {
                     Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
 
                     if (complaintResponse.isPresent()) {
-                        var fromComplaintResponse = tutorScoreRepository.findByTutorAndExercise(complaintResponse.get().getReviewer(), exercise).get();
+                        var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.get().getReviewer());
 
-                        fromComplaintResponse.setAnsweredFeedbackRequests(fromComplaintResponse.getAnsweredFeedbackRequests() + 1);
-                        fromComplaintResponse.setAnsweredFeedbackRequestsPoints(fromComplaintResponse.getAnsweredFeedbackRequestsPoints() + exercise.getMaxScore());
+                        TutorScore fromComplaint;
+
+                        if (fromComplaintResponse.isPresent()) {
+                            fromComplaint = fromComplaintResponse.get();
+                        } else {
+                            fromComplaint = new TutorScore(complaintResponse.get().getReviewer(), exercise, 0, 0);
+                        }
+
+                        fromComplaint.setAnsweredFeedbackRequests(fromComplaint.getAnsweredFeedbackRequests() + 1);
+                        fromComplaint.setAnsweredFeedbackRequestsPoints(fromComplaint.getAnsweredFeedbackRequestsPoints() + exercise.getMaxScore());
+
+                        tutorScoreRepository.save(fromComplaint);
                     }
                     else {
                         tutorScore.setNotAnsweredFeedbackRequests(tutorScore.getNotAnsweredFeedbackRequests() + 1);
@@ -274,25 +297,21 @@ public class TutorScoreService {
             return;
         }
 
-        var exercise = participation.getExercise();
+        var exercise = exerciseRepository.findById(participation.getExercise().getId());
 
-        // make all tests but mine pass
-        var kaputt = studentParticipationRepository.findById(participation.getId());
-        if (kaputt.isEmpty()) {
-            return;
-        }
-
-        var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(deletedResult.getAssessor(), exercise);
+        var existingTutorScore = findTutorScoreFromExercise(exercise.get(), deletedResult.getAssessor());
 
         if (existingTutorScore.isPresent()) {
             TutorScore tutorScore = existingTutorScore.get();
 
             if (tutorScore.getAssessments() > 0) {
                 tutorScore.setAssessments(tutorScore.getAssessments() - 1);
-                tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() - exercise.getMaxScore());
+                tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() - exercise.get().getMaxScore());
             }
 
-            removeComplaintsAndFeedbackRequests(tutorScore, deletedResult, exercise);
+            // tutorScore = removeComplaintsAndFeedbackRequests(tutorScore, deletedResult, exercise.get());
+
+            tutorScoreRepository.save(tutorScore);
             log.info("Updated existing TutorScore: " + tutorScore);
         }
     }
@@ -323,12 +342,22 @@ public class TutorScoreService {
                     Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
 
                     if (complaintResponse.isPresent()) {
-                        var fromComplaintResponse = tutorScoreRepository.findByTutorAndExercise(complaintResponse.get().getReviewer(), exercise).get();
+                        var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.get().getReviewer());
 
-                        if (fromComplaintResponse.getComplaintResponses() > 0) {
-                            fromComplaintResponse.setComplaintResponses(fromComplaintResponse.getComplaintResponses() - 1);
-                            fromComplaintResponse.setComplaintResponsesPoints(fromComplaintResponse.getComplaintResponsesPoints() - exercise.getMaxScore());
+                        TutorScore fromComplaint;
+
+                        if (fromComplaintResponse.isPresent()) {
+                            fromComplaint = fromComplaintResponse.get();
+                        } else {
+                            fromComplaint = new TutorScore(complaintResponse.get().getReviewer(), exercise, 0, 0);
                         }
+
+                        if (fromComplaint.getComplaintResponses() > 0) {
+                            fromComplaint.setComplaintResponses(fromComplaint.getComplaintResponses() - 1);
+                            fromComplaint.setComplaintResponsesPoints(fromComplaint.getComplaintResponsesPoints() - exercise.getMaxScore());
+                        }
+
+                        tutorScoreRepository.save(fromComplaint);
                     }
                 }
 
@@ -343,12 +372,22 @@ public class TutorScoreService {
                     Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
 
                     if (complaintResponse.isPresent()) {
-                        var fromComplaintResponse = tutorScoreRepository.findByTutorAndExercise(complaintResponse.get().getReviewer(), exercise).get();
+                        var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.get().getReviewer());
 
-                        if (fromComplaintResponse.getAnsweredFeedbackRequests() > 0 && fromComplaintResponse.getAnsweredFeedbackRequestsPoints() > 0) {
-                            fromComplaintResponse.setAnsweredFeedbackRequests(fromComplaintResponse.getAnsweredFeedbackRequests() - 1);
-                            fromComplaintResponse.setAnsweredFeedbackRequestsPoints(fromComplaintResponse.getAnsweredFeedbackRequestsPoints() - exercise.getMaxScore());
+                        TutorScore fromComplaint;
+
+                        if (fromComplaintResponse.isPresent()) {
+                            fromComplaint = fromComplaintResponse.get();
+                        } else {
+                            fromComplaint = new TutorScore(complaintResponse.get().getReviewer(), exercise, 0, 0);
                         }
+
+                        if (fromComplaint.getAnsweredFeedbackRequests() > 0) {
+                            fromComplaint.setAnsweredFeedbackRequests(fromComplaint.getAnsweredFeedbackRequests() - 1);
+                            fromComplaint.setAnsweredFeedbackRequestsPoints(fromComplaint.getAnsweredFeedbackRequestsPoints() - exercise.getMaxScore());
+                        }
+
+                        tutorScoreRepository.save(fromComplaint);
                     }
                     else {
                         if (tutorScore.getNotAnsweredFeedbackRequests() > 0) {

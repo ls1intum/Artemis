@@ -49,8 +49,8 @@ public class ResultListener {
         log.info("Result " + deletedResult + " will be deleted from StudentScores");
         studentScoreService.removeResult(deletedResult);
 
-        // log.info("Result " + deletedResult + " will be deleted from TutorScores");
-        // tutorScoreService.removeResult(deletedResult);
+        log.info("Result " + deletedResult + " will be deleted from TutorScores");
+        tutorScoreService.removeResult(deletedResult);
     }
 
     /**
@@ -62,10 +62,14 @@ public class ResultListener {
     public void preUpdate(Result updatedResult) {
         log.info("Result " + updatedResult + " will be updated");
 
+        // update student score
+        log.info("StudentScore for Result " + updatedResult + " will be updated");
+        studentScoreService.updateResult(updatedResult);
+
         if (updatedResult.getAssessor() != null) {
             // remove from tutor scores for future update
-            log.info("Result " + updatedResult + " will be removed from TutorScores before getting updated.");
-            // tutorScoreService.removeResult(updatedResult);
+            tutorScoreService.removeResult(updatedResult);
+            tutorScoreService.updateResult(updatedResult);
         }
     }
 
@@ -80,12 +84,12 @@ public class ResultListener {
 
         // update student score
         log.info("StudentScore for Result " + updatedResult + " will be updated");
-        studentScoreService.updateResult(updatedResult);
+        // studentScoreService.updateResult(updatedResult);
 
         if (updatedResult.getAssessor() != null) {
             // update tutor scores
             log.info("TutorScores for Result " + updatedResult + " will be updated");
-            // tutorScoreService.updateResult(updatedResult);
+            //tutorScoreService.updateResult(updatedResult);
         }
     }
 
