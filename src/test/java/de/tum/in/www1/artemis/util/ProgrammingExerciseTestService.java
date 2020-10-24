@@ -385,8 +385,6 @@ public class ProgrammingExerciseTestService {
 
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         assertEquals(ExerciseMode.TEAM, sourceExercise.getMode());
-        assertEquals(teamAssignmentConfig.getMinTeamSize(), sourceExercise.getTeamAssignmentConfig().getMinTeamSize());
-        assertEquals(teamAssignmentConfig.getMaxTeamSize(), sourceExercise.getTeamAssignmentConfig().getMaxTeamSize());
         assertEquals(1, teamService.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
     }
 
