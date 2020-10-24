@@ -909,6 +909,16 @@ public class ParticipationService {
     }
 
     /**
+     * Get all programming exercise participations belonging to exercise with eager latest {@link AssessmentType#MANUAL} results and feedbacks.
+     *
+     * @param exerciseId the id of exercise
+     * @return the list of programming exercise participations belonging to exercise
+     */
+    public List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacks(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exerciseId);
+    }
+
+    /**
      * Get all programming exercise participations belonging to exercise with eager submissions -> result.
      *
      * @param exerciseId the id of exercise
