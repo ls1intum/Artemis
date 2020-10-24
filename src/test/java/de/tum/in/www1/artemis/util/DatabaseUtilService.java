@@ -1802,7 +1802,8 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    public ProgrammingSubmission addProgrammingSubmissionWithResultAndAssessor(ProgrammingExercise exercise, ProgrammingSubmission submission, String login, String assessorLogin, AssessmentType assessmentType) {
+    public ProgrammingSubmission addProgrammingSubmissionWithResultAndAssessor(ProgrammingExercise exercise, ProgrammingSubmission submission, String login, String assessorLogin,
+            AssessmentType assessmentType) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
 
         participation.addSubmissions(submission);
