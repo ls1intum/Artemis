@@ -191,9 +191,9 @@ public class AssessmentService {
      * @param submissionId The ID of the submission for which the result should be fetched
      * @return The example result, which is linked to the submission
      */
-    public Submission getSubmissionOfExampleSubmissionWithResult(long submissionId) {
+    public Submission findExampleSubmissionWithResult(long submissionId) {
         return submissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
+                .orElseThrow(() -> new EntityNotFoundException("Submission with id '" + submissionId + "' with 'exampleSubmission = true' does not exist"));
     }
 
     /**
