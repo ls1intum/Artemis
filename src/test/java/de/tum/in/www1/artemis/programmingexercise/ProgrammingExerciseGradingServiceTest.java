@@ -4,9 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoi
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -41,6 +39,7 @@ import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 
 public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -783,6 +782,90 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     public void shouldCalculateScoreWithStaticCodeAnalysisPenalties() throws Exception {
         activateAllTestCases(false);
 
+        var participations = createTestParticipationsWithResults();
+
+        // check results
+        {
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(0).getId()).get();
+            var results = participation.getResults();
+            assertThat(results).hasSize(1);
+            var singleResult = results.iterator().next();
+            testParticipationResult(singleResult, 4L, "1 of 3 passed", true, 5, AssessmentType.AUTOMATIC);
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+        }
+        {
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(1).getId()).get();
+            var results = participation.getResults();
+            assertThat(results).hasSize(1);
+            var singleResult = results.iterator().next();
+            testParticipationResult(singleResult, 40L, "2 of 3 passed", true, 7, AssessmentType.AUTOMATIC);
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+        }
+        {
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(2).getId()).get();
+            var results = participation.getResults();
+            assertThat(results).hasSize(1);
+            var singleResult = results.iterator().next();
+            testParticipationResult(singleResult, 0L, "1 of 3 passed", true, 10, AssessmentType.AUTOMATIC);
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+        }
+        {
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(3).getId()).get();
+            var results = participation.getResults();
+            assertThat(results).hasSize(1);
+            var singleResult = results.iterator().next();
+            testParticipationResult(singleResult, 26L, "2 of 3 passed", true, 9, AssessmentType.AUTOMATIC);
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+        }
+        {
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(4).getId()).get();
+            var results = participation.getResults();
+            assertThat(results).hasSize(1);
+            var singleResult = results.iterator().next();
+            testParticipationResult(singleResult, 60L, "3 of 3 passed", true, 14, AssessmentType.AUTOMATIC);
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+        }
+    }
+
+    @Test
+    public void shouldCalculateCorrectStatistics() {
+
+        activateAllTestCases(false);
+        createTestParticipationsWithResults();
+
+        var statistics = gradingService.generateGradingStatistics(programmingExerciseSCAEnabled.getId());
+
+        assertThat(statistics.getNumParticipations()).isEqualTo(5);
+
+        var testCaseStatsMap = new HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats>();
+        testCaseStatsMap.put("test1", new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(5, 0));
+        testCaseStatsMap.put("test2", new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(2, 3));
+        testCaseStatsMap.put("test3", new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(2, 3));
+
+        assertThat(statistics.getTestCaseStatsMap()).containsExactlyInAnyOrderEntriesOf(testCaseStatsMap);
+
+        var categoryIssuesMap = new HashMap<String, Map<Integer, Integer>>();
+        categoryIssuesMap.put("Bad Practice", Map.of(2, 1, 5, 3));
+        categoryIssuesMap.put("Code Style", Map.of(1, 3, 5, 1));
+        categoryIssuesMap.put("Potential Bugs", Map.of(1, 5));
+        categoryIssuesMap.put("Miscellaneous", Map.of());
+
+        assertThat(statistics.getCategoryIssuesMap()).containsExactlyInAnyOrderEntriesOf(categoryIssuesMap);
+
+    }
+
+    private void activateAllTestCases(boolean withBonus) {
+        var testCases = new ArrayList<>(testCaseService.findByExerciseId(programmingExerciseSCAEnabled.getId()));
+        var bonusMultiplier = withBonus ? 2D : null;
+        var bonusPoints = withBonus ? 4D : null;
+        testCases.get(0).active(true).afterDueDate(false).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
+        testCases.get(1).active(true).afterDueDate(false).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
+        testCases.get(2).active(true).afterDueDate(false).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
+        testCaseRepository.saveAll(testCases);
+    }
+
+    private List<Participation> createTestParticipationsWithResults() {
+
         // create results
         var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
         {
@@ -820,57 +903,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             updateAndSaveAutomaticResult(result5, true, true, true, 5, 5);
         }
 
-        // check results
-        {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation1.getId()).get();
-            var results = participation.getResults();
-            assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 4L, "1 of 3 passed", true, 5, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
-        }
-        {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).get();
-            var results = participation.getResults();
-            assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 40L, "2 of 3 passed", true, 7, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
-        }
-        {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation3.getId()).get();
-            var results = participation.getResults();
-            assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 0L, "1 of 3 passed", true, 10, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
-        }
-        {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation4.getId()).get();
-            var results = participation.getResults();
-            assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 26L, "2 of 3 passed", true, 9, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
-        }
-        {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation5.getId()).get();
-            var results = participation.getResults();
-            assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 60L, "3 of 3 passed", true, 14, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
-        }
-    }
-
-    private void activateAllTestCases(boolean withBonus) {
-        var testCases = new ArrayList<>(testCaseService.findByExerciseId(programmingExerciseSCAEnabled.getId()));
-        var bonusMultiplier = withBonus ? 2D : null;
-        var bonusPoints = withBonus ? 4D : null;
-        testCases.get(0).active(true).afterDueDate(false).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
-        testCases.get(1).active(true).afterDueDate(false).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
-        testCases.get(2).active(true).afterDueDate(false).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
-        testCaseRepository.saveAll(testCases);
+        return List.of(participation1, participation2, participation3, participation4, participation5);
     }
 
     private void testParticipationResult(Result result, long score, String resultString, boolean hasFeedback, int feedbackSize, AssessmentType assessmentType) {
