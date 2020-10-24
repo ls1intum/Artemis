@@ -1025,7 +1025,7 @@ public class DatabaseUtilService {
      * @param login    login of the user
      * @return eagerly loaded representation of the participation object stored in the database
      */
-    public StudentParticipation addParticipationForExercise(Exercise exercise, String login) {
+    public StudentParticipation createAndSaveParticipationForExercise(Exercise exercise, String login) {
         Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         if (storedParticipation.isEmpty()) {
             User user = getUserByLogin(login);
@@ -1062,7 +1062,7 @@ public class DatabaseUtilService {
      * @return eagerly loaded representation of the participation object stored in the database
      */
     public TextSubmission markTextExerciseParticipationForTestRun(TextExercise exercise, String login) {
-        var textSubmission = addTextSubmissionWithResultAndAssessor(exercise, ModelFactory.generateTextSubmission("", null, false), login, login);
+        var textSubmission = saveTextSubmissionWithResultAndAssessor(exercise, ModelFactory.generateTextSubmission("", null, false), login, login);
         textSubmission.getResult().setScore(null);
         textSubmission.getResult().setCompletionDate(null);
         resultRepo.save(textSubmission.getResult());
@@ -1740,7 +1740,7 @@ public class DatabaseUtilService {
      * @return submission stored in the modelingSubmissionRepository
      */
     public ModelingSubmission addModelingSubmissionWithEmptyResult(ModelingExercise exercise, String model, String login) {
-        StudentParticipation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
         submission = modelSubmissionService.save(submission, exercise, login);
         Result result = new Result();
@@ -1755,7 +1755,7 @@ public class DatabaseUtilService {
     }
 
     public ModelingSubmission addModelingSubmission(ModelingExercise exercise, ModelingSubmission submission, String login) {
-        StudentParticipation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
@@ -1802,9 +1802,9 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    public ProgrammingSubmission addProgrammingSubmissionWithResultAndAssessor(ProgrammingExercise exercise, ProgrammingSubmission submission, String login, String assessorLogin,
-            AssessmentType assessmentType) {
-        StudentParticipation participation = addParticipationForExercise(exercise, login);
+    public ProgrammingSubmission addProgrammingSubmissionWithResultAndAssessor(ProgrammingExercise exercise, ProgrammingSubmission submission, String login, String assessorLogin, AssessmentType assessmentType) {
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+
         participation.addSubmissions(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
@@ -1823,7 +1823,7 @@ public class DatabaseUtilService {
     }
 
     public Submission addSubmission(Exercise exercise, Submission submission, String login) {
-        StudentParticipation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
@@ -1840,7 +1840,7 @@ public class DatabaseUtilService {
     }
 
     public ModelingSubmission addModelingSubmissionWithResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
-        StudentParticipation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
@@ -1857,7 +1857,7 @@ public class DatabaseUtilService {
     }
 
     public ModelingSubmission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
-        StudentParticipation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
@@ -1874,7 +1874,7 @@ public class DatabaseUtilService {
     }
 
     public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
-        StudentParticipation participation = addParticipationForExercise(fileUploadExercise, login);
+        StudentParticipation participation = createAndSaveParticipationForExercise(fileUploadExercise, login);
         participation.addSubmissions(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmissionRepo.save(fileUploadSubmission);
@@ -1882,9 +1882,9 @@ public class DatabaseUtilService {
         return fileUploadSubmission;
     }
 
-    public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise exercise, FileUploadSubmission fileUploadSubmission, String login,
+    public FileUploadSubmission saveFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise exercise, FileUploadSubmission fileUploadSubmission, String login,
             String assessorLogin, List<Feedback> feedbacks) {
-        StudentParticipation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmissions(fileUploadSubmission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
@@ -1907,22 +1907,21 @@ public class DatabaseUtilService {
         return fileUploadSubmission;
     }
 
-    public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
+    public FileUploadSubmission saveFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
             String assessorLogin) {
-        return addFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, login, assessorLogin, new ArrayList<>());
+        return saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, login, assessorLogin, new ArrayList<>());
     }
 
-    public TextSubmission addTextSubmission(TextExercise exercise, TextSubmission submission, String login) {
-        StudentParticipation participation = addParticipationForExercise(exercise, login);
+    public TextSubmission saveTextSubmission(TextExercise exercise, TextSubmission submission, String login) {
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         submission = textSubmissionRepo.save(submission);
-        studentParticipationRepo.save(participation);
         return submission;
     }
 
-    private TextSubmission addTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String studentLogin, Long teamId, String assessorLogin) {
-        StudentParticipation participation = Optional.ofNullable(studentLogin).map(login -> addParticipationForExercise(exercise, login))
+    private TextSubmission saveTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String studentLogin, Long teamId, String assessorLogin) {
+        StudentParticipation participation = Optional.ofNullable(studentLogin).map(login -> createAndSaveParticipationForExercise(exercise, login))
                 .orElseGet(() -> addTeamParticipationForExercise(exercise, teamId));
         participation.addSubmissions(submission);
         Result result = new Result();
@@ -1942,27 +1941,30 @@ public class DatabaseUtilService {
         submission = textSubmissionRepo.save(submission);
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
+        // re-assign after save to avoid issues
         submission.setResult(result);
         return submission;
     }
 
-    public TextSubmission addTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String login, String assessorLogin) {
-        return addTextSubmissionWithResultAndAssessor(exercise, submission, login, null, assessorLogin);
+    public TextSubmission saveTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String login, String assessorLogin) {
+        return saveTextSubmissionWithResultAndAssessor(exercise, submission, login, null, assessorLogin);
     }
 
-    public TextSubmission addTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, long teamId, String assessorLogin) {
-        return addTextSubmissionWithResultAndAssessor(exercise, submission, null, teamId, assessorLogin);
+    public TextSubmission saveTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, long teamId, String assessorLogin) {
+        return saveTextSubmissionWithResultAndAssessor(exercise, submission, null, teamId, assessorLogin);
     }
 
     public TextSubmission addTextSubmissionWithResultAndAssessorAndFeedbacks(TextExercise exercise, TextSubmission submission, String studentLogin, String assessorLogin,
             List<Feedback> feedbacks) {
-        submission = addTextSubmissionWithResultAndAssessor(exercise, submission, studentLogin, null, assessorLogin);
+        submission = saveTextSubmissionWithResultAndAssessor(exercise, submission, studentLogin, null, assessorLogin);
         Result result = submission.getResult();
-        for (Feedback f : feedbacks)
-            f.setResult(result);
-        feedbackRepo.saveAll(feedbacks);
-        result.setFeedbacks(feedbacks);
-        resultRepo.save(result);
+        for (Feedback feedback : feedbacks) {
+            result.addFeedback(feedback);
+        }
+        // this automatically saves the feedback because of the CascadeType.All annotation
+        result = resultRepo.save(result);
+        // re-assign so that the saved feedback items are contained in the returned object
+        submission.setResult(result);
         return submission;
     }
 
@@ -1974,8 +1976,7 @@ public class DatabaseUtilService {
         });
         submission.setBlocks(blocks);
         textBlockRepo.saveAll(blocks);
-        textSubmissionRepo.save(submission);
-        return submission;
+        return textSubmissionRepo.save(submission);
     }
 
     public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws Exception {
