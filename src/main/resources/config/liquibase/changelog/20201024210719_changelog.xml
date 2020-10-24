@@ -7,6 +7,10 @@
             </column>
             <column name="active_achievements" type="INT"/>
         </createTable>
+        <addColumn tableName="achievement">
+            <column name="parameter" type="BIGINT"/>
+            <column name="min_score_to_qualify" type="BIGINT"/>
+        </addColumn>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_active_achievements" constraintName="FKr69bcqxhed785h8ijd7i88ywb" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course" validate="true"/>
     </changeSet>
 </databaseChangeLog>
