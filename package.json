@@ -113,7 +113,6 @@
         "browser-sync": "2.26.13",
         "browser-sync-webpack-plugin": "2.2.2",
         "cache-loader": "4.1.0",
-        "canvas": "2.6.1",
         "chai": "4.2.0",
         "chai-as-promised": "7.1.1",
         "chai-string": "1.5.0",
