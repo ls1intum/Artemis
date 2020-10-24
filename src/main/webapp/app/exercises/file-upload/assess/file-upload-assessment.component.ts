@@ -425,6 +425,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         if (this.totalScore > maxPoints) {
             this.totalScore = maxPoints;
         }
+        // Do not allow negative score
+        if (this.totalScore < 0) {
+            this.totalScore = 0;
+        }
     }
 
     downloadFile(filePath: string) {

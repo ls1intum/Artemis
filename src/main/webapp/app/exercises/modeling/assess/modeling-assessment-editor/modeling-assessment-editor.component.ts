@@ -508,5 +508,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (this.totalScore > maxPoints) {
             this.totalScore = maxPoints;
         }
+        // Do not allow negative score
+        if (this.totalScore < 0) {
+            this.totalScore = 0;
+        }
     }
 }
