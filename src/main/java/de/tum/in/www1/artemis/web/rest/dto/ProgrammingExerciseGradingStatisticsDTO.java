@@ -17,9 +17,6 @@ public class ProgrammingExerciseGradingStatisticsDTO {
     // statistics for each category
     private Map<String, Map<Integer, Integer>> categoryIssuesMap;
 
-    // highest number of issues a student has in one category
-    private Integer maxIssuesPerCategory;
-
     public void setNumParticipations(Integer numParticipations) {
         this.numParticipations = numParticipations;
     }
@@ -42,14 +39,6 @@ public class ProgrammingExerciseGradingStatisticsDTO {
 
     public Map<String, Map<Integer, Integer>> getCategoryIssuesMap() {
         return categoryIssuesMap;
-    }
-
-    public void setMaxIssuesPerCategory(Integer maxIssuesPerCategory) {
-        this.maxIssuesPerCategory = maxIssuesPerCategory;
-    }
-
-    public int getMaxIssuesPerCategory() {
-        return maxIssuesPerCategory;
     }
 
     public static class TestCaseStats {

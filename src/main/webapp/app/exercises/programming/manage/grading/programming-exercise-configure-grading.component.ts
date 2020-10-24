@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, Subscription, zip } from 'rxjs';
-import { catchError, distinctUntilChanged, map, take, tap, switchMap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
@@ -64,6 +64,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     activeTab: string;
 
     gradingStatistics?: ProgrammingExerciseGradingStatistics;
+    maxIssuesPerCategory = 0;
 
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
 
@@ -460,6 +461,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         return this.gradingStatistics?.categoryIssuesMap ? this.gradingStatistics.categoryIssuesMap[categoryName] : undefined;
     }
 
+    /**
+     * Load the static code analysis categories
+     * @private
+     */
     private loadStaticCodeAnalysisCategories() {
         this.gradingService
             .getCodeAnalysisCategories(this.exercise.id!)
@@ -470,11 +475,29 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             .subscribe();
     }
 
+    /**
+     * Load the statistics for this exercise and calculate the
+     * maximum number of issues in one category
+     * @param exerciseId The current exercise id
+     * @private
+     */
     private loadStatistics(exerciseId: number) {
         this.gradingService
             .getGradingStatistics(exerciseId)
             .pipe(
                 tap((statistics) => (this.gradingStatistics = statistics)),
+                tap(() => {
+                    this.maxIssuesPerCategory = 0;
+                    if (this.gradingStatistics?.categoryIssuesMap) {
+                        // calculate the maximum number of issues in one category
+                        Object.values(this.gradingStatistics?.categoryIssuesMap).forEach((issuesMap) => {
+                            const maxIssues = Object.keys(issuesMap).reduce((max, issues) => Math.max(max, parseInt(issues, 10)), 0);
+                            if (maxIssues > this.maxIssuesPerCategory) {
+                                this.maxIssuesPerCategory = maxIssues;
+                            }
+                        });
+                    }
+                }),
                 catchError(() => of(null)),
             )
             .subscribe();

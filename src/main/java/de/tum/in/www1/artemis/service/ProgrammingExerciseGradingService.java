@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -483,9 +482,6 @@ public class ProgrammingExerciseGradingService {
         // number of students per amount of detected issues per category
         var categoryIssuesStudentsMap = new HashMap<String, Map<Integer, Integer>>();
 
-        // maximum amount of issues per category per student
-        var maxIssuesPerCategory = 0;
-
         // init for each test case
         for (var testCase : testCases) {
             testCaseStatsMap.put(testCase.getTestName(), new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(0, 0));
@@ -502,79 +498,94 @@ public class ProgrammingExerciseGradingService {
             var categoryIssuesMap = new HashMap<String, Integer>();
 
             for (var feedback : result.getFeedbacks()) {
-                if (feedback.getType().equals(FeedbackType.AUTOMATIC) && feedback.isStaticCodeAnalysisFeedback()) {
-                    // sca feedback
-
-                    var categoryName = feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
-                    if ("".equals(categoryName)) {
-                        continue; // this feedback belongs to no category
-                    }
-
-                    // add 1 to the issues for this category
-                    if (categoryIssuesMap.containsKey(categoryName)) {
-                        categoryIssuesMap.merge(categoryName, 1, Integer::sum);
-                    }
-                    else {
-                        categoryIssuesMap.put(categoryName, 1);
-                    }
-
-                }
-                else if (feedback.getType().equals(FeedbackType.AUTOMATIC)) {
-                    // test case feedback
-
-                    var testName = feedback.getText();
-
-                    // add 1 to the passed or failed amount for this test case
-                    // dependant on the positive flag of the feedback
-                    if (testCaseStatsMap.containsKey(testName)) {
-                        if (feedback.isPositive()) {
-                            testCaseStatsMap.get(testName).increaseNumPassed();
-                        }
-                        else {
-                            testCaseStatsMap.get(testName).increaseNumFailed();
-                        }
-                    }
-                    else {
-                        testCaseStatsMap.put(testName, new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(feedback.isPositive() ? 1 : 0, feedback.isPositive() ? 0 : 1));
-                    }
-
-                }
+                // analyse the feedback and add to the statistics
+                addFeedbackToStatistics(feedback, categoryIssuesMap, testCaseStatsMap);
             }
 
-            // merge the result issues map with the overall issues map
-            for (var entry : categoryIssuesMap.entrySet()) {
-                // key: category, value: number of issues
-
-                if (categoryIssuesStudentsMap.containsKey(entry.getKey())) {
-                    var issuesStudentsMap = categoryIssuesStudentsMap.get(entry.getKey());
-                    // add 1 to the number of students for the category & issues
-                    if (issuesStudentsMap.containsKey(entry.getValue())) {
-                        issuesStudentsMap.merge(entry.getValue(), 1, Integer::sum);
-                    }
-                    else {
-                        issuesStudentsMap.put(entry.getValue(), 1);
-                    }
-                }
-                else {
-                    // create a new issues map for this category
-                    var issuesStudentsMap = new HashMap<Integer, Integer>();
-                    issuesStudentsMap.put(entry.getValue(), 1);
-                    categoryIssuesStudentsMap.put(entry.getKey(), issuesStudentsMap);
-                }
-
-                // check max issues
-                if (entry.getValue() > maxIssuesPerCategory) {
-                    maxIssuesPerCategory = entry.getValue();
-                }
-
-            }
+            // merge the student specific issue map with the overall students issue map
+            mergeCategoryIssuesMaps(categoryIssuesStudentsMap, categoryIssuesMap);
         }
 
         statistics.setTestCaseStatsMap(testCaseStatsMap);
         statistics.setCategoryIssuesMap(categoryIssuesStudentsMap);
-        statistics.setMaxIssuesPerCategory(maxIssuesPerCategory);
 
         return statistics;
+    }
+
+    /**
+     * Merge the result issues map with the overall issues map
+     * @param categoryIssuesStudentsMap The overall issues map for all students
+     * @param categoryIssuesMap The issues map for one students
+     */
+    private void mergeCategoryIssuesMaps(HashMap<String, Map<Integer, Integer>> categoryIssuesStudentsMap, HashMap<String, Integer> categoryIssuesMap) {
+
+        for (var entry : categoryIssuesMap.entrySet()) {
+            // key: category, value: number of issues
+
+            if (categoryIssuesStudentsMap.containsKey(entry.getKey())) {
+                var issuesStudentsMap = categoryIssuesStudentsMap.get(entry.getKey());
+                // add 1 to the number of students for the category & issues
+                if (issuesStudentsMap.containsKey(entry.getValue())) {
+                    issuesStudentsMap.merge(entry.getValue(), 1, Integer::sum);
+                }
+                else {
+                    issuesStudentsMap.put(entry.getValue(), 1);
+                }
+            }
+            else {
+                // create a new issues map for this category
+                var issuesStudentsMap = new HashMap<Integer, Integer>();
+                issuesStudentsMap.put(entry.getValue(), 1);
+                categoryIssuesStudentsMap.put(entry.getKey(), issuesStudentsMap);
+            }
+        }
+    }
+
+    /**
+     * Analyses the feedback and updates the statistics maps
+     * @param feedback The given feedback object
+     * @param categoryIssuesMap The issues map for sca statistics
+     * @param testCaseStatsMap The map for test case statistics
+     */
+    private void addFeedbackToStatistics(Feedback feedback, HashMap<String, Integer> categoryIssuesMap, HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap) {
+
+        if (feedback.getType().equals(FeedbackType.AUTOMATIC) && feedback.isStaticCodeAnalysisFeedback()) {
+            // sca feedback
+
+            var categoryName = feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
+            if ("".equals(categoryName)) {
+                return; // this feedback belongs to no category
+            }
+
+            // add 1 to the issues for this category
+            if (categoryIssuesMap.containsKey(categoryName)) {
+                categoryIssuesMap.merge(categoryName, 1, Integer::sum);
+            }
+            else {
+                categoryIssuesMap.put(categoryName, 1);
+            }
+
+        }
+        else if (feedback.getType().equals(FeedbackType.AUTOMATIC)) {
+            // test case feedback
+
+            var testName = feedback.getText();
+
+            // add 1 to the passed or failed amount for this test case
+            // dependant on the positive flag of the feedback
+            if (testCaseStatsMap.containsKey(testName)) {
+                if (feedback.isPositive()) {
+                    testCaseStatsMap.get(testName).increaseNumPassed();
+                }
+                else {
+                    testCaseStatsMap.get(testName).increaseNumFailed();
+                }
+            }
+            else {
+                testCaseStatsMap.put(testName, new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(feedback.isPositive() ? 1 : 0, feedback.isPositive() ? 0 : 1));
+            }
+
+        }
     }
 
 }

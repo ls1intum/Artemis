@@ -252,7 +252,7 @@
                                         [issuesMap]="getIssuesMap(row.name)"
                                         [maxGradedIssues]="row.penalty > 0 ? row.maxPenalty / row.penalty : 0"
                                         [totalStudents]="gradingStatistics?.numParticipations || 0"
-                                        [maxNumberOfIssues]="gradingStatistics?.maxIssuesPerCategory || 0"
+                                        [maxNumberOfIssues]="maxIssuesPerCategory"
                                     >
                                     </jhi-category-issues-chart>
                                 </ng-template>

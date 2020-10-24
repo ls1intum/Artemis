@@ -70,7 +70,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     const rowClass = 'datatable-body-row';
     const saveTableButton = '#save-table-button';
     const resetTableButton = '#reset-table-button';
-    const triggerSubmissionRunButton = '#trigger-all-button > button';
     const testCasesNoUnsavedChanges = '#test-case-status-no-unsaved-changes';
     const testCasesUnsavedChanges = '#test-case-status-unsaved-changes';
     const testCasesUpdated = '#test-case-status-updated';
@@ -119,10 +118,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     const getResetButton = () => {
         return getElement(debugElement, resetTableButton);
-    };
-
-    const getTriggerButton = () => {
-        return getElement(debugElement, triggerSubmissionRunButton);
     };
 
     const getUnsavedChangesBadge = () => {
