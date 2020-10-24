@@ -32,9 +32,9 @@ export class TestCasePassedBuildsChartComponent implements OnChanges {
             this.passedPercent = passedPercent;
             this.failedPercent = failedPercent;
 
-            this.tooltip = `${passedPercent.toFixed(0)}% passed, ${failedPercent.toFixed(0)}% failed${
-                notExecutedPercent > 0 ? `, ${notExecutedPercent}% not executed` : ''
-            } of ' + totalParticipations + ' students.`;
+            this.tooltip = `${passedPercent.toFixed(0)}% passed, ${failedPercent.toFixed(0)}% failed${notExecutedPercent > 0 ? `, ${notExecutedPercent}% not executed` : ''} of ${
+                this.totalParticipations
+            } students.`;
         });
     }
 }
