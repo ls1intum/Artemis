@@ -845,8 +845,6 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
         assertThat(statistics.getCategoryIssuesMap()).containsExactlyInAnyOrderEntriesOf(categoryIssuesMap);
 
-        assertThat(statistics.getMaxIssuesPerCategory()).isEqualTo(5);
-
     }
 
     private void activateAllTestCases(boolean withBonus) {

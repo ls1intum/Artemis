@@ -517,7 +517,7 @@ public class ProgrammingExerciseGradingService {
      * @param categoryIssuesStudentsMap The overall issues map for all students
      * @param categoryIssuesMap The issues map for one students
      */
-    private void mergeCategoryIssuesMaps(HashMap<String, Map<Integer, Integer>> categoryIssuesStudentsMap, HashMap<String, Integer> categoryIssuesMap) {
+    private void mergeCategoryIssuesMaps(Map<String, Map<Integer, Integer>> categoryIssuesStudentsMap, Map<String, Integer> categoryIssuesMap) {
 
         for (var entry : categoryIssuesMap.entrySet()) {
             // key: category, value: number of issues
@@ -547,7 +547,7 @@ public class ProgrammingExerciseGradingService {
      * @param categoryIssuesMap The issues map for sca statistics
      * @param testCaseStatsMap The map for test case statistics
      */
-    private void addFeedbackToStatistics(Feedback feedback, HashMap<String, Integer> categoryIssuesMap, HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap) {
+    private void addFeedbackToStatistics(Feedback feedback, Map<String, Integer> categoryIssuesMap, Map<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap) {
 
         if (feedback.getType().equals(FeedbackType.AUTOMATIC) && feedback.isStaticCodeAnalysisFeedback()) {
             // sca feedback
