@@ -27,7 +27,7 @@ export class TestCaseDistributionChartComponent implements OnChanges {
 
     @Output() testCaseColorsChange = new EventEmitter<{}>();
 
-    chartPreset = new HorizontalStackedBarChartPreset(['Weight', 'Weight & Bonus', 'Points'], ['all weights', 'all weights and bonuses', 'all achievable points']);
+    chartPreset = new HorizontalStackedBarChartPreset(['Weight', 'Weight & Bonus', 'Points'], ['all weights', 'all weights and bonuses', 'all achieved points']);
     chartDatasets: ChartDataSets[] = [];
 
     ngOnChanges(): void {
