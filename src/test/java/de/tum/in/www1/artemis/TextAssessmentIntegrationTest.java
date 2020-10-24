@@ -525,7 +525,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     public void testSubmitAssessment_withResultOver100Percent() throws Exception {
         textExercise = (TextExercise) database.addMaxScoreAndBonusPointsToExercise(textExercise);
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        database.addTextSubmission(textExercise, textSubmission, "student1");
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
         exerciseDueDatePassed();
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
