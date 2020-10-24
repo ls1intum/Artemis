@@ -547,7 +547,8 @@ public class ProgrammingExerciseGradingService {
      * @param categoryIssuesMap The issues map for sca statistics
      * @param testCaseStatsMap The map for test case statistics
      */
-    private void addFeedbackToStatistics(Feedback feedback, Map<String, Integer> categoryIssuesMap, Map<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap) {
+    private void addFeedbackToStatistics(Feedback feedback, Map<String, Integer> categoryIssuesMap,
+            Map<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap) {
 
         if (feedback.getType().equals(FeedbackType.AUTOMATIC) && feedback.isStaticCodeAnalysisFeedback()) {
             // sca feedback
