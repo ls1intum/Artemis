@@ -53,7 +53,14 @@ export class CategoryIssuesChartComponent implements OnChanges {
             return {
                 w: columnWidth + '%',
                 h: (this.totalStudents > 0 ? (numStudents / this.totalStudents) * 95 : 0) + 4 + '%',
-                color: numStudents === 0 || this.category.state !== StaticCodeAnalysisCategoryState.Graded ? '#28a745' : numIssues > maxGradedIssues ? '#dc3545' : '#ffc107',
+                color:
+                    this.category.state === StaticCodeAnalysisCategoryState.Inactive
+                        ? '#ddd'
+                        : numStudents === 0 || this.category.state !== StaticCodeAnalysisCategoryState.Graded
+                        ? '#28a745'
+                        : numIssues > maxGradedIssues
+                        ? '#dc3545'
+                        : '#ffc107',
                 tooltip: `${numStudents} student${numStudents !== 1 ? 's' : ''} have ${numIssues} issue${numIssues !== 1 ? 's' : ''}.`,
             };
         });

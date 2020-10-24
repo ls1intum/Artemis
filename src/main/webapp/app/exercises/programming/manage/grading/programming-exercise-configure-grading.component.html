@@ -248,7 +248,6 @@
                             <ngx-datatable-column name="Detected Issues">
                                 <ng-template ngx-datatable-cell-template let-row="row">
                                     <jhi-category-issues-chart
-                                        *ngIf="row.state !== CategoryState.Inactive"
                                         [category]="row"
                                         [issuesMap]="getIssuesMap(row.name)"
                                         [totalStudents]="gradingStatistics?.numParticipations || 0"
