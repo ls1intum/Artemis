@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -23,7 +25,9 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -47,6 +51,9 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     ExampleSubmissionRepository exampleSubmissionRepo;
+
+    @Autowired
+    TeamService teamService;
 
     @BeforeEach
     public void initTestCase() {
@@ -451,5 +458,72 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         final var search = database.configureSearch("Text");
         final var result = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
         assertThat(result.getResultsOnPage().size()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testImportTextExercise_team_modeChange() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        textExercise = textExerciseRepository.save(textExercise);
+
+        var textExercise2 = new TextExercise();
+        textExercise2.setMode(ExerciseMode.TEAM);
+
+        var teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setExercise(textExercise2);
+        teamAssignmentConfig.setMinTeamSize(1);
+        teamAssignmentConfig.setMaxTeamSize(10);
+        textExercise2.setTeamAssignmentConfig(teamAssignmentConfig);
+        textExercise2.setCourse(course2);
+
+        textExercise2 = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise2, TextExercise.class, HttpStatus.CREATED);
+
+        SecurityUtils.setAuthorizationObject();
+        assertEquals(course2.getId(), textExercise2.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
+        assertEquals(ExerciseMode.TEAM, textExercise2.getMode());
+        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(textExercise2, null).size());
+
+        textExercise = textExerciseRepository.findById(textExercise.getId()).get();
+        assertEquals(course1.getId(), textExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        assertEquals(ExerciseMode.INDIVIDUAL, textExercise.getMode());
+        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(textExercise, null).size());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testImportTextExercise_individual_modeChange() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        textExercise.setMode(ExerciseMode.TEAM);
+        var teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setExercise(textExercise);
+        teamAssignmentConfig.setMinTeamSize(1);
+        teamAssignmentConfig.setMaxTeamSize(10);
+        textExercise.setTeamAssignmentConfig(teamAssignmentConfig);
+        textExercise.setCourse(course1);
+
+        textExercise = textExerciseRepository.save(textExercise);
+        teamService.save(textExercise, new Team());
+
+        var textExercise2 = new TextExercise();
+        textExercise2.setMode(ExerciseMode.INDIVIDUAL);
+        textExercise2.setCourse(course2);
+
+        textExercise2 = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise2, TextExercise.class, HttpStatus.CREATED);
+
+        SecurityUtils.setAuthorizationObject();
+        assertEquals(course2.getId(), textExercise2.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
+        assertEquals(ExerciseMode.INDIVIDUAL, textExercise2.getMode());
+        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(textExercise2, null).size());
+
+        textExercise = textExerciseRepository.findById(textExercise.getId()).get();
+        assertEquals(course1.getId(), textExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        assertEquals(ExerciseMode.TEAM, textExercise.getMode());
+        assertEquals(1, teamService.findAllByExerciseIdWithEagerStudents(textExercise, null).size());
     }
 }
