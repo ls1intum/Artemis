@@ -10,7 +10,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Router } from '@angular/router';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
-import { expect } from '../helpers/jasmine.jest.fix';
+import { expect } from '../helpers/jest.fix';
 
 describe('TextExercise Service', () => {
     let injector: TestBed;
