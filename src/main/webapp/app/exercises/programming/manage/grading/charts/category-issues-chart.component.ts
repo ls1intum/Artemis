@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { IssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 
 export class IssueColumn {
     w: string;
@@ -29,6 +30,7 @@ export class IssueColumn {
 })
 export class CategoryIssuesChartComponent implements OnChanges {
     @Input() issuesMap?: IssuesMap;
+    @Input() category: StaticCodeAnalysisCategory;
     @Input() maxGradedIssues: number;
     @Input() totalStudents: number;
     @Input() maxNumberOfIssues: number;
@@ -43,13 +45,15 @@ export class CategoryIssuesChartComponent implements OnChanges {
         const columnGap = 2;
         const columnWidth = (100 + columnGap) / numColumns - columnGap;
 
+        const maxGradedIssues = this.category.penalty > 0 ? this.category.maxPenalty / this.category.penalty : 0;
+
         const columns = new Array(numColumns).fill(0).map((column, i) => {
             const numIssues = i + 1;
             const numStudents = this.issuesMap ? this.issuesMap[numIssues] || 0 : 0;
             return {
                 w: columnWidth + '%',
                 h: (this.totalStudents > 0 ? (numStudents / this.totalStudents) * 95 : 0) + 4 + '%',
-                color: numStudents === 0 ? '#28a745' : numIssues > this.maxGradedIssues ? '#dc3545' : '#ffc107',
+                color: numStudents === 0 || this.category.state !== StaticCodeAnalysisCategoryState.Graded ? '#28a745' : numIssues > maxGradedIssues ? '#dc3545' : '#ffc107',
                 tooltip: `${numStudents} student${numStudents !== 1 ? 's' : ''} have ${numIssues} issue${numIssues !== 1 ? 's' : ''}.`,
             };
         });

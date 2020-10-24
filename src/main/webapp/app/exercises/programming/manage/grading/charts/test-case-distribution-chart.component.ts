@@ -57,7 +57,7 @@ export class TestCaseDistributionChartComponent implements OnChanges {
                 // relative score percentage
                 element.score * 100,
                 // relative points percentage
-                element.stats && totalPoints > 0 ? ((element.stats.numPassed! * element.score) / totalPoints) * 100 : 0,
+                element.stats && totalPoints > 0 ? ((element.stats.numPassed! * element.score * this.exercise.maxScore!) / totalPoints) * 100 : 0,
             ],
             backgroundColor: this.getColor(i / this.testCases.length, 50),
             hoverBackgroundColor: this.getColor(i / this.testCases.length, 60),

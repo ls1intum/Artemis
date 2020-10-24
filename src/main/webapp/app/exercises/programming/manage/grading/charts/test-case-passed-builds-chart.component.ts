@@ -16,8 +16,8 @@ import { TestCaseStats } from 'app/entities/programming-exercise-test-case-stati
     `,
     styles: [
         '.chart-body { border-radius: 4px; background-color: #ddd; height: 10px; width: 100px; overflow: hidden; position: relative; }',
-        '.passed-bar { position: absolute; top: 0; left: 0; height: 10px; color: #28a745 }',
-        '.failed-bar { position: absolute; top: 0; height: 10px; color: #dc3545 }',
+        '.passed-bar { position: absolute; top: 0; left: 0; height: 10px; background-color: #28a745 }',
+        '.failed-bar { position: absolute; top: 0; height: 10px; background-color: #dc3545 }',
     ],
 })
 export class TestCasePassedBuildsChartComponent implements OnChanges {

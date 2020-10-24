@@ -30,7 +30,7 @@ $border-color: #979797;
 
 .grading-table-layout {
     display: flex;
-    flex-flow: row wrap;
+    flex-flow: row;
 
     & > div {
         padding: 20px;
@@ -45,5 +45,15 @@ $border-color: #979797;
     & > div:last-child {
         border-left: 1px solid #ddd;
         flex-basis: 400px;
+    }
+}
+
+@media screen and (max-width: 1200px) {
+    .grading-table-layout {
+        flex-flow: column;
+
+        & > div {
+            flex-basis: auto;
+        }
     }
 }

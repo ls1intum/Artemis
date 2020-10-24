@@ -249,8 +249,8 @@
                                 <ng-template ngx-datatable-cell-template let-row="row">
                                     <jhi-category-issues-chart
                                         *ngIf="row.state !== CategoryState.Inactive"
+                                        [category]="row"
                                         [issuesMap]="getIssuesMap(row.name)"
-                                        [maxGradedIssues]="row.penalty > 0 ? row.maxPenalty / row.penalty : 0"
                                         [totalStudents]="gradingStatistics?.numParticipations || 0"
                                         [maxNumberOfIssues]="maxIssuesPerCategory"
                                     >
