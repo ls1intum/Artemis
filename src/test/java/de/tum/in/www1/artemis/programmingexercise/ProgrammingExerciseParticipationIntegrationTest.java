@@ -301,7 +301,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetParticipationWithResultsForStudentParticipation_notFound() throws Exception {
-        StudentParticipation participation = database.addParticipationForExercise(programmingExercise, "student1");
+        StudentParticipation participation = database.createAndSaveParticipationForExercise(programmingExercise, "student1");
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-results-and-feedbacks", HttpStatus.NOT_FOUND,
                 ProgrammingExerciseStudentParticipation.class);
     }

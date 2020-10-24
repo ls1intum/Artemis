@@ -3,7 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { map, take } from 'rxjs/operators';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { expect } from '../helpers/jasmine.jest.fix';
+import { expect } from '../helpers/jest.fix';
 
 describe('FileUploadSubmission Service', () => {
     let injector: TestBed;
