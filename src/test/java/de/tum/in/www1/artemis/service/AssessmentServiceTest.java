@@ -15,7 +15,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -233,16 +232,4 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, null, null, false);
         assertThat(isAllowed).isFalse();
     }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testCancelAssessmentOfSubmission_withProgrammingParticipation() {
-        ProgrammingExercise exercise = database.addProgrammingExerciseToCourse(course1, false);
-        ProgrammingSubmission submission = database.createProgrammingSubmission(null, false);
-
-        submission = database.addProgrammingSubmissionWithResultAndAssessor(exercise, submission, "student1", "tutor1", AssessmentType.AUTOMATIC);
-
-        assessmentService.cancelAssessmentOfSubmission(submission);
-    }
-
 }
