@@ -16,10 +16,7 @@ import { Course } from 'app/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
-
-// Note: for some reason the normal "import { expect } from '../helpers/jasmine.jest.fix';" does not work here and leads to an exception
-type JestExpect = <T>(actual: T) => jest.Matchers<T>;
-export declare const expect: JestExpect;
+import { expect } from '../helpers/jest.fix';
 
 describe('Exam Participation Service', () => {
     let injector: TestBed;
