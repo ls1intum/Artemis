@@ -22,17 +22,17 @@ pipeline {
             }
         }
         post {
-            always {
+            success {
+                sh '''
+                #staticCodeAnalysisScript
+                '''
+            }
+            cleanup {
                 sh 'rm -rf results'
                 sh 'mkdir results'
                 sh 'cp target/surefire-reports/*.xml $WORKSPACE/results/'
                 sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
                 cleanWs()
-            }
-            success {
-                sh '''
-                #staticCodeAnalysisScript
-                '''
             }
         }
 }

@@ -23,7 +23,7 @@ pipeline {
             }
         }
         post {
-            always {
+            cleanup {
                 sh '''
                    rm -rf results
                    mkdir results

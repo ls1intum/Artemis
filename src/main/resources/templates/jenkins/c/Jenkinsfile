@@ -76,7 +76,7 @@ pipeline {
             }
         }
         post {
-            always {
+            cleanup {
                 sh '''
                    sed -i &apos;s/&#x1b;//g&apos; test-reports/tests-results.xml&#xd;
                    sed -i &apos;s/&lt;skipped/&lt;error/g&apos; test-reports/tests-results.xml&#xd;

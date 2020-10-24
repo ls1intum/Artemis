@@ -22,7 +22,7 @@ pipeline {
             }
         }
         post {
-            always {
+            cleanup {
                 sh 'rm -rf results'
                 sh 'mkdir results'
                 sh 'cp target/surefire-reports/*.xml $WORKSPACE/results/'
