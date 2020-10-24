@@ -3,12 +3,14 @@ package de.tum.in.www1.artemis.domain.quiz;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A ShortAnswerSpotCounter.
  */
 @Entity
 @DiscriminatorValue(value = "SA")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerSpotCounter extends QuizStatisticCounter {
 
     @ManyToOne

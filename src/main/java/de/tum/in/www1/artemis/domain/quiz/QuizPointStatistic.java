@@ -9,12 +9,14 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A QuizPointStatistic.
  */
 @Entity
 @DiscriminatorValue(value = "QP")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizPointStatistic extends QuizStatistic {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "quizPointStatistic")

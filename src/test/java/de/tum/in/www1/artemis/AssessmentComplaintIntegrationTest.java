@@ -297,7 +297,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getComplaintsForTutorDashboard_sameTutorAsAssessor_studentInfoHidden() throws Exception {
+    public void getComplaintsForAssessmentDashboard_sameTutorAsAssessor_studentInfoHidden() throws Exception {
         complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
@@ -532,7 +532,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getMoreFeedbackRequestsForTutorDashboard() throws Exception {
+    public void getMoreFeedbackRequestsForAssessmentDashboard() throws Exception {
         complaint.setParticipant(database.getUserByLogin("student1"));
         moreFeedbackRequest.setAccepted(true);
         complaintRepo.save(moreFeedbackRequest);
@@ -556,7 +556,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final TextExercise examExercise = database.addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise();
         final long examId = examExercise.getExerciseGroup().getExam().getId();
         final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
-        database.addTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
         final var examExerciseComplaint = new Complaint().result(textSubmission.getResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
 
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
@@ -580,7 +580,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final TextExercise examExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
         final long examId = examExercise.getExerciseGroup().getExam().getId();
         final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
-        database.addTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
         final var examExerciseComplaint = new Complaint().result(textSubmission.getResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
         request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);

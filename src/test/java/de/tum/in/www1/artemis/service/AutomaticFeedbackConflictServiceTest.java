@@ -69,11 +69,11 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createTextAssessmentConflicts() throws NetworkingError {
+    public void createFeedbackConflicts() throws NetworkingError {
         TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("first text submission", Language.ENGLISH, true);
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("second text submission", Language.ENGLISH, true);
-        database.addTextSubmission(textExercise, textSubmission1, "student1");
-        database.addTextSubmission(textExercise, textSubmission2, "student1");
+        database.saveTextSubmission(textExercise, textSubmission1, "student1");
+        database.saveTextSubmission(textExercise, textSubmission2, "student1");
 
         final TextCluster cluster = new TextCluster().exercise(textExercise);
         textClusterRepository.save(cluster);
@@ -87,12 +87,17 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         cluster.blocks(List.of(textBlock1, textBlock2));
         textClusterRepository.save(cluster);
 
-        final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock1.getId());
-        final Feedback feedback2 = new Feedback().detailText("Good answer").credits(2D).reference(textBlock2.getId());
+        Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock1.getId());
+        Feedback feedback2 = new Feedback().detailText("Good answer").credits(2D).reference(textBlock2.getId());
 
-        database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission1, "student1", "tutor1", List.of(feedback1));
-        database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, "student2", "tutor1", List.of(feedback2));
+        textSubmission1 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission1, "student1", "tutor1", List.of(feedback1));
+        textSubmission2 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, "student2", "tutor1", List.of(feedback2));
 
+        // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
+        feedback1 = textSubmission1.getResult().getFeedbacks().get(0);
+        feedback2 = textSubmission2.getResult().getFeedbacks().get(0);
+
+        // TODO: Birtan Gültekin we should not mock those services
         textAssessmentConflictService = mock(TextAssessmentConflictService.class);
         when(textAssessmentConflictService.checkFeedbackConsistencies(any(), anyLong(), anyInt())).thenReturn(createRemoteServiceResponse(feedback1, feedback2));
 
@@ -117,9 +122,9 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void changedTextAssessmentConflictsType() throws NetworkingError {
+    public void changedFeedbackConflictsType() throws NetworkingError {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
-        database.addTextSubmission(textExercise, textSubmission, "student1");
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
 
         final TextCluster cluster = new TextCluster().exercise(textExercise);
         textClusterRepository.save(cluster);
@@ -127,14 +132,18 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         final TextBlock textBlock = new TextBlock().startIndex(0).endIndex(15).automatic().cluster(cluster);
         database.addTextBlocksToTextSubmission(List.of(textBlock), textSubmission);
 
-        final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
-        final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
-        database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
+        Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
+        Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
+        textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
 
+        // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
+        feedback1 = textSubmission.getResult().getFeedbacks().get(0);
+        feedback2 = textSubmission.getResult().getFeedbacks().get(1);
         FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(feedback1, feedback2);
         feedbackConflict.setType(FeedbackConflictType.INCONSISTENT_COMMENT);
         feedbackConflictRepository.save(feedbackConflict);
 
+        // TODO: Birtan Gültekin we should not mock those services
         textAssessmentConflictService = mock(TextAssessmentConflictService.class);
         when(textAssessmentConflictService.checkFeedbackConsistencies(any(), anyLong(), anyInt())).thenReturn(createRemoteServiceResponse(feedback1, feedback2));
 
@@ -158,9 +167,9 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void solveTextAssessmentConflicts() throws NetworkingError {
+    public void solveFeedbackConflicts() throws NetworkingError {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
-        database.addTextSubmission(textExercise, textSubmission, "student1");
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
 
         final TextCluster cluster = new TextCluster().exercise(textExercise);
         textClusterRepository.save(cluster);
@@ -168,13 +177,17 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         final TextBlock textBlock = new TextBlock().startIndex(0).endIndex(15).automatic().cluster(cluster);
         database.addTextBlocksToTextSubmission(List.of(textBlock), textSubmission);
 
-        final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
-        final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
-        database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
+        Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
+        Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
+        textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
 
+        // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
+        feedback1 = textSubmission.getResult().getFeedbacks().get(0);
+        feedback2 = textSubmission.getResult().getFeedbacks().get(1);
         FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(feedback1, feedback2);
         feedbackConflictRepository.save(feedbackConflict);
 
+        // TODO: Birtan Gültekin we should not mock those services
         textAssessmentConflictService = mock(TextAssessmentConflictService.class);
         when(textAssessmentConflictService.checkFeedbackConsistencies(any(), anyLong(), anyInt())).thenReturn(List.of());
 
@@ -191,28 +204,47 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     }
 
     /**
-     * Checks if deletion of submission, result and feedback delete the text assessment conflicts from the database.
-     * Additionally, checks the deletion of text assessment conflicts do not cause deletion of feedback.
+     * Checks if deletion of submission delete the text assessment conflicts from the database.
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void deleteSubmissionResultAndFeedback() {
-        TextSubmission textSubmission = this.createTextSubmissionWithResultFeedbackAndConflicts();
+    public void testSubmissionDelete() {
+        TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
         textSubmissionRepository.deleteById(textSubmission.getId());
         assertThat(feedbackConflictRepository.findAll(), hasSize(0));
+    }
 
-        textSubmission = this.createTextSubmissionWithResultFeedbackAndConflicts();
+    /**
+     * Checks if deletion of a result delete the text assessment conflicts from the database.
+     */
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testResultDelete() {
+        TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
         resultRepository.deleteById(textSubmission.getResult().getId());
         assertThat(feedbackConflictRepository.findAll(), hasSize(0));
+    }
 
+    /**
+     * Checks if deletion of feedback delete the text assessment conflicts from the database.
+     */
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testFeedbackDelete() {
         this.createTextSubmissionWithResultFeedbackAndConflicts();
         feedbackRepository.deleteAll();
         assertThat(feedbackConflictRepository.findAll(), hasSize(0));
+    }
 
-        this.createTextSubmissionWithResultFeedbackAndConflicts();
+    /**
+     * Checks the deletion of text assessment conflicts do not cause deletion of feedback.
+     */
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testFeedbackConflictDelete() {
+        createTextSubmissionWithResultFeedbackAndConflicts();
         feedbackConflictRepository.deleteAll();
         assertThat(feedbackRepository.findAll(), hasSize(2));
-
     }
 
     private List<FeedbackConflictResponseDTO> createRemoteServiceResponse(Feedback firstFeedback, Feedback secondFeedback) {
@@ -225,13 +257,15 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
 
     private TextSubmission createTextSubmissionWithResultFeedbackAndConflicts() {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
-        database.addTextSubmission(textExercise, textSubmission, "student1");
+        textSubmission = database.saveTextSubmission(textExercise, textSubmission, "student1");
 
         final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D);
         final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
-        database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
+        textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
 
-        FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(feedback1, feedback2);
+        // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
+        FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(textSubmission.getResult().getFeedbacks().get(0),
+                textSubmission.getResult().getFeedbacks().get(1));
         feedbackConflictRepository.save(feedbackConflict);
 
         return textSubmission;

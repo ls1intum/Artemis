@@ -7,9 +7,12 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.Immutable;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 @Entity
 @Table(name = "view_tutor_leaderboard_complaint_responses")
 @Immutable
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TutorLeaderboardComplaintResponsesView {
 
     @EmbeddedId

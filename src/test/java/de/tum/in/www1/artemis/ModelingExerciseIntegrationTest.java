@@ -223,7 +223,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         modelingExercise.getGradingCriteria().get(1).setStructuredGradingInstructions(null);
         createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(createdModelingExercise.getGradingCriteria().size()).isGreaterThan(0);
-        assertThat(createdModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).isEqualTo(null);
+        assertThat(createdModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).isNullOrEmpty();
     }
 
     @Test

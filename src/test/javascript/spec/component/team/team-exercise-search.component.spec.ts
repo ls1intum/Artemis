@@ -91,7 +91,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('My Exercise', exercise);
 
-        expect(matchesExercise).toBeTrue;
+        expect(matchesExercise).toBeTruthy;
     });
 
     it('searchMatchesExercise with lowercase term', () => {
@@ -100,7 +100,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('my exercise', exercise);
 
-        expect(matchesExercise).toBeTrue;
+        expect(matchesExercise).toBeTruthy;
     });
 
     it('searchMatchesExercise with partial term start', () => {
@@ -109,7 +109,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('my', exercise);
 
-        expect(matchesExercise).toBeTrue;
+        expect(matchesExercise).toBeTruthy;
     });
 
     it('searchMatchesExercise with partial term end', () => {
@@ -118,7 +118,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('ercise', exercise);
 
-        expect(matchesExercise).toBeTrue;
+        expect(matchesExercise).toBeTruthy;
     });
 
     it('searchMatchesExercise without whitespace', () => {
@@ -127,7 +127,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('MyExercise', exercise);
 
-        expect(matchesExercise).toBeFalse;
+        expect(matchesExercise).toBeFalsy;
     });
 
     it('searchMatchesExercise with incorrect searchTerm', () => {
@@ -136,7 +136,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('Other Exercise', exercise);
 
-        expect(matchesExercise).toBeFalse;
+        expect(matchesExercise).toBeFalsy;
     });
 
     it('successfully loads the exercise options', (done) => {

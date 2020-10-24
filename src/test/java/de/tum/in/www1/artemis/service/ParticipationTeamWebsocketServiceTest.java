@@ -43,7 +43,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
         database.addUsers(3, 0, 0);
         Course course = database.addCourseWithOneModelingExercise();
         modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
-        participation = database.addParticipationForExercise(modelingExercise, "student1");
+        participation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
 
         MockitoAnnotations.openMocks(this);
         participationTeamWebsocketService.clearDestinationTracker();

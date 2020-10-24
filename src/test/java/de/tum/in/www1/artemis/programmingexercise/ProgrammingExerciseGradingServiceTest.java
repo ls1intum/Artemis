@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 
 public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -614,21 +615,21 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         // Add some positive test case feedback otherwise the service method won't execute
         result1.addFeedback(new Feedback().result(result1).text("test1").positive(true).type(FeedbackType.AUTOMATIC));
         // Add feedback which belongs to INACTIVE category
-        var fb1 = new Feedback().result(result1).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("{\"category\": \"miscellaneous\"}")
-                .type(FeedbackType.AUTOMATIC);
-        result1.addFeedback(fb1);
+        var feedback1 = new Feedback().result(result1).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE")
+                .detailText("{\"category\": \"miscellaneous\"}").type(FeedbackType.AUTOMATIC);
+        result1.addFeedback(feedback1);
         // Add feedback without category
-        var fb2 = new Feedback().result(result1).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("").type(FeedbackType.AUTOMATIC);
-        result1.addFeedback(fb2);
+        var feedback2 = new Feedback().result(result1).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("").type(FeedbackType.AUTOMATIC);
+        result1.addFeedback(feedback2);
         // Add feedback with unsupported rule
-        var fb3 = new Feedback().result(result1).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("{\"category\": \"doesNotExist\"}")
-                .type(FeedbackType.AUTOMATIC);
-        result1.addFeedback(fb3);
+        var feedback3 = new Feedback().result(result1).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE")
+                .detailText("{\"category\": \"doesNotExist\"}").type(FeedbackType.AUTOMATIC);
+        result1.addFeedback(feedback3);
 
         Result updatedResult = gradingService.updateResult(result1, programmingExerciseSCAEnabled, true);
 
         assertThat(updatedResult.getFeedbacks()).hasSize(1);
-        assertThat(updatedResult.getFeedbacks()).doesNotContain(fb1, fb2, fb3);
+        assertThat(updatedResult.getFeedbacks()).doesNotContain(feedback1, feedback2, feedback3);
     }
 
     @Test
@@ -887,8 +888,8 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
                     .type(FeedbackType.AUTOMATIC).positive(false));
         }
 
-        result.addFeedback(new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE")
-                .detailText("{\"category\": \"miscellaneous\"}").type(FeedbackType.AUTOMATIC).positive(false));
+        var feedbackForInactiveCategory = ModelFactory.createSCAFeedbackWithInactiveCategory(result);
+        result.addFeedback(feedbackForInactiveCategory);
 
         result.addFeedback(new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS").detailText("{\"category\": \"CORRECTNESS\"}")
                 .type(FeedbackType.AUTOMATIC).positive(false));
