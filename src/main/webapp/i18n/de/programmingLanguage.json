@@ -9,7 +9,8 @@
             "HASKELL": "Haskell",
             "KOTLIN": "Kotlin",
             "VHDL": "VHDL",
-            "Assembler": "Assembler"
+            "Assembler": "Assembler",
+            "SWIFT": "Swift"
         }
     }
 }
