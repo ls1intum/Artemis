@@ -4,8 +4,17 @@
         <h3 jhiTranslate="artemisApp.programmingExercise.configureGrading.title">Configure Automated Grading</h3>
     </div>
     <ng-container *ngIf="!isLoading">
-        <div class="d-flex">
-            <div class="d-flex align-items-center ml-auto">
+        <div class="top-bar">
+            <div class="d-flex align-items-center" *ngIf="exercise.staticCodeAnalysisEnabled">
+                <div class="tab-item test-cases" (click)="selectTab('test-cases')" [ngClass]="activeTab == 'test-cases' ? 'active' : ''">
+                    <b>Test Cases</b>
+                </div>
+                <div class="tab-item code-analysis" (click)="selectTab('code-analysis')" [ngClass]="activeTab == 'code-analysis' ? 'active' : ''">
+                    <b>Code Analysis</b>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center">
                 <jhi-programming-exercise-configure-grading-status
                     [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults"
                     [hasUnsavedTestCaseChanges]="!!changedTestCaseIds.length"
@@ -20,159 +29,253 @@
             </div>
         </div>
 
-        <div class="tab-bar" *ngIf="exercise.staticCodeAnalysisEnabled">
-            <div class="tab-item test-cases" (click)="selectTab('test-cases')" [ngClass]="activeTab == 'test-cases' ? 'active' : ''">
-                <b>Test Cases</b>
-            </div>
-            <div class="tab-item code-analysis" (click)="selectTab('code-analysis')" [ngClass]="activeTab == 'code-analysis' ? 'active' : ''">
-                <b>Code Analysis</b>
-            </div>
-        </div>
-
-        <div class="grading-body-container">
+        <div class="grading-body-container mt-3">
             <div *ngIf="activeTab == 'test-cases'">
-                <div class="d-flex align-items-center justify-content-end my-3">
-                    <jhi-programming-exercise-grading-table-actions
-                        [exercise]="exercise"
-                        [hasUnsavedChanges]="!!changedTestCaseIds.length"
-                        [isSaving]="isSaving"
-                        (onReset)="resetTestCases()"
-                        (onSave)="saveTestCases()"
-                    ></jhi-programming-exercise-grading-table-actions>
-                </div>
+                <div class="grading-table-layout">
+                    <div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <div>
+                                <h2 class="mb-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.title">Test Cases</h2>
+                                <label class="d-flex align-items-center mb-2">
+                                    <input type="checkbox" [checked]="showInactive" (change)="showInactive = !showInactive" />
+                                    <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.showInactive">Show inactive</span>
+                                </label>
+                            </div>
+                            <jhi-programming-exercise-grading-table-actions
+                                [exercise]="exercise"
+                                [hasUnsavedChanges]="!!changedTestCaseIds.length"
+                                [hasUpdatedGrading]="hasUpdatedGradingConfig"
+                                [isSaving]="isSaving"
+                                (onReset)="resetTestCases()"
+                                (onSave)="saveTestCases()"
+                            ></jhi-programming-exercise-grading-table-actions>
+                        </div>
 
-                <label class="d-flex align-items-center mb-0">
-                    <input type="checkbox" [checked]="showInactive" (change)="showInactive = !showInactive" />
-                    <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.showInactive">Show inactive</span>
-                </label>
-                <ngx-datatable
-                    id="testCaseTable"
-                    class="bootstrap"
-                    [headerHeight]="50"
-                    [limit]="20"
-                    [columnMode]="'force'"
-                    [footerHeight]="50"
-                    [rowHeight]="'auto'"
-                    [rows]="filteredTestCases"
-                    [sorts]="[{ prop: 'testName', dir: 'asc' }]"
-                    [rowClass]="getRowClass"
-                >
-                    <ngx-datatable-column name="Id" prop="id">
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            {{ value }}
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="Test Name" prop="testName">
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            {{ value }}
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="Weight" prop="weight">
-                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <jhi-table-editable-field [value]="value" (onValueUpdate)="updateEditedField($event, row, EditableField.WEIGHT)"></jhi-table-editable-field>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="Bonus Multiplier" prop="bonusMultiplier">
-                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <jhi-table-editable-field [value]="value" (onValueUpdate)="updateEditedField($event, row, EditableField.BONUS_MULTIPLIER)"></jhi-table-editable-field>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="Bonus Points" prop="bonusPoints">
-                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <jhi-table-editable-field [value]="value" (onValueUpdate)="updateEditedField($event, row, EditableField.BONUS_POINTS)"></jhi-table-editable-field>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="After Due Date" prop="afterDueDate">
-                        <ng-template ngx-datatable-header-template>
-                            <span>After Due Date</span
-                            ><fa-icon
-                                *ngIf="buildAfterDueDateActive === false"
-                                [icon]="'question-circle'"
-                                class="text-secondary ml-2"
-                                [ngbPopover]="popoverContent"
-                                placement="bottom"
-                                container="body"
-                            ></fa-icon>
-                            <ng-template #popoverContent>
-                                <div class="d-flex flex-column run-after-due-date-disabled">
-                                    <pre jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.runAfterDueDateDisabled"></pre>
-                                    <a [routerLink]="['/course/', this.courseId, 'programming-exercise', this.exercise.id, 'edit']" class="ml-auto">
-                                        <jhi-button [icon]="'arrow-right'" ngbTooltip="{{ 'entity.action.edit' | translate }}"></jhi-button>
-                                    </a>
-                                </div>
-                            </ng-template>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
-                            <jhi-table-editable-checkbox
-                                [value]="value"
-                                [disabled]="!buildAfterDueDateActive"
-                                (onValueUpdate)="toggleAfterDueDate(filteredTestCases.indexOf(row))"
-                            ></jhi-table-editable-checkbox>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="Is Active" prop="active">
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            {{ value }}
-                        </ng-template>
-                    </ngx-datatable-column>
-                </ngx-datatable>
+                        <ngx-datatable
+                            id="testCaseTable"
+                            class="bootstrap"
+                            [headerHeight]="50"
+                            [limit]="20"
+                            [columnMode]="'force'"
+                            [footerHeight]="50"
+                            [rowHeight]="'auto'"
+                            [rows]="filteredTestCases"
+                            [sorts]="[{ prop: 'testName', dir: 'asc' }]"
+                            [rowClass]="getRowClass"
+                        >
+                            <ngx-datatable-column name="Test Name" prop="testName">
+                                <ng-template ngx-datatable-cell-template let-value="value">
+                                    <fa-icon [icon]="'square'" [styles]="{ color: testCaseColors[value] || 'white' }" class="mr-2"></fa-icon>
+                                    {{ value }}
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column name="Weight" prop="weight">
+                                <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                                    <jhi-table-editable-field [value]="value" (onValueUpdate)="updateEditedField($event, row, EditableField.WEIGHT)"></jhi-table-editable-field>
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column name="Bonus Multiplier" prop="bonusMultiplier">
+                                <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                                    <jhi-table-editable-field
+                                        [value]="value"
+                                        (onValueUpdate)="updateEditedField($event, row, EditableField.BONUS_MULTIPLIER)"
+                                    ></jhi-table-editable-field>
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column name="Bonus Points" prop="bonusPoints">
+                                <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                                    <jhi-table-editable-field
+                                        [value]="value"
+                                        (onValueUpdate)="updateEditedField($event, row, EditableField.BONUS_POINTS)"
+                                    ></jhi-table-editable-field>
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column name="After Due Date" prop="afterDueDate">
+                                <ng-template ngx-datatable-header-template>
+                                    <span>After Due Date</span
+                                    ><fa-icon
+                                        *ngIf="buildAfterDueDateActive === false"
+                                        [icon]="'question-circle'"
+                                        class="text-secondary ml-2"
+                                        [ngbPopover]="popoverContent"
+                                        placement="bottom"
+                                        container="body"
+                                    ></fa-icon>
+                                    <ng-template #popoverContent>
+                                        <div class="d-flex flex-column run-after-due-date-disabled">
+                                            <pre jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.runAfterDueDateDisabled"></pre>
+                                            <a [routerLink]="['/course/', this.courseId, 'programming-exercise', this.exercise.id!, 'edit']" class="ml-auto">
+                                                <jhi-button [icon]="'arrow-right'" placement="top" ngbTooltip="{{ 'entity.action.edit' | translate }}"></jhi-button>
+                                            </a>
+                                        </div>
+                                    </ng-template>
+                                </ng-template>
+                                <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
+                                    <jhi-table-editable-checkbox
+                                        [value]="value"
+                                        [disabled]="!buildAfterDueDateActive"
+                                        (onValueUpdate)="toggleAfterDueDate(filteredTestCases.indexOf(row))"
+                                    ></jhi-table-editable-checkbox>
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column name="Is Active" prop="active">
+                                <ng-template ngx-datatable-cell-template let-value="value">
+                                    {{ value }}
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column name="Passed %">
+                                <ng-template ngx-datatable-cell-template let-row="row">
+                                    <jhi-test-case-passed-builds-chart
+                                        [testCaseStats]="getTestCaseStats(row.testName)"
+                                        [totalParticipations]="gradingStatistics?.numParticipations"
+                                    >
+                                    </jhi-test-case-passed-builds-chart>
+                                </ng-template>
+                            </ngx-datatable-column>
+                        </ngx-datatable>
+                    </div>
+                    <div>
+                        <h2 class="mb-5">
+                            <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | translate }}</span>
+                            <span
+                                *ngIf="!!changedTestCaseIds.length"
+                                class="badge badge-primary"
+                                jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"
+                            ></span>
+                        </h2>
+
+                        <jhi-test-case-distribution-chart
+                            [testCases]="filteredTestCases"
+                            [testCaseStatsMap]="gradingStatistics?.testCaseStatsMap"
+                            [totalParticipations]="gradingStatistics?.numParticipations"
+                            [exercise]="exercise"
+                            (testCaseColorsChange)="testCaseColors = $event"
+                        ></jhi-test-case-distribution-chart>
+                    </div>
+                </div>
             </div>
             <div *ngIf="activeTab == 'code-analysis' && exercise.staticCodeAnalysisEnabled">
-                <div class="d-flex align-items-center justify-content-end my-3">
-                    <jhi-programming-exercise-grading-table-actions
-                        [exercise]="exercise"
-                        [hasUnsavedChanges]="!!changedCategoryIds.length"
-                        [isSaving]="isSaving"
-                        (onReset)="resetCategories()"
-                        (onSave)="saveCategories()"
-                    ></jhi-programming-exercise-grading-table-actions>
-                </div>
+                <div class="grading-table-layout">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <h2 jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.title">Code Analysis Categories</h2>
+                            <!-- TODO currently the reset button is permanently disabled -->
+                            <jhi-programming-exercise-grading-table-actions
+                                [exercise]="exercise"
+                                [hasUnsavedChanges]="!!changedCategoryIds.length"
+                                [hasUpdatedGrading]="false"
+                                [isSaving]="isSaving"
+                                (onReset)="resetCategories()"
+                                (onSave)="saveCategories()"
+                            ></jhi-programming-exercise-grading-table-actions>
+                        </div>
 
-                <ngx-datatable
-                    id="codeAnalysisTable"
-                    class="bootstrap"
-                    [headerHeight]="50"
-                    [limit]="20"
-                    [columnMode]="'force'"
-                    [footerHeight]="50"
-                    [rowHeight]="'auto'"
-                    [rows]="staticCodeAnalysisCategories"
-                >
-                    <ngx-datatable-column name="Category" prop="name">
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            {{ value }}
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="State" prop="state">
-                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <select [ngModel]="value" class="p-1" (change)="updateEditedCategoryField($event.target.value, row, EditableField.STATE)">
-                                <option *ngFor="let s of categoryStateList" [value]="s.value">{{ s.name }}</option>
-                            </select>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="Penalty" prop="penalty">
-                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <jhi-table-editable-field
-                                *ngIf="row.state === CategoryState.Graded"
-                                [value]="value"
-                                (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.PENALTY)"
-                            ></jhi-table-editable-field>
-                            <span *ngIf="row.state === CategoryState.Feedback" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
-                            <span *ngIf="row.state === CategoryState.Inactive" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="Max Penalty" prop="maxPenalty">
-                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <jhi-table-editable-field
-                                *ngIf="row.state === CategoryState.Graded"
-                                [value]="value"
-                                (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.MAX_PENALTY)"
-                            ></jhi-table-editable-field>
-                            <span *ngIf="row.state === CategoryState.Feedback" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
-                            <span *ngIf="row.state === CategoryState.Inactive" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
-                        </ng-template>
-                    </ngx-datatable-column>
-                </ngx-datatable>
+                        <ngx-datatable
+                            id="codeAnalysisTable"
+                            class="bootstrap"
+                            [headerHeight]="50"
+                            [limit]="20"
+                            [columnMode]="'force'"
+                            [footerHeight]="50"
+                            [rowHeight]="'auto'"
+                            [rows]="staticCodeAnalysisCategories"
+                        >
+                            <ngx-datatable-column name="Category" prop="name">
+                                <ng-template ngx-datatable-cell-template let-value="value">
+                                    <fa-icon [icon]="'square'" [styles]="{ color: categoryColors[value] || 'white' }" class="mr-2"></fa-icon>
+                                    {{ value }}
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column name="State" prop="state">
+                                <ng-template ngx-datatable-header-template>
+                                    <span>State</span
+                                    ><fa-icon
+                                        [icon]="'question-circle'"
+                                        class="text-secondary ml-2"
+                                        placement="bottom"
+                                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.state' | translate"
+                                        container="body"
+                                    ></fa-icon>
+                                </ng-template>
+                                <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                                    <select [ngModel]="value" class="p-1" (change)="updateEditedCategoryField($event.target.value, row, EditableField.STATE)">
+                                        <option *ngFor="let s of categoryStateList" [value]="s.value">{{ s.name }}</option>
+                                    </select>
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column name="Penalty" prop="penalty">
+                                <ng-template ngx-datatable-header-template>
+                                    <span>Penalty</span
+                                    ><fa-icon
+                                        [icon]="'question-circle'"
+                                        class="text-secondary ml-2"
+                                        placement="bottom"
+                                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.penalty' | translate"
+                                        container="body"
+                                    ></fa-icon>
+                                </ng-template>
+                                <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                                    <jhi-table-editable-field
+                                        *ngIf="row.state === CategoryState.Graded"
+                                        [value]="value"
+                                        (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.PENALTY)"
+                                    ></jhi-table-editable-field>
+                                    <span *ngIf="row.state === CategoryState.Feedback" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
+                                    <span *ngIf="row.state === CategoryState.Inactive" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column name="Max Penalty" prop="maxPenalty">
+                                <ng-template ngx-datatable-header-template>
+                                    <span>Max Penalty</span
+                                    ><fa-icon
+                                        [icon]="'question-circle'"
+                                        class="text-secondary ml-2"
+                                        placement="bottom"
+                                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.maxPenalty' | translate"
+                                        container="body"
+                                    ></fa-icon>
+                                </ng-template>
+                                <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                                    <jhi-table-editable-field
+                                        *ngIf="row.state === CategoryState.Graded"
+                                        [value]="value"
+                                        (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.MAX_PENALTY)"
+                                    ></jhi-table-editable-field>
+                                    <span *ngIf="row.state === CategoryState.Feedback" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
+                                    <span *ngIf="row.state === CategoryState.Inactive" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column name="Detected Issues">
+                                <ng-template ngx-datatable-cell-template let-row="row">
+                                    <jhi-category-issues-chart
+                                        [category]="row"
+                                        [issuesMap]="getIssuesMap(row.name)"
+                                        [totalStudents]="gradingStatistics?.numParticipations || 0"
+                                        [maxNumberOfIssues]="maxIssuesPerCategory"
+                                    >
+                                    </jhi-category-issues-chart>
+                                </ng-template>
+                            </ngx-datatable-column>
+                        </ngx-datatable>
+                    </div>
+                    <div>
+                        <h2 class="mb-5">
+                            <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | translate }}</span>
+                            <span
+                                *ngIf="!!changedCategoryIds.length"
+                                class="badge badge-primary"
+                                jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"
+                            ></span>
+                        </h2>
+
+                        <jhi-sca-category-distribution-chart
+                            [categories]="staticCodeAnalysisCategories"
+                            [categoryIssuesMap]="gradingStatistics?.categoryIssuesMap"
+                            [exercise]="exercise"
+                            (categoryColorsChange)="categoryColors = $event"
+                        ></jhi-sca-category-distribution-chart>
+                    </div>
+                </div>
             </div>
         </div>
     </ng-container>
