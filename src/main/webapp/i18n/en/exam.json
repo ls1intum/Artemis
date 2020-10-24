@@ -59,6 +59,8 @@
             }
         },
         "examScores": {
+            "xAxes": "Score in %",
+            "yAxes": "Number of Participants",
             "maxPoints": "Maximum Points",
             "title": "Exam Scores",
             "examStatisticsTitle": "Exam Statistics",
@@ -277,8 +279,7 @@
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the Exam to confirm."
-            },
-            "tutorDashboard": "Tutor Exam Dashboard"
+            }
         },
         "studentExamDetail": {
             "studentExam": "Student exam ({{ examTitle }})",

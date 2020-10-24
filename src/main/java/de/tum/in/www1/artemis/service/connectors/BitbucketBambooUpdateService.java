@@ -46,6 +46,9 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
     @Value("${artemis.version-control.url}")
     private URL bitbucketServerUrl;
 
+    @Value("${artemis.continuous-integration.vcs-application-link-name}")
+    private String vcsApplicationLinkName;
+
     private static final String OLD_ASSIGNMENT_REPO_NAME = "Assignment";
 
     private final Logger log = LoggerFactory.getLogger(BitbucketBambooUpdateService.class);
@@ -54,7 +57,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
 
     private final RestTemplate bitbucketRestTemplate;
 
-    // url --> Link
+    // application link name --> Link
     private final Map<String, ApplicationLinksDTO.ApplicationLinkDTO> cachedApplicationLinks = new ConcurrentHashMap<>();
 
     public BitbucketBambooUpdateService(@Qualifier("bambooRestTemplate") RestTemplate bambooRestTemplate, @Qualifier("bitbucketRestTemplate") RestTemplate bitbucketRestTemplate) {
@@ -119,7 +122,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         parameters.add("repository.stash.projectKey", bitbucketRepository.getProject().getKey());
         parameters.add("repository.stash.repositoryUrl", bitbucketRepository.getCloneSshUrl());
 
-        Optional<ApplicationLinksDTO.ApplicationLinkDTO> applicationLink = getApplicationLink(bitbucketServerUrl.toString());
+        Optional<ApplicationLinksDTO.ApplicationLinkDTO> applicationLink = getApplicationLink(vcsApplicationLinkName);
         applicationLink.ifPresent(link -> parameters.add("repository.stash.server", link.getId()));
 
         try {
@@ -135,19 +138,19 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         }
     }
 
-    private Optional<ApplicationLinksDTO.ApplicationLinkDTO> getApplicationLink(String applicationLinkUrl) {
+    private Optional<ApplicationLinksDTO.ApplicationLinkDTO> getApplicationLink(String applicationLinkName) {
         // first try to find the application link from the local cache
-        var cachedLink = findCachedLinkForUrl(applicationLinkUrl);
+        var cachedLink = findCachedLinkForName(applicationLinkName);
         if (cachedLink.isPresent()) {
             return cachedLink;
         }
-        // if there is no local application link available, load them Bamboo server
+        // if there is no local application link available, load them from the Bamboo server
         loadApplicationLinkList();
-        return findCachedLinkForUrl(applicationLinkUrl);
+        return findCachedLinkForName(applicationLinkName);
     }
 
-    private Optional<ApplicationLinksDTO.ApplicationLinkDTO> findCachedLinkForUrl(String url) {
-        return Optional.ofNullable(cachedApplicationLinks.get(url));
+    private Optional<ApplicationLinksDTO.ApplicationLinkDTO> findCachedLinkForName(String name) {
+        return Optional.ofNullable(cachedApplicationLinks.get(name));
     }
 
     private void loadApplicationLinkList() {
@@ -156,8 +159,8 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         ApplicationLinksDTO links = bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, ApplicationLinksDTO.class).getBody();
         if (links != null && links.getApplicationLinks() != null && links.getApplicationLinks().size() > 0) {
             for (var link : links.getApplicationLinks()) {
-                if (link.getRpcUrl() != null) {
-                    cachedApplicationLinks.put(link.getRpcUrl(), link);
+                if (link.getName() != null) {
+                    cachedApplicationLinks.put(link.getName(), link);
                 }
             }
         }

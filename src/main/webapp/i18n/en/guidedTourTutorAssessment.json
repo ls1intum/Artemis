@@ -1,12 +1,12 @@
 {
     "tour": {
         "courseAdministration": {
-            "tutorCourseDashboardButton": {
-                "headline": "Tutor Course Dashboard",
-                "content": "If you navigate to the <tt>Tutor Course Dashboard</tt> you will be able to get an overview of several student submissions and grade them."
+            "assessmentDashboardButton": {
+                "headline": "Assessment Dashboard",
+                "content": "If you navigate to the <tt>Assessment Dashboard</tt> you will be able to get an overview of several student submissions and grade them."
             }
         },
-        "tutorCourseDashboard": {
+        "assessmentDashboard": {
             "overview": {
                 "headline": "Overview",
                 "content": "Here you can see the statistics of your <tt>assessments</tt> and received <tt>complaints</tt> and <tt>feedback requests</tt> about your assessments."
@@ -28,7 +28,7 @@
                 "content": "Let's head over to the exercise dashboard to view the exercise details and student submissions."
             }
         },
-        "tutorExerciseDashboard": {
+        "exerciseAssessmentDashboard": {
             "instructions": {
                 "headline": "Instructions",
                 "content": "This section contains the <tt>Problem statement</tt>, <tt>Example solution</tt> and <tt>Grading instructions</tt> of the exercise. Please read through them carefully and then proceed to the next step."

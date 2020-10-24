@@ -96,7 +96,7 @@ public class CourseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final TutorDashboardService tutorDashboardService;
+    private final AssessmentDashboardService assessmentDashboardService;
 
     private final AchievementService achievementService;
 
@@ -111,7 +111,7 @@ public class CourseResource {
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
             ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
-            TutorDashboardService tutorDashboardService, AchievementService achievementService) {
+            AssessmentDashboardService assessmentDashboardService, AchievementService achievementService) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
@@ -130,7 +130,7 @@ public class CourseResource {
         this.vcsUserManagementService = vcsUserManagementService;
         this.auditEventRepository = auditEventRepository;
         this.env = env;
-        this.tutorDashboardService = tutorDashboardService;
+        this.assessmentDashboardService = assessmentDashboardService;
         this.achievementService = achievementService;
     }
 
@@ -540,7 +540,7 @@ public class CourseResource {
      */
     @GetMapping("/courses/{courseId}/for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Course> getCourseForTutorDashboard(@PathVariable long courseId) {
+    public ResponseEntity<Course> getCourseForAssessmentDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
         Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -553,7 +553,7 @@ public class CourseResource {
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
-        tutorDashboardService.prepareExercisesForTutorDashboard(course.getExercises(), tutorParticipations, false);
+        assessmentDashboardService.prepareExercisesForAssessmentDashboard(course.getExercises(), tutorParticipations, false);
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
@@ -567,7 +567,7 @@ public class CourseResource {
      */
     @GetMapping("/courses/{courseId}/stats-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForTutorDashboard(@PathVariable long courseId) {
+    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/stats-for-tutor-dashboard");
 
         Course course = courseService.findOne(courseId);
