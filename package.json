@@ -176,7 +176,7 @@
     },
     "engines": {
         "node": ">=15.0.0",
-        "yarn": ">=1.22.4"
+        "yarn": ">=1.22.10"
     },
     "lint-staged": {
         "src/{main/webapp,test}/**/*.{json,js,ts,css,scss,html}": "prettier --write",

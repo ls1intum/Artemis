@@ -15,11 +15,11 @@ bootRun {
     args = []
 }
 
-task webpack_test(type: YarnTask, dependsOn: 'yarn_install') {
+task webpack_test(type: YarnTask, dependsOn: 'yarn') {
     args = ["run", "webpack:test"]
 }
 
-task webpack(type: YarnTask, dependsOn: 'yarn_install') {
+task webpack(type: YarnTask, dependsOn: 'yarn') {
     args = ["run", "webpack:prod"]
     environment = [APP_VERSION: project.version]
 }
