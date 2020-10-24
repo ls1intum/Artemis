@@ -22,6 +22,7 @@
         "@angular/platform-browser": "10.2.0",
         "@angular/platform-browser-dynamic": "10.2.0",
         "@angular/router": "10.2.0",
+        "@fingerprintjs/fingerprintjs": "3.0.0",
         "@fortawesome/angular-fontawesome": "0.7.0",
         "@fortawesome/fontawesome-svg-core": "1.2.32",
         "@fortawesome/free-regular-svg-icons": "5.15.1",
@@ -41,7 +42,6 @@
         "core-js": "3.6.5",
         "dompurify": "2.2.0",
         "export-to-csv": "0.2.1",
-        "fingerprintjs2": "2.1.2",
         "franc-min": "5.0.0",
         "interactjs": "1.10.0",
         "jquery": "3.5.1",
@@ -55,7 +55,6 @@
         "ng2-ace-editor": "0.3.9",
         "ng2-charts": "2.4.2",
         "ng2-dnd": "5.0.2",
-        "ngx-cacheable": "1.4.3",
         "ngx-chips": "2.2.1",
         "ngx-clipboard": "14.0.1",
         "ngx-cookie-service": "10.1.1",
@@ -74,6 +73,7 @@
         "smoothscroll-polyfill": "0.4.4",
         "sockjs-client": "1.5.0",
         "split.js": "1.6.2",
+        "ts-cacheable": "1.0.1",
         "tslib": "2.0.3",
         "webstomp-client": "1.2.6",
         "yarn": "1.22.10",
@@ -113,7 +113,6 @@
         "browser-sync": "2.26.13",
         "browser-sync-webpack-plugin": "2.2.2",
         "cache-loader": "4.1.0",
-        "canvas": "2.6.1",
         "chai": "4.2.0",
         "chai-as-promised": "7.1.1",
         "chai-string": "1.5.0",
@@ -133,6 +132,7 @@
         "husky": "4.3.0",
         "jasmine-core": "3.6.0",
         "jest": "26.6.1",
+        "jest-canvas-mock": "2.3.0",
         "jest-date-mock": "1.0.8",
         "jest-junit": "12.0.0",
         "jest-preset-angular": "8.3.2",
@@ -176,7 +176,7 @@
     },
     "engines": {
         "node": ">=14.11.0",
-        "yarn": ">=1.22.4"
+        "yarn": ">=1.22.10"
     },
     "lint-staged": {
         "src/{main/webapp,test}/**/*.{json,js,ts,css,scss,html}": "prettier --write",
