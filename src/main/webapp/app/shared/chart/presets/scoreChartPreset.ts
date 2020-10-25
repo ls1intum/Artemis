@@ -1,8 +1,10 @@
 import { ChartComponent, ChartPreset } from 'app/shared/chart/chart.component';
+import { ChartDataSets } from 'chart.js';
 
 export class ScoreChartPreset implements ChartPreset {
     private chart: ChartComponent;
     private pattern: CanvasPattern;
+    private datasets: ChartDataSets[];
 
     constructor() {
         this.pattern = this.createPattern();
@@ -14,17 +16,25 @@ export class ScoreChartPreset implements ChartPreset {
         chart.setYAxe(0, { stacked: true }, false);
         chart.setXAxe(0, { stacked: true, ticks: { min: 0, stepSize: 25, callback: (value) => value + '%' } }, false);
         chart.setLegend(true);
+        if (this.datasets) {
+            chart.datasets = this.datasets;
+        }
     }
 
     setValues(positive: number, negative: number) {
-        this.chart.updateDataset(0, {
-            data: [positive - negative],
-            backgroundColor: '#28a745',
-        });
-        this.chart.updateDataset(1, {
-            data: [negative],
-            backgroundColor: this.pattern,
-        });
+        this.datasets = [
+            {
+                data: [positive - negative],
+                backgroundColor: '#28a745',
+            },
+            {
+                data: [negative],
+                backgroundColor: this.pattern,
+            },
+        ];
+        if (this.chart) {
+            this.chart.chartDatasets = this.datasets;
+        }
     }
 
     private createPattern() {
