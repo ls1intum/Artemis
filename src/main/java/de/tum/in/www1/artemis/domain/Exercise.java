@@ -165,6 +165,7 @@ public abstract class Exercise extends DomainObject {
     public Set<TutorScore> getTutorScores() {
         return this.tutorScores;
     }
+
     public void setTutorScores(Set<TutorScore> tutorScores) {
         this.tutorScores = tutorScores;
     }

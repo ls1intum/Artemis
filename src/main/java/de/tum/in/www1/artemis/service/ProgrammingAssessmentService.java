@@ -14,12 +14,15 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
     private final UserService userService;
 
+    private final TutorScoreService tutorScoreService;
+
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            SubmissionRepository submissionRepository, ExamService examService, UserService userService) {
+            SubmissionRepository submissionRepository, ExamService examService, UserService userService, TutorScoreService tutorScoreService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository,
                 examService);
         this.userService = userService;
+        this.tutorScoreService = tutorScoreService;
     }
 
     /**
@@ -31,6 +34,9 @@ public class ProgrammingAssessmentService extends AssessmentService {
      */
     @Transactional
     public Result saveManualAssessment(Result result) {
+        // remove result from TutorScore because the assessor changes here
+        tutorScoreService.removeResult(result);
+
         result.setHasFeedback(!result.getFeedbacks().isEmpty());
 
         User user = userService.getUserWithGroupsAndAuthorities();

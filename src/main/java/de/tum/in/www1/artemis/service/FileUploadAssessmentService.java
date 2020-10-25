@@ -21,15 +21,18 @@ public class FileUploadAssessmentService extends AssessmentService {
 
     private final FileUploadSubmissionService fileUploadSubmissionService;
 
+    private final TutorScoreService tutorScoreService;
+
     public FileUploadAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository,
             StudentParticipationRepository studentParticipationRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
-            SubmissionRepository submissionRepository, ExamService examService) {
+            SubmissionRepository submissionRepository, ExamService examService, TutorScoreService tutorScoreService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository,
                 examService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.userService = userService;
+        this.tutorScoreService = tutorScoreService;
     }
 
     /**
@@ -70,6 +73,9 @@ public class FileUploadAssessmentService extends AssessmentService {
         if (generalFeedbackCount > 1) {
             throw new BadRequestAlertException("There cannot be more than one general Feedback per Assessment", "assessment", "moreThanOneGeneralFeedback");
         }
+
+        // remove result from TutorScore because the assessor changes here
+        tutorScoreService.removeResult(result);
 
         result.setHasComplaint(false);
         result.setExampleResult(fileUploadSubmission.isExampleSubmission());

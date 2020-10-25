@@ -120,7 +120,8 @@ public class StudentScoreService {
             studentScore.setScore(updatedResult.getScore());
 
             studentScoreRepository.save(studentScore);
-        } else {
+        }
+        else {
             StudentScore studentScore = new StudentScore(student.get(), exercise.get(), updatedResult);
             studentScore.setScore(updatedResult.getScore());
 

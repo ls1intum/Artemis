@@ -33,16 +33,19 @@ public class ModelingAssessmentService extends AssessmentService {
 
     private final CompassService compassService;
 
+    private final TutorScoreService tutorScoreService;
+
     public ModelingAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, CompassService compassService,
             ModelingSubmissionRepository modelingSubmissionRepository, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            ModelingSubmissionService modelingSubmissionService, SubmissionRepository submissionRepository, ExamService examService) {
+            ModelingSubmissionService modelingSubmissionService, SubmissionRepository submissionRepository, ExamService examService, TutorScoreService tutorScoreService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository,
                 examService);
         this.userService = userService;
         this.compassService = compassService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.modelingSubmissionService = modelingSubmissionService;
+        this.tutorScoreService = tutorScoreService;
     }
 
     /**
@@ -81,6 +84,9 @@ public class ModelingAssessmentService extends AssessmentService {
         if (result == null) {
             result = modelingSubmissionService.setNewResult(modelingSubmission);
         }
+
+        // remove result from TutorScore because the assessor changes here
+        tutorScoreService.removeResult(result);
 
         result.setHasComplaint(false);
         result.setExampleResult(modelingSubmission.isExampleSubmission());

@@ -287,9 +287,14 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         result.setAssessor(user2);
         resultRepo.save(result);
 
+        // manual because deleting from old is done in services
+        tutorScore = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        tutorScore.setAssessments(tutorScore.getAssessments() - 1);
+        tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() - exercise.getMaxScore());
+        tutorScoresRepo.save(tutorScore);
+
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
-        // TODO: FIX
-        // assertThat(response.getAssessments()).as("assessments are as expected").isEqualTo(0);
+        assertThat(response.getAssessments()).as("assessments are as expected").isEqualTo(0);
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user2.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAssessments()).as("assessments are as expected").isEqualTo(1);
     }
@@ -310,7 +315,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(response.getAssessmentsPoints()).as("assessment points are as expected").isEqualTo(0);
     }
 
-    /*@Test
+    @Test
     @WithMockUser(value = "tutor3", roles = "TA")
     public void updateTutorScoreWithComplaint() throws Exception {
         user = userRepo.findAllInGroup("tutor").get(2);
@@ -324,6 +329,9 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         result.setAssessor(user);
         resultRepo.save(result);
 
+        // removal is somewhere else
+        tutorScoreService.removeResult(result);
+
         TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAllComplaints()).as("complaints amount is as expected").isEqualTo(0);
 
@@ -332,15 +340,21 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         complaint.setResult(result);
         complaintRepo.save(complaint);
         result.setHasComplaint(true);
+        result.setComplaint(complaint);
         resultRepo.save(result);
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAllComplaints()).as("complaints amount is as expected").isEqualTo(1);
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
         complaintResponseRepo.save(complaintResponse);
-        // change score to trigger PostUpdate
+        complaint.setComplaintResponse(complaintResponse);
+        complaintRepo.save(complaint);
+        // change score to trigger PreUpdate
         result.setScore(95L);
         resultRepo.save(result);
+
+        // removal is somewhere else
+        tutorScoreService.removeResult(result);
 
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAllComplaints()).as("complaints amount is as expected").isEqualTo(1);
@@ -360,6 +374,9 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         result.setAssessor(user);
         resultRepo.save(result);
 
+        // removal is somewhere else
+        tutorScoreService.removeResult(result);
+
         TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAllFeedbackRequests()).as("feedback request amount is as expected").isEqualTo(0);
 
@@ -367,15 +384,21 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         feedbackRequest = new Complaint().result(result).complaintText("More please").complaintType(ComplaintType.MORE_FEEDBACK);
         complaintRepo.save(feedbackRequest);
         result.setHasComplaint(true);
+        result.setComplaint(feedbackRequest);
         resultRepo.save(result);
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAllFeedbackRequests()).as("feedback request amount is as expected").isEqualTo(1);
 
         ComplaintResponse answeredFeedbackRequest = new ComplaintResponse().complaint(feedbackRequest.accepted(true)).reviewer(user);
         complaintResponseRepo.save(answeredFeedbackRequest);
+        feedbackRequest.setComplaintResponse(answeredFeedbackRequest);
+        complaintRepo.save(feedbackRequest);
         // change score to trigger PostUpdate
         result.setScore(90L);
         resultRepo.save(result);
+
+        // removal is somewhere else
+        tutorScoreService.removeResult(result);
 
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAllFeedbackRequests()).as("feedback request amount is as expected").isEqualTo(1);
@@ -400,9 +423,16 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         complaint.setResult(result);
         complaintRepo.save(complaint);
         result.setHasComplaint(true);
+        result.setComplaint(complaint);
         resultRepo.save(result);
 
-        TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        // removal is somewhere else
+        tutorScore = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        tutorScore.setAssessments(tutorScore.getAssessments() - 1);
+        tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() - exercise.getMaxScore());
+        tutorScoresRepo.save(tutorScore);
+
+        var response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAssessmentsPoints()).as("assessment points are as expected").isEqualTo(exercise.getMaxScore());
         assertThat(response.getAllComplaints()).as("complaints amount is as expected").isEqualTo(1);
 
@@ -414,6 +444,12 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         tutorScore.setAllComplaints(tutorScore.getAllComplaints() - 1);
         tutorScoresRepo.save(tutorScore);
         resultRepo.delete(result);
+
+        // removal is somewhere else
+        tutorScore = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        tutorScore.setAssessments(tutorScore.getAssessments() - 1);
+        tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() - exercise.getMaxScore());
+        tutorScoresRepo.save(tutorScore);
 
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAssessmentsPoints()).as("assessment points are as expected").isEqualTo(0);
@@ -439,25 +475,37 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         feedbackRequest.setResult(result);
         complaintRepo.save(feedbackRequest);
         result.setHasComplaint(true);
+        result.setComplaint(feedbackRequest);
         resultRepo.save(result);
 
-        TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        tutorScore = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        tutorScore.setAssessments(tutorScore.getAssessments() - 1);
+        tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() - exercise.getMaxScore());
+        tutorScoresRepo.save(tutorScore);
+
+        var response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAssessmentsPoints()).as("assessment points are as expected").isEqualTo(exercise.getMaxScore());
         assertThat(response.getAllFeedbackRequests()).as("feedback requests amount is as expected").isEqualTo(1);
 
         complaintRepo.delete(feedbackRequest);
         result.setHasComplaint(false);
         resultRepo.save(result);
-        // manual removal because of missing complaint -> no idea how else to test
+        // remove missing complaint
         tutorScore = tutorScoresRepo.findById(response.getId()).get();
         tutorScore.setAllFeedbackRequests(tutorScore.getAllFeedbackRequests() - 1);
         tutorScoresRepo.save(tutorScore);
         resultRepo.delete(result);
 
+        // removal is somewhere else
+        tutorScore = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        tutorScore.setAssessments(tutorScore.getAssessments() - 1);
+        tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() - exercise.getMaxScore());
+        tutorScoresRepo.save(tutorScore);
+
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAssessmentsPoints()).as("assessment points are as expected").isEqualTo(0);
         assertThat(response.getAllComplaints()).as("feedback requests amount is as expected").isEqualTo(0);
-    }*/
+    }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")

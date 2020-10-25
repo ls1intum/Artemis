@@ -116,6 +116,20 @@ public class Result extends DomainObject {
     @Nullable
     private StudentScore studentScore = null;
 
+    @OneToOne(mappedBy = "result", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties(value = "result", allowSetters = true)
+    @Nullable
+    private Complaint complaint = null;
+
+    public Complaint getComplaint() {
+        return this.complaint;
+    }
+
+    public void setComplaint(Complaint complaint) {
+        this.complaint = complaint;
+    }
+
     public String getResultString() {
         return resultString;
     }

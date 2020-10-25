@@ -27,11 +27,13 @@ public class TextAssessmentService extends AssessmentService {
 
     private final FeedbackConflictRepository feedbackConflictRepository;
 
+    private final TutorScoreService tutorScoreService;
+
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
             StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionRepository submissionRepository,
             TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ExamService examService,
-            FeedbackConflictRepository feedbackConflictRepository) {
+            FeedbackConflictRepository feedbackConflictRepository, TutorScoreService tutorScoreService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository,
                 examService);
         this.textSubmissionRepository = textSubmissionRepository;
@@ -39,6 +41,7 @@ public class TextAssessmentService extends AssessmentService {
         this.textBlockService = textBlockService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
         this.feedbackConflictRepository = feedbackConflictRepository;
+        this.tutorScoreService = tutorScoreService;
     }
 
     /**
@@ -79,6 +82,9 @@ public class TextAssessmentService extends AssessmentService {
 
         Optional<Result> desiredResult = resultRepository.findById(resultId);
         Result result = desiredResult.orElseGet(Result::new);
+
+        // remove result from TutorScore because the assessor changes here
+        tutorScoreService.removeResult(result);
 
         User user = userService.getUser();
         result.setAssessor(user);

@@ -67,8 +67,6 @@ public class ResultListener {
         studentScoreService.updateResult(updatedResult);
 
         if (updatedResult.getAssessor() != null) {
-            // remove from tutor scores for future update
-            tutorScoreService.removeResult(updatedResult);
             tutorScoreService.updateResult(updatedResult);
         }
     }
@@ -89,7 +87,7 @@ public class ResultListener {
         if (updatedResult.getAssessor() != null) {
             // update tutor scores
             log.info("TutorScores for Result " + updatedResult + " will be updated");
-            //tutorScoreService.updateResult(updatedResult);
+            // tutorScoreService.updateResult(updatedResult);
         }
     }
 

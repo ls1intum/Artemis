@@ -6,8 +6,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
@@ -40,7 +38,7 @@ public class TutorScoreService {
     private final ExerciseRepository exerciseRepository;
 
     public TutorScoreService(TutorScoreRepository tutorScoreRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-                             ResultRepository resultRepository, ExerciseRepository exerciseRepository) {
+            ResultRepository resultRepository, ExerciseRepository exerciseRepository) {
         this.tutorScoreRepository = tutorScoreRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
@@ -133,16 +131,40 @@ public class TutorScoreService {
     /**
      * Deletes all TutorScores for result deletedResult.
      *
-     * @param result result to be deleted
+     * @param deletedResult result to be deleted
      */
-    public void removeResult(Result result) {
-        // var deletedResult = result;
+    public void removeResult(Result deletedResult) {
+        if (deletedResult.getParticipation() == null || deletedResult.getParticipation().getId() == null) {
+            return;
+        }
 
-        // TODO: handle different assessor
-        // override deleted result in case there is one because of possibility of a different assessor
-        // var oldResult = resultRepository.findById(result.getId());
+        if (deletedResult.getParticipation().getClass() != StudentParticipation.class) {
+            return;
+        }
 
-        removeResultFromTutorScore(result);
+        var participation = (StudentParticipation) deletedResult.getParticipation();
+
+        if (participation.getExercise() == null) {
+            return;
+        }
+
+        var exercise = exerciseRepository.findById(participation.getExercise().getId());
+
+        var existingTutorScore = findTutorScoreFromExercise(exercise.get(), deletedResult.getAssessor());
+
+        if (existingTutorScore.isPresent()) {
+            TutorScore tutorScore = existingTutorScore.get();
+
+            if (tutorScore.getAssessments() > 0) {
+                tutorScore.setAssessments(tutorScore.getAssessments() - 1);
+                tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() - exercise.get().getMaxScore());
+            }
+
+            tutorScore = removeComplaintsAndFeedbackRequests(tutorScore, deletedResult, exercise.get());
+
+            tutorScoreRepository.save(tutorScore);
+            log.info("Updated existing TutorScore: " + tutorScore);
+        }
     }
 
     /**
@@ -178,7 +200,7 @@ public class TutorScoreService {
             tutorScore.setAssessments(tutorScore.getAssessments() + 1);
             tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() + maxScore);
 
-            // tutorScore = addComplaintsAndFeedbackRequests(updatedResult, tutorScore, exercise.get());
+            tutorScore = addComplaintsAndFeedbackRequests(tutorScore, updatedResult, exercise.get());
 
             tutorScoreRepository.save(tutorScore);
             log.info("Updated existing TutorScore: " + tutorScore);
@@ -186,7 +208,7 @@ public class TutorScoreService {
         else {
             TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise.get(), 1, maxScore);
 
-            // newScore = addComplaintsAndFeedbackRequests(updatedResult, newScore, exercise.get());
+            newScore = addComplaintsAndFeedbackRequests(newScore, updatedResult, exercise.get());
 
             tutorScoreRepository.save(newScore);
             log.info("Added new TutorScore: " + newScore);
@@ -196,7 +218,7 @@ public class TutorScoreService {
     private Optional<TutorScore> findTutorScoreFromExercise(Exercise exercise, User assessor) {
         var tutorScores = exercise.getTutorScores();
 
-        for (TutorScore score: tutorScores) {
+        for (TutorScore score : tutorScores) {
             if (score.getTutor().getId() == assessor.getId()) {
                 return Optional.of(score);
             }
@@ -208,14 +230,12 @@ public class TutorScoreService {
     /**
      * Helper method for updating complaints and feedback requests in tutor scores.
      */
-    private TutorScore addComplaintsAndFeedbackRequests(Result result, TutorScore tutorScore, Exercise exercise) {
+    private TutorScore addComplaintsAndFeedbackRequests(TutorScore tutorScore, Result result, Exercise exercise) {
         // add complaints and feedback requests
         if (Boolean.TRUE.equals(result.hasComplaint())) {
-            var complaintOptional = complaintRepository.findByResult_Id(result.getId());
+            var complaint = result.getComplaint();
 
-            if (complaintOptional.isPresent()) {
-                Complaint complaint = complaintOptional.get();
-
+            if (complaint != null) {
                 // complaint
                 if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
                     tutorScore.setAllComplaints(tutorScore.getAllComplaints() + 1);
@@ -226,17 +246,18 @@ public class TutorScoreService {
                     }
 
                     // complaint response
-                    Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
+                    ComplaintResponse complaintResponse = complaint.getComplaintResponse();
 
-                    if (complaintResponse.isPresent()) {
-                        var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.get().getReviewer());
+                    if (complaintResponse != null) {
+                        var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.getReviewer());
 
                         TutorScore fromComplaint;
 
                         if (fromComplaintResponse.isPresent()) {
                             fromComplaint = fromComplaintResponse.get();
-                        } else {
-                            fromComplaint = new TutorScore(complaintResponse.get().getReviewer(), exercise, 0, 0);
+                        }
+                        else {
+                            fromComplaint = new TutorScore(complaintResponse.getReviewer(), exercise, 0, 0);
                         }
 
                         fromComplaint.setComplaintResponses(fromComplaint.getComplaintResponses() + 1);
@@ -251,17 +272,18 @@ public class TutorScoreService {
                     tutorScore.setFeedbackRequestsPoints(tutorScore.getFeedbackRequestsPoints() + exercise.getMaxScore());
 
                     // answered feedback request
-                    Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
+                    ComplaintResponse complaintResponse = complaint.getComplaintResponse();
 
-                    if (complaintResponse.isPresent()) {
-                        var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.get().getReviewer());
+                    if (complaintResponse != null) {
+                        var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.getReviewer());
 
                         TutorScore fromComplaint;
 
                         if (fromComplaintResponse.isPresent()) {
                             fromComplaint = fromComplaintResponse.get();
-                        } else {
-                            fromComplaint = new TutorScore(complaintResponse.get().getReviewer(), exercise, 0, 0);
+                        }
+                        else {
+                            fromComplaint = new TutorScore(complaintResponse.getReviewer(), exercise, 0, 0);
                         }
 
                         fromComplaint.setAnsweredFeedbackRequests(fromComplaint.getAnsweredFeedbackRequests() + 1);
@@ -280,53 +302,14 @@ public class TutorScoreService {
     }
 
     /**
-     * Helper method for removing result from tutor scores.
-     */
-    private void removeResultFromTutorScore(Result deletedResult) {
-        if (deletedResult.getParticipation() == null || deletedResult.getParticipation().getId() == null) {
-            return;
-        }
-
-        if (deletedResult.getParticipation().getClass() != StudentParticipation.class) {
-            return;
-        }
-
-        var participation = (StudentParticipation) deletedResult.getParticipation();
-
-        if (participation.getExercise() == null) {
-            return;
-        }
-
-        var exercise = exerciseRepository.findById(participation.getExercise().getId());
-
-        var existingTutorScore = findTutorScoreFromExercise(exercise.get(), deletedResult.getAssessor());
-
-        if (existingTutorScore.isPresent()) {
-            TutorScore tutorScore = existingTutorScore.get();
-
-            if (tutorScore.getAssessments() > 0) {
-                tutorScore.setAssessments(tutorScore.getAssessments() - 1);
-                tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() - exercise.get().getMaxScore());
-            }
-
-            // tutorScore = removeComplaintsAndFeedbackRequests(tutorScore, deletedResult, exercise.get());
-
-            tutorScoreRepository.save(tutorScore);
-            log.info("Updated existing TutorScore: " + tutorScore);
-        }
-    }
-
-    /**
      * Helper method for removing complaints and feedback requests from tutor scores.
      */
     private TutorScore removeComplaintsAndFeedbackRequests(TutorScore tutorScore, Result deletedResult, Exercise exercise) {
         // handle complaints and feedback requests
         if (Boolean.TRUE.equals(deletedResult.hasComplaint())) {
-            var complaintOptional = complaintRepository.findByResult_Id(deletedResult.getId());
+            var complaint = deletedResult.getComplaint();
 
-            if (complaintOptional.isPresent()) {
-                Complaint complaint = complaintOptional.get();
-
+            if (complaint != null) {
                 // complaint
                 if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
                     if (tutorScore.getAllComplaints() > 0) {
@@ -339,17 +322,18 @@ public class TutorScoreService {
                     }
 
                     // complaint response
-                    Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
+                    ComplaintResponse complaintResponse = complaint.getComplaintResponse();
 
-                    if (complaintResponse.isPresent()) {
-                        var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.get().getReviewer());
+                    if (complaintResponse != null) {
+                        var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.getReviewer());
 
                         TutorScore fromComplaint;
 
                         if (fromComplaintResponse.isPresent()) {
                             fromComplaint = fromComplaintResponse.get();
-                        } else {
-                            fromComplaint = new TutorScore(complaintResponse.get().getReviewer(), exercise, 0, 0);
+                        }
+                        else {
+                            fromComplaint = new TutorScore(complaintResponse.getReviewer(), exercise, 0, 0);
                         }
 
                         if (fromComplaint.getComplaintResponses() > 0) {
@@ -369,17 +353,18 @@ public class TutorScoreService {
                     }
 
                     // answered feedback request
-                    Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
+                    ComplaintResponse complaintResponse = complaint.getComplaintResponse();
 
-                    if (complaintResponse.isPresent()) {
-                        var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.get().getReviewer());
+                    if (complaintResponse != null) {
+                        var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.getReviewer());
 
                         TutorScore fromComplaint;
 
                         if (fromComplaintResponse.isPresent()) {
                             fromComplaint = fromComplaintResponse.get();
-                        } else {
-                            fromComplaint = new TutorScore(complaintResponse.get().getReviewer(), exercise, 0, 0);
+                        }
+                        else {
+                            fromComplaint = new TutorScore(complaintResponse.getReviewer(), exercise, 0, 0);
                         }
 
                         if (fromComplaint.getAnsweredFeedbackRequests() > 0) {
