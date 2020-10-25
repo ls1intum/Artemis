@@ -181,7 +181,6 @@ export class ResultDetailComponent implements OnInit {
     };
 
     private filterFeedbackItems(feedbackList: FeedbackItem[]) {
-
         if (this.exerciseType !== ExerciseType.PROGRAMMING || this.showTestDetails) {
             return [...feedbackList];
         } else {
