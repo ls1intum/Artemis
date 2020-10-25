@@ -34,6 +34,7 @@ import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizStatus, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { StudentQuestionsComponent } from 'app/overview/student-questions/student-questions.component';
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
 @Component({
@@ -64,6 +65,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     isAfterAssessmentDueDate: boolean;
     public gradingCriteria: GradingCriterion[];
     showWelcomeAlert = false;
+    private studentQuestions?: StudentQuestionsComponent;
 
     /**
      * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
@@ -159,6 +161,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
         this.subscribeForNewResults();
         this.subscribeToTeamAssignmentUpdates();
+
+        if (this.studentQuestions) {
+            this.onChildActivate(this.studentQuestions);
+        }
     }
 
     /**
@@ -408,7 +414,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
 
-    onChildActivate(ref: any) {
-        console.log(ref);
+    onChildActivate(ref: StudentQuestionsComponent) {
+        this.studentQuestions = ref;
+        if (this.exercise) {
+            ref.exercise = this.exercise;
+            ref.loadQuestions();
+        }
     }
 }

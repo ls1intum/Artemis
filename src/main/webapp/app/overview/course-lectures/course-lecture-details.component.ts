@@ -11,6 +11,7 @@ import { FileService } from 'app/shared/http/file.service';
 import { Attachment } from 'app/entities/attachment.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { AttachmentService } from 'app/lecture/attachment.service';
+import { StudentQuestionsComponent } from 'app/overview/student-questions/student-questions.component';
 
 @Component({
     selector: 'jhi-course-lecture-details',
@@ -21,6 +22,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     public lecture: Lecture | null;
     public isDownloadingLink: string | null;
+    private studentQuestions?: StudentQuestionsComponent;
 
     constructor(
         private $location: Location,
@@ -51,6 +53,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 this.lecture = null;
                 this.lectureService.find(params.lectureId).subscribe((lectureResponse: HttpResponse<Lecture>) => {
                     this.lecture = lectureResponse.body;
+                    if (this.studentQuestions) {
+                        this.onChildActivate(this.studentQuestions);
+                    }
                 });
             }
         });
@@ -83,6 +88,14 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             this.isDownloadingLink = downloadUrl;
             this.fileService.downloadFileWithAccessToken(downloadUrl);
             this.isDownloadingLink = null;
+        }
+    }
+
+    onChildActivate(ref: StudentQuestionsComponent) {
+        this.studentQuestions = ref;
+        if (this.lecture) {
+            ref.lecture = this.lecture;
+            ref.loadQuestions();
         }
     }
 }

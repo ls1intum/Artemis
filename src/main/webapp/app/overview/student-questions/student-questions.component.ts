@@ -22,6 +22,7 @@ import { ActivatedRoute } from '@angular/router';
 export class StudentQuestionsComponent implements OnInit, AfterViewInit {
     @Input() exercise: Exercise;
     @Input() lecture: Lecture;
+
     studentQuestions: StudentQuestion[];
     isEditMode: boolean;
     collapsed = false;
@@ -47,13 +48,16 @@ export class StudentQuestionsComponent implements OnInit, AfterViewInit {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
         });
-        console.log(this.route);
+        this.loadQuestions();
+    }
+
+    loadQuestions() {
         if (this.exercise) {
             // in this case the student questions are preloaded
             this.studentQuestions = StudentQuestionsComponent.sortStudentQuestionsByVote(this.exercise.studentQuestions!);
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
             this.courseId = this.exercise.course!.id!;
-        } else {
+        } else if (this.lecture) {
             // in this case the student questions are preloaded
             this.studentQuestions = StudentQuestionsComponent.sortStudentQuestionsByVote(this.lecture.studentQuestions!);
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.lecture.course!);
