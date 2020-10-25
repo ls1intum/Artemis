@@ -2,23 +2,26 @@ package de.tum.in.www1.artemis.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.connector.athene.AtheneRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackConflictType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.TextAssessmentConflictService;
 import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
@@ -44,9 +47,13 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     @Autowired
     ResultRepository resultRepository;
 
-    AutomaticTextAssessmentConflictService automaticTextAssessmentConflictService;
-
+    @Autowired
     TextAssessmentConflictService textAssessmentConflictService;
+
+    @Autowired
+    private AtheneRequestMockProvider atheneRequestMockProvider;
+
+    AutomaticTextAssessmentConflictService automaticTextAssessmentConflictService;
 
     TextExercise textExercise;
 
@@ -54,22 +61,27 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     public void init() {
         database.addUsers(2, 1, 0);
         textExercise = (TextExercise) database.addCourseWithOneFinishedTextExercise().getExercises().iterator().next();
+
+        atheneRequestMockProvider.enableMockingOfRequests();
+        ReflectionTestUtils.setField(Objects.requireNonNull(ReflectionTestUtils.getField(textAssessmentConflictService, "connector")), "restTemplate",
+                atheneRequestMockProvider.restTemplate);
     }
 
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+        atheneRequestMockProvider.reset();
     }
 
     /**
      * Creates two text submissions with text blocks and feedback, adds text blocks to a cluster.
      * Mocks TextAssessmentConflictService class to not to connect to remote Athene service
      * Then checks if the text assessment conflicts are created and stored correctly.
-     * @throws NetworkingError - it never throws an error since the TextAssessmentConflictService is a mock class
+     * @throws JsonProcessingException - exception related to mapping the values to json
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createFeedbackConflicts() throws NetworkingError {
+    public void createFeedbackConflicts() throws JsonProcessingException {
         TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("first text submission", Language.ENGLISH, true);
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("second text submission", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission1, "student1");
@@ -97,16 +109,12 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         feedback1 = textSubmission1.getResult().getFeedbacks().get(0);
         feedback2 = textSubmission2.getResult().getFeedbacks().get(0);
 
-        // TODO: Birtan Gültekin we should not mock those services
-        textAssessmentConflictService = mock(TextAssessmentConflictService.class);
-        when(textAssessmentConflictService.checkFeedbackConsistencies(any(), anyLong(), anyInt())).thenReturn(createRemoteServiceResponse(feedback1, feedback2));
+        atheneRequestMockProvider.mockFeedbackConsistency(createRemoteServiceResponse(feedback1, feedback2));
 
         automaticTextAssessmentConflictService = new AutomaticTextAssessmentConflictService(feedbackConflictRepository, feedbackRepository, textBlockRepository,
                 textAssessmentConflictService);
 
         automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(List.of(textBlock1), new ArrayList<>(Collections.singletonList(feedback1)), textExercise.getId());
-
-        verify(textAssessmentConflictService, timeout(100).times(1)).checkFeedbackConsistencies(any(), anyLong(), anyInt());
 
         assertThat(feedbackConflictRepository.findAll(), hasSize(1));
         assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback(), either(is(feedback1)).or(is(feedback2)));
@@ -118,11 +126,11 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      * Creates and stores a Text Assessment Conflict in the database.
      * Then sends a conflict with same feedback ids and different conflict type.
      * Checks if the conflict type in the database has changed.
-     * @throws NetworkingError - it never throws an error since the TextAssessmentConflictService is a mock class
+     * @throws JsonProcessingException - exception related to mapping the values to json
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void changedFeedbackConflictsType() throws NetworkingError {
+    public void changedFeedbackConflictsType() throws JsonProcessingException {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, "student1");
 
@@ -143,9 +151,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         feedbackConflict.setType(FeedbackConflictType.INCONSISTENT_COMMENT);
         feedbackConflictRepository.save(feedbackConflict);
 
-        // TODO: Birtan Gültekin we should not mock those services
-        textAssessmentConflictService = mock(TextAssessmentConflictService.class);
-        when(textAssessmentConflictService.checkFeedbackConsistencies(any(), anyLong(), anyInt())).thenReturn(createRemoteServiceResponse(feedback1, feedback2));
+        atheneRequestMockProvider.mockFeedbackConsistency(createRemoteServiceResponse(feedback1, feedback2));
 
         automaticTextAssessmentConflictService = new AutomaticTextAssessmentConflictService(feedbackConflictRepository, feedbackRepository, textBlockRepository,
                 textAssessmentConflictService);
@@ -163,11 +169,11 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      * Then a same feedback is sent to the conflict checking class.
      * Empty list is returned from the mock object. (meaning: no conflicts have found)
      * Checks if the conflict set as solved in the database.
-     * @throws NetworkingError - it never throws an error since the TextAssessmentConflictService is a mock class
+     * @throws JsonProcessingException - exception related to mapping the values to json
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void solveFeedbackConflicts() throws NetworkingError {
+    public void solveFeedbackConflicts() throws JsonProcessingException {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, "student1");
 
@@ -187,9 +193,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(feedback1, feedback2);
         feedbackConflictRepository.save(feedbackConflict);
 
-        // TODO: Birtan Gültekin we should not mock those services
-        textAssessmentConflictService = mock(TextAssessmentConflictService.class);
-        when(textAssessmentConflictService.checkFeedbackConsistencies(any(), anyLong(), anyInt())).thenReturn(List.of());
+        atheneRequestMockProvider.mockFeedbackConsistency(List.of());
 
         automaticTextAssessmentConflictService = new AutomaticTextAssessmentConflictService(feedbackConflictRepository, feedbackRepository, textBlockRepository,
                 textAssessmentConflictService);
