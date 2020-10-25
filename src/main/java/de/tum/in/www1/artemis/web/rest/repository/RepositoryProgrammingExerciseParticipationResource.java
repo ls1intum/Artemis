@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.*;
@@ -271,7 +270,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
         Result latestResult = latestSubmission.getResult();
         // We don't try to fetch build logs for manual results (they were not created through the build but manually by an assessor)!
-        if (latestResult != null && latestResult.getAssessmentType().equals(AssessmentType.MANUAL)) {
+        if (latestResult != null && latestResult.isManualResult()) {
             // Don't throw an error here, just return an empty list.
             return ResponseEntity.ok(new ArrayList<>());
         }

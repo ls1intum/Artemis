@@ -120,7 +120,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         modelingExercise = modelingExerciseRepository.findAll().get(0);
         modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseRepository.save(modelingExercise);
-        studentParticipation = database.addParticipationForExercise(modelingExercise, "student2");
+        studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student2");
 
         result = ModelFactory.generateResult(true, 200).resultString("Good effort!").participation(programmingExerciseStudentParticipation);
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
@@ -524,7 +524,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         var modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
         course.addExercises(modelingExercise);
         modelingExerciseRepository.save(modelingExercise);
-        var participation = database.addParticipationForExercise(modelingExercise, "student1");
+        var participation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
         var result = database.addResultToParticipation(null, null, participation);
         request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
                 HttpStatus.BAD_REQUEST);

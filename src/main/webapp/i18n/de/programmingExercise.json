@@ -116,6 +116,7 @@
                     "noUnsavedChanges": "Keine ungespeicherten Änderungen"
                 },
                 "testCases": {
+                    "title": "Testfälle",
                     "resetSuccessful": "Die Tests wurden erfolgreich zurückgesetzt.",
                     "resetFailed": "Die Tests konnten nicht zurückgesetzt werden.",
                     "updated": "Die Testfälle wurden erfolgreich gespeichert.",
@@ -124,10 +125,20 @@
                     "showInactive": "Inaktive Testfälle anzeigen"
                 },
                 "categories": {
+                    "title": "Code Analyse Kategorien",
                     "notGraded": "Nicht bewertet.",
                     "noFeedback": "Ohne sichtbares Feedback.",
                     "updated": "Die Kategorien wurden erfolgreich gespeichert.",
                     "couldNotBeUpdated": "Die folgenden Kategorien konnten nicht gespeichert werden: {{categories}}."
+                },
+                "charts": {
+                    "title": "Diagramme",
+                    "preview": "Vorschau"
+                },
+                "help": {
+                    "state": "Gibt an ob Issues in dieser Kategorie den Studenten angezeigt und bewertet werden sollen.",
+                    "penalty": "Punktabzüge werden auf jedes erkannte Issue in dieser Kategorie angewendet.",
+                    "maxPenalty": "Der maximale Punktabzug über alle Issues eines Studenten in dieser Kategorie."
                 },
                 "updatedGradingConfigShort": "Veränderte Bewertung",
                 "updatedGradingConfig": "Achtung: Du hast die Bewertung der Aufgabe verändert, aber nicht alle Einreichungen der Studenten mit den aktualisierten Testfall Einstellungen erneut ausgeführt. Neu erstellte Ergebnisse werden mit den aktualisierten Bewertungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Du kannst die erneute Ausführung der Einreichungen auch zu einem späteren Zeitpunkt veranlassen. Willst du wirklich den Bereich verlassen?",
