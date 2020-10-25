@@ -289,7 +289,7 @@ public class ProgrammingExerciseGradingService {
             updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            updateResultString(result, successfulTestCases, testCasesForCurrentDate, exercise);
+            updateResultString(result, successfulTestCases, testCasesForCurrentDate, staticCodeAnalysisFeedback, exercise);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0 && testCaseFeedback.size() > 0) {
@@ -442,11 +442,19 @@ public class ProgrammingExerciseGradingService {
      * @param result of the build run.
      * @param successfulTestCases test cases with positive feedback.
      * @param allTests of the given programming exercise.
+     * @param scaFeedback for the result
+     * @param exercise to which this result and the test cases belong
      */
-    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests, ProgrammingExercise exercise) {
+    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests, List<Feedback> scaFeedback,
+            ProgrammingExercise exercise) {
         if (result.getAssessmentType() == AssessmentType.AUTOMATIC) {
             // Create a new result string that reflects passed, failed & not executed test cases.
             String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
+
+            // Show number of found quality issues if static code analysis is enabled
+            if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
+                newResultString += ", " + scaFeedback.size() + " quality issues found";
+            }
             result.setResultString(newResultString);
         }
         else {
