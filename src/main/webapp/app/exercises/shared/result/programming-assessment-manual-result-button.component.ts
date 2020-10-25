@@ -10,7 +10,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Router } from '@angular/router';
 
 @Component({
-    selector: 'jhi-manual-result-button',
+    selector: 'jhi-programming-assessment-manual-result',
     template: `
         <jhi-button
             [disabled]="!participationId"
@@ -22,7 +22,7 @@ import { Router } from '@angular/router';
         ></jhi-button>
     `,
 })
-export class ManualResultButtonComponent implements OnChanges, OnDestroy {
+export class ProgrammingAssessmentManualResultButtonComponent implements OnChanges, OnDestroy {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
     @Input() participationId: number;

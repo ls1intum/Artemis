@@ -283,13 +283,13 @@
                                         </ng-template>
                                     </ng-container>
                                     <ng-template #programmingAssessment>
-                                        <jhi-manual-result-button
+                                        <jhi-programming-assessment-manual-result
                                             [participationId]="submission.participation.id"
                                             [latestResult]="submission.result"
                                             [exercise]="exercise"
                                             [isTestRun]="isTestRun"
                                             (onResultModified)="loadAll()"
-                                        ></jhi-manual-result-button>
+                                        ></jhi-programming-assessment-manual-result>
                                     </ng-template>
                                 </ng-container>
                             </td>
@@ -317,13 +317,13 @@
                                     {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | translate }}
                                 </button>
                                 <ng-template #programmingAssessment>
-                                    <jhi-manual-result-button
+                                    <jhi-programming-assessment-manual-result
                                         [participationId]="unassessedSubmission.participation!.id"
                                         [latestResult]="unassessedSubmission.result"
                                         [exercise]="exercise"
                                         [isTestRun]="isTestRun"
                                         (onResultModified)="loadAll()"
-                                    ></jhi-manual-result-button>
+                                    ></jhi-programming-assessment-manual-result>
                                 </ng-template>
                             </td>
                         </tr>

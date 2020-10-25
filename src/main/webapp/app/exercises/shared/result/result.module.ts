@@ -7,12 +7,12 @@ import { SubmissionResultStatusComponent } from 'app/overview/submission-result-
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
-import { ManualResultButtonComponent } from 'app/exercises/shared/result/manual-result-button.component';
+import { ProgrammingAssessmentManualResultButtonComponent } from 'app/exercises/shared/result/programming-assessment-manual-result-button.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
     imports: [ArtemisSharedModule, MomentModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedComponentModule],
-    declarations: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent, SubmissionResultStatusComponent, ManualResultButtonComponent],
-    exports: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent, SubmissionResultStatusComponent, ManualResultButtonComponent],
+    declarations: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent, SubmissionResultStatusComponent, ProgrammingAssessmentManualResultButtonComponent],
+    exports: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent, SubmissionResultStatusComponent, ProgrammingAssessmentManualResultButtonComponent],
 })
 export class ArtemisResultModule {}
