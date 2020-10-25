@@ -22,20 +22,11 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
 public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     ExerciseRepository exerciseRepository;
@@ -76,9 +67,9 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
         users.remove(database.getUserByLogin("admin"));
         course1 = database.addCourseWithModelingAndTextAndFileUploadExercise();
         course1.getExercises().forEach(exercise -> {
-            database.addParticipationForExercise(exercise, "student1");
-            database.addParticipationForExercise(exercise, "student2");
-            database.addParticipationForExercise(exercise, "student3");
+            database.createAndSaveParticipationForExercise(exercise, "student1");
+            database.createAndSaveParticipationForExercise(exercise, "student2");
+            database.createAndSaveParticipationForExercise(exercise, "student3");
 
             if (exercise instanceof ModelingExercise) {
                 modelingExercise = (ModelingExercise) exercise;
@@ -94,9 +85,9 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
             else if (exercise instanceof TextExercise) {
                 textExercise = (TextExercise) exercise;
 
-                textSubmission1 = database.addTextSubmission(textExercise, ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true), "student1");
-                textSubmission2 = database.addTextSubmission(textExercise, ModelFactory.generateTextSubmission("some other text", Language.ENGLISH, true), "student2");
-                textSubmission3 = database.addTextSubmission(textExercise, ModelFactory.generateTextSubmission("a third text", Language.ENGLISH, true), "student3");
+                textSubmission1 = database.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true), "student1");
+                textSubmission2 = database.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("some other text", Language.ENGLISH, true), "student2");
+                textSubmission3 = database.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("a third text", Language.ENGLISH, true), "student3");
             }
             else if (exercise instanceof FileUploadExercise) {
                 fileUploadExercise = (FileUploadExercise) exercise;

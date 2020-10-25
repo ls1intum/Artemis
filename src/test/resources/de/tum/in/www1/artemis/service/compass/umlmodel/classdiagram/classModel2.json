@@ -1,0 +1,521 @@
+{
+    "version": "2.0.0",
+    "type": "ClassDiagram",
+    "size": {
+        "width": 1015.3333740234375,
+        "height": 540
+    },
+    "interactive": {
+        "elements": [
+        ],
+        "relationships": [
+        ]
+    },
+    "elements": [
+        {
+            "id": "b8ab2312-7916-4cf0-807a-d9bebe552301",
+            "name": "Developper",
+            "type": "Class",
+            "owner": null,
+            "bounds": {
+                "x": 130,
+                "y": 10,
+                "width": 160,
+                "height": 40
+            },
+            "attributes": [
+            ],
+            "methods": [
+            ]
+        },
+        {
+            "id": "9039b173-28a5-4593-96e1-90331470039a",
+            "name": "Release Manager",
+            "type": "Class",
+            "owner": null,
+            "bounds": {
+                "x": 350,
+                "y": 0,
+                "width": 200,
+                "height": 40
+            },
+            "attributes": [
+            ],
+            "methods": [
+            ]
+        },
+        {
+            "id": "eddc0f0b-4f67-4a57-b21b-d7d28afa60dd",
+            "name": "User",
+            "type": "Class",
+            "owner": null,
+            "bounds": {
+                "x": 850,
+                "y": 130,
+                "width": 140,
+                "height": 40
+            },
+            "attributes": [
+            ],
+            "methods": [
+            ]
+        },
+        {
+            "id": "a2de0962-8b2a-4360-9e01-2671cb580937",
+            "name": "Device",
+            "type": "Class",
+            "owner": null,
+            "bounds": {
+                "x": 800,
+                "y": 410,
+                "width": 200,
+                "height": 40
+            },
+            "attributes": [
+            ],
+            "methods": [
+            ]
+        },
+        {
+            "id": "088e3169-56de-4f66-909e-7767d6ee525e",
+            "name": "Issue Tracker",
+            "type": "Class",
+            "owner": null,
+            "bounds": {
+                "x": 40,
+                "y": 410,
+                "width": 150,
+                "height": 40
+            },
+            "attributes": [
+            ],
+            "methods": [
+            ]
+        },
+        {
+            "id": "bd0e9c5c-8ae3-4e63-b8e6-f9ae17c42314",
+            "name": "VCS",
+            "type": "Class",
+            "owner": null,
+            "bounds": {
+                "x": 140,
+                "y": 240,
+                "width": 140,
+                "height": 40
+            },
+            "attributes": [
+            ],
+            "methods": [
+            ]
+        },
+        {
+            "id": "54a47182-bd7b-45e9-a856-efe18aaff72b",
+            "name": "CIS",
+            "type": "Class",
+            "owner": null,
+            "bounds": {
+                "x": 390,
+                "y": 200,
+                "width": 130,
+                "height": 100
+            },
+            "attributes": [
+            ],
+            "methods": [
+                "53eac44e-a2a1-4667-bc69-29b642c65e63",
+                "8d835f99-85f8-4e02-b91d-8288707de111"
+            ]
+        },
+        {
+            "id": "53eac44e-a2a1-4667-bc69-29b642c65e63",
+            "name": "compile()",
+            "type": "ClassMethod",
+            "owner": "54a47182-bd7b-45e9-a856-efe18aaff72b",
+            "bounds": {
+                "x": 390,
+                "y": 240,
+                "width": 130,
+                "height": 30
+            }
+        },
+        {
+            "id": "8d835f99-85f8-4e02-b91d-8288707de111",
+            "name": "testBuild()",
+            "type": "ClassMethod",
+            "owner": "54a47182-bd7b-45e9-a856-efe18aaff72b",
+            "bounds": {
+                "x": 390,
+                "y": 270,
+                "width": 130,
+                "height": 30
+            }
+        },
+        {
+            "id": "6d1e8b83-e236-41f4-b7c8-6e714846cba8",
+            "name": "CDS",
+            "type": "Class",
+            "owner": null,
+            "bounds": {
+                "x": 570,
+                "y": 310,
+                "width": 130,
+                "height": 70
+            },
+            "attributes": [
+            ],
+            "methods": [
+                "09e80e3a-3fe5-46dd-889e-98d0b5b8cc69"
+            ]
+        },
+        {
+            "id": "09e80e3a-3fe5-46dd-889e-98d0b5b8cc69",
+            "name": "build()",
+            "type": "ClassMethod",
+            "owner": "6d1e8b83-e236-41f4-b7c8-6e714846cba8",
+            "bounds": {
+                "x": 570,
+                "y": 350,
+                "width": 130,
+                "height": 30
+            }
+        }
+    ],
+    "relationships": [
+        {
+            "id": "cd4e7274-7376-4d82-b040-0412fad9b8ce",
+            "name": "",
+            "type": "ClassBidirectional",
+            "owner": null,
+            "bounds": {
+                "x": 455,
+                "y": 40,
+                "width": 1,
+                "height": 160
+            },
+            "path": [
+                {
+                    "x": 0,
+                    "y": 0
+                },
+                {
+                    "x": 0,
+                    "y": 160
+                }
+            ],
+            "source": {
+                "direction": "Down",
+                "element": "9039b173-28a5-4593-96e1-90331470039a",
+                "multiplicity": "1",
+                "role": ""
+            },
+            "target": {
+                "direction": "Up",
+                "element": "54a47182-bd7b-45e9-a856-efe18aaff72b",
+                "multiplicity": "1..*",
+                "role": "release()"
+            }
+        },
+        {
+            "id": "165c9763-8c50-429a-8fb8-ff36c8577973",
+            "name": "",
+            "type": "ClassBidirectional",
+            "owner": null,
+            "bounds": {
+                "x": 700,
+                "y": 345,
+                "width": 100,
+                "height": 85
+            },
+            "path": [
+                {
+                    "x": 100,
+                    "y": 85
+                },
+                {
+                    "x": 50,
+                    "y": 85
+                },
+                {
+                    "x": 50,
+                    "y": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0
+                }
+            ],
+            "source": {
+                "direction": "Left",
+                "element": "a2de0962-8b2a-4360-9e01-2671cb580937",
+                "multiplicity": "1..*",
+                "role": "download"
+            },
+            "target": {
+                "direction": "Right",
+                "element": "6d1e8b83-e236-41f4-b7c8-6e714846cba8",
+                "multiplicity": "1",
+                "role": "uploadFeedback"
+            }
+        },
+        {
+            "id": "20e9fef0-fcbe-4ba5-87f4-80d1e5a8dba5",
+            "name": "",
+            "type": "ClassAggregation",
+            "owner": null,
+            "bounds": {
+                "x": 920,
+                "y": 170,
+                "width": 1,
+                "height": 240
+            },
+            "path": [
+                {
+                    "x": 0,
+                    "y": 240
+                },
+                {
+                    "x": 0,
+                    "y": 0
+                }
+            ],
+            "source": {
+                "direction": "Up",
+                "element": "a2de0962-8b2a-4360-9e01-2671cb580937",
+                "multiplicity": "1..*",
+                "role": "giveFeedback()"
+            },
+            "target": {
+                "direction": "Down",
+                "element": "eddc0f0b-4f67-4a57-b21b-d7d28afa60dd",
+                "multiplicity": "1..*",
+                "role": ""
+            }
+        },
+        {
+            "id": "23335b13-d193-45b7-a119-8a1ccd3a9679",
+            "name": "",
+            "type": "ClassBidirectional",
+            "owner": null,
+            "bounds": {
+                "x": 635,
+                "y": 150,
+                "width": 215,
+                "height": 160
+            },
+            "path": [
+                {
+                    "x": 0,
+                    "y": 160
+                },
+                {
+                    "x": 0,
+                    "y": 0
+                },
+                {
+                    "x": 215,
+                    "y": 0
+                }
+            ],
+            "source": {
+                "direction": "Up",
+                "element": "6d1e8b83-e236-41f4-b7c8-6e714846cba8",
+                "multiplicity": "1",
+                "role": ""
+            },
+            "target": {
+                "direction": "Left",
+                "element": "eddc0f0b-4f67-4a57-b21b-d7d28afa60dd",
+                "multiplicity": "1..*",
+                "role": "notifyAboutRelease()"
+            }
+        },
+        {
+            "id": "3e7f7571-28b9-4b3a-a7ff-70204cb386a1",
+            "name": "",
+            "type": "ClassBidirectional",
+            "owner": null,
+            "bounds": {
+                "x": 455,
+                "y": 300,
+                "width": 115,
+                "height": 45
+            },
+            "path": [
+                {
+                    "x": 0,
+                    "y": 0
+                },
+                {
+                    "x": 0,
+                    "y": 45
+                },
+                {
+                    "x": 115,
+                    "y": 45
+                }
+            ],
+            "source": {
+                "direction": "Down",
+                "element": "54a47182-bd7b-45e9-a856-efe18aaff72b",
+                "multiplicity": "1",
+                "role": ""
+            },
+            "target": {
+                "direction": "Left",
+                "element": "6d1e8b83-e236-41f4-b7c8-6e714846cba8",
+                "multiplicity": "1..*",
+                "role": "upload()"
+            }
+        },
+        {
+            "id": "d1d3f615-7a1f-4a95-8de7-60d87ecf2415",
+            "name": "",
+            "type": "ClassBidirectional",
+            "owner": null,
+            "bounds": {
+                "x": 280,
+                "y": 260,
+                "width": 110,
+                "height": 1
+            },
+            "path": [
+                {
+                    "x": 0,
+                    "y": 0
+                },
+                {
+                    "x": 110,
+                    "y": 0
+                }
+            ],
+            "source": {
+                "direction": "Right",
+                "element": "bd0e9c5c-8ae3-4e63-b8e6-f9ae17c42314",
+                "multiplicity": "1",
+                "role": ""
+            },
+            "target": {
+                "direction": "Left",
+                "element": "54a47182-bd7b-45e9-a856-efe18aaff72b",
+                "multiplicity": "1..*",
+                "role": "checkout()"
+            }
+        },
+        {
+            "id": "6a3a44d7-af35-4146-a7d2-e2a59ed133e5",
+            "name": "",
+            "type": "ClassAggregation",
+            "owner": null,
+            "bounds": {
+                "x": 210,
+                "y": 50,
+                "width": 1,
+                "height": 190
+            },
+            "path": [
+                {
+                    "x": 0,
+                    "y": 0
+                },
+                {
+                    "x": 0,
+                    "y": 190
+                }
+            ],
+            "source": {
+                "direction": "Down",
+                "element": "b8ab2312-7916-4cf0-807a-d9bebe552301",
+                "multiplicity": "1..*",
+                "role": ""
+            },
+            "target": {
+                "direction": "Up",
+                "element": "bd0e9c5c-8ae3-4e63-b8e6-f9ae17c42314",
+                "multiplicity": "1",
+                "role": "commit()"
+            }
+        },
+        {
+            "id": "957aeac6-2401-4d74-acf4-75a1db2af606",
+            "name": "",
+            "type": "ClassBidirectional",
+            "owner": null,
+            "bounds": {
+                "x": 0,
+                "y": 30,
+                "width": 130,
+                "height": 400
+            },
+            "path": [
+                {
+                    "x": 40,
+                    "y": 400
+                },
+                {
+                    "x": 0,
+                    "y": 400
+                },
+                {
+                    "x": 0,
+                    "y": 0
+                },
+                {
+                    "x": 130,
+                    "y": 0
+                }
+            ],
+            "source": {
+                "direction": "Left",
+                "element": "088e3169-56de-4f66-909e-7767d6ee525e",
+                "multiplicity": "1",
+                "role": ""
+            },
+            "target": {
+                "direction": "Left",
+                "element": "b8ab2312-7916-4cf0-807a-d9bebe552301",
+                "multiplicity": "1..*",
+                "role": "notifyAboutIssue()"
+            }
+        },
+        {
+            "id": "e52181da-6b51-419b-a02e-302ea1de2b40",
+            "name": "",
+            "type": "ClassBidirectional",
+            "owner": null,
+            "bounds": {
+                "x": 190,
+                "y": 380,
+                "width": 445,
+                "height": 50
+            },
+            "path": [
+                {
+                    "x": 445,
+                    "y": 0
+                },
+                {
+                    "x": 445,
+                    "y": 50
+                },
+                {
+                    "x": 0,
+                    "y": 50
+                }
+            ],
+            "source": {
+                "direction": "Down",
+                "element": "6d1e8b83-e236-41f4-b7c8-6e714846cba8",
+                "multiplicity": "1",
+                "role": ""
+            },
+            "target": {
+                "direction": "Right",
+                "element": "088e3169-56de-4f66-909e-7767d6ee525e",
+                "multiplicity": "1",
+                "role": "storeFeedBackAsIssue()"
+            }
+        }
+    ],
+    "assessments": [
+    ]
+}

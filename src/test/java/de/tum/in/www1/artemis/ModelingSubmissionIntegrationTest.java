@@ -43,9 +43,8 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -63,12 +62,6 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     StudentParticipationRepository studentParticipationRepository;
-
-    @Autowired
-    RequestUtilService request;
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     ParticipationService participationService;
@@ -125,11 +118,11 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         objectExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
         useCaseExercise = database.findModelingExerciseWithTitle(course.getExercises(), "UseCaseDiagram");
         finishedExercise = database.findModelingExerciseWithTitle(course.getExercises(), "finished");
-        afterDueDateParticipation = database.addParticipationForExercise(finishedExercise, "student3");
-        database.addParticipationForExercise(classExercise, "student3");
+        afterDueDateParticipation = database.createAndSaveParticipationForExercise(finishedExercise, "student3");
+        database.createAndSaveParticipationForExercise(classExercise, "student3");
 
-        emptyModel = database.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
-        validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
+        emptyModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
+        validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         submittedSubmission = generateSubmittedSubmission();
         unsubmittedSubmission = generateUnsubmittedSubmission();
 
@@ -165,7 +158,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(value = "student1")
     public void saveAndSubmitModelingSubmission_classDiagram() throws Exception {
-        database.addParticipationForExercise(classExercise, "student1");
+        database.createAndSaveParticipationForExercise(classExercise, "student1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
@@ -181,14 +174,14 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(value = "student1")
     public void saveAndSubmitModelingSubmission_activityDiagram() throws Exception {
-        database.addParticipationForExercise(activityExercise, "student1");
-        String emptyActivityModel = database.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
+        database.createAndSaveParticipationForExercise(activityExercise, "student1");
+        String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(activityExercise.getId(), submission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyActivityModel);
         checkDetailsHidden(returnedSubmission, true);
 
-        String validActivityModel = database.loadFileFromResources("test-data/model-submission/example-activity-diagram.json");
+        String validActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/example-activity-diagram.json");
         returnedSubmission.setModel(validActivityModel);
         returnedSubmission.setSubmitted(true);
         returnedSubmission = performUpdateOnModelSubmission(activityExercise.getId(), returnedSubmission);
@@ -199,14 +192,14 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(value = "student1")
     public void saveAndSubmitModelingSubmission_objectDiagram() throws Exception {
-        database.addParticipationForExercise(objectExercise, "student1");
-        String emptyObjectModel = database.loadFileFromResources("test-data/model-submission/empty-object-diagram.json");
+        database.createAndSaveParticipationForExercise(objectExercise, "student1");
+        String emptyObjectModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-object-diagram.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyObjectModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(objectExercise.getId(), submission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyObjectModel);
         checkDetailsHidden(returnedSubmission, true);
 
-        String validObjectModel = database.loadFileFromResources("test-data/model-submission/object-model.json");
+        String validObjectModel = FileUtils.loadFileFromResources("test-data/model-submission/object-model.json");
         returnedSubmission.setModel(validObjectModel);
         returnedSubmission.setSubmitted(true);
         returnedSubmission = performUpdateOnModelSubmission(objectExercise.getId(), returnedSubmission);
@@ -217,14 +210,14 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(value = "student1")
     public void saveAndSubmitModelingSubmission_useCaseDiagram() throws Exception {
-        database.addParticipationForExercise(useCaseExercise, "student1");
-        String emptyUseCaseModel = database.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
+        database.createAndSaveParticipationForExercise(useCaseExercise, "student1");
+        String emptyUseCaseModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyUseCaseModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(), submission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyUseCaseModel);
         checkDetailsHidden(returnedSubmission, true);
 
-        String validUseCaseModel = database.loadFileFromResources("test-data/model-submission/use-case-model.json");
+        String validUseCaseModel = FileUtils.loadFileFromResources("test-data/model-submission/use-case-model.json");
         returnedSubmission.setModel(validUseCaseModel);
         returnedSubmission.setSubmitted(true);
         returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission);
@@ -245,7 +238,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         teamService.save(useCaseExercise, team);
 
         database.addTeamParticipationForExercise(useCaseExercise, team.getId());
-        String emptyUseCaseModel = database.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
+        String emptyUseCaseModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyUseCaseModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(), submission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyUseCaseModel);
@@ -259,7 +252,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         assertThat(version.get().getLastModifiedDate()).isNotNull();
 
         database.changeUser("student2");
-        String validUseCaseModel = database.loadFileFromResources("test-data/model-submission/use-case-model.json");
+        String validUseCaseModel = FileUtils.loadFileFromResources("test-data/model-submission/use-case-model.json");
         returnedSubmission.setModel(validUseCaseModel);
         returnedSubmission.setSubmitted(true);
         returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission);
@@ -281,7 +274,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(value = "student2")
     public void updateModelSubmission() throws Exception {
-        database.addParticipationForExercise(classExercise, "student2");
+        database.createAndSaveParticipationForExercise(classExercise, "student2");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, true);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
@@ -306,7 +299,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(value = "student1")
     public void injectResultOnSubmissionUpdate() throws Exception {
         User user = database.getUserByLogin("student1");
-        database.addParticipationForExercise(classExercise, "student1");
+        database.createAndSaveParticipationForExercise(classExercise, "student1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, false);
         Result result = new Result();
         result.setScore(100L);
@@ -621,7 +614,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(value = "student1")
     public void getSubmissionForModelingEditor_emptySubmission() throws Exception {
-        StudentParticipation studentParticipation = database.addParticipationForExercise(classExercise, "student1");
+        StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(classExercise, "student1");
         assertThat(studentParticipation.getSubmissions()).isEmpty();
         ModelingSubmission returnedSubmission = request.get("/api/participations/" + studentParticipation.getId() + "/latest-modeling-submission", HttpStatus.OK,
                 ModelingSubmission.class);
@@ -679,7 +672,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(value = "student1")
     public void getSubmissionForModelingEditor_unfinishedAssessment() throws Exception {
-        StudentParticipation studentParticipation = database.addParticipationForExercise(classExercise, "student1");
+        StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(classExercise, "student1");
         database.addModelingSubmissionWithEmptyResult(classExercise, "", "student1");
 
         ModelingSubmission returnedSubmission = request.get("/api/participations/" + studentParticipation.getId() + "/latest-modeling-submission", HttpStatus.OK,

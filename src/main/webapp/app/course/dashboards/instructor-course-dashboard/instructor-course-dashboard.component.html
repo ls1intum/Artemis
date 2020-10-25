@@ -52,6 +52,11 @@
                                     <b>{{ 'artemisApp.instructorCourseDashboard.rating' | translate }}</b>
                                 </a>
                             </li>
+                            <li>
+                                <a *ngIf="course.studentQuestionsEnabled" [routerLink]="['/course-management', course.id, 'questions']">
+                                    <b>{{ 'artemisApp.instructorCourseDashboard.questionsAndAnswers' | translate }}</b>
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </div>

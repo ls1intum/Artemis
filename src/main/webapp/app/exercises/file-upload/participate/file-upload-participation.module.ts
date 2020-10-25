@@ -8,6 +8,7 @@ import { FileUploadResultComponent } from 'app/exercises/file-upload/participate
 import { FileUploadSubmissionComponent } from './file-upload-submission.component';
 import { MomentModule } from 'ngx-moment';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
+import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 
 @NgModule({
     imports: [
@@ -18,6 +19,7 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
         ArtemisFileUploadParticipationRoutingModule,
         MomentModule,
         ArtemisHeaderExercisePageWithDetailsModule,
+        RatingModule,
     ],
     declarations: [FileUploadSubmissionComponent, FileUploadResultComponent],
 })

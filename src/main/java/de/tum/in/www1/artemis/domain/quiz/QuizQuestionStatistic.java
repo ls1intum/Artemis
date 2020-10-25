@@ -8,6 +8,7 @@ import javax.persistence.OneToOne;
 import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -18,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceQuestionStatistic.class, name = "multiple-choice"),
         @JsonSubTypes.Type(value = DragAndDropQuestionStatistic.class, name = "drag-and-drop"),
         @JsonSubTypes.Type(value = ShortAnswerQuestionStatistic.class, name = "short-answer") })
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class QuizQuestionStatistic extends QuizStatistic {
 
     @Column(name = "rated_correct_counter")

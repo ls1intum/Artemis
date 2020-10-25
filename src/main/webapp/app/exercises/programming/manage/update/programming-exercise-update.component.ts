@@ -1,7 +1,7 @@
 import { ActivatedRoute, Params } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { Observable, Subject } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
@@ -19,6 +19,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -59,11 +60,25 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     existingCategories: ExerciseCategory[];
 
     public inProductionEnvironment: boolean;
+    checkedFlagForStructuredGradingInstructions = false;
+
+    public supportsJava = true;
+    public supportsPython = false;
+    public supportsC = false;
+    public supportsHaskell = false;
+    public supportsKotlin = false;
+    public supportsVHDL = false;
+    public supportsAssembler = false;
+
+    public packageNameRequired = true;
+    public staticCodeAnalysisAllowed = false;
+    public checkoutSolutionRepositoryAllowed = false;
+    public sequentialTestRunsAllowed = false;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseService: CourseManagementService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private exerciseService: ExerciseService,
         private fileService: FileService,
         private activatedRoute: ActivatedRoute,
@@ -71,6 +86,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private profileService: ProfileService,
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
         private exerciseGroupService: ExerciseGroupService,
+        private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
     ) {}
 
     /**
@@ -80,8 +96,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     set selectedProgrammingLanguage(language: ProgrammingLanguage) {
         this.selectedProgrammingLanguageValue = language;
+
+        const programmingLanguageFeature = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(language);
+        this.packageNameRequired = programmingLanguageFeature.packageNameRequired;
+        this.staticCodeAnalysisAllowed = programmingLanguageFeature.staticCodeAnalysis;
+        this.checkoutSolutionRepositoryAllowed = programmingLanguageFeature.checkoutSolutionRepositoryAllowed;
+        this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
+
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
-        if (language !== ProgrammingLanguage.JAVA) {
+        if (!this.staticCodeAnalysisAllowed) {
             this.programmingExercise.staticCodeAnalysisEnabled = false;
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
@@ -160,6 +183,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 this.inProductionEnvironment = profileInfo.inProduction;
             }
         });
+
+        this.supportsJava = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.JAVA);
+        this.supportsPython = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.PYTHON);
+        this.supportsC = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.C);
+        this.supportsHaskell = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.HASKELL);
+        this.supportsKotlin = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.KOTLIN);
+        this.supportsVHDL = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.VHDL);
+        this.supportsAssembler = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.ASSEMBLER);
     }
 
     /**
@@ -290,6 +321,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
+    }
+
+    /**
+     * gets the flag of the structured grading instructions slide toggle
+     */
+    getCheckedFlag(event: boolean) {
+        this.checkedFlagForStructuredGradingInstructions = event;
     }
 
     /**

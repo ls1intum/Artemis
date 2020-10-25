@@ -17,9 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -34,12 +32,6 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Autowired
     UserService userService;
-
-    @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     UserRepository userRepository;
@@ -74,10 +66,10 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
         course = database.addCourseWithOneReleasedTextExercise();
         exercise = (TextExercise) exerciseRepo.findAll().get(0);
         User student1 = users.get(0);
-        database.addParticipationForExercise(exercise, student1.getLogin());
+        database.createAndSaveParticipationForExercise(exercise, student1.getLogin());
 
         submission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
-        submission = database.addTextSubmission(exercise, submission, student1.getLogin());
+        submission = database.saveTextSubmission(exercise, submission, student1.getLogin());
 
         result = ModelFactory.generateResult(true, 0);
         result = database.addResultToSubmission(submission, null);

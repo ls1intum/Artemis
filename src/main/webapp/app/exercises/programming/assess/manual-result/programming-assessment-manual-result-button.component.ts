@@ -6,7 +6,6 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { filter } from 'rxjs/operators';
 import { User } from 'app/core/user/user.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Router } from '@angular/router';
 
@@ -43,7 +42,7 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
      * @param changes
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.latestResult && this.latestResult && this.latestResult.assessmentType !== AssessmentType.MANUAL) {
+        if (changes.latestResult && this.latestResult && !Result.isManualResult(this.latestResult)) {
             // The assessor can't update the automatic result of the student.
             this.latestResult = null;
         }
@@ -53,7 +52,7 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
             }
             this.latestResultSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.participationId, false, this.exercise.id)
-                .pipe(filter((result: Result) => result && result.assessmentType === AssessmentType.MANUAL))
+                .pipe(filter((result: Result) => result && Result.isManualResult(result)))
                 .subscribe((manualResult) => {
                     let assessor: User | undefined;
                     // TODO: workaround to fix an issue when the assessor gets lost due to the websocket update

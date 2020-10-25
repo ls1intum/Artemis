@@ -26,14 +26,10 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     ExamSubmissionService examSubmissionService;
@@ -154,7 +150,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testPreventMultipleSubmissions() {
-        StudentParticipation participation = database.addParticipationForExercise(exercise, "student1");
+        StudentParticipation participation = database.createAndSaveParticipationForExercise(exercise, "student1");
         Submission existingSubmission = ModelFactory.generateTextSubmission("The initial submission", Language.ENGLISH, true);
         existingSubmission = database.addSubmission(participation, existingSubmission);
         Submission receivedSubmission = ModelFactory.generateTextSubmission("This is a submission", Language.ENGLISH, true);

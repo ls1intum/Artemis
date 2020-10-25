@@ -20,13 +20,9 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService;
 
 class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     StudentParticipationRepository participationRepo;
@@ -47,7 +43,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
         database.addUsers(3, 0, 0);
         Course course = database.addCourseWithOneModelingExercise();
         modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
-        participation = database.addParticipationForExercise(modelingExercise, "student1");
+        participation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
 
         MockitoAnnotations.openMocks(this);
         participationTeamWebsocketService.clearDestinationTracker();

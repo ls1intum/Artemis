@@ -24,9 +24,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionComparisonDTO;
 
 public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -42,12 +40,6 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Autowired
     StudentParticipationRepository participationRepository;
-
-    @Autowired
-    RequestUtilService request;
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     UserService userService;
@@ -77,10 +69,10 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         Course course2 = database.addCourseWithOneFinishedTextExercise();
         releasedTextExercise = database.findTextExerciseWithTitle(course1.getExercises(), "Text");
         finishedTextExercise = database.findTextExerciseWithTitle(course2.getExercises(), "Finished");
-        lateParticipation = database.addParticipationForExercise(finishedTextExercise, student.getLogin());
+        lateParticipation = database.createAndSaveParticipationForExercise(finishedTextExercise, student.getLogin());
         lateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
         participationRepository.save(lateParticipation);
-        database.addParticipationForExercise(releasedTextExercise, student.getLogin());
+        database.createAndSaveParticipationForExercise(releasedTextExercise, student.getLogin());
 
         textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         lateTextSubmission = ModelFactory.generateLateTextSubmission("example text 2", Language.ENGLISH);
@@ -98,7 +90,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void getOwnTextSubmission() throws Exception {
-        textSubmission = database.addTextSubmission(finishedTextExercise, textSubmission, "student1");
+        textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
 
         TextSubmission textSubmission = request.get("/api/text-submissions/" + this.textSubmission.getId(), HttpStatus.OK, TextSubmission.class);
 
@@ -110,7 +102,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllTextSubmissions_studentHiddenForTutor() throws Exception {
-        textSubmission = database.addTextSubmissionWithResultAndAssessor(finishedTextExercise, textSubmission, "student1", "tutor1");
+        textSubmission = database.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, textSubmission, "student1", "tutor1");
 
         List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.OK,
                 TextSubmission.class);
@@ -123,7 +115,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllTextSubmissions_studentVisibleForInstructor() throws Exception {
-        textSubmission = database.addTextSubmission(finishedTextExercise, textSubmission, "student1");
+        textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
 
         List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class);
 
@@ -135,28 +127,28 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getAllTextSubmissions_assessedByTutorForStudent() throws Exception {
-        textSubmission = database.addTextSubmission(finishedTextExercise, textSubmission, "student1");
+        textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
         request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getAllTextSubmissions_notAssessedByTutorForTutor() throws Exception {
-        textSubmission = database.addTextSubmission(finishedTextExercise, textSubmission, "student1");
+        textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
         request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
     public void getAllTextSubmission_notTutorInExercise() throws Exception {
-        textSubmission = database.addTextSubmission(finishedTextExercise, textSubmission, "student1");
+        textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
         request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getTextSubmissionWithoutAssessment_studentHidden() throws Exception {
-        textSubmission = database.addTextSubmission(finishedTextExercise, textSubmission, "student1");
+        textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
 
         TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class);
@@ -170,7 +162,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getTextSubmissionWithoutAssessment_lockSubmission() throws Exception {
         User user = database.getUserByLogin("tutor1");
-        textSubmission = database.addTextSubmission(finishedTextExercise, textSubmission, "student1");
+        textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
 
         TextSubmission storedSubmission = request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment?lock=true", HttpStatus.OK,
                 TextSubmission.class);
@@ -188,8 +180,8 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getTextSubmissionWithoutAssessment_selectInTime() throws Exception {
 
-        textSubmission = database.addTextSubmission(finishedTextExercise, textSubmission, "student1");
-        lateTextSubmission = database.addTextSubmission(finishedTextExercise, lateTextSubmission, "student2");
+        textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
+        lateTextSubmission = database.saveTextSubmission(finishedTextExercise, lateTextSubmission, "student2");
 
         assertThat(textSubmission.getSubmissionDate()).as("first submission is in-time").isBefore(finishedTextExercise.getDueDate());
         assertThat(lateTextSubmission.getSubmissionDate()).as("second submission is late").isAfter(finishedTextExercise.getDueDate());
@@ -205,7 +197,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getTextSubmissionWithoutAssessment_noSubmittedSubmission_notFound() throws Exception {
         TextSubmission submission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, false);
-        database.addTextSubmission(finishedTextExercise, submission, "student1");
+        database.saveTextSubmission(finishedTextExercise, submission, "student1");
 
         request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.NOT_FOUND, TextSubmission.class);
     }
@@ -213,14 +205,14 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
     public void getTextSubmissionWithoutAssessment_notTutorInExercise() throws Exception {
-        textSubmission = database.addTextSubmission(finishedTextExercise, textSubmission, "student1");
+        textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
         request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getTextSubmissionWithoutAssessment_dueDateNotOver() throws Exception {
-        textSubmission = database.addTextSubmission(releasedTextExercise, textSubmission, "student1");
+        textSubmission = database.saveTextSubmission(releasedTextExercise, textSubmission, "student1");
 
         request.get("/api/exercises/" + releasedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
@@ -228,7 +220,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "student1")
     public void getTextSubmissionWithoutAssessment_asStudent_forbidden() throws Exception {
-        textSubmission = database.addTextSubmission(finishedTextExercise, textSubmission, "student1");
+        textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
 
         request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
@@ -237,7 +229,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = "student1")
     public void getResultsForCurrentStudent_assessorHiddenForStudent() throws Exception {
         textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        database.addTextSubmissionWithResultAndAssessor(finishedTextExercise, textSubmission, "student1", "tutor1");
+        database.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, textSubmission, "student1", "tutor1");
 
         Exercise returnedExercise = request.get("/api/exercises/" + finishedTextExercise.getId() + "/details", HttpStatus.OK, Exercise.class);
 
@@ -247,7 +239,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void getDataForTextEditorWithResult() throws Exception {
-        TextSubmission textSubmission = database.addTextSubmissionWithResultAndAssessor(finishedTextExercise, this.textSubmission, "student1", "tutor1");
+        TextSubmission textSubmission = database.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, this.textSubmission, "student1", "tutor1");
         Long participationId = textSubmission.getParticipation().getId();
 
         StudentParticipation participation = request.get("/api/text-editor/" + participationId, HttpStatus.OK, StudentParticipation.class);
@@ -363,7 +355,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void deleteTextSubmissionWithTextBlocks() throws Exception {
         textSubmission.setText("Lorem Ipsum dolor sit amet");
-        textSubmission = database.addTextSubmission(releasedTextExercise, textSubmission, "student1");
+        textSubmission = database.saveTextSubmission(releasedTextExercise, textSubmission, "student1");
         final List<TextBlock> blocks = List.of(ModelFactory.generateTextBlock(0, 11), ModelFactory.generateTextBlock(12, 21), ModelFactory.generateTextBlock(22, 26));
         database.addTextBlocksToTextSubmission(blocks, textSubmission);
 
@@ -387,9 +379,9 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         final TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("example test", Language.ENGLISH, true);
         final TextSubmission textSubmission3 = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
 
-        database.addTextSubmission(finishedTextExercise, textSubmission1, "student1");
-        database.addTextSubmission(finishedTextExercise, textSubmission2, "student2");
-        database.addTextSubmission(finishedTextExercise, textSubmission3, "tutor1");
+        database.saveTextSubmission(finishedTextExercise, textSubmission1, "student1");
+        database.saveTextSubmission(finishedTextExercise, textSubmission2, "student2");
+        database.saveTextSubmission(finishedTextExercise, textSubmission3, "tutor1");
 
         final var list = request.getList("/api/text-exercises/" + finishedTextExercise.getId() + "/check-plagiarism", HttpStatus.OK, SubmissionComparisonDTO.class);
 

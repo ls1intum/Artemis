@@ -9,7 +9,7 @@ import { ArtemisTestModule } from '../test.module';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { Rating } from 'app/entities/rating.model';
 import { Result } from 'app/entities/result.model';
-import { expect } from '../helpers/jasmine.jest.fix';
+import { expect } from '../helpers/jest.fix';
 
 describe('Rating Service', () => {
     let injector: TestBed;
@@ -31,50 +31,48 @@ describe('Rating Service', () => {
         elemDefault = new Rating(new Result(), 3);
     });
 
-    describe('Service methods', async () => {
-        it('should create a Rating', async () => {
-            const returnedFromService = Object.assign(
-                {
-                    id: 0,
-                },
-                elemDefault,
-            );
-            service.createRating(new Rating(new Result(), 3)).pipe(take(1)).subscribe();
+    it('should create a Rating', async () => {
+        const returnedFromService = Object.assign(
+            {
+                id: 0,
+            },
+            elemDefault,
+        );
+        service.createRating(new Rating(new Result(), 3)).pipe(take(1)).subscribe();
 
-            const req = httpMock.expectOne({ method: 'POST' });
-            req.flush(JSON.stringify(returnedFromService));
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush(JSON.stringify(returnedFromService));
+    });
+
+    it('should get a Rating', async () => {
+        const returnedFromService = Object.assign({}, elemDefault);
+        service.getRating(0).pipe(take(1)).subscribe();
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(JSON.stringify(returnedFromService));
+    });
+
+    it('should update a Rating', async () => {
+        const returnedFromService = Object.assign(
+            {
+                id: 0,
+            },
+            elemDefault,
+        );
+        service.updateRating(new Rating(new Result(), 3)).pipe(take(1)).subscribe();
+
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush(JSON.stringify(returnedFromService));
+    });
+
+    it('should get Ratings for Dashboard', async () => {
+        const returnedFromService = Object.assign({}, [elemDefault]);
+        service.getRatingsForDashboard(0).subscribe((ratings: Rating[]) => {
+            expect(ratings.length).toEqual(1);
         });
 
-        it('should get a Rating', async () => {
-            const returnedFromService = Object.assign({}, elemDefault);
-            service.getRating(0).pipe(take(1)).subscribe();
-
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(JSON.stringify(returnedFromService));
-        });
-
-        it('should update a Rating', async () => {
-            const returnedFromService = Object.assign(
-                {
-                    id: 0,
-                },
-                elemDefault,
-            );
-            service.updateRating(new Rating(new Result(), 3)).pipe(take(1)).subscribe();
-
-            const req = httpMock.expectOne({ method: 'PUT' });
-            req.flush(JSON.stringify(returnedFromService));
-        });
-
-        it('should get Ratings for Dashboard', async () => {
-            const returnedFromService = Object.assign({}, [elemDefault]);
-            service.getRatingsForDashboard(0).subscribe((ratings: Rating[]) => {
-                expect(ratings.length).toEqual(1);
-            });
-
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(JSON.stringify(returnedFromService));
-        });
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(JSON.stringify(returnedFromService));
     });
 
     afterEach(() => {

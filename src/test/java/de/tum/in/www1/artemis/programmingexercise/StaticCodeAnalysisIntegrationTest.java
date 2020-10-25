@@ -22,18 +22,10 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.StaticCodeAnalysisResource;
 
 class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     private StaticCodeAnalysisService staticCodeAnalysisService;
@@ -227,5 +219,27 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         programmingExerciseRepository.delete(programmingExerciseSCAEnabled);
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExerciseSCAEnabled.getId());
         assertThat(categories).isEmpty();
+    }
+
+    @Test
+    void shouldRemoveFeedbackOfInactiveCategories() {
+        var result = new Result();
+        var feedbackForInactiveCategory = ModelFactory.createSCAFeedbackWithInactiveCategory(result);
+        result.addFeedback(feedbackForInactiveCategory);
+        var filteredFeedback = staticCodeAnalysisService.categorizeScaFeedback(result, List.of(feedbackForInactiveCategory), programmingExerciseSCAEnabled);
+        assertThat(filteredFeedback.size()).isEqualTo(0);
+        assertThat(result.getFeedbacks().size()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldCategorizeFeedback() {
+        var result = new Result();
+        var feedback = new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS").detailText("{\"category\": \"BAD_PRACTICE\"}")
+                .type(FeedbackType.AUTOMATIC).positive(false);
+        result.addFeedback(feedback);
+        var filteredFeedback = staticCodeAnalysisService.categorizeScaFeedback(result, List.of(feedback), programmingExerciseSCAEnabled);
+        assertThat(filteredFeedback.size()).isEqualTo(1);
+        assertThat(result.getFeedbacks()).containsExactlyInAnyOrderElementsOf(filteredFeedback);
+        assertThat(result.getFeedbacks().iterator().next().getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");
     }
 }

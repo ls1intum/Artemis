@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -35,6 +36,7 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 @Entity
 @DiscriminatorValue(value = "P")
 @SecondaryTable(name = "programming_exercise_details")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExercise extends Exercise {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
@@ -98,6 +100,16 @@ public class ProgrammingExercise extends Exercise {
 
     @Transient
     private boolean isLocalSimulationTransient;
+
+    /**
+     * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
+     * This property is only used when creating the exercise (the client sets this value when POSTing the new exercise to the server).
+     * It is not persisted as this setting can not be changed afterwards.
+     * This is currently only supported for HASKELL on BAMBOO, thus the default value is false.
+     */
+    @Transient
+    @JsonProperty
+    private boolean checkoutSolutionRepository = false;
 
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -288,9 +300,8 @@ public class ProgrammingExercise extends Exercise {
     public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         return submissions.stream().filter(submission -> {
             if (submission.getResult() != null) {
-                return (submission.getResult().isRated() && !submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL))
-                        || submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)
-                                && (this.getAssessmentDueDate() == null || this.getAssessmentDueDate().isBefore(ZonedDateTime.now()));
+                return (submission.getResult().isRated() && !submission.getResult().isManualResult())
+                        || (submission.getResult().isManualResult() && (this.getAssessmentDueDate() == null || this.getAssessmentDueDate().isBefore(ZonedDateTime.now())));
             }
             return this.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
                     || submission.getSubmissionDate().isBefore(this.getDueDate());
@@ -489,8 +500,7 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-        return participation.getResults().stream()
-                .filter(result -> (result.getAssessmentType().equals(AssessmentType.MANUAL) && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
+        return participation.getResults().stream().filter(result -> (result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
                 .collect(Collectors.toSet());
     }
 
@@ -510,7 +520,7 @@ public class ProgrammingExercise extends Exercise {
             }
             // NOTE: for the dashboard we only use rated results with completion date or automatic result
             boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-            if ((result.getAssessmentType().equals(AssessmentType.MANUAL) && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
+            if ((result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;
@@ -548,5 +558,13 @@ public class ProgrammingExercise extends Exercise {
 
     public void setIsLocalSimulation(Boolean isLocalSimulationTransient) {
         this.isLocalSimulationTransient = isLocalSimulationTransient;
+    }
+
+    public boolean getCheckoutSolutionRepository() {
+        return this.checkoutSolutionRepository;
+    }
+
+    public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
+        this.checkoutSolutionRepository = checkoutSolutionRepository;
     }
 }

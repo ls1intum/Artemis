@@ -20,6 +20,7 @@ import locale from '@angular/common/locales/en';
 import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
 import * as moment from 'moment';
 import { MockComponent } from 'ng-mocks';
+import { MockAlertService } from './helpers/mocks/service/mock-alert.service';
 
 @NgModule({
     imports: [HttpClientTestingModule, FontAwesomeModule],
@@ -58,15 +59,15 @@ import { MockComponent } from 'ng-mocks';
             useClass: MockAccountService,
         },
         {
+            provide: JhiAlertService,
+            useClass: MockAlertService,
+        },
+        {
             provide: ElementRef,
             useValue: null,
         },
         {
             provide: Renderer2,
-            useValue: null,
-        },
-        {
-            provide: JhiAlertService,
             useValue: null,
         },
         {

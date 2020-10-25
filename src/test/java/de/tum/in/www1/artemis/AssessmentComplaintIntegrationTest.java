@@ -31,9 +31,8 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -42,12 +41,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Autowired
     CourseRepository courseRepository;
-
-    @Autowired
-    RequestUtilService request;
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     ResultRepository resultRepo;
@@ -304,7 +297,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getComplaintsForTutorDashboard_sameTutorAsAssessor_studentInfoHidden() throws Exception {
+    public void getComplaintsForAssessmentDashboard_sameTutorAsAssessor_studentInfoHidden() throws Exception {
         complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
@@ -446,7 +439,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     }
 
     private void saveModelingSubmissionAndAssessment() throws Exception {
-        modelingSubmission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         modelingSubmission = database.addModelingSubmission(modelingExercise, modelingSubmission, "student1");
         modelingAssessment = database.addModelingAssessmentForSubmission(modelingExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.v2.json", "tutor1",
                 true);
@@ -539,7 +532,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getMoreFeedbackRequestsForTutorDashboard() throws Exception {
+    public void getMoreFeedbackRequestsForAssessmentDashboard() throws Exception {
         complaint.setParticipant(database.getUserByLogin("student1"));
         moreFeedbackRequest.setAccepted(true);
         complaintRepo.save(moreFeedbackRequest);
@@ -563,7 +556,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final TextExercise examExercise = database.addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise();
         final long examId = examExercise.getExerciseGroup().getExam().getId();
         final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
-        database.addTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
         final var examExerciseComplaint = new Complaint().result(textSubmission.getResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
 
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
@@ -587,7 +580,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final TextExercise examExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
         final long examId = examExercise.getExerciseGroup().getExam().getId();
         final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
-        database.addTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
         final var examExerciseComplaint = new Complaint().result(textSubmission.getResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
         request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);

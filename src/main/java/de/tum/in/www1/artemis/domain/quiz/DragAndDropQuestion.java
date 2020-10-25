@@ -10,6 +10,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -24,6 +25,7 @@ import de.tum.in.www1.artemis.service.FileService;
 @Entity
 @DiscriminatorValue(value = "DD")
 @JsonTypeName("drag-and-drop")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragAndDropQuestion extends QuizQuestion {
 
     @Transient

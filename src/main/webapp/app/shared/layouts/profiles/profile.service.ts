@@ -50,6 +50,11 @@ export class ProfileService {
                         profileInfo.registrationEnabled = data.registrationEnabled;
                         profileInfo.allowedEmailPattern = data.allowedEmailPattern;
                         profileInfo.allowedEmailPatternReadable = data.allowedEmailPatternReadable;
+                        profileInfo.allowedLdapUsernamePattern = data.allowedLdapUsernamePattern;
+                        profileInfo.allowedCourseRegistrationUsernamePattern = data.allowedCourseRegistrationUsernamePattern;
+                        profileInfo.accountName = data.accountName;
+                        profileInfo.versionControlUrl = data.versionControlUrl;
+                        profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
 
                         return profileInfo;
                     }),

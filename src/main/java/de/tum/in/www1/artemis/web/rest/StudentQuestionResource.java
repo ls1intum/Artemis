@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
@@ -47,6 +48,8 @@ public class StudentQuestionResource {
 
     private final LectureRepository lectureRepository;
 
+    private final CourseRepository courseRepository;
+
     private final StudentQuestionService studentQuestionService;
 
     private final AuthorizationCheckService authorizationCheckService;
@@ -56,7 +59,8 @@ public class StudentQuestionResource {
     GroupNotificationService groupNotificationService;
 
     public StudentQuestionResource(StudentQuestionRepository studentQuestionRepository, GroupNotificationService groupNotificationService, LectureRepository lectureRepository,
-            StudentQuestionService studentQuestionService, AuthorizationCheckService authorizationCheckService, UserService userService, ExerciseRepository exerciseRepository) {
+            StudentQuestionService studentQuestionService, AuthorizationCheckService authorizationCheckService, UserService userService, ExerciseRepository exerciseRepository,
+            CourseRepository courseRepository) {
         this.studentQuestionRepository = studentQuestionRepository;
         this.studentQuestionService = studentQuestionService;
         this.groupNotificationService = groupNotificationService;
@@ -64,22 +68,34 @@ public class StudentQuestionResource {
         this.userService = userService;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepository = lectureRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
-     * POST /student-questions : Create a new studentQuestion.
+     * POST /courses/{courseId}/student-questions : Create a new studentQuestion.
      *
+     * @param courseId course the question belongs to
      * @param studentQuestion the studentQuestion to create
      * @return the ResponseEntity with status 201 (Created) and with body the new studentQuestion, or with status 400 (Bad Request) if the studentQuestion has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/student-questions")
+    @PostMapping("courses/{courseId}/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: there are no security checks here. The API endpoint should at least include the course id
-    public ResponseEntity<StudentQuestion> createStudentQuestion(@RequestBody StudentQuestion studentQuestion) throws URISyntaxException {
+    public ResponseEntity<StudentQuestion> createStudentQuestion(@PathVariable Long courseId, @RequestBody StudentQuestion studentQuestion) throws URISyntaxException {
         log.debug("REST request to save StudentQuestion : {}", studentQuestion);
+        User user = this.userService.getUserWithGroupsAndAuthorities();
         if (studentQuestion.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestion cannot already have an ID", ENTITY_NAME, "idexists");
+        }
+        Optional<Course> optionalCourse = courseRepository.findById(courseId);
+        if (optionalCourse.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!this.authorizationCheckService.isAtLeastStudentInCourse(optionalCourse.get(), user)) {
+            return forbidden();
+        }
+        if (!studentQuestion.getCourse().getId().equals(courseId)) {
+            return forbidden();
         }
         StudentQuestion question = studentQuestionRepository.save(studentQuestion);
         if (question.getExercise() != null) {
@@ -88,30 +104,36 @@ public class StudentQuestionResource {
         if (question.getLecture() != null) {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewQuestionForLecture(question);
         }
-        return ResponseEntity.created(new URI("/api/student-questions/" + question.getId()))
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/student-questions/" + question.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, question.getId().toString())).body(question);
     }
 
     /**
-     * PUT /student-questions : Updates an existing studentQuestion.
+     * PUT /courses/{courseId}/student-questions : Updates an existing studentQuestion.
      *
+     * @param courseId course the question belongs to
      * @param studentQuestion the studentQuestion to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated studentQuestion, or with status 400 (Bad Request) if the studentQuestion is not valid, or with
      *         status 500 (Internal Server Error) if the studentQuestion couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/student-questions")
+    @PutMapping("courses/{courseId}/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: there are no security checks here. The API endpoint should at least include the course id
-    public ResponseEntity<StudentQuestion> updateStudentQuestion(@RequestBody StudentQuestion studentQuestion) throws URISyntaxException {
+    public ResponseEntity<StudentQuestion> updateStudentQuestion(@PathVariable Long courseId, @RequestBody StudentQuestion studentQuestion) {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to update StudentQuestion : {}", studentQuestion);
         if (studentQuestion.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
+        Optional<Course> optionalCourse = courseRepository.findById(courseId);
+        if (optionalCourse.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
         Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(studentQuestion.getId());
         if (optionalStudentQuestion.isEmpty()) {
             return ResponseEntity.notFound().build();
+        }
+        if (!studentQuestion.getCourse().getId().equals(courseId)) {
+            return forbidden();
         }
         if (mayUpdateOrDeleteStudentQuestion(optionalStudentQuestion.get(), user)) {
             StudentQuestion result = studentQuestionRepository.save(studentQuestion);
@@ -123,17 +145,17 @@ public class StudentQuestionResource {
     }
 
     /**
-     * PUT /student-questions/{questionId}/votes : Updates votes for a studentQuestion.
+     * PUT /courses/{courseId}/student-questions/{questionId}/votes : Updates votes for a studentQuestion.
      *
+     * @param courseId course the question belongs to
      * @param questionId the ID of the question to update
      * @param voteChange value by which votes are increased / decreased
      * @return the ResponseEntity with status 200 (OK) and with body the updated studentQuestion, or with status 400 (Bad Request) if the studentQuestion is not valid, or with
      *         status 500 (Internal Server Error) if the studentQuestion couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/student-questions/{questionId}/votes")
+    @PutMapping("courses/{courseId}/student-questions/{questionId}/votes")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentQuestion> updateStudentQuestionVotes(@PathVariable Long questionId, @RequestBody Integer voteChange) throws URISyntaxException {
+    public ResponseEntity<StudentQuestion> updateStudentQuestionVotes(@PathVariable Long courseId, @PathVariable Long questionId, @RequestBody Integer voteChange) {
         if (voteChange < -2 || voteChange > 2) {
             return forbidden();
         }
@@ -141,6 +163,13 @@ public class StudentQuestionResource {
         Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(questionId);
         if (optionalStudentQuestion.isEmpty()) {
             return ResponseEntity.notFound().build();
+        }
+        Optional<Course> optionalCourse = courseRepository.findById(courseId);
+        if (optionalCourse.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!optionalStudentQuestion.get().getCourse().getId().equals(courseId)) {
+            return forbidden();
         }
         if (mayUpdateStudentQuestionVotes(optionalStudentQuestion.get(), user)) {
             StudentQuestion updatedStudentQuestion = optionalStudentQuestion.get();
@@ -155,20 +184,28 @@ public class StudentQuestionResource {
     }
 
     /**
-     * GET /exercises/{exerciseId}/student-questions : get all student questions for exercise.
+     * GET /courses/{courseId}/exercises/{exerciseId}/student-questions : get all student questions for exercise.
      *
+     * @param courseId course the question belongs to
      * @param exerciseId the exercise that the student questions belong to
      * @return the ResponseEntity with status 200 (OK) and with body all student questions for exercise
      */
-    @GetMapping("exercises/{exerciseId}/student-questions")
+    @GetMapping("courses/{courseId}/exercises/{exerciseId}/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<StudentQuestion>> getAllQuestionsForExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<StudentQuestion>> getAllQuestionsForExercise(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         final User user = userService.getUserWithGroupsAndAuthorities();
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
         if (exercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
+        Optional<Course> optionalCourse = courseRepository.findById(courseId);
+        if (optionalCourse.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
         if (!authorizationCheckService.isAtLeastStudentForExercise(exercise.get(), user)) {
+            return forbidden();
+        }
+        if (!exercise.get().getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
             return forbidden();
         }
         List<StudentQuestion> studentQuestions = studentQuestionService.findStudentQuestionsForExercise(exerciseId);
@@ -178,24 +215,54 @@ public class StudentQuestionResource {
     }
 
     /**
+     * GET /courses/{courseId}/lectures/{lectureId}/student-questions : get all student questions for lecture.
      *
-     * GET /lectures/{lectureId}/student-questions : get all student questions for exercise.
+     * @param courseId course the question belongs to
      * @param lectureId the lecture that the student questions belong to
-     * @return the ResponseEntity with status 200 (OK) and with body all student questions for exercise
+     * @return the ResponseEntity with status 200 (OK) and with body all student questions for lecture
      */
-    @GetMapping("lectures/{lectureId}/student-questions")
+    @GetMapping("courses/{courseId}/lectures/{lectureId}/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<StudentQuestion>> getAllQuestionsForLecture(@PathVariable Long lectureId) {
+    public ResponseEntity<List<StudentQuestion>> getAllQuestionsForLecture(@PathVariable Long courseId, @PathVariable Long lectureId) {
         final User user = userService.getUserWithGroupsAndAuthorities();
         Optional<Lecture> lecture = lectureRepository.findById(lectureId);
         if (lecture.isEmpty()) {
-            throw new EntityNotFoundException("Exercise with exerciseId " + lectureId + " does not exist!");
+            throw new EntityNotFoundException("Lecture with lectureId " + lectureId + " does not exist!");
+        }
+        Optional<Course> optionalCourse = courseRepository.findById(courseId);
+        if (optionalCourse.isEmpty()) {
+            return ResponseEntity.notFound().build();
         }
         if (!authorizationCheckService.isAtLeastStudentInCourse(lecture.get().getCourse(), user)) {
             return forbidden();
         }
+        if (!lecture.get().getCourse().getId().equals(courseId)) {
+            return forbidden();
+        }
         List<StudentQuestion> studentQuestions = studentQuestionService.findStudentQuestionsForLecture(lectureId);
         hideSensitiveInformation(studentQuestions);
+
+        return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
+    }
+
+    /**
+     *
+     * GET /courses/{courseId}/student-questions : get all student questions for course
+     * @param courseId the course that the student questions belong to
+     * @return the ResponseEntity with status 200 (OK) and with body all student questions for course
+     */
+    @GetMapping("courses/{courseId}/student-questions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<StudentQuestion>> getAllQuestionsForCourse(@PathVariable Long courseId) {
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<Course> course = courseRepository.findById(courseId);
+        if (course.isEmpty()) {
+            throw new EntityNotFoundException("Course with courseId " + courseId + " does not exist!");
+        }
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course.get(), user)) {
+            return forbidden();
+        }
+        List<StudentQuestion> studentQuestions = studentQuestionService.findStudentQuestionsForCourse(courseId);
 
         return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
     }
@@ -212,16 +279,20 @@ public class StudentQuestionResource {
     }
 
     /**
-     * DELETE /student-questions/:id : delete the "id" studentQuestion.
+     * DELETE /courses/{courseId}/student-questions/:id : delete the "id" studentQuestion.
      *
+     * @param courseId course the question belongs to
      * @param id the id of the studentQuestion to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/student-questions/{id}")
-    // TODO: there are no security checks here. The API endpoint should at least include the course id
+    @DeleteMapping("courses/{courseId}/student-questions/{id}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteStudentQuestion(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteStudentQuestion(@PathVariable Long courseId, @PathVariable Long id) {
         User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<Course> optionalCourse = courseRepository.findById(courseId);
+        if (optionalCourse.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
         Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(id);
         if (optionalStudentQuestion.isEmpty()) {
             return ResponseEntity.notFound().build();

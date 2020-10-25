@@ -4,19 +4,20 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of, Subscription, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { IssuesMap, ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
+import { Location } from '@angular/common';
 import {
     ProgrammingExerciseGradingService,
     ProgrammingExerciseTestCaseUpdate,
     StaticCodeAnalysisCategoryUpdate,
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
-import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
-import { Location } from '@angular/common';
 
 /**
  * Describes the editableField
@@ -62,7 +63,13 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     hasUpdatedGradingConfig = false;
     activeTab: string;
 
+    gradingStatistics?: ProgrammingExerciseGradingStatistics;
+    maxIssuesPerCategory = 0;
+
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
+
+    testCaseColors = {};
+    categoryColors = {};
 
     /**
      * Returns the value of testcases
@@ -101,7 +108,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         private programmingExerciseService: ProgrammingExerciseService,
         private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService,
         private route: ActivatedRoute,
-        private alertService: AlertService,
+        private alertService: JhiAlertService,
         private translateService: TranslateService,
         private location: Location,
         private router: Router,
@@ -131,7 +138,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     map((res) => res.body!),
                     tap((exercise) => (this.exercise = exercise)),
                     tap(() => {
-                        if (!this.exercise.staticCodeAnalysisEnabled) {
+                        if (this.exercise.staticCodeAnalysisEnabled) {
+                            this.loadStaticCodeAnalysisCategories();
+                        } else if (this.activeTab !== 'test-cases') {
                             this.selectTab('test-cases');
                         }
                     }),
@@ -147,12 +156,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     catchError(() => of(null)),
                 );
 
-                const loadCodeAnalysisCategories = this.gradingService.getCodeAnalysisCategories(exerciseId).pipe(
-                    tap((categories) => (this.staticCodeAnalysisCategories = categories)),
-                    catchError(() => of(null)),
-                );
+                this.loadStatistics(exerciseId);
 
-                zip(loadExercise, loadExerciseTestCaseState, loadCodeAnalysisCategories)
+                zip(loadExercise, loadExerciseTestCaseState)
                     .pipe(take(1))
                     .subscribe(() => {
                         // This subscription e.g. adds new new tests to the table that were just created.
@@ -202,6 +208,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 tap((testCases: ProgrammingExerciseTestCase[]) => {
                     this.testCases = testCases;
                 }),
+                tap(() => this.loadStatistics(this.exercise.id!)),
             )
             .subscribe();
     }
@@ -284,6 +291,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.isSaving = true;
 
         const testCasesToUpdate = _intersectionWith(this.testCases, this.changedTestCaseIds, (testCase: ProgrammingExerciseTestCase, id: number) => testCase.id === id);
+
         const testCaseUpdates = testCasesToUpdate.map((testCase) => ProgrammingExerciseTestCaseUpdate.from(testCase));
 
         const saveTestCases = this.gradingService.updateTestCase(this.exercise.id!, testCaseUpdates).pipe(
@@ -293,6 +301,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
                 // Generate the new list of test cases with the updated weights and notify the test case service.
                 const newTestCases = _unionBy(updatedTestCases, this.testCases, 'id');
+
                 this.gradingService.notifyTestCases(this.exercise.id!, newTestCases);
 
                 // Find out if there are test cases that were not updated, show an error.
@@ -339,13 +348,17 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 // Find out if there are test cases that were not updated, show an error.
                 const notUpdatedCategories = _differenceBy(categoriesToUpdate, updatedCategories, 'id');
                 if (notUpdatedCategories.length) {
-                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.couldNotBeUpdated`, { categories: notUpdatedCategories });
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.couldNotBeUpdated`, {
+                        categories: notUpdatedCategories.map((c) => c.name).join(', '),
+                    });
                 } else {
                     this.alertService.success(`artemisApp.programmingExercise.configureGrading.categories.updated`);
                 }
             }),
             catchError(() => {
-                this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.couldNotBeUpdated`, { categories: categoriesToUpdate });
+                this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.couldNotBeUpdated`, {
+                    categories: categoriesToUpdate.map((c) => c.name).join(', '),
+                });
                 return of(null);
             }),
         );
@@ -422,9 +435,71 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         return confirm(warning);
     }
 
+    /**
+     * Switch tabs
+     * @param tab The target tab
+     */
     selectTab(tab: string) {
         const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
         this.location.replaceState(`${parentUrl}/${tab}`);
         this.activeTab = tab;
+    }
+
+    /**
+     * Get the stats for a specific test case
+     * @param testName The name of the test case
+     */
+    getTestCaseStats(testName: string): TestCaseStats | undefined {
+        return this.gradingStatistics?.testCaseStatsMap ? this.gradingStatistics.testCaseStatsMap[testName] : undefined;
+    }
+
+    /**
+     * Get the issues map for a specific category
+     * @param categoryName The name of the category
+     */
+    getIssuesMap(categoryName: string): IssuesMap | undefined {
+        return this.gradingStatistics?.categoryIssuesMap ? this.gradingStatistics.categoryIssuesMap[categoryName] : undefined;
+    }
+
+    /**
+     * Load the static code analysis categories
+     * @private
+     */
+    private loadStaticCodeAnalysisCategories() {
+        this.gradingService
+            .getCodeAnalysisCategories(this.exercise.id!)
+            .pipe(
+                tap((categories) => (this.staticCodeAnalysisCategories = categories)),
+                catchError(() => of(null)),
+            )
+            .subscribe();
+    }
+
+    /**
+     * Load the statistics for this exercise and calculate the
+     * maximum number of issues in one category
+     * @param exerciseId The current exercise id
+     * @private
+     */
+    private loadStatistics(exerciseId: number) {
+        this.gradingService
+            .getGradingStatistics(exerciseId)
+            .pipe(
+                tap((statistics) => (this.gradingStatistics = statistics)),
+                tap(() => {
+                    this.maxIssuesPerCategory = 0;
+                    if (this.gradingStatistics?.categoryIssuesMap) {
+                        // calculate the maximum number of issues in one category
+                        Object.values(this.gradingStatistics?.categoryIssuesMap).forEach((issuesMap) => {
+                            const maxIssues = Object.keys(issuesMap).reduce((max, issues) => Math.max(max, parseInt(issues, 10)), 0);
+                            if (maxIssues > this.maxIssuesPerCategory) {
+                                this.maxIssuesPerCategory = maxIssues;
+                            }
+                        });
+                    }
+                }),
+                catchError(() => of(null)),
+            )
+            .subscribe();
     }
 }

@@ -18,9 +18,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -34,13 +32,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     ProgrammingExerciseImportService programmingExerciseImportService;
 
     @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    RequestUtilService request;
 
     private Course additionalEmptyCourse;
 

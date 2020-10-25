@@ -174,9 +174,9 @@ public class ProgrammingExerciseService {
         String projectKey = programmingExercise.getProjectKey();
         continuousIntegrationService.get().createProjectForExercise(programmingExercise);
         // template build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
         // solution build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUrl, testsRepoUrl);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUrl, testsRepoUrl, solutionRepoUrl);
 
         // Give appropriate permissions for CI projects
         continuousIntegrationService.get().removeAllDefaultProjectPermissions(projectKey);
@@ -322,7 +322,9 @@ public class ProgrammingExerciseService {
      */
     private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise, User user)
             throws Exception {
-        if (gitService.listFiles(repository).size() == 0 && programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) { // Only copy template if repo is empty
+        // Only copy template if repo is empty
+        if (gitService.listFiles(repository).size() == 0
+                && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
             String templatePath = "classpath:templates/" + programmingExercise.getProgrammingLanguage().toString().toLowerCase() + "/test";
 
             String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
@@ -399,32 +401,24 @@ public class ProgrammingExerciseService {
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
     public void replacePlaceholders(ProgrammingExercise programmingExercise, Repository repository) throws IOException {
-        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
         }
 
-        List<String> fileTargets = new ArrayList<>();
-        List<String> fileReplacements = new ArrayList<>();
-        // This is based on the correct order and assumes that boths lists have the same
-        // length, it
-        // replaces fileTargets.get(i) with fileReplacements.get(i)
+        Map<String, String> replacements = new HashMap<>();
 
-        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-            fileTargets.add("${packageName}");
-            fileReplacements.add(programmingExercise.getPackageName());
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
+            replacements.put("${packageName}", programmingExercise.getPackageName());
         }
         // there is no need in python to replace package names
 
-        fileTargets.add("${exerciseNamePomXml}");
-        fileReplacements.add(programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
+        replacements.put("${exerciseNamePomXml}", programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
 
-        fileTargets.add("${exerciseName}");
-        fileReplacements.add(programmingExercise.getTitle());
+        replacements.put("${exerciseName}", programmingExercise.getTitle());
 
-        fileTargets.add("${studentWorkingDirectory}");
-        fileReplacements.add(Constants.STUDENT_WORKING_DIRECTORY);
+        replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
 
-        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
+        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements);
     }
 
     /**
@@ -671,8 +665,11 @@ public class ProgrammingExerciseService {
         // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId).get();
-        if (deleteBaseReposBuildPlans) {
+        final var templateRepositoryUrlAsUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
+        final var solutionRepositoryUrlAsUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
+        final var testRepositoryUrlAsUrl = programmingExercise.getTestRepositoryUrlAsUrl();
 
+        if (deleteBaseReposBuildPlans) {
             final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
             if (templateBuildPlanId != null) {
                 continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
@@ -684,21 +681,29 @@ public class ProgrammingExerciseService {
             continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
 
             if (programmingExercise.getTemplateRepositoryUrl() != null) {
-                final var templateRepositoryUrlAsUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
                 versionControlService.get().deleteRepository(templateRepositoryUrlAsUrl);
-                gitService.deleteLocalRepository(templateRepositoryUrlAsUrl);
             }
             if (programmingExercise.getSolutionRepositoryUrl() != null) {
-                final var solutionRepositoryUrlAsUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
                 versionControlService.get().deleteRepository(solutionRepositoryUrlAsUrl);
-                gitService.deleteLocalRepository(solutionRepositoryUrlAsUrl);
             }
             if (programmingExercise.getTestRepositoryUrl() != null) {
-                final var testRepositoryUrlAsUrl = programmingExercise.getTestRepositoryUrlAsUrl();
                 versionControlService.get().deleteRepository(testRepositoryUrlAsUrl);
-                gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
             }
             versionControlService.get().deleteProject(programmingExercise.getProjectKey());
+        }
+        /*
+         * Always delete the local copies of the repository because they can (in theory) be restored by cloning again, but they block the creation of new programming exercises with
+         * the same short name as a deleted one. The instructors might have missed selecting deleteBaseReposBuildPlans, and delete those manually later. This however leaves no
+         * chance to remove the Artemis-local repositories on the server. In summary, they should and can always be deleted.
+         */
+        if (programmingExercise.getTemplateRepositoryUrl() != null) {
+            gitService.deleteLocalRepository(templateRepositoryUrlAsUrl);
+        }
+        if (programmingExercise.getSolutionRepositoryUrl() != null) {
+            gitService.deleteLocalRepository(solutionRepositoryUrlAsUrl);
+        }
+        if (programmingExercise.getTestRepositoryUrl() != null) {
+            gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
         }
 
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();

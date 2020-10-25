@@ -4,11 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,9 +38,7 @@ import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -76,13 +70,13 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     TextExerciseRepository textExerciseRepository;
 
     @Autowired
+    ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    @Autowired
+    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
     UserRepository userRepo;
-
-    @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     ResultRepository resultRepository;
@@ -126,7 +120,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         modelingExercise = modelingExerciseRepository.findAll().get(0);
         modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseRepository.save(modelingExercise);
-        studentParticipation = database.addParticipationForExercise(modelingExercise, "student2");
+        studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student2");
 
         result = ModelFactory.generateResult(true, 200).resultString("Good effort!").participation(programmingExerciseStudentParticipation);
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
@@ -140,55 +134,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() {
-        database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
-
-        Set<ProgrammingExerciseTestCase> expectedTestCases = new HashSet<>();
-        expectedTestCases
-                .add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test1").active(true).weight(1.0).id(1L).bonusMultiplier(1D).bonusPoints(0D));
-        expectedTestCases
-                .add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test2").active(true).weight(1.0).id(2L).bonusMultiplier(1D).bonusPoints(0D));
-        expectedTestCases
-                .add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test4").active(true).weight(1.0).id(3L).bonusMultiplier(1D).bonusPoints(0D));
-
-        final var resultNotification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of());
-        final var optionalResult = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
-
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).usingElementComparatorIgnoringFields("exercise", "id").isEqualTo(expectedTestCases);
-        assertThat(optionalResult).isPresent();
-        assertThat(optionalResult.get().getScore()).isEqualTo(100L);
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport() {
-        final var resultNotification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
-        final var staticCodeAnalysisFeedback = feedbackService
-                .createFeedbackFromStaticCodeAnalysisReports(resultNotification.getBuild().getJobs().get(0).getStaticCodeAnalysisReports());
-        final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
-        final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
-
-        // Create comparator to explicitly compare feedback attributes (equals only compares id)
-        Comparator<? super Feedback> scaFeedbackComparator = (Comparator<Feedback>) (fb1, fb2) -> {
-            if (Objects.equals(fb1.getDetailText(), fb2.getDetailText()) && Objects.equals(fb1.getText(), fb2.getText())
-                    && Objects.equals(fb1.getReference(), fb2.getReference())) {
-                return 0;
-            }
-            else {
-                return 1;
-            }
-        };
-
-        assertThat(optionalResult).isPresent();
-        var result = optionalResult.get();
-        assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(savedResult.getFeedbacks());
-        assertThat(savedResult.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(staticCodeAnalysisFeedback);
-        assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(staticCodeAnalysisFeedback);
     }
 
     @Test
@@ -579,7 +524,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         var modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
         course.addExercises(modelingExercise);
         modelingExerciseRepository.save(modelingExercise);
-        var participation = database.addParticipationForExercise(modelingExercise, "student1");
+        var participation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
         var result = database.addResultToParticipation(null, null, participation);
         request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
                 HttpStatus.BAD_REQUEST);

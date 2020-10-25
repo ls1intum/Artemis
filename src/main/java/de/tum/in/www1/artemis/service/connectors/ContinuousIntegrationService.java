@@ -28,12 +28,13 @@ public interface ContinuousIntegrationService {
     /**
      * Creates the base build plan for the given programming exercise
      *
-     * @param exercise          a programming exercise with the required information to create the base build plan
-     * @param planKey           the key of the plan
-     * @param repositoryURL     the URL of the assignment repository (used to separate between exercise and solution)
-     * @param testRepositoryURL the URL of the test repository
+     * @param exercise              a programming exercise with the required information to create the base build plan
+     * @param planKey               the key of the plan
+     * @param repositoryURL         the URL of the assignment repository (used to separate between exercise and solution)
+     * @param testRepositoryURL     the URL of the test repository
+     * @param solutionRepositoryURL the URL of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise ignored.
      */
-    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL);
+    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL, URL solutionRepositoryURL);
 
     /**
      * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.
@@ -43,9 +44,10 @@ public interface ContinuousIntegrationService {
      * @param targetProjectKey The key of the project the plan should get copied to
      * @param targetProjectName The wanted name of the new project
      * @param targetPlanName The wanted name of the new plan after copying it
+     * @param targetProjectExists whether the target project already exists or not
      * @return The key of the new build plan
      */
-    String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName);
+    String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName, boolean targetProjectExists);
 
     /**
      * Configure the build plan with the given participation on the CI system. Common configurations: - update the repository in the build plan - set appropriate user permissions -
@@ -121,7 +123,7 @@ public interface ContinuousIntegrationService {
      * @param buildPlanId unique identifier for build plan on CI system
      * @return true if build plan is valid otherwise false
      */
-    boolean buildPlanIdIsValid(String projectKey, String buildPlanId);
+    boolean checkIfBuildPlanExists(String projectKey, String buildPlanId);
 
     /**
      * Get the build logs of the latest CI build.
@@ -236,8 +238,7 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, C, HASKELL -> Constants.ASSIGNMENT_CHECKOUT_PATH;
-                    default -> throw new IllegalArgumentException("Repository checkout path for assignment repo has not yet been defined for " + language);
+                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT -> Constants.ASSIGNMENT_CHECKOUT_PATH;
                 };
             }
         },
@@ -246,9 +247,18 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, HASKELL -> "";
-                    case C -> Constants.TESTS_CHECKOUT_PATH;
-                    default -> throw new IllegalArgumentException("Repository checkout path for test repo has not yet been defined for " + language);
+                    case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT -> "";
+                    case C, VHDL, ASSEMBLER -> Constants.TESTS_CHECKOUT_PATH;
+                };
+            }
+        },
+        SOLUTION {
+
+            @Override
+            public String forProgrammingLanguage(ProgrammingLanguage language) {
+                return switch (language) {
+                    case HASKELL -> Constants.SOLUTION_CHECKOUT_PATH;
+                    default -> throw new IllegalArgumentException("Repository checkout path for solution repo has not yet been defined for " + language);
                 };
             }
         }

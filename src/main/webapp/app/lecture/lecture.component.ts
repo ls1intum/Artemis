@@ -9,7 +9,7 @@ import { LectureService } from './lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { ActivatedRoute } from '@angular/router';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-lecture',
@@ -27,7 +27,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     constructor(
         protected lectureService: LectureService,
         private route: ActivatedRoute,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
         protected accountService: AccountService,
     ) {}
