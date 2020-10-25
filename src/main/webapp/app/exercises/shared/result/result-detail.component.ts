@@ -13,7 +13,9 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 
 export enum FeedbackItemType {
-    Issue, Test, Feedback,
+    Issue,
+    Test,
+    Feedback,
 }
 
 export class FeedbackItem {
@@ -122,7 +124,9 @@ export class ResultDetailComponent implements OnInit {
                     return {
                         type: FeedbackItemType.Test,
                         category: this.showTestDetails ? 'Test Case' : 'Feedback',
-                        title: !this.showTestDetails ? undefined : feedback.positive === undefined
+                        title: !this.showTestDetails
+                            ? undefined
+                            : feedback.positive === undefined
                             ? `No result information for ${feedback.text}`
                             : `Test ${feedback.text} ${feedback.positive ? 'passed' : 'failed'}`,
                         text: feedback.detailText,
@@ -184,9 +188,23 @@ export class ResultDetailComponent implements OnInit {
         if (this.exerciseType !== ExerciseType.PROGRAMMING || this.showTestDetails) {
             return [...feedbackList];
         } else {
-            return feedbackList.filter((feedbackItem) => {
-                return feedbackItem.type !== FeedbackItemType.Test || !feedbackItem.positive;
+            const positiveTestCases = feedbackList.filter((feedbackItem) => {
+                return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive;
             });
+            if (positiveTestCases.length > 0) {
+                return [
+                    {
+                        type: FeedbackItemType.Test,
+                        category: 'Feedback',
+                        title: positiveTestCases.length + ' passed test' + (positiveTestCases.length > 1 ? 's' : ''),
+                        positive: true,
+                        credits: positiveTestCases.reduce((sum, feedbackItem) => sum + (feedbackItem.credits || 0), 0),
+                    },
+                    ...feedbackList.filter((feedbackItem) => !positiveTestCases.includes(feedbackItem)),
+                ];
+            } else {
+                return [...feedbackList];
+            }
         }
     }
 
@@ -199,7 +217,7 @@ export class ResultDetailComponent implements OnInit {
             if (feedback.credits === 0) {
                 return 'alert-secondary';
             } else {
-                return feedback.positive ? 'alert-success' : 'alert-danger';
+                return feedback.positive || (feedback.credits && feedback.credits > 0) ? 'alert-success' : 'alert-danger';
             }
         }
     }
