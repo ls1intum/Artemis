@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -199,5 +200,36 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         resultRepository.save(result);
 
         assertThat(result.getResultString()).isEqualTo("6 of 7 points");
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testIsAllowedToCreateOrOverrideResult_withExamDueDateNotPassed() {
+        ZonedDateTime visibleDate = ZonedDateTime.now().minusHours(2);
+        ZonedDateTime startDate = ZonedDateTime.now().minusHours(1);
+        ZonedDateTime endDate = ZonedDateTime.now().plusHours(1);
+
+        Exam exam = database.addExam(course1, visibleDate, startDate, endDate);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
+        var exercise = exam.getExerciseGroups().get(0).getExercises().iterator().next();
+
+        boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, null, null, false);
+        assertThat(isAllowed).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testIsAllowedToCreateOrOverrideResult_withExamPublishResultDatePassed() {
+        ZonedDateTime visibleDate = ZonedDateTime.now().minusHours(3);
+        ZonedDateTime startDate = ZonedDateTime.now().minusHours(2);
+        ZonedDateTime endDate = ZonedDateTime.now().minusHours(1);
+        ZonedDateTime publishResultDate = ZonedDateTime.now().minusMinutes(1);
+
+        Exam exam = database.addExam(course1, visibleDate, startDate, endDate, publishResultDate);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
+        var exercise = exam.getExerciseGroups().get(0).getExercises().iterator().next();
+
+        boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, null, null, false);
+        assertThat(isAllowed).isFalse();
     }
 }
