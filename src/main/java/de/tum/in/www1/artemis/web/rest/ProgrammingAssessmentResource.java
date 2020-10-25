@@ -14,7 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -120,7 +120,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        Optional<Result> latestExistingResult = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.MANUAL).findFirst();
+        Optional<Result> latestExistingResult = participation.getResults().stream().filter(result -> result.isManualResult()).findFirst();
         if (latestExistingResult.isPresent()) {
             // prevent that tutors create multiple manual results
             newResult.setId(latestExistingResult.get().getId());
@@ -147,8 +147,10 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         if (newResult.getScore() != null && newResult.getScore() < 100 && newResult.isSuccessful()) {
             throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         }
-        else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getDetailText() == null)) {
-            throw new BadRequestAlertException("In case feedback is present, feedback detail text is mandatory.", ENTITY_NAME, "feedbackDetailTextNull");
+        // All not automatically generated result must have a detail text
+        else if (!newResult.getFeedbacks().isEmpty()
+                && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getType() != FeedbackType.AUTOMATIC && feedback.getDetailText() == null)) {
+            throw new BadRequestAlertException("In case tutor feedback is present, a feedback detail text is mandatory.", ENTITY_NAME, "feedbackDetailTextNull");
         }
         else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getCredits() == null)) {
             throw new BadRequestAlertException("In case feedback is present, a feedback must contain points.", ENTITY_NAME, "feedbackCreditsNull");

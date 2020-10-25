@@ -285,8 +285,8 @@ public class DatabaseUtilService {
      * numberOfStudents Tutors login is a concatenation of the prefix "tutor" and a number counting from 1 to numberOfStudents Tutors are all in the "tutor" group and students in
      * the "tumuser" group
      *
-     * @param numberOfStudents the number of students that will be added to the database
-     * @param numberOfTutors the number of tutors that will be added to the database
+     * @param numberOfStudents    the number of students that will be added to the database
+     * @param numberOfTutors      the number of tutors that will be added to the database
      * @param numberOfInstructors the number of instructors that will be added to the database
      */
     public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
@@ -896,6 +896,17 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime publishResultDate) {
+        Exam exam = ModelFactory.generateExam(course);
+        exam.setVisibleDate(visibleDate);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        exam.setPublishResultsDate(publishResultDate);
+        exam.setGracePeriod(180);
+        examRepository.save(exam);
+        return exam;
+    }
+
     public Exam addActiveExamWithRegisteredUser(Course course, User user) {
         Exam exam = ModelFactory.generateExam(course);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
@@ -1183,11 +1194,25 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
+    public Result addFeedbackToResults(Result result) {
+        List<Feedback> feedback = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
+        feedback.addAll(ModelFactory.generateFeedback());
+        feedback = feedbackRepo.saveAll(feedback);
+        result.addFeedbacks(feedback);
+        return resultRepo.save(result);
+    }
+
     public Result addResultToSubmission(Submission submission, AssessmentType assessmentType) {
         Result result = new Result().participation(submission.getParticipation()).submission(submission).resultString("x of y passed").rated(true).score(100L)
                 .assessmentType(assessmentType);
         resultRepo.save(result);
         return result;
+    }
+
+    public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
+        exercise.setMaxScore(100.0);
+        exercise.setBonusPoints(10.0);
+        return exerciseRepo.save(exercise);
     }
 
     public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
@@ -1777,12 +1802,14 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    public ProgrammingSubmission addProgrammingSubmissionWithResultAndAssessor(ProgrammingExercise exercise, ProgrammingSubmission submission, String login, String assessorLogin) {
+    public ProgrammingSubmission addProgrammingSubmissionWithResultAndAssessor(ProgrammingExercise exercise, ProgrammingSubmission submission, String login, String assessorLogin,
+            AssessmentType assessmentType) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+
         participation.addSubmissions(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
-        result.setAssessmentType(AssessmentType.MANUAL);
+        result.setAssessmentType(assessmentType);
         result.setScore(50L);
         result.setCompletionDate(ZonedDateTime.now());
         result = resultRepo.save(result);

@@ -300,9 +300,8 @@ public class ProgrammingExercise extends Exercise {
     public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         return submissions.stream().filter(submission -> {
             if (submission.getResult() != null) {
-                return (submission.getResult().isRated() && !submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL))
-                        || submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)
-                                && (this.getAssessmentDueDate() == null || this.getAssessmentDueDate().isBefore(ZonedDateTime.now()));
+                return (submission.getResult().isRated() && !submission.getResult().isManualResult())
+                        || (submission.getResult().isManualResult() && (this.getAssessmentDueDate() == null || this.getAssessmentDueDate().isBefore(ZonedDateTime.now())));
             }
             return this.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
                     || submission.getSubmissionDate().isBefore(this.getDueDate());
@@ -501,8 +500,7 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-        return participation.getResults().stream()
-                .filter(result -> (result.getAssessmentType().equals(AssessmentType.MANUAL) && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
+        return participation.getResults().stream().filter(result -> (result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
                 .collect(Collectors.toSet());
     }
 
@@ -522,7 +520,7 @@ public class ProgrammingExercise extends Exercise {
             }
             // NOTE: for the dashboard we only use rated results with completion date or automatic result
             boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-            if ((result.getAssessmentType().equals(AssessmentType.MANUAL) && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
+            if ((result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;
