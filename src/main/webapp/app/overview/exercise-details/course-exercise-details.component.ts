@@ -162,8 +162,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.subscribeForNewResults();
         this.subscribeToTeamAssignmentUpdates();
 
-        if (this.studentQuestions) {
-            this.onChildActivate(this.studentQuestions);
+        if (this.studentQuestions && this.exercise) {
+            // We need to manually update the exercise property of the student questions component
+            this.studentQuestions.exercise = this.exercise;
+            this.studentQuestions.loadQuestions(); // reload the student questions
         }
     }
 
@@ -366,6 +368,19 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         return undefined;
     }
 
+    /**
+     * This function gets called if the router outlet gets activated. This is
+     * used only for the StudentQuestionsComponent
+     * @param instance The component instance
+     */
+    onChildActivate(instance: StudentQuestionsComponent) {
+        this.studentQuestions = instance; // save the reference to the component instance
+        if (this.exercise) {
+            instance.exercise = this.exercise;
+            instance.loadQuestions(); // reload the student questions
+        }
+    }
+
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
 
     /**
@@ -413,12 +428,4 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
-
-    onChildActivate(ref: StudentQuestionsComponent) {
-        this.studentQuestions = ref;
-        if (this.exercise) {
-            ref.exercise = this.exercise;
-            ref.loadQuestions();
-        }
-    }
 }

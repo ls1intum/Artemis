@@ -53,8 +53,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 this.lecture = null;
                 this.lectureService.find(params.lectureId).subscribe((lectureResponse: HttpResponse<Lecture>) => {
                     this.lecture = lectureResponse.body;
-                    if (this.studentQuestions) {
-                        this.onChildActivate(this.studentQuestions);
+                    if (this.studentQuestions && this.lecture) {
+                        // We need to manually update the lecture property of the student questions component
+                        this.studentQuestions.lecture = this.lecture;
+                        this.studentQuestions.loadQuestions(); // reload the student questions
                     }
                 });
             }
@@ -91,11 +93,16 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
-    onChildActivate(ref: StudentQuestionsComponent) {
-        this.studentQuestions = ref;
+    /**
+     * This function gets called if the router outlet gets activated. This is
+     * used only for the StudentQuestionsComponent
+     * @param instance The component instance
+     */
+    onChildActivate(instance: StudentQuestionsComponent) {
+        this.studentQuestions = instance; // save the reference to the component instance
         if (this.lecture) {
-            ref.lecture = this.lecture;
-            ref.loadQuestions();
+            instance.lecture = this.lecture;
+            instance.loadQuestions(); // reload the student questions
         }
     }
 }
