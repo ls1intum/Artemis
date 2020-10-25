@@ -108,12 +108,12 @@ const routes: Routes = [
         },
         canActivate: [UserRouteAccessService],
         children: [
-        {
-            path: '',
-            pathMatch: 'full',
-            loadChildren: () => import('app/overview/student-questions/student-questions.module').then((m) => m.ArtemisStudentQuestionsModule),
-        },
-],
+            {
+                path: '',
+                pathMatch: 'full',
+                loadChildren: () => import('app/overview/student-questions/student-questions.module').then((m) => m.ArtemisStudentQuestionsModule),
+            },
+        ],
     },
 ];
 
