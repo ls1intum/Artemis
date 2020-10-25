@@ -14,15 +14,15 @@
 -->
     <ng-template #feedbackContainer>
         <div *ngIf="!loadingFailed && filteredFeedbackList && filteredFeedbackList.length; else buildLogsContainer" class="result-detail-container">
-            <div *ngIf="showFeedbackCredits && result.participation?.exercise" class="result-detail-graph">
+            <div *ngIf="showResultGraph && result.participation?.exercise" class="result-detail-graph">
                 <jhi-result-graph [feedbackList]="feedbackList" [exercise]="result.participation!.exercise!"></jhi-result-graph>
                 <hr />
             </div>
             <div class="feedback-list">
                 <div *ngFor="let feedback of filteredFeedbackList; last as isLast" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedback)]">
                     <span>{{ feedback.category }}</span>
-                    <span class="feedback-points" *ngIf="showFeedbackCredits && feedback.credits">{{ feedback.credits.toFixed(1) }}P</span>
-                    <span class="feedback-title">{{ feedback.title }}</span>
+                    <span class="feedback-points" *ngIf="feedback.credits">{{ feedback.credits.toFixed(1) }}P</span>
+                    <span class="feedback-title" *ngIf="feedback.title">{{ feedback.title }}</span>
                     <p *ngIf="feedback.text">{{ feedback.text }}</p>
                     <p *ngElse>No feedback available</p>
                 </div>

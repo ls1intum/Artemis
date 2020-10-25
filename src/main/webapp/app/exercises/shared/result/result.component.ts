@@ -51,7 +51,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() result: Result | null;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge = false;
-    @Input() showTestNames = false;
+    @Input() showTestDetails = false;
 
     ParticipationType = ParticipationType;
 
@@ -270,13 +270,14 @@ export class ResultComponent implements OnInit, OnChanges {
             result.participation = this.participation;
         }
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.result = result;
-        modalRef.componentInstance.showTestNames = this.showTestNames;
+        const componentInstance: ResultDetailComponent = modalRef.componentInstance;
+        componentInstance.result = result;
+        componentInstance.showTestDetails = this.showTestDetails;
         const exercise = getExercise(this.participation);
         if (exercise) {
-            modalRef.componentInstance.exerciseType = exercise.type;
-            modalRef.componentInstance.maxPoints = exercise.maxScore! + (exercise.bonusPoints || 0);
-            modalRef.componentInstance.showFeedbackCredits = true;
+            componentInstance.exerciseType = exercise.type!;
+            componentInstance.maxPoints = exercise.maxScore! + (exercise.bonusPoints || 0);
+            componentInstance.showResultGraph = true;
         }
     }
 

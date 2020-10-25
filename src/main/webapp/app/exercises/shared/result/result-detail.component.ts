@@ -4,7 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
-import { Feedback, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
@@ -12,12 +12,17 @@ import { BuildLogService } from 'app/exercises/programming/shared/service/build-
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 
+export enum FeedbackItemType {
+    Issue, Test, Feedback,
+}
+
 export class FeedbackItem {
+    type: FeedbackItemType;
     category: string;
-    title: string | null;
-    text: string | null;
-    positive: boolean | null;
-    credits: number;
+    title?: string;
+    text?: string;
+    positive?: boolean;
+    credits?: number;
 }
 
 // Modal -> Result details view
@@ -32,8 +37,8 @@ export class ResultDetailComponent implements OnInit {
     @Input() result: Result;
     // Specify the feedback.text values that should be shown, all other values will not be visible.
     @Input() feedbackFilter: string[];
-    @Input() showTestNames = false;
-    @Input() showFeedbackCredits = false;
+    @Input() showTestDetails = false;
+    @Input() showResultGraph = false;
     @Input() exerciseType: ExerciseType;
 
     isLoading = false;
@@ -91,8 +96,8 @@ export class ResultDetailComponent implements OnInit {
             return [...feedbackList];
         } else {
             return this.feedbackFilter
-                .map((test) => {
-                    return feedbackList.find(({ text }) => text === test);
+                .map((filterText) => {
+                    return feedbackList.find(({ text }) => text === filterText);
                 })
                 .filter(Boolean) as Feedback[];
         }
@@ -105,41 +110,43 @@ export class ResultDetailComponent implements OnInit {
                     const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
                     const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
                     return {
+                        type: FeedbackItemType.Issue,
                         category: 'Code Issue',
                         title: `${scaCategory} Issue in file ${this.getIssueLocation(scaIssue)}`.trim(),
                         text: `${scaIssue.rule}: ${scaIssue.message}`,
                         positive: false,
-                        credits: feedback.credits!,
+                        credits: feedback.credits,
                     };
-                } else if (feedback.type === 'AUTOMATIC') {
+                } else if (feedback.type === FeedbackType.AUTOMATIC) {
                     return {
-                        category: 'Test Case',
-                        title: !this.showTestNames
-                            ? `${feedback.positive ? 'Passed' : 'Failed'} test`
-                            : feedback.positive === undefined
+                        type: FeedbackItemType.Test,
+                        category: this.showTestDetails ? 'Test Case' : 'Feedback',
+                        title: !this.showTestDetails ? undefined : feedback.positive === undefined
                             ? `No result information for ${feedback.text}`
                             : `Test ${feedback.text} ${feedback.positive ? 'passed' : 'failed'}`,
-                        text: feedback.detailText!,
-                        positive: feedback.positive!,
-                        credits: feedback.credits!,
+                        text: feedback.detailText,
+                        positive: feedback.positive,
+                        credits: feedback.credits,
                     };
                 } else {
                     return {
-                        category: 'Tutor',
-                        title: feedback.text!,
-                        text: feedback.detailText!,
-                        positive: feedback.positive!,
-                        credits: feedback.credits!,
+                        type: FeedbackItemType.Feedback,
+                        category: this.showTestDetails ? 'Tutor' : 'Feedback',
+                        title: feedback.text,
+                        text: feedback.detailText,
+                        positive: feedback.positive,
+                        credits: feedback.credits,
                     };
                 }
             });
         } else {
             return feedbacks.map((feedback) => ({
-                category: feedback.type === 'AUTOMATIC' ? 'System' : 'Tutor',
-                title: feedback.text!,
-                text: feedback.detailText!,
-                positive: feedback.positive!,
-                credits: feedback.credits!,
+                type: FeedbackItemType.Feedback,
+                category: 'Feedback',
+                title: feedback.text,
+                text: feedback.detailText,
+                positive: feedback.positive,
+                credits: feedback.credits,
             }));
         }
     }
@@ -173,27 +180,27 @@ export class ResultDetailComponent implements OnInit {
     };
 
     private filterFeedbackItems(feedbackList: FeedbackItem[]) {
-        if (this.exerciseType === ExerciseType.PROGRAMMING) {
-            return feedbackList.filter((feedbackItem) => {
-                if (feedbackItem.category === 'Test Case' && feedbackItem.positive) {
-                    return false;
-                }
-                return true;
-            });
-        } else {
+
+        if (this.exerciseType !== ExerciseType.PROGRAMMING || this.showTestDetails) {
             return [...feedbackList];
+        } else {
+            return feedbackList.filter((feedbackItem) => {
+                return feedbackItem.type !== FeedbackItemType.Test || !feedbackItem.positive;
+            });
         }
     }
 
     getClassNameForFeedbackItem(feedback: FeedbackItem): string {
-        if (feedback.category === 'Test Case') {
-            return 'alert-danger';
-        } else if (feedback.category === 'Code Issue') {
+        if (feedback.type === FeedbackItemType.Issue) {
             return 'alert-warning';
-        } else if (this.exerciseType === ExerciseType.PROGRAMMING) {
-            return 'alert-primary';
-        } else {
+        } else if (feedback.type === FeedbackItemType.Test) {
             return feedback.positive ? 'alert-success' : 'alert-danger';
+        } else if (feedback.type === FeedbackItemType.Feedback) {
+            if (feedback.credits === 0) {
+                return 'alert-secondary';
+            } else {
+                return feedback.positive ? 'alert-success' : 'alert-danger';
+            }
         }
     }
 }
