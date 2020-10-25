@@ -12,7 +12,21 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 
 @NgModule({
     imports: [ArtemisSharedModule, MomentModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedComponentModule],
-    declarations: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent, SubmissionResultStatusComponent, ProgrammingAssessmentManualResultButtonComponent],
-    exports: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent, SubmissionResultStatusComponent, ProgrammingAssessmentManualResultButtonComponent],
+    declarations: [
+        ResultComponent,
+        UpdatingResultComponent,
+        ResultDetailComponent,
+        ResultHistoryComponent,
+        SubmissionResultStatusComponent,
+        ProgrammingAssessmentManualResultButtonComponent,
+    ],
+    exports: [
+        ResultComponent,
+        UpdatingResultComponent,
+        ResultDetailComponent,
+        ResultHistoryComponent,
+        SubmissionResultStatusComponent,
+        ProgrammingAssessmentManualResultButtonComponent,
+    ],
 })
 export class ArtemisResultModule {}
