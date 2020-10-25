@@ -407,4 +407,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
+
+    onChildActivate(ref: any) {
+        console.log(ref);
+    }
 }

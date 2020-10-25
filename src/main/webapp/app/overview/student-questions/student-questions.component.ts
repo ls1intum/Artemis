@@ -12,6 +12,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import interact from 'interactjs';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-student-questions',
@@ -32,7 +33,12 @@ export class StudentQuestionsComponent implements OnInit, AfterViewInit {
     domainCommands = [new KatexCommand()];
     courseId: number;
 
-    constructor(private accountService: AccountService, private studentQuestionService: StudentQuestionService, private exerciseService: ExerciseService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private accountService: AccountService,
+        private studentQuestionService: StudentQuestionService,
+        private exerciseService: ExerciseService,
+    ) {}
 
     /**
      * get the current user and check if he is at least a tutor for this course
@@ -41,6 +47,7 @@ export class StudentQuestionsComponent implements OnInit, AfterViewInit {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
         });
+        console.log(this.route);
         if (this.exercise) {
             // in this case the student questions are preloaded
             this.studentQuestions = StudentQuestionsComponent.sortStudentQuestionsByVote(this.exercise.studentQuestions!);
