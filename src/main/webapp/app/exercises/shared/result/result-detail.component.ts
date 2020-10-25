@@ -11,6 +11,7 @@ import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
+import { ScoreChartPreset } from 'app/shared/chart/presets/scoreChartPreset';
 
 export enum FeedbackItemType {
     Issue,
@@ -40,7 +41,7 @@ export class ResultDetailComponent implements OnInit {
     // Specify the feedback.text values that should be shown, all other values will not be visible.
     @Input() feedbackFilter: string[];
     @Input() showTestDetails = false;
-    @Input() showResultGraph = false;
+    @Input() showScoreChart = false;
     @Input() exerciseType: ExerciseType;
     @Input() maxPoints: number;
 
@@ -73,6 +74,9 @@ export class ResultDetailComponent implements OnInit {
                         const filteredFeedback = this.filterFeedback(feedbacks);
                         this.feedbackList = this.createFeedbackItems(filteredFeedback);
                         this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
+                        if (this.showScoreChart) {
+                            this.updateChart(this.feedbackList);
+                        }
                     }
                     // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
                     if (this.exerciseType === ExerciseType.PROGRAMMING && (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)) {
@@ -184,6 +188,8 @@ export class ResultDetailComponent implements OnInit {
         );
     };
 
+    chartPreset = new ScoreChartPreset();
+
     private filterFeedbackItems(feedbackList: FeedbackItem[]) {
         if (this.exerciseType !== ExerciseType.PROGRAMMING || this.showTestDetails) {
             return [...feedbackList];
@@ -220,5 +226,17 @@ export class ResultDetailComponent implements OnInit {
                 return feedback.positive || (feedback.credits && feedback.credits > 0) ? 'alert-success' : 'alert-danger';
             }
         }
+    }
+
+    private updateChart(feedbackList: FeedbackItem[]) {
+        const positiveCredits = feedbackList
+            .filter((feedbackItem) => feedbackItem.credits && feedbackItem.credits > 0)
+            .reduce((sum, feedbackItem) => sum + feedbackItem.credits!, 0);
+
+        const negativeCredits = feedbackList
+            .filter((feedbackItem) => feedbackItem.credits && feedbackItem.credits < 0)
+            .reduce((sum, feedbackItem) => sum + -feedbackItem.credits!, 0);
+
+        this.chartPreset.setValues(positiveCredits, negativeCredits);
     }
 }

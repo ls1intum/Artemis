@@ -14,8 +14,8 @@
 -->
     <ng-template #feedbackContainer>
         <div *ngIf="!loadingFailed && filteredFeedbackList && filteredFeedbackList.length; else buildLogsContainer" class="result-detail-container">
-            <div *ngIf="showResultGraph && result.participation?.exercise" class="result-detail-graph">
-                <jhi-result-graph [feedbackList]="feedbackList" [exercise]="result.participation!.exercise!"></jhi-result-graph>
+            <div *ngIf="showScoreChart && result.participation?.exercise" class="result-detail-graph">
+                <jhi-chart [preset]="chartPreset"></jhi-chart>
                 <hr />
             </div>
             <div class="feedback-list">
