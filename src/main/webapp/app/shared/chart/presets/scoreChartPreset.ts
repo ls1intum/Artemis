@@ -1,5 +1,6 @@
 import { ChartComponent, ChartPreset } from 'app/shared/chart/chart.component';
 import { ChartDataSets } from 'chart.js';
+import { Exercise } from 'app/entities/exercise.model';
 
 export class ScoreChartPreset implements ChartPreset {
     private chart: ChartComponent;
@@ -21,17 +22,31 @@ export class ScoreChartPreset implements ChartPreset {
         }
     }
 
-    setValues(positive: number, negative: number) {
+    setValues(positive: number, negative: number, exercise: Exercise) {
+        const maxScoreWithBonus = exercise.maxScore! + (exercise.bonusPoints || 0);
+        const maxScore = exercise.maxScore!;
+
+        // cap to min and max values while maintaining correct negative points
+        if (positive - negative > maxScoreWithBonus) {
+            positive = maxScoreWithBonus;
+            negative = 0;
+        } else if (positive > maxScoreWithBonus) {
+            negative -= positive - maxScoreWithBonus;
+            positive = maxScoreWithBonus;
+        } else if (positive - negative < 0) {
+            negative = positive;
+        }
+
         this.datasets = [
             {
                 label: 'Points',
-                data: [positive - negative],
+                data: [((positive - negative) / maxScore) * 100],
                 backgroundColor: '#28a745',
                 hoverBackgroundColor: '#28a745',
             },
             {
                 label: 'Deductions',
-                data: [negative],
+                data: [(negative / maxScore) * 100],
                 backgroundColor: this.pattern,
                 hoverBackgroundColor: this.pattern,
             },

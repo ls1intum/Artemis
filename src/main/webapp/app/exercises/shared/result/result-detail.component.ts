@@ -12,6 +12,7 @@ import { BuildLogService } from 'app/exercises/programming/shared/service/build-
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { ScoreChartPreset } from 'app/shared/chart/presets/scoreChartPreset';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 export enum FeedbackItemType {
     Issue,
@@ -235,19 +236,31 @@ export class ResultDetailComponent implements OnInit {
 
         const sumCredits = (sum: number, feedbackItem: FeedbackItem) => sum + feedbackItem.credits!;
 
-        const testCasePoints = feedbackList.filter((item) => item.type === FeedbackItemType.Test).reduce(sumCredits, 0);
+        let testCaseCredits = feedbackList.filter((item) => item.type === FeedbackItemType.Test).reduce(sumCredits, 0);
         const positiveCredits = feedbackList.filter((item) => item.type !== FeedbackItemType.Test && item.credits && item.credits > 0).reduce(sumCredits, 0);
-        const negativeCredits = feedbackList.filter((item) => item.credits && item.credits < 0).reduce(sumCredits, 0);
+        let codeIssueCredits = -feedbackList.filter((item) => item.type === FeedbackItemType.Issue).reduce(sumCredits, 0);
+        const negativeCredits = -feedbackList.filter((item) => item.type !== FeedbackItemType.Issue && item.credits && item.credits < 0).reduce(sumCredits, 0);
 
         const exercise = this.result.participation.exercise;
 
+        // cap test points
         const maxPointsWithBonus = exercise.maxScore! + (exercise.bonusPoints || 0);
-        const maxPoints = exercise.maxScore!;
+        if (testCaseCredits > maxPointsWithBonus) {
+            testCaseCredits = maxPointsWithBonus;
+        }
 
-        let points = Math.min(testCasePoints, maxPointsWithBonus); // cap test points first
-        points = points - negativeCredits + positiveCredits; // subtract negative and add positive credits from remaining feedback
-        points = Math.max(0, Math.min(points, maxPointsWithBonus)); // 0 <= points <= maxPointsWithBonus
+        // cap sca penalty points
+        if (exercise.type === ExerciseType.PROGRAMMING) {
+            const programmingExercise = exercise as ProgrammingExercise;
+            if (programmingExercise.staticCodeAnalysisEnabled && programmingExercise.maxStaticCodeAnalysisPenalty != null) {
+                const maxPenaltyCredits = (programmingExercise.maxScore! * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
+                codeIssueCredits = Math.min(codeIssueCredits, maxPenaltyCredits);
+            }
+        }
 
-        this.scoreChartPreset.setValues((points / maxPoints) * 100, (negativeCredits / maxPoints) * 100);
+        const negativePoints = codeIssueCredits + negativeCredits;
+        const positivePoints = testCaseCredits + positiveCredits;
+
+        this.scoreChartPreset.setValues(positivePoints, negativePoints, exercise);
     }
 }
