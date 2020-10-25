@@ -55,7 +55,7 @@ export class ChartComponent {
             display: false,
         },
         tooltips: {
-            enabled: true,
+            enabled: false,
         },
         scales: {
             yAxes: [],

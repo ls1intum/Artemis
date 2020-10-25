@@ -43,7 +43,6 @@ export class ResultDetailComponent implements OnInit {
     @Input() showTestDetails = false;
     @Input() showScoreChart = false;
     @Input() exerciseType: ExerciseType;
-    @Input() maxPoints: number;
 
     isLoading = false;
     loadingFailed = false;
@@ -188,7 +187,7 @@ export class ResultDetailComponent implements OnInit {
         );
     };
 
-    chartPreset = new ScoreChartPreset();
+    scoreChartPreset = new ScoreChartPreset();
 
     private filterFeedbackItems(feedbackList: FeedbackItem[]) {
         if (this.exerciseType !== ExerciseType.PROGRAMMING || this.showTestDetails) {
@@ -229,14 +228,26 @@ export class ResultDetailComponent implements OnInit {
     }
 
     private updateChart(feedbackList: FeedbackItem[]) {
-        const positiveCredits = feedbackList
-            .filter((feedbackItem) => feedbackItem.credits && feedbackItem.credits > 0)
-            .reduce((sum, feedbackItem) => sum + feedbackItem.credits!, 0);
+        if (!this.result.participation?.exercise) {
+            this.showScoreChart = false;
+            return;
+        }
 
-        const negativeCredits = feedbackList
-            .filter((feedbackItem) => feedbackItem.credits && feedbackItem.credits < 0)
-            .reduce((sum, feedbackItem) => sum + -feedbackItem.credits!, 0);
+        const sumCredits = (sum: number, feedbackItem: FeedbackItem) => sum + feedbackItem.credits!;
 
-        this.chartPreset.setValues(positiveCredits, negativeCredits);
+        const testCasePoints = feedbackList.filter((item) => item.type === FeedbackItemType.Test).reduce(sumCredits, 0);
+        const positiveCredits = feedbackList.filter((item) => item.type !== FeedbackItemType.Test && item.credits && item.credits > 0).reduce(sumCredits, 0);
+        const negativeCredits = feedbackList.filter((item) => item.credits && item.credits < 0).reduce(sumCredits, 0);
+
+        const exercise = this.result.participation.exercise;
+
+        const maxPointsWithBonus = exercise.maxScore! + (exercise.bonusPoints || 0);
+        const maxPoints = exercise.maxScore!;
+
+        let points = Math.min(testCasePoints, maxPointsWithBonus); // cap test points first
+        points = points - negativeCredits + positiveCredits; // subtract negative and add positive credits from remaining feedback
+        points = Math.max(0, Math.min(points, maxPointsWithBonus)); // 0 <= points <= maxPointsWithBonus
+
+        this.scoreChartPreset.setValues((points / maxPoints) * 100, (negativeCredits / maxPoints) * 100);
     }
 }

@@ -34,34 +34,20 @@
     }
 }
 
-.result-detail-graph {
+.result-score-chart {
     margin-bottom: 1em;
-}
+    max-height: 100px;
 
-.result-graph-wrapper {
-    margin-bottom: 1em;
-    display: flex;
+    .result-score-chart-title {
+        display: inline-block;
+        width: 100%;
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-bottom: 5px;
+        font-size: .9em;
 
-    .result-graph-svg {
-        margin-right: 1em;
-    }
-
-    .result-graph-legend {
-        display: flex;
-        flex-flow: column wrap;
-        justify-content: center;
-
-        .result-graph-legend-item {
-            display: flex;
-            align-items: center;
-
-            .result-graph-legend-dot {
-                display: inline-block;
-                width: 8px;
-                height: 8px;
-                border-radius: 8px;
-                margin-right: 1em;
-            }
+        .badge {
+            float: right;
         }
     }
 }

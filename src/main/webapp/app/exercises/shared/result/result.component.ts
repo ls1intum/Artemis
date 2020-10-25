@@ -276,7 +276,6 @@ export class ResultComponent implements OnInit, OnChanges {
         const exercise = getExercise(this.participation);
         if (exercise) {
             componentInstance.exerciseType = exercise.type!;
-            componentInstance.maxPoints = exercise.maxScore! + (exercise.bonusPoints || 0);
             componentInstance.showScoreChart = true;
         }
     }

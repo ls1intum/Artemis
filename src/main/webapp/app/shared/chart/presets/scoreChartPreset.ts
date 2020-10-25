@@ -14,8 +14,8 @@ export class ScoreChartPreset implements ChartPreset {
         this.chart = chart;
         chart.setType('horizontalBar');
         chart.setYAxe(0, { stacked: true }, false);
-        chart.setXAxe(0, { stacked: true, ticks: { min: 0, stepSize: 25, callback: (value) => value + '%' } }, false);
-        chart.setLegend(true);
+        chart.setXAxe(0, { stacked: true, ticks: { min: 0, stepSize: 25, suggestedMax: 100, callback: (value) => value + '%' } }, false);
+        chart.setLegend({ position: 'bottom' });
         if (this.datasets) {
             chart.datasets = this.datasets;
         }
@@ -24,12 +24,16 @@ export class ScoreChartPreset implements ChartPreset {
     setValues(positive: number, negative: number) {
         this.datasets = [
             {
+                label: 'Points',
                 data: [positive - negative],
                 backgroundColor: '#28a745',
+                hoverBackgroundColor: '#28a745',
             },
             {
+                label: 'Deductions',
                 data: [negative],
                 backgroundColor: this.pattern,
+                hoverBackgroundColor: this.pattern,
             },
         ];
         if (this.chart) {
