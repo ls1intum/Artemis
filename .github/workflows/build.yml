@@ -103,7 +103,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-
     - name: Java Tests
-      run: ./gradlew --console=plain executeTests jacocoTestReport -x yarn_install -x webpack jacocoTestCoverageVerification
+      run: ./gradlew --console=plain executeTests jacocoTestReport -x yarn -x webpack jacocoTestCoverageVerification
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
@@ -114,7 +114,7 @@ jobs:
       run: ./gradlew spotlessCheck
       if: success() || failure()
     - name: Java Documentation
-      run: ./gradlew checkstyleMain -x yarn_install -x webpack
+      run: ./gradlew checkstyleMain -x yarn -x webpack
       if: success() || failure()
 
   client-tests:
@@ -149,3 +149,15 @@ jobs:
     - name: TypeScript Code Style
       run: yarn lint
       if: success() || failure()
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ammaraskar/sphinx-action@master
+      with:
+        docs-folder: "docs/"
+    - uses: actions/upload-artifact@v1
+      with:
+        name: Documentation
+        path: docs/_build/html/

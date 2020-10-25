@@ -21,14 +21,9 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     ApollonDiagramRepository apollonDiagramRepository;
@@ -44,9 +39,6 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     UserService userService;
-
-    @Autowired
-    RequestUtilService request;
 
     private ApollonDiagram apollonDiagram;
 

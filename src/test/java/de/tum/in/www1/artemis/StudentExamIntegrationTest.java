@@ -37,18 +37,13 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
-import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.util.Verifiable;
+import de.tum.in.www1.artemis.util.ProgrammingExerciseTestService;
 
 public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    RequestUtilService request;
+    ProgrammingExerciseTestService programmingExerciseTestService;
 
     @Autowired
     ExamRepository examRepository;
@@ -89,17 +84,11 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private StudentExam studentExam1;
 
-    private final LocalRepository exerciseRepo = new LocalRepository();
-
-    private final LocalRepository testRepo = new LocalRepository();
-
-    private final LocalRepository solutionRepo = new LocalRepository();
-
     private final List<LocalRepository> studentRepos = new ArrayList<>();
 
     @BeforeEach
-    public void initTestCase() {
-        users = database.addUsers(10, 1, 2);
+    public void initTestCase() throws Exception {
+        users = programmingExerciseTestService.setupTestUsers(10, 1, 2);
         users.remove(database.getUserByLogin("admin")); // the admin is not registered for the course and therefore cannot access the student exam so we need to remove it
         course1 = database.addEmptyCourse();
         exam1 = database.addActiveExamWithRegisteredUser(course1, users.get(0));
@@ -109,18 +98,16 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         studentExam1.setUser(users.get(0));
         studentExamRepository.save(studentExam1);
         database.addStudentExam(exam2);
+        // TODO: all parts using programmingExerciseTestService should also be provided for Gitlab+Jenkins
+        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
     }
 
     @AfterEach
     public void resetDatabase() throws Exception {
-        database.resetDatabase();
-
+        programmingExerciseTestService.tearDown();
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
 
-        exerciseRepo.resetLocalRepo();
-        testRepo.resetLocalRepo();
-        solutionRepo.resetLocalRepo();
         for (var repo : studentRepos) {
             repo.resetLocalRepo();
         }
@@ -190,20 +177,17 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(studentExamRepository.findAll()).hasSize(registeredStudents.size() + 3); // we generate three additional student exams in the @Before method
 
         // start exercises
-        exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
-        testRepo.configureRepos("testLocalRepo", "testOriginRepo");
-        solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
 
         List<ProgrammingExercise> programmingExercises = new ArrayList<>();
         for (var exercise : exam2.getExerciseGroups().get(4).getExercises()) {
             var programmingExercise = (ProgrammingExercise) exercise;
             programmingExercises.add(programmingExercise);
 
-            setupRepositoryMocks(programmingExercise, exerciseRepo, solutionRepo, testRepo);
+            programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
             for (var user : exam2.getRegisteredUsers()) {
                 var repo = new LocalRepository();
                 repo.configureRepos("studentRepo", "studentOriginRepo");
-                setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo);
+                programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo);
                 studentRepos.add(repo);
             }
         }
@@ -1125,21 +1109,20 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         bambooRequestMockProvider.enableMockingOfRequests(true);
         final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam2.getExerciseGroups().get(4).getExercises().iterator().next();
         final String projectKey = programmingExercise.getProjectKey();
-        setupRepositoryMocks(programmingExercise, exerciseRepo, solutionRepo, testRepo);
+        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
 
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
-        final var verifiables = new LinkedList<Verifiable>();
 
         List<String> studentLogins = new ArrayList<>();
         for (final User user : exam2.getRegisteredUsers()) {
             studentLogins.add(user.getLogin());
         }
-        verifiables.add(bambooRequestMockProvider.mockDeleteProject(projectKey));
+        bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
         List<String> planNames = new ArrayList<>(studentLogins);
         planNames.add(TEMPLATE.getName());
         planNames.add(SOLUTION.getName());
         for (final String planName : planNames) {
-            verifiables.add(bambooRequestMockProvider.mockDeletePlan(projectKey + "-" + planName.toUpperCase()));
+            bambooRequestMockProvider.mockDeleteBambooBuildPlan(projectKey + "-" + planName.toUpperCase());
         }
         List<String> repoNames = new ArrayList<>(studentLogins);
         repoNames.add(RepositoryType.TEMPLATE.getName());
@@ -1152,9 +1135,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         bitbucketRequestMockProvider.mockDeleteProject(projectKey);
         request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
-        for (final var verifiable : verifiables) {
-            verifiable.performVerification();
-        }
 
         deleteExam1WithInstructor();
     }
@@ -1225,7 +1205,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var instructor = database.getUserByLogin("instructor1");
         StudentExam testRunConfiguration = new StudentExam();
         testRunConfiguration.setExercises(new ArrayList<>());
-        var exam = database.addExerciseGroupsAndExercisesToExam(exam1, false);
+        var exam = database.addExam(course1);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
         exam.getExerciseGroups().forEach(exerciseGroup -> testRunConfiguration.getExercises().add(exerciseGroup.getExercises().iterator().next()));
         testRunConfiguration.setExam(exam);
         testRunConfiguration.setWorkingTime(6000);

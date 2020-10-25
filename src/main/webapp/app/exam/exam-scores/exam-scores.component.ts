@@ -14,7 +14,7 @@ import {
 } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { round } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -23,6 +23,7 @@ import * as Chart from 'chart.js';
 import { ChartDataSets, ChartOptions, ChartType, LinearTickOptions } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -64,10 +65,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private examService: ExamManagementService,
         private sortService: SortService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private changeDetector: ChangeDetectorRef,
         private languageHelper: JhiLanguageHelper,
         private localeConversionService: LocaleConversionService,
+        private translateService: TranslateService,
     ) {}
 
     ngOnInit() {
@@ -143,6 +145,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             scales: {
                 yAxes: [
                     {
+                        scaleLabel: {
+                            display: true,
+                            labelString: this.translateService.instant('artemisApp.examScores.yAxes'),
+                        },
                         ticks: {
                             maxTicksLimit: 11,
                             beginAtZero: true,
@@ -150,6 +156,14 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                             min: 0,
                             max: this.calculateTickMax(),
                         } as LinearTickOptions,
+                    },
+                ],
+                xAxes: [
+                    {
+                        scaleLabel: {
+                            display: true,
+                            labelString: this.translateService.instant('artemisApp.examScores.xAxes'),
+                        },
                     },
                 ],
             },

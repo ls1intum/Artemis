@@ -20,7 +20,13 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.ErrorDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestsuiteDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class ModelFactory {
@@ -442,15 +448,18 @@ public class ModelFactory {
         Feedback positiveFeedback = new Feedback();
         positiveFeedback.setCredits(2D);
         positiveFeedback.setReference("theory");
+        positiveFeedback.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(positiveFeedback);
         Feedback positiveFeedback2 = new Feedback();
         positiveFeedback2.setCredits(1D);
         positiveFeedback2.setReference("theory2");
+        positiveFeedback2.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(positiveFeedback2);
         Feedback negativeFeedback = new Feedback();
         negativeFeedback.setCredits(-1D);
         negativeFeedback.setDetailText("Bad solution");
         negativeFeedback.setReference("practice");
+        negativeFeedback.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(negativeFeedback);
         return feedbacks;
     }
@@ -501,6 +510,7 @@ public class ModelFactory {
         feedbackConflict.setFirstFeedback(firstFeedback);
         feedbackConflict.setSecondFeedback(secondFeedback);
         feedbackConflict.setType(FeedbackConflictType.INCONSISTENT_SCORE);
+        feedbackConflict.setDiscard(false);
         return feedbackConflict;
     }
 
@@ -617,6 +627,55 @@ public class ModelFactory {
         return apollonDiagram;
     }
 
+    /**
+     * Creates a dummy DTO used by Jenkins, which notifies about new programming exercise results.
+     *
+     * @param repoName name of the repository
+     * @param successfulTestNames names of successful tests
+     * @param failedTestNames names of failed tests
+     * @return TestResultDTO with dummy data
+     */
+    public static TestResultsDTO generateTestResultDTO(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
+        var notification = new TestResultsDTO();
+
+        var testSuite = new TestsuiteDTO();
+        testSuite.setName("TestSuiteName1");
+        testSuite.setTime(ZonedDateTime.now().toEpochSecond());
+        testSuite.setErrors(0);
+        testSuite.setSkipped(0);
+        testSuite.setFailures(failedTestNames.size());
+        testSuite.setTests(successfulTestNames.size() + failedTestNames.size());
+        testSuite.setTestCases(successfulTestNames.stream().map(name -> {
+            var testcase = new TestCaseDTO();
+            testcase.setName(name);
+            testcase.setClassname("Class");
+            return testcase;
+        }).collect(Collectors.toList()));
+        testSuite.getTestCases().addAll(failedTestNames.stream().map(name -> {
+            var testcase = new TestCaseDTO();
+            testcase.setName(name);
+            testcase.setClassname("Class");
+            var error = new ErrorDTO();
+            error.setMessage(name + " error message");
+            testcase.setErrors(List.of(error));
+            return testcase;
+        }).collect(Collectors.toList()));
+
+        var commitDTO = new CommitDTO();
+        commitDTO.setHash(TestConstants.COMMIT_HASH_STRING);
+        commitDTO.setRepositorySlug(repoName);
+
+        var reports = generateStaticCodeAnalysisReports(ProgrammingLanguage.JAVA);
+
+        notification.setCommits(List.of(commitDTO));
+        notification.setResults(List.of(testSuite));
+        notification.setStaticCodeAnalysisReports(reports);
+        notification.setSuccessful(successfulTestNames.size());
+        notification.setFailures(failedTestNames.size());
+        notification.setRunDate(ZonedDateTime.now());
+        return notification;
+    }
+
     public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
         final var notification = new BambooBuildResultNotificationDTO();
         final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO();
@@ -662,24 +721,72 @@ public class ModelFactory {
         return notification;
     }
 
+    /**
+     * Generate a Bamboo notification with build logs of various sizes
+     *
+     * @param repoName repository name
+     * @param successfulTestNames names of successful tests
+     * @param failedTestNames names of failed tests
+     * @return notification with build logs
+     */
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
+        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+
+        String logWith254Chars = "a".repeat(254);
+
+        var buildLogDTO254Chars = new BambooBuildLogDTO();
+        buildLogDTO254Chars.setDate(ZonedDateTime.now());
+        buildLogDTO254Chars.setLog(logWith254Chars);
+
+        var buildLogDTO255Chars = new BambooBuildLogDTO();
+        buildLogDTO255Chars.setDate(ZonedDateTime.now());
+        buildLogDTO255Chars.setLog(logWith254Chars + "a");
+
+        var buildLogDTO256Chars = new BambooBuildLogDTO();
+        buildLogDTO256Chars.setDate(ZonedDateTime.now());
+        buildLogDTO256Chars.setLog(logWith254Chars + "aa");
+
+        var largeBuildLogDTO = new BambooBuildLogDTO();
+        largeBuildLogDTO.setDate(ZonedDateTime.now());
+        largeBuildLogDTO.setLog(logWith254Chars + logWith254Chars);
+
+        notification.getBuild().getJobs().iterator().next().setLogs(List.of(buildLogDTO254Chars, buildLogDTO255Chars, buildLogDTO256Chars, largeBuildLogDTO));
+
+        return notification;
+    }
+
+    public static Feedback createSCAFeedbackWithInactiveCategory(Result result) {
+        return new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("{\"category\": \"miscellaneous\"}")
+                .type(FeedbackType.AUTOMATIC).positive(false);
+    }
+
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
             List<String> failedTestNames) {
         var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
-        var spotbugsReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.SPOTBUGS);
-        var checkstyleReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.CHECKSTYLE);
-        var pmdReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.PMD);
-        notification.getBuild().getJobs().get(0).setStaticCodeAnalysisReports(List.of(spotbugsReport, checkstyleReport, pmdReport));
+        var reports = generateStaticCodeAnalysisReports(ProgrammingLanguage.JAVA);
+        notification.getBuild().getJobs().get(0).setStaticCodeAnalysisReports(reports);
         return notification;
+    }
+
+    public static List<StaticCodeAnalysisReportDTO> generateStaticCodeAnalysisReports(ProgrammingLanguage language) {
+        return StaticCodeAnalysisTool.getToolsForProgrammingLanguage(language).stream().map(ModelFactory::generateStaticCodeAnalysisReport).collect(Collectors.toList());
     }
 
     private static StaticCodeAnalysisReportDTO generateStaticCodeAnalysisReport(StaticCodeAnalysisTool tool) {
         var report = new StaticCodeAnalysisReportDTO();
         report.setTool(tool);
-        report.setIssues(List.of(generateStaticCodeAnalysisIssue()));
+        report.setIssues(List.of(generateStaticCodeAnalysisIssue(tool)));
         return report;
     }
 
-    private static StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue generateStaticCodeAnalysisIssue() {
+    private static StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue generateStaticCodeAnalysisIssue(StaticCodeAnalysisTool tool) {
+        // Use a category which is not invisible in the default configuration
+        String category = switch (tool) {
+            case SPOTBUGS -> "BAD_PRACTICE";
+            case PMD -> "Best Practices";
+            case CHECKSTYLE -> "coding";
+        };
+
         var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
         issue.setFilePath(Constants.STUDENT_WORKING_DIRECTORY + "/www/packagename/Class1.java");
         issue.setStartLine(1);
@@ -687,9 +794,10 @@ public class ModelFactory {
         issue.setStartColumn(1);
         issue.setEndColumn(10);
         issue.setRule("Rule");
-        issue.setCategory("Category");
+        issue.setCategory(category);
         issue.setMessage("Message");
         issue.setPriority("Priority");
+
         return issue;
     }
 

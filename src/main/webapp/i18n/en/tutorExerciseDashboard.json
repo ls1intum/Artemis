@@ -1,13 +1,13 @@
 {
     "artemisApp": {
-        "tutorExerciseDashboard": {
+        "exerciseAssessmentDashboard": {
             "home": {
-                "title": "Tutor Exercise Dashboard"
+                "title": "Exercise Assessment Dashboard"
             },
             "participation": {
                 "instructionsReviewed": "You reviewed the instructions, you can now read the example submissions"
             },
-            "pageHeader": "Tutor Exercise Dashboard for exercise",
+            "pageHeader": "Exercise Assessment Dashboard for:",
             "testRunPageHeader": "Test Run Exercise Dashboard for exercise:",
             "yourStatus": "Your status",
             "youAssessedSoFar": "You assessed {{numberOfTutorAssessments}} submissions so far",

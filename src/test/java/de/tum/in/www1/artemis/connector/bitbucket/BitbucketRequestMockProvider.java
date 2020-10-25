@@ -5,6 +5,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -30,24 +32,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketBranchProtectionDTO;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketCloneDTO;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketProjectDTO;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketSearchDTO;
+import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 
 @Component
 @Profile("bitbucket")
 public class BitbucketRequestMockProvider {
 
     @Value("${artemis.version-control.url}")
-    private URL BITBUCKET_SERVER_URL;
+    private URL bitbucketServerUrl;
 
     @Value("${artemis.user-management.external.admin-group-name}")
-    private String ADMIN_GROUP_NAME;
+    private String adminGroupName;
 
     private final RestTemplate restTemplate;
 
     private final ObjectMapper mapper = new ObjectMapper();
+
+    @Autowired
+    private UrlService urlService;
 
     private MockRestServiceServer mockServer;
 
@@ -76,10 +79,10 @@ public class BitbucketRequestMockProvider {
         final var projectName = exercise.getProjectName();
         final var body = Map.of("key", projectKey, "name", projectName);
 
-        mockServer.expect(ExpectedCount.once(), requestTo(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects")).andExpect(method(HttpMethod.POST))
+        mockServer.expect(ExpectedCount.once(), requestTo(bitbucketServerUrl + "/rest/api/latest/projects")).andExpect(method(HttpMethod.POST))
                 .andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
 
-        mockGrantGroupPermissionToProject(exercise, ADMIN_GROUP_NAME, "PROJECT_ADMIN");
+        mockGrantGroupPermissionToProject(exercise, adminGroupName, "PROJECT_ADMIN");
         mockGrantGroupPermissionToProject(exercise, exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName(), "PROJECT_ADMIN");
         if (exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName() != null) {
             mockGrantGroupPermissionToProject(exercise, exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName(), "PROJECT_WRITE");
@@ -88,7 +91,7 @@ public class BitbucketRequestMockProvider {
 
     public void mockGrantGroupPermissionToProject(ProgrammingExercise exercise, String groupName, String permission) throws URISyntaxException {
         final var projectKey = exercise.getProjectKey();
-        final var permissionPath = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(projectKey).path("/permissions/groups/")
+        final var permissionPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/permissions/groups/")
                 .queryParam("name", groupName).queryParam("permission", permission);
 
         mockServer.expect(ExpectedCount.once(), requestTo(permissionPath.build().toUri())).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
@@ -97,7 +100,7 @@ public class BitbucketRequestMockProvider {
     public void mockCreateRepository(ProgrammingExercise exercise, String repositoryName) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
         final var body = Map.of("name", repositoryName);
-        final var createRepoPath = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(projectKey).path("/repos");
+        final var createRepoPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/repos");
 
         mockServer.expect(requestTo(createRepoPath.build().toUri())).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(body)))
                 .andRespond(withStatus(HttpStatus.OK));
@@ -109,9 +112,9 @@ public class BitbucketRequestMockProvider {
         searchResult.setSize(0);
         searchResult.setSearchResults(new ArrayList<>());
 
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/.*/webhooks")))
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/webhooks")))
                 .andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(searchResult)).contentType(MediaType.APPLICATION_JSON));
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/.*/webhooks")))
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/webhooks")))
                 .andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
@@ -127,12 +130,20 @@ public class BitbucketRequestMockProvider {
             throws JsonProcessingException, URISyntaxException {
         sourceRepoName = sourceRepoName.toLowerCase();
         targetRepoName = targetRepoName.toLowerCase();
-        final var copyRepoPath = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(sourceProjectKey).path("/repos/")
+        final var copyRepoPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(sourceProjectKey).path("/repos/")
                 .pathSegment(sourceRepoName).build().toUri();
         final var cloneBody = new BitbucketCloneDTO(targetRepoName, new BitbucketCloneDTO.CloneDetailsDTO(targetProjectKey));
 
         mockServer.expect(requestTo(copyRepoPath)).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(cloneBody)))
                 .andRespond(withStatus(HttpStatus.CREATED));
+    }
+
+    public void mockGetBitbucketRepository(ProgrammingExercise exercise, String bitbucketRepoName, BitbucketRepositoryDTO bitbucketRepository)
+            throws URISyntaxException, JsonProcessingException {
+        URI uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(exercise.getProjectKey()).pathSegment("repos")
+                .pathSegment(bitbucketRepoName).build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(bitbucketRepository)));
     }
 
     public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<User> users) throws URISyntaxException, IOException {
@@ -149,7 +160,7 @@ public class BitbucketRequestMockProvider {
 
     public void mockGiveWritePermission(ProgrammingExercise exercise, String repositoryName, String username) throws URISyntaxException {
         final var projectKey = exercise.getProjectKey();
-        final var permissionPath = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(projectKey).path("/repos/")
+        final var permissionPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/repos/")
                 .pathSegment(repositoryName).path("/permissions/users").queryParam("name", username).queryParam("permission", "REPO_WRITE").build().toUri();
 
         mockServer.expect(requestTo(permissionPath)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
@@ -165,7 +176,7 @@ public class BitbucketRequestMockProvider {
         // Prevent deletion of branches
         final var noDeletesProtection = new BitbucketBranchProtectionDTO("no-deletes", matcher);
         final var body = List.of(fastForwardOnlyProtection, noDeletesProtection);
-        final var protectBranchPath = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/branch-permissions/2.0/projects/").pathSegment(projectKey)
+        final var protectBranchPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/branch-permissions/2.0/projects/").pathSegment(projectKey)
                 .path("/repos/").pathSegment(repositoryName).path("/restrictions").build().toUri();
 
         mockServer.expect(requestTo(protectBranchPath)).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(body)))
@@ -173,33 +184,11 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockRepositoryUrlIsValid(final URL repositoryUrl, final String projectKey, final boolean isValid) throws URISyntaxException {
-        final var repositoryName = getRepositorySlugFromUrl(repositoryUrl);
-        final var uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(projectKey).pathSegment("repos")
+        final var repositoryName = urlService.getRepositorySlugFromUrl(repositoryUrl);
+        final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).pathSegment("repos")
                 .pathSegment(repositoryName).build().toUri();
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(isValid ? HttpStatus.OK : HttpStatus.BAD_REQUEST));
-    }
-
-    /**
-     * TODO: this method is currently copied from BambooService for testing purposes. Think about how to properly reuse this method while allowing it to be mocked during testing
-     *
-     * Gets the repository slug from the given URL
-     *
-     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
-     * @return The repository slug
-     */
-    public String getRepositorySlugFromUrl(URL repositoryUrl) {
-        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        String[] urlParts = repositoryUrl.getFile().split("/");
-        String repositorySlug = urlParts[urlParts.length - 1];
-        if (repositorySlug.endsWith(".git")) {
-            repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
-        }
-        else {
-            throw new IllegalArgumentException("No repository slug could be found");
-        }
-
-        return repositorySlug;
     }
 
     /**
@@ -207,9 +196,12 @@ public class BitbucketRequestMockProvider {
      *
      * @param exercise the programming exercise that already exists
      */
-    public void mockProjectKeyExists(ProgrammingExercise exercise) throws IOException, URISyntaxException {
-        final var existsUri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(exercise.getProjectKey()).build().toUri();
-        mockServer.expect(requestTo(existsUri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK));
+    public void mockProjectKeyExists(ProgrammingExercise exercise) throws URISyntaxException, JsonProcessingException {
+        final var existsUri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(exercise.getProjectKey()).build().toUri();
+        var existingProject = new BitbucketProjectDTO(exercise.getProjectKey());
+        existingProject.setName("existingProject");
+        mockServer.expect(requestTo(existsUri)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(existingProject)));
     }
 
     /**
@@ -217,12 +209,12 @@ public class BitbucketRequestMockProvider {
      *
      * @param exercise the programming exercise that might already exist
      * @param exists whether the programming exercise with the same title exists
-     * @throws JsonProcessingException
-     * @throws URISyntaxException
+     * @throws JsonProcessingException exception in the processing of json files
+     * @throws URISyntaxException exception in the processing of uris
      */
     public void mockCheckIfProjectExists(final ProgrammingExercise exercise, final boolean exists) throws JsonProcessingException, URISyntaxException {
-        final var existsUri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(exercise.getProjectKey()).build().toUri();
-        final var uniqueUri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").queryParam("name", exercise.getProjectName()).build()
+        final var existsUri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(exercise.getProjectKey()).build().toUri();
+        final var uniqueUri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").queryParam("name", exercise.getProjectName()).build()
                 .toUri();
         final var searchResults = new BitbucketSearchDTO<BitbucketProjectDTO>();
         final var foundProject = new BitbucketProjectDTO();
@@ -236,7 +228,7 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockGetExistingWebhooks(String projectKey, String repositoryName) throws URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").pathSegment(projectKey).path("repos").pathSegment(repositoryName)
+        final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").pathSegment(projectKey).path("repos").pathSegment(repositoryName)
                 .path("webhooks").build().toUri();
         final var existingHooks = "{\"values\": []}";
 
@@ -244,7 +236,7 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockAddWebhook(String projectKey, String repositoryName, String url) throws JsonProcessingException, URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").pathSegment(projectKey).path("repos").pathSegment(repositoryName)
+        final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").pathSegment(projectKey).path("repos").pathSegment(repositoryName)
                 .path("webhooks").build().toUri();
         final var body = Map.of("name", "Artemis WebHook", "url", url, "events", List.of("repo:refs_changed"));
 
@@ -253,13 +245,13 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockDeleteProject(String projectKey) throws URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").pathSegment(projectKey).build().toUri();
+        final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").pathSegment(projectKey).build().toUri();
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockDeleteRepository(String projectKey, String repositoryName) throws URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").pathSegment(projectKey).path("repos").pathSegment(repositoryName)
+        final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").pathSegment(projectKey).path("repos").pathSegment(repositoryName)
                 .build().toUri();
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
@@ -272,7 +264,7 @@ public class BitbucketRequestMockProvider {
     }
 
     private void mockSetStudentRepositoryPermission(String repositorySlug, String projectKey, String username) throws URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").pathSegment(projectKey).path("repos").pathSegment(repositorySlug)
+        final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").pathSegment(projectKey).path("repos").pathSegment(repositorySlug)
                 .path("permissions/users").queryParam("name", username).queryParam("permission", "REPO_READ").build().toUri();
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
@@ -283,9 +275,16 @@ public class BitbucketRequestMockProvider {
     }
 
     private void mockRemoveStudentRepositoryAccess(String repositorySlug, String projectKey, String username) throws URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").pathSegment(projectKey).path("repos").pathSegment(repositorySlug)
+        final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").pathSegment(projectKey).path("repos").pathSegment(repositorySlug)
                 .path("permissions/users").queryParam("name", username).build().toUri();
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockHealth(String state, HttpStatus httpStatus) throws URISyntaxException, JsonProcessingException {
+        var response = Map.of("state", state);
+        var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/status").build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(httpStatus).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 }

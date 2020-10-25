@@ -59,6 +59,8 @@
             }
         },
         "examScores": {
+            "xAxes": "Score in %",
+            "yAxes": "Number of Participants",
             "maxPoints": "Maximum Points",
             "title": "Exam Scores",
             "examStatisticsTitle": "Exam Statistics",
@@ -90,7 +92,7 @@
         },
         "examParticipation": {
             "timer": "Time left: ",
-            "timerEndView": "Time left to submit exam: ",
+            "timerEndView": "Time left to submit: ",
             "connected": "Your answers will be saved every 30s.",
             "ideConnected": "",
             "disconnected": "You are disconnected. Please check your Internet connection. You can continue working, but you need to be connected in order to save changes!",
@@ -106,9 +108,10 @@
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
-            "greeting": "Welcome to {{ title }}. Your full name is: ",
-            "finish": "This is the end of {{ title }}. Your full name is:",
-            "submitFinalExam": "Please confirm the text below and click on 'Finish' within the time left to hand in your exam.<br />(Note: If you miss this step, your exam will not be graded)",
+            "greeting": "Welcome to {{ title }}.",
+            "finish": "This is the end of {{ title }}.",
+            "nameDisplay": "Your full name is: {{ fullName }}",
+            "submitFinalExam": "Please confirm and click on 'Finish' within the time limit.",
             "preparingParticipation": "Preparing exercise. This may take a few seconds.",
             "generateParticipationFailed": "The preparation of the exercise failed.",
             "generateParticipationRetry": "Retry",
@@ -123,7 +126,9 @@
             "handInEarly": "Hand in early",
             "continueAfterHandInEarly": "Continue",
             "continueAfterHandInEarlyDescription": "You don't want to hand in yet?",
-            "handInEarlyNotice": "You are about to hand in before the end of the exam. After finishing the exam you cannot participate any longer.",
+            "handInEarlyNotice": "You are about to hand in before the end of the exam.\nAfter finishing the exam you cannot participate any longer.",
+            "handInEarlyNoticeFirstSentence": "You are about to hand in before the end of the exam.",
+            "handInEarlyNoticeSecondSentence": "After finishing the exam you cannot participate any longer.",
             "namePlaceholder": "Enter your full name here"
         },
         "exerciseGroup": {
@@ -274,8 +279,7 @@
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the Exam to confirm."
-            },
-            "tutorDashboard": "Tutor Exam Dashboard"
+            }
         },
         "studentExamDetail": {
             "studentExam": "Student exam ({{ examTitle }})",

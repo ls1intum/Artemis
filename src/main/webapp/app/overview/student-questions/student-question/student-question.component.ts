@@ -30,6 +30,7 @@ export class StudentQuestionComponent implements OnInit {
     editText?: string;
     isEditMode: boolean;
     EditorMode = EditorMode;
+    courseId: number;
 
     constructor(private studentQuestionService: StudentQuestionService) {}
 
@@ -40,6 +41,7 @@ export class StudentQuestionComponent implements OnInit {
     ngOnInit(): void {
         if (this.user) {
             this.isQuestionAuthor = this.studentQuestion.author!.id === this.user.id;
+            this.courseId = this.studentQuestion.exercise ? this.studentQuestion.exercise.course!.id! : this.studentQuestion.lecture!.course!.id!;
         }
         this.editText = this.studentQuestion.questionText;
     }
@@ -59,7 +61,7 @@ export class StudentQuestionComponent implements OnInit {
      */
     saveQuestion(): void {
         this.studentQuestion.questionText = this.editText;
-        this.studentQuestionService.update(this.studentQuestion).subscribe(() => {
+        this.studentQuestionService.update(this.courseId, this.studentQuestion).subscribe(() => {
             this.isEditMode = false;
         });
     }
@@ -87,10 +89,10 @@ export class StudentQuestionComponent implements OnInit {
 
     /**
      * update the number of votes for this studentQuestion
-     * @param {number} votes
+     * @param {number} voteChange
      */
     updateVotes(voteChange: number): void {
-        this.studentQuestionService.updateVotes(this.studentQuestion.id!, voteChange).subscribe((res) => {
+        this.studentQuestionService.updateVotes(this.courseId, this.studentQuestion.id!, voteChange).subscribe((res) => {
             this.studentQuestion = res.body!;
             this.interactQuestion.emit({
                 name: QuestionActionName.VOTE_CHANGE,

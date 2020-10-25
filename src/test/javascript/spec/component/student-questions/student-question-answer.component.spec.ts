@@ -1,5 +1,6 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
+import { ActivatedRoute } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { StudentQuestionAnswerComponent } from 'app/overview/student-questions/student-question-answer/student-question-answer.component';
@@ -7,6 +8,7 @@ import { StudentQuestionAnswer } from 'app/entities/student-question-answer.mode
 import { User } from 'app/core/user/user.model';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,6 +45,7 @@ describe('StudentQuestionAnswerComponent', () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
             declarations: [StudentQuestionAnswerComponent],
+            providers: [{ provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects }],
         })
             .overrideTemplate(StudentQuestionAnswerComponent, '')
             .compileComponents()
@@ -54,61 +57,44 @@ describe('StudentQuestionAnswerComponent', () => {
 
     it('should be author of answer', () => {
         component.studentQuestionAnswer = approvedStudentQuestionAnswer;
-        componentFixture.detectChanges();
         component.user = user2;
-        componentFixture.detectChanges();
         expect(component.isAuthorOfAnswer(approvedStudentQuestionAnswer)).to.be.true;
     });
 
     it('should not be author of answer', () => {
         component.studentQuestionAnswer = approvedStudentQuestionAnswer;
-        componentFixture.detectChanges();
         component.user = user2;
-        componentFixture.detectChanges();
         expect(component.isAuthorOfAnswer(unApprovedStudentQuestionAnswer)).to.be.false;
     });
 
     it('should approve answer', () => {
         component.studentQuestionAnswer = unApprovedStudentQuestionAnswer;
-        componentFixture.detectChanges();
         component.toggleAnswerTutorApproved();
-        componentFixture.detectChanges();
         expect(component.studentQuestionAnswer.tutorApproved).to.be.true;
     });
 
     it('should unapprove answer', () => {
         component.studentQuestionAnswer = approvedStudentQuestionAnswer;
-        componentFixture.detectChanges();
         component.toggleAnswerTutorApproved();
-        componentFixture.detectChanges();
         expect(component.studentQuestionAnswer.tutorApproved).to.be.false;
     });
 
     it('should toggle edit mode and reset editor Text', () => {
         component.studentQuestionAnswer = approvedStudentQuestionAnswer;
-        componentFixture.detectChanges();
         component.isEditMode = true;
-        componentFixture.detectChanges();
         component.editText = 'test';
-        componentFixture.detectChanges();
         component.toggleEditMode();
-        componentFixture.detectChanges();
         expect(component.editText).to.deep.equal('approved');
         expect(component.isEditMode).to.be.false;
         component.toggleEditMode();
-        componentFixture.detectChanges();
         expect(component.isEditMode).to.be.true;
     });
 
     it('should update answerText', () => {
         component.studentQuestionAnswer = approvedStudentQuestionAnswer;
-        componentFixture.detectChanges();
         component.isEditMode = true;
-        componentFixture.detectChanges();
         component.editText = 'test';
-        componentFixture.detectChanges();
         component.saveAnswer();
-        componentFixture.detectChanges();
         expect(component.studentQuestionAnswer.answerText).to.deep.equal('test');
     });
 });

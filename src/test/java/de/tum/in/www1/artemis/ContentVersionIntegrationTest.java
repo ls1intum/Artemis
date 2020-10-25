@@ -16,12 +16,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.in.www1.artemis.config.ApiVersionFilter;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 
 public class ContentVersionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     private MockMvc mvc;

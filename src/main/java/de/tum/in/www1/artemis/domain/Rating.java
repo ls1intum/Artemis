@@ -2,15 +2,18 @@ package de.tum.in.www1.artemis.domain;
 
 import javax.persistence.*;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
  * A Rating.
  */
 @Entity
 @Table(name = "result_rating")
-@JsonInclude(Include.NON_EMPTY)
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Rating extends DomainObject {
 
     @Column(name = "rating")

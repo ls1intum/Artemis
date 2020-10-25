@@ -900,7 +900,7 @@ public class UserService {
         if (optionalVcsUserManagementService.isPresent()) {
             final var oldGroups = new TreeSet<>(user.getGroups());
             artemisAuthenticationProvider.addUserToGroup(user, group);
-            updateUserInConnectorsAndAuthProvider(user, oldGroups, true);
+            updateUserInConnectorsAndAuthProvider(user, oldGroups, false);
         }
         else {
             artemisAuthenticationProvider.addUserToGroup(user, group);
@@ -919,7 +919,7 @@ public class UserService {
         if (optionalVcsUserManagementService.isPresent()) {
             final var oldGroups = new TreeSet<>(user.getGroups());
             artemisAuthenticationProvider.removeUserFromGroup(user, group);
-            updateUserInConnectorsAndAuthProvider(user, oldGroups, true);
+            updateUserInConnectorsAndAuthProvider(user, oldGroups, false);
         }
         else {
             artemisAuthenticationProvider.removeUserFromGroup(user, group);

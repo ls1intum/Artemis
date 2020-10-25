@@ -7,8 +7,8 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent } from 'ng-mocks';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { AlertService } from 'app/core/alert/alert.service';
+
+import { JhiAlertService } from 'ng-jhipster';
 import { Router } from '@angular/router';
 import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';
 import { DebugElement } from '@angular/core';
@@ -41,6 +41,7 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
+import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -51,7 +52,7 @@ describe('FileUploadSubmissionComponent', () => {
     let debugElement: DebugElement;
     let router: Router;
     let fileUploaderService: FileUploaderService;
-    let jhiAlertService: AlertService;
+    let jhiAlertService: JhiAlertService;
     let fileUploadSubmissionService: FileUploadSubmissionService;
 
     const result = { id: 1 } as Result;
@@ -69,6 +70,7 @@ describe('FileUploadSubmissionComponent', () => {
                 RouterTestingModule.withRoutes([routes[0]]),
                 ArtemisSharedComponentModule,
                 ArtemisHeaderExercisePageWithDetailsModule,
+                RatingModule,
             ],
             declarations: [
                 FileUploadSubmissionComponent,
@@ -77,7 +79,6 @@ describe('FileUploadSubmissionComponent', () => {
                 MockComponent(FileUploadResultComponent),
             ],
             providers: [
-                { provide: AlertService, useClass: MockAlertService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -93,9 +94,11 @@ describe('FileUploadSubmissionComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
-                router.initialNavigation();
+                fixture.ngZone!.run(() => {
+                    router.initialNavigation();
+                });
                 fileUploaderService = TestBed.inject(FileUploaderService);
-                jhiAlertService = TestBed.inject(AlertService);
+                jhiAlertService = TestBed.inject(JhiAlertService);
                 fileUploadSubmissionService = debugElement.injector.get(FileUploadSubmissionService);
             });
     });

@@ -8,8 +8,11 @@ import javax.persistence.Embeddable;
 
 import org.hibernate.annotations.Immutable;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 @Immutable
 @Embeddable
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LeaderboardId implements Serializable {
 
     @Column(name = "user_id")

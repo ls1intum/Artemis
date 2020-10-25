@@ -9,13 +9,11 @@ import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { Duration, Option } from './quiz-exercise-interfaces';
-import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Location } from '@angular/common';
-import { AlertService } from 'app/core/alert/alert.service';
-import { Observable } from 'rxjs/Observable';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { JhiAlertService } from 'ng-jhipster';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { Exercise, ExerciseCategory } from 'app/entities/exercise.model';
@@ -134,7 +132,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         private translateService: TranslateService,
         private fileUploaderService: FileUploaderService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private location: Location,
         private modalService: NgbModal,
         private changeDetector: ChangeDetectorRef,
@@ -272,7 +270,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     /**
      * Returns whether pending changes are present, preventing a deactivation.
      */
-    canDeactivate(): Observable<boolean> | boolean {
+    canDeactivate(): boolean {
         return !this.pendingChangesCache;
     }
 
@@ -637,7 +635,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     question.title !== '' &&
                     shortAnswerQuestion.correctMappings &&
                     shortAnswerQuestion.correctMappings.length > 0 &&
-                    // && this.shortAnswerQuestionUtil.solveShortAnswer(shortAnswerQuestion).length
                     this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion) &&
                     this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots) &&
                     this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
@@ -865,12 +862,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                         translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectMapping',
                         translateValues: { index: index + 1 },
                     });
-                } /*else if (this.shortAnswerQuestionUtil.solveShortAnswer(shortAnswerQuestion, []).length === 0) {
-                    reasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionUnsolvable',
-                        translateValues: { index: index + 1 }
-                    });
-                } */
+                }
                 if (!this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping',

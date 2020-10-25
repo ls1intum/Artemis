@@ -24,17 +24,9 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    RequestUtilService request;
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     CourseRepository courseRepo;
@@ -487,7 +479,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Submission and Result should be present for Team of which the user is the Team Owner
         final String submissionText = "Hello World";
         TextSubmission submission = ModelFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
-        database.addTextSubmissionWithResultAndAssessor(textExercise, submission, team1b.getId(), tutor.getLogin());
+        database.saveTextSubmissionWithResultAndAssessor(textExercise, submission, team1b.getId(), tutor.getLogin());
 
         Course course3 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team1a), HttpStatus.OK, Course.class);
         StudentParticipation participation = course3.getExercises().stream().filter(exercise -> exercise.equals(textExercise)).findAny().orElseThrow().getStudentParticipations()
@@ -498,7 +490,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // Submission and Result should not be present for a Team of which the user is not (!) the Team Owner
         submission = ModelFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
-        database.addTextSubmissionWithResultAndAssessor(textExercise, submission, team2b.getId(), "tutor2");
+        database.saveTextSubmissionWithResultAndAssessor(textExercise, submission, team2b.getId(), "tutor2");
 
         Course course4 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team2a), HttpStatus.OK, Course.class);
         participation = course4.getExercises().stream().filter(exercise -> exercise.equals(textExercise)).findAny().orElseThrow().getStudentParticipations().iterator().next();

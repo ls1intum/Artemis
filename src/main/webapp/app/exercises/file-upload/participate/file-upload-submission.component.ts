@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
@@ -20,6 +20,7 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -36,6 +37,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
     isSaving: boolean;
+    isOwnerOfParticipation: boolean;
 
     acceptedFileExtensions: string;
 
@@ -50,12 +52,13 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private fileUploaderService: FileUploaderService,
         private resultService: ResultService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private location: Location,
         private translateService: TranslateService,
         private fileService: FileService,
         private participationWebsocketService: ParticipationWebsocketService,
         private fileUploadAssessmentService: FileUploadAssessmentsService,
+        private accountService: AccountService,
     ) {
         translateService.get('artemisApp.fileUploadSubmission.confirmSubmission').subscribe((text) => (this.submissionConfirmationText = text));
     }
@@ -106,6 +109,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                         this.result = assessmentResult;
                     });
                 }
+                this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation);
             },
             (error: HttpErrorResponse) => this.onError(error),
         );
