@@ -234,14 +234,14 @@
                             <fa-icon class="mr-1" [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             Online editor
                         </button>
-                        <jhi-programming-assessment-manual-result
+                        <jhi-manual-result-button
                             *ngIf="newManualResultAllowed"
                             [participationId]="value.participation.id"
                             [latestResult]="value"
                             [exercise]="exercise"
                             (onResultModified)="refresh()"
                             class="mr-1"
-                        ></jhi-programming-assessment-manual-result>
+                        ></jhi-manual-result-button>
                     </ng-template>
                 </ngx-datatable-column>
 

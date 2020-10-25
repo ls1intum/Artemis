@@ -176,13 +176,13 @@
                             </button>
                         </ng-container>
                         <ng-template #programmingAssessment>
-                            <jhi-programming-assessment-manual-result
+                            <jhi-manual-result-button
                                 *ngIf="value.participation"
                                 [participationId]="value.participation?.id"
                                 [latestResult]="value.submission?.result"
                                 [exercise]="value"
                                 (onResultModified)="loadAll()"
-                            ></jhi-programming-assessment-manual-result>
+                            ></jhi-manual-result-button>
                         </ng-template>
                         <fa-icon
                             class="mx-3"
