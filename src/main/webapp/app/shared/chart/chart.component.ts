@@ -9,7 +9,7 @@ export interface ChartPreset {
 @Component({
     selector: 'jhi-chart',
     template: `
-        <div class="chartWrapper" style="position: relative; width: 100%; max-height: 400px;">
+        <div style="position: relative; width: 100%; height: 1000%;">
             <canvas baseChart [datasets]="chartDatasets" [labels]="chartLabels" [options]="chartOptions" [chartType]="chartType"></canvas>
         </div>
     `,
