@@ -40,6 +40,7 @@ export class ResultDetailComponent implements OnInit {
     @Input() showTestDetails = false;
     @Input() showResultGraph = false;
     @Input() exerciseType: ExerciseType;
+    @Input() maxPoints: number;
 
     isLoading = false;
     loadingFailed = false;
@@ -195,7 +196,7 @@ export class ResultDetailComponent implements OnInit {
             return 'alert-warning';
         } else if (feedback.type === FeedbackItemType.Test) {
             return feedback.positive ? 'alert-success' : 'alert-danger';
-        } else if (feedback.type === FeedbackItemType.Feedback) {
+        } else {
             if (feedback.credits === 0) {
                 return 'alert-secondary';
             } else {
