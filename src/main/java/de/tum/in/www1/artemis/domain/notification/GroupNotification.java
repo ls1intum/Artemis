@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
  */
 @Entity
 @DiscriminatorValue(value = "G")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GroupNotification extends Notification {
 
     @Enumerated(EnumType.STRING)
