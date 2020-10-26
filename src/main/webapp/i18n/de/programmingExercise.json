@@ -31,6 +31,7 @@
             },
             "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studenten sein.",
             "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
+            "unsavedChangesProjectTypeChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll der Projekt Typ wirklich geändert werden?",
             "templateRepositoryUrl": "Vorlage Repository Url",
             "testRepositoryUrl": "Test Repository Url",
             "solutionRepositoryUrl": "Lösung Repository Url",

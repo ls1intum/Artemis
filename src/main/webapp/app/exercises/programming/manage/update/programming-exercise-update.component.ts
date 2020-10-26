@@ -112,8 +112,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         if (languageChanged) {
             // Reset project type when changing programming language as not all programming languages support (the same) project types
-            this.programmingExercise.projectType = undefined;
-            this.selectedProjectTypeValue = undefined!;
+            this.programmingExercise.projectType = this.projectTypes[0];
+            this.selectedProjectTypeValue = this.projectTypes[0]!;
         }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
@@ -361,7 +361,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     onProjectTypeChange(projectType: ProjectType) {
         // If there are unsaved changes and the user does not confirm, the language doesn't get changed
         if (this.hasUnsavedChanges) {
-            const confirmLanguageChangeText = this.translateService.instant(this.translationBasePath + 'unsavedChangesLanguageChange');
+            const confirmLanguageChangeText = this.translateService.instant(this.translationBasePath + 'unsavedChangesProjectTypeChange');
             if (!window.confirm(confirmLanguageChangeText)) {
                 return this.selectedProjectType;
             }
