@@ -1341,10 +1341,10 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
-"@ls1intum/apollon@2.2.8":
-  version "2.2.8"
-  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.2.8.tgz#d5626dd817cbf3787a7db95467ee2ee1f813862f"
-  integrity sha512-c1w5WW2Vo1xvqAre2f1rjHeh3glMkfEsciEI5FQrFBP7vXfCAM48c/fHCOxymLaH69WvrSU4ka10FHy7Hoc8Wg==
+"@ls1intum/apollon@2.2.9":
+  version "2.2.9"
+  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.2.9.tgz#771a7c8ca0ec17af2291b5daea315d57e2824a07"
+  integrity sha512-kt74T6HqXV47Ni/iBrk6BQ719NGUWadSZJtqFYIXCF63lK6sARKV5EGqQm89SyHobAUunqjm/aOs2ZHy53OoNg==
   dependencies:
     is-mobile "2.2.2"
     pepjs "0.5.2"
