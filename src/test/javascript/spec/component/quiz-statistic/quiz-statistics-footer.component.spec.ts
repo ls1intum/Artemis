@@ -2,7 +2,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, async, inject, tick, fakeAsync } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,10 +19,10 @@ import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util
 
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
-let quizExercise = { id: 42, started: true, course: course, quizQuestions: [question] } as QuizExercise;
+let quizExercise = { id: 42, started: true, course, quizQuestions: [question] } as QuizExercise;
 const route = { params: of({ questionId: 1, exerciseId: 42 }) };
 
-describe('QuizExercise Footer Component', () => {
+describe('QuizExercise Statistic Footer Component', () => {
     let comp: QuizStatisticsFooterComponent;
     let fixture: ComponentFixture<QuizStatisticsFooterComponent>;
     let quizService: QuizExerciseService;
@@ -58,36 +58,40 @@ describe('QuizExercise Footer Component', () => {
 
     afterEach(() => {
         comp.ngOnDestroy();
-        quizExercise = { id: 42, started: true, course: course, quizQuestions: [question] } as QuizExercise;
+        quizExercise = { id: 42, started: true, course, quizQuestions: [question] } as QuizExercise;
     });
 
-    it('Should load Quiz on Init', () => {
-        //setup
+    it('Should load Quiz on Init', fakeAsync(() => {
+        // setup
+        jest.useFakeTimers();
         accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
-        let quizExercise = { id: 789, started: true, quizQuestions: [question] } as QuizExercise;
-        let quizSpy = spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
-        let loadSpy = spyOn(comp, 'loadQuiz').and.callThrough();
+        const quizSpy = spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
+        const loadSpy = spyOn(comp, 'loadQuiz').and.callThrough();
+        const updateDisplayedTimesSpy = spyOn(comp, 'updateDisplayedTimes');
 
-        //call
+        // call
         comp.ngOnInit();
+        tick(); // simulate async
+        jest.advanceTimersByTime(201); // simulate setInterval time passing
 
-        //check
+        // check
         expect(accountSpy).toHaveBeenCalled();
         expect(quizSpy).toHaveBeenCalledWith(42);
         expect(loadSpy).toHaveBeenCalledWith(quizExercise);
         expect(comp.question).toEqual(question);
-    });
+        expect(updateDisplayedTimesSpy).toHaveBeenCalledTimes(1);
+
+    }));
 
     it('should set quiz and update properties', () => {
-        //setup
+        // setup
         accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
-        let quizExercise = { id: 789, started: true, quizQuestions: [question] } as QuizExercise;
         comp.questionIdParam = 1;
 
-        //call
+        // call
         comp.loadQuiz(quizExercise);
 
-        //check
+        // check
         expect(accountSpy).toHaveBeenCalled();
         expect(comp.quizExercise).toEqual(quizExercise);
         expect(comp.question).toEqual(question);
@@ -95,37 +99,37 @@ describe('QuizExercise Footer Component', () => {
     });
 
     it('should return remaining Time', () => {
-        //only minutes if time > 2min 30sec
+        // only minutes if time > 2min 30sec
         expect(comp.relativeTimeText(220)).toEqual('4 min');
 
-        //minutes and seconds if time in minutes between 1 <= x < 2.5
+        // minutes and seconds if time in minutes between 1 <= x < 2.5
         expect(comp.relativeTimeText(130)).toEqual('2 min 10 s');
 
-        //only seconds if time < 1min
+        // only seconds if time < 1min
         expect(comp.relativeTimeText(50)).toEqual('50 s');
     });
 
     describe('test previous statistic', () => {
-        //setup
+        // setup
         it('should go to quiz-point-statistic', () => {
-            //setup
-            let routerSpy = spyOn(router, 'navigateByUrl');
+            // setup
+            const routerSpy = spyOn(router, 'navigateByUrl');
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
             spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
             spyOn(comp, 'loadQuiz').and.callThrough();
             comp.ngOnInit();
             comp.isQuizStatistic = true;
 
-            //call
+            // call
             comp.previousStatistic();
 
-            //check
+            // check
             expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/quiz-exercises/42/quiz-point-statistic`);
         });
 
         it('should go to quiz-statistic', () => {
-            //setup
-            let routerSpy = spyOn(router, 'navigateByUrl');
+            // setup
+            const routerSpy = spyOn(router, 'navigateByUrl');
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
             quizExercise.quizQuestions = [];
             spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
@@ -134,68 +138,68 @@ describe('QuizExercise Footer Component', () => {
             comp.isQuizStatistic = false;
             comp.isQuizPointStatistic = true;
 
-            //check
+            // check
             comp.previousStatistic();
 
-            //check
+            // check
             expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/quiz-exercises/42/quiz-statistic`);
         });
 
         it('should go to previous statistic', () => {
-            //setup
+            // setup
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
             spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
             spyOn(comp, 'loadQuiz').and.callThrough();
-            let quizStatisticUtilSpy = spyOn(quizStatisticUtil, 'navigateToStatisticOf');
+            const quizStatisticUtilSpy = spyOn(quizStatisticUtil, 'navigateToStatisticOf');
             comp.ngOnInit();
             comp.isQuizStatistic = false;
             comp.isQuizPointStatistic = true;
 
-            //call
+            // call
             comp.previousStatistic();
 
-            //check
+            // check
             expect(quizStatisticUtilSpy).toHaveBeenCalledWith(quizExercise, question);
         });
 
         it('should call util previous Statistic ', () => {
-            //setup
+            // setup
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
             spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
             spyOn(comp, 'loadQuiz').and.callThrough();
-            let quizStatisticUtilSpy = spyOn(quizStatisticUtil, 'previousStatistic');
+            const quizStatisticUtilSpy = spyOn(quizStatisticUtil, 'previousStatistic');
             comp.ngOnInit();
             comp.isQuizStatistic = false;
             comp.isQuizPointStatistic = false;
 
-            //call
+            // call
             comp.previousStatistic();
 
-            //check
+            // check
             expect(quizStatisticUtilSpy).toHaveBeenCalledWith(quizExercise, question);
         });
     });
 
     describe('test next statistic', () => {
         it('should go to quiz-point-statistic', () => {
-            //setup
-            let routerSpy = spyOn(router, 'navigateByUrl');
+            // setup
+            const routerSpy = spyOn(router, 'navigateByUrl');
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
             spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
             spyOn(comp, 'loadQuiz').and.callThrough();
             comp.ngOnInit();
             comp.isQuizPointStatistic = true;
 
-            //call
+            // call
             comp.nextStatistic();
 
-            //check
+            // check
             expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/quiz-exercises/42/quiz-statistic`);
         });
 
         it('should go to quiz-statistic', () => {
-            //setup
-            let routerSpy = spyOn(router, 'navigateByUrl');
+            // setup
+            const routerSpy = spyOn(router, 'navigateByUrl');
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
             quizExercise.quizQuestions = [];
             spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
@@ -204,44 +208,44 @@ describe('QuizExercise Footer Component', () => {
             comp.isQuizPointStatistic = false;
             comp.isQuizStatistic = true;
 
-            //call
+            // call
             comp.nextStatistic();
 
-            //check
+            // check
             expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/quiz-exercises/42/quiz-point-statistic`);
         });
 
         it('should go to next statistic', () => {
-            //setup
+            // setup
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
             spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
             spyOn(comp, 'loadQuiz').and.callThrough();
-            let quizStatisticUtilSpy = spyOn(quizStatisticUtil, 'navigateToStatisticOf');
+            const quizStatisticUtilSpy = spyOn(quizStatisticUtil, 'navigateToStatisticOf');
             comp.ngOnInit();
             comp.isQuizPointStatistic = false;
             comp.isQuizStatistic = true;
 
-            //call
+            // call
             comp.nextStatistic();
 
-            //check
+            // check
             expect(quizStatisticUtilSpy).toHaveBeenCalledWith(quizExercise, question);
         });
 
         it('should call util next Statistic ', () => {
-            //setup
+            // setup
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
             spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
             spyOn(comp, 'loadQuiz').and.callThrough();
-            let quizStatisticUtilSpy = spyOn(quizStatisticUtil, 'nextStatistic');
+            const quizStatisticUtilSpy = spyOn(quizStatisticUtil, 'nextStatistic');
             comp.ngOnInit();
             comp.isQuizPointStatistic = false;
             comp.isQuizStatistic = false;
 
-            //call
+            // call
             comp.nextStatistic();
 
-            //check
+            // check
             expect(quizStatisticUtilSpy).toHaveBeenCalledWith(quizExercise, question);
         });
     });
