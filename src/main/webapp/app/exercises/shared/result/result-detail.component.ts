@@ -102,10 +102,19 @@ export class ResultDetailComponent implements OnInit {
             });
     }
 
+    /**
+     * Loads the missing feedback details
+     * @param resultId The current result
+     * @private
+     */
     private getFeedbackDetailsForResult(resultId: number) {
         return this.resultService.getFeedbackDetailsForResult(resultId).pipe(map(({ body: feedbackList }) => feedbackList!));
     }
 
+    /**
+     * Filters the feedback based on the filter input
+     * @param feedbackList The full list of feedback
+     */
     private filterFeedback = (feedbackList: Feedback[]) => {
         if (!this.feedbackFilter) {
             return [...feedbackList];
@@ -118,6 +127,11 @@ export class ResultDetailComponent implements OnInit {
         }
     };
 
+    /**
+     * Creates a feedback item with a category, title and text for each feedback object.
+     * @param feedbacks The list of feedback objects.
+     * @private
+     */
     private createFeedbackItems(feedbacks: Feedback[]): FeedbackItem[] {
         if (this.exerciseType === ExerciseType.PROGRAMMING) {
             return feedbacks.map((feedback) => {
@@ -168,6 +182,10 @@ export class ResultDetailComponent implements OnInit {
         }
     }
 
+    /**
+     * Builds the location string for a static code analysis issue
+     * @param issue The sca issue
+     */
     getIssueLocation(issue: StaticCodeAnalysisIssue): string {
         const lineText = issue.startLine === issue.endLine ? ` at line ${issue.startLine}` : ` at lines ${issue.startLine}-${issue.endLine}`;
         let columnText = '';
@@ -177,6 +195,10 @@ export class ResultDetailComponent implements OnInit {
         return issue.filePath + lineText + columnText;
     }
 
+    /**
+     * Fetches build logs for a participation
+     * @param participationId The active participation
+     */
     private fetchAndSetBuildLogs = (participationId: number) => {
         return this.buildLogService.getBuildLogs(participationId).pipe(
             tap((repoResult: BuildLogEntry[]) => {
@@ -196,6 +218,11 @@ export class ResultDetailComponent implements OnInit {
         );
     };
 
+    /**
+     * Filters / Summarizes positive test cases for a student and programming exercise result
+     * @param feedbackList The list of feedback items
+     * @private
+     */
     private filterFeedbackItems(feedbackList: FeedbackItem[]) {
         if (this.exerciseType !== ExerciseType.PROGRAMMING || this.showTestDetails) {
             return [...feedbackList];
@@ -220,6 +247,10 @@ export class ResultDetailComponent implements OnInit {
         }
     }
 
+    /**
+     * Handles the coloring of each feedback items based on its type and credits.
+     * @param feedback The feedback item
+     */
     getClassNameForFeedbackItem(feedback: FeedbackItem): string {
         if (feedback.type === FeedbackItemType.Issue) {
             return 'alert-warning';
@@ -234,6 +265,11 @@ export class ResultDetailComponent implements OnInit {
         }
     }
 
+    /**
+     * Calculates and updates the values of the score chart
+     * @param feedbackList The list of feedback items.
+     * @private
+     */
     private updateChart(feedbackList: FeedbackItem[]) {
         if (!this.result.participation?.exercise || feedbackList.length === 0) {
             this.showScoreChart = false;
@@ -267,9 +303,13 @@ export class ResultDetailComponent implements OnInit {
         const negativePoints = codeIssueCredits + negativeCredits;
         const positivePoints = testCaseCredits + positiveCredits;
 
+        // the chart preset handles the capping to the maximum score of the exercise
         this.scoreChartPreset.setValues(positivePoints, negativePoints, exercise);
     }
 
+    /**
+     * Checks if the current result is preliminary and has hidden test cases.
+     */
     resultIsPreliminary() {
         return (
             this.result.participation &&

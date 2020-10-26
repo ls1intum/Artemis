@@ -4,7 +4,7 @@ import { Exercise } from 'app/entities/exercise.model';
 
 export class ScoreChartPreset implements ChartPreset {
     private chart: ChartComponent;
-    private datasets: ChartDataSets[];
+    private datasets: ChartDataSets[] = [];
 
     private readonly redGreenPattern: CanvasPattern;
     private readonly redTransparentPattern: CanvasPattern;
@@ -41,11 +41,15 @@ export class ScoreChartPreset implements ChartPreset {
                     ] as ChartLegendLabelItem[],
             },
         });
-        if (this.datasets) {
-            chart.datasets = this.datasets;
-        }
+        chart.chartDatasets = this.datasets;
     }
 
+    /**
+     * Updates the datasets of the charts with the correct values and colors.
+     * @param positive Sum of positive credits of the score
+     * @param negative Sum of negative credits of the score
+     * @param exercise The active exercise
+     */
     setValues(positive: number, negative: number, exercise: Exercise) {
         const maxScoreWithBonus = exercise.maxScore! + (exercise.bonusPoints || 0);
         const maxScore = exercise.maxScore!;
@@ -78,6 +82,11 @@ export class ScoreChartPreset implements ChartPreset {
         }
     }
 
+    /**
+     * Generates a diagonal red stripes pattern used for the deductions bar.
+     * @param fillStyle The background of the pattern
+     * @private
+     */
     private createPattern(fillStyle: string) {
         const c = document.createElement('canvas');
         c.width = 10;
