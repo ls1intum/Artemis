@@ -52,6 +52,7 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
     /**
      * Gets all TextSubmissions which are submitted, with matching and loads all blocks
      * @param exerciseId the Id of the exercise
+     * @param language language of the exercise
      * @return List of Text Submissions
      */
     List<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrueAndLanguage(Long exerciseId, Language language);
