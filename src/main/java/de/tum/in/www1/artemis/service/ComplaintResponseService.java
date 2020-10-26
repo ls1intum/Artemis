@@ -94,16 +94,7 @@ public class ComplaintResponseService {
         complaintResponse = complaintResponseRepository.save(complaintResponse);
 
         // add complaint response to TutorScores
-        tutorScoreService.removeResult(originalResult);
-        tutorScoreService.updateResult(originalResult);
-
-        if (originalComplaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
-            var tutorScore = tutorScoreService.getTutorScoreForTutorAndExercise(originalResult.getAssessor(), originalResult.getParticipation().getExercise());
-
-            if (tutorScore.isPresent()) {
-                tutorScoreService.removeNotAnsweredFeedbackRequest(tutorScore.get());
-            }
-        }
+        tutorScoreService.addComplaintResponseOrAnsweredFeedbackRequest(complaintResponse, originalResult.getParticipation().getExercise());
 
         return complaintResponse;
     }

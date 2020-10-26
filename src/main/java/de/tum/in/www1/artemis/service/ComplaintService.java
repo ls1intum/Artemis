@@ -113,16 +113,13 @@ public class ComplaintService {
             throw new InternalServerErrorException("Failed to store original result");
         }
 
-        resultRepository.save(originalResult);
-
         complaint = complaintRepository.save(complaint);
 
-        // add complaint to matching TutorScore
-        var tutorScore = tutorScoreService.getTutorScoreForTutorAndExercise(originalResult.getAssessor(), originalResult.getParticipation().getExercise());
+        originalResult.setComplaint(complaint);
+        originalResult = resultRepository.save(originalResult);
 
-        if (tutorScore.isPresent()) {
-            tutorScoreService.addUnansweredComplaintOrFeedbackRequest(tutorScore.get(), complaint, originalResult.getParticipation().getExercise());
-        }
+        // add complaint to matching TutorScore
+        tutorScoreService.addComplaintOrFeedbackRequest(complaint, originalResult.getParticipation().getExercise());
 
         return complaint;
     }

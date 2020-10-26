@@ -54,20 +54,6 @@ public class Complaint extends DomainObject {
     @ManyToOne
     private Team team;
 
-    @OneToOne(mappedBy = "complaint", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-    @JsonIgnoreProperties(value = "complaint", allowSetters = true)
-    @Nullable
-    private ComplaintResponse complaintResponse = null;
-
-    public ComplaintResponse getComplaintResponse() {
-        return this.complaintResponse;
-    }
-
-    public void setComplaintResponse(ComplaintResponse complaintResponse) {
-        this.complaintResponse = complaintResponse;
-    }
-
     public String getComplaintText() {
         return complaintText;
     }

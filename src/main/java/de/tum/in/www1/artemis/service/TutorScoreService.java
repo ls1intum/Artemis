@@ -118,17 +118,6 @@ public class TutorScoreService {
     }
 
     /**
-     * Remove one unanswered FeedbackRequest from TutorScore.
-     *
-     * @param tutorScore tutor score
-     */
-    public void removeNotAnsweredFeedbackRequest(TutorScore tutorScore) {
-        tutorScore.setNotAnsweredFeedbackRequests(tutorScore.getNotAnsweredFeedbackRequests() - 1);
-
-        tutorScoreRepository.save(tutorScore);
-    }
-
-    /**
      * Deletes all TutorScores for result deletedResult.
      *
      * @param deletedResult result to be deleted
@@ -200,15 +189,11 @@ public class TutorScoreService {
             tutorScore.setAssessments(tutorScore.getAssessments() + 1);
             tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() + maxScore);
 
-            tutorScore = addComplaintsAndFeedbackRequests(tutorScore, updatedResult, exercise.get());
-
             tutorScoreRepository.save(tutorScore);
             log.info("Updated existing TutorScore: " + tutorScore);
         }
         else {
             TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise.get(), 1, maxScore);
-
-            newScore = addComplaintsAndFeedbackRequests(newScore, updatedResult, exercise.get());
 
             tutorScoreRepository.save(newScore);
             log.info("Added new TutorScore: " + newScore);
@@ -230,75 +215,64 @@ public class TutorScoreService {
     /**
      * Helper method for updating complaints and feedback requests in tutor scores.
      */
-    private TutorScore addComplaintsAndFeedbackRequests(TutorScore tutorScore, Result result, Exercise exercise) {
+    public void addComplaintOrFeedbackRequest(Complaint complaint, Exercise exercise) {
+        TutorScore tutorScore = findTutorScoreFromExercise(exercise, complaint.getResult().getAssessor()).get();
+
         // add complaints and feedback requests
-        if (Boolean.TRUE.equals(result.hasComplaint())) {
-            var complaint = result.getComplaint();
+        if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
+            tutorScore.setAllComplaints(tutorScore.getAllComplaints() + 1);
+            tutorScore.setComplaintsPoints(tutorScore.getComplaintsPoints() + exercise.getMaxScore());
+        }
 
-            if (complaint != null) {
-                // complaint
-                if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
-                    tutorScore.setAllComplaints(tutorScore.getAllComplaints() + 1);
-                    tutorScore.setComplaintsPoints(tutorScore.getComplaintsPoints() + exercise.getMaxScore());
+        if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
+            tutorScore.setAllFeedbackRequests(tutorScore.getAllFeedbackRequests() + 1);
+            tutorScore.setFeedbackRequestsPoints(tutorScore.getFeedbackRequestsPoints() + exercise.getMaxScore());
+            tutorScore.setNotAnsweredFeedbackRequests(tutorScore.getNotAnsweredFeedbackRequests() + 1);
+        }
 
-                    if (Boolean.TRUE.equals(complaint.isAccepted())) {
-                        tutorScore.setAcceptedComplaints(tutorScore.getAcceptedComplaints() + 1);
-                    }
+        tutorScoreRepository.save(tutorScore);
+    }
 
-                    // complaint response
-                    ComplaintResponse complaintResponse = complaint.getComplaintResponse();
+    /**
+     * Add ComplaintResponse or AnsweredFeedbackRequest to TutorScore.
+     *
+     * @param complaintResponse complaintResponse
+     * @param exercise exercise
+     */
+    public void addComplaintResponseOrAnsweredFeedbackRequest(ComplaintResponse complaintResponse, Exercise exercise) {
+        var complaint = complaintResponse.getComplaint();
+        var optionalTutorScore = findTutorScoreFromExercise(exercise, complaintResponse.getReviewer());
 
-                    if (complaintResponse != null) {
-                        var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.getReviewer());
+        TutorScore tutorScore;
 
-                        TutorScore fromComplaint;
+        if (optionalTutorScore.isPresent()) {
+            tutorScore = optionalTutorScore.get();
+        }
+        else {
+            tutorScore = new TutorScore(complaintResponse.getReviewer(), exercise, 0, 0);
+        }
 
-                        if (fromComplaintResponse.isPresent()) {
-                            fromComplaint = fromComplaintResponse.get();
-                        }
-                        else {
-                            fromComplaint = new TutorScore(complaintResponse.getReviewer(), exercise, 0, 0);
-                        }
+        if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
+            tutorScore.setComplaintResponses(tutorScore.getComplaintResponses() + 1);
+            tutorScore.setComplaintResponsesPoints(tutorScore.getComplaintResponsesPoints() + exercise.getMaxScore());
 
-                        fromComplaint.setComplaintResponses(fromComplaint.getComplaintResponses() + 1);
-                        fromComplaint.setComplaintResponsesPoints(fromComplaint.getComplaintResponsesPoints() + exercise.getMaxScore());
-                        tutorScoreRepository.save(fromComplaint);
-                    }
-                }
+            if (complaint.isAccepted()) {
+                var resultTutorScore = findTutorScoreFromExercise(exercise, complaintResponse.getComplaint().getResult().getAssessor()).get();
+                resultTutorScore.setAssessments(resultTutorScore.getAssessments() - 1);
+                resultTutorScore.setAssessmentsPoints(resultTutorScore.getAssessmentsPoints() - exercise.getMaxScore());
+                resultTutorScore.setAcceptedComplaints(resultTutorScore.getAcceptedComplaints() + 1);
 
-                // feedback request
-                if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
-                    tutorScore.setAllFeedbackRequests(tutorScore.getAllFeedbackRequests() + 1);
-                    tutorScore.setFeedbackRequestsPoints(tutorScore.getFeedbackRequestsPoints() + exercise.getMaxScore());
-
-                    // answered feedback request
-                    ComplaintResponse complaintResponse = complaint.getComplaintResponse();
-
-                    if (complaintResponse != null) {
-                        var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.getReviewer());
-
-                        TutorScore fromComplaint;
-
-                        if (fromComplaintResponse.isPresent()) {
-                            fromComplaint = fromComplaintResponse.get();
-                        }
-                        else {
-                            fromComplaint = new TutorScore(complaintResponse.getReviewer(), exercise, 0, 0);
-                        }
-
-                        fromComplaint.setAnsweredFeedbackRequests(fromComplaint.getAnsweredFeedbackRequests() + 1);
-                        fromComplaint.setAnsweredFeedbackRequestsPoints(fromComplaint.getAnsweredFeedbackRequestsPoints() + exercise.getMaxScore());
-
-                        tutorScoreRepository.save(fromComplaint);
-                    }
-                    else {
-                        tutorScore.setNotAnsweredFeedbackRequests(tutorScore.getNotAnsweredFeedbackRequests() + 1);
-                    }
-                }
+                tutorScoreRepository.save(resultTutorScore);
             }
         }
 
-        return tutorScore;
+        if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
+            tutorScore.setAnsweredFeedbackRequests(tutorScore.getAnsweredFeedbackRequests() + 1);
+            tutorScore.setAnsweredFeedbackRequestsPoints(tutorScore.getAnsweredFeedbackRequestsPoints() + exercise.getMaxScore());
+            tutorScore.setNotAnsweredFeedbackRequests(tutorScore.getNotAnsweredFeedbackRequests() - 1);
+        }
+
+        tutorScoreRepository.save(tutorScore);
     }
 
     /**
@@ -318,13 +292,16 @@ public class TutorScoreService {
                     }
 
                     if (Boolean.TRUE.equals(complaint.isAccepted())) {
-                        tutorScore.setAcceptedComplaints(tutorScore.getAcceptedComplaints() - 1);
+                        if (tutorScore.getAcceptedComplaints() > 0) {
+                            tutorScore.setAcceptedComplaints(tutorScore.getAcceptedComplaints() - 1);
+                        }
                     }
 
                     // complaint response
-                    ComplaintResponse complaintResponse = complaint.getComplaintResponse();
+                    var complaintResponseOptional = complaintResponseRepository.findByComplaint_Id(complaint.getId());
 
-                    if (complaintResponse != null) {
+                    if (complaintResponseOptional.isPresent()) {
+                        ComplaintResponse complaintResponse = complaintResponseOptional.get();
                         var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.getReviewer());
 
                         TutorScore fromComplaint;
@@ -353,9 +330,10 @@ public class TutorScoreService {
                     }
 
                     // answered feedback request
-                    ComplaintResponse complaintResponse = complaint.getComplaintResponse();
+                    var complaintResponseOptional = complaintResponseRepository.findByComplaint_Id(complaint.getId());
 
-                    if (complaintResponse != null) {
+                    if (complaintResponseOptional != null) {
+                        ComplaintResponse complaintResponse = complaintResponseOptional.get();
                         var fromComplaintResponse = findTutorScoreFromExercise(exercise, complaintResponse.getReviewer());
 
                         TutorScore fromComplaint;

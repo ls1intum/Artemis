@@ -116,7 +116,7 @@ public class Result extends DomainObject {
     @Nullable
     private StudentScore studentScore = null;
 
-    @OneToOne(mappedBy = "result", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToOne(mappedBy = "result", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     @Nullable
