@@ -22,10 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
@@ -100,6 +97,10 @@ public class ProgrammingExercise extends Exercise {
 
     @Transient
     private boolean isLocalSimulationTransient;
+
+    @Nullable
+    @Column(name = "project_type", table = "programming_exercise_details")
+    private ProjectType projectType;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
@@ -482,6 +483,15 @@ public class ProgrammingExercise extends Exercise {
             return AssessmentType.AUTOMATIC;
         }
         return super.getAssessmentType();
+    }
+
+    @Nullable
+    public ProjectType getProjectType() {
+        return projectType;
+    }
+
+    public void setProjectType(@Nullable ProjectType projectType) {
+        this.projectType = projectType;
     }
 
     /**

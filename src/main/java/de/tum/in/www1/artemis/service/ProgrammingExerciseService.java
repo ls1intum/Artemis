@@ -215,7 +215,7 @@ public class ProgrammingExerciseService {
             throws IOException, GitAPIException, InterruptedException {
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
-        String templatePath = "classpath:templates/" + programmingLanguage;
+        String templatePath = getTemplatePath(programmingLanguage, programmingExercise.getProjectType());
         String exercisePath = templatePath + "/exercise/**/*.*";
         String solutionPath = templatePath + "/solution/**/*.*";
         String testPath = templatePath + "/test/**/*.*";
@@ -245,6 +245,10 @@ public class ProgrammingExerciseService {
             gitService.commitAndPush(testRepo, "Empty Setup by Artemis", user);
             gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis", user);
         }
+    }
+
+    private String getTemplatePath(String programmingLanguage, @Nullable ProjectType projectType) {
+        return "classpath:templates/" + programmingLanguage + (projectType != null ? projectType.name().toLowerCase() + "/" : "");
     }
 
     private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise, String templateRepoName, String testRepoName, String solutionRepoName) {
