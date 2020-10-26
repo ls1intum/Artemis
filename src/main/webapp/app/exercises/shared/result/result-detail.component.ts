@@ -234,7 +234,7 @@ export class ResultDetailComponent implements OnInit {
             return;
         }
 
-        const sumCredits = (sum: number, feedbackItem: FeedbackItem) => sum + feedbackItem.credits!;
+        const sumCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.credits || 0);
 
         let testCaseCredits = feedbackList.filter((item) => item.type === FeedbackItemType.Test).reduce(sumCredits, 0);
         const positiveCredits = feedbackList.filter((item) => item.type !== FeedbackItemType.Test && item.credits && item.credits > 0).reduce(sumCredits, 0);
