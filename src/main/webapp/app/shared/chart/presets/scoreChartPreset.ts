@@ -4,11 +4,14 @@ import { Exercise } from 'app/entities/exercise.model';
 
 export class ScoreChartPreset implements ChartPreset {
     private chart: ChartComponent;
-    private readonly redGreenPattern: CanvasPattern;
-    private readonly redTransparentPattern: CanvasPattern;
     private datasets: ChartDataSets[];
 
-    constructor() {
+    private readonly redGreenPattern: CanvasPattern;
+    private readonly redTransparentPattern: CanvasPattern;
+    private readonly labels: string[];
+
+    constructor(labels: string[]) {
+        this.labels = labels;
         this.redGreenPattern = this.createPattern('#28a745');
         this.redTransparentPattern = this.createPattern('transparent');
     }
@@ -24,13 +27,13 @@ export class ScoreChartPreset implements ChartPreset {
                 generateLabels: () =>
                     [
                         {
-                            text: 'Points',
+                            text: this.labels[0],
                             fillStyle: '#28a745',
                             strokeStyle: '#28a745',
                             lineWidth: 1,
                         },
                         {
-                            text: 'Deductions',
+                            text: this.labels[1],
                             fillStyle: this.redTransparentPattern,
                             strokeStyle: '#dc3545',
                             lineWidth: 1,
@@ -60,18 +63,14 @@ export class ScoreChartPreset implements ChartPreset {
 
         this.datasets = [
             {
-                label: 'Points',
                 data: [((positive - negative) / maxScore) * 100],
                 backgroundColor: '#28a745',
                 hoverBackgroundColor: '#28a745',
-                borderColor: '#28a745',
             },
             {
-                label: 'Deductions',
                 data: [(negative / maxScore) * 100],
                 backgroundColor: this.redGreenPattern,
                 hoverBackgroundColor: this.redGreenPattern,
-                borderColor: '#dc3545',
             },
         ];
         if (this.chart) {

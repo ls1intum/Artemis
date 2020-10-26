@@ -13,6 +13,8 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { ScoreChartPreset } from 'app/shared/chart/presets/scoreChartPreset';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { TranslateService } from '@ngx-translate/core';
+import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
 export enum FeedbackItemType {
     Issue,
@@ -51,7 +53,13 @@ export class ResultDetailComponent implements OnInit {
     filteredFeedbackList: FeedbackItem[];
     buildLogs: BuildLogEntryArray;
 
-    constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private buildLogService: BuildLogService) {}
+    scoreChartPreset: ScoreChartPreset;
+
+    constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private buildLogService: BuildLogService, translateService: TranslateService) {
+        const pointsLabel = translateService.instant('artemisApp.result.chart.points');
+        const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
+        this.scoreChartPreset = new ScoreChartPreset([pointsLabel, deductionsLabel]);
+    }
 
     /**
      * Load the result feedbacks if necessary and assign them to the component.
@@ -188,8 +196,6 @@ export class ResultDetailComponent implements OnInit {
         );
     };
 
-    scoreChartPreset = new ScoreChartPreset();
-
     private filterFeedbackItems(feedbackList: FeedbackItem[]) {
         if (this.exerciseType !== ExerciseType.PROGRAMMING || this.showTestDetails) {
             return [...feedbackList];
@@ -229,7 +235,7 @@ export class ResultDetailComponent implements OnInit {
     }
 
     private updateChart(feedbackList: FeedbackItem[]) {
-        if (!this.result.participation?.exercise) {
+        if (!this.result.participation?.exercise || feedbackList.length === 0) {
             this.showScoreChart = false;
             return;
         }
@@ -262,5 +268,13 @@ export class ResultDetailComponent implements OnInit {
         const positivePoints = testCaseCredits + positiveCredits;
 
         this.scoreChartPreset.setValues(positivePoints, negativePoints, exercise);
+    }
+
+    resultIsPreliminary() {
+        return (
+            this.result.participation &&
+            isProgrammingExerciseStudentParticipation(this.result.participation) &&
+            isResultPreliminary(this.result!, this.result.participation.exercise as ProgrammingExercise)
+        );
     }
 }

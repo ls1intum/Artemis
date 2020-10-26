@@ -230,7 +230,7 @@ export class ResultComponent implements OnInit, OnChanges {
             isProgrammingExerciseStudentParticipation(this.participation) &&
             isResultPreliminary(this.result!, getExercise(this.participation) as ProgrammingExercise)
         ) {
-            const preliminary = this.translate.instant('artemisApp.result.preliminary');
+            const preliminary = '(' + this.translate.instant('artemisApp.result.preliminary') + ')';
             return `${this.result!.resultString} ${preliminary}`;
         }
         return this.result!.resultString;
