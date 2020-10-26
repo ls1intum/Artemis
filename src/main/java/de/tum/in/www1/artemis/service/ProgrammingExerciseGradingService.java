@@ -294,6 +294,7 @@ public class ProgrammingExerciseGradingService {
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0 && testCaseFeedback.size() > 0) {
             removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
+            updateResultString(result, Set.of(), testCasesForCurrentDate, staticCodeAnalysisFeedback, exercise);
         }
         // Case 3: If there is no test case feedback, the build has failed or it has previously fallen under case 2. In this case we just return the original result without
         // changing it.
@@ -478,7 +479,6 @@ public class ProgrammingExerciseGradingService {
         result.setFeedbacks(staticCodeAnalysisFeedback);
         result.hasFeedback(staticCodeAnalysisFeedback.size() > 0);
         result.setScore(0L);
-        result.setResultString("0 of 0 passed");
     }
 
     /**
