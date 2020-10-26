@@ -261,8 +261,6 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
 
     private TextSubmission createTextSubmissionWithResultFeedbackAndConflicts() {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
-        textSubmission = database.saveTextSubmission(textExercise, textSubmission, "student1");
-
         final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D);
         final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
         textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
