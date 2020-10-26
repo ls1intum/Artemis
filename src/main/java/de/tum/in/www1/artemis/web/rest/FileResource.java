@@ -145,6 +145,7 @@ public class FileResource {
      *
      * @param filename The filename of the file to get
      * @param language The programming language for which the template file should be returned
+     * @param projectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @return The requested file, or 404 if the file doesn't exist
      */
     @GetMapping({ "files/templates/{language}/{projectType}/{filename}", "files/templates/{language}/{filename}", "/files/templates/{filename:.+}" })
