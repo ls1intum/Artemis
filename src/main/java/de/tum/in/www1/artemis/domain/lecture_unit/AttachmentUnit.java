@@ -22,7 +22,7 @@ public class AttachmentUnit extends LectureUnit {
     private String description;
 
     @OneToOne(mappedBy = "attachmentUnit", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties(value = "attachmentUnit")
+    @JsonIgnoreProperties(value = "attachmentUnit", allowSetters = true)
     private Attachment attachment;
 
     @Override
