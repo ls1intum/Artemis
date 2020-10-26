@@ -13,7 +13,7 @@ from random import choices, randint
 def main():
     # Makefile location:
     # Artemis expects it to be located in ../assignment
-    makefileLocation: str = "../assignment"
+    makefileLocation: str = "../Solution"
 
     # Create a new instace of the tester:
     tester: Tester = Tester()
@@ -33,6 +33,8 @@ def main():
                               "aAbByYzZ123!%&/()Oau", [testCompile.name], name="TestOutput_1"))
     tester.addTest(TestOutput(makefileLocation, 26,
                               "aAbByYzZ123!%&/()Oau", [testCompile.name], name="TestOutput_26"))
+    tester.addTest(TestOutput(makefileLocation, 1563,
+                              "eIxK4zuaarER", [testCompile.name], name="TestOutput_1563"))
 
     # Random RotX tests:
     for i in range(0, 10):
