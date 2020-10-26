@@ -453,8 +453,8 @@ public class ProgrammingExerciseGradingService {
 
             // Show number of found quality issues if static code analysis is enabled
             if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
-                String issueTerm = scaFeedback.size() == 1 ? "issue" : "issues";
-                newResultString += ", " + scaFeedback.size() + " quality " + issueTerm + " found";
+                String issueTerm = scaFeedback.size() == 1 ? ", 1 issue" : ", " + scaFeedback.size() + " issues";
+                newResultString += issueTerm;
             }
             result.setResultString(newResultString);
         }
