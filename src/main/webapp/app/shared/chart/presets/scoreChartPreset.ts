@@ -1,14 +1,16 @@
 import { ChartComponent, ChartPreset } from 'app/shared/chart/chart.component';
-import { ChartDataSets } from 'chart.js';
+import { ChartDataSets, ChartLegendLabelItem } from 'chart.js';
 import { Exercise } from 'app/entities/exercise.model';
 
 export class ScoreChartPreset implements ChartPreset {
     private chart: ChartComponent;
-    private pattern: CanvasPattern;
+    private readonly redGreenPattern: CanvasPattern;
+    private readonly redTransparentPattern: CanvasPattern;
     private datasets: ChartDataSets[];
 
     constructor() {
-        this.pattern = this.createPattern();
+        this.redGreenPattern = this.createPattern('#28a745');
+        this.redTransparentPattern = this.createPattern('transparent');
     }
 
     applyTo(chart: ChartComponent): void {
@@ -16,7 +18,24 @@ export class ScoreChartPreset implements ChartPreset {
         chart.setType('horizontalBar');
         chart.setYAxe(0, { stacked: true }, false);
         chart.setXAxe(0, { stacked: true, ticks: { min: 0, stepSize: 25, suggestedMax: 100, callback: (value) => value + '%' } }, false);
-        chart.setLegend({ position: 'bottom' });
+        chart.setLegend({
+            position: 'bottom',
+            labels: {
+                generateLabels: () =>
+                    [
+                        {
+                            text: 'Points',
+                            fillStyle: '#28a745',
+                            strokeStyle: '#28a745',
+                        },
+                        {
+                            text: 'Deductions',
+                            fillStyle: this.redTransparentPattern,
+                            strokeStyle: '#dc3545',
+                        },
+                    ] as ChartLegendLabelItem[],
+            },
+        });
         if (this.datasets) {
             chart.datasets = this.datasets;
         }
@@ -43,12 +62,14 @@ export class ScoreChartPreset implements ChartPreset {
                 data: [((positive - negative) / maxScore) * 100],
                 backgroundColor: '#28a745',
                 hoverBackgroundColor: '#28a745',
+                borderColor: '#28a745',
             },
             {
                 label: 'Deductions',
                 data: [(negative / maxScore) * 100],
-                backgroundColor: this.pattern,
-                hoverBackgroundColor: this.pattern,
+                backgroundColor: this.redGreenPattern,
+                hoverBackgroundColor: this.redGreenPattern,
+                borderColor: '#dc3545',
             },
         ];
         if (this.chart) {
@@ -56,7 +77,7 @@ export class ScoreChartPreset implements ChartPreset {
         }
     }
 
-    private createPattern() {
+    private createPattern(fillStyle: string) {
         const c = document.createElement('canvas');
         c.width = 10;
         c.height = 10;
@@ -69,11 +90,11 @@ export class ScoreChartPreset implements ChartPreset {
         const y1 = 12;
         const offset = 10;
 
-        ctx.fillStyle = '#28a745';
+        ctx.fillStyle = fillStyle;
         ctx.fillRect(0, 0, 10, 10);
 
         ctx.strokeStyle = '#dc3545';
-        ctx.lineWidth = 3.53;
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(x0, y0);
         ctx.lineTo(x1, y1);
