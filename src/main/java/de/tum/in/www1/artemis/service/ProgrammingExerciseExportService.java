@@ -211,7 +211,6 @@ public class ProgrammingExerciseExportService {
             case JAVA -> "java19";
             case C -> "c/c++";
             case PYTHON -> "python3";
-            case SWIFT -> "swift"; // TODO: swift check for correct string
             default -> throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
                     "ProgrammingExercise", "notSupported");
         };
