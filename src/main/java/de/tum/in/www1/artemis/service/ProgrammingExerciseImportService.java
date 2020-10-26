@@ -3,20 +3,19 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
-import java.util.List;
-import java.util.Optional;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.http.HttpException;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -26,6 +25,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 
 @Service
@@ -49,10 +49,17 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final GitService gitService;
+
+    private final FileService fileService;
+
+    private final UserService userService;
+
     public ProgrammingExerciseImportService(ExerciseHintService exerciseHintService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService,
+            UserService userService) {
         this.exerciseHintService = exerciseHintService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -61,6 +68,9 @@ public class ProgrammingExerciseImportService {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseService = programmingExerciseService;
+        this.gitService = gitService;
+        this.fileService = fileService;
+        this.userService = userService;
     }
 
     /**
@@ -129,6 +139,14 @@ public class ProgrammingExerciseImportService {
         reposToCopy.forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName()));
         // Add the necessary hooks notifying Artemis about changes after commits have been pushed
         versionControlService.get().addWebHooksForExercise(newExercise);
+
+        try {
+            // Adjust placeholders that were replaced during creation of template exercise
+            adjustProjectNames(templateExercise, newExercise);
+        }
+        catch (GitAPIException | IOException | InterruptedException e) {
+            log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newExercise.getTitle(), e);
+        }
     }
 
     /**
@@ -278,5 +296,53 @@ public class ProgrammingExerciseImportService {
     private void setupTestRepository(ProgrammingExercise newExercise, String projectKey) {
         final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
         newExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
+    }
+
+    /**
+     * Adjust project names in imported exercise for TEST, BASE and SOLUTION repositories.
+     * Replace values inserted in {@link ProgrammingExerciseService#replacePlaceholders(ProgrammingExercise, Repository)}.
+     * @param templateExercise the exercise from which the values that should be replaced are extracted
+     * @param newExercise the exercise from which the values that should be inserted are extracted
+     * @throws GitAPIException If the checkout/push of one repository fails
+     * @throws InterruptedException If the checkout of one repository fails
+     * @throws IOException If the values in the files could not be replaced
+     */
+    private void adjustProjectNames(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, InterruptedException, IOException {
+        final var projectKey = newExercise.getProjectKey();
+
+        Map<String, String> replacements = new HashMap<>();
+
+        // Used in pom.xml
+        replacements.put("<artifactId>" + templateExercise.getTitle().replaceAll(" ", "-"), "<artifactId>" + newExercise.getTitle().replaceAll(" ", "-"));
+
+        // Used in .project
+        replacements.put("<name>" + templateExercise.getTitle(), "<name>" + newExercise.getTitle());
+
+        final var user = userService.getUser();
+
+        adjustProjectName(replacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName(), user);
+        adjustProjectName(replacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName(), user);
+        adjustProjectName(replacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName(), user);
+    }
+
+    /**
+     * Adjust project names in imported exercise for specific repository.
+     * Replace values inserted in {@link ProgrammingExerciseService#replacePlaceholders(ProgrammingExercise, Repository)}.
+     * @param replacements the replacements that should be applied
+     * @param projectKey the project key of the new exercise
+     * @param repositoryName the name of the repository that should be adjusted
+     * @param user the user which performed the action (used as Git author)
+     * @throws GitAPIException If the checkout/push of one repository fails
+     * @throws InterruptedException If the checkout of one repository fails
+     * @throws IOException If the values in the files could not be replaced
+     */
+    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user)
+            throws GitAPIException, IOException, InterruptedException {
+        final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, repositoryName).getURL();
+        Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
+        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements);
+        gitService.stageAllChanges(repository);
+        gitService.commitAndPush(repository, "Template adjusted by Artemis", user);
+        repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
     }
 }

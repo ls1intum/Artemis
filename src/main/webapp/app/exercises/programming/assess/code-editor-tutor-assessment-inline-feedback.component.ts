@@ -53,6 +53,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.feedback.reference = `file:${this.selectedFile}_line:${this.codeLine}`;
         this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine}`;
         this.viewOnly = true;
+        if (this.feedback.credits && this.feedback.credits > 0) {
+            this.feedback.positive = true;
+        }
         this.onUpdateFeedback.emit(this.feedback);
     }
 

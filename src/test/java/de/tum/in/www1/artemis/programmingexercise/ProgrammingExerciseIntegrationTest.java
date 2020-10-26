@@ -175,7 +175,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     void textProgrammingExerciseIsReleased_IsReleasedAndHasResults() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
-        StudentParticipation participation = database.addParticipationForExercise(programmingExercise, "student1");
+        StudentParticipation participation = database.createAndSaveParticipationForExercise(programmingExercise, "student1");
         database.addResultToParticipation(null, null, participation);
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
@@ -190,7 +190,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     void textProgrammingExerciseIsReleased_IsNotReleasedAndHasResults() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
-        StudentParticipation participation = database.addParticipationForExercise(programmingExercise, "student1");
+        StudentParticipation participation = database.createAndSaveParticipationForExercise(programmingExercise, "student1");
         database.addResultToParticipation(null, null, participation);
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
@@ -765,7 +765,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     @ParameterizedTest
     // It should fail for all ProgrammingExercises except Haskell
-    @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL" }, mode = EnumSource.Mode.EXCLUDE)
+    // TODO René Lalla: incldue Swift again as soon as it is fully supported
+    @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL", "SWIFT" }, mode = EnumSource.Mode.EXCLUDE)
     public void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");

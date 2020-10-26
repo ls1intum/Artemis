@@ -28,8 +28,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "P")
 @DiscriminatorOptions(force = true)
-// NOTE: Use strict cache to prevent lost updates when updating statistics in semaphore (see StatisticService.java)
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = StudentParticipation.class, name = "student"),
