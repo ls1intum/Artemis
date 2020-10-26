@@ -187,10 +187,10 @@ export class ResultDetailComponent implements OnInit {
      * @param issue The sca issue
      */
     getIssueLocation(issue: StaticCodeAnalysisIssue): string {
-        const lineText = issue.startLine === issue.endLine ? ` at line ${issue.startLine}` : ` at lines ${issue.startLine}-${issue.endLine}`;
+        const lineText = !issue.endLine || issue.startLine === issue.endLine ? ` at line ${issue.startLine}` : ` at lines ${issue.startLine}-${issue.endLine}`;
         let columnText = '';
         if (issue.startColumn) {
-            columnText = issue.startColumn === issue.endColumn ? ` column ${issue.startColumn}` : ` columns ${issue.startColumn}-${issue.endColumn}`;
+            columnText = !issue.endColumn || issue.startColumn === issue.endColumn ? ` column ${issue.startColumn}` : ` columns ${issue.startColumn}-${issue.endColumn}`;
         }
         return issue.filePath + lineText + columnText;
     }

@@ -6,16 +6,18 @@ import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { SinonStub, stub } from 'sinon';
 import { of, throwError } from 'rxjs';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
+import { FeedbackItem, FeedbackItemType, ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -30,20 +32,62 @@ describe('ResultDetailComponent', () => {
     let buildlogsStub: SinonStub;
     let getFeedbackDetailsForResultStub: SinonStub;
 
-    const generateSCAFeedback = () => {
-        const scaFeedback = new Feedback();
-        scaFeedback.id = 42;
-        scaFeedback.type = FeedbackType.AUTOMATIC;
-        scaFeedback.text = STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER;
-        scaFeedback.detailText = '{"filePath":"www/withSCA/MergeSort.java","startLine":9}';
-        return scaFeedback;
+    const makeFeedback = (fb: Feedback) => {
+        return Object.assign({ type: FeedbackType.AUTOMATIC, text: '', detailText: '', credits: 0 } as Feedback, fb);
     };
 
-    const generateTestCaseFeedback = () => {
-        const tcFeedback = new Feedback();
-        tcFeedback.id = 55;
-        tcFeedback.type = FeedbackType.AUTOMATIC;
-        return tcFeedback;
+    const makeFeedbackItem = (item: FeedbackItem) => {
+        return Object.assign({ type: FeedbackItemType.Feedback, credits: 0, title: undefined, positive: undefined } as FeedbackItem, item);
+    };
+
+    const generateSCAFeedbackPair = () => {
+        return {
+            fb: makeFeedback({
+                text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + 'Bad Practice',
+                detailText: JSON.stringify({
+                    filePath: 'www/withSCA/MergeSort.java',
+                    startLine: 9,
+                    rule: 'Rule1',
+                    message: 'This is bad practice',
+                }),
+                credits: -2,
+                positive: false,
+            }),
+            item: makeFeedbackItem({
+                type: FeedbackItemType.Issue,
+                category: 'Code Issue',
+                title: 'Bad Practice Issue in file www/withSCA/MergeSort.java at line 9',
+                text: 'Rule1: This is bad practice',
+                credits: -2,
+                positive: false,
+            }),
+        };
+    };
+
+    const generateTestCaseFeedbackPair = () => {
+        return {
+            fb: makeFeedback({
+                text: 'TestCase1',
+                detailText: 'This failed.',
+            }),
+            item: makeFeedbackItem({
+                type: FeedbackItemType.Test,
+                category: 'Feedback',
+                text: 'This failed.',
+            }),
+        };
+    };
+
+    const generateFeedbacksAndExpectedItems = () => {
+        const feedbacks: Feedback[] = [];
+        const expectedItems: FeedbackItem[] = [];
+        const addPair = (pair: { fb: Feedback; item: FeedbackItem }) => {
+            feedbacks.push(pair.fb);
+            expectedItems.push(pair.item);
+        };
+        addPair(generateSCAFeedbackPair());
+        addPair(generateTestCaseFeedbackPair());
+        return { feedbacks, expectedItems };
     };
 
     const generateProgrammingSubmission = (buildFailed: boolean) => {
@@ -55,6 +99,7 @@ describe('ResultDetailComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisResultModule],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -73,47 +118,27 @@ describe('ResultDetailComponent', () => {
     });
 
     it('should not try to retrieve the feedbacks from the server if provided result has feedbacks', () => {
-        const scaFeedback = generateSCAFeedback();
-        const testCaseFeedback = generateTestCaseFeedback();
-        const feedbacks: Feedback[] = [scaFeedback, testCaseFeedback];
+        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems();
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.result.feedbacks = feedbacks;
 
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
-        expect(comp.feedbackList).to.have.same.deep.members([testCaseFeedback]);
-        expect(comp.staticCodeAnalysisIssues).to.have.same.deep.members([JSON.parse(scaFeedback.detailText!)]);
+        expect(comp.feedbackList).to.have.deep.members(expectedItems);
         expect(comp.isLoading).to.be.false;
     });
 
     it('should try to retrieve the feedbacks from the server if provided result does not have feedbacks', () => {
-        const scaFeedback = generateSCAFeedback();
-        const testCaseFeedback = generateTestCaseFeedback();
-        const feedbacks: Feedback[] = [scaFeedback, testCaseFeedback];
+        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems();
         comp.exerciseType = ExerciseType.PROGRAMMING;
-        getFeedbackDetailsForResultStub.returns(of({ body: feedbacks as Feedback[] } as HttpResponse<Feedback[]>));
+        getFeedbackDetailsForResultStub.returns(of({ body: feedbacks } as HttpResponse<Feedback[]>));
 
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(comp.result.id);
-        expect(comp.feedbackList).to.have.same.deep.members([testCaseFeedback]);
-        expect(comp.staticCodeAnalysisIssues).to.have.same.deep.members([JSON.parse(scaFeedback.detailText!)]);
+        expect(comp.feedbackList).to.have.same.deep.members(expectedItems);
         expect(comp.isLoading).to.be.false;
-    });
-
-    it('should split static code analysis feedback and test case feedback correctly', () => {
-        const scaFeedback = generateSCAFeedback();
-        const testCaseFeedback = generateTestCaseFeedback();
-        const feedbacks: Feedback[] = [scaFeedback, testCaseFeedback];
-        comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.result.feedbacks = feedbacks;
-
-        comp.ngOnInit();
-
-        expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
-        expect(comp.staticCodeAnalysisIssues).to.have.same.deep.members([JSON.parse(scaFeedback.detailText!)]);
-        expect(comp.feedbackList).to.have.same.deep.members([testCaseFeedback]);
     });
 
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and no submission was provided.', () => {
