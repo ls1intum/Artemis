@@ -315,12 +315,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     adjustedtRepositoryURL(): string {
         if (this.participation.repositoryUrl != null) {
-           const splitted = this.participation.repositoryUrl.split("@", 2);
+           const splitted = this.participation.repositoryUrl.split('@', 2);
             return 'http://' + splitted[1];
         }
         return '';
     }
-    
+
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         this.participationForManualResult.results![0] = this.manualResult = response.body!;
         this.jhiAlertService.clear();
