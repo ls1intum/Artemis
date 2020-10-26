@@ -9,9 +9,6 @@ import org.eclipse.jgit.lib.BaseRepositoryBuilder;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 
-/**
- * Created by Josias Montag on 14.10.16.
- */
 public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepository {
 
     private ProgrammingExerciseParticipation participation;

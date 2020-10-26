@@ -13,6 +13,7 @@ import javax.validation.constraints.Size;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 
 /**
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 @Entity
 @Table(name = "jhi_authority")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Authority implements Serializable {
 
     private static final long serialVersionUID = 1L;

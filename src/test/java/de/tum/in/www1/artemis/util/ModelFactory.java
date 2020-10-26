@@ -449,15 +449,18 @@ public class ModelFactory {
         Feedback positiveFeedback = new Feedback();
         positiveFeedback.setCredits(2D);
         positiveFeedback.setReference("theory");
+        positiveFeedback.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(positiveFeedback);
         Feedback positiveFeedback2 = new Feedback();
         positiveFeedback2.setCredits(1D);
         positiveFeedback2.setReference("theory2");
+        positiveFeedback2.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(positiveFeedback2);
         Feedback negativeFeedback = new Feedback();
         negativeFeedback.setCredits(-1D);
         negativeFeedback.setDetailText("Bad solution");
         negativeFeedback.setReference("practice");
+        negativeFeedback.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(negativeFeedback);
         return feedbacks;
     }
@@ -755,6 +758,11 @@ public class ModelFactory {
         return notification;
     }
 
+    public static Feedback createSCAFeedbackWithInactiveCategory(Result result) {
+        return new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("{\"category\": \"miscellaneous\"}")
+                .type(FeedbackType.AUTOMATIC).positive(false);
+    }
+
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
             List<String> failedTestNames) {
         var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
@@ -770,11 +778,18 @@ public class ModelFactory {
     private static StaticCodeAnalysisReportDTO generateStaticCodeAnalysisReport(StaticCodeAnalysisTool tool) {
         var report = new StaticCodeAnalysisReportDTO();
         report.setTool(tool);
-        report.setIssues(List.of(generateStaticCodeAnalysisIssue()));
+        report.setIssues(List.of(generateStaticCodeAnalysisIssue(tool)));
         return report;
     }
 
-    private static StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue generateStaticCodeAnalysisIssue() {
+    private static StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue generateStaticCodeAnalysisIssue(StaticCodeAnalysisTool tool) {
+        // Use a category which is not invisible in the default configuration
+        String category = switch (tool) {
+            case SPOTBUGS -> "BAD_PRACTICE";
+            case PMD -> "Best Practices";
+            case CHECKSTYLE -> "coding";
+        };
+
         var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
         issue.setFilePath(Constants.STUDENT_WORKING_DIRECTORY + "/www/packagename/Class1.java");
         issue.setStartLine(1);
@@ -782,9 +797,10 @@ public class ModelFactory {
         issue.setStartColumn(1);
         issue.setEndColumn(10);
         issue.setRule("Rule");
-        issue.setCategory("Category");
+        issue.setCategory(category);
         issue.setMessage("Message");
         issue.setPriority("Priority");
+
         return issue;
     }
 
