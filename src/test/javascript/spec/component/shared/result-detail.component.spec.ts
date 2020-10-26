@@ -4,7 +4,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { SinonStub, stub } from 'sinon';
+import { SinonStub, spy, stub } from 'sinon';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
@@ -18,6 +18,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -40,53 +41,90 @@ describe('ResultDetailComponent', () => {
         return Object.assign({ type: FeedbackItemType.Feedback, credits: 0, title: undefined, positive: undefined } as FeedbackItem, item);
     };
 
-    const generateSCAFeedbackPair = () => {
+    const generateSCAFeedbackPair = (category: string, credits: number, { line = 1, column = undefined }: { line?: number; column?: number } = {}) => {
         return {
             fb: makeFeedback({
-                text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + 'Bad Practice',
+                text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + category,
                 detailText: JSON.stringify({
-                    filePath: 'www/withSCA/MergeSort.java',
-                    startLine: 9,
-                    rule: 'Rule1',
-                    message: 'This is bad practice',
+                    filePath: 'www/packet/File.java',
+                    startLine: line,
+                    startColumn: column,
+                    rule: 'Rule',
+                    message: 'This is a code issue',
                 }),
-                credits: -2,
+                credits,
                 positive: false,
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Issue,
                 category: 'Code Issue',
-                title: 'Bad Practice Issue in file www/withSCA/MergeSort.java at line 9',
-                text: 'Rule1: This is bad practice',
-                credits: -2,
+                title: category + ' Issue in file www/packet/File.java at line ' + line + (column != null ? ' column ' + column : ''),
+                text: 'Rule: This is a code issue',
+                credits,
                 positive: false,
             }),
         };
     };
 
-    const generateTestCaseFeedbackPair = () => {
+    const generateTestCaseFeedbackPair = (showDetails: boolean, name: string, message: string, credits = 0) => {
         return {
             fb: makeFeedback({
-                text: 'TestCase1',
-                detailText: 'This failed.',
+                text: name,
+                detailText: message,
+                credits,
+                positive: credits > 0,
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Test,
-                category: 'Feedback',
-                text: 'This failed.',
+                category: showDetails ? 'Test Case' : 'Feedback',
+                text: message,
+                credits,
+                positive: credits > 0,
+                title: showDetails ? `Test ${name} ${credits > 0 ? 'passed' : 'failed'}` : undefined,
             }),
         };
     };
 
-    const generateFeedbacksAndExpectedItems = () => {
+    const generateManualFeedbackPair = (showDetails: boolean, title: string, text: string, credits = 0) => {
+        return {
+            fb: makeFeedback({
+                type: FeedbackType.MANUAL,
+                text: title,
+                detailText: text,
+                credits,
+                positive: credits > 0,
+            }),
+            item: makeFeedbackItem({
+                type: FeedbackItemType.Feedback,
+                category: showDetails ? 'Tutor' : 'Feedback',
+                title,
+                text,
+                credits,
+                positive: credits > 0,
+            }),
+        };
+    };
+
+    const generateFeedbacksAndExpectedItems = (showTestDetails = false) => {
         const feedbacks: Feedback[] = [];
         const expectedItems: FeedbackItem[] = [];
         const addPair = (pair: { fb: Feedback; item: FeedbackItem }) => {
             feedbacks.push(pair.fb);
             expectedItems.push(pair.item);
         };
-        addPair(generateSCAFeedbackPair());
-        addPair(generateTestCaseFeedbackPair());
+        addPair(generateSCAFeedbackPair('Bad Practice', -2));
+        addPair(generateSCAFeedbackPair('Styling', -0.5, { column: 10 }));
+        addPair(generateManualFeedbackPair(showTestDetails, 'Positive', 'This is good', 4));
+        addPair(generateManualFeedbackPair(showTestDetails, 'Negative', 'This is bad', -2));
+        addPair(generateManualFeedbackPair(showTestDetails, 'Neutral', 'This is neutral', 0));
+        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase1', 'This failed.'));
+        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase2', 'This passed.', 3));
+
+        if (!showTestDetails) {
+            expectedItems.pop();
+            expectedItems.unshift(makeFeedbackItem({ type: FeedbackItemType.Test, category: 'Feedback', title: '1 passed test', positive: true, credits: 3 }));
+        }
+
         return { feedbacks, expectedItems };
     };
 
@@ -125,7 +163,7 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
-        expect(comp.feedbackList).to.have.deep.members(expectedItems);
+        expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
         expect(comp.isLoading).to.be.false;
     });
 
@@ -137,7 +175,7 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(comp.result.id);
-        expect(comp.feedbackList).to.have.same.deep.members(expectedItems);
+        expect(comp.filteredFeedbackList).to.have.same.deep.members(expectedItems);
         expect(comp.isLoading).to.be.false;
     });
 
@@ -205,6 +243,64 @@ describe('ResultDetailComponent', () => {
 
         expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id);
         expect(comp.loadingFailed).to.be.true;
+        expect(comp.isLoading).to.be.false;
+    });
+
+    it('should show test names if showTestDetails is set to true', () => {
+        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems(true);
+        comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.result.feedbacks = feedbacks;
+        comp.showTestDetails = true;
+
+        comp.ngOnInit();
+
+        expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
+        expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
+        expect(comp.isLoading).to.be.false;
+    });
+
+    it('should filter the correct feedbacks when a filter is set', () => {
+        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems();
+        comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.result.feedbacks = feedbacks;
+        comp.feedbackFilter = ['TestCase1', 'TestCase2'];
+
+        comp.ngOnInit();
+
+        expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
+        expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems.filter((item) => item.type === FeedbackItemType.Test));
+        expect(comp.isLoading).to.be.false;
+    });
+
+    it('should generate correct class names for feedback items', () => {
+        const { expectedItems } = generateFeedbacksAndExpectedItems();
+
+        //                       test case 1       sca              sca              manual 1         manual 2        manual 3           test case 2
+        const expectedClasses = ['alert-success', 'alert-warning', 'alert-warning', 'alert-success', 'alert-danger', 'alert-secondary', 'alert-danger'];
+
+        expectedItems.forEach((item, index) => expect(comp.getClassNameForFeedbackItem(item)).to.equal(expectedClasses[index]));
+    });
+
+    it('should calculate the correct chart values and update the score chart', () => {
+        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems();
+        comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.showScoreChart = true;
+        comp.result.feedbacks = feedbacks;
+
+        comp.result.participation!.exercise = { maxScore: 100, bonusPoints: 0 } as ProgrammingExercise;
+
+        const chartSetValuesSpy = spy(comp.scoreChartPreset, 'setValues');
+
+        comp.ngOnInit();
+
+        expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
+        expect(chartSetValuesSpy).to.have.been.calledOnce;
+        // @ts-ignore
+        expect(comp.scoreChartPreset.datasets.length).to.equal(2);
+        // @ts-ignore
+        expect(comp.scoreChartPreset.datasets[0].data[0]).to.equal(2.5);
+        // @ts-ignore
+        expect(comp.scoreChartPreset.datasets[1].data[0]).to.equal(4.5);
         expect(comp.isLoading).to.be.false;
     });
 });
