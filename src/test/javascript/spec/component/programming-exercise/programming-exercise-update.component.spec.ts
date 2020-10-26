@@ -128,6 +128,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 plagiarismCheckSupported: true,
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: true,
+                projectTypes: [ProjectType.ECLIPSE, ProjectType.MAVEN],
             };
             spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(of(programmingLanguageFeature));
 
@@ -167,6 +168,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 plagiarismCheckSupported: true,
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: true,
+                projectTypes: [ProjectType.ECLIPSE, ProjectType.MAVEN],
             };
             spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(of(programmingLanguageFeature));
 
