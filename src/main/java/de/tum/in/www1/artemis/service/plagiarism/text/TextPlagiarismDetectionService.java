@@ -5,12 +5,13 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.*;
 
 import jplag.ExitException;
-import jplag.Program;
-import jplag.options.CommandLineOptions;
+import jplag.JPlag;
+import jplag.JPlagOptions;
+import jplag.JPlagResult;
+import jplag.options.LanguageOption;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,16 +111,12 @@ public class TextPlagiarismDetectionService {
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException   is thrown for file handling errors
      */
-    public File checkPlagiarism(TextExercise textExercise) throws ExitException, IOException {
+    public JPlagResult checkPlagiarism(TextExercise textExercise) throws ExitException, IOException {
         // TODO: offer the following options in the client
         // 1) filter empty submissions, i.e. repositories with no student commits
         // 2) filter submissions with a result score of 0%
 
-        final var jplagResultFolderName = "./tmp/jplag-result";
         final var submissionsFolderName = "./tmp/submissions";
-        final var zipFilePath = Paths.get(String.format("./tmp/%s-%s-%s-JPlag-Output.zip", textExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(),
-                textExercise.getShortName(), System.currentTimeMillis()));
-
         final var submissionFolderFile = new File(submissionsFolderName);
         submissionFolderFile.mkdirs();
 
@@ -138,45 +135,17 @@ public class TextPlagiarismDetectionService {
             }
         });
 
-        final var jplagResultFolderFile = new File(jplagResultFolderName);
-        jplagResultFolderFile.mkdirs();
+        // TODO
+        JPlagOptions options = new JPlagOptions("/path/to/rootDir", LanguageOption.JAVA_1_9);
 
-        final var jplagArgs = new String[] {
-                // Language: text
-                "-l", "text",
-
-                // Name of directory in which the resulting web pages will be stored
-                "-r", jplagResultFolderName,
-
-                // Option to look at sub-directories too
-                "-s",
-
-                // Name of the directory which contains the base code
-                // "-bc", templateRepoName,
-
-                // Specify verbosity
-                "-vq",
-
-                // The root-directory that contains all submissions
-                submissionsFolderName };
-
-        final CommandLineOptions options = new CommandLineOptions(jplagArgs, null);
-        final Program program = new Program(options);
-        program.run();
-
-        zipFileService.createZipFileWithFolderContent(zipFilePath, jplagResultFolderFile.toPath());
-        fileService.scheduleForDeletion(zipFilePath, 5);
-
-        // cleanup
-        if (jplagResultFolderFile.exists()) {
-            FileSystemUtils.deleteRecursively(jplagResultFolderFile);
-        }
+        JPlag jplag = new JPlag(options);
+        JPlagResult result = jplag.run();
 
         if (submissionFolderFile.exists()) {
             FileSystemUtils.deleteRecursively(submissionFolderFile);
         }
 
-        return new File(zipFilePath.toString());
+        return result;
     }
 
 }

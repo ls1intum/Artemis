@@ -169,7 +169,7 @@ dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
     implementation "org.gitlab4j:gitlab4j-api:4.15.7"
 
-    implementation files("libs/jplag-2.12.1.jar")
+    implementation files("libs/jplag-3.0.0.jar")
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r"

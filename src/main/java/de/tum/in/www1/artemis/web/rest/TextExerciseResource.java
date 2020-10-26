@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import jplag.ExitException;
+import jplag.JPlagResult;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -608,7 +609,7 @@ public class TextExerciseResource {
      */
     @GetMapping(value = "/text-exercises/{exerciseId}/check-plagiarism", params = { "strategy=JPlag" })
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Resource> checkPlagiarismJPlag(@PathVariable long exerciseId) throws ExitException, IOException {
+    public ResponseEntity<JPlagResult> checkPlagiarismJPlag(@PathVariable long exerciseId) throws ExitException, IOException {
         Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissions(exerciseId);
 
         if (optionalTextExercise.isEmpty()) {
@@ -621,16 +622,9 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        File zipFile = textPlagiarismDetectionService.checkPlagiarism(textExercise);
+        JPlagResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise);
 
-        if (zipFile == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
-        }
-
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+        return ResponseEntity.ok(result);
     }
 
 }

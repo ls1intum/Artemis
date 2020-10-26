@@ -24,8 +24,10 @@ import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathFactory;
 
 import jplag.ExitException;
-import jplag.Program;
-import jplag.options.CommandLineOptions;
+import jplag.JPlag;
+import jplag.JPlagOptions;
+import jplag.JPlagResult;
+import jplag.options.LanguageOption;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -187,9 +189,11 @@ public class ProgrammingExerciseExportService {
         final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
         final var args = new String[] { "-l", programmingLanguage, "-r", outputFolder, "-s", repoFolder, "-bc", templateRepoName, "-vq" };
 
-        final var options = new CommandLineOptions(args, null);
-        final var program = new Program(options);
-        program.run();
+        // TODO
+        JPlagOptions options = new JPlagOptions("/path/to/rootDir", LanguageOption.JAVA_1_9);
+
+        JPlag jplag = new JPlag(options);
+        JPlagResult result = jplag.run();
 
         final var zipFilePath = Paths.get(REPO_DOWNLOAD_CLONE_PATH, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
                 + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + "-Jplag-Analysis-Output.zip");
