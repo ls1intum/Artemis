@@ -313,7 +313,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     /**
      * Removes the username from the repositoryURL
      */
-    adjustedtRepositoryURL(): string {
+    adjustedRepositoryURL(): string {
         if (this.participation.repositoryUrl != null) {
            const splitted = this.participation.repositoryUrl.split('@', 2);
             return 'http://' + splitted[1];
