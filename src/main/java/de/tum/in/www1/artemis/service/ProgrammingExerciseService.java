@@ -228,10 +228,12 @@ public class ProgrammingExerciseService {
         Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl, true);
         Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl, true);
 
+        String basePrefix = getProgrammingLanguageProjectTypePath(programmingLanguage, programmingExercise.getProjectType());
+
         try {
-            String exercisePrefix = programmingLanguage + "/exercise";
-            String testPrefix = programmingLanguage + "/test";
-            String solutionPrefix = programmingLanguage + "/solution";
+            String exercisePrefix = basePrefix + "/exercise";
+            String testPrefix = basePrefix + "/test";
+            String solutionPrefix = basePrefix + "/solution";
             setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, "Exercise", programmingExercise, user);
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, "Solution", programmingExercise, user);
             setupTestTemplateAndPush(testRepo, testResources, testPrefix, "Test", programmingExercise, user);
@@ -247,8 +249,12 @@ public class ProgrammingExerciseService {
         }
     }
 
+    private String getProgrammingLanguageProjectTypePath(String programmingLanguage, @Nullable ProjectType projectType) {
+        return programmingLanguage + (projectType != null ? "/" + projectType.name().toLowerCase() : "");
+    }
+
     private String getTemplatePath(String programmingLanguage, @Nullable ProjectType projectType) {
-        return "classpath:templates/" + programmingLanguage + (projectType != null ? projectType.name().toLowerCase() + "/" : "");
+        return "classpath:templates/" + getProgrammingLanguageProjectTypePath(programmingLanguage, projectType);
     }
 
     private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise, String templateRepoName, String testRepoName, String solutionRepoName) {
@@ -329,7 +335,7 @@ public class ProgrammingExerciseService {
         // Only copy template if repo is empty
         if (gitService.listFiles(repository).size() == 0
                 && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
-            String templatePath = "classpath:templates/" + programmingExercise.getProgrammingLanguage().toString().toLowerCase() + "/test";
+            String templatePath = getTemplatePath(programmingExercise.getProgrammingLanguage().toString().toLowerCase(), programmingExercise.getProjectType()) + "/test";
 
             String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
             String testUtilsPath = templatePath + "/testutils/**/*.*";
