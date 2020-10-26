@@ -469,7 +469,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         var response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
 
-        //feedback request
+        // feedback request
         feedbackRequest = new Complaint().result(result).complaintText("More please").complaintType(ComplaintType.MORE_FEEDBACK);
         feedbackRequest.setResult(result);
         complaintRepo.save(feedbackRequest);
