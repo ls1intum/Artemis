@@ -79,8 +79,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         submittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         notSubmittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(false);
         lateFileUploadSubmission = ModelFactory.generateLateFileUploadSubmission();
-        database.addParticipationForExercise(releasedFileUploadExercise, "student3");
-        participation = database.addParticipationForExercise(finishedFileUploadExercise, "student3");
+        database.createAndSaveParticipationForExercise(releasedFileUploadExercise, "student3");
+        participation = database.createAndSaveParticipationForExercise(finishedFileUploadExercise, "student3");
     }
 
     @AfterEach
@@ -153,7 +153,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void cannotSeeStudentDetailsInSubmissionListAsTutor() throws Exception {
-        FileUploadSubmission submission1 = database.addFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, submittedFileUploadSubmission, "student1", "tutor1");
+        FileUploadSubmission submission1 = database.saveFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, submittedFileUploadSubmission, "student1", "tutor1");
 
         List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions?assessedByTutor=true",
                 HttpStatus.OK, FileUploadSubmission.class);
@@ -221,7 +221,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getLateSubmissionWithoutAssessment() throws Exception {
 
-        database.addFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, submittedFileUploadSubmission, "student1", "tutor1");
+        database.saveFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, submittedFileUploadSubmission, "student1", "tutor1");
         FileUploadSubmission lateSubmission = database.addFileUploadSubmission(releasedFileUploadExercise, lateFileUploadSubmission, "student1");
 
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -267,7 +267,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     public void getDataForFileUpload() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
-        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessorFeedback(releasedFileUploadExercise, fileUploadSubmission, "student1", "tutor1", feedbacks);
+        fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessorFeedback(releasedFileUploadExercise, fileUploadSubmission, "student1", "tutor1", feedbacks);
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
@@ -283,7 +283,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     public void getDataForFileUpload_withoutFinishedAssessment() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
-        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessorFeedback(releasedFileUploadExercise, fileUploadSubmission, "student1", "tutor1", feedbacks);
+        fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessorFeedback(releasedFileUploadExercise, fileUploadSubmission, "student1", "tutor1", feedbacks);
         database.updateResultCompletionDate(fileUploadSubmission.getResult().getId(), null);
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
 
@@ -297,7 +297,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     public void getDataForFileUpload_wrongStudent() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
-        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessorFeedback(releasedFileUploadExercise, fileUploadSubmission, "student2", "tutor1", feedbacks);
+        fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessorFeedback(releasedFileUploadExercise, fileUploadSubmission, "student2", "tutor1", feedbacks);
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.FORBIDDEN,
@@ -310,7 +310,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     public void getDataForFileUpload_wrongExcerciseType() throws Exception {
         Course course = database.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
-        Participation modelingExerciseParticipation = database.addParticipationForExercise(modelingExercise, "student1");
+        Participation modelingExerciseParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
         FileUploadSubmission submission = request.get("/api/participations/" + modelingExerciseParticipation.getId() + "/file-upload-editor", HttpStatus.BAD_REQUEST,
                 FileUploadSubmission.class);
         assertThat(submission).isNull();

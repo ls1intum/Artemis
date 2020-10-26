@@ -12,6 +12,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -29,6 +30,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  */
 @Entity
 @DiscriminatorValue(value = "Q")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizExercise extends Exercise {
 
     @Column(name = "randomize_question_order")

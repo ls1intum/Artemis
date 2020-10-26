@@ -104,7 +104,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
-        (gradingService as MockProgrammingExerciseGradingService).next(testCases);
+        (gradingService as MockProgrammingExerciseGradingService).nextTestCases(testCases);
 
         fixture.detectChanges();
         tick();
@@ -123,7 +123,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
-        (gradingService as MockProgrammingExerciseGradingService).next(testCases);
+        (gradingService as MockProgrammingExerciseGradingService).nextTestCases(testCases);
 
         fixture.detectChanges();
         tick();
@@ -131,7 +131,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(comp.exerciseTestCases).to.have.lengthOf(2);
         expect(comp.exerciseTestCases).to.deep.equal(['test1', 'test2']);
 
-        (gradingService as MockProgrammingExerciseGradingService).next([{ testName: 'testX' }]);
+        (gradingService as MockProgrammingExerciseGradingService).nextTestCases([{ testName: 'testX' }]);
         fixture.detectChanges();
         tick();
 
@@ -152,7 +152,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         // No test cases available, might be that the solution build never ran to create tests...
-        (gradingService as MockProgrammingExerciseGradingService).next(undefined);
+        (gradingService as MockProgrammingExerciseGradingService).nextTestCases(undefined);
 
         fixture.detectChanges();
 

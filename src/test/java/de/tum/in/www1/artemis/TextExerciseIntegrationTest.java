@@ -80,7 +80,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
-        textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
+        textSubmission = database.saveTextSubmission(textExercise, textSubmission, "student1");
         int submissionCount = 5;
         int submissionSize = 4;
         ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);

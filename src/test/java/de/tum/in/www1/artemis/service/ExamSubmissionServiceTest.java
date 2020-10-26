@@ -150,7 +150,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testPreventMultipleSubmissions() {
-        StudentParticipation participation = database.addParticipationForExercise(exercise, "student1");
+        StudentParticipation participation = database.createAndSaveParticipationForExercise(exercise, "student1");
         Submission existingSubmission = ModelFactory.generateTextSubmission("The initial submission", Language.ENGLISH, true);
         existingSubmission = database.addSubmission(participation, existingSubmission);
         Submission receivedSubmission = ModelFactory.generateTextSubmission("This is a submission", Language.ENGLISH, true);

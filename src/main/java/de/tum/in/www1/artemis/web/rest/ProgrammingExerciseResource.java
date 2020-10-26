@@ -35,9 +35,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -48,6 +48,8 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
+import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -94,6 +96,10 @@ public class ProgrammingExerciseResource {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
+    private final GradingCriterionService gradingCriterionService;
+
+    private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
+
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -106,7 +112,8 @@ public class ProgrammingExerciseResource {
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
-            ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService) {
+            ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionService gradingCriterionService,
+            ProgrammingLanguageFeatureService programmingLanguageFeatureService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -120,6 +127,8 @@ public class ProgrammingExerciseResource {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.exerciseGroupService = exerciseGroupService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
+        this.gradingCriterionService = gradingCriterionService;
+        this.programmingLanguageFeatureService = programmingLanguageFeatureService;
     }
 
     /**
@@ -234,6 +243,8 @@ public class ProgrammingExerciseResource {
      * @return Optional validation error response
      */
     private Optional<ResponseEntity<ProgrammingExercise>> validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+
         // Check if the static code analysis flag was set
         if (programmingExercise.isStaticCodeAnalysisEnabled() == null) {
             return Optional.of(ResponseEntity.badRequest()
@@ -241,7 +252,7 @@ public class ProgrammingExerciseResource {
         }
 
         // Static code analysis is only supported for Java at the moment
-        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && programmingExercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.isStaticCodeAnalysis()) {
             return Optional.of(ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "The static code analysis can only be enabled for Java", "staticCodeAnalysisOnlyAvailableForJava"))
                     .body(null));
@@ -307,9 +318,10 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "No programming language was specified", "programmingLanguageNotSet")).body(null);
         }
 
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+
         // Check if package name is set
-        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
-            // only Java and Kotlin need a valid package name at the moment
+        if (programmingLanguageFeature.isPackageNameRequired()) {
             if (programmingExercise.getPackageName() == null) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
             }
@@ -322,12 +334,11 @@ public class ProgrammingExerciseResource {
         }
 
         // Check if checkout solution repository is enabled
-        if (programmingExercise.getCheckoutSolutionRepository()) {
-            if (programmingExercise.getProgrammingLanguage() != ProgrammingLanguage.HASKELL) {
-                return ResponseEntity.badRequest().headers(
-                        HeaderUtil.createAlert(applicationName, "Checking out the solution repository is only supported for Haskell exercises", "checkoutSolutionNotSupported"))
-                        .body(null);
-            }
+        if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.isCheckoutSolutionRepositoryAllowed()) {
+            return ResponseEntity.badRequest()
+                    .headers(
+                            HeaderUtil.createAlert(applicationName, "Checking out the solution repository is only supported for Haskell exercises", "checkoutSolutionNotSupported"))
+                    .body(null);
         }
 
         // Validate exercise title
@@ -667,6 +678,10 @@ public class ProgrammingExerciseResource {
             return notFound();
         }
         ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
+
+        // Fetch grading criterion into exercise of participation
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        programmingExercise.setGradingCriteria(gradingCriteria);
 
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
         if (programmingExercise.hasExerciseGroup()) {
@@ -1021,7 +1036,8 @@ public class ProgrammingExerciseResource {
         }
 
         var language = programmingExercise.get().getProgrammingLanguage();
-        if (language != ProgrammingLanguage.JAVA && language != ProgrammingLanguage.C && language != ProgrammingLanguage.PYTHON) {
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
+        if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingLanguageNotSupported",
                     "Artemis does not support plagiarism checks for the programming language " + language)).body(null);
         }
