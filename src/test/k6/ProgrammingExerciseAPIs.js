@@ -100,7 +100,7 @@ export default function (data) {
             someSuccessfulErrorContent = someSuccessfulErrorContentC;
             allSuccessfulContent = allSuccessfulContentC;
             buildErrorContent = buildErrorContentC;
-            somePassedString = '5 of 21 passed';
+            somePassedString = '5 of 22 passed';
             break;
     }
 
