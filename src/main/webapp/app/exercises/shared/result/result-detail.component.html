@@ -15,7 +15,7 @@
     <ng-template #feedbackContainer>
         <div *ngIf="!loadingFailed && filteredFeedbackList && filteredFeedbackList.length; else buildLogsContainer" class="result-detail-container">
             <div *ngIf="showScoreChart && result.participation?.exercise" class="result-score-chart">
-                <span class="result-score-chart-title">Current Score <span class="badge badge-warning">Preliminary</span></span>
+                <span class="result-score-chart-title">Current Score: {{result.score}}% <span class="badge badge-warning">Preliminary</span></span>
                 <div style="height: 100px"><jhi-chart [preset]="scoreChartPreset"></jhi-chart></div>
                 <hr />
             </div>
