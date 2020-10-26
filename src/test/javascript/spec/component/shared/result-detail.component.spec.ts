@@ -145,7 +145,19 @@ describe('ResultDetailComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 
-                comp.result = { id: 89, participation: { id: 55 } } as Result;
+                comp.result = {
+                    id: 89,
+                    participation: {
+                        id: 55,
+                        exercise: {
+                            maxScore: 100,
+                            bonusPoints: 0,
+                            type: ExerciseType.PROGRAMMING,
+                            staticCodeAnalysisEnabled: true,
+                            maxStaticCodeAnalysisPenalty: 20,
+                        } as ProgrammingExercise,
+                    },
+                } as Result;
 
                 buildLogService = debugElement.injector.get(BuildLogService);
                 resultService = debugElement.injector.get(ResultService);
@@ -286,8 +298,6 @@ describe('ResultDetailComponent', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.showScoreChart = true;
         comp.result.feedbacks = feedbacks;
-
-        comp.result.participation!.exercise = { maxScore: 100, bonusPoints: 0 } as ProgrammingExercise;
 
         const chartSetValuesSpy = spy(comp.scoreChartPreset, 'setValues');
 
