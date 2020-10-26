@@ -103,6 +103,13 @@ public class LectureResource {
         if (!authCheckService.isInstructorInCourse(lecture.getCourse(), user) && !authCheckService.isAdmin(user)) {
             return forbidden();
         }
+
+        // Make sure that the original references are preserved.
+        Lecture originalLecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture.getId()).get();
+
+        // NOTE: Make sure that all references are preserved here
+        lecture.setLectureUnits(originalLecture.getLectureUnits());
+
         Lecture result = lectureRepository.save(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, lecture.getId().toString())).body(result);
     }

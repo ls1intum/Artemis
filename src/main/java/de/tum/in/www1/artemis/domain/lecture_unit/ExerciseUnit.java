@@ -7,14 +7,21 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.Exercise;
 
 @Entity
 @DiscriminatorValue("E")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class ExerciseUnit extends LectureUnit {
 
     @ManyToOne
     @JoinColumn(name = "exercise_id")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Exercise exercise;
 
     @Override
@@ -56,7 +63,7 @@ public class ExerciseUnit extends LectureUnit {
     }
 
     @Override
-    public boolean isVisibleToStudents() {
+    public boolean calculateVisibility() {
         if (exercise == null) {
             return true;
         }

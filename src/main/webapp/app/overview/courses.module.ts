@@ -73,6 +73,6 @@ import { AttachmentUnitComponent } from './course-lectures/attachment-unit/attac
         ExerciseUnitComponent,
         AttachmentUnitComponent,
     ],
-    exports: [ExerciseActionButtonComponent, ExerciseDetailsStudentActionsComponent, ExerciseUnitComponent],
+    exports: [ExerciseActionButtonComponent, ExerciseDetailsStudentActionsComponent, ExerciseUnitComponent, AttachmentUnitComponent],
 })
 export class ArtemisCoursesModule {}

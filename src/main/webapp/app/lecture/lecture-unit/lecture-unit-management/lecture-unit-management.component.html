@@ -10,9 +10,10 @@
     <!-- Lecture Unit Rows-->
     <div class="row mb-4" *ngFor="let lectureUnit of lectureUnits; index as i; trackBy: identify">
         <div class="col-10 col-md-6 offset-md-3" [ngSwitch]="lectureUnit.type">
-            <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true"></jhi-exercise-unit>
+            <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true"> </jhi-exercise-unit>
+            <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit" [isPresentationMode]="true"></jhi-attachment-unit>
         </div>
-        <div class="col-1">
+        <div class="col-1 my-auto">
             <div class="container">
                 <div class="row mx-auto mb-1">
                     <button type="button" class="btn btn-primary btn-circle" (click)="moveUp(i)" [disabled]="i === 0">

@@ -36,6 +36,7 @@
             <div class="row" *ngFor="let lectureUnit of lectureUnits">
                 <div class="col-12 mx-auto mb-2" [ngSwitch]="lectureUnit.type">
                     <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit"></jhi-exercise-unit>
+                    <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
                 </div>
             </div>
             <!-- LECTURE UNITS END-->

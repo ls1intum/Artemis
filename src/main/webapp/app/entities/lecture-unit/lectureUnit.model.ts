@@ -19,6 +19,8 @@ export abstract class LectureUnit implements BaseEntity {
     public lecture?: Lecture;
     public learningGoals?: LearningGoal[];
     public type?: LectureUnitType;
+    // calculated property
+    public visibleToStudents?: boolean;
 
     protected constructor(type: LectureUnitType) {
         this.type = type;

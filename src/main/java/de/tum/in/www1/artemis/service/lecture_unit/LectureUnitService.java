@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.lecture_unit.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture_unit.LectureUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 
@@ -37,6 +38,11 @@ public class LectureUnitService {
             }
             // Set the lecture manually as it won't be included in orderedLectureUnits
             lectureUnit.setLecture(lecture);
+
+            if (lectureUnit instanceof AttachmentUnit) {
+                ((AttachmentUnit) lectureUnit).getAttachment().setAttachmentUnit((AttachmentUnit) lectureUnit);
+            }
+
         }
 
         lecture.setLectureUnits(orderedLectureUnits);

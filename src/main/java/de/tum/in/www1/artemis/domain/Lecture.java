@@ -37,14 +37,13 @@ public class Lecture extends DomainObject {
     @Column(name = "end_date")
     private ZonedDateTime endDate;
 
-    // ToDo Remove and write conversion script to replace with AttachmentModule
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
     private Set<Attachment> attachments = new HashSet<>();
 
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderColumn(name = "lecture_unit_order")
-    @JsonIgnoreProperties("lecture")
+    @JsonIgnoreProperties(value = "lecture")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<LectureUnit> lectureUnits = new ArrayList<>();
 

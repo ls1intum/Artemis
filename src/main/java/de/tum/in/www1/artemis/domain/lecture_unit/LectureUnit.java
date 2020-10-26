@@ -10,6 +10,8 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -25,10 +27,14 @@ import de.tum.in.www1.artemis.domain.Lecture;
 @DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 // Annotation necessary to distinguish between concrete implementations of lecture-content when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = AttachmentUnit.class, name = "attachment"), @JsonSubTypes.Type(value = ExerciseUnit.class, name = "exercise"),
         @JsonSubTypes.Type(value = TextUnit.class, name = "text"), @JsonSubTypes.Type(value = VideoUnit.class, name = "video"), })
 public abstract class LectureUnit extends DomainObject {
+
+    @Transient
+    private boolean visibleToStudents;
 
     @Column(name = "name")
     private String name;
@@ -38,9 +44,11 @@ public abstract class LectureUnit extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "lecture_id")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Lecture lecture;
 
     @ManyToMany(mappedBy = "lectureUnits")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     public Set<LearningGoal> learningGoals = new HashSet<>();
 
     public String getName() {
@@ -85,10 +93,16 @@ public abstract class LectureUnit extends DomainObject {
         learningGoal.getLectureUnits().remove(this);
     }
 
+    @JsonProperty(value = "visibleToStudents")
     public boolean isVisibleToStudents() {
+        return calculateVisibility();
+    }
+
+    public boolean calculateVisibility() {
         if (releaseDate == null) {
             return true;
         }
         return releaseDate.isBefore(ZonedDateTime.now());
     }
+
 }

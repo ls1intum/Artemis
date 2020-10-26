@@ -8,11 +8,13 @@ import { UnitCreationCardComponent } from './unit-creation-card/unit-creation-ca
 import { CreateExerciseUnitComponent } from './create-exercise-unit/create-exercise-unit.component';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { CreateAttachmentUnitComponent } from './create-attachment-unit/create-attachment-unit.component';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { ReactiveFormsModule } from '@angular/forms';
 
 const ENTITY_STATES = [...lectureUnitRoute];
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, RouterModule.forChild(ENTITY_STATES), ArtemisCoursesModule],
+    imports: [ArtemisSharedModule, ReactiveFormsModule, ArtemisSharedComponentModule, RouterModule.forChild(ENTITY_STATES), ArtemisCoursesModule, FormDateTimePickerModule],
     declarations: [LectureUnitManagementComponent, UnitCreationCardComponent, CreateExerciseUnitComponent, CreateAttachmentUnitComponent],
 })
 export class ArtemisLectureUnitManagementModule {}

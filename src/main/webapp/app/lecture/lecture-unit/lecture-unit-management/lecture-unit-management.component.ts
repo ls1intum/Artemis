@@ -122,11 +122,17 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         if (lectureUnit.type === LectureUnitType.EXERCISE) {
             return 'artemisApp.exerciseUnit.delete.question';
         }
+        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
+            return 'artemisApp.attachmentUnit.delete.question';
+        }
     }
 
     getDeleteConfirmationTextKey(lectureUnit: LectureUnit) {
         if (lectureUnit.type === LectureUnitType.EXERCISE) {
             return 'artemisApp.exerciseUnit.delete.typeNameToConfirm';
+        }
+        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
+            return 'artemisApp.attachmentUnit.delete.typeNameToConfirm';
         }
     }
 

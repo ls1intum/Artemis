@@ -10,12 +10,16 @@
                 "exercise": "Aufgabe",
                 "video": "Video",
                 "file": "Datei"
-            }
+            },
+            "releaseDate": "Erscheinungsdatum",
+            "uploadDate": "Uploaddatum",
+            "version": "Datei Version"
         },
         "attachmentUnit": {
             "createAttachmentUnit": {
                 "title": "Dateianhang Einheit"
-            }
+            },
+            "tooltip": "Das ist ein Dateianhang."
         },
         "exerciseUnit": {
             "created": "Aufgabe mit Vorlesung verknüpft",
