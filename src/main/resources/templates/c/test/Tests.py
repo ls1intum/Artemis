@@ -13,7 +13,7 @@ from random import choices, randint
 def main():
     # Makefile location:
     # Artemis expects it to be located in ../assignment
-    makefileLocation: str = "../Solution"
+    makefileLocation: str = "../assignment"
 
     # Create a new instace of the tester:
     tester: Tester = Tester()
