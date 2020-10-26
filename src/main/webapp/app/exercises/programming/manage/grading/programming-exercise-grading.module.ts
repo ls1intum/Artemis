@@ -10,6 +10,10 @@ import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercise
 import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingDirtyWarningComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-dirty-warning.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-table-actions.component';
+import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
+import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/grading/charts/category-issues-chart.component';
+import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
+import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
 
 @NgModule({
     imports: [
@@ -29,6 +33,10 @@ import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/p
         ProgrammingExerciseConfigureGradingActionsComponent,
         ProgrammingExerciseGradingDirtyWarningComponent,
         ProgrammingExerciseGradingTableActionsComponent,
+        TestCasePassedBuildsChartComponent,
+        CategoryIssuesChartComponent,
+        TestCaseDistributionChartComponent,
+        ScaCategoryDistributionChartComponent,
     ],
     exports: [ProgrammingExerciseConfigureGradingComponent, ProgrammingExerciseGradingDirtyWarningComponent],
 })

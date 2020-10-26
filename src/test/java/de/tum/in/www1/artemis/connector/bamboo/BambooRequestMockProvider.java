@@ -46,8 +46,8 @@ public class BambooRequestMockProvider {
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;
 
-    @Value("${artemis.version-control.url}")
-    private URL bitbucketServerUrl;
+    @Value("${artemis.continuous-integration.vcs-application-link-name}")
+    private String vcsApplicationLinkName;
 
     @Autowired
     private ObjectMapper mapper;
@@ -233,7 +233,7 @@ public class BambooRequestMockProvider {
     public ApplicationLinksDTO createApplicationLink() {
         final var applicationLinks = new ApplicationLinksDTO();
         final var applicationLink = new ApplicationLinksDTO.ApplicationLinkDTO();
-        applicationLink.setRpcUrl(bitbucketServerUrl.toString());
+        applicationLink.setName(vcsApplicationLinkName);
         applicationLink.setId("123b1230-e123-3123-9123-9123e2123123");
         applicationLinks.setApplicationLinks(List.of(applicationLink));
         return applicationLinks;

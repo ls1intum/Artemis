@@ -188,6 +188,11 @@ public class Feedback extends DomainObject {
         return this;
     }
 
+    /**
+     * be careful when using this method as it might result in org.hibernate.HibernateException: null index column for collection: de.tum.in.www1.artemis.domain.Result.feedbacks
+     * when saving the result. The result object is the container that owns the feedback and uses CascadeType.ALL and orphanRemoval
+     * @param result the result container object that owns the feedback
+     */
     public void setResult(Result result) {
         this.result = result;
     }

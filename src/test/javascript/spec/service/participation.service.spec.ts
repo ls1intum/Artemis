@@ -5,7 +5,7 @@ import * as moment from 'moment';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { expect } from '../helpers/jasmine.jest.fix';
+import { expect } from '../helpers/jest.fix';
 
 describe('Participation Service', () => {
     let injector: TestBed;

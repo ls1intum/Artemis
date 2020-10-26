@@ -29,4 +29,13 @@ export class Result implements BaseEntity {
     constructor() {
         this.successful = false; // default value
     }
+
+    /**
+     * Checks whether the result is a manual result. A manual result can be from type MANUAL or SEMI_AUTOMATIC
+     *
+     * @return true if the result is a manual result
+     */
+    public static isManualResult(that: Result): boolean {
+        return that.assessmentType === AssessmentType.MANUAL || that.assessmentType === AssessmentType.SEMI_AUTOMATIC;
+    }
 }
