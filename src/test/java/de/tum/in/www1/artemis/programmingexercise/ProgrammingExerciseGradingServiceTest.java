@@ -366,9 +366,6 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
     @Test
     public void shouldGenerateZeroScoreIfThereAreNoTestCasesBeforeDueDate() {
-        // Set programming exercise due date in future.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(10));
-
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
@@ -376,6 +373,26 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.feedbacks(feedbacks);
         result.successful(false);
+        testAndAssertZeroScoreIfThereAreNoTestCasesBeforeDueDate(programmingExercise, "0 of 0 passed", 0);
+    }
+
+    @Test
+    public void shouldGenerateZeroScoreIfThereAreNoTestCasesBeforeDueDateWithSCA() {
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(ModelFactory.createSCAFeedbackWithInactiveCategory(result));
+        feedbacks.add(new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS").detailText("{\"category\": \"BAD_PRACTICE\"}")
+                .type(FeedbackType.AUTOMATIC).positive(false));
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        result.feedbacks(feedbacks);
+        result.successful(false);
+        testAndAssertZeroScoreIfThereAreNoTestCasesBeforeDueDate(programmingExerciseSCAEnabled, "0 of 0 passed, 1 issue", 1);
+    }
+
+    private void testAndAssertZeroScoreIfThereAreNoTestCasesBeforeDueDate(ProgrammingExercise programmingExercise, String expectedResultString, int expectedFeedbackSize) {
+        // Set programming exercise due date in future.
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(10));
         Long scoreBeforeUpdate = result.getScore();
 
         // Set all test cases of the programming exercise to be executed after due date.
@@ -391,11 +408,11 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         Long expectedScore = 0L;
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getResultString()).isEqualTo("0 of 0 passed");
+        assertThat(result.getResultString()).isEqualTo(expectedResultString);
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
         // The feedback must be empty as not test should be executed yet.
-        assertThat(result.getFeedbacks()).hasSize(0);
+        assertThat(result.getFeedbacks()).hasSize(expectedFeedbackSize);
     }
 
     @Test
