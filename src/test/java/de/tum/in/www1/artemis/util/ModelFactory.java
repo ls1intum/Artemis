@@ -115,6 +115,7 @@ public class ModelFactory {
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise.setProjectType(ProjectType.ECLIPSE);
         programmingExercise.setPackageName("de.test");
         final var repoName = (programmingExercise.getProjectKey() + "-" + RepositoryType.TESTS.getName()).toLowerCase();
         String testRepoUrl = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
@@ -548,6 +549,7 @@ public class ModelFactory {
         toBeImported.setExampleSubmissions(null);
         toBeImported.setTestRepositoryUrl(template.getTestRepositoryUrl());
         toBeImported.setProgrammingLanguage(template.getProgrammingLanguage());
+        toBeImported.setProjectType(template.getProjectType());
         toBeImported.setAssessmentDueDate(template.getAssessmentDueDate());
         toBeImported.setAttachments(null);
         toBeImported.setDueDate(template.getDueDate());
