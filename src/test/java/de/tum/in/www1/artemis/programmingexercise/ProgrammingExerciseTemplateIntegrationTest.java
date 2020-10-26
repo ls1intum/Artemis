@@ -149,14 +149,14 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
     @ParameterizedTest
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
-    public void runTemplateTests_exercise(ProgrammingLanguage language, ProjectType projectType) throws Exception {
+    public void test_template_exercise(ProgrammingLanguage language, ProjectType projectType) throws Exception {
         runTests(language, projectType, exerciseRepo, TestResult.FAILED);
     }
 
     @ParameterizedTest
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
-    public void runTemplateTests_solution(ProgrammingLanguage language, ProjectType projectType) throws Exception {
+    public void test_template_solution(ProgrammingLanguage language, ProjectType projectType) throws Exception {
         runTests(language, projectType, solutionRepo, TestResult.SUCCESSFUL);
     }
 
