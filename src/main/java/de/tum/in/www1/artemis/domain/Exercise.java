@@ -541,7 +541,12 @@ public abstract class Exercise extends DomainObject {
             }
             // NOTE: for the dashboard we only use rated results with completion date
             boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-            if (result.getCompletionDate() != null && Boolean.TRUE.equals(result.isRated()) && isAssessmentOver) {
+            boolean isProgrammingExercise = participation.getExercise() instanceof ProgrammingExercise;
+            if (result.getCompletionDate() != null && Boolean.TRUE.equals(result.isRated()) // Check that submission was assessed and submitted in time (rated)
+                    && (!isProgrammingExercise && isAssessmentOver // For non programming exercises we check if the assessment due date has passed (if set)
+                            || isProgrammingExercise // For programming exercises we check that the assessment due date has passed (if set) for manual results
+                                    // otherwise we always show the automatic result
+                                    && ((result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)))) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;
