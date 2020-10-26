@@ -37,6 +37,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     version: string;
     currAccount?: User;
     isRegistrationEnabled = false;
+    breadcrumbs: Breadcrumb[];
 
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
@@ -84,6 +85,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.examParticipationService.currentlyLoadedStudentExam.subscribe((studentExam) => {
             this.exam = studentExam.exam;
         });
+
+        this.buildBreadcrumbs(this.router.url);
+        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => this.buildBreadcrumbs(event.url));
     }
 
     ngOnDestroy(): void {
@@ -92,6 +96,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
         if (this.routerEventSubscription) {
             this.routerEventSubscription.unsubscribe();
+        }
+    }
+
+    buildBreadcrumbs(fullURI: string) {
+        this.breadcrumbs = [];
+        let path = '';
+        const parts = fullURI.split('/');
+        for (let i = 0; i < parts.length; i++) {
+            const crumb = new Breadcrumb();
+            crumb.label = parts[i];
+            path += parts[i] + '/';
+            crumb.uri = path;
+            this.breadcrumbs[i] = crumb;
         }
     }
 
@@ -186,4 +203,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
         return false;
     }
+}
+
+class Breadcrumb {
+    label: string;
+    uri: string;
 }
