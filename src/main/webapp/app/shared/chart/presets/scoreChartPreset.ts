@@ -27,11 +27,13 @@ export class ScoreChartPreset implements ChartPreset {
                             text: 'Points',
                             fillStyle: '#28a745',
                             strokeStyle: '#28a745',
+                            lineWidth: 1,
                         },
                         {
                             text: 'Deductions',
                             fillStyle: this.redTransparentPattern,
                             strokeStyle: '#dc3545',
+                            lineWidth: 1,
                         },
                     ] as ChartLegendLabelItem[],
             },
