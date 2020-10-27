@@ -465,7 +465,7 @@ public class ProgrammingExerciseGradingService {
             result.setResultString(totalScore, maxScore);
         }
     }
-    
+
     /**
      * Returns the maximum amount of regular points for the given exercise or a replacement point amount if the exercise has zero points (neither regular nor bonus points).
      * <p>
