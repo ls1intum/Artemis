@@ -505,9 +505,9 @@ public class DatabaseUtilService {
             result2 = resultRepo.save(result2);
             result3 = resultRepo.save(result3);
 
-            modelingSubmission1.setResults(result1);
-            modelingSubmission2.setResults(result2);
-            textSubmission.setResults(result3);
+            modelingSubmission1.addResult(result1);
+            modelingSubmission2.addResult(result2);
+            textSubmission.addResult(result3);
 
             participation1 = studentParticipationRepo.save(participation1);
             participation2 = studentParticipationRepo.save(participation2);
@@ -735,15 +735,15 @@ public class DatabaseUtilService {
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
 
         modelingSubmission.setParticipation(participationModeling);
-        modelingSubmission.setResults(resultModeling);
+        modelingSubmission.addResult(resultModeling);
         textSubmission.setParticipation(participationText);
-        textSubmission.setResults(resultText);
+        textSubmission.addResult(resultText);
         fileUploadSubmission.setParticipation(participationFileUpload);
-        fileUploadSubmission.setResults(resultFileUpload);
+        fileUploadSubmission.addResult(resultFileUpload);
         quizSubmission.setParticipation(participationQuiz);
-        quizSubmission.setResults(resultQuiz);
+        quizSubmission.addResult(resultQuiz);
         programmingSubmission.setParticipation(participationProgramming);
-        programmingSubmission.setResults(resultProgramming);
+        programmingSubmission.addResult(resultProgramming);
 
         // Save submissions
         modelingSubmission = submissionRepository.save(modelingSubmission);

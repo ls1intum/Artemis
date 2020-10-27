@@ -94,20 +94,11 @@ public abstract class Submission extends DomainObject {
         return Duration.between(initilizationDate, submissionDate).toMinutes();
     }
 
-    /**
-     * Method used before changing relationship, first set to return the first in the ArrayList
-     * @return First Element in the ArrayList
-     */
+
     public List<Result> getResults() {
        return results;
     }
 
-
-
-    /**
-     * Method use before changing relationship between result and submission, add one result to the List of the result
-     * @param results
-     */
     public void setResults(List<Result> results) {
         this.results = results;
     }
@@ -121,6 +112,19 @@ public abstract class Submission extends DomainObject {
             existed.ifPresent(value -> results.remove(value));
             results.add(result);
         }
+    }
+
+    /**
+     * get the latest result from the result list
+     * @return  the latest result from the result list
+     */
+    public Result getLatestResult() {
+        Result result = null;
+        if (results != null && !results.isEmpty()) {
+            result = results.get(results.size() - 1);
+        }
+
+        return result;
     }
 
     public Participation getParticipation() {

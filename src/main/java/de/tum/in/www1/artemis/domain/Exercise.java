@@ -536,13 +536,10 @@ public abstract class Exercise extends DomainObject {
         }
 
         Result result = null;
-        List<Result> results;
-        List<Result> resultsOfLatestSubmission;
+
         for (var submission : participation.getSubmissions()) {
-           results = submission.getResults();
-            if (results != null && !results.isEmpty()) {
-                result = results.get(results.size() - 1);
-            }
+
+            result = submission.getLatestResult();
             if (result == null) {
                 continue;
             }
