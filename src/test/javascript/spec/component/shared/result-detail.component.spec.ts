@@ -288,7 +288,7 @@ describe('ResultDetailComponent', () => {
         const { expectedItems } = generateFeedbacksAndExpectedItems();
 
         //                       test case 1       sca              sca              manual 1         manual 2        manual 3           test case 2
-        const expectedClasses = ['alert-success', 'alert-warning', 'alert-warning', 'alert-success', 'alert-danger', 'alert-secondary', 'alert-danger'];
+        const expectedClasses = ['alert-success', 'alert-warning', 'alert-warning', 'alert-success', 'alert-danger', 'alert-warning', 'alert-danger'];
 
         expectedItems.forEach((item, index) => expect(comp.getClassNameForFeedbackItem(item)).to.equal(expectedClasses[index]));
     });
