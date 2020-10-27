@@ -74,7 +74,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
     automaticFeedback: Feedback[] = [];
-    totalScore = 0;
+
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
         private router: Router,
@@ -157,7 +157,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     save(): void {
         this.saveBusy = true;
-        this.setFeedbacksForManualResult();
         this.avoidCircularStructure();
         this.manualResultService.save(this.participation.id!, this.manualResult!).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
@@ -170,7 +169,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     submit(): void {
         this.submitBusy = true;
-        this.setFeedbacksForManualResult();
         this.avoidCircularStructure();
         this.manualResultService.save(this.participation.id!, this.manualResult!, true).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
@@ -274,7 +272,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     /**
      * Updates the referenced feedbacks, which are the inline feedbacks added directly in the code.
-     * @param feedbacks Inline feedbacks from th ecode
+     * @param feedbacks Inline feedbacks directly in the code
      */
     onUpdateFeedback(feedbacks: Feedback[]) {
         // Filter out other feedback than manual feedback
@@ -403,6 +401,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
+    private setAttributesForManualResult(totalScore: number) {
+        this.setFeedbacksForManualResult();
+        this.manualResult!.hasFeedback = this.manualResult!.feedbacks!.length > 0;
+        this.manualResult!.resultString = `${this.automaticResult!.resultString}, ${totalScore} of ${this.exercise.maxScore} points`;
+        this.manualResult!.score = Math.round((totalScore / this.exercise.maxScore!) * 100);
+        // This is done to update the result string in result.component.ts
+        this.manualResult = cloneDeep(this.manualResult);
+    }
+
     private avoidCircularStructure() {
         if (this.manualResult?.participation?.results) {
             this.manualResult.participation.results = [];
@@ -442,6 +449,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (totalScore > maxPoints) {
             totalScore = maxPoints;
         }
-        this.totalScore = +totalScore.toFixed(2);
+
+        totalScore = +totalScore.toFixed(2);
+
+        // Set attributes of manual result
+        this.setAttributesForManualResult(totalScore);
     }
 }

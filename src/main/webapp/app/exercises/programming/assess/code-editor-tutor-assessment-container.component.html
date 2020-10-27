@@ -54,34 +54,18 @@
                 target="_blank"
                 rel="noopener noreferrer"
                 jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"
-            >Go to repository</a
-            >
+            >Go to repository</a>
             <jhi-result
                 *ngIf="participationForManualResult"
                 [result]="manualResult"
                 [showUngradedResults]="true"
-                [showGradedBadge]="true"
+                [showGradedBadge]="false"
                 [showTestNames]="true"
                 [isBuilding]="false"
                 [participation]="participationForManualResult"
                 [short]="true"
                 class="mr-1"
             ></jhi-result>
-            <span jhiTranslate="artemisApp.result.manualResult">Manual Result</span>
-           <!-- <span class="badge badge-primary ml-2" [style.fontSize]="'inherit'">
-                <jhi-score-display [score]="totalScore" [maxScore]="exercise.maxScore"></jhi-score-display>
-            </span>
-            <span jhiTranslate="artemisApp.result.currentScore">Current Score</span> -->
-            <!-- <jhi-result
-                *ngIf="participation"
-                [result]="automaticResult"
-                [showUngradedResults]="true"
-                [showGradedBadge]="true"
-                [showTestNames]="true"
-                [isBuilding]="false"
-                [participation]="participation"
-                [short]="true"
-            ></jhi-result> -->
             <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" [exerciseHints]="exercise.exerciseHints" class="mr-2"></jhi-exercise-hint-student>
         </div>
         <jhi-assessment-instructions
