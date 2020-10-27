@@ -103,14 +103,14 @@
         <module name="LocalVariableName"/>
         <module name="MemberName"/>
         <module name="MethodName"/>
-        <module name="PackageName"/>
+        <!-- <module name="PackageName"/> -->
         <module name="ParameterName"/>
         <module name="StaticVariableName"/>
         <module name="TypeName"/>
 
         <!-- Checks for imports                              -->
         <!-- See https://checkstyle.org/config_imports.html -->
-        <module name="AvoidStarImport"/>
+        <!-- <module name="AvoidStarImport"/> -->
         <module name="IllegalImport"/> <!-- defaults to sun.* packages -->
         <module name="RedundantImport"/>
         <module name="UnusedImports">
