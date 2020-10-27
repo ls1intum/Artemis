@@ -144,7 +144,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             return forbidden();
         }
 
-        if (newResult.isRated() == false) {
+        if (Boolean.FALSE.equals(newResult.isRated())) {
             throw new BadRequestAlertException("Result is not rated", ENTITY_NAME, "resultNotRated");
         }
         if (newResult.getResultString() == null) {
