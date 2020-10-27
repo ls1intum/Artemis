@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MomentModule } from 'ngx-moment';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
