@@ -85,6 +85,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results result left join fetch result.feedbacks where participation.exercise.id = :#{#exerciseId} and (result.id = (select max(prs.id) from participation.results prs where prs.assessmentType = 'AUTOMATIC'))")
     List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacks(@Param("exerciseId") Long exerciseId);
 
+    // Manual result can either be from type MANUAL or SEMI_AUTOMATIC
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results result left join fetch result.feedbacks where participation.exercise.id = :#{#exerciseId} and (result.assessmentType = 'MANUAL' or result.assessmentType = 'SEMI_AUTOMATIC')")
+    List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacks(@Param("exerciseId") Long exerciseId);
+
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId} and participation.student.id = :#{#studentId}")
     List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerSubmissions(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 

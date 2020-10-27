@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing TextAssessment.
  */
 @RestController
+// TODO: remove 'text-assessments' here
 @RequestMapping("/api/text-assessments")
 public class TextAssessmentResource extends AssessmentResource {
 
@@ -311,15 +312,9 @@ public class TextAssessmentResource extends AssessmentResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
             return forbidden();
         }
-        Submission submission = textAssessmentService.getSubmissionOfExampleSubmissionWithResult(submissionId);
-
-        // If the user is not an instructor, and this is not an example submission used for tutorial, do not provide the results
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
-        if (!submission.isExampleSubmission() && !isAtLeastInstructor) {
-            return forbidden();
-        }
         // TODO: Example submission should have only one result, take care of the cases where you want to make example reassessment
-        return ResponseEntity.ok(submission.getResults().get(0));
+        Submission submission = textAssessmentService.findExampleSubmissionWithResult(submissionId);
+        return ResponseEntity.ok(submission.getLatestResult());
     }
 
     /**

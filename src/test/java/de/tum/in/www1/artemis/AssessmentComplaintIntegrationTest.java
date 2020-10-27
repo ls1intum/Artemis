@@ -556,17 +556,17 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final TextExercise examExercise = database.addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise();
         final long examId = examExercise.getExerciseGroup().getExam().getId();
         final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
-        database.addTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
-        final var examExerciseComplaint = new Complaint().result(textSubmission.getResults()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        final var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
 
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
         request.post(url, examExerciseComplaint, HttpStatus.CREATED);
 
-        Optional<Complaint> storedComplaint = complaintRepo.findByResult_Id(textSubmission.getResults().getId());
+        Optional<Complaint> storedComplaint = complaintRepo.findByResult_Id(textSubmission.getLatestResult().getId());
         assertThat(storedComplaint).as("complaint is saved").isPresent();
         assertThat(storedComplaint.get().getComplaintText()).as("complaint text got correctly saved").isEqualTo(examExerciseComplaint.getComplaintText());
         assertThat(storedComplaint.get().isAccepted()).as("accepted flag of complaint is not set").isNull();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(textSubmission.getResults().getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(textSubmission.getLatestResult().getId()).get();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
         Result resultBeforeComplaint = mapper.readValue(storedComplaint.get().getResultBeforeComplaint(), Result.class);
         // set date to UTC for comparison as the date saved in resultBeforeComplaint string is in UTC
@@ -580,8 +580,8 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final TextExercise examExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
         final long examId = examExercise.getExerciseGroup().getExam().getId();
         final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
-        database.addTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
-        final var examExerciseComplaint = new Complaint().result(textSubmission.getResults()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        final var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
         request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);
 

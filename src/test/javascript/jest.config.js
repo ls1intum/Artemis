@@ -2,7 +2,7 @@ const esModules = ['ngx-treeview', 'lodash-es'].join('|');
 module.exports = {
     globals: {
         'ts-jest': {
-            tsConfig: '<rootDir>/tsconfig.spec.json',
+            tsconfig: '<rootDir>/tsconfig.spec.json',
             stringifyContentPathRegex: '\\.html$',
             astTransformers: {
                 before: [require.resolve('./InlineHtmlStripStylesTransformer')],
@@ -14,11 +14,11 @@ module.exports = {
     },
     coverageThreshold: {
         global: {
-            branches: 36,
-            functions: 44,
-            lines: 62,
+            branches: 38,
+            functions: 45,
+            lines: 63,
             // TODO: in the future, the following value should be increase to 80%
-            statements: 63,
+            statements: 64,
         },
     },
     preset: 'jest-preset-angular',

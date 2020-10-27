@@ -118,7 +118,7 @@ public class TextPlagiarismDetectionService {
         final var jplagResultFolderName = "./tmp/jplag-result";
         final var submissionsFolderName = "./tmp/submissions";
         final var zipFilePath = Paths.get(String.format("./tmp/%s-%s-%s-JPlag-Output.zip", textExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(),
-                textExercise.getShortName(), System.currentTimeMillis()));
+                textExercise.getTitle(), System.currentTimeMillis()));
 
         final var submissionFolderFile = new File(submissionsFolderName);
         submissionFolderFile.mkdirs();

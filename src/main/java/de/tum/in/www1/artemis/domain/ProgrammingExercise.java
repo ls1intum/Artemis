@@ -5,7 +5,6 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -300,12 +299,9 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         return submissions.stream().filter(submission -> {
-            List<Result> results = submission.getResults();
-            if (results != null && !results.isEmpty()) {
-                Result latestResult = results.get(results.size() - 1);
-                return (latestResult.isRated() && !latestResult.getAssessmentType().equals(AssessmentType.MANUAL))
-                        || latestResult.getAssessmentType().equals(AssessmentType.MANUAL)
-                                && (this.getAssessmentDueDate() == null || this.getAssessmentDueDate().isBefore(ZonedDateTime.now()));
+            if (submission.getLatestResult() != null) {
+                return (submission.getLatestResult().isRated() && !submission.getLatestResult().isManualResult())
+                        || (submission.getLatestResult().isManualResult() && (this.getAssessmentDueDate() == null || this.getAssessmentDueDate().isBefore(ZonedDateTime.now())));
             }
             return this.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
                     || submission.getSubmissionDate().isBefore(this.getDueDate());
@@ -504,8 +500,7 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-        return participation.getResults().stream()
-                .filter(result -> (result.getAssessmentType().equals(AssessmentType.MANUAL) && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
+        return participation.getResults().stream().filter(result -> (result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
                 .collect(Collectors.toSet());
     }
 
@@ -519,28 +514,21 @@ public class ProgrammingExercise extends Exercise {
             return null;
         }
 
-        Result result = null;
-        List<Result> results;
-        List<Result> latestResults;
         for (var submission : participation.getSubmissions()) {
-            results = submission.getResults();
-            if (results != null && !results.isEmpty()) {
-                result = results.get(results.size() - 1);
-            }
-            if (result == null) {
+            var result = submission.getLatestResult();
+            if (result == null || result.getCompletionDate() == null) {
                 continue;
             }
             // NOTE: for the dashboard we only use rated results with completion date or automatic result
             boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-            if ((result.getAssessmentType().equals(AssessmentType.MANUAL) && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
+            if ((result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;
                 }
                 // take newer results and thus disregard older ones
                 else {
-                    latestResults = latestSubmission.getResults();
-                    if (latestResults.get(latestResults.size() - 1).getCompletionDate().isBefore(result.getCompletionDate())) {
+                    if (latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
                         latestSubmission = submission;
                     }
                 }

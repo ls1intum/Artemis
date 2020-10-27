@@ -279,7 +279,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         var assessedSubmission = ModelFactory.generateProgrammingSubmission(true);
         assessedSubmission = database.addProgrammingSubmission(exercise, assessedSubmission, "student2");
         final var tutor = database.getUserByLogin("tutor1");
-        database.addResultToSubmission(assessedSubmission, AssessmentType.MANUAL, tutor);
+        database.addResultToSubmission(assessedSubmission, AssessmentType.SEMI_AUTOMATIC, tutor);
 
         final var paramMap = new LinkedMultiValueMap<String, String>();
         paramMap.add("assessedByTutor", "true");
@@ -321,7 +321,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         var submission = ModelFactory.generateProgrammingSubmission(true);
         submission = database.addProgrammingSubmission(exercise, submission, "student1");
         final var tutor = database.getUserByLogin("tutor1");
-        database.addResultToSubmission(submission, AssessmentType.MANUAL, tutor);
+        database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, tutor);
 
         request.get("/api/exercises" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.NOT_FOUND, String.class);
     }

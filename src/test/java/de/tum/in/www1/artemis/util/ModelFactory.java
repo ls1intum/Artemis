@@ -448,15 +448,18 @@ public class ModelFactory {
         Feedback positiveFeedback = new Feedback();
         positiveFeedback.setCredits(2D);
         positiveFeedback.setReference("theory");
+        positiveFeedback.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(positiveFeedback);
         Feedback positiveFeedback2 = new Feedback();
         positiveFeedback2.setCredits(1D);
         positiveFeedback2.setReference("theory2");
+        positiveFeedback2.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(positiveFeedback2);
         Feedback negativeFeedback = new Feedback();
         negativeFeedback.setCredits(-1D);
         negativeFeedback.setDetailText("Bad solution");
         negativeFeedback.setReference("practice");
+        negativeFeedback.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(negativeFeedback);
         return feedbacks;
     }
