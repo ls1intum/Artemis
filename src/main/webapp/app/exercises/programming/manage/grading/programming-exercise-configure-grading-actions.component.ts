@@ -12,7 +12,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
         <jhi-programming-exercise-re-evaluate-button [exercise]="exercise" [disabled]="isSaving"></jhi-programming-exercise-re-evaluate-button>
         <jhi-programming-exercise-trigger-all-button
             [exercise]="exercise"
-            [disabled]="isSaving || !hasUpdatedGradingConfig"
+            [disabled]="isSaving"
             (onBuildTriggered)="onBuildTriggered.emit()"
         ></jhi-programming-exercise-trigger-all-button>
     `,
