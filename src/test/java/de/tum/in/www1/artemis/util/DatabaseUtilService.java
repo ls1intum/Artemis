@@ -262,6 +262,15 @@ public class DatabaseUtilService {
     @Autowired
     private DatabaseCleanupService databaseCleanupService;
 
+    @Value("${info.guided-tour.course-group-students:#{null}}")
+    private Optional<String> tutorialGroupStudents;
+
+    @Value("${info.guided-tour.course-group-tutors:#{null}}")
+    private Optional<String> tutorialGroupTutors;
+
+    @Value("${info.guided-tour.course-group-instructors:#{null}}")
+    private Optional<String> tutorialGroupInstructors;
+
     public void resetDatabase() {
         databaseCleanupService.clearDatabase();
     }
@@ -1523,15 +1532,6 @@ public class DatabaseUtilService {
         assertThat(courseRepo.findById(course.getId())).as("empty course is initialized").isPresent();
         return course;
     }
-
-    @Value("${info.guided-tour.course-group-students:#{null}}")
-    private Optional<String> tutorialGroupStudents;
-
-    @Value("${info.guided-tour.course-group-tutors:#{null}}")
-    private Optional<String> tutorialGroupTutors;
-
-    @Value("${info.guided-tour.course-group-instructors:#{null}}")
-    private Optional<String> tutorialGroupInstructors;
 
     /**
      * @return A tutorial course with the names specified in application-dev or application-prod

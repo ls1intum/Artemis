@@ -71,9 +71,6 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
     @Autowired
     private GitlabRequestMockProvider gitlabRequestMockProvider;
 
-    @Value("${artemis.user-management.use-external}")
-    private Boolean useExternalUserManagement;
-
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
 
@@ -169,7 +166,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
-    public void createUser_withInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
+    public void createUserWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
         gitlabRequestMockProvider.mockGetUserID();
         database.addTutorialCourse();
@@ -194,7 +191,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
-    public void createTutor_withInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
+    public void createTutorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
         gitlabRequestMockProvider.mockGetUserID();
         database.addTutorialCourse();
@@ -219,7 +216,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
-    public void createInstructor_withInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
+    public void createInstructorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
         gitlabRequestMockProvider.mockGetUserID();
         database.addTutorialCourse();
