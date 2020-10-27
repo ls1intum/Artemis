@@ -536,17 +536,17 @@ public abstract class Exercise extends DomainObject {
         }
         for (var submission : participation.getSubmissions()) {
             var result = submission.getResult();
-            if (result == null) {
+            // If not the result does not exist or is not assessed yet, we can skip it
+            if (result == null || result.getCompletionDate() == null) {
                 continue;
             }
             // NOTE: for the dashboard we only use rated results with completion date
             boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
             boolean isProgrammingExercise = participation.getExercise() instanceof ProgrammingExercise;
-            if (result.getCompletionDate() != null && Boolean.TRUE.equals(result.isRated()) // Check that submission was assessed and submitted in time (rated)
-                    && (!isProgrammingExercise && isAssessmentOver // For non programming exercises we check if the assessment due date has passed (if set)
-                            || isProgrammingExercise // For programming exercises we check that the assessment due date has passed (if set) for manual results
-                                    // otherwise we always show the automatic result
-                                    && ((result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)))) {
+            // Check that submission was submitted in time (rated). For non programming exercises we check if the assessment due date has passed (if set)
+            if (Boolean.TRUE.equals(result.isRated()) && (!isProgrammingExercise && isAssessmentOver
+                    // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
+                    || isProgrammingExercise && ((result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)))) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;
