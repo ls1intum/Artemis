@@ -121,4 +121,26 @@ public class GitlabRequestMockProvider {
         final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false);
         doReturn(hook).when(projectApi).addHook(any(), anyString(), any(ProjectHook.class), anyBoolean(), anyString());
     }
+
+    public void mockFailOnGetUserById(String login) throws GitLabApiException {
+        UserApi userApi = mock(UserApi.class);
+        doReturn(userApi).when(gitLabApi).getUserApi();
+        doReturn(null).when(userApi).getUser(eq(login));
+    }
+
+    /**
+     * Mocks that given user is not found in GitLab and is hence created.
+     * @param login Login of the user who's creation is mocked
+     * @throws GitLabApiException Never
+     */
+    public void mockCreationOfUser(String login) throws GitLabApiException {
+        UserApi userApi = mock(UserApi.class);
+        doReturn(userApi).when(gitLabApi).getUserApi();
+        doReturn(null).when(userApi).getUser(eq(login));
+        doAnswer(invocation -> {
+            User user = (User) invocation.getArguments()[0];
+            user.setId(1234);
+            return user;
+        }).when(userApi).createUser(any(), any(), anyBoolean());
+    }
 }

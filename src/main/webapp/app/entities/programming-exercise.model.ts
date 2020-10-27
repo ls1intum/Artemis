@@ -13,6 +13,7 @@ export enum ProgrammingLanguage {
     KOTLIN = 'KOTLIN',
     VHDL = 'VHDL',
     ASSEMBLER = 'ASSEMBLER',
+    SWIFT = 'SWIFT',
 }
 
 export class ProgrammingExercise extends Exercise {

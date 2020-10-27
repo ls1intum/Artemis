@@ -42,7 +42,7 @@ public class Team extends AbstractAuditingEntity implements Participant {
      * occur when trying to persist the entity for the first time after changes have been made to the related entities of the ManyToMany relationship (users in this case).
      */
     @ManyToMany(fetch = FetchType.EAGER)
-    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JoinTable(name = "team_student", joinColumns = @JoinColumn(name = "team_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id"))
     private Set<User> students = new HashSet<>();

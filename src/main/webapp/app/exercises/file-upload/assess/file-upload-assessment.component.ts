@@ -420,6 +420,15 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             this.assessmentsAreValid = false;
         }
         this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
+        // Cap totalScore to maxPoints
+        const maxPoints = this.exercise.maxScore! + this.exercise.bonusPoints! ?? 0.0;
+        if (this.totalScore > maxPoints) {
+            this.totalScore = maxPoints;
+        }
+        // Do not allow negative score
+        if (this.totalScore < 0) {
+            this.totalScore = 0;
+        }
     }
 
     downloadFile(filePath: string) {

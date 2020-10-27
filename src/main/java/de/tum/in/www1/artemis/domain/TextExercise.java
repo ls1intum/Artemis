@@ -5,6 +5,7 @@ import java.util.List;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 
 /**
@@ -12,6 +13,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
  */
 @Entity
 @DiscriminatorValue(value = "T")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextExercise extends Exercise {
 
     @Column(name = "sample_solution")

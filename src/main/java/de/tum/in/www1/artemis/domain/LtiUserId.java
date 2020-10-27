@@ -5,12 +5,15 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * A LtiUserId.
  */
 @Entity
 @Table(name = "lti_user_id")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LtiUserId extends DomainObject {
 
     @Column(name = "lti_user_id")

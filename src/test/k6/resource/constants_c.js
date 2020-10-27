@@ -1,15 +1,26 @@
-export const programmingExerciseProblemStatementC =
-    '#### General Tasks\n' +
-    '1. [task][Compile](TestCompile)\n' +
+export const programmingExerciseProblemStatementC = '### Tests\n' + '\n';
+'#### Allgemein\n' +
+    '1. [task][Kompilieren](TestCompile)\n' +
+    '2. [task][Rot0 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutput_0)\n' +
+    '3. [task][Rot1 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutput_1)\n' +
+    '4. [task][Rot26 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutput_26)\n' +
+    '5. [task][Rot1563 mit "eIxK4zuaarER" als Eingabe](TestOutput_1563)\n' +
+    '6. [task][Zufällige Eingaben](TestOutputRandom_0, TestOutputRandom_1, TestOutputRandom_2, TestOutputRandom_3, TestOutputRandom_4, TestOutputRandom_5, TestOutputRandom_6, TestOutputRandom_7, TestOutputRandom_8, TestOutputRandom_9)\n' +
     '\n' +
     '#### Adress Sanitizer\n' +
-    '1. [task][Compile Address Sanitizer](TestCompileASan)\n' +
+    '1. [task][Adress Sanitizer Kompilieren](TestCompileASan)\n' +
+    '2. [task][Adress Sanitizer Rot27 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutputASan)\n' +
     '\n' +
     '#### Undefined Behavior Sanitizer\n' +
-    '1. [task][Compile Undefined Behavior Sanitizer](TestCompileUBSan)\n' +
+    '1. [task][Undefined Behavior Sanitizer Kompilieren](TestCompileUBSan)\n' +
+    '2. [task][Undefined Behavior Sanitizer Rot27 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutputUBSan)\n' +
     '\n' +
     '#### Leak Sanitizer\n' +
-    '1. [task][Compile Leak Sanitizer](TestCompileLeak)';
+    '1. [task][Leak Sanitizer Kompilieren](TestCompileLeak)\n' +
+    '2. [task][Leak Sanitizer Rot27 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutputLSan)\n' +
+    '\n' +
+    '#### GCC Static Analysis\n' +
+    '1. [task][GCC Static analysis](TestGccStaticAnalysis)';
 
 export const buildErrorContentC = {
     newFiles: [],
