@@ -1,19 +1,24 @@
 package ${packageName}.testutils;
 
-import me.xdrop.fuzzywuzzy.FuzzySearch;
-import org.json.JSONArray;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
@@ -48,7 +53,7 @@ public class ClassNameScanner {
     private final Map<String, List<String>> observedClasses;
     private final ScanResult scanResult;
 
-    public ClassNameScanner(String expectedClassName, String expectedPackageName, JSONArray structureOracleJSON) {
+    public ClassNameScanner(String expectedClassName, String expectedPackageName) {
         this.expectedClassName = expectedClassName;
         this.expectedPackageName = expectedPackageName;
         this.observedClasses = retrieveObservedClasses();
@@ -219,25 +224,25 @@ public class ClassNameScanner {
      * each type it finds e.g. filenames ending in .java to the passed JSON object.
      * @param assignmentFolderName: The root folder where the method starts walking the project structure.
      * @param node: The current node the method is visiting.
-     * @param foundTypes: The JSON object where the type names and packages get appended.
+     * @param types: The JSON object where the type names and packages get appended.
      */
     private void walkProjectFileStructure(String assignmentFolderName, File node, Map<String, List<String>> foundTypes) {
         String fileName = node.getName();
 
-        if(fileName.contains(".java") || fileName.contains(".kt")) {
+        if(fileName.contains(".java")) {
             String[] fileNameComponents = fileName.split("\\.");
 
             String className = fileNameComponents[fileNameComponents.length - 2];
-            int until = node.getPath().indexOf(".java");
-            if (until == -1) {
-                until = node.getPath().indexOf(".kt");
-            }
-            String packageName = node.getPath().substring(0, until);
+            String packageName = node.getPath().substring(0, node.getPath().indexOf(".java"));
             packageName = packageName.substring(
                 packageName.indexOf(assignmentFolderName) + assignmentFolderName.length() + 1,
                 packageName.lastIndexOf(File.separator + className));
             packageName = packageName.replace(File.separatorChar, '.');
 
+            if (packageName.charAt(0) == '.') {
+                packageName = packageName.substring(1);
+            }
+            
             if(foundTypes.containsKey(className)) {
                 foundTypes.get(className).add(packageName);
             }
