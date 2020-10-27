@@ -453,8 +453,9 @@ public class ProgrammingExerciseGradingService {
     private static double getMaxScoreRespectingZeroPointExercises(ProgrammingExercise programmingExercise) {
         boolean hasNormalPoints = Objects.requireNonNullElse(programmingExercise.getMaxScore(), 0.0) > 0.0;
         boolean hasBonusPoints = Objects.requireNonNullElse(programmingExercise.getMaxScore(), 0.0) > 0.0;
-        if (hasNormalPoints || hasBonusPoints)
+        if (hasNormalPoints || hasBonusPoints) {
             return programmingExercise.getMaxScore();
+        }
         return PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
     }
 
