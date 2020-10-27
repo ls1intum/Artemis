@@ -1,10 +1,24 @@
 package ${packageName};
 
-import java.text.*;
-import java.util.*;
 import java.security.SecureRandom;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
-public class Client {
+public final class Client {
+
+    private static final int ITERATIONS = 10;
+
+    private static final int RANDOM_FLOOR = 5;
+
+    private static final int RANDOM_CEILING = 15;
+
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    private Client() {
+    }
 
     // TODO: Implement BubbleSort
     // TODO: Implement MergeSort
@@ -18,14 +32,16 @@ public class Client {
     /**
      * Main method.
      * Add code to demonstrate your implementation here.
+     *
+     * @param args command line arguments
      */
-    public static void main(String[] args) throws ParseException {
+    public static void main(final String[] args) throws ParseException {
 
         // TODO: Init Context and Policy
 
 
-        // Run 10 times to simulate different sorting strategies for different Array sizes
-        for (int i = 0; i < 10; i++) {
+        // Run multiple times to simulate different sorting strategies for different Array sizes
+        for (int i = 0; i < ITERATIONS; i++) {
             List<Date> dates = createRandomDatesList();
 
             // TODO: Configure context
@@ -41,15 +57,19 @@ public class Client {
     }
 
     /**
-     * Generates a List of random Date objects with random List size between 5 and 15.
+     * Generates a List of random Date objects with random List size between
+     * {@link #ANDOM_FLOOR} and {@link #RANDOM_CEILING}.
+     *
+     * @return a List of random Date objects
+     * @throws ParserException if date string cannot be parsed
      */
     private static List<Date> createRandomDatesList() throws ParseException {
-        int listLength = randomIntegerWithin(5, 15);
+        int listLength = randomIntegerWithin(RANDOM_FLOOR, RANDOM_CEILING);
         List<Date> list = new ArrayList<>();
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         Date lowestDate = dateFormat.parse("08.11.2016");
-        Date highestDate = dateFormat.parse("15.04.2019");
+        Date highestDate = dateFormat.parse("26.10.2020");
 
         for (int i = 0; i < listLength; i++) {
             Date randomDate = randomDateWithin(lowestDate, highestDate);
@@ -58,10 +78,12 @@ public class Client {
         return list;
     }
 
-    private static SecureRandom random = new SecureRandom();
-
     /**
-     * Creates a random Date within given Range
+     * Creates a random Date within the given range.
+     *
+     * @param low the lower bound
+     * @param high the upper bound
+     * @return random Date within the given range
      */
     private static Date randomDateWithin(Date low, Date high) {
         long randomLong = randomLongWithin(low.getTime(), high.getTime());
@@ -69,21 +91,31 @@ public class Client {
     }
 
     /**
-     * Creates a random Long within given Range
+     * Creates a random long within the given range.
+     *
+     * @param low the lower bound
+     * @param high the upper bound
+     * @return random long within the given range
      */
     private static long randomLongWithin(long low, long high) {
-        return low + random.nextLong() * (high - low);
+        return low + RANDOM.nextLong() * (high - low);
     }
 
     /**
-     * Creates a random Integer within given Range
+     * Creates a random int within the given range.
+     *
+     * @param low the lower bound
+     * @param high the upper bound
+     * @return random int within the given range
      */
     private static int randomIntegerWithin(int low, int high) {
-        return low + random.nextInt() * (high - low);
+        return low + RANDOM.nextInt() * (high - low);
     }
 
     /**
-     * Prints out given Array of Date objects
+     * Prints out the given Array of Date objects.
+     *
+     * @param list the dates to print
      */
     private static void printDateList(List<Date> list) {
         System.out.println(list.toString());
