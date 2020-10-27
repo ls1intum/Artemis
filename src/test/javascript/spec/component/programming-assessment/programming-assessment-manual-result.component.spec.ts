@@ -62,7 +62,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let accountService: AccountService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let programmingSubmissionService: ProgrammingSubmissionService;
-    let manualResultService: ProgrammingAssessmentManualResultService;
 
     let updateAfterComplaintStub: SinonStub;
     let getStudentParticipationWithResultsStub: SinonStub;
@@ -130,7 +129,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 programmingAssessmentManualResultService = debugElement.injector.get(ProgrammingAssessmentManualResultService);
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
                 programmingSubmissionService = debugElement.injector.get(ProgrammingSubmissionService);
-                manualResultService = debugElement.injector.get(ProgrammingAssessmentManualResultService);
                 complaintService = debugElement.injector.get(ComplaintService);
                 accountService = debugElement.injector.get(AccountService);
 

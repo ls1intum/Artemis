@@ -515,7 +515,7 @@ public class ProgrammingExercise extends Exercise {
         }
         for (var submission : participation.getSubmissions()) {
             var result = submission.getResult();
-            if (result == null) {
+            if (result == null || result.getCompletionDate() == null) {
                 continue;
             }
             // NOTE: for the dashboard we only use rated results with completion date or automatic result
