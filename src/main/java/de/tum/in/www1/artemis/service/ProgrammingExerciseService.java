@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -215,10 +216,10 @@ public class ProgrammingExerciseService {
             throws IOException, GitAPIException, InterruptedException {
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
-        String templatePath = getTemplatePath(programmingLanguage, programmingExercise.getProjectType());
-        String exercisePath = templatePath + "/exercise/**/*.*";
-        String solutionPath = templatePath + "/solution/**/*.*";
-        String testPath = templatePath + "/test/**/*.*";
+        String programmingLanguageTemplate = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage());
+        String exercisePath = programmingLanguageTemplate + "/exercise/**/*.*";
+        String solutionPath = programmingLanguageTemplate + "/solution/**/*.*";
+        String testPath = programmingLanguageTemplate + "/test/**/*.*";
 
         Resource[] exerciseResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath);
         Resource[] testResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
@@ -228,16 +229,53 @@ public class ProgrammingExerciseService {
         Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl, true);
         Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl, true);
 
-        String basePrefix = getProgrammingLanguageProjectTypePath(programmingLanguage, programmingExercise.getProjectType());
+        String exercisePrefix = programmingLanguage + "/exercise";
+        String testPrefix = programmingLanguage + "/test";
+        String solutionPrefix = programmingLanguage + "/solution";
+
+        Resource[] projectTypeExerciseResources = null;
+        Resource[] projectTypeTestResources = null;
+        Resource[] projectTypeSolutionResources = null;
+
+        String projectTypeExercisePrefix = null;
+        String projectTypeTestPrefix = null;
+        String projectTypeSolutionPrefix = null;
+
+        if (programmingExercise.getProjectType() != null) {
+            String programmingLanguageProjectTypePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType());
+            String projectType = programmingExercise.getProjectType().name().toLowerCase();
+
+            projectTypeExercisePrefix = programmingLanguage + "/" + projectType + "/exercise";
+            ;
+            projectTypeTestPrefix = programmingLanguage + "/" + projectType + "/test";
+            ;
+            projectTypeSolutionPrefix = programmingLanguage + "/" + projectType + "/solution";
+            ;
+
+            exercisePath = programmingLanguageProjectTypePath + "/exercise/**/*.*";
+            solutionPath = programmingLanguageProjectTypePath + "/solution/**/*.*";
+            testPath = programmingLanguageProjectTypePath + "/test/**/*.*";
+            try {
+                projectTypeExerciseResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath);
+            }
+            catch (FileNotFoundException ignored) {
+            }
+            try {
+                projectTypeTestResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
+            }
+            catch (FileNotFoundException ignored) {
+            }
+            try {
+                projectTypeSolutionResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(solutionPath);
+            }
+            catch (FileNotFoundException ignored) {
+            }
+        }
 
         try {
-            String exercisePrefix = basePrefix + "/exercise";
-            String testPrefix = basePrefix + "/test";
-            String solutionPrefix = basePrefix + "/solution";
-            setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, "Exercise", programmingExercise, user);
-            setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, "Solution", programmingExercise, user);
-            setupTestTemplateAndPush(testRepo, testResources, testPrefix, "Test", programmingExercise, user);
-
+            setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, projectTypeExerciseResources, projectTypeExercisePrefix, "Exercise", programmingExercise, user);
+            setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix, "Solution", programmingExercise, user);
+            setupTestTemplateAndPush(testRepo, testResources, testPrefix, projectTypeTestResources, projectTypeTestPrefix, "Test", programmingExercise, user);
         }
         catch (Exception ex) {
             // if any exception occurs, try to at least push an empty commit, so that the
@@ -249,12 +287,12 @@ public class ProgrammingExerciseService {
         }
     }
 
-    private String getProgrammingLanguageProjectTypePath(String programmingLanguage, @Nullable ProjectType projectType) {
-        return programmingLanguage + (projectType != null ? "/" + projectType.name().toLowerCase() : "");
+    private String getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage, @Nullable ProjectType projectType) {
+        return getProgrammingLanguageTemplatePath(programmingLanguage) + (projectType != null ? "/" + projectType.name().toLowerCase() : "");
     }
 
-    private String getTemplatePath(String programmingLanguage, @Nullable ProjectType projectType) {
-        return "classpath:templates/" + getProgrammingLanguageProjectTypePath(programmingLanguage, projectType);
+    private String getProgrammingLanguageTemplatePath(ProgrammingLanguage programmingLanguage) {
+        return "classpath:templates/" + programmingLanguage.name().toLowerCase();
     }
 
     private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise, String templateRepoName, String testRepoName, String solutionRepoName) {
@@ -310,10 +348,15 @@ public class ProgrammingExerciseService {
     }
 
     // Copy template and push, if no file is in the directory
-    private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise, User user)
-            throws Exception {
+    private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, Resource[] projectTypeResources, String projectTypePrefix, String templateName,
+            ProgrammingExercise programmingExercise, User user) throws Exception {
         if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
             fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
+            // Also copy project type specific files AFTERWARDS (so that they might overwrite the default files)
+            if (projectTypeResources != null) {
+                fileService.copyResources(projectTypeResources, projectTypePrefix, repository.getLocalPath().toAbsolutePath().toString(), true);
+            }
+
             replacePlaceholders(programmingExercise, repository);
             commitAndPushRepository(repository, templateName, user);
         }
@@ -330,12 +373,13 @@ public class ProgrammingExerciseService {
      * @param user the user who has initiated the generation of the programming exercise
      * @throws Exception If anything goes wrong
      */
-    private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise, User user)
-            throws Exception {
+    private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, Resource[] projectTypeResources, String projectTypePrefix,
+            String templateName, ProgrammingExercise programmingExercise, User user) throws Exception {
         // Only copy template if repo is empty
         if (gitService.listFiles(repository).size() == 0
                 && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
-            String templatePath = getTemplatePath(programmingExercise.getProgrammingLanguage().toString().toLowerCase(), programmingExercise.getProjectType()) + "/test";
+            ProjectType projectType = programmingExercise.getProjectType();
+            String templatePath = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()) + "/test";
 
             String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
             String testUtilsPath = templatePath + "/testutils/**/*.*";
@@ -343,9 +387,31 @@ public class ProgrammingExerciseService {
             Resource[] testUtils = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testUtilsPath);
             Resource[] projectTemplate = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(projectTemplatePath);
 
-            Map<String, Boolean> sectionsMap = new HashMap<>();
-
             fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
+
+            Resource[] projectTypeTestUtils = null;
+
+            if (projectType != null) {
+                String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
+
+                String projectTypeProjectTemplatePath = projectTypeTemplatePath + "/projectTemplate/**/*.*";
+                String projectTypeTestUtilsPath = projectTypeTemplatePath + "/testutils/**/*.*";
+
+                try {
+                    projectTypeTestUtils = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(projectTypeTestUtilsPath);
+                }
+                catch (FileNotFoundException ignored) {
+                }
+
+                try {
+                    Resource[] projectTypeProjectTemplate = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(projectTypeProjectTemplatePath);
+                    fileService.copyResources(projectTypeProjectTemplate, projectTypePrefix, repository.getLocalPath().toAbsolutePath().toString(), false);
+                }
+                catch (FileNotFoundException ignored) {
+                }
+            }
+
+            Map<String, Boolean> sectionsMap = new HashMap<>();
 
             // Keep or delete static code analysis configuration in pom.xml
             sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
@@ -353,19 +419,38 @@ public class ProgrammingExerciseService {
             if (!programmingExercise.hasSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles" + "/**/*.*";
                 Resource[] testFileResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testFilePath);
+                String packagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
                 sectionsMap.put("non-sequential", true);
                 sectionsMap.put("sequential", false);
 
                 fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
 
-                String packagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
                 fileService.copyResources(testUtils, prefix, packagePath, true);
                 fileService.copyResources(testFileResources, prefix, packagePath, false);
+
+                if (projectType != null) {
+                    String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
+                    if (projectTypeTestUtils != null) {
+                        fileService.copyResources(projectTypeTestUtils, prefix, packagePath, true);
+                    }
+
+                    try {
+                        Resource[] projectTypeTestFileResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(projectTypeTemplatePath);
+                        fileService.copyResources(projectTypeTestFileResources, projectTypePrefix, packagePath, false);
+                    }
+                    catch (FileNotFoundException ignored) {
+                    }
+                }
+
             }
             else {
                 String stagePomXmlPath = templatePath + "/stagePom.xml";
+                if (new java.io.File(projectTemplatePath + "/stagePom.xml").exists()) {
+                    stagePomXmlPath = projectTemplatePath + "/stagePom.xml";
+                }
                 Resource stagePomXml = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource(stagePomXmlPath);
+
                 // This is done to prepare for a feature where instructors/tas can add multiple build stages.
                 List<String> sequentialTestTasks = new ArrayList<>();
                 sequentialTestTasks.add("structural");
@@ -392,6 +477,19 @@ public class ProgrammingExerciseService {
                     Files.copy(stagePomXml.getInputStream(), Paths.get(buildStagePath.toAbsolutePath().toString(), "pom.xml"));
                     fileService.copyResources(testUtils, prefix, packagePath, true);
                     fileService.copyResources(buildStageResources, prefix, packagePath, false);
+
+                    if (projectType != null) {
+                        if (projectTypeTestUtils != null) {
+                            fileService.copyResources(projectTypeTestUtils, prefix, packagePath, true);
+                        }
+                        buildStageResourcesPath = projectTemplatePath + "/testFiles/" + buildStage + "/**/*.*";
+                        try {
+                            buildStageResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(buildStageResourcesPath);
+                            fileService.copyResources(buildStageResources, prefix, packagePath, false);
+                        }
+                        catch (FileNotFoundException ignored) {
+                        }
+                    }
                 }
             }
 
@@ -400,7 +498,7 @@ public class ProgrammingExerciseService {
         }
         else {
             // If there is no special test structure for a programming language, just copy all the test files.
-            setupTemplateAndPush(repository, resources, prefix, templateName, programmingExercise, user);
+            setupTemplateAndPush(repository, resources, prefix, projectTypeResources, projectTypePrefix, templateName, programmingExercise, user);
         }
     }
 
