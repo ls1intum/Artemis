@@ -453,10 +453,11 @@ public class ProgrammingExerciseGradingService {
             // Calculate different scores for totalScore calculation and set resultString for manual results
             double maxScore = exercise.getMaxScore();
             double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
-            double calculatedScore = programmingAssessmentService.calculateTotalScore(result.getFeedbacks());
+            double calculatedScore = programmingAssessmentService.calculateTotalScore(result);
             double totalScore = programmingAssessmentService.calculateTotalScore(calculatedScore, maxScore + bonusPoints);
             result.setScore(totalScore, maxScore);
-            result.setResultString(totalScore, maxScore);
+            String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed, " + calculatedScore + " of " + maxScore + "points";
+            result.setResultString(newResultString);
         }
     }
 
