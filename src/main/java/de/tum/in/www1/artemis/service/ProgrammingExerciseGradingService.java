@@ -444,22 +444,6 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Returns the maximum amount of regular points for the given exercise or a replacement point amount if the exercise has zero points (neither regular nor bonus points).
-     * <p>
-     * <b>Must only be used for the exercise-local score calculation and display messages and never for the actual score of a student in a course.</b>  
-     * @param programmingExercise the exercise to the the maxScore for
-     * @return {@link Exercise#getMaxScore()} or {@link #PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES}
-     */
-    private static double getMaxScoreRespectingZeroPointExercises(ProgrammingExercise programmingExercise) {
-        boolean hasNormalPoints = Objects.requireNonNullElse(programmingExercise.getMaxScore(), 0.0) > 0.0;
-        boolean hasBonusPoints = Objects.requireNonNullElse(programmingExercise.getMaxScore(), 0.0) > 0.0;
-        if (hasNormalPoints || hasBonusPoints) {
-            return programmingExercise.getMaxScore();
-        }
-        return PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
-    }
-
-    /**
      * Update the result's result string given the successful tests vs. all tests (x of y passed).
      * @param result of the build run.
      * @param successfulTestCases test cases with positive feedback.
@@ -473,13 +457,29 @@ public class ProgrammingExerciseGradingService {
         }
         else {
             // Calculate different scores for totalScore calculation and set resultString for manual results
-            double maxScore = exercise.getMaxScore();
+            double maxScore = getMaxScoreRespectingZeroPointExercises(exercise);
             double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
             double calculatedScore = programmingAssessmentService.calculateTotalScore(result.getFeedbacks());
             double totalScore = programmingAssessmentService.calculateTotalScore(calculatedScore, maxScore + bonusPoints);
             result.setScore(totalScore, maxScore);
             result.setResultString(totalScore, maxScore);
         }
+    }
+    
+    /**
+     * Returns the maximum amount of regular points for the given exercise or a replacement point amount if the exercise has zero points (neither regular nor bonus points).
+     * <p>
+     * <b>Must only be used for the exercise-local score calculation and display messages and never for the actual score of a student in a course.</b>  
+     * @param programmingExercise the exercise to the the maxScore for
+     * @return {@link Exercise#getMaxScore()} or {@link #PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES}
+     */
+    private static double getMaxScoreRespectingZeroPointExercises(ProgrammingExercise programmingExercise) {
+        boolean hasNormalPoints = Objects.requireNonNullElse(programmingExercise.getMaxScore(), 0.0) > 0.0;
+        boolean hasBonusPoints = Objects.requireNonNullElse(programmingExercise.getMaxScore(), 0.0) > 0.0;
+        if (hasNormalPoints || hasBonusPoints) {
+            return programmingExercise.getMaxScore();
+        }
+        return PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
     }
 
     /**
