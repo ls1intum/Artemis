@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -88,6 +89,19 @@ public abstract class StructuralTest {
      * @return True if they match, false otherwise.
      */
     protected static boolean checkModifiers(String[] observedModifiers, JSONArray expectedModifiers) {
+        if (expectedModifiers == null) return true;
+
+        String[] ignorableModifiers = new String[] { "final", "public" };
+
+        for (String modifier : ignorableModifiers) {
+            // if `final` modifier was not explicitly requested ignore it
+            if (!expectedModifiers.toList().contains(modifier)) {
+                observedModifiers = Arrays.stream(observedModifiers)
+                                          .filter(it -> !it.equals(modifier))
+                                          .collect(Collectors.toList())
+                                          .toArray(new String[] {});
+            }
+        }
 
         // If both the observed and expected elements have no modifiers, then they match.
         // A note: for technical reasons, we get in case of no observed modifiers, a string array with an empty string.
