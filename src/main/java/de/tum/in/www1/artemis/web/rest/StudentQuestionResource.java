@@ -94,6 +94,9 @@ public class StudentQuestionResource {
         if (!this.authorizationCheckService.isAtLeastStudentInCourse(optionalCourse.get(), user)) {
             return forbidden();
         }
+        if (!studentQuestion.getCourse().getId().equals(courseId)) {
+            return forbidden();
+        }
         StudentQuestion question = studentQuestionRepository.save(studentQuestion);
         if (question.getExercise() != null) {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewQuestionForExercise(question);
@@ -112,11 +115,10 @@ public class StudentQuestionResource {
      * @param studentQuestion the studentQuestion to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated studentQuestion, or with status 400 (Bad Request) if the studentQuestion is not valid, or with
      *         status 500 (Internal Server Error) if the studentQuestion couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("courses/{courseId}/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentQuestion> updateStudentQuestion(@PathVariable Long courseId, @RequestBody StudentQuestion studentQuestion) throws URISyntaxException {
+    public ResponseEntity<StudentQuestion> updateStudentQuestion(@PathVariable Long courseId, @RequestBody StudentQuestion studentQuestion) {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to update StudentQuestion : {}", studentQuestion);
         if (studentQuestion.getId() == null) {
@@ -129,6 +131,9 @@ public class StudentQuestionResource {
         Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(studentQuestion.getId());
         if (optionalStudentQuestion.isEmpty()) {
             return ResponseEntity.notFound().build();
+        }
+        if (!studentQuestion.getCourse().getId().equals(courseId)) {
+            return forbidden();
         }
         if (mayUpdateOrDeleteStudentQuestion(optionalStudentQuestion.get(), user)) {
             StudentQuestion result = studentQuestionRepository.save(studentQuestion);
@@ -147,12 +152,10 @@ public class StudentQuestionResource {
      * @param voteChange value by which votes are increased / decreased
      * @return the ResponseEntity with status 200 (OK) and with body the updated studentQuestion, or with status 400 (Bad Request) if the studentQuestion is not valid, or with
      *         status 500 (Internal Server Error) if the studentQuestion couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("courses/{courseId}/student-questions/{questionId}/votes")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentQuestion> updateStudentQuestionVotes(@PathVariable Long courseId, @PathVariable Long questionId, @RequestBody Integer voteChange)
-            throws URISyntaxException {
+    public ResponseEntity<StudentQuestion> updateStudentQuestionVotes(@PathVariable Long courseId, @PathVariable Long questionId, @RequestBody Integer voteChange) {
         if (voteChange < -2 || voteChange > 2) {
             return forbidden();
         }
@@ -164,6 +167,9 @@ public class StudentQuestionResource {
         Optional<Course> optionalCourse = courseRepository.findById(courseId);
         if (optionalCourse.isEmpty()) {
             return ResponseEntity.notFound().build();
+        }
+        if (!optionalStudentQuestion.get().getCourse().getId().equals(courseId)) {
+            return forbidden();
         }
         if (mayUpdateStudentQuestionVotes(optionalStudentQuestion.get(), user)) {
             StudentQuestion updatedStudentQuestion = optionalStudentQuestion.get();
@@ -199,6 +205,9 @@ public class StudentQuestionResource {
         if (!authorizationCheckService.isAtLeastStudentForExercise(exercise.get(), user)) {
             return forbidden();
         }
+        if (!exercise.get().getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
+            return forbidden();
+        }
         List<StudentQuestion> studentQuestions = studentQuestionService.findStudentQuestionsForExercise(exerciseId);
         hideSensitiveInformation(studentQuestions);
 
@@ -225,6 +234,9 @@ public class StudentQuestionResource {
             return ResponseEntity.notFound().build();
         }
         if (!authorizationCheckService.isAtLeastStudentInCourse(lecture.get().getCourse(), user)) {
+            return forbidden();
+        }
+        if (!lecture.get().getCourse().getId().equals(courseId)) {
             return forbidden();
         }
         List<StudentQuestion> studentQuestions = studentQuestionService.findStudentQuestionsForLecture(lectureId);

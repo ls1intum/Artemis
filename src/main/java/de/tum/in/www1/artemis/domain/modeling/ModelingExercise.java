@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.domain.modeling;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 
@@ -10,6 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
  */
 @Entity
 @DiscriminatorValue(value = "M")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ModelingExercise extends Exercise {
 
     @Enumerated(EnumType.STRING)

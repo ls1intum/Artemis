@@ -195,8 +195,11 @@ under ``localhost:7990``.
    9.2 Personal access token for Bitbucket.
 
       - Log in as the admin user and go to Bitbucket -> View Profile (top right corner) -> Manage account -> Personal access tokens -> Create token
+      
+          .. figure:: bamboo-bitbucket-jira/bitbucket-create-token.png
+             :align: center
 
-      - Insert the generated token into the file ``application-artemis.yml`` in the section ``version-control ``:
+      - Insert the generated token into the file ``application-artemis.yml`` in the section ``version-control``:
 
       .. code:: yaml
 
@@ -241,6 +244,7 @@ Configure Artemis
                url: http://localhost:7990
                user:  <bitbucket-admin-user>
                password: <bitbuckt-admin-password>
+               token: <bitbucket-admin-token>
            continuous-integration:
                url: http://localhost:8085
                user:  <bamboo-admin-user>

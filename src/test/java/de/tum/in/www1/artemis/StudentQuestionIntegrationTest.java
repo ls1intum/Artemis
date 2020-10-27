@@ -58,9 +58,10 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         StudentQuestion studentQuestionToSave = new StudentQuestion();
         studentQuestionToSave.setQuestionText("Test Student Question 1");
         studentQuestionToSave.setVisibleForStudents(true);
+        studentQuestionToSave.setExercise(studentQuestion.getExercise());
 
-        StudentQuestion createdStudentQuestion = request.postWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions", studentQuestionToSave,
-                StudentQuestion.class, HttpStatus.CREATED);
+        StudentQuestion createdStudentQuestion = request.postWithResponseBody("/api/courses/" + studentQuestionToSave.getCourse().getId() + "/student-questions",
+                studentQuestionToSave, StudentQuestion.class, HttpStatus.CREATED);
 
         assertThat(createdStudentQuestion).isNotNull();
     }

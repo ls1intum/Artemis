@@ -3,19 +3,18 @@ from testUtils.AbstractTest import AbstractTest
 from testUtils.Utils import printTester, getTesterOutput, clearTesterOutputCache, resetStdoutLimit, setStdoutLimitEnabled
 from testUtils.junit.Junit import Junit
 from testUtils.junit.TestSuite import TestSuite
-from time import time
-from time import sleep
+
 
 class Tester:
     name: str
     suite: TestSuite
     tests: Dict[str, AbstractTest]
-    
-    def __init__(self, name: str = "GBS-Tester-1.23"):
+
+    def __init__(self, name: str = "GBS-Tester-1.24"):
         self.name = name
         self.suite = TestSuite(name)
         self.tests = dict()
-    
+
     def run(self):
         """
         Starts the tester and runs all tests added via "addTest(test: AbstractTest)".
@@ -30,27 +29,28 @@ class Tester:
 
         for name, test in self.tests.items():
             if test.timeoutSec >= 0:
-                printTester("Running test case '{}' with a {} second timeout...".format(name, test.timeoutSec))
+                printTester("Running test case '{}' with a {} second timeout...".format(
+                    name, test.timeoutSec))
             else:
-                printTester("Running test case '{}' with no timeout...".format(name))
+                printTester(
+                    "Running test case '{}' with no timeout...".format(name))
 
             # Reset the tester output cache:
             resetStdoutLimit()
             setStdoutLimitEnabled(True)
             clearTesterOutputCache()
-            
+
             test.start(testResults, self.suite)
-            
-            
+
             setStdoutLimitEnabled(False)
-            printTester("Finished test case '{}' in {} seconds.".format(name, test.case.time.total_seconds()))
+            printTester("Finished test case '{}' in {} seconds.".format(
+                name, test.case.time.total_seconds()))
 
             # Store the tester output in the test case:
             test.case.testerOutput = self.name + "\n" + getTesterOutput()
             # Update test results:
             testResults[name] = test.case.result
         self.__printResult()
-        
 
     def addTest(self, test: AbstractTest):
         """
@@ -58,12 +58,14 @@ class Tester:
         """
 
         if test.name in self.tests:
-            raise NameError("Test '{}' already registered. Test names should be unique!".format(test.name))
+            raise NameError(
+                "Test '{}' already registered. Test names should be unique!".format(test.name))
         self.tests[test.name] = test
-    
+
     def __printResult(self):
         print("Result".center(50, "="))
-        print("{} finished {} test cases in {} seconds.".format(self.name, len(self.tests), self.suite.time.total_seconds()))
+        print("{} finished {} test cases in {} seconds.".format(
+            self.name, len(self.tests), self.suite.time.total_seconds()))
         print("SUCCESS: {}".format(self.suite.successful))
         print("FAILED: {}".format(self.suite.failures))
         print("ERROR: {}".format(self.suite.errors))
