@@ -1,13 +1,13 @@
 package ${packageName};
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 import java.lang.reflect.InvocationTargetException;
 import java.text.*;
 import java.util.*;
 
-import org.junit.*;
+import org.junit.jupiter.api.*;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
@@ -18,7 +18,7 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
     private List<Date> dates;
     private List<Date> datesWithCorrectOrder;
 
-    @Before
+    @BeforeEach
     public void setup() throws ParseException {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         Date date1 = dateFormat.parse("08.11.2018");
@@ -30,7 +30,7 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
         this.datesWithCorrectOrder = Arrays.asList(date3, date2, date4, date1);
     }
 
-    @Test(timeout = 1000)
+    @Test
     public void testBubbleSort() {
         BubbleSort bubbleSort = new BubbleSort();
         bubbleSort.performSort(dates);
@@ -39,7 +39,7 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
         }
     }
 
-    @Test(timeout = 1000)
+    @Test
     public void testMergeSort() {
         MergeSort mergeSort = new MergeSort();
         mergeSort.performSort(dates);
@@ -48,7 +48,7 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
         }
     }
 
-    @Test(timeout = 1000)
+    @Test
     public void testUseMergeSortForBigList() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException, ClassNotFoundException {
         List<Date> bigList = new ArrayList<Date>();
         for (int i = 0; i < 11; i++) {
@@ -60,7 +60,7 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
         }
     }
 
-    @Test(timeout = 1000)
+    @Test
     public void testUseBubbleSortForSmallList()  throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException, ClassNotFoundException {
         List<Date> smallList = new ArrayList<Date>();
         for (int i = 0; i < 3; i++) {
