@@ -508,6 +508,36 @@ public class ProgrammingExercise extends Exercise {
                 .collect(Collectors.toSet());
     }
 
+    @Override
+    @Nullable
+    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
+        // for most types of exercises => return latest result (all results are relevant)
+        Submission latestSubmission = null;
+        // we get the results over the submissions
+        if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
+            return null;
+        }
+        for (var submission : participation.getSubmissions()) {
+            var result = submission.getResult();
+            if (result == null || result.getCompletionDate() == null) {
+                continue;
+            }
+            // NOTE: for the dashboard we only use rated results with completion date or automatic result
+            boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
+            if ((result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
+                // take the first found result that fulfills the above requirements
+                if (latestSubmission == null) {
+                    latestSubmission = submission;
+                }
+                // take newer results and thus disregard older ones
+                else if (latestSubmission.getResult().getCompletionDate().isBefore(result.getCompletionDate())) {
+                    latestSubmission = submission;
+                }
+            }
+        }
+        return latestSubmission;
+    }
+
     /**
      * Check if manual results are allowed for the exercise
      * @return true if manual results are allowed, false otherwise
