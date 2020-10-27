@@ -535,11 +535,9 @@ public abstract class Exercise extends DomainObject {
             return null;
         }
 
-        Result result = null;
-
         for (var submission : participation.getSubmissions()) {
 
-            result = submission.getLatestResult();
+            Result result = submission.getLatestResult();
             if (result == null) {
                 continue;
             }
@@ -552,9 +550,7 @@ public abstract class Exercise extends DomainObject {
                 }
                 // take newer results and thus disregard older ones
                 else {
-                    resultsOfLatestSubmission = latestSubmission.getResults();
-                    Result latestResultOfLatestSubmission = null;
-                    latestResultOfLatestSubmission = resultsOfLatestSubmission.get(resultsOfLatestSubmission.size()-1);
+                    Result latestResultOfLatestSubmission = latestSubmission.getLatestResult();
                     if (latestResultOfLatestSubmission.getCompletionDate().isBefore(result.getCompletionDate())) {
                         latestSubmission = submission;
                     }

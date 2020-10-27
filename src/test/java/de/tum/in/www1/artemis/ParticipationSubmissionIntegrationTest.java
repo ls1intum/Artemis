@@ -49,7 +49,7 @@ public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegr
     public void deleteSubmissionOfParticipation() throws Exception {
         Submission submissionWithResult = database.addSubmission(textExercise, new TextSubmission(), "student1");
         var result = database.addResultToSubmission(submissionWithResult, null);
-        submissionWithResult.setResults(result);
+        submissionWithResult.addResult(result);
         submissionRepository.save(submissionWithResult);
         Long participationId = submissionWithResult.getParticipation().getId();
         Long submissionId = submissionWithResult.getId();

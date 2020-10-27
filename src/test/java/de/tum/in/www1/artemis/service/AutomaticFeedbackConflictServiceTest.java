@@ -94,8 +94,8 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         textSubmission2 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, "student2", "tutor1", List.of(feedback2));
 
         // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
-        feedback1 = textSubmission1.getResult().getFeedbacks().get(0);
-        feedback2 = textSubmission2.getResult().getFeedbacks().get(0);
+        feedback1 = textSubmission1.getLatestResult().getFeedbacks().get(0);
+        feedback2 = textSubmission2.getLatestResult().getFeedbacks().get(0);
 
         // TODO: Birtan Gültekin we should not mock those services
         textAssessmentConflictService = mock(TextAssessmentConflictService.class);
@@ -137,8 +137,8 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
 
         // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
-        feedback1 = textSubmission.getResult().getFeedbacks().get(0);
-        feedback2 = textSubmission.getResult().getFeedbacks().get(1);
+        feedback1 = textSubmission.getLatestResult().getFeedbacks().get(0);
+        feedback2 = textSubmission.getLatestResult().getFeedbacks().get(1);
         FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(feedback1, feedback2);
         feedbackConflict.setType(FeedbackConflictType.INCONSISTENT_COMMENT);
         feedbackConflictRepository.save(feedbackConflict);
@@ -182,8 +182,8 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
 
         // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
-        feedback1 = textSubmission.getResult().getFeedbacks().get(0);
-        feedback2 = textSubmission.getResult().getFeedbacks().get(1);
+        feedback1 = textSubmission.getLatestResult().getFeedbacks().get(0);
+        feedback2 = textSubmission.getLatestResult().getFeedbacks().get(1);
         FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(feedback1, feedback2);
         feedbackConflictRepository.save(feedbackConflict);
 
@@ -213,7 +213,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         textSubmissionRepository.deleteById(textSubmission.getId());
         assertThat(feedbackConflictRepository.findAll(), hasSize(0));
     }
-    
+
     /**
      * Checks if deletion of a result delete the text assessment conflicts from the database.
      */
@@ -221,7 +221,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testResultDelete() {
         TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
-        resultRepository.deleteById(textSubmission.getResult().getId());
+        resultRepository.deleteById(textSubmission.getLatestResult().getId());
         assertThat(feedbackConflictRepository.findAll(), hasSize(0));
     }
 
@@ -264,8 +264,8 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
 
         // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
-        FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(textSubmission.getResult().getFeedbacks().get(0),
-                textSubmission.getResult().getFeedbacks().get(1));
+        FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(textSubmission.getLatestResult().getFeedbacks().get(0),
+                textSubmission.getLatestResult().getFeedbacks().get(1));
         feedbackConflictRepository.save(feedbackConflict);
 
         return textSubmission;

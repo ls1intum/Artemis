@@ -120,7 +120,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     public void updateAssessmentAfterComplaint_automaticAssessment_forbidden() throws Exception {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExerciseRepository.save(programmingExercise);
-        Result programmingAssessment = programmingSubmission.getResults();
+        Result programmingAssessment = programmingSubmission.getLatestResult();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
@@ -154,7 +154,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void updateAssessmentAfterComplaint_sameAsAssessor_forbidden() throws Exception {
-        Result programmingAssessment = programmingSubmission.getResults();
+        Result programmingAssessment = programmingSubmission.getLatestResult();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
@@ -320,7 +320,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         result = resultRepository.save(result);
         // Create submission for result and save
         ProgrammingSubmission submission = new ProgrammingSubmission();
-        submission.setResult(result);
+        submission.addResult(result);
         submission = programmingSubmissionRepository.save(submission);
 
         // Set submission and save again
@@ -382,7 +382,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         // Submission in response is lazy loaded therefore, we fetch submission and check if relation is correct
         ProgrammingSubmission submissionFetch = programmingSubmissionService.findByIdWithEagerResultAndFeedback(programmingSubmission.getId());
-        assertThat(response.getId().equals(submissionFetch.getResults().getId()));
+        assertThat(response.getId().equals(submissionFetch.getLatestResult().getId()));
         assertThat(submissionFetch.getId().equals(programmingSubmission.getId()));
     }
 
@@ -436,7 +436,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     private void overrideAssessment(HttpStatus httpStatus) throws Exception {
         var participation = programmingSubmission.getParticipation();
-        var result = programmingSubmission.getResults();
+        var result = programmingSubmission.getLatestResult();
         result.setScore(75L);
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
         result.setCompletionDate(ZonedDateTime.now());

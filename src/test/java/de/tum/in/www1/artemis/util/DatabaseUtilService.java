@@ -801,7 +801,7 @@ public class DatabaseUtilService {
                 submission = markProgrammingParticipationForTestRun((ProgrammingExercise) exercise, instructor.getLogin());
             }
             assertThat(exercise.hasExerciseGroup()).isTrue();
-            assertThat(submission.getResults().getAssessor().getLogin()).isEqualTo(instructor.getLogin());
+            assertThat(submission.getLatestResult().getAssessor().getLogin()).isEqualTo(instructor.getLogin());
             assertThat(((StudentParticipation) submission.getParticipation()).getStudent().get().getLogin()).isEqualTo(instructor.getLogin());
         }
         return testRun;
@@ -1049,8 +1049,8 @@ public class DatabaseUtilService {
      */
     public ModelingSubmission markModelingParticipationForTestRun(ModelingExercise exercise, String login) {
         var modelingSubmission = addModelingSubmissionWithEmptyResult(exercise, "", login);
-        modelingSubmission.getResults().setAssessor(getUserByLogin(login));
-        resultRepo.save(modelingSubmission.getResults());
+        modelingSubmission.getLatestResult().setAssessor(getUserByLogin(login));
+        resultRepo.save(modelingSubmission.getLatestResult());
         return modelingSubmission;
     }
 
@@ -1072,9 +1072,9 @@ public class DatabaseUtilService {
     public ProgrammingSubmission markProgrammingParticipationForTestRun(ProgrammingExercise exercise, String login) {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submitted(true);
         submission = addProgrammingSubmissionWithResult(exercise, submission, login);
-        submission.getResults().setAssessor(getUserByLogin(login));
-        submission.getResults().setCompletionDate(null);
-        resultRepo.save(submission.getResults());
+        submission.getLatestResult().setAssessor(getUserByLogin(login));
+        submission.getLatestResult().setCompletionDate(null);
+        resultRepo.save(submission.getLatestResult());
         submissionRepository.save(submission);
         return submission;
     }
@@ -1746,7 +1746,7 @@ public class DatabaseUtilService {
         Result result = new Result();
         result = resultRepo.save(result);
         result.setSubmission(submission);
-        submission.setResults(result);
+        submission.addResult(result);
         participation.addResult(result);
         studentParticipationRepo.save(participation);
         modelingSubmissionRepo.save(submission);
@@ -1793,7 +1793,7 @@ public class DatabaseUtilService {
         Result result = resultRepo.save(new Result().participation(participation));
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
-        submission.setResults(result);
+        submission.addResult(result);
         submission = programmingSubmissionRepo.save(submission);
         result.setSubmission(submission);
         result = resultRepo.save(result);
@@ -1815,7 +1815,7 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setParticipation(participation);
-        submission.setResults(result);
+        submission.addResult(result);
         submission.getParticipation().addResult(result);
         submission = programmingSubmissionRepo.save(submission);
         result = resultRepo.save(result);
@@ -1849,7 +1849,7 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setParticipation(participation);
-        submission.setResults(result);
+        submission.addResult(result);
         submission.getParticipation().addResult(result);
         submission = modelingSubmissionRepo.save(submission);
         result = resultRepo.save(result);
@@ -1866,7 +1866,7 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setParticipation(participation);
-        submission.setResults(result);
+        submission.addResult(result);
         submission.getParticipation().addResult(result);
         submission = modelingSubmissionRepo.save(submission);
         result = resultRepo.save(result);
@@ -1900,7 +1900,7 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         result.setSubmission(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
-        fileUploadSubmission.setResults(result);
+        fileUploadSubmission.addResult(result);
         fileUploadSubmission.getParticipation().addResult(result);
         fileUploadSubmission = fileUploadSubmissionRepo.save(fileUploadSubmission);
         result = resultRepo.save(result);
@@ -1937,14 +1937,14 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setParticipation(participation);
-        submission.setResults(result);
+        submission.addResult(result);
         submission.getParticipation().addResult(result);
         submission = textSubmissionRepo.save(submission);
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
 
         // re-assign after save to avoid issues
-        submission.setResults(result);
+        submission.reAssignResult(result);
         return submission;
     }
 
@@ -1967,7 +1967,7 @@ public class DatabaseUtilService {
         // this automatically saves the feedback because of the CascadeType.All annotation
         result = resultRepo.save(result);
         // re-assign so that the saved feedback items are contained in the returned object
-        submission.setResults(result);
+        submission.reAssignResult(result);
         return submission;
     }
 

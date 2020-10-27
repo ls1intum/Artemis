@@ -274,12 +274,8 @@ public class TextSubmissionService extends SubmissionService {
 
     public TextSubmission findOneWithEagerResultFeedbackAndTextBlocks(Long submissionId) {
 
-        var textSubmission = textSubmissionRepository.findByIdWithEagerResultFeedback(submissionId)
+        var textSubmission = textSubmissionRepository.findByIdWithEagerResultFeedbackAndTextBlocks(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
-
-        var textSubmissionWithTextBlocks = textSubmissionRepository.findByIdWithEagerTextBlocks(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
-        textSubmission.setBlocks(textSubmissionWithTextBlocks.getBlocks());
         return textSubmission;
     }
 }
