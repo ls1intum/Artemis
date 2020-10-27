@@ -14,7 +14,6 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { QuizStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 
 const question = { id: 1 } as QuizQuestion;
@@ -23,14 +22,17 @@ let quizExercise = { id: 42, started: true, course, quizQuestions: [question] } 
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 
+const quizQuestionStatOne = { ratedCorrectCounter: 1, unRatedCorrectCounter: 3 };
+const quizQuestionStatTwo = { ratedCorrectCounter: 2, unRatedCorrectCounter: 4 };
+
 describe('QuizExercise Statistic Component', () => {
     let comp: QuizStatisticComponent;
     let fixture: ComponentFixture<QuizStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy;
+    let accountSpy: jasmine.Spy;
     let router: Router;
-    let quizStatisticUtil: QuizStatisticUtil;
+    let quizServiceFindSpy: jasmine.Spy;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -53,21 +55,33 @@ describe('QuizExercise Statistic Component', () => {
                 quizService = fixture.debugElement.injector.get(QuizExerciseService);
                 accountService = fixture.debugElement.injector.get(AccountService);
                 router = fixture.debugElement.injector.get(Router);
-                quizStatisticUtil = fixture.debugElement.injector.get(QuizStatisticUtil);
+                quizServiceFindSpy = spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });
 
     afterEach(() => {
         comp.ngOnDestroy();
         quizExercise = { id: 42, started: true, course, quizQuestions: [question] } as QuizExercise;
+        quizServiceFindSpy.calls.reset();
     });
 
     describe('OnInit', function () {
+        let loadQuizSuccessSpy: jasmine.Spy;
+        let loadDataSpy: jasmine.Spy;
+
+        beforeEach(() => {
+            loadQuizSuccessSpy = loadQuizSuccessSpy = spyOn(comp, 'loadQuizSuccess');
+            loadDataSpy = spyOn(comp, 'loadData');
+        });
+
+        afterEach(() => {
+            loadQuizSuccessSpy.calls.reset();
+            loadDataSpy.calls.reset();
+        });
+
         it('should call functions on Init', fakeAsync(() => {
             // setup
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
-            const quizServiceFindSpy = spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
-            const loadQuizSuccessSpy = spyOn(comp, 'loadQuizSuccess');
 
             // call
             comp.ngOnInit();
@@ -82,12 +96,10 @@ describe('QuizExercise Statistic Component', () => {
         it('should not load QuizSuccess if not authorised', fakeAsync(() => {
             // setup
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(false);
-            const quizServiceFindSpy = spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
-            const loadQuizSuccessSpy = spyOn(comp, 'loadQuizSuccess');
 
             // call
             comp.ngOnInit();
-            tick();
+            tick(); // simulate async
 
             // check
             expect(accountSpy).toHaveBeenCalled();
@@ -97,11 +109,22 @@ describe('QuizExercise Statistic Component', () => {
     });
 
     describe('loadQuizSuccess', function () {
+        let calculateMaxScoreSpy: jasmine.Spy;
+        let loadDataSpy: jasmine.Spy;
+
+        beforeEach(() => {
+            calculateMaxScoreSpy = spyOn(comp, 'calculateMaxScore').and.returnValue(32);
+            loadDataSpy = spyOn(comp, 'loadData');
+        });
+
+        afterEach(() => {
+            calculateMaxScoreSpy.calls.reset();
+            loadDataSpy.calls.reset();
+        });
+
         it('should set data', () => {
             // setup
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
-            const calculateMaxScoreSpy = spyOn(comp, 'calculateMaxScore').and.returnValue(32);
-            const loadDataSpy = spyOn(comp, 'loadData');
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -154,19 +177,20 @@ describe('QuizExercise Statistic Component', () => {
     });
 
     describe('loadData', function () {
-        it('should use values of quizExercise and rated data', () => {
-            // setup
-            const quizQuestionStatOne = { ratedCorrectCounter: 1, unRatedCorrectCounter: 3 };
-            const quizQuestionStatTwo = { ratedCorrectCounter: 2, unRatedCorrectCounter: 4 };
-            const updateChartSpy = spyOn(comp, 'updateChart');
-            comp.rated = true;
-            comp.maxScore = 1;
+        beforeEach(() => {
             quizExercise.quizQuestions = [
                 { quizQuestionStatistic: quizQuestionStatOne, score: 5 },
                 { quizQuestionStatistic: quizQuestionStatTwo, score: 6 },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
             comp.quizExercise = quizExercise;
+        });
+
+        it('should use values of quizExercise and rated data', () => {
+            // setup
+            const updateChartSpy = spyOn(comp, 'updateChart');
+            comp.rated = true;
+            comp.maxScore = 1;
 
             // call
             comp.loadData();
@@ -177,21 +201,12 @@ describe('QuizExercise Statistic Component', () => {
             expect(comp.unratedData).toEqual([3, 4, 39]);
             expect(comp.data).toEqual([1, 2, 17]);
             expect(comp.participants).toBe(42);
-            4;
         });
 
         it('should use values of quizExercise and unrated data', () => {
             // setup
-            const quizQuestionStatOne = { ratedCorrectCounter: 1, unRatedCorrectCounter: 3 };
-            const quizQuestionStatTwo = { ratedCorrectCounter: 2, unRatedCorrectCounter: 4 };
             comp.rated = false;
             comp.maxScore = 1;
-            quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, score: 5 },
-                { quizQuestionStatistic: quizQuestionStatTwo, score: 6 },
-            ];
-            quizExercise.quizPointStatistic = { participantsRated: 42 };
-            comp.quizExercise = quizExercise;
 
             // call
             comp.loadData();
@@ -205,7 +220,6 @@ describe('QuizExercise Statistic Component', () => {
             // setup
             const updateChartSpy = spyOn(comp, 'updateChart');
             quizExercise.quizQuestions = [];
-            quizExercise.quizPointStatistic = { participantsRated: 1 };
             comp.rated = true;
             comp.maxScore = 1;
             comp.quizExercise = quizExercise;
@@ -218,7 +232,7 @@ describe('QuizExercise Statistic Component', () => {
             expect(comp.ratedData).toEqual([0]);
             expect(comp.unratedData).toEqual([0]);
             expect(comp.data).toEqual([0]);
-            expect(comp.participants).toBe(1);
+            expect(comp.participants).toBe(42);
         });
     });
 });

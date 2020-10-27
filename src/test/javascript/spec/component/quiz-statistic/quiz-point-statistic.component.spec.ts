@@ -14,30 +14,28 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { QuizPointStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-point-statistic/quiz-point-statistic.component';
 import moment = require('moment');
-import {QuizPointStatistic} from 'app/entities/quiz/quiz-point-statistic.model';
+import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
-let quizExercise = { id: 42, started: true, course: course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
 const pointCounters = [
-    {points: 1, ratedCounter: 2, unRatedCounter: 3, },
-    {points: 4, ratedCounter: 5, unRatedCounter: 6, }
+    { points: 1, ratedCounter: 2, unRatedCounter: 3 },
+    { points: 4, ratedCounter: 5, unRatedCounter: 6 },
 ];
-
+let quizExercise = { id: 42, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
 
 describe('QuizExercise Point Statistic Component', () => {
     let comp: QuizPointStatisticComponent;
     let fixture: ComponentFixture<QuizPointStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy;
+    let accountSpy: jasmine.Spy;
     let router: Router;
-    let quizStatisticUtil: QuizStatisticUtil;
     let translateService: TranslateService;
+    let quizServiceFindSpy: jasmine.Spy;
     Date.now = jest.fn(() => new Date(Date.UTC(2017, 0, 1)).valueOf());
 
     beforeEach(() => {
@@ -61,23 +59,21 @@ describe('QuizExercise Point Statistic Component', () => {
                 quizService = fixture.debugElement.injector.get(QuizExerciseService);
                 accountService = fixture.debugElement.injector.get(AccountService);
                 router = fixture.debugElement.injector.get(Router);
-                quizStatisticUtil = fixture.debugElement.injector.get(QuizStatisticUtil);
                 translateService = fixture.debugElement.injector.get(TranslateService);
+                quizServiceFindSpy = spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
             });
-    })
+    });
 
     afterEach(() => {
-        quizExercise = { id: 42, started: true, course: course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
+        quizExercise = { id: 42, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
     });
 
     describe('OnInit', function () {
-
         it('should call functions on Init', fakeAsync(() => {
             // setup
             jest.useFakeTimers();
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
-            const quizServiceFindSpy = spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
-            const loadQuizSuccessSpy = spyOn(comp, 'loadQuizSuccess')
+            const loadQuizSuccessSpy = spyOn(comp, 'loadQuizSuccess');
             const updateDisplayedTimesSpy = spyOn(comp, 'updateDisplayedTimes');
             comp.quizExerciseChannel = '';
             comp.waitingForQuizStart = true;
@@ -98,8 +94,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
         it('should not load QuizSuccess if not authorised', fakeAsync(() => {
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(false);
-            const quizServiceFindSpy = spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
-            const loadQuizSuccessSpy = spyOn(comp, 'loadQuizSuccess')
+            const loadQuizSuccessSpy = spyOn(comp, 'loadQuizSuccess');
 
             comp.ngOnInit();
             tick();
@@ -112,35 +107,30 @@ describe('QuizExercise Point Statistic Component', () => {
     });
 
     describe('updateDisplayedTimes', function () {
-
         it('should update remaining time ', () => {
-            //setup
+            // setup
             quizExercise.adjustedDueDate = moment(Date.now());
             comp.quizExercise = quizExercise;
 
-            //call
+            // call
             comp.updateDisplayedTimes();
 
-            //check
+            // check
             expect(comp.remainingTimeSeconds).toEqual(-1);
             expect(comp.remainingTimeText).toEqual(translateService.instant('showStatistic.quizhasEnded'));
-
         });
 
         it('should show remaining time as zero if time unknown', () => {
-            //setup
+            // setup
             comp.quizExercise = quizExercise;
 
-            //call
+            // call
             comp.updateDisplayedTimes();
 
-            //check
+            // check
             expect(comp.remainingTimeSeconds).toEqual(0);
             expect(comp.remainingTimeText).toBe('?');
-
         });
-
-
     });
 
     it('should return remaining Time', () => {
@@ -154,15 +144,23 @@ describe('QuizExercise Point Statistic Component', () => {
         expect(comp.relativeTimeText(50)).toEqual('50 s');
     });
 
-    //test loadQuizSuccess
     describe('loadQuizSuccess', function () {
+        let loadDataSpy: jasmine.Spy;
+        let routerSpy: jasmine.Spy;
+
+        beforeEach(() => {
+            loadDataSpy = spyOn(comp, 'loadData');
+            routerSpy = spyOn(router, 'navigate');
+        });
+
+        afterEach(() => {
+            loadDataSpy.calls.reset();
+            routerSpy.calls.reset();
+        });
 
         it('should call router if called by student', () => {
             // setup
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(false);
-            const quizServiceFindSpy = spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
-            const loadDataSpy = spyOn(comp, 'loadData');
-            const routerSpy = spyOn(router, 'navigate');
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -174,9 +172,6 @@ describe('QuizExercise Point Statistic Component', () => {
         it('should load the quiz', () => {
             // setup
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
-            const quizServiceFindSpy = spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
-            const loadDataSpy = spyOn(comp, 'loadData');
-            const routerSpy = spyOn(router, 'navigate');
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -189,24 +184,19 @@ describe('QuizExercise Point Statistic Component', () => {
         });
     });
 
-
-
-    //test calculateMaxScore
     it('should calculate the MaxScore', () => {
         // setup
-        quizExercise.quizQuestions = [{score: 1}, {score: 2}];
+        quizExercise.quizQuestions = [{ score: 1 }, { score: 2 }];
         comp.quizExercise = quizExercise;
 
-        //call
+        // call
         const result = comp.calculateMaxScore();
 
         // check
         expect(result).toBe(3);
     });
 
-
     describe('loadData', function () {
-
         it('should set data', () => {
             // setup
             const loadDataInDiagramSpy = spyOn(comp, 'loadDataInDiagram');
@@ -220,10 +210,7 @@ describe('QuizExercise Point Statistic Component', () => {
             expect(loadDataInDiagramSpy).toHaveBeenCalled();
             expect(comp.labels).toEqual(['1', '4']);
             expect(comp.ratedData).toEqual([2, 5]);
-            expect(comp.unratedData).toEqual([3,6]);
-
+            expect(comp.unratedData).toEqual([3, 6]);
         });
-
     });
-
 });
