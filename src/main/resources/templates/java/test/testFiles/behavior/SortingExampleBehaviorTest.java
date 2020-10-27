@@ -30,6 +30,7 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
         this.datesWithCorrectOrder = Arrays.asList(date3, date2, date4, date1);
     }
 
+    @Timeout(1)
     @Test
     public void testBubbleSort() {
         BubbleSort bubbleSort = new BubbleSort();
@@ -39,6 +40,7 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
         }
     }
 
+    @Timeout(1)
     @Test
     public void testMergeSort() {
         MergeSort mergeSort = new MergeSort();
@@ -48,6 +50,7 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
         }
     }
 
+    @Timeout(1)
     @Test
     public void testUseMergeSortForBigList() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException, ClassNotFoundException {
         List<Date> bigList = new ArrayList<Date>();
@@ -60,6 +63,7 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
         }
     }
 
+    @Timeout(1)
     @Test
     public void testUseBubbleSortForSmallList()  throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException, ClassNotFoundException {
         List<Date> smallList = new ArrayList<Date>();
