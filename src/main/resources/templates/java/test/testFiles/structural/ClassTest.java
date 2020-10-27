@@ -19,7 +19,7 @@ import org.junit.jupiter.api.TestFactory;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 3.0 (25.09.2019)
+ * @version 4.0 (27.10.2020)
  * <br><br>
  * This test evaluates the hierarchy of the class, i.e. if the class is abstract or an interface or an enum and also if the class extends another superclass and if
  * it implements the interfaces and annotations, based on its definition in the structure oracle (test.json).

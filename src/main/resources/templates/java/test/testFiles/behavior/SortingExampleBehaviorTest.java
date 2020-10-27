@@ -11,7 +11,7 @@ import org.junit.jupiter.api.*;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 3.0 (25.09.2019)
+ * @version 4.0 (27.10.2020)
  */
 public class SortingExampleBehaviorTest extends BehaviorTest {
 

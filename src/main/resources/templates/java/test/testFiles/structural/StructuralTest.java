@@ -20,7 +20,7 @@ import ${packageName}.testutils.ScanResultType;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 3.0 (25.09.2019)
+ * @version 4.0 (27.10.2020)
  * <br><br>
  * This test and its subclasses evaluate if the following specified elements of a given class in the structure oracle are
  * correctly implemented (in case they are specified):
