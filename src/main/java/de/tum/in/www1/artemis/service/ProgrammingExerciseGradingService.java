@@ -31,7 +31,7 @@ public class ProgrammingExerciseGradingService {
     /**
      * Placeholder point value for the score calculation of zero-point exercises to avoid the score always being 0.
      */
-    private static final double PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES = 1.0;
+    public static final double PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES = 100.0;
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingService.class);
 
