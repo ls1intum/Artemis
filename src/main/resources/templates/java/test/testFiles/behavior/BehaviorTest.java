@@ -1,7 +1,7 @@
 package ${packageName};
 
 import static java.util.Objects.requireNonNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.lang.reflect.*;
 import java.util.Arrays;

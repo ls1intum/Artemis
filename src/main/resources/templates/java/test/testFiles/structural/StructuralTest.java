@@ -15,8 +15,8 @@ import java.util.Objects;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import test.testutils.ClassNameScanner;
-import test.testutils.ScanResultType;
+import ${packageName}.testutils.ClassNameScanner;
+import ${packageName}.testutils.ScanResultType;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
