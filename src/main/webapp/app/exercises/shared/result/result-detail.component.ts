@@ -258,7 +258,7 @@ export class ResultDetailComponent implements OnInit {
             return feedback.positive ? 'alert-success' : 'alert-danger';
         } else {
             if (feedback.credits === 0) {
-                return 'alert-secondary';
+                return 'alert-warning';
             } else {
                 return feedback.positive || (feedback.credits && feedback.credits > 0) ? 'alert-success' : 'alert-danger';
             }
