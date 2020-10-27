@@ -67,10 +67,14 @@ public class GitlabRequestMockProvider {
         mockAddUserToGroup(exercise);
     }
 
+    /**
+     * Method to mock the getUser method to return mocked users with their id's
+     * @throws GitLabApiException
+     */
     public void mockGetUserID() throws GitLabApiException {
-        org.gitlab4j.api.models.User instructor = new org.gitlab4j.api.models.User();
-        org.gitlab4j.api.models.User tutor = new org.gitlab4j.api.models.User();
-        org.gitlab4j.api.models.User user = new org.gitlab4j.api.models.User();
+        User instructor = new User();
+        User tutor = new User();
+        User user = new User();
         instructor.setId(2);
         tutor.setId(3);
         user.setId(4);
