@@ -309,16 +309,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readOnly() {
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
-    
+
     /**
-     * Removes the username from the repositoryURL
+     * Removes the login from the repositoryURL
      */
     adjustedRepositoryURL(): string {
-        if (this.participation.repositoryUrl != null) {
-           const splitted = this.participation.repositoryUrl.split('@', 2);
-            return 'http://' + splitted[1];
+        let newRepositoryUrl: string = this.participation.repositoryUrl || '';
+        if (this.participation.student != null && this.participation.repositoryUrl != null) {
+            const userName = this.participation.student.login + '@';
+            if (this.participation.repositoryUrl.includes(userName)) {
+                newRepositoryUrl = this.participation.repositoryUrl.replace(userName, '');
+            }
         }
-        return '';
+        return newRepositoryUrl;
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
