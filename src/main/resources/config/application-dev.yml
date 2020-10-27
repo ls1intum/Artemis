@@ -106,11 +106,9 @@ jhipster:
 
 # Properties to be exposed on the /info management endpoint
 info:
-    tutorial-course-groups: # Names of the tutorial groups that will be automatically added to newly created users
-        students: 'artemis-artemistutorial-students'
-        tutors: 'artemis-artemistutorial-tutors'
-        instructors: 'artemis-artemistutorial-instructors'
     guided-tour:
+        # Names of the tutorial groups that will be automatically added to newly created users
+        course-group-students: 'artemis-artemistutorial-students'
         courseShortName: 'artemistutorial'
         tours:
             - cancel_tour: ''

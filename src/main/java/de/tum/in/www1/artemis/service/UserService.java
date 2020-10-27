@@ -76,13 +76,13 @@ public class UserService {
     @Value("${artemis.user-management.internal-admin.password:#{null}}")
     private Optional<String> artemisInternalAdminPassword;
 
-    @Value("${info.tutorial-course-groups.students:#{null}}")
+    @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
 
-    @Value("${info.tutorial-course-groups.tutors:#{null}}")
+    @Value("${info.guided-tour.course-group-tutors:#{null}}")
     private Optional<String> tutorialGroupTutors;
 
-    @Value("${info.tutorial-course-groups.instructors:#{null}}")
+    @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
 
     private final UserRepository userRepository;
