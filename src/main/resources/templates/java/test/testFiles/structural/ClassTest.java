@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.DynamicContainer;
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
@@ -31,6 +32,7 @@ public class ClassTest extends StructuralTest {
      * These classes are then transformed into JUnit 5 dynamic tests.
      * @return A dynamic test container containing the test for each class which is then executed by JUnit.
      */
+    @Timeout(10)
     @TestFactory
     public DynamicContainer generateTestsForAllClasses() throws URISyntaxException {
         List<DynamicNode> tests = new ArrayList<>();
