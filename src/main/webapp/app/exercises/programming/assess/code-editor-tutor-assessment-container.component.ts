@@ -334,6 +334,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         const manualResults = (results || []).filter((result) => Result.isManualResult(result));
         const sortedResults = this.sortResults(manualResults);
         const initialManualResult = new Result();
+        // Manual results are always rated
+        initialManualResult.rated = true;
         return sortedResults.length > 0 ? sortedResults[0] : initialManualResult;
     }
 
