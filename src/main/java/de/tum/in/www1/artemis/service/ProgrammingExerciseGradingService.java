@@ -294,11 +294,14 @@ public class ProgrammingExerciseGradingService {
             updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            updateResultString(result, successfulTestCases, testCasesForCurrentDate, exercise);
+            updateResultString(result, successfulTestCases, testCasesForCurrentDate, staticCodeAnalysisFeedback, exercise);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0 && testCaseFeedback.size() > 0) {
             removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
+
+            // In this case, test cases won't be displayed but static code analysis feedback must be shown in the result string.
+            updateResultString(result, Set.of(), Set.of(), staticCodeAnalysisFeedback, exercise);
         }
         // Case 3: If there is no test case feedback, the build has failed or it has previously fallen under case 2. In this case we just return the original result without
         // changing it.
@@ -448,11 +451,20 @@ public class ProgrammingExerciseGradingService {
      * @param result of the build run.
      * @param successfulTestCases test cases with positive feedback.
      * @param allTests of the given programming exercise.
+     * @param scaFeedback for the result
+     * @param exercise to which this result and the test cases belong
      */
-    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests, ProgrammingExercise exercise) {
+    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests, List<Feedback> scaFeedback,
+            ProgrammingExercise exercise) {
         if (result.getAssessmentType() == AssessmentType.AUTOMATIC) {
             // Create a new result string that reflects passed, failed & not executed test cases.
             String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
+
+            // Show number of found quality issues if static code analysis is enabled
+            if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
+                String issueTerm = scaFeedback.size() == 1 ? ", 1 issue" : ", " + scaFeedback.size() + " issues";
+                newResultString += issueTerm;
+            }
             result.setResultString(newResultString);
         }
         else {
@@ -491,7 +503,6 @@ public class ProgrammingExerciseGradingService {
         result.setFeedbacks(staticCodeAnalysisFeedback);
         result.hasFeedback(staticCodeAnalysisFeedback.size() > 0);
         result.setScore(0L);
-        result.setResultString("0 of 0 passed");
     }
 
     /**
