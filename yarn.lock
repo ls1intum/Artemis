@@ -1341,10 +1341,10 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
-"@ls1intum/apollon@2.2.6":
-  version "2.2.6"
-  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.2.6.tgz#4c842fc9b54657d6ef5a3a2d0255265a770cebfc"
-  integrity sha512-zzdVYraL6YI8HCjkdoGN/4c9TyvZMwcWvvUH+U0Yl4gryd5oIvhKgPJyHw9ZUGOKqtr3T1NmCYAkKYg9uDQaOQ==
+"@ls1intum/apollon@2.2.9":
+  version "2.2.9"
+  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.2.9.tgz#771a7c8ca0ec17af2291b5daea315d57e2824a07"
+  integrity sha512-kt74T6HqXV47Ni/iBrk6BQ719NGUWadSZJtqFYIXCF63lK6sARKV5EGqQm89SyHobAUunqjm/aOs2ZHy53OoNg==
   dependencies:
     is-mobile "2.2.2"
     pepjs "0.5.2"
@@ -1355,7 +1355,7 @@
     redux-saga "1.1.3"
     redux-thunk "2.3.0"
     styled-components "5.2.0"
-    tslib "2.0.1"
+    tslib "2.0.3"
     uuid "8.3.1"
 
 "@ng-bootstrap/ng-bootstrap@7.0.0":
@@ -12291,11 +12291,6 @@ ts-jest@26.4.2, ts-jest@26.x:
     mkdirp "1.x"
     semver "7.x"
     yargs-parser "20.x"
-
-tslib@2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.0.1.tgz#410eb0d113e5b6356490eec749603725b021b43e"
-  integrity sha512-SgIkNheinmEBgx1IUNirK0TUD4X9yjjBRTqqjggWCU3pUEqIk3/Uwl3yRixYKT6WjQuGiwDv4NomL3wqRCj+CQ==
 
 tslib@2.0.3, tslib@^2.0.0, tslib@^2.0.1:
   version "2.0.3"
