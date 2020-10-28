@@ -158,6 +158,12 @@ public class BitbucketRepositoryDTO {
 
         private List<CloneDTO> self = new ArrayList<>();
 
+        /**
+         * needed for Jackson
+         */
+        public LinksDTO() {
+        }
+
         public List<CloneDTO> getClone() {
             return clone;
         }

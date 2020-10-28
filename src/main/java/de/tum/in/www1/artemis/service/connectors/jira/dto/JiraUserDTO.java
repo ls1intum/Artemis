@@ -126,6 +126,12 @@ public class JiraUserDTO {
 
         private URL self;
 
+        /**
+         * needed for Jackson
+         */
+        public JiraUserGroupDTO() {
+        }
+
         public String getName() {
             return name;
         }

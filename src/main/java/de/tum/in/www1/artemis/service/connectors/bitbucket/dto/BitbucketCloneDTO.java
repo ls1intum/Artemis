@@ -49,6 +49,12 @@ public class BitbucketCloneDTO {
 
         private String key;
 
+        /**
+         * needed for Jackson
+         */
+        public CloneDetailsDTO() {
+        }
+
         public CloneDetailsDTO(String key) {
             this.key = key;
         }
