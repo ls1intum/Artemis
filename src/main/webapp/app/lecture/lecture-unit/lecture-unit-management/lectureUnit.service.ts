@@ -10,7 +10,6 @@ import { AttachmentService } from 'app/lecture/attachment.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
-type EntityResponseType = HttpResponse<LectureUnit>;
 type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
 
 @Injectable({

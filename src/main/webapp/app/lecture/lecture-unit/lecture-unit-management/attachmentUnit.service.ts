@@ -7,7 +7,6 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<AttachmentUnit>;
-type EntityArrayResponseType = HttpResponse<AttachmentUnit[]>;
 
 @Injectable({
     providedIn: 'root',
