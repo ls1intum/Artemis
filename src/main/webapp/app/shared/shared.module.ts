@@ -16,6 +16,7 @@ import { JhiConnectionStatusComponent } from 'app/shared/connection-status/conne
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { DebounceClickDirective } from 'app/shared/directives/DebounceClickDirective';
+import { ChartComponent } from 'app/shared/chart/chart.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 
 @NgModule({
@@ -31,6 +32,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
         SecureLinkDirective,
         SlideToggleComponent,
         JhiConnectionStatusComponent,
+        ChartComponent,
         DebounceClickDirective,
     ],
     entryComponents: [DeleteDialogComponent],
@@ -52,6 +54,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
         SlideToggleComponent,
         JhiConnectionStatusComponent,
         DebounceClickDirective,
+        ChartComponent,
     ],
 })
 export class ArtemisSharedModule {}

@@ -10,7 +10,6 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview/exercise-details/programming-exercise-student-ide-actions.component';
 import { CourseCardComponent } from 'app/overview/course-card.component';
-import { ArtemisStudentQuestionsModule } from 'app/overview/student-questions/student-questions.module';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 import { ExerciseActionButtonComponent } from 'app/overview/exercise-details/exercise-action-button.component';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
@@ -42,7 +41,6 @@ import { AttachmentUnitComponent } from './course-lectures/attachment-unit/attac
         ClipboardModule,
         MomentModule,
         ArtemisResultModule,
-        ArtemisStudentQuestionsModule,
         ArtemisSidePanelModule,
         ArtemisCoursesRoutingModule,
         ArtemisHeaderExercisePageWithDetailsModule,

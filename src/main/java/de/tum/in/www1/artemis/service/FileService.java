@@ -11,7 +11,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -485,14 +484,13 @@ public class FileService implements DisposableBean {
     /**
      * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file
      *
-     * @see {@link #replaceVariablesInFile(String, List, List) replaceVariablesInFile}
+     * @see {@link #replaceVariablesInFile(String, Map) replaceVariablesInFile}
      * @param startPath          the path where the start directory is located
-     * @param targetStrings      the strings that should be replaced
-     * @param replacementStrings the strings that should be used to replace the target strings
+     * @param replacements       the replacements that should be applied
      * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
-    public void replaceVariablesInFileRecursive(String startPath, List<String> targetStrings, List<String> replacementStrings) throws IOException {
-        log.debug("Replacing {} with {} in files in directory {}", targetStrings, replacementStrings, startPath);
+    public void replaceVariablesInFileRecursive(String startPath, Map<String, String> replacements) throws IOException {
+        log.debug("Replacing {} in files in directory {}", replacements, startPath);
         File directory = new File(startPath);
         if (!directory.exists() || !directory.isDirectory()) {
             throw new RuntimeException("Files in directory " + startPath + " should be replaced but the directory does not exist.");
@@ -502,7 +500,7 @@ public class FileService implements DisposableBean {
         String[] files = directory.list((current, name) -> new File(current, name).isFile());
         if (files != null) {
             for (String file : files) {
-                replaceVariablesInFile(directory.getAbsolutePath() + File.separator + file, targetStrings, replacementStrings);
+                replaceVariablesInFile(directory.getAbsolutePath() + File.separator + file, replacements);
             }
         }
 
@@ -514,7 +512,7 @@ public class FileService implements DisposableBean {
                     // ignore files in the '.git' folder
                     continue;
                 }
-                replaceVariablesInFileRecursive(directory.getAbsolutePath() + File.separator + subdirectory, targetStrings, replacementStrings);
+                replaceVariablesInFileRecursive(directory.getAbsolutePath() + File.separator + subdirectory, replacements);
             }
         }
     }
@@ -524,19 +522,18 @@ public class FileService implements DisposableBean {
      * order of the argument is the same
      *
      * @param filePath           the path where the file is located
-     * @param targetStrings      the strings that should be replaced
-     * @param replacementStrings the strings that should be used to replace the target strings
+     * @param replacements       the replacements that should be applied
      * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
-    public void replaceVariablesInFile(String filePath, List<String> targetStrings, List<String> replacementStrings) throws IOException {
-        log.debug("Replacing {} with {} in file {}", targetStrings, replacementStrings, filePath);
+    public void replaceVariablesInFile(String filePath, Map<String, String> replacements) throws IOException {
+        log.debug("Replacing {} in file {}", replacements, filePath);
         // https://stackoverflow.com/questions/3935791/find-and-replace-words-lines-in-a-file
         Path replaceFilePath = Paths.get(filePath);
         Charset charset = StandardCharsets.UTF_8;
 
         String fileContent = Files.readString(replaceFilePath, charset);
-        for (int i = 0; i < targetStrings.size(); i++) {
-            fileContent = fileContent.replace(targetStrings.get(i), replacementStrings.get(i));
+        for (Map.Entry<String, String> replacement : replacements.entrySet()) {
+            fileContent = fileContent.replace(replacement.getKey(), replacement.getValue());
         }
         Files.writeString(replaceFilePath, fileContent, charset);
     }
