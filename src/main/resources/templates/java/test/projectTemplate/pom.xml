@@ -99,6 +99,10 @@
                         <version>6.28.0</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <!-- Minimum amount of duplicated tokens triggering the copy-paste detection -->
+                    <minimumTokens>70</minimumTokens>
+                </configuration>
             </plugin>
             %static-code-analysis-stop%
         </plugins>
