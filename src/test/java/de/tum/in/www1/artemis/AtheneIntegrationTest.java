@@ -100,17 +100,19 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         final List<TextCluster> clusters = textClusterRepository.findAllByExercise(exercise);
 
-        for (int i1 = 0; i1 < clusters.size(); i1++) {
-            TextCluster cluster = clusters.get(i1);
+        for (int clusterIndex = 0; clusterIndex < clusters.size(); clusterIndex++) {
+            TextCluster cluster = clusters.get(clusterIndex);
             assertThat(cluster.size(), equalTo(3));
             assertThat(cluster.getBlocks(), hasSize(3));
 
             List<TextBlock> blocks = cluster.getBlocks();
-            for (int i = 0; i < blocks.size(); i++) {
-                TextBlock block = blocks.get(i);
+            for (int blockIndex = 0; blockIndex < blocks.size(); blockIndex++) {
+                TextBlock block = blocks.get(blockIndex);
                 assertThat(block.getAddedDistance(), greaterThan(1.65));
-                final TextBlock textBlockFromRequest = clusterDTOs.get(i1).getBlocks().get(i);
+                final TextBlock textBlockFromRequest = clusterDTOs.get(clusterIndex).getBlocks().get(blockIndex);
                 assertThat(block.getId(), is(equalTo(textBlockFromRequest.getId())));
+                var positionInCluster = ReflectionTestUtils.getField(block, "positionInCluster");
+                assertThat(positionInCluster, is(equalTo(blockIndex)));
             }
         }
 
