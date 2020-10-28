@@ -53,6 +53,12 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         database.resetDatabase();
     }
 
+    /**
+     * Test that Added Distances are calculated and positionInCluster is stored when receiving
+     * response from Athene.
+     *
+     * @throws Exception might be thrown from Network Call to Artemis API
+     */
     @Test
     public void testProcessingClusterAddedDistances() throws Exception {
         SecurityUtils.setAuthorizationObject();
