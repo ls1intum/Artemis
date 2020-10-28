@@ -420,7 +420,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private calculateTotalScore() {
         const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
-        const maxPoints = this.exercise.maxScore! + this.exercise.bonusPoints! ?? 0.0;
+        const maxPoints = this.exercise.maxScore! + (this.exercise.bonusPoints! ?? 0.0);
         let totalScore = 0.0;
         let scoreAutomaticTests = 0.0;
         const gradingInstructions = {}; // { instructionId: noOfEncounters }

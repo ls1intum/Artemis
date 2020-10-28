@@ -142,15 +142,16 @@ public class Result extends DomainObject {
      *
      * @param totalScore total amount of scored points
      * @param maxScore   maximum score reachable at corresponding exercise
+     * @return String with result string for manual result of a progrmaming exercise
      */
     @JsonIgnore
     public String createResultStringForManualResult(Double totalScore, @Nullable Double maxScore) {
         DecimalFormat formatter = new DecimalFormat("#.##");
         if (maxScore == null) {
-            return (formatter.format(totalScore) + " points");
+            return formatter.format(totalScore) + " points";
         }
         else {
-            return (formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points");
+            return formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points";
         }
     }
 
