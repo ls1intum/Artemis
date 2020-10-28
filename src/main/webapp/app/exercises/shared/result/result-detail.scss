@@ -1,0 +1,52 @@
+.feedback-item {
+    border-radius: 4px;
+    border-style: solid;
+    border-width: 1px;
+    padding: 5px 10px;
+    margin-bottom: 15px;
+    font-weight: normal;
+
+    span:first-child {
+        font-size: 0.7em;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    span.feedback-points {
+        float: right;
+        font-weight: bold;
+    }
+
+    span.feedback-title {
+        font-size: 0.9em;
+
+        &::before {
+            content: '·';
+            display: inline;
+            font-weight: 900;
+            margin: 0 8px 0 4px;
+        }
+    }
+
+    p {
+        white-space: pre-wrap;
+        margin: 0.2em 0;
+    }
+}
+
+.result-score-chart {
+    margin-bottom: 1em;
+
+    .result-score-chart-title {
+        display: inline-block;
+        width: 100%;
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-bottom: 5px;
+        font-size: 0.9em;
+
+        .badge {
+            float: right;
+        }
+    }
+}
