@@ -828,7 +828,7 @@ public class ModelFactory {
      * @return A list containing the generated TextSubmissions
      */
     public static List<TextSubmission> generateTextSubmissions(int count) {
-        if (count > 10 ) {
+        if (count > 10) {
             throw new IllegalArgumentException();
         }
 

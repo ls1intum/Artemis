@@ -109,7 +109,8 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     public void submitJobWith10Submissions() {
         // Let textSubmissionService return 10 generated submissions
 
-        when(textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(exercise1.getId(), Language.ENGLISH)).thenReturn(ModelFactory.generateTextSubmissions(10));
+        when(textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(exercise1.getId(), Language.ENGLISH))
+                .thenReturn(ModelFactory.generateTextSubmissions(10));
 
         // Inject restTemplate to connector of atheneService
         RemoteArtemisServiceConnector conn = (RemoteArtemisServiceConnector) ReflectionTestUtils.getField(atheneService, "connector");
