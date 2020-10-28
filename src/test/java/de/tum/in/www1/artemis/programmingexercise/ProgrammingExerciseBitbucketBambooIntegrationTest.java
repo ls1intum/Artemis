@@ -51,7 +51,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     @ParameterizedTest
-    @EnumSource(ProgrammingLanguage.class)
+    // TODO René Lalla: incldue Swift again as soon as it is fully supported
+    @EnumSource(value = ProgrammingLanguage.class, names = { "SWIFT" }, mode = EnumSource.Mode.EXCLUDE)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language) throws Exception {
         programmingExerciseTestService.createProgrammingExercise_programmingLanguage_validExercise_created(language);
@@ -76,7 +77,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     @ParameterizedTest
-    @EnumSource(ProgrammingLanguage.class)
+    // TODO René Lalla: incldue Swift again as soon as it is fully supported
+    @EnumSource(value = ProgrammingLanguage.class, names = { "SWIFT" }, mode = EnumSource.Mode.EXCLUDE)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExerciseTestService.importExercise_created(programmingLanguage);
@@ -128,6 +130,18 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam() throws Exception {
         programmingExerciseTestService.repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_mode_changedToIndividual() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExercise_individual_modeChange();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_mode_changedToTeam() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExercise_team_modeChange();
     }
 
 }

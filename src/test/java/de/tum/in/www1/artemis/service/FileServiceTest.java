@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -122,5 +124,24 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         fileService.convertToUTF8("./exportTest/EncodingISO_8559_1.java");
         charset = fileService.detectCharset(FileUtils.readFileToByteArray(new File("./exportTest/EncodingISO_8559_1.java")));
         assertThat(charset).isEqualTo(StandardCharsets.UTF_8);
+    }
+
+    @Test
+    public void replacePlaceHolder() throws IOException {
+        copyFile("pom.xml", "pom.xml");
+        File pomXml = new File("./exportTest/pom.xml");
+        String fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
+
+        assertThat(fileContent).contains("${exerciseName}");
+        assertThat(fileContent).doesNotContain("SomeCoolExerciseName");
+
+        Map<String, String> replacements = new HashMap<>();
+        replacements.put("${exerciseName}", "SomeCoolExerciseName");
+
+        fileService.replaceVariablesInFileRecursive(pomXml.getParent(), replacements);
+        fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
+
+        assertThat(fileContent).doesNotContain("${exerciseName}");
+        assertThat(fileContent).contains("SomeCoolExerciseName");
     }
 }

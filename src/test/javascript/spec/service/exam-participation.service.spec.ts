@@ -11,12 +11,12 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../test.module';
-import { expect } from '../helpers/jasmine.jest.fix';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
+import { expect } from '../helpers/jest.fix';
 
 describe('Exam Participation Service', () => {
     let injector: TestBed;
