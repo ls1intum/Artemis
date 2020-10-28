@@ -1,14 +1,25 @@
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
 import { Moment } from 'moment';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 
-export class AttachmentUnitFormData {
+export interface AttachmentUnitFormData {
+    formProperties: FormProperties;
+    fileProperties: FileProperties;
+}
+
+// matches structure of the reactive form
+export interface FormProperties {
     name?: string;
     description?: string;
     releaseDate?: Moment;
-    file?: Blob | File;
+    version?: number;
+    updateNotificationText?: string;
+}
+
+// file input is a special case and is not included in the reactive form structure
+export interface FileProperties {
+    file?: File | Blob;
     fileName?: string;
 }
 
@@ -19,51 +30,53 @@ export class AttachmentUnitFormData {
 })
 export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     @Input()
-    attachmentUnit: AttachmentUnit;
-
+    formData: AttachmentUnitFormData;
     @Input()
-    editing = false;
+    isEditMode = false;
 
-    erroredFile?: Blob;
-    errorMessage?: string;
+    fileUploadErrorMessage?: string;
 
     @Output()
-    submitAttachmentUnitForm: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
-
+    formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
     form: FormGroup;
 
+    // have to handle the file input as a special case at is not part of the reactive form
     @ViewChild('fileInput', { static: false })
     fileInput: ElementRef;
-
-    file?: Blob | File;
-    // Setting it to the placeholder value as default
-    fileName?: string = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.chooseFile');
+    file: File | Blob;
+    readonly fileNamePlaceholder = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.chooseFile');
+    fileName: string = this.fileNamePlaceholder;
+    fileInputTouched = false;
 
     constructor(private translateService: TranslateService, private fb: FormBuilder) {}
 
     ngOnChanges(): void {
-        this.initForm();
+        this.initializeForm();
+        if (this.isEditMode) {
+            this.setFormValues(this.formData);
+        }
     }
 
     ngOnInit(): void {
-        this.initForm();
+        this.initializeForm();
     }
 
-    private initForm() {
+    private initializeForm() {
         if (this.form) {
             return;
         }
         this.form = this.fb.group({
             name: [undefined, [Validators.required, Validators.maxLength(255)]],
             description: [undefined, [Validators.maxLength(255)]],
-            file: [undefined, Validators.required],
             releaseDate: [undefined],
+            version: [1],
+            updateNotificationText: [undefined, [Validators.maxLength(255)]],
         });
     }
 
-    setFile($event: any): void {
+    onFileChange($event: any): void {
         if ($event.target.files.length) {
-            this.erroredFile = undefined; // removes the file size error message when the user selects a new file
+            this.fileUploadErrorMessage = undefined; // removes the file size error message when the user selects a new file
             const fileList: FileList = $event.target.files;
             this.file = fileList[0];
             this.fileName = this.file['name'];
@@ -78,43 +91,48 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
         return this.form.get('description');
     }
 
-    get fileControl() {
-        return this.form.get('file');
+    get releaseDateControl() {
+        return this.form.get('releaseDate');
     }
 
-    resetForm() {
-        this.form.reset();
-        this.fileName = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.chooseFile');
-        this.erroredFile = undefined;
-        this.errorMessage = undefined;
+    get updateNotificationTextControl() {
+        return this.form.get('updateNotificationText');
     }
 
-    setFileUploadError(error: any) {
-        this.errorMessage = error.message;
-        this.erroredFile = this.file;
+    get isSubmitPossible() {
+        return !(this.form.invalid || this.fileUploadErrorMessage || this.fileName === this.fileNamePlaceholder);
+    }
+
+    // will be called from parent component to set the form error when the file upload failed
+    setFileUploadError(errorMessage: string) {
+        this.fileUploadErrorMessage = errorMessage;
         this.fileInput.nativeElement.value = '';
-        this.file = undefined;
+        this.fileName = this.fileNamePlaceholder;
     }
 
     submitForm() {
         const formValue = this.form.value;
-        const formData: AttachmentUnitFormData = new AttachmentUnitFormData();
-        if (formValue.name) {
-            formData.name = formValue.name;
-        }
-        if (formValue.description) {
-            formData.description = formValue.description;
-        }
-        if (formValue.releaseDate) {
-            formData.releaseDate = formValue.releaseDate;
-        }
-        if (this.file) {
-            formData.file = this.file;
-        }
-        if (this.fileName) {
-            formData.fileName = this.fileName;
-        }
+        const formProperties: FormProperties = { ...formValue };
+        const fileProperties: FileProperties = {
+            file: this.file,
+            fileName: this.fileName,
+        };
 
-        this.submitAttachmentUnitForm.emit(formData);
+        this.formSubmitted.emit({
+            formProperties,
+            fileProperties,
+        });
+    }
+
+    private setFormValues(formData: AttachmentUnitFormData) {
+        if (formData?.formProperties) {
+            this.form.patchValue(formData.formProperties);
+        }
+        if (formData?.fileProperties?.file) {
+            this.file = formData?.fileProperties?.file;
+        }
+        if (formData?.fileProperties?.fileName) {
+            this.fileName = formData?.fileProperties?.fileName;
+        }
     }
 }

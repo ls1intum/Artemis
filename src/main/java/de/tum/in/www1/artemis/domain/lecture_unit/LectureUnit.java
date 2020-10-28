@@ -95,10 +95,6 @@ public abstract class LectureUnit extends DomainObject {
 
     @JsonProperty(value = "visibleToStudents")
     public boolean isVisibleToStudents() {
-        return calculateVisibility();
-    }
-
-    public boolean calculateVisibility() {
         if (releaseDate == null) {
             return true;
         }

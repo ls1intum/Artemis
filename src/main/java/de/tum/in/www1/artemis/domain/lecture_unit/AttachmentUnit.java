@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.lecture_unit;
 
-import java.time.ZonedDateTime;
-
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -17,52 +15,23 @@ import de.tum.in.www1.artemis.domain.Attachment;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class AttachmentUnit extends LectureUnit {
 
+    // Note: Name and Release Date will always be taken from associated attachment
     @Column(name = "description")
     @Lob
     private String description;
 
-    @OneToOne(mappedBy = "attachmentUnit", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "attachmentUnit", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "attachmentUnit", allowSetters = true)
     private Attachment attachment;
 
     @Override
-    public String getName() {
-        if (this.attachment != null && this.attachment.getName() != null) {
-            return this.attachment.getName();
-        }
-        else {
-            return null;
-        }
-    }
-
-    @Override
-    public void setName(String name) {
-        // Do nothing as the name will always be taken from the attachment
-    }
-
-    @Override
-    public ZonedDateTime getReleaseDate() {
-        if (this.attachment != null && this.attachment.getReleaseDate() != null) {
-            return this.attachment.getReleaseDate();
-        }
-        else {
-            return null;
-        }
-    }
-
-    @Override
-    public boolean calculateVisibility() {
+    public boolean isVisibleToStudents() {
         if (attachment == null) {
             return true;
         }
         else {
             return attachment.isVisibleToStudents();
         }
-    }
-
-    @Override
-    public void setReleaseDate(ZonedDateTime releaseDate) {
-        // Do nothing as the release date will always be taken from the attachment
     }
 
     public String getDescription() {

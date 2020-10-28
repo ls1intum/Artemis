@@ -10,6 +10,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription } from 'rxjs';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 
 @Component({
     selector: 'jhi-lecture-unit-management',
@@ -45,7 +47,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.navigationEndSubscription = this.router.events.pipe(filter((value) => value instanceof NavigationEnd)).subscribe((event) => {
+        this.navigationEndSubscription = this.router.events.pipe(filter((value) => value instanceof NavigationEnd)).subscribe(() => {
             this.loadData();
         });
 
@@ -57,6 +59,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             }
         });
 
+        // debounceTime limits the amount of put requests sent for updating the lecture unit order
         this.updateOrderSubjectSubscription = this.updateOrderSubject.pipe(debounceTime(1000)).subscribe(() => {
             this.updateOrder();
         });
@@ -76,6 +79,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 (lecture) => {
                     if (lecture?.lectureUnits) {
                         this.lectureUnits = lecture?.lectureUnits;
+                    } else {
+                        this.lectureUnits = [];
                     }
                 },
                 (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -114,8 +119,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.router.navigate(['attachment-units', 'create'], { relativeTo: this.activatedRoute });
     }
 
-    identify(_: any, lectureUnit: LectureUnit) {
-        return lectureUnit.id;
+    identify(index: number, lectureUnit: LectureUnit) {
+        return `${index}-${lectureUnit.id}`;
     }
 
     getDeleteQuestionKey(lectureUnit: LectureUnit) {
@@ -152,5 +157,37 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
+    }
+
+    editButtonAvailable(lectureUnit: LectureUnit) {
+        switch (lectureUnit?.type) {
+            case LectureUnitType.ATTACHMENT:
+            case LectureUnitType.TEXT:
+            case LectureUnitType.VIDEO:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    editButtonClicked(lectureUnit: LectureUnit) {
+        switch (lectureUnit?.type) {
+            case LectureUnitType.ATTACHMENT:
+                this.router.navigate(['attachment-units', lectureUnit.id, 'edit'], { relativeTo: this.activatedRoute });
+                break;
+            default:
+                return;
+        }
+    }
+
+    getLectureUnitName(lectureUnit: LectureUnit): string | undefined {
+        switch (lectureUnit?.type) {
+            case LectureUnitType.ATTACHMENT:
+                return (<AttachmentUnit>lectureUnit)?.attachment?.name;
+            case LectureUnitType.EXERCISE:
+                return (<ExerciseUnit>lectureUnit)?.exercise?.title;
+            default:
+                return lectureUnit.name;
+        }
     }
 }

@@ -2,7 +2,7 @@ import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureU
 import { Attachment } from 'app/entities/attachment.model';
 
 export class AttachmentUnit extends LectureUnit {
-    public description?: String;
+    public description?: string;
     public attachment?: Attachment;
 
     constructor() {

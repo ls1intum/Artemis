@@ -17,9 +17,21 @@ export class AttachmentUnitService {
 
     constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
 
+    findById(attachmentUnitId: number) {
+        return this.httpClient
+            .get<AttachmentUnit>(`${this.resourceURL}/attachment-units/${attachmentUnitId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+    }
+
     create(attachmentUnit: AttachmentUnit, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient
             .post<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units`, attachmentUnit, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+    }
+
+    update(attachmentUnit: AttachmentUnit, lectureId: number): Observable<EntityResponseType> {
+        return this.httpClient
+            .put<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units`, attachmentUnit, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
     }
 }

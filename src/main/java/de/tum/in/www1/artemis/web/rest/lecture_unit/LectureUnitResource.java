@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.lecture_unit.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture_unit.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture_unit.LectureUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -81,15 +82,18 @@ public class LectureUnitResource {
         lecture.setLectureUnits(filteredLectureUnits);
         lectureRepository.save(lecture);
 
-        String title;
+        String lectureUnitName;
 
-        if (lectureUnit instanceof ExerciseUnit) {
-            title = ((ExerciseUnit) lectureUnit).getExercise().getTitle();
+        if (lectureUnit instanceof ExerciseUnit && ((ExerciseUnit) lectureUnit).getExercise() != null) {
+            lectureUnitName = ((ExerciseUnit) lectureUnit).getExercise().getTitle();
+        }
+        else if (lectureUnit instanceof AttachmentUnit && ((AttachmentUnit) lectureUnit).getAttachment() != null) {
+            lectureUnitName = ((AttachmentUnit) lectureUnit).getAttachment().getName();
         }
         else {
-            title = lectureUnit.getName();
+            lectureUnitName = lectureUnit.getName();
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, title)).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureUnitName)).build();
     }
 
 }

@@ -71,6 +71,14 @@ export class AttachmentService {
         return res;
     }
 
+    convertAttachmentDateFromServer(attachment?: Attachment) {
+        if (attachment) {
+            attachment.releaseDate = attachment.releaseDate ? moment(attachment.releaseDate) : undefined;
+            attachment.uploadDate = attachment.uploadDate ? moment(attachment.uploadDate) : undefined;
+        }
+        return attachment;
+    }
+
     convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((attachment: Attachment) => {

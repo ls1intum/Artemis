@@ -20,12 +20,12 @@ export class ExerciseUnitService {
     create(exerciseUnit: ExerciseUnit, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient
             .post<ExerciseUnit>(`${this.resourceURL}/lectures/${lectureId}/exercise-units`, exerciseUnit, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
     }
 
     findAllByLectureId(lectureId: number): Observable<EntityArrayResponseType> {
         return this.httpClient
             .get<ExerciseUnit[]>(`${this.resourceURL}/lectures/${lectureId}/exercise-units`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.lectureUnitService.convertDateArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.lectureUnitService.convertDateArrayFromServerResponse(res)));
     }
 }

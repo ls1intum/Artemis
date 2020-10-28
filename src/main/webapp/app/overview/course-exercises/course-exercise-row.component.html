@@ -16,7 +16,7 @@
             </div>
             <jhi-submission-result-status *ngIf="!isPresentationMode" [exercise]="exercise" [short]="true"></jhi-submission-result-status>
         </div>
-        <div class="row" *ngIf="!isPresentationMode">
+        <div class="row">
             <jhi-exercise-details-student-actions
                 jhiOrionFilter
                 [showInOrionWindow]="false"
@@ -27,6 +27,7 @@
                 [equalColumns]="false"
                 [exercise]="exercise"
                 [ngClass]="'mt-2 mb-2'"
+                *ngIf="!isPresentationMode"
             ></jhi-exercise-details-student-actions>
             <div class="exercise-tags col-auto col-sm d-flex justify-content-center mt-2">
                 <h4>
@@ -39,7 +40,7 @@
                         {{ 'artemisApp.courseOverview.exerciseList.notReleased' | translate }}</span
                     >
                 </h4>
-                <h4>
+                <h4 *ngIf="!isPresentationMode">
                     <span class="badge badge-success mr-1" [hidden]="!asQuizExercise(exercise).isActiveQuiz">{{ 'artemisApp.courseOverview.exerciseList.live' | translate }}</span>
                 </h4>
                 <h4 *ngFor="let category of exerciseCategories">

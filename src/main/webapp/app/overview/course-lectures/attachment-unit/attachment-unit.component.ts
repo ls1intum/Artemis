@@ -11,9 +11,6 @@ export class AttachmentUnitComponent implements OnInit {
     @Input()
     attachmentUnit: AttachmentUnit;
 
-    @Input()
-    isPresentationMode: false;
-
     constructor(private fileService: FileService) {}
 
     ngOnInit(): void {}
@@ -21,6 +18,14 @@ export class AttachmentUnitComponent implements OnInit {
     downloadAttachment() {
         if (this.attachmentUnit?.attachment?.link) {
             this.fileService.downloadFileWithAccessToken(this.attachmentUnit?.attachment?.link);
+        }
+    }
+
+    getFileName() {
+        if (this.attachmentUnit?.attachment?.link) {
+            return this.attachmentUnit?.attachment?.link.substring(this.attachmentUnit?.attachment?.link.lastIndexOf('/') + 1);
+        } else {
+            return '';
         }
     }
 

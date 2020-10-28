@@ -10,8 +10,8 @@
     <!-- Lecture Unit Rows-->
     <div class="row mb-4" *ngFor="let lectureUnit of lectureUnits; index as i; trackBy: identify">
         <div class="col-10 col-md-6 offset-md-3" [ngSwitch]="lectureUnit.type">
-            <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true"> </jhi-exercise-unit>
-            <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit" [isPresentationMode]="true"></jhi-attachment-unit>
+            <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true"></jhi-exercise-unit>
+            <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
         </div>
         <div class="col-1 my-auto">
             <div class="container">
@@ -32,13 +32,17 @@
                 *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                 jhiDeleteButton
                 [actionType]="getActionType(lectureUnit)"
-                [entityTitle]="lectureUnit.name"
+                [entityTitle]="getLectureUnitName(lectureUnit)"
                 [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
                 [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
                 (delete)="deleteLectureUnit(lectureUnit.id)"
                 [dialogError]="dialogError$"
             >
                 <fa-icon [icon]="'times'"></fa-icon>
+            </button>
+            <button *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary" (click)="editButtonClicked(lectureUnit)">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
             </button>
         </div>
     </div>
