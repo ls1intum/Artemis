@@ -52,7 +52,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Mock
     TextClusterRepository textClusterRepository;
 
-    private final static String submitApiEndpoint = "http://localhost/submit";
+    private final static String SUBMIT_API_ENDPOINT = "http://localhost/submit";
 
     AtheneService atheneService;
 
@@ -66,7 +66,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         // Create atheneService and inject @Value fields
         atheneService = new AtheneService(textSubmissionService, textBlockRepository, textClusterRepository, textExerciseRepository, textAssessmentQueueService);
         ReflectionTestUtils.setField(atheneService, "artemisServerUrl", artemisServerUrl);
-        ReflectionTestUtils.setField(atheneService, "submitApiEndpoint", submitApiEndpoint);
+        ReflectionTestUtils.setField(atheneService, "submitApiEndpoint", SUBMIT_API_ENDPOINT);
         String apiSecret = "YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=";
         ReflectionTestUtils.setField(atheneService, "apiSecret", apiSecret);
 
@@ -118,7 +118,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         // Create mock server
         MockRestServiceServer mockServer = MockRestServiceServer.bindTo(restTemplate).build();
-        mockServer.expect(ExpectedCount.once(), requestTo(submitApiEndpoint)).andExpect(method(HttpMethod.POST))
+        mockServer.expect(ExpectedCount.once(), requestTo(SUBMIT_API_ENDPOINT)).andExpect(method(HttpMethod.POST))
                 .andRespond(withSuccess("{ \"detail\": \"Submission successful\" }", MediaType.APPLICATION_JSON));
 
         atheneService.submitJob(exercise1);
