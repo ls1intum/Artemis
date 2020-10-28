@@ -137,6 +137,23 @@ public class Result extends DomainObject {
         }
     }
 
+    /**
+     * Builds a part of the result string of manual results for programming exercises
+     *
+     * @param totalScore total amount of scored points
+     * @param maxScore   maximum score reachable at corresponding exercise
+     */
+    @JsonIgnore
+    public String createResultStringForManualResult(Double totalScore, @Nullable Double maxScore) {
+        DecimalFormat formatter = new DecimalFormat("#.##");
+        if (maxScore == null) {
+            return (formatter.format(totalScore) + " points");
+        }
+        else {
+            return (formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points");
+        }
+    }
+
     public ZonedDateTime getCompletionDate() {
         return completionDate;
     }

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
@@ -465,12 +464,11 @@ public class ProgrammingExerciseGradingService {
             newResultString += issueTerm;
         }
         if (result.isManualResult()) {
-            DecimalFormat formatter = new DecimalFormat("#.##");
             // Calculate different scores for totalScore calculation and add points and maxScore to result string
             double maxScore = getMaxScoreRespectingZeroPointExercises(exercise);
             double points = programmingAssessmentService.calculateTotalScore(result);
             result.setScore(points, maxScore);
-            newResultString += ", " + (formatter.format(points) + " of " + formatter.format(maxScore) + " points");
+            newResultString += result.createResultStringForManualResult(points, maxScore);
         }
         result.setResultString(newResultString);
     }

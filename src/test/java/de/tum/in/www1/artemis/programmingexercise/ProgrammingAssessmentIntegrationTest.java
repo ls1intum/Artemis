@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
-import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,7 +77,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
         double points = programmingAssessmentService.calculateTotalScore(result);
-        result.resultString("3 of 3 passed, 1 issue, " + createManualResultStringAddition(points));
+        result.resultString("3 of 3 passed, 1 issue, " + result.createResultStringForManualResult(points, programmingExercise.getMaxScore()));
 
         dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
@@ -96,7 +95,6 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1",
                 AssessmentType.SEMI_AUTOMATIC);
         Result programmingAssessment = programmingSubmission.getResult();
-        double score = programmingAssessmentService.calculateTotalScore(programmingAssessment);
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
@@ -104,15 +102,18 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate();
-        assessmentUpdate.setFeedbacks(new ArrayList<>());
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
+        assessmentUpdate.setFeedbacks(feedbacks);
+
         assessmentUpdate.setComplaintResponse(complaintResponse);
 
         Result updatedResult = request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
-        assertThat(updatedResult.getScore()).isEqualTo((long) score);
-        assertThat(updatedResult.getResultString()).isEqualTo("1 of 13 passed, 1 issue, 5 of 10 points");
+        assertThat(updatedResult.getScore()).isEqualTo(80);
+        assertThat(updatedResult.getResultString()).isEqualTo("1 of 13 passed, 1 issue, 80 of 100 points");
         assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
 
         // Check that result and submission are properly connected
@@ -276,7 +277,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
         result.setFeedbacks(feedbacks);
         double points = programmingAssessmentService.calculateTotalScore(result);
-        result.resultString("3 of 3 passed, 1 issue, " + createManualResultStringAddition(points));
+        result.resultString("3 of 3 passed, 1 issue, " + result.createResultStringForManualResult(points, programmingExercise.getMaxScore()));
         // As maxScore is 100 points, 1 point is 1%
         result.score((long) points);
 
@@ -290,7 +291,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
         points = programmingAssessmentService.calculateTotalScore(result);
         result.score((long) points);
-        result.resultString("3 of 3 passed, 1 issue, " + createManualResultStringAddition(points));
+        result.resultString("3 of 3 passed, 1 issue, " + result.createResultStringForManualResult(points, programmingExercise.getMaxScore()));
 
         response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", result, Result.class,
                 HttpStatus.OK);
@@ -312,7 +313,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         double points = programmingAssessmentService.calculateTotalScore(result);
         // As maxScore is 100 points, 1 point is 1%
         result.score((long) points);
-        result.resultString("3 of 3 passed, 1 issue, " + createManualResultStringAddition(points));
+        result.resultString("3 of 3 passed, 1 issue, " + result.createResultStringForManualResult(points, programmingExercise.getMaxScore()));
 
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", result,
                 Result.class, HttpStatus.OK);
@@ -412,7 +413,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         result.setFeedbacks(result.getFeedbacks().subList(0, 1));
         double points = programmingAssessmentService.calculateTotalScore(result);
         result.setScore((long) points);
-        result.resultString("3 of 3 passed, 1 issue, " + createManualResultStringAddition(points));
+        result.resultString("3 of 3 passed, 1 issue, " + result.createResultStringForManualResult(points, programmingExercise.getMaxScore()));
 
         Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK);
         assertThat(response.getScore()).isEqualTo(2);
@@ -499,10 +500,5 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         ProgrammingSubmission submission = database.createProgrammingSubmission(null, false);
         submission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submission, "student1", "tutor1", AssessmentType.AUTOMATIC);
         request.put("/api/programming-submissions/" + submission.getId() + "/cancel-assessment", null, expectedStatus);
-    }
-
-    private String createManualResultStringAddition(Double points) {
-        DecimalFormat formatter = new DecimalFormat("#.##");
-        return (formatter.format(points) + " of " + formatter.format(programmingExercise.getMaxScore()) + " points");
     }
 }
