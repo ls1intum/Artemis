@@ -28,6 +28,11 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ProgrammingExerciseGradingService {
 
+    /**
+     * Placeholder point value for the score calculation of zero-point exercises to avoid the score always being 0.
+     */
+    public static final double PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES = 100.0;
+
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingService.class);
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
@@ -289,11 +294,14 @@ public class ProgrammingExerciseGradingService {
             updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            updateResultString(result, successfulTestCases, testCasesForCurrentDate, exercise);
+            updateResultString(result, successfulTestCases, testCasesForCurrentDate, staticCodeAnalysisFeedback, exercise);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0 && testCaseFeedback.size() > 0) {
             removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
+
+            // In this case, test cases won't be displayed but static code analysis feedback must be shown in the result string.
+            updateResultString(result, Set.of(), Set.of(), staticCodeAnalysisFeedback, exercise);
         }
         // Case 3: If there is no test case feedback, the build has failed or it has previously fallen under case 2. In this case we just return the original result without
         // changing it.
@@ -340,12 +348,13 @@ public class ProgrammingExerciseGradingService {
             List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
         if (successfulTestCases.size() > 0) {
 
+            double maxScoreRespectingZeroPointExercises = getMaxScoreRespectingZeroPointExercises(programmingExercise);
             double weightSum = allTests.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
 
             // calculate the achieved points from the passed test cases
             double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {
                 double testWeight = test.getWeight() * test.getBonusMultiplier();
-                double testPoints = testWeight / weightSum * programmingExercise.getMaxScore();
+                double testPoints = testWeight / weightSum * maxScoreRespectingZeroPointExercises;
                 double testPointsWithBonus = testPoints + test.getBonusPoints();
                 // update credits of related feedback
                 result.getFeedbacks().stream().filter(fb -> fb.getType() == FeedbackType.AUTOMATIC && fb.getText().equals(test.getTestName())).findFirst()
@@ -360,7 +369,7 @@ public class ProgrammingExerciseGradingService {
              * receive the full 20 points, if the points are not capped before the penalty is subtracted. With the implemented order in place
              * successfulTestPoints will be capped to 20 points first, then the penalty is subtracted resulting in 10 points.
              */
-            double maxPoints = programmingExercise.getMaxScore() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+            double maxPoints = maxScoreRespectingZeroPointExercises + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
             if (successfulTestPoints > maxPoints) {
                 successfulTestPoints = maxPoints;
             }
@@ -376,7 +385,7 @@ public class ProgrammingExerciseGradingService {
             }
 
             // The score is calculated as a percentage of the maximum points
-            long score = (long) (successfulTestPoints / programmingExercise.getMaxScore() * 100.0);
+            long score = (long) (successfulTestPoints / maxScoreRespectingZeroPointExercises * 100.0);
 
             result.setScore(score);
         }
@@ -429,7 +438,7 @@ public class ProgrammingExerciseGradingService {
          * points due to static code analysis issues.
          */
         final var maxExercisePenaltyPoints = (double) Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(100) / 100.0
-                * programmingExercise.getMaxScore();
+                * getMaxScoreRespectingZeroPointExercises(programmingExercise);
         if (codeAnalysisPenaltyPoints > maxExercisePenaltyPoints) {
             codeAnalysisPenaltyPoints = maxExercisePenaltyPoints;
         }
@@ -442,22 +451,47 @@ public class ProgrammingExerciseGradingService {
      * @param result of the build run.
      * @param successfulTestCases test cases with positive feedback.
      * @param allTests of the given programming exercise.
+     * @param scaFeedback for the result
+     * @param exercise to which this result and the test cases belong
      */
-    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests, ProgrammingExercise exercise) {
+    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests, List<Feedback> scaFeedback,
+            ProgrammingExercise exercise) {
         if (result.getAssessmentType() == AssessmentType.AUTOMATIC) {
             // Create a new result string that reflects passed, failed & not executed test cases.
             String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
+
+            // Show number of found quality issues if static code analysis is enabled
+            if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
+                String issueTerm = scaFeedback.size() == 1 ? ", 1 issue" : ", " + scaFeedback.size() + " issues";
+                newResultString += issueTerm;
+            }
             result.setResultString(newResultString);
         }
         else {
             // Calculate different scores for totalScore calculation and set resultString for manual results
-            double maxScore = exercise.getMaxScore();
+            double maxScore = getMaxScoreRespectingZeroPointExercises(exercise);
             double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
             double calculatedScore = programmingAssessmentService.calculateTotalScore(result.getFeedbacks());
             double totalScore = programmingAssessmentService.calculateTotalScore(calculatedScore, maxScore + bonusPoints);
             result.setScore(totalScore, maxScore);
             result.setResultString(totalScore, maxScore);
         }
+    }
+
+    /**
+     * Returns the maximum amount of regular points for the given exercise or a replacement point amount if the exercise has zero points (neither regular nor bonus points).
+     * <p>
+     * <b>Must only be used for the exercise-local score calculation and display messages and never for the actual score of a student in a course.</b>  
+     * @param programmingExercise the exercise to the the maxScore for
+     * @return {@link Exercise#getMaxScore()} or {@link #PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES}
+     */
+    private static double getMaxScoreRespectingZeroPointExercises(ProgrammingExercise programmingExercise) {
+        boolean hasNormalPoints = Objects.requireNonNullElse(programmingExercise.getMaxScore(), 0.0) > 0.0;
+        boolean hasBonusPoints = Objects.requireNonNullElse(programmingExercise.getMaxScore(), 0.0) > 0.0;
+        if (hasNormalPoints || hasBonusPoints) {
+            return programmingExercise.getMaxScore();
+        }
+        return PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
     }
 
     /**
@@ -469,7 +503,6 @@ public class ProgrammingExerciseGradingService {
         result.setFeedbacks(staticCodeAnalysisFeedback);
         result.hasFeedback(staticCodeAnalysisFeedback.size() > 0);
         result.setScore(0L);
-        result.setResultString("0 of 0 passed");
     }
 
     /**
