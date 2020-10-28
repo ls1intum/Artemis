@@ -51,7 +51,7 @@ public class AtheneService {
 
     private final TextSubmissionService textSubmissionService;
 
-    private final RemoteArtemisServiceConnector<Request, Response> connector = new RemoteArtemisServiceConnector<>(log, Response.class);
+    private final RemoteArtemisServiceConnector<RequestDTO, ResponseDTO> connector = new RemoteArtemisServiceConnector<>(log, ResponseDTO.class);
 
     // Contains tasks submitted to Athene and currently processing
     private final List<Long> runningAtheneTasks = new ArrayList<>();
@@ -66,7 +66,7 @@ public class AtheneService {
     }
 
     // region Request/Response DTOs
-    private static class Request {
+    private static class RequestDTO {
 
         public long courseId;
 
@@ -74,7 +74,7 @@ public class AtheneService {
 
         public List<TextSubmission> submissions;
 
-        Request(@NotNull long courseId, @NotNull List<TextSubmission> submissions, @NotNull String callbackUrl) {
+        RequestDTO(@NotNull long courseId, @NotNull List<TextSubmission> submissions, @NotNull String callbackUrl) {
             this.courseId = courseId;
             this.callbackUrl = callbackUrl;
             this.submissions = createSubmissionDTOs(submissions);
@@ -94,7 +94,7 @@ public class AtheneService {
         }
     }
 
-    private static class Response {
+    private static class ResponseDTO {
 
         public String detail;
 
@@ -156,8 +156,8 @@ public class AtheneService {
         log.info("Calling Remote Service to calculate automatic feedback for " + textSubmissions.size() + " submissions.");
 
         try {
-            final Request request = new Request(exercise.getId(), textSubmissions, artemisServerUrl + ATHENE_RESULT_API_PATH + exercise.getId());
-            Response response = connector.invokeWithRetry(submitApiEndpoint, request, authorizationHeaderForSymmetricSecret(apiSecret), maxRetries);
+            final RequestDTO request = new RequestDTO(exercise.getId(), textSubmissions, artemisServerUrl + ATHENE_RESULT_API_PATH + exercise.getId());
+            ResponseDTO response = connector.invokeWithRetry(submitApiEndpoint, request, authorizationHeaderForSymmetricSecret(apiSecret), maxRetries);
             log.info("Remote Service to calculate automatic feedback responded: " + response.detail);
 
             // Register task for exercise as running, AtheneResource calls finishTask on result receive
