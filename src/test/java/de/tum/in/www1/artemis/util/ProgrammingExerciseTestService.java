@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.util;
 
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
@@ -308,6 +310,85 @@ public class ProgrammingExerciseTestService {
         assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
         assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
                 .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
+    }
+
+    // TEST
+    public void testImportProgrammingExercise_team_modeChange() throws Exception {
+        // Setup exercises for import
+        ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        sourceExercise.setMode(ExerciseMode.INDIVIDUAL);
+        database.addTestCasesToProgrammingExercise(sourceExercise);
+        database.addHintsToExercise(sourceExercise);
+        database.addHintsToProblemStatement(sourceExercise);
+        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        sourceExercise.setCourse(sourceExercise.getCourseViaExerciseGroupOrCourseMember());
+        programmingExerciseRepository.save(sourceExercise);
+        database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
+        exerciseToBeImported.setMode(ExerciseMode.TEAM);
+        var teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setExercise(exerciseToBeImported);
+        teamAssignmentConfig.setMinTeamSize(1);
+        teamAssignmentConfig.setMaxTeamSize(10);
+        exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
+
+        // Mock requests
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
+
+        exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
+                ProgrammingExercise.class, HttpStatus.OK);
+
+        SecurityUtils.setAuthorizationObject();
+        assertEquals(ExerciseMode.TEAM, exerciseToBeImported.getMode());
+        assertEquals(teamAssignmentConfig.getMinTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize());
+        assertEquals(teamAssignmentConfig.getMaxTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize());
+        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+
+        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        assertEquals(ExerciseMode.INDIVIDUAL, sourceExercise.getMode());
+        assertNull(sourceExercise.getTeamAssignmentConfig());
+        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+    }
+
+    // TEST
+    public void testImportProgrammingExercise_individual_modeChange() throws Exception {
+        // Setup exercises for import
+        ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        sourceExercise.setMode(ExerciseMode.TEAM);
+        database.addTestCasesToProgrammingExercise(sourceExercise);
+        database.addHintsToExercise(sourceExercise);
+        database.addHintsToProblemStatement(sourceExercise);
+        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        var teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setExercise(sourceExercise);
+        teamAssignmentConfig.setMinTeamSize(1);
+        teamAssignmentConfig.setMaxTeamSize(10);
+        sourceExercise.setTeamAssignmentConfig(teamAssignmentConfig);
+        sourceExercise.setCourse(sourceExercise.getCourseViaExerciseGroupOrCourseMember());
+        programmingExerciseRepository.save(sourceExercise);
+        teamService.save(sourceExercise, new Team());
+        database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
+        exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
+
+        // Mock requests
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
+
+        exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
+                ProgrammingExercise.class, HttpStatus.OK);
+
+        SecurityUtils.setAuthorizationObject();
+        assertEquals(ExerciseMode.INDIVIDUAL, exerciseToBeImported.getMode());
+        assertNull(exerciseToBeImported.getTeamAssignmentConfig());
+        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+
+        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        assertEquals(ExerciseMode.TEAM, sourceExercise.getMode());
+        assertEquals(1, teamService.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
     }
 
     // TEST
