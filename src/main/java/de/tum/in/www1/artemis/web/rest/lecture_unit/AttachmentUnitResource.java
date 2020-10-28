@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture_unit.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -54,16 +53,11 @@ public class AttachmentUnitResource {
             return notFound();
         }
         AttachmentUnit attachmentUnit = optionalAttachmentUnit.get();
-        if (attachmentUnit.getLecture() == null) {
+        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null) {
             return conflict();
         }
-        Lecture lecture = attachmentUnit.getLecture();
-        if (lecture.getCourse() == null) {
-            return conflict();
-        }
-        Course course = lecture.getCourse();
 
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(attachmentUnit.getLecture().getCourse(), null)) {
             return forbidden();
         }
         return ResponseEntity.ok().body(attachmentUnit);
@@ -77,16 +71,11 @@ public class AttachmentUnitResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
 
-        if (attachmentUnit.getLecture() == null) {
+        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null) {
             return conflict();
         }
-        Lecture lecture = attachmentUnit.getLecture();
-        if (lecture.getCourse() == null) {
-            return conflict();
-        }
-        Course course = lecture.getCourse();
 
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(attachmentUnit.getLecture().getCourse(), null)) {
             return forbidden();
         }
 
@@ -117,9 +106,7 @@ public class AttachmentUnitResource {
         if (lecture.getCourse() == null) {
             return conflict();
         }
-        Course course = lecture.getCourse();
-
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(lecture.getCourse(), null)) {
             return forbidden();
         }
 

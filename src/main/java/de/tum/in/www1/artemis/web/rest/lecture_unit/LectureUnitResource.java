@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture_unit.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture_unit.ExerciseUnit;
@@ -57,9 +56,7 @@ public class LectureUnitResource {
         if (lecture.getCourse() == null) {
             return conflict();
         }
-        Course course = lecture.getCourse();
-
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(lecture.getCourse(), null)) {
             return forbidden();
         }
 
@@ -97,20 +94,20 @@ public class LectureUnitResource {
             return notFound();
         }
         LectureUnit lectureUnit = lectureUnitOptional.get();
-        if (lectureUnit.getLecture() == null) {
+        if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
             return conflict();
         }
-        Lecture lecture = lectureUnit.getLecture();
-        if (lecture.getCourse() == null) {
-            return conflict();
-        }
-        Course course = lecture.getCourse();
-
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(lectureUnit.getLecture().getCourse(), null)) {
             return forbidden();
         }
 
-        // Remove the lecture unit by removing it from the list of lecture units of the corresponding lecture
+        // we have to get the lecture from the db so that that the lecture units are included
+        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lectureUnit.getLecture().getId());
+        if (lectureOptional.isEmpty()) {
+            return notFound();
+        }
+        Lecture lecture = lectureOptional.get();
+
         List<LectureUnit> filteredLectureUnits = lecture.getLectureUnits();
         filteredLectureUnits.removeIf(lu -> lu.getId().equals(lectureUnitId));
         lecture.setLectureUnits(filteredLectureUnits);

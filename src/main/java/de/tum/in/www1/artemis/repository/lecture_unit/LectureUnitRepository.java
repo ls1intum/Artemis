@@ -10,4 +10,5 @@ import de.tum.in.www1.artemis.domain.lecture_unit.LectureUnit;
  */
 @Repository
 public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> {
+
 }

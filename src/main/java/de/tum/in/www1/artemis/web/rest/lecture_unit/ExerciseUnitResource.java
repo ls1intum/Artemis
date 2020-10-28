@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture_unit.ExerciseUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -60,9 +59,7 @@ public class ExerciseUnitResource {
         if (lecture.getCourse() == null) {
             return conflict();
         }
-        Course course = lecture.getCourse();
-
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(lecture.getCourse(), null)) {
             return forbidden();
         }
 
@@ -87,9 +84,7 @@ public class ExerciseUnitResource {
         if (lecture.getCourse() == null) {
             return conflict();
         }
-        Course course = lecture.getCourse();
-
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(lecture.getCourse(), null)) {
             return forbidden();
         }
 

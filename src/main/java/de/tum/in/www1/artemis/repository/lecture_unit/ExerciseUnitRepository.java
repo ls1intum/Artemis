@@ -21,4 +21,6 @@ public interface ExerciseUnitRepository extends JpaRepository<ExerciseUnit, Long
             WHERE
             eu.lecture.id = :#{#lectureId}""")
     List<ExerciseUnit> findByLectureId(@Param("lectureId") Long lectureId);
+
+    List<ExerciseUnit> removeAllByExerciseId(Long exerciseId);
 }
