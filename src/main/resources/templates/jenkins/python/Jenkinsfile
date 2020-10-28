@@ -28,7 +28,7 @@ pipeline {
                    rm -rf results
                    mkdir results
                    sed -i 's/<testsuites>//g ; s/<\/testsuites>//g' test-reports/results.xml
-                   cp test-reports/*.xml $WORKSPACE/results/
+                   cp test-reports/*.xml $WORKSPACE/results/ || true
                    '''
                 sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
                 cleanWs()
