@@ -452,6 +452,21 @@ recommended ones that got installed during the setup process):
 5.  `Timestamper <https://plugins.jenkins.io/timestamper/>`__ for adding the
     time to every line of the build output (Timestamper might already be installed)
 
+Plugins required for the new Pipeline-Setup:
+
+1.  `GitLab <https://plugins.jenkins.io/gitlab-plugin/>`__ for enabling
+    webhooks to and from GitLab
+
+2.  `Timestamper <https://plugins.jenkins.io/timestamper/>`__ for adding the
+    time to every line of the build output (Timestamper might already be installed)
+
+3.  `Pipeline <https://plugins.jenkins.io/workflow-aggregator/>`__ for defining the
+    build description using declarative files (Pipeline might already be installed)
+
+    **Note:** This is a suite of plugins that will install multiple plugins
+
+4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines.
+
 Choose “Download now and install after restart” and checking the
 “Restart Jenkins when installation is complete and no jobs are running” box
 
