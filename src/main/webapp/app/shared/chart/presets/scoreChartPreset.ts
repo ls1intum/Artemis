@@ -51,8 +51,8 @@ export class ScoreChartPreset implements ChartPreset {
      * @param exercise The active exercise
      */
     setValues(positive: number, negative: number, exercise: Exercise) {
-        const maxScoreWithBonus = exercise.maxScore! + (exercise.bonusPoints || 0);
-        const maxScore = exercise.maxScore!;
+        const maxScoreWithBonus = exercise.maxScore! + (exercise.bonusPoints || 0) || 100;
+        const maxScore = exercise.maxScore! + (exercise.bonusPoints || 0) === 0 ? 100 : exercise.maxScore!;
 
         // cap to min and max values while maintaining correct negative points
         if (positive - negative > maxScoreWithBonus) {

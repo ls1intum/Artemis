@@ -286,7 +286,7 @@ export class ResultDetailComponent implements OnInit {
         const exercise = this.result.participation.exercise;
 
         // cap test points
-        const maxPointsWithBonus = exercise.maxScore! + (exercise.bonusPoints || 0);
+        const maxPointsWithBonus = exercise.maxScore! + (exercise.bonusPoints || 0) || 100;
         if (testCaseCredits > maxPointsWithBonus) {
             testCaseCredits = maxPointsWithBonus;
         }
@@ -295,7 +295,8 @@ export class ResultDetailComponent implements OnInit {
         if (exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = exercise as ProgrammingExercise;
             if (programmingExercise.staticCodeAnalysisEnabled && programmingExercise.maxStaticCodeAnalysisPenalty != null) {
-                const maxPenaltyCredits = (programmingExercise.maxScore! * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
+                const maxPoints = programmingExercise.maxScore! + (programmingExercise.bonusPoints || 0) === 0 ? 100 : programmingExercise.maxScore!;
+                const maxPenaltyCredits = (maxPoints * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
                 codeIssueCredits = Math.min(codeIssueCredits, maxPenaltyCredits);
             }
         }
