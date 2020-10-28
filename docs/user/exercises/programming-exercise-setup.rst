@@ -130,9 +130,8 @@ Exercise Creation
       # Arguments:
       # $1: exercise short name as specified on Artemis
       # $2: (optional) output folder name
-
-      # base URL to repositories
-      BASE="ssh://git@bitbucket.ase.in.tum.de:7999/$EXERCISE/$EXERCISE"
+      #
+      # Note: you might want to adapt the `BASE` variable below according to your needs
 
       if [ -z "$1" ]; then
         echo "No exercise short name supplied."
@@ -148,11 +147,14 @@ Exercise Creation
         NAME="$2"
       fi
 
+      # default base URL to repositories; change this according to your needs
+      BASE="ssh://git@bitbucket.ase.in.tum.de:7999/$EXERCISE/$EXERCISE"
+
       # clone the test repository
       git clone "$BASE-tests.git" "$NAME" && \
         # clone the template repository
         git clone "$BASE-exercise.git" "$NAME/template" && \
-        # copy the solution repository
+        # clone the solution repository
         git clone "$BASE-solution.git" "$NAME/solution" && \
         # create an assignment folder from the template repository
         cp -R "$NAME/template" "$NAME/assignment" && \
