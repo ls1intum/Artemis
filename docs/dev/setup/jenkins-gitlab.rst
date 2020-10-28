@@ -646,6 +646,54 @@ the following steps:
     Depending on the version this setting might not be available anymore.
     Have a look `here <https://unix.stackexchange.com/questions/444177/how-to-disable-the-csrf-protection-in-jenkins-by-default>`__ on how you can disable CSRF protection.
 
+
+Installing remote build agents
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+You might want to run the builds on additional Jenkins agents, especially if a large amount of students should use the system at the same time.
+Jenkins supports remote build agents: The actual compilation of the students submissions happens on these other machines but the whole process is transparent to Artemis.
+
+This setup guide is for setting up a remote agent on an Ubuntu virtual machine that supports docker builds.
+
+Prerequisites:
+1. Install Docker on the remote machine: https://docs.docker.com/engine/install/ubuntu/
+
+2. Add a new user to the remote machine that Jenkins will use: ```sudo adduser --disabled-password --gecos "" jenkins```
+
+3. Add the jenkins user to the docker group (This allows the jenkins user to interact with docker): ```sudo usermod -a -G docker jenkins```
+
+4. Generate a new SSH key locally (e.g. using ```ssh-keygen```) and add the public key to the ```.ssh/authorized_keys``` file of the jenkins user on the agent VM.
+
+5. Validate that you can connect to the build agent machine using SSH and the generated private key and validate that you can use docker (`docker ps` should not show an error)
+
+6. Log in with your normal account on the build agent machine and install Java: ```sudo apt install default-jre```
+
+7. Add a new secret in Jenkins, enter private key you just generated and add the passphrase, if set:
+
+   .. figure:: jenkins-gitlab/jenkins_ssh_credentials.png
+      :align: center
+
+      Jenkins SSH Credentials
+
+8. Add a new node (select a name and select `Permanent Agent`):
+    Set the number of executors so that it matches your machine's specs: This is the number of concurrent builds this agent can handle
+
+    Set the remote root directory to ```/home/jenkins/remote_agent```
+
+    Set the launch method to `Launch via SSH` and add the host of the machine. Select the credentials you just created and select `Manually trusted key Verification Strategy` as Host key verification Strategy.
+    Save it.
+
+
+   .. figure:: jenkins-gitlab/jenkins_node.png
+      :align: center
+
+      Add a Jenkins node
+
+9. Wait for some moments while jenkins installs it's remote agent on the agent's machine.
+You can track the progress using the `Log` page when selecting the agent. System information should also be available.
+
+10. You are finished, the new agent should now also process builds.
+
+
 Upgrade Jenkins
 ~~~~~~~~~~~~~~~
 
