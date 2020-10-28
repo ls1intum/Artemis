@@ -157,8 +157,16 @@ public class FileResource {
             String languagePrefix = language.map(programmingLanguage -> File.separator + programmingLanguage.name().toLowerCase()).orElse("");
             String projectTypePrefix = projectType.map(type -> File.separator + type.name().toLowerCase()).orElse("");
 
-            Resource fileResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader)
-                    .getResource("classpath:templates" + languagePrefix + projectTypePrefix + File.separator + filename);
+            Resource fileResource;
+            try {
+                fileResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader)
+                        .getResource("classpath:templates" + languagePrefix + projectTypePrefix + File.separator + filename);
+            }
+            catch (Exception e) {
+                // Load without project type if not found with project type
+                fileResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:templates" + languagePrefix + File.separator + filename);
+            }
+
             var fileContent = IOUtils.toByteArray(fileResource.getInputStream());
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.TEXT_PLAIN);

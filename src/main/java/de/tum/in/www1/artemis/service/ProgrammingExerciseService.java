@@ -212,10 +212,24 @@ public class ProgrammingExerciseService {
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
     }
 
+    /**
+     * Setup the exercise template by determining the files needed for the template and copying them.
+     * @param programmingExercise the programming exercise that should be set up
+     * @param user the User that performed the action (used as Git commit author)
+     * @param exerciseRepoUrl the URL where the exercise repo is located
+     * @param testsRepoUrl the URL where the tests repo is located
+     * @param solutionRepoUrl the URL where the solution repo is located
+     */
     private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl)
             throws IOException, GitAPIException, InterruptedException {
-        String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
+        // Checkout repositories
+        Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl, true);
+        Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl, true);
+        Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl, true);
+
+        // Get path, files and prefix for the programming-language dependent files. They are copied first.
+        String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
         String programmingLanguageTemplate = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage());
         String exercisePath = programmingLanguageTemplate + "/exercise/**/*.*";
         String solutionPath = programmingLanguageTemplate + "/solution/**/*.*";
@@ -225,14 +239,11 @@ public class ProgrammingExerciseService {
         Resource[] testResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
         Resource[] solutionResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(solutionPath);
 
-        Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl, true);
-        Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl, true);
-        Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl, true);
-
         String exercisePrefix = programmingLanguage + "/exercise";
         String testPrefix = programmingLanguage + "/test";
         String solutionPrefix = programmingLanguage + "/solution";
 
+        // Initialize project type dependent resources with null as they might not be used
         Resource[] projectTypeExerciseResources = null;
         Resource[] projectTypeTestResources = null;
         Resource[] projectTypeSolutionResources = null;
@@ -241,20 +252,21 @@ public class ProgrammingExerciseService {
         String projectTypeTestPrefix = null;
         String projectTypeSolutionPrefix = null;
 
+        // Find the project type specific files if present
         if (programmingExercise.getProjectType() != null) {
+            // Get path, files and prefix for the project-type dependent files. They are copied last and can overwrite the resources from the programming language.
             String programmingLanguageProjectTypePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType());
             String projectType = programmingExercise.getProjectType().name().toLowerCase();
 
             projectTypeExercisePrefix = programmingLanguage + "/" + projectType + "/exercise";
-            ;
             projectTypeTestPrefix = programmingLanguage + "/" + projectType + "/test";
-            ;
             projectTypeSolutionPrefix = programmingLanguage + "/" + projectType + "/solution";
-            ;
 
             exercisePath = programmingLanguageProjectTypePath + "/exercise/**/*.*";
             solutionPath = programmingLanguageProjectTypePath + "/solution/**/*.*";
             testPath = programmingLanguageProjectTypePath + "/test/**/*.*";
+
+            // We have to catch these exceptions as e.g. only some folders (e.g. only exercise and solution, but not tests) might be project-type specific
             try {
                 projectTypeExerciseResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath);
             }
@@ -287,8 +299,8 @@ public class ProgrammingExerciseService {
         }
     }
 
-    private String getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage, @Nullable ProjectType projectType) {
-        return getProgrammingLanguageTemplatePath(programmingLanguage) + (projectType != null ? "/" + projectType.name().toLowerCase() : "");
+    private String getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
+        return getProgrammingLanguageTemplatePath(programmingLanguage) + "/" + projectType.name().toLowerCase();
     }
 
     private String getProgrammingLanguageTemplatePath(ProgrammingLanguage programmingLanguage) {
@@ -348,8 +360,21 @@ public class ProgrammingExerciseService {
     }
 
     // Copy template and push, if no file is in the directory
-    private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, Resource[] projectTypeResources, String projectTypePrefix, String templateName,
-            ProgrammingExercise programmingExercise, User user) throws Exception {
+
+    /**
+     * Copy template and push, if no file is currently in the repository.
+     * @param repository The repository to push to
+     * @param resources An array of resources that should be copied. Might be overwritten by projectTypeResources.
+     * @param prefix A prefix that should be replaced for all Resources inside the resources.
+     * @param projectTypeResources An array of resources that should be copied AFTER the resources array has been copied. Can be null.
+     * @param projectTypePrefix A prefix that should be replaced for all Resources inside the projectTypeResources.
+     * @param templateName The name of the template
+     * @param programmingExercise the programming exercise
+     * @param user The user that triggered the action (used as Git commit author)
+     * @throws Exception
+     */
+    private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, @Nullable Resource[] projectTypeResources, String projectTypePrefix,
+            String templateName, ProgrammingExercise programmingExercise, User user) throws Exception {
         if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
             fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
             // Also copy project type specific files AFTERWARDS (so that they might overwrite the default files)
@@ -378,7 +403,7 @@ public class ProgrammingExerciseService {
         // Only copy template if repo is empty
         if (gitService.listFiles(repository).size() == 0
                 && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
-            ProjectType projectType = programmingExercise.getProjectType();
+            // First get files that are not dependent on the project type
             String templatePath = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()) + "/test";
 
             String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
@@ -389,8 +414,9 @@ public class ProgrammingExerciseService {
 
             fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
 
+            // These resources might override the programming language dependent resources as they are project type dependent.
             Resource[] projectTypeTestUtils = null;
-
+            ProjectType projectType = programmingExercise.getProjectType();
             if (projectType != null) {
                 String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
 
@@ -429,6 +455,7 @@ public class ProgrammingExerciseService {
                 fileService.copyResources(testUtils, prefix, packagePath, true);
                 fileService.copyResources(testFileResources, prefix, packagePath, false);
 
+                // Possibly overwrite files if the project type is defined
                 if (projectType != null) {
                     String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
                     if (projectTypeTestUtils != null) {
@@ -478,6 +505,7 @@ public class ProgrammingExerciseService {
                     fileService.copyResources(testUtils, prefix, packagePath, true);
                     fileService.copyResources(buildStageResources, prefix, packagePath, false);
 
+                    // Possibly overwrite files if the project type is defined
                     if (projectType != null) {
                         if (projectTypeTestUtils != null) {
                             fileService.copyResources(projectTypeTestUtils, prefix, packagePath, true);
