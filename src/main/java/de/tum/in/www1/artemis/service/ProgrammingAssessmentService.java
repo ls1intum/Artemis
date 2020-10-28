@@ -107,6 +107,10 @@ public class ProgrammingAssessmentService extends AssessmentService {
         if (totalScore < 0) {
             totalScore = 0;
         }
+        // Make sure to not give more than maxPoints
+        if (totalScore > maxPoints) {
+            totalScore = maxPoints;
+        }
         return totalScore;
     }
 }
