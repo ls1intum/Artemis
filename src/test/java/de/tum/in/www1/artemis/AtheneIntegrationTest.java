@@ -12,7 +12,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +24,7 @@ import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextCluster;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.TextBlockService;
 import de.tum.in.www1.artemis.service.connectors.AtheneService;
 import de.tum.in.www1.artemis.util.ModelFactory;
