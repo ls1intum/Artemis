@@ -181,8 +181,7 @@ public class AtheneService {
         List<TextBlock> textBlocks = parseTextBlocks(blocks, exerciseId);
 
         // Save textBlocks in Database
-        final Map<String, TextBlock> textBlockMap;
-        textBlockMap = textBlockRepository.saveAll(textBlocks).stream().collect(toMap(TextBlock::getId, block -> block));
+        final Map<String, TextBlock> textBlockMap = textBlockRepository.saveAll(textBlocks).stream().collect(toMap(TextBlock::getId, block -> block));
 
         // Save clusters in Database
         processClusters(clusters, textBlockMap, exerciseId);

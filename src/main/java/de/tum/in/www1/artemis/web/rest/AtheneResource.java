@@ -61,7 +61,7 @@ public class AtheneResource {
 
         log.debug("REST call for new Athene results for exercise {} finished", exerciseId);
 
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.ok().build();
     }
 
 }
