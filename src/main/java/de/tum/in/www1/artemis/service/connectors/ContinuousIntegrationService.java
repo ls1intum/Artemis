@@ -238,7 +238,7 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER -> Constants.ASSIGNMENT_CHECKOUT_PATH;
+                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT -> Constants.ASSIGNMENT_CHECKOUT_PATH;
                 };
             }
         },
@@ -247,7 +247,7 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, HASKELL, KOTLIN -> "";
+                    case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT -> "";
                     case C, VHDL, ASSEMBLER -> Constants.TESTS_CHECKOUT_PATH;
                 };
             }

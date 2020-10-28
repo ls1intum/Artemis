@@ -204,7 +204,13 @@
             </div>
             <!-- RESULTS END -->
             <jhi-complaint-interactions
-                *ngIf="exercise && exercise.type === PROGRAMMING && studentParticipation && currentResult && currentResult.assessmentType === AssessmentType.MANUAL"
+                *ngIf="
+                    exercise &&
+                    exercise.type === PROGRAMMING &&
+                    studentParticipation &&
+                    currentResult &&
+                    (currentResult.assessmentType === AssessmentType.MANUAL || currentResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
+                "
                 class="mb-2 mt-2 ml-3"
                 [exercise]="exercise"
                 [participation]="studentParticipation"
@@ -212,6 +218,6 @@
             >
             </jhi-complaint-interactions>
         </div>
-        <jhi-student-questions *ngIf="exercise.course && exercise.course.studentQuestionsEnabled" class="ml-3" [exercise]="exercise"></jhi-student-questions>
+        <router-outlet *ngIf="exercise.course && exercise.course.studentQuestionsEnabled" class="ml-3" (activate)="onChildActivate($event)"></router-outlet>
     </div>
 </div>

@@ -170,7 +170,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     result.submission && result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (result.submission as ProgrammingSubmission).buildFailed
                 );
             case FilterProp.MANUAL:
-                return result.assessmentType === AssessmentType.MANUAL;
+                return Result.isManualResult(result);
             case FilterProp.AUTOMATIC:
                 return result.assessmentType === AssessmentType.AUTOMATIC;
             default:

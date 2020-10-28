@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity
 @DiscriminatorValue(value = "SP")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StudentParticipation extends Participation {
 
     @Column(name = "presentation_score")

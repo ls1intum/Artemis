@@ -66,10 +66,10 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
         course = database.addCourseWithOneReleasedTextExercise();
         exercise = (TextExercise) exerciseRepo.findAll().get(0);
         User student1 = users.get(0);
-        database.addParticipationForExercise(exercise, student1.getLogin());
+        database.createAndSaveParticipationForExercise(exercise, student1.getLogin());
 
         submission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
-        submission = database.addTextSubmission(exercise, submission, student1.getLogin());
+        submission = database.saveTextSubmission(exercise, submission, student1.getLogin());
 
         result = ModelFactory.generateResult(true, 0);
         result = database.addResultToSubmission(submission, null);

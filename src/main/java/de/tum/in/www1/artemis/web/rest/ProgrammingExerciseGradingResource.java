@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 
 /**
  * REST controller for managing ProgrammingExerciseTestCase. Test cases are created automatically from build run results which is why there are not endpoints available for POST,
@@ -25,6 +26,8 @@ public class ProgrammingExerciseGradingResource {
     public final static String RESET = "/programming-exercise/{exerciseId}/grading/reset";
 
     public final static String RE_EVALUATE = "/programming-exercise/{exerciseId}/grading/re-evaluate";
+
+    public final static String STATISTICS = "/programming-exercise/{exerciseId}/grading/statistics";
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
 
@@ -94,4 +97,28 @@ public class ProgrammingExerciseGradingResource {
         resultRepository.saveAll(updatedResults);
         return ResponseEntity.ok(updatedResults.size());
     }
+
+    /**
+     * Get the exercise's test case statistics for the the given exercise id.
+     *
+     * @param exerciseId of the the exercise.
+     * @return the test case statistics for the exercise.
+     */
+    @GetMapping(STATISTICS)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingExerciseGradingStatisticsDTO> getGradingStatistics(@PathVariable Long exerciseId) {
+        log.debug("REST request to get test case statistics for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return forbidden();
+        }
+
+        var statistics = programmingExerciseGradingService.generateGradingStatistics(exerciseId);
+        return ResponseEntity.ok(statistics);
+    }
+
 }

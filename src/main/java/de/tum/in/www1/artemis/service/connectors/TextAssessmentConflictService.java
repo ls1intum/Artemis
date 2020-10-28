@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.service.dto.TextFeedbackConflictRequestDTO;
 
 @Service
 @Profile("automaticText")
+// TODO: why is there a AutomaticTextAssessmentConflictService and a TextAssessmentConflictService
 public class TextAssessmentConflictService {
 
     private final Logger log = LoggerFactory.getLogger(TextAssessmentConflictService.class);

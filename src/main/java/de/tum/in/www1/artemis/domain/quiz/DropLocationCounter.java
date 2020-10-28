@@ -3,12 +3,14 @@ package de.tum.in.www1.artemis.domain.quiz;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A DropLocationCounter.
  */
 @Entity
 @DiscriminatorValue(value = "DD")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DropLocationCounter extends QuizStatisticCounter {
 
     @ManyToOne
