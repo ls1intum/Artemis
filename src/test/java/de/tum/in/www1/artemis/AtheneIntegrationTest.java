@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +46,11 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     TextClusterRepository textClusterRepository;
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
+    }
 
     @Test
     public void testProcessingClusterAddedDistances() throws Exception {
