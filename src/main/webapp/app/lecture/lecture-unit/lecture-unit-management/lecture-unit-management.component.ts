@@ -150,7 +150,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     deleteLectureUnit(lectureUnitId: number) {
-        this.lectureUnitService.delete(lectureUnitId, this.lectureId).subscribe(
+        this.lectureUnitService.delete(lectureUnitId).subscribe(
             () => {
                 this.dialogErrorSource.next('');
                 this.loadData();

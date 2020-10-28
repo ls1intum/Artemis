@@ -27,8 +27,8 @@ export class LectureUnitService {
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServerResponse(res)));
     }
 
-    delete(lectureUnitId: number, lectureId: number) {
-        return this.httpClient.delete(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}`, { observe: 'response' });
+    delete(lectureUnitId: number) {
+        return this.httpClient.delete(`${this.resourceURL}/lecture-units/${lectureUnitId}`, { observe: 'response' });
     }
 
     convertDateArrayFromClient<T extends LectureUnit>(lectureUnits: T[]): T[] {

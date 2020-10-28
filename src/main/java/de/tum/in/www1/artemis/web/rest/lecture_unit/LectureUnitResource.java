@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.lecture_unit;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture_unit.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture_unit.ExerciseUnit;
@@ -19,8 +20,6 @@ import de.tum.in.www1.artemis.domain.lecture_unit.LectureUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.lecture_unit.LectureUnitRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.lecture_unit.LectureUnitService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -34,21 +33,14 @@ public class LectureUnitResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final UserService userService;
-
     private final AuthorizationCheckService authorizationCheckService;
-
-    private final LectureUnitService lectureUnitService;
 
     private final LectureUnitRepository lectureUnitRepository;
 
     private final LectureRepository lectureRepository;
 
-    public LectureUnitResource(UserService userService, AuthorizationCheckService authorizationCheckService, LectureUnitService lectureUnitService,
-            LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository) {
-        this.userService = userService;
+    public LectureUnitResource(AuthorizationCheckService authorizationCheckService, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository) {
         this.authorizationCheckService = authorizationCheckService;
-        this.lectureUnitService = lectureUnitService;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
     }
@@ -57,24 +49,66 @@ public class LectureUnitResource {
     @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<LectureUnit> orderedLectureUnits) {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
-        List<LectureUnit> persistedOrderedLectureUnits = lectureUnitService.updateLectureUnitsOrder(lectureId, orderedLectureUnits);
-        return ResponseEntity.ok(persistedOrderedLectureUnits);
-    }
-
-    @DeleteMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}")
-    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
-    public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
-        log.info("REST request to delete lecture unit: {}", lectureUnitId);
         Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lectureId);
         if (lectureOptional.isEmpty()) {
             return notFound();
         }
         Lecture lecture = lectureOptional.get();
+        if (lecture.getCourse() == null) {
+            return conflict();
+        }
+        Course course = lecture.getCourse();
+
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+            return forbidden();
+        }
+
+        // Ensure that exactly as many lecture units have been received as are currently related to the lecture
+        if (orderedLectureUnits.size() != lecture.getLectureUnits().size()) {
+            return conflict();
+        }
+
+        // Ensure that all received lecture units are already related to the lecture
+        for (LectureUnit lectureUnit : orderedLectureUnits) {
+            if (!lecture.getLectureUnits().contains(lectureUnit)) {
+                return conflict();
+            }
+            // Set the lecture manually as it won't be included in orderedLectureUnits
+            lectureUnit.setLecture(lecture);
+
+            // keep bidirectional mapping between attachment unit and attachment
+            if (lectureUnit instanceof AttachmentUnit) {
+                ((AttachmentUnit) lectureUnit).getAttachment().setAttachmentUnit((AttachmentUnit) lectureUnit);
+            }
+
+        }
+
+        lecture.setLectureUnits(orderedLectureUnits);
+        Lecture persistedLecture = lectureRepository.save(lecture);
+        return ResponseEntity.ok(persistedLecture.getLectureUnits());
+    }
+
+    @DeleteMapping("/lecture-units/{lectureUnitId}")
+    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId) {
+        log.info("REST request to delete lecture unit: {}", lectureUnitId);
         Optional<LectureUnit> lectureUnitOptional = lectureUnitRepository.findById(lectureUnitId);
         if (lectureUnitOptional.isEmpty()) {
             return notFound();
         }
         LectureUnit lectureUnit = lectureUnitOptional.get();
+        if (lectureUnit.getLecture() == null) {
+            return conflict();
+        }
+        Lecture lecture = lectureUnit.getLecture();
+        if (lecture.getCourse() == null) {
+            return conflict();
+        }
+        Course course = lecture.getCourse();
+
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+            return forbidden();
+        }
 
         // Remove the lecture unit by removing it from the list of lecture units of the corresponding lecture
         List<LectureUnit> filteredLectureUnits = lecture.getLectureUnits();

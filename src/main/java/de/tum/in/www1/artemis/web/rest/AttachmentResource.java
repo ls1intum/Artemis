@@ -137,7 +137,7 @@ public class AttachmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Attachment> getAttachmentsForLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
-        return attachmentService.findAllByLectureId(lectureId);
+        return attachmentRepository.findAllByLectureId(lectureId);
     }
 
     /**
