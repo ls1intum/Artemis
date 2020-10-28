@@ -72,27 +72,33 @@ export class CreateAttachmentUnitComponent implements OnInit {
         }
 
         this.isLoading = true;
-        this.fileUploaderService.uploadFile(file, fileName, { keepFileName: true }).then((result) => {
-            // update link to the path provided by the server
-            this.attachmentToCreate.link = result.path;
-
-            this.attachmentUnitService
-                .create(this.attachmentUnitToCreate!, this.lectureId)
-                .concatMap((response: HttpResponse<AttachmentUnit>) => {
-                    this.attachmentToCreate.attachmentUnit = response.body!;
-                    return this.attachmentService.create(this.attachmentToCreate);
-                })
-                .pipe(
-                    finalize(() => {
-                        this.isLoading = false;
-                    }),
-                )
-                .subscribe(
-                    () => {
-                        this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
-                    },
-                    (res: HttpErrorResponse) => onError(this.alertService, res),
-                );
-        });
+        this.fileUploaderService.uploadFile(file, fileName, { keepFileName: true }).then(
+            (result) => {
+                // update link to the path provided by the server
+                this.attachmentToCreate.link = result.path;
+                this.attachmentUnitService
+                    .create(this.attachmentUnitToCreate!, this.lectureId)
+                    .concatMap((response: HttpResponse<AttachmentUnit>) => {
+                        this.attachmentToCreate.attachmentUnit = response.body!;
+                        return this.attachmentService.create(this.attachmentToCreate);
+                    })
+                    .pipe(
+                        finalize(() => {
+                            this.isLoading = false;
+                        }),
+                    )
+                    .subscribe(
+                        () => {
+                            this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                        },
+                        (res: HttpErrorResponse) => onError(this.alertService, res),
+                    );
+            },
+            (error) => {
+                // displaying the file upload error in the form but not resetting the form]
+                this.attachmentUnitForm.setFileUploadError(error.message);
+                this.isLoading = false;
+            },
+        );
     }
 }

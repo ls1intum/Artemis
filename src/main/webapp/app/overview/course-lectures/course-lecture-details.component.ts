@@ -58,6 +58,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                     this.lecture = lectureResponse.body;
                     if (this.lecture?.lectureUnits) {
                         this.lectureUnits = this.lecture.lectureUnits;
+                    }
                     if (this.studentQuestions && this.lecture) {
                         // We need to manually update the lecture property of the student questions component
                         this.studentQuestions.lecture = this.lecture;
