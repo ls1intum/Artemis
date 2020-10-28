@@ -35,14 +35,14 @@ public class ExerciseUnitResource {
 
     private final LectureRepository lectureRepository;
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     public ExerciseUnitResource(LectureRepository lectureRepository, ExerciseUnitRepository exerciseUnitRepository, AuthorizationCheckService authorizationCheckService) {
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     /**
      * POST /lectures/:lectureId/exercise-units : creates a new exercise unit.

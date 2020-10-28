@@ -93,7 +93,7 @@ public abstract class LectureUnit extends DomainObject {
         learningGoal.getLectureUnits().remove(this);
     }
 
-    @JsonProperty(value = "visibleToStudents")
+    @JsonProperty("visibleToStudents")
     public boolean isVisibleToStudents() {
         if (releaseDate == null) {
             return true;
