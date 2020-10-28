@@ -20,7 +20,7 @@
         </a>
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed" [ngSwitch]="isAuthenticated()">
-        <ol class="breadcrumb">
+        <ol class="breadcrumb" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']">
             <li *ngFor="let breadcrumb of breadcrumbs" class="breadcrumb-item">
                 <a [routerLink]="breadcrumb.uri" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ breadcrumb.label }}</a>
             </li>
