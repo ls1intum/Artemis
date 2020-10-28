@@ -281,6 +281,14 @@ public class FileResource {
         return buildFileResponse(FilePathService.getLectureAttachmentFilepath() + optionalLecture.get().getId(), filename);
     }
 
+    /**
+     * GET files/attachments/attachment-unit/:attachmentUnitId/:filename : Get the lecture unit attachment
+     *
+     * @param attachmentUnitId     ID of the attachment unit, the attachment belongs to
+     * @param filename             the filename of the file
+     * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
+     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/{filename:.+}")
     @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId, @PathVariable String filename,

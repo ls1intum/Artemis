@@ -108,6 +108,10 @@ public class Attachment extends DomainObject implements Serializable {
         }
     }
 
+    /**
+     * Will be called after the entity is persisted (saved).
+     * Manages files by taking care of file system changes for this entity.
+     */
     @PostPersist
     public void afterCreate() {
         // replace placeholder with actual id if necessary (id is no longer null at this point)
@@ -137,6 +141,10 @@ public class Attachment extends DomainObject implements Serializable {
         }
     }
 
+    /**
+     * Will be called after the entity is removed (deleted).
+     * Manages files by taking care of file system changes for this entity.
+     */
     @PostRemove
     public void onDelete() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {

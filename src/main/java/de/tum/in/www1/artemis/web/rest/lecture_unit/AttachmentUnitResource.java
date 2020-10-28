@@ -44,6 +44,12 @@ public class AttachmentUnitResource {
         this.authorizationCheckService = authorizationCheckService;
     }
 
+    /**
+     * GET /attachment-units/:attachmentUnitId : gets the attachment unit with the specified id
+     *
+     * @param attachmentUnitId the id of the attachmentUnit to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the attachment unit, or with status 404 (Not Found)
+     */
     @GetMapping("/attachment-units/{attachmentUnitId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<AttachmentUnit> getAttachmentUnit(@PathVariable Long attachmentUnitId) {
@@ -63,6 +69,14 @@ public class AttachmentUnitResource {
         return ResponseEntity.ok().body(attachmentUnit);
     }
 
+    /**
+     * PUT /lectures/:lectureId/attachment-units : Updates an existing attachment unit .
+     *
+     * @param lectureId      the id of the lecture to which the attachment unit belongs to update
+     * @param attachmentUnit the attachment unit to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
     @PutMapping("/lectures/{lectureId}/attachment-units")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @RequestBody AttachmentUnit attachmentUnit) throws URISyntaxException {
@@ -91,6 +105,14 @@ public class AttachmentUnitResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, attachmentUnit.getId().toString())).body(result);
     }
 
+    /**
+     * POST /lectures/:lectureId/attachment-units : creates a new attachment unit.
+     *
+     * @param lectureId      the id of the lecture to which the attachment unit should be added
+     * @param attachmentUnit the attachment unit that should be created
+     * @return the ResponseEntity with status 201 (Created) and with body the new attachment unit
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
     @PostMapping("/lectures/{lectureId}/attachment-units")
     @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<AttachmentUnit> createAttachmentUnit(@PathVariable Long lectureId, @RequestBody AttachmentUnit attachmentUnit) throws URISyntaxException {

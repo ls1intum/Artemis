@@ -312,6 +312,13 @@ public class AuthorizationCheckService {
         return isInstructorInCourse(course, user) || isTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && exercise.isVisibleToStudents());
     }
 
+    /**
+     * Determines if a user is allowed to see a lecture unit
+     *
+     * @param lectureUnit the lectureUnit for which to check permission
+     * @param user        the user for which to check permission
+     * @return true if the user is allowed, false otherwise
+     */
     public boolean isAllowedToSeeLectureUnit(LectureUnit lectureUnit, User user) {
         if (user == null || user.getGroups() == null) {
             user = userService.getUserWithGroupsAndAuthorities();

@@ -44,6 +44,13 @@ public class LectureUnitResource {
         this.lectureRepository = lectureRepository;
     }
 
+    /**
+     * PUT /lectures/:lectureId/lecture-units-order
+     *
+     * @param lectureId           the id of the lecture for which to update the lecture unit order
+     * @param orderedLectureUnits ordered lecture units
+     * @return the ResponseEntity with status 200 (OK) and with body the ordered lecture units
+     */
     @PutMapping("/lectures/{lectureId}/lecture-units-order")
     @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<LectureUnit> orderedLectureUnits) {
@@ -85,6 +92,12 @@ public class LectureUnitResource {
         return ResponseEntity.ok(persistedLecture.getLectureUnits());
     }
 
+    /**
+     * DELETE /lecture-units/:lectureUnitId
+     *
+     * @param lectureUnitId the id of the lecture unit to remove
+     * @return the ResponseEntity with status 200 (OK)
+     */
     @DeleteMapping("/lecture-units/{lectureUnitId}")
     @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId) {

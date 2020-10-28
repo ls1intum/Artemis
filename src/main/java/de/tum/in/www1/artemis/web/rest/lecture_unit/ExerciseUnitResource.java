@@ -44,6 +44,14 @@ public class ExerciseUnitResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    /**
+     * POST /lectures/:lectureId/exercise-units : creates a new exercise unit.
+     *
+     * @param lectureId    the id of the lecture to which the attachment unit should be added
+     * @param exerciseUnit the exercise unit that should be created
+     * @return the ResponseEntity with status 201 (Created) and with body the new exercise unit
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
     @PostMapping("/lectures/{lectureId}/exercise-units")
     @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<ExerciseUnit> createExerciseUnit(@PathVariable Long lectureId, @RequestBody ExerciseUnit exerciseUnit) throws URISyntaxException {
@@ -72,6 +80,12 @@ public class ExerciseUnitResource {
 
     }
 
+    /**
+     * GET /lectures/:lectureId/exercise-units : gets the exercise units associated with an lecture
+     *
+     * @param lectureId the id of the lecture to get the exercise-units for
+     * @return the ResponseEntity with status 200 (OK) and with body the found exercise units
+     */
     @GetMapping("/lectures/{lectureId}/exercise-units")
     @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<List<ExerciseUnit>> getAllExerciseUnitsOfLecture(@PathVariable Long lectureId) {
