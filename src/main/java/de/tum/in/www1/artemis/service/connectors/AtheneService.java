@@ -251,8 +251,8 @@ public class AtheneService {
             List<TextBlock> updatedBlockReferences = cluster.getBlocks().parallelStream().map(block -> textBlockMap.get(block.getId())).peek(block -> block.setCluster(cluster))
                     .collect(toList());
             textAssessmentQueueService.setAddedDistances(updatedBlockReferences, cluster);
-            updatedBlockReferences = textBlockRepository.saveAll(updatedBlockReferences);
             cluster.setBlocks(updatedBlockReferences);
+            textBlockRepository.saveAll(updatedBlockReferences);
         }
 
         // Save clusters in Database
