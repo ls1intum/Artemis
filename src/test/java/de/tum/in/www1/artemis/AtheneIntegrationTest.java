@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +55,7 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     public void testProcessingClusterAddedDistances() throws Exception {
+        SecurityUtils.setAuthorizationObject();
         database.addUsers(10, 0, 0);
         final var course = database.addCourseWithOneFinishedTextExercise();
         final var exercise = (TextExercise) course.getExercises().iterator().next();
