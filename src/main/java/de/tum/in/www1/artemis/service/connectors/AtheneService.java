@@ -164,7 +164,7 @@ public class AtheneService {
             startTask(exercise.getId());
         }
         catch (NetworkingError networkingError) {
-            log.error("Error while calling Remote Service", networkingError);
+            log.error("Error while calling Remote Service: {}", networkingError.getMessage());
         }
     }
 
