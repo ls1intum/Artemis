@@ -157,12 +157,9 @@ public class FileResource {
             String languagePrefix = language.map(programmingLanguage -> File.separator + programmingLanguage.name().toLowerCase()).orElse("");
             String projectTypePrefix = projectType.map(type -> File.separator + type.name().toLowerCase()).orElse("");
 
-            Resource fileResource;
-            try {
-                fileResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader)
-                        .getResource("classpath:templates" + languagePrefix + projectTypePrefix + File.separator + filename);
-            }
-            catch (Exception e) {
+            Resource fileResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader)
+                    .getResource("classpath:templates" + languagePrefix + projectTypePrefix + File.separator + filename);
+            if (!fileResource.exists()) {
                 // Load without project type if not found with project type
                 fileResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:templates" + languagePrefix + File.separator + filename);
             }
