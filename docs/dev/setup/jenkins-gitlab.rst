@@ -704,9 +704,18 @@ Prerequisites:
       Add a Jenkins node
 
 9. Wait for some moments while jenkins installs it's remote agent on the agent's machine.
-You can track the progress using the `Log` page when selecting the agent. System information should also be available.
+    You can track the progress using the `Log` page when selecting the agent. System information should also be available.
 
-10. You are finished, the new agent should now also process builds.
+10. Change the settings of the master node to be used only for specific jobs.
+    This ensures that the docker tasks are not executed on the master agent but on the remote agent.
+
+
+   .. figure:: jenkins-gitlab/jenkins_master_node.png
+      :align: center
+
+      Adjust Jenkins master node settings
+
+11. You are finished, the new agent should now also process builds.
 
 
 Upgrade Jenkins
