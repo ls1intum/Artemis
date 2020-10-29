@@ -23,26 +23,26 @@ public class TimeBasedAchievementService {
 
     private final static long DAYS_UNRANKED = 4L;
 
+    private final static long MIN_SCORE_TO_QUALIFY = 50L;
+
     public TimeBasedAchievementService(AchievementRepository achievementRepository) {
         this.achievementRepository = achievementRepository;
     }
 
     /**
-     * Generates all time based achievements for an exercise
-     * @param exercise
+     * Generates all time based achievements for a course
+     * @param course
      */
-    public void generateAchievements(Exercise exercise) {
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+    public void generateAchievements(Course course) {
         Set<Achievement> achievementsToSave = new HashSet<>();
-        achievementsToSave.add(new Achievement("Time Master", "Hand in your submission within " + DAYS_GOLD + " day after the release for exercise: " + exercise.getTitle(),
-                "calendar-check", AchievementRank.GOLD, AchievementType.TIME, course, exercise));
-        achievementsToSave
-                .add(new Achievement("Time Intermediate", "Hand in your submission within " + DAYS_SILVER + " days after the release for exercise: " + exercise.getTitle(),
-                        "calendar-check", AchievementRank.SILVER, AchievementType.TIME, course, exercise));
-        achievementsToSave.add(new Achievement("Time Beginner", "Hand in your submission within " + DAYS_BRONZE + " days after the release for exercise: " + exercise.getTitle(),
-                "calendar-check", AchievementRank.BRONZE, AchievementType.TIME, course, exercise));
-        achievementsToSave.add(new Achievement("Time Amateur", "Hand in your submission within " + DAYS_UNRANKED + " days after the release for exercise: " + exercise.getTitle(),
-                "calendar-check", AchievementRank.UNRANKED, AchievementType.TIME, course, exercise));
+        achievementsToSave.add(new Achievement("Time Master", "Hand in your submission within " + DAYS_GOLD + " day(s) after the release of an exercise", "calendar-check",
+                AchievementRank.GOLD, AchievementType.TIME, DAYS_GOLD, MIN_SCORE_TO_QUALIFY, course, null));
+        achievementsToSave.add(new Achievement("Time Intermediate", "Hand in your submission within " + DAYS_SILVER + " days after the release of an exercise", "calendar-check",
+                AchievementRank.SILVER, AchievementType.TIME, DAYS_SILVER, MIN_SCORE_TO_QUALIFY, course, null));
+        achievementsToSave.add(new Achievement("Time Beginner", "Hand in your submission within " + DAYS_BRONZE + " days after the release of an exercise", "calendar-check",
+                AchievementRank.BRONZE, AchievementType.TIME, DAYS_BRONZE, MIN_SCORE_TO_QUALIFY, course, null));
+        achievementsToSave.add(new Achievement("Time Amateur", "Hand in your submission within " + DAYS_UNRANKED + " days after the release of an exercise", "calendar-check",
+                AchievementRank.UNRANKED, AchievementType.TIME, DAYS_UNRANKED, MIN_SCORE_TO_QUALIFY, course, null));
 
         achievementRepository.saveAll(achievementsToSave);
     }

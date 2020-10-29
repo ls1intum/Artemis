@@ -62,12 +62,9 @@ public class FileUploadExerciseResource {
 
     private final FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
-    private final AchievementService achievementService;
-
     public FileUploadExerciseResource(FileUploadExerciseService fileUploadExerciseService, FileUploadExerciseRepository fileUploadExerciseRepository, UserService userService,
             AuthorizationCheckService authCheckService, CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
-            FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionService gradingCriterionService, ExerciseGroupService exerciseGroupService,
-            AchievementService achievementService) {
+            FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionService gradingCriterionService, ExerciseGroupService exerciseGroupService) {
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userService = userService;
@@ -78,7 +75,6 @@ public class FileUploadExerciseResource {
         this.gradingCriterionService = gradingCriterionService;
         this.exerciseGroupService = exerciseGroupService;
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
-        this.achievementService = achievementService;
     }
 
     /**
@@ -109,9 +105,6 @@ public class FileUploadExerciseResource {
         }
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
-
-        // Generate achievements if enabled in course and exercise not part of exam
-        achievementService.generateForExercise(course, result);
 
         // Only notify tutors when the exercise is created for a course
         if (fileUploadExercise.hasCourse()) {

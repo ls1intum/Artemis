@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 
 import java.time.ZonedDateTime;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.enumeration.AchievementType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
@@ -107,6 +109,11 @@ public class Course extends DomainObject {
 
     @Column(name = "achievements_enabled", columnDefinition = "Boolean default false")
     private Boolean achievementsEnabled = false; // default value
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "course_active_achievements", joinColumns = @JoinColumn(name = "course_id"))
+    @Column(name = "active_achievements")
+    private Set<AchievementType> activeAchievements = new HashSet<>();
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -356,7 +363,21 @@ public class Course extends DomainObject {
     }
 
     public void setAchievementsEnabled(Boolean achievementsEnabled) {
+        if (achievementsEnabled) {
+            setActiveAchievements(EnumSet.allOf(AchievementType.class));
+        }
+        else {
+            setActiveAchievements(EnumSet.noneOf(AchievementType.class));
+        }
         this.achievementsEnabled = achievementsEnabled;
+    }
+
+    public Set<AchievementType> getActiveAchievements() {
+        return activeAchievements;
+    }
+
+    public void setActiveAchievements(Set<AchievementType> activeAchievements) {
+        this.activeAchievements = activeAchievements;
     }
 
     /*
