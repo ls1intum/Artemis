@@ -21,6 +21,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.atlassian.bamboo.specs.util.BambooServer;
@@ -83,10 +84,15 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users) throws IOException, URISyntaxException {
+    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
+        bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username, status);
+    }
+
+    @Override
+    public List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
+            throws IOException, URISyntaxException {
         final var verifications = new LinkedList<Verifiable>();
-        bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
-        bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users);
+        bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists);
         bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
         mockUpdatePlanRepositoryForParticipation(exercise, username);
         bambooRequestMockProvider.mockEnablePlan(exercise.getProjectKey(), username);
@@ -209,9 +215,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockRepositoryWritePermissions(Team team, User newStudent, ProgrammingExercise exercise) throws URISyntaxException {
+    public void mockRepositoryWritePermissions(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws URISyntaxException {
         final var repositorySlug = (exercise.getProjectKey() + "-" + team.getParticipantIdentifier()).toLowerCase();
-        bitbucketRequestMockProvider.mockGiveWritePermission(exercise, repositorySlug, newStudent.getLogin());
+        bitbucketRequestMockProvider.mockGiveWritePermission(exercise, repositorySlug, newStudent.getLogin(), status);
     }
 
     @Override

@@ -1,13 +1,15 @@
 import os
+from os import chmod
 import signal
 from pty import openpty
 from subprocess import Popen
 from time import sleep
-from typing import List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime
 from io import TextIOWrapper
 from threading import Thread
 from select import select
+from pwd import getpwnam, struct_passwd
 
 
 def studSaveStrComp(ref: str, other: str, strip: bool = True, ignoreCase: bool = True, ignoreNonAlNum=True):
@@ -35,9 +37,24 @@ def studSaveStrComp(ref: str, other: str, strip: bool = True, ignoreCase: bool =
     return ref == other
 
 
+def recursive_chmod(path: str, mode: int):
+    """
+    Recursively changes file permissions.
+    """
+    os.chmod(path, mode)
+    # print("CHMOD: {}".format(path))
+    f: str
+    for f in os.listdir(path):
+        f = os.path.join(path, f)
+        if os.path.isdir(f):
+            recursive_chmod(f, mode)
+        else:
+            os.chmod(f, mode)
+            # print("CHMOD: {}".format(f))
+
+
 # Limit for stdout in chars.
 # Should prevent to much output on artemis if for example there is a loop in a tree.
-__stdoutCharsLeft: int = 15000
 # By default the stdout limit is disabled:
 __stdoutLimitEnabled: bool = False
 
@@ -122,7 +139,7 @@ def printProg(text: str, addToCache: bool = True):
     Should be used instead of print() to make it easier for students
     to determin what came from the tester and what from their programm.
     """
-    msg: str = "[{}][PROG]: {}".format(__getCurDateTimeStr(), text)
+    msg: str = "[{}][PROG]: {}".format(__getCurDateTimeStr(), text.rstrip())
     __printStdout(msg)
     if addToCache:
         testerOutputCache.append(msg)
@@ -236,7 +253,7 @@ class PWrap:
 
     cmd: List[str]
     prog: Optional[Popen]
-    cwd: Optional[str]
+    cwd: str
 
     __stdinFd: int
     __stdinMasterFd: int
@@ -250,7 +267,7 @@ class PWrap:
                  cwd: Optional[str] = None):
         self.cmd = cmd
         self.prog = None
-        self.cwd: Optional[str] = cwd
+        self.cwd: str = os.getcwd() if cwd is None else cwd
         self.stdout = open(stdoutFilePath, "wb")
         self.stderr = open(stderrFilePath, "wb")
 
@@ -264,26 +281,81 @@ class PWrap:
             os.close(self.__stdinFd)
         except OSError as e:
             printTester("Closing stdin FD failed with: {}".format(e))
+        except AttributeError as e:
+            pass
         try:
             os.close(self.__stdinMasterFd)
         except OSError as e:
             printTester("Closing stdin master FD failed with: {}".format(e))
+        except AttributeError as e:
+            pass
 
-    def start(self):
+    def start(self, userName: Optional[str] = None):
         """
         Starts the process and sets all file descriptors to nonblocking.
+
+        ---
+
+        userName: Optional[str] = None
+            In case the userName is not None, the process will be executed as the given userName.
+            This requires root privileges and you have to ensure the user has the required rights to access all resources (files).
         """
         # Emulate a terminal for stdin:
         self.__stdinMasterFd, self.__stdinFd = openpty()
 
-        # Start the actual process:
-        self.prog = Popen(self.cmd,
-                          stdout=self.__stdOutLineCache.fileno(),
-                          stdin=self.__stdinMasterFd,
-                          stderr=self.__stdErrLineCache.fileno(),
-                          universal_newlines=True,
-                          cwd=self.cwd,
-                          preexec_fn=os.setsid)  # Make sure we store the process group id
+        if not userName is None:
+            # Check for root privileges:
+            self.__checkForRootPrivileges()
+
+            # Prepare environment:
+            pwRecord: struct_passwd = getpwnam(userName)
+            env: Dict[str, str] = os.environ.copy()
+            env["HOME"] = pwRecord.pw_dir
+            env["LOGNAME"] = pwRecord.pw_name
+            env["USER"] = pwRecord.pw_name
+            env["PWD"] = self.cwd
+            printTester("Starting process as: {}".format(pwRecord.pw_name))
+
+            # Start the actual process:
+            self.prog = Popen(self.cmd,
+                              stdout=self.__stdOutLineCache.fileno(),
+                              stdin=self.__stdinMasterFd,
+                              stderr=self.__stdErrLineCache.fileno(),
+                              universal_newlines=True,
+                              cwd=self.cwd,
+                              env=env,
+                              preexec_fn=self.__demote(pwRecord.pw_uid, pwRecord.pw_gid, pwRecord.pw_name))
+        else:
+            # Start the actual process:
+            self.prog = Popen(self.cmd,
+                              stdout=self.__stdOutLineCache.fileno(),
+                              stdin=self.__stdinMasterFd,
+                              stderr=self.__stdErrLineCache.fileno(),
+                              universal_newlines=True,
+                              cwd=self.cwd,
+                              preexec_fn=os.setsid)  # Make sure we store the process group id
+
+    def __demote(self, userUid: int, userGid: int, userName: str):
+        """
+        Returns a call, demoting the calling process to the given user, UID and GID.
+        """
+        def result():
+            # self.__printIds("Starting demotion...") # Will print inside the new process and reports via the __stdOutLineCache
+            os.initgroups(userName, userGid)
+            os.setuid(userUid)
+            # self.__printIds("Finished demotion.") # Will print inside the new process and reports via the __stdOutLineCache
+        return result
+
+    def __checkForRootPrivileges(self):
+        """
+        Checks if the current process has root premissions.
+        Fails if not.
+        """
+        if os.geteuid() != 0:
+            raise PermissionError("The tester has to be executed as root to be able to switch users!")
+
+    def __printIds(self, msg: str):
+        printTester("uid, gid = {}, {}; {}".format(os.getuid(), os.getgid(), msg))
 
     def __readLine(self, lineCache: ReadCache, blocking: bool):
         """
@@ -296,8 +368,6 @@ class PWrap:
         """
         while blocking:
             if not lineCache.canReadLine():
-                if self.hasTerminated():
-                    break
                 sleep(0.1)
             else:
                 line: str = lineCache.readLine()
