@@ -143,4 +143,18 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(this.attachmentUnit.getAttachment()).isEqualTo(this.attachment);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteAttachmentUnit_withAttachment_shouldDeleteAttachment() throws Exception {
+        var persistedAttachmentUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class,
+                HttpStatus.CREATED);
+        assertThat(persistedAttachmentUnit.getId()).isNotNull();
+        this.attachment.setAttachmentUnit(persistedAttachmentUnit);
+        var persistedAttachment = request.postWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.CREATED);
+
+        request.delete("/api/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
+        request.get("/api/attachments/" + persistedAttachment.getId(), HttpStatus.NOT_FOUND, Attachment.class);
+
+    }
+
 }
