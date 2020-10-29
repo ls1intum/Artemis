@@ -41,7 +41,7 @@ describe('ResultDetailComponent', () => {
         return Object.assign({ type: FeedbackItemType.Feedback, credits: 0, title: undefined, positive: undefined } as FeedbackItem, item);
     };
 
-    const generateSCAFeedbackPair = (category: string, credits: number, { line = 1, column = undefined }: { line?: number; column?: number } = {}) => {
+    const generateSCAFeedbackPair = (showDetails: boolean, category: string, credits: number, { line = 1, column = undefined }: { line?: number; column?: number } = {}) => {
         return {
             fb: makeFeedback({
                 text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + category,
@@ -59,7 +59,7 @@ describe('ResultDetailComponent', () => {
                 type: FeedbackItemType.Issue,
                 category: 'Code Issue',
                 title: category + ' Issue in file www/packet/File.java at line ' + line + (column != null ? ' column ' + column : ''),
-                text: 'Rule: This is a code issue',
+                text: showDetails ? 'Rule: This is a code issue' : 'This is a code issue',
                 credits,
                 positive: false,
             }),
@@ -112,8 +112,8 @@ describe('ResultDetailComponent', () => {
             feedbacks.push(pair.fb);
             expectedItems.push(pair.item);
         };
-        addPair(generateSCAFeedbackPair('Bad Practice', -2));
-        addPair(generateSCAFeedbackPair('Styling', -0.5, { column: 10 }));
+        addPair(generateSCAFeedbackPair(showTestDetails, 'Bad Practice', -2));
+        addPair(generateSCAFeedbackPair(showTestDetails, 'Styling', -0.5, { column: 10 }));
         addPair(generateManualFeedbackPair(showTestDetails, 'Positive', 'This is good', 4));
         addPair(generateManualFeedbackPair(showTestDetails, 'Negative', 'This is bad', -2));
         addPair(generateManualFeedbackPair(showTestDetails, 'Neutral', 'This is neutral', 0));
