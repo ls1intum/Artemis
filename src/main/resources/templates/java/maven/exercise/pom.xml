@@ -1,22 +1,22 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>${packageName}</groupId>
-	<artifactId>${exerciseNamePomXml}-Exercise</artifactId>
-	<packaging>jar</packaging>
-	<version>3.0</version>
-	<name>${exerciseNamePomXml} Exercise</name>
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
-	<dependencies>
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>${packageName}</groupId>
+    <artifactId>${exerciseNamePomXml}-Exercise</artifactId>
+    <packaging>jar</packaging>
+    <version>3.0</version>
+    <name>${exerciseNamePomXml} Exercise</name>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
         <dependency>
-          <groupId>org.apache.commons</groupId>
-          <artifactId>commons-lang3</artifactId>
-          <version>3.11</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.11</version>
         </dependency>
-	</dependencies>
+    </dependencies>
     <build>
         <sourceDirectory>${project.basedir}/src</sourceDirectory>
         <resources>
