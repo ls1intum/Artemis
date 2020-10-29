@@ -46,9 +46,13 @@
             "positive": "Positive",
             "graded": "Graded",
             "notGraded": "Not graded",
-            "preliminary": "(preliminary)",
+            "preliminary": "preliminary",
             "preliminaryTooltip": "Your result is not final. More tests will be executed after the exercise's due date.",
-            "noResultDetails": "No result details available."
+            "noResultDetails": "No result details available.",
+            "chart": {
+                "points": "Points",
+                "deductions": "Deductions"
+            }
         }
     }
 }

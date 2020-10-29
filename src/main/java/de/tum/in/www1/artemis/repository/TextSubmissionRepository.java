@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 
 /**
  * Spring Data JPA repository for the TextSubmission entity.
@@ -39,4 +40,20 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
 
     @EntityGraph(type = LOAD, attributePaths = { "result", "result.assessor", "blocks" })
     Optional<TextSubmission> findByResult_Id(Long resultId);
+
+    /**
+     * Gets all TextSubmissions which are submitted and loads all blocks
+     * @param exerciseId the Id of the exercise
+     * @return List of Text Submissions
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "blocks" })
+    List<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrue(Long exerciseId);
+
+    /**
+     * Gets all TextSubmissions which are submitted, with matching and loads all blocks
+     * @param exerciseId the Id of the exercise
+     * @param language language of the exercise
+     * @return List of Text Submissions
+     */
+    List<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrueAndLanguage(Long exerciseId, Language language);
 }

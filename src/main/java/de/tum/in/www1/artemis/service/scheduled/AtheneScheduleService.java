@@ -22,15 +22,15 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
-import de.tum.in.www1.artemis.service.TextClusteringService;
 import de.tum.in.www1.artemis.service.TextExerciseService;
+import de.tum.in.www1.artemis.service.connectors.AtheneService;
 import io.github.jhipster.config.JHipsterConstants;
 
 @Service
-@Profile("automaticText & scheduling")
-public class TextClusteringScheduleService {
+@Profile("athene & scheduling")
+public class AtheneScheduleService {
 
-    private final Logger log = LoggerFactory.getLogger(TextClusteringScheduleService.class);
+    private final Logger log = LoggerFactory.getLogger(AtheneScheduleService.class);
 
     private final ExerciseLifecycleService exerciseLifecycleService;
 
@@ -38,19 +38,19 @@ public class TextClusteringScheduleService {
 
     private final Environment env;
 
-    private final Map<Long, ScheduledFuture> scheduledClusteringTasks = new HashMap<>();
+    private final Map<Long, ScheduledFuture> scheduledAtheneTasks = new HashMap<>();
 
-    private final TextClusteringService textClusteringService;
+    private final AtheneService atheneService;
 
     private final TaskScheduler scheduler;
 
-    public TextClusteringScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseService textExerciseService, TextClusteringService textClusteringService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler, Environment env) {
+    public AtheneScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseService textExerciseService, @Qualifier("taskScheduler") TaskScheduler scheduler,
+            Environment env, AtheneService atheneService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.textExerciseService = textExerciseService;
-        this.textClusteringService = textClusteringService;
         this.scheduler = scheduler;
         this.env = env;
+        this.atheneService = atheneService;
     }
 
     @PostConstruct
@@ -62,17 +62,17 @@ public class TextClusteringScheduleService {
             return;
         }
         final List<TextExercise> runningTextExercises = textExerciseService.findAllAutomaticAssessmentTextExercisesWithFutureDueDate();
-        runningTextExercises.forEach(this::scheduleExerciseForClustering);
-        log.info("Scheduled text clustering for " + runningTextExercises.size() + " text exercises with future due dates.");
+        runningTextExercises.forEach(this::scheduleExerciseForAthene);
+        log.info("Scheduled Athene for " + runningTextExercises.size() + " text exercises with future due dates.");
     }
 
     /**
-     * Schedule a clustering task for a text exercise with its due date if automatic assessments are enabled and its due date is in the future.
-     * @param exercise exercise to schedule clustering for
+     * Schedule a Athene task for a text exercise with its due date if automatic assessments are enabled and its due date is in the future.
+     * @param exercise exercise to schedule Athene for
      */
-    public void scheduleExerciseForClusteringIfRequired(TextExercise exercise) {
+    public void scheduleExerciseForAtheneIfRequired(TextExercise exercise) {
         if (!exercise.isAutomaticAssessmentEnabled()) {
-            cancelScheduledClustering(exercise.getId());
+            cancelScheduledAthene(exercise.getId());
             return;
         }
         // ToDo Needs to be adapted for exam exercises (@Jan Philip Bernius)
@@ -80,56 +80,56 @@ public class TextClusteringScheduleService {
             return;
         }
 
-        scheduleExerciseForClustering(exercise);
+        scheduleExerciseForAthene(exercise);
     }
 
-    private void scheduleExerciseForClustering(TextExercise exercise) {
+    private void scheduleExerciseForAthene(TextExercise exercise) {
         // check if already scheduled for exercise. if so, cancel.
-        // no exercise should be scheduled for clustering more than once.
-        cancelScheduledClustering(exercise.getId());
+        // no exercise should be scheduled for Athene more than once.
+        cancelScheduledAthene(exercise.getId());
 
-        final ScheduledFuture future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, clusteringRunnableForExercise(exercise));
+        final ScheduledFuture future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, atheneRunnableForExercise(exercise));
 
-        scheduledClusteringTasks.put(exercise.getId(), future);
-        log.debug("Scheduled Clustering for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for " + exercise.getDueDate() + ".");
+        scheduledAtheneTasks.put(exercise.getId(), future);
+        log.debug("Scheduled Athene for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for " + exercise.getDueDate() + ".");
     }
 
     /**
-     * Schedule a clustering task for a text exercise to start immediately.
-     * @param exercise exercise to schedule clustering for
+     * Schedule an Athene task for a text exercise to start immediately.
+     * @param exercise exercise to schedule Athene for
      */
-    public void scheduleExerciseForInstantClustering(TextExercise exercise) {
+    public void scheduleExerciseForInstantAthene(TextExercise exercise) {
         // TODO: sanity checks.
-        scheduler.schedule(clusteringRunnableForExercise(exercise), now());
+        scheduler.schedule(atheneRunnableForExercise(exercise), now());
     }
 
     @NotNull
-    private Runnable clusteringRunnableForExercise(TextExercise exercise) {
+    private Runnable atheneRunnableForExercise(TextExercise exercise) {
         return () -> {
             SecurityUtils.setAuthorizationObject();
-            textClusteringService.calculateClusters(exercise);
+            atheneService.submitJob(exercise);
         };
     }
 
     /**
-     * Cancel possible schedules clustering tasks for a provided exercise.
-     * @param exerciseId id of the exercise for which a potential clustering task is canceled
+     * Cancel possible schedules Athene tasks for a provided exercise.
+     * @param exerciseId id of the exercise for which a potential Athene task is canceled
      */
-    public void cancelScheduledClustering(Long exerciseId) {
-        final ScheduledFuture future = scheduledClusteringTasks.get(exerciseId);
+    public void cancelScheduledAthene(Long exerciseId) {
+        final ScheduledFuture future = scheduledAtheneTasks.get(exerciseId);
         if (future != null) {
             future.cancel(false);
-            scheduledClusteringTasks.remove(exerciseId);
+            scheduledAtheneTasks.remove(exerciseId);
         }
     }
 
     /**
      * Checks if Athene is currently proccessing submissions of given exercise.
      * @param exercise Exercise to check state
-     * @return currently computing clusters?
+     * @return currently computing Athene?
      */
     public boolean currentlyProcessing(TextExercise exercise) {
-        final ScheduledFuture future = scheduledClusteringTasks.get(exercise.getId());
+        final ScheduledFuture future = scheduledAtheneTasks.get(exercise.getId());
         if (future == null) {
             return false;
         }
@@ -138,7 +138,9 @@ public class TextClusteringScheduleService {
         final boolean done = future.isDone();
         final boolean cancelled = future.isCancelled();
 
-        return (!done && !cancelled && delay <= 0);
+        // Check future for scheduled tasks
+        // Check atheneService for running tasks
+        return !done && !cancelled && delay <= 0 || atheneService.isTaskRunning(exercise.getId());
     }
 
 }

@@ -91,7 +91,7 @@ public class JiraRequestMockProvider {
 
     public void mockGetUsernameForEmail(String email, String usernameToBeReturned) throws IOException, URISyntaxException {
         final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/user/search").queryParam("username", email).build().toUri();
-        final var response = List.of(Map.of("name", usernameToBeReturned));
+        final var response = List.of(new JiraUserDTO(usernameToBeReturned));
 
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
@@ -99,7 +99,7 @@ public class JiraRequestMockProvider {
 
     public void mockCreateGroup(String groupName) throws URISyntaxException, JsonProcessingException {
         final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/group").build().toUri();
-        final var body = Map.of("name", groupName);
+        final var body = new JiraUserDTO(groupName);
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
     }
 
@@ -110,7 +110,6 @@ public class JiraRequestMockProvider {
 
     public void mockGetOrCreateUserLti(String authUsername, String password, String username, String email, String firstName, Set<String> groups)
             throws URISyntaxException, IOException {
-        final var response = new JiraUserDTO();
         final var groupsResponse = new JiraUserGroupsDTO();
         final var groupDTOs = new HashSet<JiraUserGroupDTO>();
         for (final var group : groups) {
@@ -121,10 +120,7 @@ public class JiraRequestMockProvider {
         }
         groupsResponse.setSize(groups.size());
         groupsResponse.setItems(groupDTOs);
-        response.setName(username);
-        response.setDisplayName(firstName);
-        response.setEmailAddress(email);
-        response.setGroups(groupsResponse);
+        final var response = new JiraUserDTO(username, firstName, email, groupsResponse);
         final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/user").queryParam("username", username).queryParam("expand", "groups").build().toUri();
         final var auth = authUsername + ":" + password;
         final var authHeader = new String(Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8)));
@@ -134,7 +130,6 @@ public class JiraRequestMockProvider {
     }
 
     public void mockGetOrCreateUserJira(String username, String email, String firstName, Set<String> groups) throws URISyntaxException, IOException {
-        final var response = new JiraUserDTO();
         final var groupsResponse = new JiraUserGroupsDTO();
         final var groupDTOs = new HashSet<JiraUserGroupDTO>();
         for (final var group : groups) {
@@ -145,10 +140,7 @@ public class JiraRequestMockProvider {
         }
         groupsResponse.setSize(groups.size());
         groupsResponse.setItems(groupDTOs);
-        response.setName(username);
-        response.setDisplayName(firstName);
-        response.setEmailAddress(email);
-        response.setGroups(groupsResponse);
+        final var response = new JiraUserDTO(username, firstName, email, groupsResponse);
         final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/user").queryParam("username", username).queryParam("expand", "groups").build().toUri();
 
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.GET))
@@ -156,7 +148,6 @@ public class JiraRequestMockProvider {
     }
 
     public void mockGetOrCreateUserJiraCaptchaException(String username, String email, String firstName, Set<String> groups) throws URISyntaxException, IOException {
-        final var response = new JiraUserDTO();
         final var groupsResponse = new JiraUserGroupsDTO();
         final var groupDTOs = new HashSet<JiraUserGroupDTO>();
         for (final var group : groups) {
@@ -167,10 +158,7 @@ public class JiraRequestMockProvider {
         }
         groupsResponse.setSize(groups.size());
         groupsResponse.setItems(groupDTOs);
-        response.setName(username);
-        response.setDisplayName(firstName);
-        response.setEmailAddress(email);
-        response.setGroups(groupsResponse);
+        final var response = new JiraUserDTO(username, firstName, email, groupsResponse);
         final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/user").queryParam("username", username).queryParam("expand", "groups").build().toUri();
 
         var headers = new HttpHeaders();
@@ -181,12 +169,7 @@ public class JiraRequestMockProvider {
 
     public void mockCreateUserInExternalUserManagement(String username, String fullname, String email) throws URISyntaxException, JsonProcessingException {
         final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/user").build().toUri();
-        Map<String, Object> body = new HashMap<>();
-        body.put("key", username);
-        body.put("name", username);
-        body.put("displayName", fullname);
-        body.put("emailAddress", email);
-        body.put("applicationKeys", List.of("jira-software"));
+        final var body = new JiraUserDTO(username, username, fullname, email, List.of("jira-software"));
 
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
     }
