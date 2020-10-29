@@ -5,7 +5,8 @@
         "generic": {
             "yes": "Ja",
             "no": "Nein",
-            "emptyList": "Keine Elemente verfügbar"
+            "emptyList": "Keine Elemente verfügbar",
+            "unset": "Nicht gesetzt"
         },
         "menu": {
             "home": "Startseite",
