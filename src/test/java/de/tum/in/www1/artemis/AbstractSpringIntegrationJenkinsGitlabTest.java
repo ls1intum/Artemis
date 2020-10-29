@@ -33,11 +33,12 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import de.tum.in.www1.artemis.util.Verifiable;
 
-@SpringBootTest
+@SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
+        "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ "artemis", "gitlab", "jenkins", "automaticText" })
+@ActiveProfiles({ "artemis", "gitlab", "jenkins", "athene" })
 @TestPropertySource(properties = "artemis.user-management.use-external=false")
 public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends AbstractArtemisIntegrationTest {
 

@@ -15,16 +15,15 @@ import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
 import de.tum.in.www1.artemis.service.dto.TextFeedbackConflictRequestDTO;
 
 @Service
-@Profile("automaticText")
-// TODO: why is there a AutomaticTextAssessmentConflictService and a TextAssessmentConflictService
+@Profile("athene")
 public class TextAssessmentConflictService {
 
     private final Logger log = LoggerFactory.getLogger(TextAssessmentConflictService.class);
 
-    @Value("${artemis.automatic-text.feedback-consistency-url}")
+    @Value("${artemis.athene.feedback-consistency-url}")
     private String API_ENDPOINT;
 
-    @Value("${artemis.automatic-text.secret}")
+    @Value("${artemis.athene.base64-secret}")
     private String API_SECRET;
 
     private final RemoteArtemisServiceConnector<Request, Response> connector = new RemoteArtemisServiceConnector<>(log, Response.class);
