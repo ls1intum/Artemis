@@ -101,14 +101,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     buildBreadcrumbs(fullURI: string) {
         this.breadcrumbs = [];
+        // Temporarily restrict routes
+        if (!fullURI.startsWith('/admin') && !fullURI.startsWith('/course-management')) {
+            return;
+        }
         let path = '';
+        let index = 0;
         const parts = fullURI.split('/');
-        for (let i = 0; i < parts.length; i++) {
+        for (const part of parts) {
             const crumb = new Breadcrumb();
-            crumb.label = parts[i];
-            path += parts[i] + '/';
+            crumb.label = part;
+            path += part + '/';
             crumb.uri = path;
-            this.breadcrumbs[i] = crumb;
+            this.breadcrumbs[index++] = crumb;
         }
     }
 
