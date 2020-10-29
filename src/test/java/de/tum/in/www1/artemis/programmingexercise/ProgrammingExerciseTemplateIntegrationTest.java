@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.maven.plugin.surefire.log.api.PrintStreamLogger;
 import org.apache.maven.plugins.surefire.report.ReportTestCase;
@@ -29,8 +30,10 @@ import org.apache.maven.shared.utils.Os;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -39,12 +42,18 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.*;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
+
+    @Autowired
+    private ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
     private ProgrammingExercise exercise;
 
@@ -115,22 +124,45 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         solutionRepo.resetLocalRepo();
     }
 
-    @ParameterizedTest
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    @EnumSource(value = ProgrammingLanguage.class, names = { "KOTLIN", "JAVA" }, mode = EnumSource.Mode.INCLUDE)
-    public void runTemplateTests_exercise(ProgrammingLanguage language) throws Exception {
-        runTests(language, exerciseRepo, TestResult.FAILED);
+    /**
+     * Build a combination of valid programming languages and project types.
+     * Programming languages without project type only have one template, set null to use this one.
+     * Programming languages with project type should be executed once per project type.
+     * @return valid combinations of programming languages and project types.
+     */
+    private Stream<Arguments> languageTypeBuilder() {
+        Stream.Builder<Arguments> argumentBuilder = Stream.builder();
+        // Add programming exercises that should be tested with Maven here
+        List<ProgrammingLanguage> programmingLanguages = List.of(ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN);
+        for (ProgrammingLanguage language : programmingLanguages) {
+            List<ProjectType> projectTypes = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language).getProjectTypes();
+            if (projectTypes.isEmpty()) {
+                argumentBuilder.add(Arguments.of(language, null));
+            }
+            for (ProjectType projectType : projectTypes) {
+                argumentBuilder.add(Arguments.of(language, projectType));
+            }
+        }
+        return argumentBuilder.build();
     }
 
     @ParameterizedTest
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    @EnumSource(value = ProgrammingLanguage.class, names = { "KOTLIN", "JAVA" }, mode = EnumSource.Mode.INCLUDE)
-    public void runTemplateTests_solution(ProgrammingLanguage language) throws Exception {
-        runTests(language, solutionRepo, TestResult.SUCCESSFUL);
+    @MethodSource("languageTypeBuilder")
+    public void test_template_exercise(ProgrammingLanguage language, ProjectType projectType) throws Exception {
+        runTests(language, projectType, exerciseRepo, TestResult.FAILED);
     }
 
-    private void runTests(ProgrammingLanguage language, LocalRepository repository, TestResult testResult) throws Exception {
+    @ParameterizedTest
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @MethodSource("languageTypeBuilder")
+    public void test_template_solution(ProgrammingLanguage language, ProjectType projectType) throws Exception {
+        runTests(language, projectType, solutionRepo, TestResult.SUCCESSFUL);
+    }
+
+    private void runTests(ProgrammingLanguage language, ProjectType projectType, LocalRepository repository, TestResult testResult) throws Exception {
         exercise.setProgrammingLanguage(language);
+        exercise.setProjectType(projectType);
         mockConnectorRequestsForSetup(exercise);
         request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 

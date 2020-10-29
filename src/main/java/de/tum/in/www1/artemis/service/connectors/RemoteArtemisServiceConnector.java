@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.exception.NetworkingError;
 
 /**
  * This class allows for an easy implementation of Connectors to Remote Artemis Services (e.g. the Text Clustering System).
- * As parameters, this class required DTO classes do serialize and deserialize POJOs to JSON and back.
+ * As parameters, this class required DTO classes to serialize and deserialize POJOs to JSON and back.
  *
  * @param <RequestType> DTO class, describing the body of the network request.
  * @param <ResponseType> DTO class, describing the body of the network response.
@@ -32,7 +32,7 @@ class RemoteArtemisServiceConnector<RequestType, ResponseType> {
     }
 
     /**
-     * Invoke the remove service with a network call.
+     * Invoke the remote service with a network call.
      *
      * @param url remote service api endpoint
      * @param requestObject request body as POJO
@@ -44,7 +44,7 @@ class RemoteArtemisServiceConnector<RequestType, ResponseType> {
     }
 
     /**
-     * Invoke the remove service with a network call.
+     * Invoke the remote service with a network call.
      *
      * @param url remote service api endpoint
      * @param requestObject request body as POJO
@@ -77,7 +77,7 @@ class RemoteArtemisServiceConnector<RequestType, ResponseType> {
     }
 
     /**
-     * Invoke the remove service with a network call, but retry the request n times in case of an unsuccessful request.
+     * Invoke the remote service with a network call, but retry the request n times in case of an unsuccessful request.
      *
      * @param url remote service api endpoint
      * @param requestObject request body as POJO
@@ -90,7 +90,7 @@ class RemoteArtemisServiceConnector<RequestType, ResponseType> {
     }
 
     /**
-     * Invoke the remove service with a network call, but retry the request n times in case of an unsuccessful request.
+     * Invoke the remote service with a network call, but retry the request n times in case of an unsuccessful request.
      *
      * @param url remote service api endpoint
      * @param requestObject request body as POJO
@@ -121,6 +121,18 @@ class RemoteArtemisServiceConnector<RequestType, ResponseType> {
     static HttpHeaders authenticationHeaderForSecret(String secret) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(secret);
+        return headers;
+    }
+
+    /**
+     * Helper to generate HttpHeaders for a symmetric secret.
+     *
+     * @param secret Authorization secret
+     * @return HttpHeaders
+     */
+    static HttpHeaders authorizationHeaderForSymmetricSecret(String secret) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", secret);
         return headers;
     }
 }
