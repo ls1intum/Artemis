@@ -52,6 +52,7 @@ export const allSuccessfulContentC = {
                 '#include <stdlib.h> // size_t\n' +
                 '#include <unistd.h> // read(...)\n' +
                 '#include <stdio.h> // printf(...)\n' +
+                '#include <unistd.h> // sleep(...)\n' +
                 '\n' +
                 '#define MAX_BUFFER_SIZE 1024\n' +
                 '\n' +
@@ -98,6 +99,8 @@ export const allSuccessfulContentC = {
                 '\t}\n' +
                 '\t// Print the result:\n' +
                 '\tprintf("%s", buff);\n' +
+                '\tflush(stdin); // Ensure we flush our output\n' +
+                '\tsleep(1); // Sleep one second to prevent th output from not getting read sometimes by the tester\n' +
                 '\t\n' +
                 '}\n',
         },
