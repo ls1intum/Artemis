@@ -610,7 +610,7 @@ public class BitbucketService extends AbstractVersionControlService {
         log.debug("Creating WebHook for Repository {}-{} ({})", projectKey, repositorySlug, notificationUrl);
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
 
-        final var body = new BitbucketWebHookDTO(webHookName, notificationUrl, new ArrayList(List.of("repo:refs_changed")));
+        final var body = new BitbucketWebHookDTO(webHookName, notificationUrl, List.of("repo:refs_changed"));
         // TODO: We might want to add a token to ensure the notification is valid
 
         HttpEntity<?> entity = new HttpEntity<>(body, null);

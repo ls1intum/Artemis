@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.bitbucket.dto;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -13,7 +13,7 @@ public class BitbucketWebHookDTO {
 
     private String url;
 
-    private ArrayList<String> events;
+    private List<String> events;
 
     public Integer getId() {
         return id;
@@ -39,11 +39,11 @@ public class BitbucketWebHookDTO {
         this.url = url;
     }
 
-    public ArrayList<String> getEvents() {
+    public List<String> getEvents() {
         return events;
     }
 
-    public void setEvents(ArrayList<String> events) {
+    public void setEvents(List<String> events) {
         this.events = events;
     }
 
@@ -53,7 +53,7 @@ public class BitbucketWebHookDTO {
     public BitbucketWebHookDTO() {
     }
 
-    public BitbucketWebHookDTO(String name, String url, ArrayList<String> events) {
+    public BitbucketWebHookDTO(String name, String url, List<String> events) {
         this.name = name;
         this.url = url;
         this.events = events;
