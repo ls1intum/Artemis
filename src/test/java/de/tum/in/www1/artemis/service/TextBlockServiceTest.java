@@ -3,13 +3,12 @@ package de.tum.in.www1.artemis.service;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
@@ -28,7 +27,7 @@ public class TextBlockServiceTest {
     @Test
     public void splitSubmissionIntoBlocksForEmptyText() {
         TextSubmission submission = new TextSubmission(0L);
-        List<TextBlock> textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
+        var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
         assertThat(textBlocks, hasSize(0));
 
         submission = new TextSubmission(0L).text("");
@@ -47,7 +46,7 @@ public class TextBlockServiceTest {
     @Test
     public void splitSubmissionIntoBlocksForSingleSentence() {
         final TextSubmission submission = new TextSubmission(0L).text("Hello World.");
-        final List<TextBlock> textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
+        final var textBlocks = new ArrayList<>(textBlockService.splitSubmissionIntoBlocks(submission));
 
         assertThat(textBlocks, hasSize(1));
         assertThat(textBlocks.get(0).getText(), is(equalTo("Hello World.")));
@@ -56,7 +55,7 @@ public class TextBlockServiceTest {
     @Test
     public void splitSubmissionIntoBlocksForTwoSentencesWithoutNewLine() {
         final TextSubmission submission = new TextSubmission(0L).text("Hello World. This is a Test.");
-        final List<TextBlock> textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
+        final var textBlocks = new ArrayList<>(textBlockService.splitSubmissionIntoBlocks(submission));
 
         assertThat(textBlocks, hasSize(2));
         assertThat(textBlocks.get(0).getText(), is(equalTo("Hello World.")));
@@ -66,7 +65,7 @@ public class TextBlockServiceTest {
     @Test
     public void splitSubmissionsIntoBlocksForManySentencesWithNewlinesWithoutFullstop() {
         final TextSubmission submission = new TextSubmission(0L).text("Hello World. This is a Test\n\n\nAnother Test");
-        final List<TextBlock> textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
+        final var textBlocks = new ArrayList<>(textBlockService.splitSubmissionIntoBlocks(submission));
 
         assertThat(textBlocks, hasSize(3));
         assertThat(textBlocks.get(0).getText(), is(equalTo("Hello World.")));
@@ -77,7 +76,7 @@ public class TextBlockServiceTest {
     @Test
     public void splitSubmissionIntoBlocksForManySentencesWithoutPunctuation() {
         final TextSubmission submission = new TextSubmission(0L).text("Example:\nThis is the first example\n\nSection 2:\n- Here is a list\n- Of many bullet  points\n\n");
-        final List<TextBlock> textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
+        final var textBlocks = new ArrayList<>(textBlockService.splitSubmissionIntoBlocks(submission));
 
         String[] sections = new String[] { "Example:", "This is the first example", "Section 2:", "- Here is a list", "- Of many bullet  points" };
         assertThat(textBlocks, hasSize(sections.length));

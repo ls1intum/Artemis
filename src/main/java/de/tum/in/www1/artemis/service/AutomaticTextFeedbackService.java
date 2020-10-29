@@ -44,7 +44,7 @@ public class AutomaticTextFeedbackService {
     @Transactional(readOnly = true)
     public void suggestFeedback(@NotNull Result result) {
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
-        final List<TextBlock> blocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmission.getId());
+        final var blocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmission.getId());
         textSubmission.setBlocks(blocks);
 
         final List<Feedback> suggestedFeedback = blocks.stream().map(block -> {

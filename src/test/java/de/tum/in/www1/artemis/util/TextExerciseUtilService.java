@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,10 +26,10 @@ public class TextExerciseUtilService {
     @Autowired
     private TextExerciseRepository textExerciseRepository;
 
-    private Random random = new Random();
+    private final Random random = new Random();
 
-    public ArrayList<TextBlock> generateTextBlocks(int count) {
-        ArrayList<TextBlock> textBlocks = new ArrayList<>();
+    public Set<TextBlock> generateTextBlocks(int count) {
+        Set<TextBlock> textBlocks = new HashSet<>();
         TextBlock textBlock;
         for (int i = 0; i < count; i++) {
             textBlock = new TextBlock();
@@ -42,14 +39,14 @@ public class TextExerciseUtilService {
         return textBlocks;
     }
 
-    public List<TextCluster> addTextBlocksToCluster(List<TextBlock> textBlocks, int[] clusterSizes, TextExercise textExercise) {
+    public List<TextCluster> addTextBlocksToCluster(Set<TextBlock> textBlocks, int[] clusterSizes, TextExercise textExercise) {
 
         if (Arrays.stream(clusterSizes).sum() != textBlocks.size()) {
             throw new IllegalArgumentException("The clusterSizes sum has to be equal to the number of textBlocks");
         }
 
         // Create clusters
-        ArrayList<TextCluster> clusters = new ArrayList<>();
+        List<TextCluster> clusters = new ArrayList<>();
         for (int i = 0; i < clusterSizes.length; i++) {
             clusters.add(new TextCluster().exercise(textExercise));
         }
@@ -87,7 +84,7 @@ public class TextExerciseUtilService {
             submission.setParticipation(studentParticipation);
             submission.setLanguage(Language.ENGLISH);
             submission.setText("Test123");
-            submission.setBlocks(textBlocks.subList(i * submissionSize, (i + 1) * submissionSize));
+            submission.setBlocks(new HashSet<>(textBlocks.subList(i * submissionSize, (i + 1) * submissionSize)));
             submission.setSubmitted(true);
             submission.setSubmissionDate(ZonedDateTime.now());
             textBlocks.subList(i * submissionSize, (i + 1) * submissionSize).forEach(textBlock -> textBlock.setSubmission(submission));

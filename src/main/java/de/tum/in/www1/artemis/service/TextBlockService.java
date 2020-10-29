@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static java.lang.Integer.compare;
 
 import java.text.BreakIterator;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,12 +30,12 @@ public class TextBlockService {
         this.textBlockRepository = textBlockRepository;
     }
 
-    public List<TextBlock> findAllBySubmissionId(Long id) {
+    public Set<TextBlock> findAllBySubmissionId(Long id) {
         return this.textBlockRepository.findAllBySubmissionId(id);
     }
 
-    public List<TextBlock> computeTextBlocksForSubmissionBasedOnSyntax(TextSubmission textSubmission) {
-        final List<TextBlock> blocks = splitSubmissionIntoBlocks(textSubmission);
+    public Set<TextBlock> computeTextBlocksForSubmissionBasedOnSyntax(TextSubmission textSubmission) {
+        final var blocks = splitSubmissionIntoBlocks(textSubmission);
         textSubmission.setBlocks(blocks);
         return blocks;
     }
@@ -49,17 +47,19 @@ public class TextBlockService {
      * @param submission TextSubmission to split
      * @return List of TextBlocks
      */
+    // TODO: remove transactional here
     @Transactional(readOnly = true)
-    public List<TextBlock> splitSubmissionIntoBlocks(TextSubmission submission) {
+    public Set<TextBlock> splitSubmissionIntoBlocks(TextSubmission submission) {
         final String submissionText = submission.getText();
-        if (submissionText == null)
-            return new ArrayList<>();
+        if (submissionText == null) {
+            return new HashSet<>();
+        }
         // Return empty list for missing submission text.
 
         // Javas Sentence BreakIterator handles sentence splitting.
         BreakIterator breakIterator = BreakIterator.getSentenceInstance();
         breakIterator.setText(submissionText);
-        List<TextBlock> blocks = new ArrayList<>();
+        Set<TextBlock> blocks = new HashSet<>();
 
         int start = breakIterator.first();
 
