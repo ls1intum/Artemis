@@ -300,9 +300,9 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         return submissions.stream().filter(submission -> {
-            if (submission.getResult() != null) {
-                return (submission.getResult().isRated() && !submission.getResult().isManualResult())
-                        || (submission.getResult().isManualResult() && (this.getAssessmentDueDate() == null || this.getAssessmentDueDate().isBefore(ZonedDateTime.now())));
+            Result result = submission.getResult();
+            if (result != null) {
+                return checkForRatedAndAssessedResult(result);
             }
             return this.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
                     || submission.getSubmissionDate().isBefore(this.getDueDate());
@@ -509,39 +509,7 @@ public class ProgrammingExercise extends Exercise {
 
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-        return participation.getResults().stream().filter(result -> (result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
-                .collect(Collectors.toSet());
-    }
-
-    @Override
-    @Nullable
-    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
-        // for most types of exercises => return latest result (all results are relevant)
-        Submission latestSubmission = null;
-        // we get the results over the submissions
-        if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
-            return null;
-        }
-        for (var submission : participation.getSubmissions()) {
-            var result = submission.getResult();
-            if (result == null || result.getCompletionDate() == null) {
-                continue;
-            }
-            // NOTE: for the dashboard we only use rated results with completion date or automatic result
-            boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-            if ((result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
-                // take the first found result that fulfills the above requirements
-                if (latestSubmission == null) {
-                    latestSubmission = submission;
-                }
-                // take newer results and thus disregard older ones
-                else if (latestSubmission.getResult().getCompletionDate().isBefore(result.getCompletionDate())) {
-                    latestSubmission = submission;
-                }
-            }
-        }
-        return latestSubmission;
+        return participation.getResults().stream().filter(result -> checkForRatedAndAssessedResult(result)).collect(Collectors.toSet());
     }
 
     /**
@@ -552,6 +520,12 @@ public class ProgrammingExercise extends Exercise {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
         final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
         return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
+    }
+
+    private boolean checkForRatedAndAssessedResult(Result result) {
+        boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
+        return Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null
+                && ((result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC));
     }
 
     @Override
