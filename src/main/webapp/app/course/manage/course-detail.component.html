@@ -39,7 +39,8 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.semester">Semester</span></dt>
                 <dd>
-                    <span>{{ course.semester }}</span>
+                    <span *ngIf="course.semester && course.semester !== ''">{{ course.semester }}</span>
+                    <span *ngIf="!course.semester || course.semester === ''">{{ 'global.generic.unset' | translate }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.testCourse.title">Test Course</span></dt>
                 <dd>
