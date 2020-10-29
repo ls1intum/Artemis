@@ -34,7 +34,8 @@ public class FeedbackService {
 
     public static final String DEFAULT_FILEPATH = "notAvailable";
 
-    private static final Pattern JVM_RESULT_MESSAGE_MATCHER = prepareJVMResultMessageMatcher(List.of("java.lang.AssertionError", "org.opentest4j.AssertionFailedError"));
+    private static final Pattern JVM_RESULT_MESSAGE_MATCHER = prepareJVMResultMessageMatcher(
+            List.of("java.lang.AssertionError", "org.opentest4j.AssertionFailedError", "de.tum.in.test.api.util.UnexpectedExceptionError"));
 
     private static final Predicate<String> IS_NOT_STACK_TRACE_LINE = line -> !line.startsWith("\tat ");
 
