@@ -61,7 +61,7 @@ public class GroupNotificationService {
      * @param exercise that has been started
      */
     public void notifyStudentGroupAboutExerciseStart(Exercise exercise) {
-        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_STARTED, null));
+        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.QUIZ_EXERCISE_STARTED, null));
     }
 
     /**
