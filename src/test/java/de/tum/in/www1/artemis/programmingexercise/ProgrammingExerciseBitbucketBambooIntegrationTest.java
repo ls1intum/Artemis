@@ -149,4 +149,34 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         programmingExerciseTestService.testImportProgrammingExercise_team_modeChange();
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void configureRepository_createTeamUserWhenLtiUserIsNotExistent() throws Exception {
+        programmingExerciseTestService.configureRepository_createTeamUserWhenLtiUserIsNotExistent();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void copyRepository_testInternalServerError() throws Exception {
+        programmingExerciseTestService.copyRepository_testInternalServerError();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void copyRepository_testBadRequestError() throws Exception {
+        programmingExerciseTestService.copyRepository_testBadRequestError();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void copyRepository_testConflictError() throws Exception {
+        programmingExerciseTestService.copyRepository_testConflictError();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void configureRepository_testBadRequestError() throws Exception {
+        programmingExerciseTestService.configureRepository_testBadRequestError();
+    }
+
 }

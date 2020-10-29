@@ -3,7 +3,7 @@
     [style.max-width]="'780px'"
     [class.alert-success]="feedback.credits! > 0"
     [class.alert-danger]="feedback.credits! < 0"
-    [class.alert-warning]="feedback.credits === 0"
+    [class.alert-warning]="!feedback.credits"
 >
     <div class="m-2">
         <div *ngIf="!viewOnly; else readOnlyFeedback" class="form-row align-items-start" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
@@ -25,7 +25,12 @@
             <button type="button" class="btn btn-secondary btn-sm" (click)="cancelFeedback()">
                 <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
-            <button type="submit" [disabled]="feedback.detailText ? feedback.detailText.trim().length === 0 : true" class="btn btn-primary btn-sm" (click)="updateFeedback()">
+            <button
+                type="submit"
+                [disabled]="feedback.credits == null || (feedback.detailText ? feedback.detailText.trim().length === 0 : true)"
+                class="btn btn-primary btn-sm"
+                (click)="updateFeedback()"
+            >
                 <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
             </button>
         </div>
