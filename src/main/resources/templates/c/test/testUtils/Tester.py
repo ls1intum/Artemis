@@ -10,7 +10,7 @@ class Tester:
     suite: TestSuite
     tests: Dict[str, AbstractTest]
 
-    def __init__(self, name: str = "GBS-Tester-1.24"):
+    def __init__(self, name: str = "GBS-Tester-1.27"):
         self.name = name
         self.suite = TestSuite(name)
         self.tests = dict()

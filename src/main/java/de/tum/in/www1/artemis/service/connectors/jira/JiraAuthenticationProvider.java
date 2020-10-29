@@ -17,6 +17,7 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -224,11 +225,10 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             throw new IllegalArgumentException("Jira does not have a group: " + group);
         }
 
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", user.getLogin());
+        final var body = new JiraUserDTO(user.getLogin());
         HttpEntity<?> entity = new HttpEntity<>(body);
         try {
-            restTemplate.exchange(jiraUrl + "/rest/api/2/group/user?groupname=" + group, HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(jiraUrl + "/rest/api/2/group/user?groupname=" + group, HttpMethod.POST, entity, Void.class);
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST) && e.getResponseBodyAsString().contains("user is already a member of")) {
@@ -243,15 +243,10 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public void createUserInExternalUserManagement(User user) {
         log.info("Try to create user " + user.getLogin() + " in JIRA");
-        Map<String, Object> body = new HashMap<>();
-        body.put("key", user.getLogin());
-        body.put("name", user.getLogin());
-        body.put("emailAddress", user.getEmail());
-        body.put("displayName", user.getName());
-        body.put("applicationKeys", List.of("jira-software"));
+        final var body = new JiraUserDTO(user.getLogin(), user.getLogin(), user.getName(), user.getEmail(), List.of("jira-software"));
         HttpEntity<?> entity = new HttpEntity<>(body);
         try {
-            restTemplate.exchange(jiraUrl + "/rest/api/2/user", HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(jiraUrl + "/rest/api/2/user", HttpMethod.POST, entity, Void.class);
             log.info("Creating user " + user.getLogin() + " was successful");
         }
         catch (HttpClientErrorException e) {
@@ -277,9 +272,10 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public void createGroup(String groupName) {
         log.info("Create group " + groupName + " in JIRA");
-        HttpEntity<?> entity = new HttpEntity<>(Map.of("name", groupName));
+        final var body = new JiraUserDTO(groupName);
+        HttpEntity<?> entity = new HttpEntity<>(body);
         try {
-            restTemplate.exchange(jiraUrl + "/rest/api/2/group", HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(jiraUrl + "/rest/api/2/group", HttpMethod.POST, entity, Void.class);
         }
         catch (HttpClientErrorException e) {
             // forward this error to the client because we might not want to create the course, if the group already exists
@@ -297,7 +293,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         }
         log.info("Delete group " + groupName + " in JIRA");
         try {
-            restTemplate.exchange(jiraUrl + "/rest/api/2/group?groupname=" + groupName, HttpMethod.DELETE, null, Map.class);
+            restTemplate.exchange(jiraUrl + "/rest/api/2/group?groupname=" + groupName, HttpMethod.DELETE, null, Void.class);
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
@@ -330,7 +326,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public boolean isGroupAvailable(String group) {
         try {
-            ResponseEntity<Map> response = restTemplate.exchange(jiraUrl + "/rest/api/2/group/member?groupname=" + group, HttpMethod.GET, null, Map.class);
+            ResponseEntity<Void> response = restTemplate.exchange(jiraUrl + "/rest/api/2/group/member?groupname=" + group, HttpMethod.GET, null, Void.class);
             if (response.getStatusCode().equals(HttpStatus.OK)) {
                 return true;
             }
@@ -377,15 +373,17 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public Optional<String> getUsernameForEmail(String email) throws ArtemisAuthenticationException {
         try {
-            ResponseEntity<ArrayList> authenticationResponse = restTemplate.exchange(jiraUrl + "/rest/api/2/user/search?username=" + email, HttpMethod.GET, null, ArrayList.class);
+            var authenticationResponse = restTemplate.exchange(jiraUrl + "/rest/api/2/user/search?username=" + email, HttpMethod.GET, null,
+                    new ParameterizedTypeReference<List<JiraUserDTO>>() {
+                    });
 
             var results = authenticationResponse.getBody();
             if (results == null || results.size() == 0) {
                 // no result
                 return Optional.empty();
             }
-            Map firstResult = (Map) results.get(0);
-            return Optional.of((String) firstResult.get("name"));
+            JiraUserDTO firstResult = results.get(0);
+            return Optional.of(firstResult.getName());
         }
         catch (HttpClientErrorException e) {
             log.error("Could not get JIRA username for email address " + email, e);

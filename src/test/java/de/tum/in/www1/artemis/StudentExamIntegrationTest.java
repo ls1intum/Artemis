@@ -194,7 +194,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         for (var programmingExercise : programmingExercises) {
             for (var user : users) {
-                mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user));
+                mockCopyRepositoryForParticipation(programmingExercise, user.getParticipantIdentifier(), HttpStatus.CREATED);
+                mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true);
             }
         }
 

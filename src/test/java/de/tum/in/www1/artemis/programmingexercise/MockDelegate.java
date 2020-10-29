@@ -7,6 +7,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.http.HttpStatus;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -22,7 +24,8 @@ public interface MockDelegate {
 
     List<Verifiable> mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported) throws IOException, URISyntaxException;
 
-    List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users) throws IOException, URISyntaxException;
+    List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
+            throws IOException, URISyntaxException;
 
     void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException;
 
@@ -31,7 +34,9 @@ public interface MockDelegate {
 
     void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) throws URISyntaxException;
 
-    void mockRepositoryWritePermissions(Team team, User newStudent, ProgrammingExercise exercise) throws URISyntaxException;
+    void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException;
+
+    void mockRepositoryWritePermissions(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws URISyntaxException;
 
     void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) throws MalformedURLException, URISyntaxException, JsonProcessingException;
 
