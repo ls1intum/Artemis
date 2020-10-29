@@ -6,7 +6,6 @@ import java.text.BreakIterator;
 import java.util.*;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextSubmission;
@@ -35,7 +34,7 @@ public class TextBlockService {
     }
 
     public Set<TextBlock> computeTextBlocksForSubmissionBasedOnSyntax(TextSubmission textSubmission) {
-        final var blocks = splitSubmissionIntoBlocks(textSubmission);
+        final var blocks = new HashSet<>(splitSubmissionIntoBlocks(textSubmission));
         textSubmission.setBlocks(blocks);
         return blocks;
     }
@@ -47,19 +46,17 @@ public class TextBlockService {
      * @param submission TextSubmission to split
      * @return List of TextBlocks
      */
-    // TODO: remove transactional here
-    @Transactional(readOnly = true)
-    public Set<TextBlock> splitSubmissionIntoBlocks(TextSubmission submission) {
+    public List<TextBlock> splitSubmissionIntoBlocks(TextSubmission submission) {
         final String submissionText = submission.getText();
         if (submissionText == null) {
-            return new HashSet<>();
+            return new ArrayList<>();
         }
         // Return empty list for missing submission text.
 
         // Javas Sentence BreakIterator handles sentence splitting.
         BreakIterator breakIterator = BreakIterator.getSentenceInstance();
         breakIterator.setText(submissionText);
-        Set<TextBlock> blocks = new HashSet<>();
+        List<TextBlock> blocks = new ArrayList<>();
 
         int start = breakIterator.first();
 
