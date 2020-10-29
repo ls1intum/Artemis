@@ -498,8 +498,7 @@ public class BambooService implements ContinuousIntegrationService {
     public String getPlanKey(Object requestBody) throws BambooException {
         try {
             final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
-            var plan = buildResult.getPlan();
-            return plan.getKey();
+            return buildResult.getPlan().getKey();
         }
         catch (Exception e) {
             // TODO: Not sure when this is triggered, the method would return null if the planMap does not have a 'key'.
