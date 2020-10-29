@@ -119,15 +119,13 @@ public class TextAssessmentService extends AssessmentService {
      *   3. Load Text Blocks
      *   4. Compute Fallback Text Blocks if needed
      *
-     * With the implementation of second correction in exam mode, the second correction should be allowed in exam mode,
-     * instead of working with the existing result further like here.
+     *
      * @param textSubmission Text Submission to be assessed
      */
     public void prepareSubmissionForAssessment(TextSubmission textSubmission) {
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
 
-        //TODO: add changes when exam mode is comming
         Result result = textSubmission.getLatestResult();
 
         final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();

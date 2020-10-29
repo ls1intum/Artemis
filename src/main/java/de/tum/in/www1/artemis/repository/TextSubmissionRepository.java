@@ -43,7 +43,7 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
 
     @Query("select distinct s from TextSubmission s left join fetch s.results r left join fetch r.assessor left join fetch s.blocks where r.id = :#{#resultId}")
     Optional<TextSubmission> findByResultId(@Param("resultId") Long resultId);
-    
+
     /**
      * Gets all TextSubmissions which are submitted and loads all blocks
      * @param exerciseId the Id of the exercise

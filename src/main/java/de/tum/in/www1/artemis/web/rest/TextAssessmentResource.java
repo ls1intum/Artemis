@@ -195,7 +195,6 @@ public class TextAssessmentResource extends AssessmentResource {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkAuthorization(textExercise, user);
         saveTextBlocks(assessmentUpdate.getTextBlocks(), textSubmission);
-        //TODO： Override an assessment for complaint can only be set for the last Assessment for exam Exercise with second correction. Either create a new one or override the last one
         Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getLatestResult(), textExercise, assessmentUpdate);
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {

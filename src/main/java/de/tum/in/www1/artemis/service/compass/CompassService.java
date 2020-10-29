@@ -371,10 +371,9 @@ public class CompassService {
      * @return the result of the given submission either obtained from the submission or the automatic result map, or a newly created one if it does not exist already
      */
     private Result provideResultForSubmission(ModelingSubmission modelingSubmission) {
-        Result result = new Result();
-        List<Result> results = modelingSubmission.getResults();
+        Result result = modelingSubmission.getLatestResult();
 
-        if (results == null || results.isEmpty() || results.stream().anyMatch(result1 -> !AssessmentType.MANUAL.equals(result1.getAssessmentType()))) {
+        if (result == null  || AssessmentType.MANUAL.equals(result.getAssessmentType())) {
             StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
             long exerciseId = studentParticipation.getExercise().getId();
             if (automaticResultMaps.containsKey(exerciseId)) {
@@ -384,9 +383,6 @@ public class CompassService {
             if (result == null) {
                 result = new Result().submission(modelingSubmission).participation(studentParticipation);
             }
-        } else {
-            List<Result> manualResults = results.stream().filter(result1 -> AssessmentType.MANUAL.equals(result1.getAssessmentType())).collect(Collectors.toList());
-            result = manualResults.get(manualResults.size() - 1);
         }
 
         return result;

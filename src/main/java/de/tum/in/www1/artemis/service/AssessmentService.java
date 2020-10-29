@@ -166,8 +166,7 @@ public class AssessmentService {
 
     /**
      * Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
-     * again. After the relationship changes, there can have multiple results to one submission. with this cancelAssessmentOfSubmission, we delete the last assessment of this submission for now,
-     * because the result of last assessment represent the final result
+     * again.
      *
      * @param submission the submission for which the current assessment should be canceled
      */

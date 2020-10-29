@@ -63,7 +63,7 @@ public abstract class Submission extends DomainObject {
      */
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties({ "submission", "participation" })
-    @OrderColumn(name = "id")
+    @OrderColumn(name = "result_order")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<Result> results = new ArrayList<>();
 
@@ -105,16 +105,11 @@ public abstract class Submission extends DomainObject {
     }
 
 
-    //TODO: Change possible, it is too complicated this way
     public void addResult(Result result) {
         if(this.results == null) {
-            results = new ArrayList<Result>();
+            results = new ArrayList<>();
         }
-        if(result != null) {
-            var existed = results.stream().filter(result1 -> result1.getId().equals(result.getId())).findFirst();
-            existed.ifPresent(value -> results.remove(value));
-            results.add(result);
-        }
+        results.add(result);
     }
 
     /**
@@ -124,6 +119,7 @@ public abstract class Submission extends DomainObject {
     public Result getLatestResult() {
         Result result = null;
         if (results != null && !results.isEmpty()) {
+            //TODO: This will only work with results are sorted
             result = results.get(results.size() - 1);
         }
 

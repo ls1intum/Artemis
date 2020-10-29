@@ -72,7 +72,7 @@ public abstract class AssessmentResource {
     protected ResponseEntity<Void> cancelAssessment(long submissionId) {
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
         Submission submission = submissionService.findOneWithEagerResult(submissionId);
-        if (submission.getResults() == null || submission.getResults().isEmpty()) {
+        if (submission.getLatestResult() == null) {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }

@@ -388,21 +388,20 @@ public class TextExerciseResource {
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);
 
-            List<Result> results = textSubmission.getResults();
-            if (results != null  && !results.isEmpty()) {
+            Result result = textSubmission.getLatestResult();
+
+            if (result != null) {
                 // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
                 final List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
                 textSubmission.setBlocks(textBlocks);
 
-                if (textSubmission.isSubmitted() && results.stream().noneMatch(result -> result.getCompletionDate() == null)) {
-                    results.forEach(result -> {
-                        List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
-                        result.setFeedbacks(assessments);
-                    });
+                if (textSubmission.isSubmitted() && result.getCompletionDate() == null) {
+                    List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+                    result.setFeedbacks(assessments);
                 }
 
                 if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
-                    results.forEach(result -> result.setAssessor(null));
+                    result.setAssessor(null);
                 }
             }
 

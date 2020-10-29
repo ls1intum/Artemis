@@ -98,7 +98,7 @@ public class ModelingSubmissionService extends SubmissionService {
     public ModelingSubmission getLockedModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
-        if (modelingSubmission.getResults() == null || modelingSubmission.getResults().stream().anyMatch(result -> result.getAssessor() == null)) {
+        if (modelingSubmission.getLatestResult() == null || modelingSubmission.getLatestResult().getAssessor() == null) {
             checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
         }

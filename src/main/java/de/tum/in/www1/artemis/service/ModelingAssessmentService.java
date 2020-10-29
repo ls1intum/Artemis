@@ -78,8 +78,6 @@ public class ModelingAssessmentService extends AssessmentService {
      */
     @Transactional
     public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment, ModelingExercise modelingExercise) {
-        //TODO: In Exam Mode instead of further working with one assessment, add another assessment?
-
         Result result = modelingSubmission.getLatestResult();
 
         if (result == null) {

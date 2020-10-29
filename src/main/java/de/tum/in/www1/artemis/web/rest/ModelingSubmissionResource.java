@@ -411,11 +411,11 @@ public class ModelingSubmissionResource {
         participation.setResults(null);
 
         // do not send the result to the client if the assessment is not finished
-        if (modelingSubmission.getResults() != null && (modelingSubmission.getResults().stream().anyMatch(result -> result.getCompletionDate() == null || result.getAssessor() == null))) {
+        if (modelingSubmission.getLatestResult() != null && modelingSubmission.getLatestResult().getCompletionDate() == null || modelingSubmission.getLatestResult().getAssessor() == null) {
             modelingSubmission.setResults(null);
         }
 
-        if (modelingSubmission.getResults() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
+        if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             modelingSubmission.getResults().forEach(result -> result.setAssessor(null));
         }
 

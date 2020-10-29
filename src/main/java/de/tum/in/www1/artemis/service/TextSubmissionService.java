@@ -133,7 +133,7 @@ public class TextSubmissionService extends SubmissionService {
         textSubmission.setType(SubmissionType.MANUAL);
 
         // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
-        if (textSubmission.getLatestResult() != null && textSubmission.getLatestResult().getCompletionDate() == null) {
+        if (textSubmission.getLatestResult() != null && textSubmission.getLatestResult().getSubmission() == null) {
             textSubmission.getLatestResult().setSubmission(textSubmission);
         }
 
@@ -275,9 +275,6 @@ public class TextSubmissionService extends SubmissionService {
     }
 
     public TextSubmission findOneWithEagerResultFeedbackAndTextBlocks(Long submissionId) {
-
-        var textSubmission = textSubmissionRepository.findByIdWithEagerResultFeedbackAndTextBlocks(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
-        return textSubmission;
+        return textSubmissionRepository.findByIdWithEagerResultFeedbackAndTextBlocks(submissionId).get();
     }
 }

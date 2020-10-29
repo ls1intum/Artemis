@@ -235,7 +235,7 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmission getLockedFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise) {
         FileUploadSubmission fileUploadSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
-        if (fileUploadSubmission.getResults() == null || fileUploadSubmission.getResults().isEmpty() || fileUploadSubmission.getResults().stream().anyMatch(result -> result.getAssessor() == null)) {
+        if (fileUploadSubmission.getLatestResult() == null || fileUploadSubmission.getLatestResult().getAssessor() == null) {
             checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         }
 

@@ -336,18 +336,15 @@ public class FileUploadSubmissionResource {
         participation.setSubmissions(null);
         participation.setResults(null);
 
-        List<Result> resultsOfLatestSubmission = fileUploadSubmission.getResults();
         // do not send the result to the client if the assessment is not finished
-        if (resultsOfLatestSubmission != null) {
-            List<Result> ListOfResults = resultsOfLatestSubmission.stream().filter(result -> result.getCompletionDate() != null && result.getAssessor() != null).collect(Collectors.toList());
-            fileUploadSubmission.setResults(ListOfResults);
-
-            resultsOfLatestSubmission.stream().forEach(result -> {
-                if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
-                    result.setAssessor(null);
-                }
-            });
+        if (fileUploadSubmission.getLatestResult() != null && (fileUploadSubmission.getLatestResult().getCompletionDate() == null || fileUploadSubmission.getLatestResult().getAssessor() == null)) {
+            fileUploadSubmission.setResults(null);
         }
+
+        if (fileUploadSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
+            fileUploadSubmission.getLatestResult().setAssessor(null);
+        }
+
         return ResponseEntity.ok(fileUploadSubmission);
     }
 }

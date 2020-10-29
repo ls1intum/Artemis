@@ -5,10 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toList;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -320,7 +317,7 @@ public class SubmissionService {
             Optional<Submission> optionalSubmission = participation.findLatestSubmission();
             if (optionalSubmission.isPresent() && (!submittedOnly || optionalSubmission.get().isSubmitted())) {
                 participation.setSubmissions(Set.of(optionalSubmission.get()));
-                Optional.ofNullable(optionalSubmission.get().getResults()).ifPresent(results -> participation.setResults(Set.copyOf(results)));
+                Optional.ofNullable(optionalSubmission.get().getResults()).ifPresent(results -> participation.setResults(new HashSet<>(results)));
             }
             else {
                 participation.setSubmissions(Set.of());
