@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.lecture_unit.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.lecture_unit.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -82,7 +81,7 @@ public class AttachmentUnitResource {
     public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @RequestBody AttachmentUnit attachmentUnit) throws URISyntaxException {
         log.debug("REST request to update an attachment unit : {}", attachmentUnit);
         if (attachmentUnit.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+            return badRequest();
         }
 
         if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null) {
