@@ -122,30 +122,23 @@ public class Result extends DomainObject {
     }
 
     /**
-     * builds and sets the resultString attribute
+     * Sets the resultString attribute
      *
      * @param totalScore total amount of scored points between 0 and maxScore
      * @param maxScore   maximum score reachable at corresponding exercise
      */
     public void setResultString(Double totalScore, @Nullable Double maxScore) {
-        DecimalFormat formatter = new DecimalFormat("#.##");
-        if (maxScore == null) {
-            resultString = (formatter.format(totalScore) + " points");
-        }
-        else {
-            resultString = (formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points");
-        }
+        resultString = createResultString(totalScore, maxScore);
     }
 
     /**
-     * Builds a part of the result string of manual results for programming exercises
+     * Builds the resultString attribute
      *
      * @param totalScore total amount of scored points
      * @param maxScore   maximum score reachable at corresponding exercise
-     * @return String with result string for manual result of a progrmaming exercise
+     * @return String with result string in this format "2 of 13 points" or "2 points"
      */
-    @JsonIgnore
-    public String createResultStringForManualResult(Double totalScore, @Nullable Double maxScore) {
+    public String createResultString(Double totalScore, @Nullable Double maxScore) {
         DecimalFormat formatter = new DecimalFormat("#.##");
         if (maxScore == null) {
             return formatter.format(totalScore) + " points";

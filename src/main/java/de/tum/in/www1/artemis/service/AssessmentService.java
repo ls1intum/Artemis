@@ -117,7 +117,7 @@ public class AssessmentService {
              * student has achieved have changed
              */
             String[] resultStringParts = originalResult.getResultString().split(", ");
-            resultStringParts[resultStringParts.length - 1] = originalResult.createResultStringForManualResult(points, exercise.getMaxScore());
+            resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, exercise.getMaxScore());
             originalResult.setResultString(String.join(", ", resultStringParts));
             return resultRepository.save(originalResult);
         }
