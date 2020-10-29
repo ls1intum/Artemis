@@ -499,7 +499,6 @@ public class ProgrammingExercise extends Exercise {
 
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
         return participation.getResults().stream().filter(result -> checkForRatedAndAssessedResult(result)).collect(Collectors.toSet());
     }
 
