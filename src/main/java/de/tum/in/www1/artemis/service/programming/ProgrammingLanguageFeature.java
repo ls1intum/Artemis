@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import java.util.List;
+
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 
 /**
  * Store configuration of a specific programming language.
@@ -20,14 +23,17 @@ public class ProgrammingLanguageFeature {
 
     private boolean checkoutSolutionRepositoryAllowed;
 
+    private List<ProjectType> projectTypes;
+
     public ProgrammingLanguageFeature(ProgrammingLanguage programmingLanguage, boolean sequentialTestRuns, boolean staticCodeAnalysis, boolean plagiarismCheckSupported,
-            boolean packageNameRequired, boolean checkoutSolutionRepositoryAllowed) {
+            boolean packageNameRequired, boolean checkoutSolutionRepositoryAllowed, List<ProjectType> projectTypes) {
         this.programmingLanguage = programmingLanguage;
         this.sequentialTestRuns = sequentialTestRuns;
         this.staticCodeAnalysis = staticCodeAnalysis;
         this.plagiarismCheckSupported = plagiarismCheckSupported;
         this.packageNameRequired = packageNameRequired;
         this.checkoutSolutionRepositoryAllowed = checkoutSolutionRepositoryAllowed;
+        this.projectTypes = projectTypes;
     }
 
     public ProgrammingLanguage getProgrammingLanguage() {
@@ -76,5 +82,13 @@ public class ProgrammingLanguageFeature {
 
     public void setCheckoutSolutionRepositoryAllowed(boolean checkoutSolutionRepositoryAllowed) {
         this.checkoutSolutionRepositoryAllowed = checkoutSolutionRepositoryAllowed;
+    }
+
+    public List<ProjectType> getProjectTypes() {
+        return projectTypes;
+    }
+
+    public void setProjectTypes(List<ProjectType> projectTypes) {
+        this.projectTypes = projectTypes;
     }
 }

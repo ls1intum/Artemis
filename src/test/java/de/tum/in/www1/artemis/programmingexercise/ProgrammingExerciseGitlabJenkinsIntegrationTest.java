@@ -13,12 +13,16 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.ProgrammingExerciseTestService;
 
 class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
+
+    @Autowired
+    private ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
     @BeforeEach
     void setup() throws Exception {
@@ -53,7 +57,8 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @EnumSource(value = ProgrammingLanguage.class, names = { "SWIFT", "KOTLIN", "VHDL", "ASSEMBLER", "C", "HASKELL" }, mode = EnumSource.Mode.EXCLUDE)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language) throws Exception {
-        programmingExerciseTestService.createProgrammingExercise_programmingLanguage_validExercise_created(language);
+        programmingExerciseTestService.createProgrammingExercise_programmingLanguage_validExercise_created(language,
+                programmingLanguageFeatureService.getProgrammingLanguageFeatures(language));
     }
 
     @Test
