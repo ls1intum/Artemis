@@ -368,11 +368,6 @@ class PWrap:
         """
         while blocking:
             if not lineCache.canReadLine():
-                if self.hasTerminated():
-                    # Give the pipe a bit more time to receive all input:
-                    sleep(1)
-                    if not lineCache.canReadLine():
-                        break
                 sleep(0.1)
             else:
                 line: str = lineCache.readLine()
