@@ -311,9 +311,13 @@ public class Result extends DomainObject {
      * assigns the new feedback afterwards. IMPORTANT: This method should not be used for Quiz and Programming exercises with completely automatic assessments!
      *
      * @param feedbacks the new feedback list
+     * @param skipAutomaticResults if true automatic results won't be updated
      */
-    public void updateAllFeedbackItems(List<Feedback> feedbacks) {
+    public void updateAllFeedbackItems(List<Feedback> feedbacks, boolean skipAutomaticResults) {
         for (Feedback feedback : feedbacks) {
+            if (skipAutomaticResults && feedback.getType() == FeedbackType.AUTOMATIC) {
+                continue;
+            }
             if (feedback.getCredits() != null) {
                 feedback.setPositive(feedback.getCredits() >= 0);
             }

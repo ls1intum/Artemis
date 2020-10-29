@@ -77,7 +77,7 @@ public class FileUploadAssessmentService extends AssessmentService {
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);
-        result.updateAllFeedbackItems(fileUploadAssessment);
+        result.updateAllFeedbackItems(fileUploadAssessment, false);
         // Note: this boolean flag is only used for programming exercises
         result.setHasFeedback(false);
 
