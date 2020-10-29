@@ -549,11 +549,8 @@ public abstract class Exercise extends DomainObject {
                     latestSubmission = submission;
                 }
                 // take newer results and thus disregard older ones
-                else {
-                    Result latestResultOfLatestSubmission = latestSubmission.getLatestResult();
-                    if (latestResultOfLatestSubmission.getCompletionDate().isBefore(result.getCompletionDate())) {
-                        latestSubmission = submission;
-                    }
+                else if (latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
+                    latestSubmission = submission;
                 }
             }
         }
@@ -617,11 +614,8 @@ public abstract class Exercise extends DomainObject {
         List<Submission> submissionsWithoutResult = new ArrayList<>();
 
         for (Submission submission : submissions) {
-            Result result = null;
-            List<Result> results = submission.getResults();
-            if (results != null && !results.isEmpty()) {
-                result = results.get(results.size() - 1);
-            }
+            Result result = submission.getLatestResult();
+
             if (result != null) {
                 if (Boolean.TRUE.equals(result.isRated())) {
                     submissionsWithRatedResult.add(submission);

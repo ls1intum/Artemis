@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -12,8 +15,6 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-
-import java.util.List;
 
 public abstract class AssessmentResource {
 
@@ -71,8 +72,7 @@ public abstract class AssessmentResource {
     protected ResponseEntity<Void> cancelAssessment(long submissionId) {
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
         Submission submission = submissionService.findOneWithEagerResult(submissionId);
-        List<Result> resultList = submission.getResults();
-        if (resultList == null) {
+        if (submission.getResults() == null || submission.getResults().isEmpty()) {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
@@ -82,7 +82,7 @@ public abstract class AssessmentResource {
         Exercise exercise = exerciseService.findOne(exerciseId);
         checkAuthorization(exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        if (!(isAtLeastInstructor || userService.getUser().getId().equals(resultList.get(resultList.size() - 1).getAssessor().getId()))) {
+        if (!(isAtLeastInstructor || userService.getUser().getId().equals(submission.getLatestResult().getAssessor().getId()))) {
             // tutors cannot cancel the assessment of other tutors (only instructors can)
             return forbidden();
         }

@@ -280,10 +280,8 @@ public class ParticipationService {
                 result.setSubmission(submission);
                 submission.addResult(result);
                 result.setParticipation(submission.getParticipation());
-                List<Result> results = submission.getResults();
-                Result addedResult = results.get(results.size() - 1);
-                addedResult.setAssessor(participation.getStudent().get());
-                addedResult.setAssessmentType(AssessmentType.TEST_RUN);
+                submission.getLatestResult().setAssessor(participation.getStudent().get());
+                submission.getLatestResult().setAssessmentType(AssessmentType.TEST_RUN);
 
                 resultRepository.save(result);
                 submissionRepository.save(submission);

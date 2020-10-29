@@ -527,10 +527,8 @@ public class ProgrammingExercise extends Exercise {
                     latestSubmission = submission;
                 }
                 // take newer results and thus disregard older ones
-                else {
-                    if (latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
+                else if (latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
                         latestSubmission = submission;
-                    }
                 }
             }
         }

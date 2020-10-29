@@ -176,12 +176,7 @@ public class AssessmentService {
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerResults(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
 
-        Result result = new Result();
-        List<Result> resultsFromSubmission = submission.getResults();
-        if (resultsFromSubmission != null && !resultsFromSubmission.isEmpty()) {
-            result = resultsFromSubmission.get(resultsFromSubmission.size()-1);
-        }
-
+        Result result = submission.getLatestResult();
 
         // For programming exercise the first result is always automatic and must not be deleted
         if (participation instanceof ProgrammingExerciseStudentParticipation) {

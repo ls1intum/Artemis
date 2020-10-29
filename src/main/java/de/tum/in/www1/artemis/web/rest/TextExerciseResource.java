@@ -487,12 +487,6 @@ public class TextExerciseResource {
         }
 
         final var originalTextExercise = optionalOriginalTextExercise.get();
-        final var originalTextExerciseWithTextBlock = textExerciseRepository.findByIdWithEagerExampleSubmissionsAndResultsWithTextBlocks(sourceExerciseId).get();
-        Map<Long, List<TextBlock>> textSubmissions = originalTextExerciseWithTextBlock.getExampleSubmissions().stream().map(x -> (TextSubmission) x.getSubmission())
-                .collect(toMap(x -> x.getId(), x -> x.getBlocks()));
-        originalTextExercise.getExampleSubmissions().stream().forEach(textSubmission -> {
-            ((TextSubmission) textSubmission.getSubmission()).setBlocks(textSubmissions.get(textSubmission.getSubmission().getId()));
-        });
 
         if (originalTextExercise.getCourseViaExerciseGroupOrCourseMember() == null) {
             if (!authCheckService.isAtLeastInstructorInCourse(originalTextExercise.getExerciseGroup().getExam().getCourse(), user)) {

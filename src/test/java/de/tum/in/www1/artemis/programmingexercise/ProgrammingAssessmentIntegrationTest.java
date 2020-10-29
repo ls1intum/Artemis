@@ -111,7 +111,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         // Check that result and submission are properly connected
         var submissionFromDb = programmingSubmissionService.findByIdWithEagerResultAndFeedback(programmingSubmission.getId());
         var resultFromDb = resultRepository.findWithEagerSubmissionAndFeedbackById(programmingAssessment.getId()).get();
-        assertThat(submissionFromDb.getResults()).isEqualTo(updatedResult);
+        assertThat(submissionFromDb.getLatestResult()).isEqualTo(updatedResult);
         assertThat(resultFromDb.getSubmission()).isEqualTo(updatedResult.getSubmission());
     }
 

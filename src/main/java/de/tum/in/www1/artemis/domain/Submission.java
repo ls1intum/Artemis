@@ -63,7 +63,7 @@ public abstract class Submission extends DomainObject {
      */
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties({ "submission", "participation" })
-    @OrderColumn
+    @OrderColumn(name = "id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<Result> results = new ArrayList<>();
 
@@ -131,10 +131,14 @@ public abstract class Submission extends DomainObject {
     }
 
     public void reAssignResult(Result result) {
-        if(result != null) {
-            results.remove(results.size() - 1);
-            results.add(result);
+        if (results == null) {
+            results = new ArrayList<>();
         }
+        if(result != null && !results.isEmpty()) {
+            results.remove(results.size() - 1);
+        }
+
+        results.add(result);
     }
 
     public Participation getParticipation() {

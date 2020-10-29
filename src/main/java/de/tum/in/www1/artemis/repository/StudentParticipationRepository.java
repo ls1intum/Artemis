@@ -116,7 +116,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId the exercise id the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions submission left join fetch submission.results results where participation.exercise.id = :#{#exerciseId} and not exists (select prs from participation.results prs where prs.assessor.id = participation.student.id) and not exists (select prs from participation.results prs where prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')) and submission.submitted = true and submission.id = (select max(id) from participation.submissions)")
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions submission left join fetch submission.results result where participation.exercise.id = :#{#exerciseId} and not exists (select prs from participation.results prs where prs.assessor.id = participation.student.id) and not exists (select prs from participation.results prs where prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')) and submission.submitted = true and submission.id = (select max(id) from participation.submissions)")
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation(@Param("exerciseId") Long exerciseId);
 
     /**
@@ -188,10 +188,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.assessor" })
-    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s where p.exercise.id = :#{#exerciseId} and ( :#{#assessorId} IN (select r.assessor.id from s.results r join r.assessor) and s.id = (select max(id) from p.submissions) or s.id = null)")
+    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch r.assessor a where p.exercise.id = :#{#exerciseId} and (:#{#assessorId} in (select a.id from User a) and s.id = (select max(id) from p.submissions) or s.id = null)")
     List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessor(@Param("exerciseId") Long exerciseId, @Param("assessorId") Long assessorId);
 
-    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s where p.exercise.id = :#{#exerciseId} and ( :#{#assessorId} IN (select r.assessor.id from s.results r join r.assessor) and s.id = (select max(id) from p.submissions) or s.id = null) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
+    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch r.assessor a where p.exercise.id = :#{#exerciseId} and (:#{#assessorId} in (select a.id from User a) and s.id = (select max(id) from p.submissions) or s.id = null) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
     List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("assessorId") Long assessorId);
 
     /**
@@ -213,6 +213,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select participation.id, count(submissions) from StudentParticipation participation left join participation.submissions submissions where participation.team.shortName = :#{#teamShortName} and participation.exercise.course.id = :#{#courseId} group by participation.id")
     List<long[]> countSubmissionsPerParticipationByCourseIdAndTeamShortName(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
 
-    @Query("SELECT DISTINCT p FROM StudentParticipation p left join fetch p.submissions s WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM Submission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND :#{#assessor} IN (select r.assessor from s.results r join r.assessor) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id))")
+    @Query("SELECT DISTINCT p FROM StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch r.assessor a WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM Submission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND :#{#assessor} IN (select a from User a) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id))")
     List<StudentParticipation> findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 }

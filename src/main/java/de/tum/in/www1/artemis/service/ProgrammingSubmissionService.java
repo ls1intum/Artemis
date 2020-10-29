@@ -556,7 +556,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     public ProgrammingSubmission findByResultId(long resultId) throws EntityNotFoundException {
-        Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository.findByResultsId(resultId);
+        Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository.findByResultId(resultId);
         return programmingSubmission.orElseThrow(() -> new EntityNotFoundException("Could not find programming submission for result id " + resultId));
     }
 

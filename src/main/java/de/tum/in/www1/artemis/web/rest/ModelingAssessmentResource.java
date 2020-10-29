@@ -82,12 +82,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         Exercise exercise = participation.getExercise();
 
-        //TODO: Exam exercise with second correction, allow seeing all assessment
-        Result result = null;
-        List<Result> results = submission.getResults();
-        if (results != null && !results.isEmpty()) {
-            result = results.get(results.size() - 1);
-        }
+        //TODO: Exam exercise with second correction, allow seeing all assessment?
+        Result result = submission.getLatestResult();
+
         if (result == null) {
             return notFound();
         }
@@ -153,12 +150,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
         checkAuthorization(modelingExercise, user);
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(modelingExercise);
-        List<Result> results = modelingSubmission.getResults();
-        Result resultToCheck = null;
-        if (results != null && !results.isEmpty()) {
-            resultToCheck = results.get(results.size() - 1);
-        }
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(resultToCheck, modelingExercise, studentParticipation, user, isAtLeastInstructor)) {
+
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(modelingSubmission.getLatestResult(), modelingExercise, studentParticipation, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
@@ -226,12 +219,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise, user);
         // TODO: For exam exercise add new one or override the last one?
-        List<Result> results = modelingSubmission.getResults();
-        Result resultToCheck = null;
-        if (results != null && !results.isEmpty()) {
-            resultToCheck = results.get(results.size() - 1);
-        }
-        Result result = modelingAssessmentService.updateAssessmentAfterComplaint(resultToCheck, modelingExercise, assessmentUpdate);
+        Result result = modelingAssessmentService.updateAssessmentAfterComplaint(modelingSubmission.getLatestResult(), modelingExercise, assessmentUpdate);
 
         if (compassService.isSupported(modelingExercise)) {
             compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());

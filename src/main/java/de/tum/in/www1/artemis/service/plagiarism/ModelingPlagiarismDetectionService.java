@@ -91,11 +91,9 @@ public class ModelingPlagiarismDetectionService {
                 }
 
                 var submission1 = models.get(model1);
-                var results1 = submission1.getResults();
                 var submission2 = models.get(model2);
-                var results2 = submission2.getResults();
-                if (results1 != null && !results1.isEmpty() && results1.get(results1.size() - 1).getScore() != null && results1.get(results1.size() - 1).getScore() < minimumScore
-                        && results2 != null && !results2.isEmpty() && results2.get(results2.size() - 1).getScore() != null && results2.get(results2.size() - 1).getScore() < minimumModelSize) {
+                if (submission1.getLatestResult() != null && submission1.getLatestResult().getScore() != null && submission1.getLatestResult().getScore() < minimumScore
+                        && submission2.getLatestResult() != null && submission2.getLatestResult().getScore() != null && submission2.getLatestResult().getScore() < minimumModelSize) {
                     // ignore comparison results with too small scores
                     continue;
                 }
@@ -110,11 +108,11 @@ public class ModelingPlagiarismDetectionService {
                 comparisonResult.setElement1(element1);
                 comparisonResult.setElement2(element2);
                 comparisonResult.similarity(similarity);
-                if (results1 != null && !results1.isEmpty()) {
-                    comparisonResult.getElement1().score(results1.get(results1.size() - 1).getScore());
+                if (submission1.getLatestResult() != null) {
+                    comparisonResult.getElement1().score(submission1.getLatestResult().getScore());
                 }
-                if (results2 != null && !results2.isEmpty()) {
-                    comparisonResult.getElement2().score(results2.get(results2.size() - 1).getScore());
+                if (submission2.getLatestResult() != null ) {
+                    comparisonResult.getElement2().score(submission2.getLatestResult().getScore());
                 }
 
                 comparisonResults.add(comparisonResult);

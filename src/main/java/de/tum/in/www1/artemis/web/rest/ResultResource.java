@@ -241,7 +241,7 @@ public class ResultResource {
             }
 
             Submission relevantSubmissionWithResult = exercise.findLatestSubmissionWithRatedResultWithCompletionDate(participation, true);
-            if (relevantSubmissionWithResult == null || relevantSubmissionWithResult.getResults() == null) {
+            if (relevantSubmissionWithResult == null || relevantSubmissionWithResult.getResults() == null || relevantSubmissionWithResult.getResults().isEmpty()) {
                 continue;
             }
 

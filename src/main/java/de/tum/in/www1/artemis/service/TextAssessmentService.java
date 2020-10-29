@@ -128,11 +128,7 @@ public class TextAssessmentService extends AssessmentService {
         final TextExercise exercise = (TextExercise) participation.getExercise();
 
         //TODO: add changes when exam mode is comming
-        Result result = null;
-        List<Result> results = textSubmission.getResults();
-        if (results != null && !results.isEmpty()) {
-            result = results.get(results.size()-1);
-        }
+        Result result = textSubmission.getLatestResult();
 
         final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
 

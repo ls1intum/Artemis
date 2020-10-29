@@ -292,12 +292,9 @@ public class SubmissionService {
      * @param submission the submission to lock
      */
     protected Result lockSubmission(Submission submission) {
-        Result result = null;
-        List<Result> results = submission.getResults();
-        if (results != null && !results.isEmpty()) {
-            result = results.get(results.size() - 1);
-        }
-        //TODO: In Exam Mode how to lock the submission
+        Result result = submission.getLatestResult();
+
+        //TODO: In Exam Mode with second correction how to lock the submission
         if (result == null) {
             result = setNewResult(submission);
         }

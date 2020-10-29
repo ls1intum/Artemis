@@ -80,11 +80,7 @@ public class ModelingAssessmentService extends AssessmentService {
     public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment, ModelingExercise modelingExercise) {
         //TODO: In Exam Mode instead of further working with one assessment, add another assessment?
 
-        Result result = null;
-        List<Result> results = modelingSubmission.getResults();
-        if (results != null && !results.isEmpty()) {
-            result = results.get(results.size() - 1);
-        }
+        Result result = modelingSubmission.getLatestResult();
 
         if (result == null) {
             result = modelingSubmissionService.setNewResult(modelingSubmission);
@@ -101,7 +97,7 @@ public class ModelingAssessmentService extends AssessmentService {
 
         if (result.getSubmission() == null) {
             result.setSubmission(modelingSubmission);
-            modelingSubmission.addResult(result);
+            modelingSubmission.reAssignResult(result);
             modelingSubmissionRepository.save(modelingSubmission);
         }
         // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
@@ -134,11 +130,7 @@ public class ModelingAssessmentService extends AssessmentService {
         Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId);
         ModelingSubmission modelingSubmission = optionalModelingSubmission
                 .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
-        List<Result> results = modelingSubmission.getResults();
-        Result result = null;
-        if (results != null && !results.isEmpty()) {
-            result = results.get(results.size() - 1);
-        }
-        return result;
+
+        return modelingSubmission.getLatestResult();
     }
 }

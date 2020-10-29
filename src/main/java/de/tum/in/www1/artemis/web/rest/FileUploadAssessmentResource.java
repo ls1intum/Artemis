@@ -63,11 +63,8 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         Exercise exercise = participation.getExercise();
         //TODO: For exam exercise with second correction, variation for get all results
-        Result result = null;
-        List<Result> results = submission.getResults();
-        if (results != null && !results.isEmpty()) {
-            result = results.get(results.size() - 1);
-        }
+        Result result = submission.getLatestResult();
+
         if (result == null) {
             return notFound();
         }
@@ -106,8 +103,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         checkAuthorization(fileUploadExercise, userService.getUserWithGroupsAndAuthorities());
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user);
-        List<Result> results = fileUploadSubmission.getResults();
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(results.get(results.size() - 1), fileUploadExercise, studentParticipation, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(fileUploadSubmission.getLatestResult(), fileUploadExercise, studentParticipation, user, isAtLeastInstructor)) {
             log.debug("The user " + user.getLogin() + " is not allowed to override the assessment for the submission " + fileUploadSubmission.getId());
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
@@ -146,8 +142,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
         checkAuthorization(fileUploadExercise, user);
 
-        List<Result> results = fileUploadSubmission.getResults();
-        Result result = fileUploadAssessmentService.updateAssessmentAfterComplaint(results.get(results.size() - 1), fileUploadExercise, assessmentUpdate);
+        Result result = fileUploadAssessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getLatestResult(), fileUploadExercise, assessmentUpdate);
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {

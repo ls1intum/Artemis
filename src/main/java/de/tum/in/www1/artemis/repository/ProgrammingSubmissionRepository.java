@@ -44,8 +44,7 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     List<ProgrammingSubmission> findLatestSubmissionForParticipation(@Param("participationId") Long participationId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks" })
-    @Query("SELECT ps from ProgrammingSubmission ps WHERE ps.participation.exercise.id = :#{#participationId} AND ps.results IS EMPTY ORDER BY ps.submissionDate DESC")
-    List<ProgrammingSubmission> findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(@Param("participationId") Long participationId);
+    List<ProgrammingSubmission> findByParticipationIdAndResultsIsNullOrderBySubmissionDateDesc(Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findWithEagerResultById(Long submissionId);
@@ -56,5 +55,6 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     @EntityGraph(type = LOAD, attributePaths = { "buildLogEntries" })
     Optional<ProgrammingSubmission> findWithEagerBuildLogEntriesById(Long submissionId);
 
-    Optional<ProgrammingSubmission> findByResultsId(long resultId);
+    @Query("select s from ProgrammingSubmission s left join fetch s.results r where r.id = :#{#resultId}")
+    Optional<ProgrammingSubmission> findByResultId(@Param("resultId") Long resultId);
 }

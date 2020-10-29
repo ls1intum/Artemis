@@ -74,11 +74,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             return forbidden();
         }
 
-        List<Result> results = programmingSubmission.getResults();
-        if (results == null || results.isEmpty()) {
-            return forbidden();
-        }
-        Result result = programmingAssessmentService.updateAssessmentAfterComplaint(results.get(results.size() - 1), programmingExercise, assessmentUpdate);
+        Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getLatestResult(), programmingExercise, assessmentUpdate);
         // make sure the submission is reconnected with the result to prevent problems when the object is used for other calls in the client
         result.setSubmission(programmingSubmission);
         // remove circular dependencies if the results of the participation are there
