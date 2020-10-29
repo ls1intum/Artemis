@@ -496,11 +496,9 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public String getPlanKey(Object requestBody) throws BambooException {
-        // TODO: convert into a proper DTO object to avoid unchecked Map casts
         try {
-            Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
-            Map<String, Object> planMap = (Map<String, Object>) requestBodyMap.get("plan");
-            return (String) planMap.get("key");
+            final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
+            return buildResult.getPlan().getKey();
         }
         catch (Exception e) {
             // TODO: Not sure when this is triggered, the method would return null if the planMap does not have a 'key'.
