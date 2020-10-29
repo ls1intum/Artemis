@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleServi
 public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @Value("${server.url}")
-    protected String ARTEMIS_SERVER_URL;
+    protected String artemisServerUrl;
 
     // NOTE: we prefer SpyBean over MockBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
     @SpyBean
