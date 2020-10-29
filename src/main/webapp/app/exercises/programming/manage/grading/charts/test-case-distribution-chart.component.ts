@@ -33,21 +33,23 @@ export class TestCaseDistributionChartComponent implements OnChanges {
     ngOnChanges(): void {
         // sum of all weights
         const totalWeight = this.testCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
+        // max points for the exercise - 100 for an zero points exercise to still show the graph
+        const maxPoints = this.exercise.maxScore! + (this.exercise.bonusPoints || 0) === 0 ? 100 : this.exercise.maxScore!;
         // exercise max score with bonus in percent
-        const maxScore = (this.exercise.maxScore! + (this.exercise.bonusPoints || 0)) / this.exercise.maxScore!;
+        const maxScoreInPercent = (maxPoints + (this.exercise.bonusPoints || 0)) / maxPoints;
 
         const testCaseScores = this.testCases.map((testCase) => {
             // calculated score for this test case
-            const testCaseScore = (totalWeight > 0 ? (testCase.weight! * testCase.bonusMultiplier!) / totalWeight : 0) + testCase.bonusPoints! / this.exercise.maxScore!;
+            const testCaseScore = (totalWeight > 0 ? (testCase.weight! * testCase.bonusMultiplier!) / totalWeight : 0) + (testCase.bonusPoints || 0) / maxPoints;
             return {
                 testCase,
-                score: Math.min(testCaseScore, maxScore),
+                score: Math.min(testCaseScore, maxScoreInPercent),
                 stats: this.testCaseStatsMap ? this.testCaseStatsMap[testCase.testName!] : undefined,
             };
         });
 
         // total of achievable points for this exercise
-        const totalPoints = this.exercise.maxScore! * (this.totalParticipations || 0);
+        const totalPoints = maxPoints * (this.totalParticipations || 0);
 
         this.chartDatasets = testCaseScores.map((element, i) => ({
             label: element.testCase.testName!,
@@ -57,7 +59,7 @@ export class TestCaseDistributionChartComponent implements OnChanges {
                 // relative score percentage
                 element.score * 100,
                 // relative points percentage
-                element.stats && totalPoints > 0 ? ((element.stats.numPassed! * element.score * this.exercise.maxScore!) / totalPoints) * 100 : 0,
+                element.stats && totalPoints > 0 ? ((element.stats.numPassed! * element.score * maxPoints) / totalPoints) * 100 : 0,
             ],
             backgroundColor: this.getColor(i / this.testCases.length, 50),
             hoverBackgroundColor: this.getColor(i / this.testCases.length, 60),
