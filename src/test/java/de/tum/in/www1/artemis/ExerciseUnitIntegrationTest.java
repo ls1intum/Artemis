@@ -70,8 +70,8 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
     @BeforeEach
     public void initTestCase() throws Exception {
         this.database.addUsers(10, 10, 10);
-        this.database.createCoursesWithExercisesAndLectures(true);
-        this.course1 = this.courseRepository.findWithEagerExercisesAndLecturesById(1);
+        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true);
+        this.course1 = this.courseRepository.findWithEagerExercisesAndLecturesById(courses.get(0).getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().get();
 
         this.textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
@@ -165,7 +165,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
         Exercise exercise = course1.getExercises().stream().findFirst().get();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
-        ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api/lectures/" + 99 + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.BAD_REQUEST);
+        ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api/lectures/" + 0 + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
