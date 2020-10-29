@@ -116,10 +116,50 @@ Exercise Creation
 
 3. **Update exercise code in repositories**
 
-- **Alternative 1:** Clone the 3 repositories and adapt the code on your local computer in your preferred development environment (e.g. Eclipse)
+- **Alternative 1:** Clone the 3 repositories and adapt the code on your local computer in your preferred development environment (e.g. Eclipse).
 
   - To execute tests, copy the template (or solution) code into a folder **assignment** in the test repository and execute the tests (e.g. using maven clean test)
   - Commit and push your changes |submit|
+
+  - **Notes for Haskell:** In addition to the assignment folder, the executables of the build file expect the solution repository checked out in the **solution** subdirectory of the test folder and also allow for a **template** subdirectory to easily test the template on your local machine.
+    You can use the following script to conveniently checkout an exercise and create the right folder structure:
+
+    .. code-block:: bash
+
+      #!/bin/sh
+      # Arguments:
+      # $1: exercise short name as specified on Artemis
+      # $2: (optional) output folder name
+      #
+      # Note: you might want to adapt the `BASE` variable below according to your needs
+
+      if [ -z "$1" ]; then
+        echo "No exercise short name supplied."
+        exit 1
+      fi
+
+      EXERCISE="$1"
+
+      if [ -z "$2" ]; then
+        # use the exercise name if no output folder name is specified
+        NAME="$1"
+      else
+        NAME="$2"
+      fi
+
+      # default base URL to repositories; change this according to your needs
+      BASE="ssh://git@bitbucket.ase.in.tum.de:7999/$EXERCISE/$EXERCISE"
+
+      # clone the test repository
+      git clone "$BASE-tests.git" "$NAME" && \
+        # clone the template repository
+        git clone "$BASE-exercise.git" "$NAME/template" && \
+        # clone the solution repository
+        git clone "$BASE-solution.git" "$NAME/solution" && \
+        # create an assignment folder from the template repository
+        cp -R "$NAME/template" "$NAME/assignment" && \
+        # remove the .git folder from the assignment folder
+        rm -r "$NAME/assignment/.git/"
 
 - **Alternative 2:** Open |edit-in-editor| in Artemis (in the browser) and adapt the code in online code editor
 
