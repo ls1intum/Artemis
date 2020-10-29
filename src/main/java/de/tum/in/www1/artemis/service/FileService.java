@@ -331,6 +331,14 @@ public class FileService implements DisposableBean {
             if (targetFilePath.endsWith("Makefile.file")) {
                 targetFilePath = targetFilePath.replace("Makefile.file", "Makefile");
             }
+            // special case for '.project' files which would not be included in the build otherwise
+            if (targetFilePath.endsWith("project.file")) {
+                targetFilePath = targetFilePath.replace("project.file", ".project");
+            }
+            // special case for '.classpath' files which would not be included in the build otherwise
+            if (targetFilePath.endsWith("classpath.file")) {
+                targetFilePath = targetFilePath.replace("classpath.file", ".classpath");
+            }
 
             Path copyPath = Paths.get(targetDirectoryPath + targetFilePath);
             File parentFolder = copyPath.toFile().getParentFile();
