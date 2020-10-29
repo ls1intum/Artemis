@@ -119,6 +119,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
+        result.assessmentType(AssessmentType.AUTOMATIC);
         Long scoreBeforeUpdate = result.getScore();
 
         gradingService.updateResult(result, programmingExercise, true);
@@ -505,7 +506,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
             var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findAny();
             assertThat(manualResultOptional).isPresent();
-            testParticipationResult(manualResultOptional.get(), 86, "86 of 100 points", true, 6, AssessmentType.SEMI_AUTOMATIC);
+            testParticipationResult(manualResultOptional.get(), 86, "1 of 3 passed, 86 of 100 points", true, 6, AssessmentType.SEMI_AUTOMATIC);
             assertThat(manualResultOptional.get()).isEqualTo(participation.findLatestResult());
 
             var automaticResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC).findAny();

@@ -109,8 +109,22 @@ public class AssessmentService {
 
         // Update the result that was complained about with the new feedback
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks(), exercise instanceof ProgrammingExercise);
-        Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
-        return submitResult(originalResult, exercise, calculatedScore);
+        if (exercise instanceof ProgrammingExercise) {
+            double points = ((ProgrammingAssessmentService) this).calculateTotalScore(originalResult);
+            originalResult.setScore(points, exercise.getMaxScore());
+            /*
+             * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
+             * student has achieved have changed
+             */
+            String[] resultStringParts = originalResult.getResultString().split(", ");
+            resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, exercise.getMaxScore());
+            originalResult.setResultString(String.join(", ", resultStringParts));
+            return resultRepository.save(originalResult);
+        }
+        else {
+            Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
+            return submitResult(originalResult, exercise, calculatedScore);
+        }
     }
 
     /**
