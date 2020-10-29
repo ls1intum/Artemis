@@ -11,8 +11,6 @@ import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
 import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
 import { SanitizeHtmlPipe } from 'app/shared/pipes/sanitize-html.pipe';
 import { ExerciseTypePipe } from 'app/shared/pipes/exercise-type.pipe';
-import { RemovePositiveAutomaticFeedbackPipe } from 'app/shared/pipes/remove-positive-automatic-feedback.pipe';
-import { StaticCodeAnalysisLocationTextPipe } from 'app/shared/pipes/static-code-analysis-location-text.pipe';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 
 @NgModule({
@@ -25,13 +23,11 @@ import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.
         ExerciseTypePipe,
         KeysPipe,
         TypeCheckPipe,
-        RemovePositiveAutomaticFeedbackPipe,
         HtmlForMarkdownPipe,
         HtmlForGuidedTourMarkdownPipe,
         TruncatePipe,
         SanitizeHtmlPipe,
         AverageByPipe,
-        StaticCodeAnalysisLocationTextPipe,
     ],
     exports: [
         SafeHtmlPipe,
@@ -41,14 +37,12 @@ import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.
         ExerciseTypePipe,
         KeysPipe,
         TypeCheckPipe,
-        RemovePositiveAutomaticFeedbackPipe,
         HtmlForMarkdownPipe,
         HtmlForGuidedTourMarkdownPipe,
         TruncatePipe,
         SanitizeHtmlPipe,
         SafeResourceUrlPipe,
         AverageByPipe,
-        StaticCodeAnalysisLocationTextPipe,
     ],
 })
 export class ArtemisSharedPipesModule {}

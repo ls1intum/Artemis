@@ -1962,6 +1962,7 @@ public class DatabaseUtilService {
         submission = saveTextSubmissionWithResultAndAssessor(exercise, submission, studentLogin, null, assessorLogin);
         Result result = submission.getLatestResult();
         for (Feedback feedback : feedbacks) {
+            // this also invoked feedback.setResult(result)
             result.addFeedback(feedback);
         }
         // this automatically saves the feedback because of the CascadeType.All annotation
