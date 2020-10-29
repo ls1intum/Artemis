@@ -5,7 +5,8 @@
         "generic": {
             "yes": "Yes",
             "no": "No",
-            "emptyList": "No items available"
+            "emptyList": "No items available",
+            "unset": "Unset"
         },
         "menu": {
             "home": "Home",

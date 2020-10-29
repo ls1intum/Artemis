@@ -333,6 +333,22 @@ public class ProgrammingExerciseResource {
             }
         }
 
+        // Check if project type is selected
+        if (programmingLanguageFeature.getProjectTypes().size() > 0) {
+            if (programmingExercise.getProjectType() == null) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The project type is not set", "projectTypeNotSet")).body(null);
+            }
+            if (!programmingLanguageFeature.getProjectTypes().contains(programmingExercise.getProjectType())) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createAlert(applicationName, "The project type is not supported for this programming language", "projectTypeNotSupported")).body(null);
+            }
+        }
+        else {
+            if (programmingExercise.getProjectType() != null) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The project type is set but not supported", "projectTypeSet")).body(null);
+            }
+        }
+
         // Check if checkout solution repository is enabled
         if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.isCheckoutSolutionRepositoryAllowed()) {
             return ResponseEntity.badRequest()

@@ -108,7 +108,7 @@ public class AssessmentService {
         }
 
         // Update the result that was complained about with the new feedback
-        originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks());
+        originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks(), exercise instanceof ProgrammingExercise);
         if (exercise instanceof ProgrammingExercise) {
             double points = ((ProgrammingAssessmentService) this).calculateTotalScore(originalResult);
             originalResult.setScore(points, exercise.getMaxScore());

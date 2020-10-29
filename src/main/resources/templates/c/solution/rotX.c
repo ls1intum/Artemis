@@ -2,6 +2,7 @@
 #include <stdlib.h> // size_t
 #include <unistd.h> // read(...)
 #include <stdio.h> // printf(...)
+#include <unistd.h> // sleep(...)
 
 #define MAX_BUFFER_SIZE 1024
 
@@ -48,4 +49,6 @@ int main() {
     }
     // Print the result:
     printf("%s", buff);
+    fflush(stdin); // Ensure we flush our output
+    sleep(1); // Sleep one second to prevent th output from not getting read sometimes by the tester
 }
