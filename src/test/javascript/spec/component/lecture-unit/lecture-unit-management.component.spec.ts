@@ -16,6 +16,9 @@ import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit
 import { By } from '@angular/platform-browser';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
+import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import sinon = require('sinon');
 
 chai.use(sinonChai);
@@ -49,11 +52,13 @@ describe('LectureUnitManagementComponent', () => {
             id: 42,
             name: 'A',
             attachment: attachments[0],
+            type: LectureUnitType.ATTACHMENT,
         },
         {
             id: 49,
             name: 'B',
             attachment: attachments[1],
+            type: LectureUnitType.ATTACHMENT,
         },
     ] as AttachmentUnit[];
 
@@ -141,5 +146,20 @@ describe('LectureUnitManagementComponent', () => {
         fixture.detectChanges();
         expect(moveUpSpy).to.have.been.calledOnce;
         expect(comp.lectureUnits[1].id).to.equal(42);
+    });
+
+    it('should give the correct delete question translation key', () => {
+        expect(comp.getDeleteQuestionKey(new AttachmentUnit())).to.equal('artemisApp.attachmentUnit.delete.question');
+        expect(comp.getDeleteQuestionKey(new ExerciseUnit())).to.equal('artemisApp.exerciseUnit.delete.question');
+    });
+
+    it('should give the correct confirmation text translation key', () => {
+        expect(comp.getDeleteConfirmationTextKey(new AttachmentUnit())).to.equal('artemisApp.attachmentUnit.delete.typeNameToConfirm');
+        expect(comp.getDeleteConfirmationTextKey(new ExerciseUnit())).to.equal('artemisApp.exerciseUnit.delete.typeNameToConfirm');
+    });
+
+    it('should give the correct action type', () => {
+        expect(comp.getActionType(new AttachmentUnit())).to.equal(ActionType.Delete);
+        expect(comp.getActionType(new ExerciseUnit())).to.equal(ActionType.Unlink);
     });
 });
