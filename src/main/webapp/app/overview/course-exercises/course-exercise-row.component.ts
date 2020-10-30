@@ -31,6 +31,10 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     @Input() course: Course;
     @Input() extendedLink = false;
     @Input() hasGuidedTour: boolean;
+    /**
+     * PresentationMode deactivates the interactivity of the component
+     */
+    @Input() isPresentationMode = false;
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;

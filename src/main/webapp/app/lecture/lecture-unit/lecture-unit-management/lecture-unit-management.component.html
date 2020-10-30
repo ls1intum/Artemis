@@ -1,0 +1,56 @@
+<jhi-alert></jhi-alert>
+
+<div *ngIf="isLoading" class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+</div>
+
+<div *ngIf="!isLoading" class="container">
+    <!-- Lecture Unit Rows-->
+    <div class="row mb-4" *ngFor="let lectureUnit of lectureUnits; index as i; trackBy: identify">
+        <div class="col-10 col-md-6 offset-md-3" [ngSwitch]="lectureUnit.type">
+            <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true"></jhi-exercise-unit>
+            <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
+        </div>
+        <div class="col-1 my-auto">
+            <div class="container">
+                <div class="row mx-auto mb-1">
+                    <button id="{{ 'up-' + i }}" type="button" class="btn btn-primary btn-circle" (click)="moveUp(i)" [disabled]="i === 0">
+                        <fa-icon [icon]="'arrow-up'" [fixedWidth]="true" [size]="'lg'"></fa-icon>
+                    </button>
+                </div>
+                <div class="row mx-auto">
+                    <button id="{{ 'down-' + i }}" type="button" class="btn btn-primary btn-circle" (click)="moveDown(i)" [disabled]="i === lectureUnits.length - 1">
+                        <fa-icon [icon]="'arrow-down'" [fixedWidth]="true" [size]="'lg'"></fa-icon>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-1 my-auto">
+            <button
+                *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
+                jhiDeleteButton
+                [actionType]="getActionType(lectureUnit)"
+                [entityTitle]="getLectureUnitName(lectureUnit)"
+                [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
+                [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
+                (delete)="deleteLectureUnit(lectureUnit.id)"
+                [dialogError]="dialogError$"
+            >
+                <fa-icon [icon]="'times'"></fa-icon>
+            </button>
+            <button *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary" (click)="editButtonClicked(lectureUnit)">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Unit Creation Card Row-->
+    <div class="row">
+        <div class="col-12 mx-auto">
+            <jhi-unit-creation-card (createExerciseUnit)="createExerciseUnit()" (createAttachmentUnit)="createAttachmentUnit()"></jhi-unit-creation-card>
+        </div>
+    </div>
+</div>
