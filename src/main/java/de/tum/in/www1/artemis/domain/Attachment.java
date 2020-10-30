@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
+import de.tum.in.www1.artemis.domain.lecture_unit.AttachmentUnit;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
@@ -58,6 +59,10 @@ public class Attachment extends DomainObject implements Serializable {
     @JsonIgnoreProperties("attachments")
     private Lecture lecture;
 
+    @OneToOne
+    @JoinColumn(name = "attachmentUnit_id")
+    private AttachmentUnit attachmentUnit;
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     /*
      * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding course is deleted or it is replaced
@@ -78,6 +83,10 @@ public class Attachment extends DomainObject implements Serializable {
         if (attachmentType == AttachmentType.FILE && getLecture() != null && link != null && link.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
             link = link.replace(Constants.FILEPATH_ID_PLACHEOLDER, getLecture().getId().toString());
         }
+        if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null && link != null && link.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
+            link = link.replace(Constants.FILEPATH_ID_PLACHEOLDER, getAttachmentUnit().getId().toString());
+        }
+
         prevLink = link; // save current path as old path (needed to know old path in onUpdate() and onDelete())
     }
 
@@ -92,13 +101,25 @@ public class Attachment extends DomainObject implements Serializable {
             link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(),
                     true);
         }
+        if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null) {
+            // move file if necessary (id at this point will be null, so placeholder will be inserted)
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getAttachmentUnitFilePath() + getAttachmentUnit().getId() + '/',
+                    getAttachmentUnit().getId(), true);
+        }
     }
 
+    /**
+     * Will be called after the entity is persisted (saved).
+     * Manages files by taking care of file system changes for this entity.
+     */
     @PostPersist
     public void afterCreate() {
         // replace placeholder with actual id if necessary (id is no longer null at this point)
-        if (attachmentType == AttachmentType.FILE && link != null && link.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
+        if (attachmentType == AttachmentType.FILE && link != null && link.contains(Constants.FILEPATH_ID_PLACHEOLDER) && getLecture() != null) {
             link = link.replace(Constants.FILEPATH_ID_PLACHEOLDER, getLecture().getId().toString());
+        }
+        if (attachmentType == AttachmentType.FILE && link != null && link.contains(Constants.FILEPATH_ID_PLACHEOLDER) && getAttachmentUnit() != null) {
+            link = link.replace(Constants.FILEPATH_ID_PLACHEOLDER, getAttachmentUnit().getId().toString());
         }
     }
 
@@ -113,13 +134,27 @@ public class Attachment extends DomainObject implements Serializable {
             link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(),
                     true);
         }
+        if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null) {
+            // move file and delete old file if necessary
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getAttachmentUnitFilePath() + getAttachmentUnit().getId() + '/',
+                    getAttachmentUnit().getId(), true);
+        }
     }
 
+    /**
+     * Will be called after the entity is removed (deleted).
+     * Manages files by taking care of file system changes for this entity.
+     */
     @PostRemove
     public void onDelete() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // delete old file if necessary
             fileService.manageFilesForUpdatedFilePath(prevLink, null, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(), true);
+        }
+        if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null) {
+            // delete old file if necessary
+            fileService.manageFilesForUpdatedFilePath(prevLink, null, FilePathService.getAttachmentUnitFilePath() + getAttachmentUnit().getId() + '/', getAttachmentUnit().getId(),
+                    true);
         }
     }
 
@@ -200,6 +235,21 @@ public class Attachment extends DomainObject implements Serializable {
 
     public void setLecture(Lecture lecture) {
         this.lecture = lecture;
+    }
+
+    public AttachmentUnit getAttachmentUnit() {
+        return attachmentUnit;
+    }
+
+    public void setAttachmentUnit(AttachmentUnit attachmentUnit) {
+        this.attachmentUnit = attachmentUnit;
+    }
+
+    public Boolean isVisibleToStudents() {
+        if (releaseDate == null) {  // no release date means the attachment is visible to students
+            return Boolean.TRUE;
+        }
+        return releaseDate.isBefore(ZonedDateTime.now());
     }
 
     @Override

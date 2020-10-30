@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.domain;
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -127,6 +129,10 @@ public class Course extends DomainObject {
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "course", allowSetters = true)
     private Set<Lecture> lectures = new HashSet<>();
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("course")
+    private List<LearningGoal> learningGoals = new ArrayList<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -385,7 +391,6 @@ public class Course extends DomainObject {
             exam.setCourse(this);
         }
     }
-
     /*
      * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding course is deleted or it is replaced
      * by another file. The workflow is as follows 1. user uploads a file -> this is a temporary file, because at this point the corresponding course might not exist yet. 2. user
@@ -397,7 +402,7 @@ public class Course extends DomainObject {
      */
 
     /**
-     *Initialisation of the Course on Server start
+     * Initialisation of the Course on Server start
      */
     @PostLoad
     public void onLoad() {
@@ -465,5 +470,23 @@ public class Course extends DomainObject {
 
     public Long getNumberOfStudents() {
         return this.numberOfStudentsTransient;
+    }
+
+    public List<LearningGoal> getLearningGoals() {
+        return learningGoals;
+    }
+
+    public void setLearningGoals(List<LearningGoal> learningGoals) {
+        this.learningGoals = learningGoals;
+    }
+
+    public void addLearningGoal(LearningGoal learningGoal) {
+        this.learningGoals.add(learningGoal);
+        learningGoal.setCourse(this);
+    }
+
+    public void removeLearningGoal(LearningGoal learningGoal) {
+        this.learningGoals.remove(learningGoal);
+        learningGoal.setCourse(null);
     }
 }

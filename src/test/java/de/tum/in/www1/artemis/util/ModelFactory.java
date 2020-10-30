@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.ErrorDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.ErrorOrFailureDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestsuiteDTO;
@@ -658,7 +658,7 @@ public class ModelFactory {
             var testcase = new TestCaseDTO();
             testcase.setName(name);
             testcase.setClassname("Class");
-            var error = new ErrorDTO();
+            var error = new ErrorOrFailureDTO();
             error.setMessage(name + " error message");
             testcase.setErrors(List.of(error));
             return testcase;
