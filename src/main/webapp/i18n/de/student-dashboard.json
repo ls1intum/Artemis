@@ -120,7 +120,7 @@
             "exerciseDetails": {
                 "dueDate": "Einreichungsfrist:",
                 "categories": "Kategorien:",
-                "exerciseType": "Typ:",
+                "type": "Typ:",
                 "difficulty": "Schwierigkeit:",
                 "exerciseStatus": "Aufgaben Status:",
                 "points": "Punkte:",

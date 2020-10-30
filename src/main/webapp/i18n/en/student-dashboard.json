@@ -122,7 +122,7 @@
             "exerciseDetails": {
                 "dueDate": "Due date:",
                 "categories": "Categories:",
-                "exerciseType": "Type:",
+                "type": "Type:",
                 "difficulty": "Difficulty:",
                 "exerciseStatus": "Exercise status:",
                 "points": "Points:",
