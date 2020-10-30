@@ -163,6 +163,10 @@ public class FileService implements DisposableBean {
             String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
             return FilePathService.getLectureAttachmentFilepath() + lectureId + filename;
         }
+        if (publicPath.contains("files/attachments/attachment-unit")) {
+            String attachmentUnitId = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "");
+            return FilePathService.getAttachmentUnitFilePath() + attachmentUnitId + filename;
+        }
         if (publicPath.contains("files/file-upload-exercises")) {
             final var uploadSubPath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
             final var shouldBeExerciseId = uploadSubPath[0];
@@ -209,6 +213,9 @@ public class FileService implements DisposableBean {
         if (actualPath.contains(FilePathService.getLectureAttachmentFilepath())) {
             return "/api/files/attachments/lecture/" + id + "/" + filename;
         }
+        if (actualPath.contains(FilePathService.getAttachmentUnitFilePath())) {
+            return "/api/files/attachments/attachment-unit/" + id + "/" + filename;
+        }
         if (actualPath.contains(FilePathService.getFileUploadExercisesFilepath())) {
             final var path = Paths.get(actualPath);
             final long exerciseId;
@@ -249,6 +256,9 @@ public class FileService implements DisposableBean {
         }
         if (targetFolder.contains(FilePathService.getLectureAttachmentFilepath())) {
             filenameBase = "LectureAttachment_";
+        }
+        if (targetFolder.contains(FilePathService.getAttachmentUnitFilePath())) {
+            filenameBase = "AttachmentUnit_";
         }
 
         // extract the file extension

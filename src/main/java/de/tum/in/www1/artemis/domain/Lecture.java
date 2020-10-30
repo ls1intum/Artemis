@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -11,6 +13,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.tum.in.www1.artemis.domain.lecture_unit.LectureUnit;
 
 /**
  * A Lecture.
@@ -37,6 +40,12 @@ public class Lecture extends DomainObject {
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
     private Set<Attachment> attachments = new HashSet<>();
+
+    @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderColumn(name = "lecture_unit_order")
+    @JsonIgnoreProperties("lecture")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private List<LectureUnit> lectureUnits = new ArrayList<>();
 
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -101,6 +110,24 @@ public class Lecture extends DomainObject {
 
     public void setAttachments(Set<Attachment> attachments) {
         this.attachments = attachments;
+    }
+
+    public List<LectureUnit> getLectureUnits() {
+        return lectureUnits;
+    }
+
+    public void setLectureUnits(List<LectureUnit> lectureUnits) {
+        this.lectureUnits = lectureUnits;
+    }
+
+    public void addLectureUnit(LectureUnit lectureUnit) {
+        this.lectureUnits.add(lectureUnit);
+        lectureUnit.setLecture(this);
+    }
+
+    public void removeLectureUnit(LectureUnit lectureUnit) {
+        this.lectureUnits.remove(lectureUnit);
+        lectureUnit.setLecture(null);
     }
 
     public Set<StudentQuestion> getStudentQuestions() {

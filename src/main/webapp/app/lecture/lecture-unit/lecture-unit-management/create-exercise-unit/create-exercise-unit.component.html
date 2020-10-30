@@ -1,0 +1,78 @@
+<div *ngIf="isLoading" class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+</div>
+
+<div *ngIf="!isLoading" class="container">
+    <div class="row">
+        <div class="col-12 mx-auto">
+            <h2>{{ 'artemisApp.exerciseUnit.createExerciseUnit.headline' | translate }}</h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6 mx-auto">
+            <p>{{ 'artemisApp.exerciseUnit.createExerciseUnit.description' | translate }}</p>
+        </div>
+        <div class="col-sm-6 mx-auto text-right">
+            <button type="button" class="btn btn-primary" [disabled]="exercisesToCreateUnitFor.length === 0" (click)="createExerciseUnits()">
+                {{ 'entity.action.submit' | translate }}
+            </button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 mx-auto">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="thead-dark">
+                        <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
+                            <th jhiSortBy="id">
+                                id
+                                <fa-icon [icon]="'sort'"></fa-icon>
+                            </th>
+                            <th jhiSortBy="type">
+                                {{ 'artemisApp.exercise.type' | translate }}
+                                <fa-icon [icon]="'sort'"></fa-icon>
+                            </th>
+                            <th jhiSortBy="title">
+                                {{ 'artemisApp.exercise.title' | translate }}
+                                <fa-icon [icon]="'sort'"></fa-icon>
+                            </th>
+                            <th jhiSortBy="shortName">
+                                {{ 'artemisApp.exercise.shortName' | translate }}
+                                <fa-icon [icon]="'sort'"></fa-icon>
+                            </th>
+                            <th jhiSortBy="releaseDate">
+                                {{ 'artemisApp.exercise.releaseDate' | translate }}
+                                <fa-icon [icon]="'sort'"></fa-icon>
+                            </th>
+                            <th jhiSortBy="dueDate">
+                                {{ 'artemisApp.exercise.dueDate' | translate }}
+                                <fa-icon [icon]="'sort'"></fa-icon>
+                            </th>
+                            <th jhiSortBy="assessmentDueDate">
+                                {{ 'artemisApp.exercise.assessmentDueDate' | translate }}
+                                <fa-icon [icon]="'sort'"></fa-icon>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            *ngFor="let exercise of exercisesAvailableForUnitCreation"
+                            (click)="selectExerciseForUnitCreation(exercise)"
+                            [class.table-primary]="isExerciseSelectedForUnitCreation(exercise)"
+                        >
+                            <td>{{ exercise.id ? exercise.id : '' }}</td>
+                            <td>{{ exercise.type ? exercise.type : '' }}</td>
+                            <td>{{ exercise.title ? exercise.title : '' }}</td>
+                            <td>{{ exercise.shortName ? exercise.shortName : '' }}</td>
+                            <td>{{ exercise.releaseDate ? exercise.releaseDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                            <td>{{ exercise.dueDate ? exercise.dueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                            <td>{{ exercise.assessmentDueDate ? exercise.assessmentDueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

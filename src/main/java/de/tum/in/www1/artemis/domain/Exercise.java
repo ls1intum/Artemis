@@ -82,6 +82,9 @@ public abstract class Exercise extends DomainObject {
     @Lob
     private String gradingInstructions;
 
+    @ManyToMany(mappedBy = "exercises")
+    public Set<LearningGoal> learningGoals = new HashSet<>();
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
     @Column(name = "categories")
@@ -240,6 +243,7 @@ public abstract class Exercise extends DomainObject {
 
     /**
      * Checks if the assessment due date is in the past. Also returns true, if no assessment due date is set.
+     *
      * @return true if the assessment due date is in the past, otherwise false
      */
     @JsonIgnore
@@ -464,6 +468,24 @@ public abstract class Exercise extends DomainObject {
         return ZonedDateTime.now().isAfter(getDueDate());
     }
 
+    public Set<LearningGoal> getLearningGoals() {
+        return learningGoals;
+    }
+
+    public void setLearningGoals(Set<LearningGoal> learningGoals) {
+        this.learningGoals = learningGoals;
+    }
+
+    public void addLearningGoal(LearningGoal learningGoal) {
+        this.learningGoals.add(learningGoal);
+        learningGoal.getExercises().add(this);
+    }
+
+    public void removeLearningGoal(LearningGoal learningGoal) {
+        this.learningGoals.remove(learningGoal);
+        learningGoal.getExercises().remove(this);
+    }
+
     public boolean isTeamMode() {
         return mode == ExerciseMode.TEAM;
     }
@@ -522,7 +544,7 @@ public abstract class Exercise extends DomainObject {
      * Get the latest relevant result from the given participation (rated == true or rated == null) (relevancy depends on Exercise type => this should be overridden by subclasses
      * if necessary)
      *
-     * @param participation the participation whose results we are considering
+     * @param participation           the participation whose results we are considering
      * @param ignoreAssessmentDueDate defines if assessment due date is ignored for the selected results
      * @return the latest relevant result in the given participation, or null, if none exist
      */
@@ -719,6 +741,7 @@ public abstract class Exercise extends DomainObject {
 
     /**
      * Checks whether the exercise is released
+     *
      * @return boolean
      */
     public boolean isReleased() {

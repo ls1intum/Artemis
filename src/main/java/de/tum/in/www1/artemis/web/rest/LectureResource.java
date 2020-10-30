@@ -4,8 +4,10 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.lecture_unit.LectureUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
@@ -24,7 +27,6 @@ import de.tum.in.www1.artemis.service.LectureService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing Lecture.
@@ -101,6 +103,13 @@ public class LectureResource {
         if (!authCheckService.isInstructorInCourse(lecture.getCourse(), user) && !authCheckService.isAdmin(user)) {
             return forbidden();
         }
+
+        // Make sure that the original references are preserved.
+        Lecture originalLecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture.getId()).get();
+
+        // NOTE: Make sure that all references are preserved here
+        lecture.setLectureUnits(originalLecture.getLectureUnits());
+
         Lecture result = lectureRepository.save(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, lecture.getId().toString())).body(result);
     }
@@ -134,17 +143,24 @@ public class LectureResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Lecture> getLecture(@PathVariable Long id) {
         log.debug("REST request to get Lecture : {}", id);
-        Optional<Lecture> lecture = lectureRepository.findByIdWithStudentQuestions(id);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (lecture.isEmpty()) {
+        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(id);
+        if (lectureOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        Course course = lecture.get().getCourse();
+        Lecture lecture = lectureOptional.get();
+        Course course = lecture.getCourse();
+        if (course == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
-        lecture = Optional.of(lectureService.filterActiveAttachments(lecture.get(), user));
-        return ResponseUtil.wrapOrNotFound(lecture);
+
+        List<LectureUnit> lectureUnitsStudentIsAllowedToSee = lecture.getLectureUnits().stream()
+                .filter(lectureUnit -> authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)).collect(Collectors.toList());
+        lecture.setLectureUnits(lectureUnitsStudentIsAllowedToSee);
+        return ResponseEntity.ok(lecture);
     }
 
     /**

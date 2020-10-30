@@ -9,6 +9,7 @@ export enum ActionType {
     Reset = 'reset',
     Cleanup = 'cleanup',
     Remove = 'remove',
+    Unlink = 'unlink',
 }
 
 /**
