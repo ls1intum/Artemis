@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.repository.lecture;
+package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
 
