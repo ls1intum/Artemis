@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, NavigationExtras } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 
@@ -21,9 +21,8 @@ import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submission-assessment.route';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { Course } from 'app/entities/course.model';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { TextAssessmentBaseComponent } from 'app/exercises/text/assess-new/text-assessment-base.component';
 import { now } from 'moment';
 
 @Component({
@@ -31,7 +30,7 @@ import { now } from 'moment';
     templateUrl: './text-submission-assessment.component.html',
     styleUrls: ['./text-submission-assessment.component.scss'],
 })
-export class TextSubmissionAssessmentComponent implements OnInit {
+export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit {
     /*
      * The instance of this component is REUSED for multiple assessments if using the "Assess Next" button!
      * All properties must be initialized with a default value (or null) in the resetComponent() method.
@@ -40,7 +39,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
     participation?: StudentParticipation;
     submission?: TextSubmission;
-    exercise?: TextExercise;
     result?: Result;
     generalFeedback: Feedback;
     unreferencedFeedback: Feedback[];
@@ -64,7 +62,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
      * Non-resetted properties:
      * These properties are not resetted on purpose, as they cannot change between assessments.
      */
-    private userId?: number;
     private cancelConfirmationText: string;
     // ExerciseId is updated from Route Subscription directly.
     exerciseId: number;
@@ -87,22 +84,19 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             .map(({ block }) => block!);
     }
 
-    private get course(): Course | undefined {
-        return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
-    }
-
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private location: Location,
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
-        private accountService: AccountService,
-        private assessmentsService: TextAssessmentsService,
+        protected jhiAlertService: JhiAlertService,
+        protected accountService: AccountService,
+        protected assessmentsService: TextAssessmentsService,
         private complaintService: ComplaintService,
-        private translateService: TranslateService,
-        private structuredGradingCriterionService: StructuredGradingCriterionService,
+        translateService: TranslateService,
+        protected structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
+        super(jhiAlertService, accountService, assessmentsService, translateService, structuredGradingCriterionService);
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         this.resetComponent();
     }
@@ -138,14 +132,11 @@ export class TextSubmissionAssessmentComponent implements OnInit {
      * Life cycle hook to indicate component creation is done
      */
     async ngOnInit() {
-        // Used to check if the assessor is the current user
-        const identity = await this.accountService.identity();
-        this.userId = identity?.id;
+        await super.ngOnInit();
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
         });
 
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
@@ -170,8 +161,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.getComplaint();
         this.updateUrlIfNeeded();
 
-        this.checkPermissions();
-        this.computeTotalScore();
+        this.checkPermissions(this.result);
+        this.totalScore = this.computeTotalScore(this.assessments);
         this.isLoading = false;
 
         // track feedback in athene
@@ -190,6 +181,12 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
     private get isNewAssessmentRoute(): boolean {
         return this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH;
+    }
+
+    private checkPermissions(result?: Result): void {
+        this.isAssessor = result?.assessor?.id === this.userId;
+        // case distinction for exam mode
+        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
     }
 
     /**
@@ -234,9 +231,14 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         );
     }
 
-    private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
-        this.participation!.results![0] = this.result = response.body!;
-        this.jhiAlertService.success(translationKey);
+    protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
+        super.handleSaveOrSubmitSuccessWithAlert(response, translationKey);
+        // eslint-disable-next-line chai-friendly/no-unused-expressions
+        response.body!.feedbacks?.forEach((newFeedback) => {
+            newFeedback.conflictingTextAssessments = this.result?.feedbacks?.find((feedback) => feedback.id === newFeedback.id)?.conflictingTextAssessments;
+        });
+        this.result = response.body!;
+        this.submission!.result = this.result;
         this.saveBusy = this.submitBusy = false;
     }
 
@@ -257,6 +259,22 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     async nextSubmission(): Promise<void> {
         this.nextSubmissionBusy = true;
         await this.router.navigate(['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
+    }
+
+    /**
+     * if the conflict badge is clicked, navigate to conflict page and add the submission to the extras.
+     * @param feedbackId - selected feedback id with conflicts.
+     */
+    async navigateToConflictingSubmissions(feedbackId: number): Promise<void> {
+        const tempSubmission = this.submission!;
+        tempSubmission!.result!.completionDate = undefined;
+        tempSubmission!.result!.submission = undefined;
+        tempSubmission!.result!.participation = undefined;
+        const navigationExtras: NavigationExtras = { state: { submission: tempSubmission } };
+        await this.router.navigate(
+            ['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'text-feedback-conflict', feedbackId],
+            navigationExtras,
+        );
     }
 
     /**
@@ -282,11 +300,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission, this.isTestRun);
-    }
-
-    private computeTotalScore() {
-        this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
+        assessmentNavigateBack(this.location, this.router, this.exercise!, this.submission!, this.isTestRun);
     }
 
     /**
@@ -299,7 +313,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
         this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback || hasUnreferencedFeedback;
 
-        this.computeTotalScore();
+        this.totalScore = this.computeTotalScore(this.assessments);
     }
 
     private prepareTextBlocksAndFeedbacks(): void {
@@ -317,64 +331,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
 
         const matchBlocksWithFeedbacks = TextAssessmentsService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
-        this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks);
-    }
-
-    /**
-     * Sorts text block refs by there appearance and cheecks for overlaps or gaps.
-     * Prevent dupliace text when manual and automatic text blocks are present.
-     *
-     * @param matchBlocksWithFeedbacks
-     */
-    private sortAndSetTextBlockRefs(matchBlocksWithFeedbacks: TextBlockRef[]) {
-        // Sort by start index to process all refs in order
-        const sortedRefs = matchBlocksWithFeedbacks.sort((a, b) => a.block!.startIndex! - b.block!.startIndex!);
-
-        let previousIndex = 0;
-        const lastIndex = this.submission?.text?.length || 0;
-        for (let i = 0; i <= sortedRefs.length; i++) {
-            let ref: TextBlockRef | undefined = sortedRefs[i];
-            const nextIndex = ref ? ref.block!.startIndex! : lastIndex;
-
-            // last iteration, nextIndex = lastIndex. PreviousIndex > lastIndex is a sign for illegal state.
-            if (!ref && previousIndex > nextIndex) {
-                console.error('Illegal State: previous index cannot be greated than the last index!');
-
-                // new text block starts before previous one ended (overlap)
-            } else if (previousIndex > nextIndex) {
-                const previousRef = this.textBlockRefs.pop();
-                if (!previousRef) {
-                    console.error('Overlapping Text Blocks with nothing?', previousRef, ref);
-                } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.AUTOMATIC)) {
-                    console.error('Overlapping AUTOMATIC Text Blocks!', previousRef, ref);
-                } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.MANUAL)) {
-                    console.error('Overlapping MANUAL Text Blocks!', previousRef, ref);
-                } else {
-                    // Find which block is Manual and only keep that one. Automatic block is stored in `unusedTextBlockRefs` in case we need to restore.
-                    switch (TextBlockType.MANUAL) {
-                        case previousRef.block!.type:
-                            this.unusedTextBlockRefs.push(ref);
-                            ref = previousRef;
-                            break;
-                        case ref.block!.type:
-                            this.unusedTextBlockRefs.push(previousRef);
-                            this.addTextBlockByIndices(previousRef.block!.startIndex!, nextIndex);
-                            break;
-                    }
-                }
-
-                // If there is a gap between the current and previous block (most likely whitespace or linebreak), we need to create a new text block as well.
-            } else if (previousIndex < nextIndex) {
-                // There is a gap. We need to add a Text Block in between
-                this.addTextBlockByIndices(previousIndex, nextIndex);
-                previousIndex = nextIndex;
-            }
-
-            if (ref) {
-                this.textBlockRefs.push(ref);
-                previousIndex = ref.block!.endIndex!;
-            }
-        }
+        this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
     }
 
     /**
@@ -387,23 +344,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             this.textBlockRefs = [];
             this.unusedTextBlockRefs = [];
 
-            this.sortAndSetTextBlockRefs(refs);
+            this.sortAndSetTextBlockRefs(refs, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
         });
-    }
-
-    private addTextBlockByIndices(startIndex: number, endIndex: number): void {
-        if (startIndex >= endIndex) {
-            return;
-        }
-
-        const newRef = TextBlockRef.new();
-        if (newRef.block) {
-            newRef.block.startIndex = startIndex;
-            newRef.block.endIndex = endIndex;
-            newRef.block.setTextFromSubmission(this.submission!);
-            newRef.block.computeId();
-        }
-        this.textBlockRefs.push(newRef);
     }
 
     private getComplaint(): void {
@@ -458,15 +400,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
-    private checkPermissions(): void {
-        this.isAssessor = this.result?.assessor?.id === this.userId;
-        // case distinction for exam mode
-        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
-    }
-
-    private handleError(error: HttpErrorResponse): void {
-        const errorMessage = error.headers?.get('X-artemisApp-message') || error.message;
-        this.jhiAlertService.error(errorMessage);
+    protected handleError(error: HttpErrorResponse): void {
+        super.handleError(error);
         this.saveBusy = this.submitBusy = false;
     }
 }

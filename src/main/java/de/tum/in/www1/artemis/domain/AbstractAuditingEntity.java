@@ -11,12 +11,14 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Base abstract class for entities which will hold definitions for created, last modified by and created, last modified by date.
  */
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class AbstractAuditingEntity extends DomainObject {
 
     @CreatedBy

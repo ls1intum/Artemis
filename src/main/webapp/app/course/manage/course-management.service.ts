@@ -156,7 +156,7 @@ export class CourseManagementService {
     }
 
     /**
-     * returns the course with the provided unique identifier for the tutor dashboard
+     * returns the course with the provided unique identifier for the assessment dashboard
      * @param courseId - the id of the course
      */
     getCourseWithInterestingExercisesForTutors(courseId: number): Observable<EntityResponseType> {
@@ -167,7 +167,7 @@ export class CourseManagementService {
     }
 
     /**
-     * returns the stats of the course with the provided unique identifier for the tutor dashboard
+     * returns the stats of the course with the provided unique identifier for the assessment dashboard
      * @param courseId - the id of the course
      */
     getStatsForTutors(courseId: number): Observable<HttpResponse<StatsForDashboard>> {
@@ -308,24 +308,23 @@ export class CourseManagementService {
 
     convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.startDate = res.body.startDate ? moment(res.body.startDate) : undefined;
-            res.body.endDate = res.body.endDate ? moment(res.body.endDate) : undefined;
-            res.body.exercises = this.exerciseService.convertExercisesDateFromServer(res.body.exercises);
-            res.body.lectures = this.lectureService.convertDatesForLecturesFromServer(res.body.lectures);
+            this.setCourseDates(res.body);
         }
         return res;
     }
 
     private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.forEach((course: Course) => {
-                course.startDate = course.startDate ? moment(course.startDate) : undefined;
-                course.endDate = course.endDate ? moment(course.endDate) : undefined;
-                course.exercises = this.exerciseService.convertExercisesDateFromServer(course.exercises);
-                course.lectures = this.lectureService.convertDatesForLecturesFromServer(course.lectures);
-            });
+            res.body.forEach((course: Course) => this.setCourseDates(course));
         }
         return res;
+    }
+
+    private setCourseDates(course: Course) {
+        course.startDate = course.startDate ? moment(course.startDate) : undefined;
+        course.endDate = course.endDate ? moment(course.endDate) : undefined;
+        course.exercises = this.exerciseService.convertExercisesDateFromServer(course.exercises);
+        course.lectures = this.lectureService.convertDatesForLecturesFromServer(course.lectures);
     }
 
     private subscribeToCourseNotifications(res: EntityArrayResponseType): EntityArrayResponseType {

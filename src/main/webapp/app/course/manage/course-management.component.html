@@ -48,6 +48,13 @@
                         <span>{{ 'artemisApp.course.endDate' | translate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
+                    <th class="d-none d-md-table-cell">
+                        <span>{{ 'artemisApp.course.semester' | translate }}</span>
+                    </th>
+                    <th class="d-none d-md-table-cell" jhiSortBy="testCourse">
+                        <span>{{ 'artemisApp.course.testCourse.title' | translate }}</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="onlineCourse">
                         <span>{{ 'artemisApp.course.onlineCourse.title' | translate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
@@ -103,9 +110,14 @@
                         </td>
                         <td>{{ course.startDate | artemisDate }}</td>
                         <td>{{ course.endDate | artemisDate }}</td>
+                        <td>{{ course.semester }}</td>
                         <td class="d-none d-md-table-cell">
-                            <span *ngIf="course.onlineCourse">{{ 'artemisApp.course.onlineCourseTrue' | translate }}</span>
-                            <span *ngIf="!course.onlineCourse">{{ 'artemisApp.course.onlineCourseFalse' | translate }}</span>
+                            <span *ngIf="course.testCourse">{{ 'global.generic.yes' | translate }}</span>
+                            <span *ngIf="!course.testCourse">{{ 'global.generic.no' | translate }}</span>
+                        </td>
+                        <td class="d-none d-md-table-cell">
+                            <span *ngIf="course.onlineCourse">{{ 'global.generic.yes' | translate }}</span>
+                            <span *ngIf="!course.onlineCourse">{{ 'global.generic.no' | translate }}</span>
                         </td>
                         <td class="d-none d-md-table-cell">
                             <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | translate }}</span>
@@ -176,7 +188,7 @@
                                         [class.guided-tour]="course === courseForGuidedTour"
                                     >
                                         <fa-icon [icon]="'th-list'"></fa-icon>
-                                        <span class="d-none d-md-inline">{{ 'entity.action.tutorCourseDashboard' | translate }}</span>
+                                        <span class="d-none d-md-inline">{{ 'entity.action.assessmentDashboard' | translate }}</span>
                                     </button>
                                     <button
                                         type="submit"

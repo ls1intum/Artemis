@@ -37,8 +37,8 @@ public class Achievement extends DomainObject {
     @Column(name = "achievement_type")
     private AchievementType type;
 
-    @Column(name = "parameter")
-    private Long parameter;
+    @Column(name = "success_criteria")
+    private Long successCriteria;
 
     @Column(name = "min_score_to_qualify")
     private Long minScoreToQualify;
@@ -57,14 +57,14 @@ public class Achievement extends DomainObject {
     public Achievement() {
     }
 
-    public Achievement(String title, String description, String icon, AchievementRank rank, AchievementType type, Long parameter, Long minScoreToQualify, Course course,
+    public Achievement(String title, String description, String icon, AchievementRank rank, AchievementType type, Long successCriteria, Long minScoreToQualify, Course course,
             Exercise exercise) {
         this.title = title;
         this.description = description;
         this.icon = icon;
         this.rank = rank;
         this.type = type;
-        this.parameter = parameter;
+        this.successCriteria = successCriteria;
         this.minScoreToQualify = minScoreToQualify;
         this.course = course;
         this.exercise = exercise;
@@ -110,12 +110,12 @@ public class Achievement extends DomainObject {
         this.type = type;
     }
 
-    public Long getParameter() {
-        return parameter;
+    public Long getSuccessCriteria() {
+        return successCriteria;
     }
 
-    public void setParameter(Long parameter) {
-        this.parameter = parameter;
+    public void setSuccessCriteria(Long successCriteria) {
+        this.successCriteria = successCriteria;
     }
 
     public Long getMinScoreToQualify() {
@@ -153,6 +153,6 @@ public class Achievement extends DomainObject {
     @Override
     public String toString() {
         return "Achievement{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", icon='" + getIcon() + "'" + ", rank='"
-                + getRank() + "'" + ", type='" + getType() + "'" + ", parameter=" + getParameter() + ", minScoreToQualify=" + getMinScoreToQualify() + "}";
+                + getRank() + "'" + ", type='" + getType() + "'" + ", successCriteria=" + getSuccessCriteria() + ", minScoreToQualify=" + getMinScoreToQualify() + "}";
     }
 }

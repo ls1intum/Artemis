@@ -25,17 +25,15 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Joiner;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketBranchProtectionDTO;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketProjectDTO;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketSearchDTO;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 
 @Service
 @Profile("bitbucket")
@@ -66,9 +64,12 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private final RestTemplate restTemplate;
 
-    public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate) {
+    private final UrlService urlService;
+
+    public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UrlService urlService) {
         this.userService = userService;
         this.restTemplate = restTemplate;
+        this.urlService = urlService;
     }
 
     @Override
@@ -107,17 +108,17 @@ public class BitbucketService extends AbstractVersionControlService {
             }
         }
 
-        protectBranches(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
+        protectBranches(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl));
     }
 
     @Override
     public void addMemberToRepository(URL repositoryUrl, User user) {
-        giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), user.getLogin());
+        giveWritePermission(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl), user.getLogin());
     }
 
     @Override
     public void removeMemberFromRepository(URL repositoryUrl, User user) {
-        removeStudentRepositoryAccess(repositoryUrl, getProjectKeyFromUrl(repositoryUrl), user.getLogin());
+        removeStudentRepositoryAccess(repositoryUrl, urlService.getProjectKeyFromUrl(repositoryUrl), user.getLogin());
     }
 
     /**
@@ -155,8 +156,8 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     protected void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
-        if (!webHookExists(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl))) {
-            createWebHook(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl, webHookName);
+        if (!webHookExists(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl))) {
+            createWebHook(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl), notificationUrl, webHookName);
         }
     }
 
@@ -181,7 +182,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public void deleteRepository(URL repositoryUrl) {
-        deleteRepositoryImpl(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
+        deleteRepositoryImpl(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl));
     }
 
     @Override
@@ -196,11 +197,7 @@ public class BitbucketService extends AbstractVersionControlService {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
         final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
-        final var body = new HashMap<String, Object>();
-        body.put("name", targetRepoSlug);
-        final var projectMap = new HashMap<>();
-        projectMap.put("key", targetProjectKey);
-        body.put("project", projectMap);
+        final var body = new BitbucketCloneDTO(targetRepoSlug, new BitbucketCloneDTO.CloneDetailsDTO(targetProjectKey));
         HttpEntity<?> entity = new HttpEntity<>(body, null);
         log.info("Try to copy repository " + sourceProjectKey + "/repos/" + sourceRepositoryName + " into " + targetRepoSlug);
         final String repoUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + sourceProjectKey + "/repos/" + sourceRepositoryName;
@@ -214,8 +211,7 @@ public class BitbucketService extends AbstractVersionControlService {
              */
             for (int i = 0; i < MAX_FORK_RETRIES; i++) {
                 try {
-                    // TODO: either use Void.class or create a proper DTO
-                    final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
+                    final var response = restTemplate.postForEntity(new URI(repoUrl), entity, BitbucketCloneDTO.class);
                     if (response.getStatusCode().equals(HttpStatus.CREATED)) {
                         return getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
                     }
@@ -248,8 +244,7 @@ public class BitbucketService extends AbstractVersionControlService {
                 return getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
             }
             else {
-                var bodyString = Joiner.on(",").withKeyValueSeparator("=").join(body);
-                log.error("Could not fork base repository on " + repoUrl + " using " + bodyString, e);
+                log.error("Could not fork base repository on " + repoUrl + " using " + body.toString(), e);
                 throw new BitbucketException("Error while forking repository", e);
             }
         }
@@ -259,13 +254,11 @@ public class BitbucketService extends AbstractVersionControlService {
                 log.error("Internal Server Error on Bitbucket with message: '" + internalServerError.getMessage() + "', body: '" + internalServerError.getResponseBodyAsString()
                         + "', headers: '" + internalServerError.getResponseHeaders() + "', status text: '" + internalServerError.getStatusText() + "'.");
             }
-            var bodyString = Joiner.on(",").withKeyValueSeparator("=").join(body);
-            log.error("Could not fork base repository on " + repoUrl + " using " + bodyString, e);
+            log.error("Could not fork base repository on " + repoUrl + " using " + body.toString(), e);
             throw new BitbucketException("Error while forking repository", e);
         }
         catch (Exception emAll) {
-            var bodyString = Joiner.on(",").withKeyValueSeparator("=").join(body);
-            log.error("Could not fork base repository on " + repoUrl + " using " + bodyString, emAll);
+            log.error("Could not fork base repository on " + repoUrl + " using " + body.toString(), emAll);
             throw new BitbucketException("Error while forking repository", emAll);
         }
 
@@ -274,50 +267,6 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private BitbucketProjectDTO getBitbucketProject(String projectKey) {
         return restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey, HttpMethod.GET, null, BitbucketProjectDTO.class).getBody();
-    }
-
-    /**
-     * Gets the project key from the given URL
-     *
-     * TODO: rework this!
-     *
-     * Example: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git will return EIST2016RME
-     *
-     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
-     * @return The project key
-     * @throws BitbucketException if the URL is invalid and no project key could be extracted
-     */
-    public String getProjectKeyFromUrl(URL repositoryUrl) throws BitbucketException {
-        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        String[] urlParts = repositoryUrl.getFile().split("/");
-        if (urlParts.length > 2) {
-            return urlParts[2];
-        }
-
-        log.error("No project key could be found for repository {}", repositoryUrl);
-        throw new BitbucketException("No project key could be found");
-    }
-
-    /**
-     * TODO: this is duplicated code from BambooService. Think about how to reuse it while being able to test and mock it properly
-     *
-     * Gets the repository slug from the given URL.
-     * Example: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git will return RMEXERCISE-ga42xab
-     *
-     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
-     * @return The repository slug
-     * @throws BitbucketException if the URL is invalid and no repository slug could be extracted
-     */
-    public String getRepositorySlugFromUrl(URL repositoryUrl) throws BitbucketException {
-        String[] urlParts = repositoryUrl.getFile().split("/");
-        if (urlParts[urlParts.length - 1].endsWith(".git")) {
-            String repositorySlug = urlParts[urlParts.length - 1];
-            repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
-            return repositorySlug;
-        }
-
-        log.error("No repository slug could be found for repository {}", repositoryUrl);
-        throw new BitbucketException("No repository slug could be found");
     }
 
     /**
@@ -375,9 +324,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @throws BitbucketException if the rest request to Bitbucket for adding the user to the specified groups failed.
      */
     public void addUserToGroups(String username, Set<String> groups) throws BitbucketException {
-        Map<String, Object> body = new HashMap<>();
-        body.put("user", username);
-        body.put("groups", groups);
+        final var body = new BitbucketUserDTO(username, groups);
         HttpEntity<?> entity = new HttpEntity<>(body, null);
 
         log.debug("Adding Bitbucket user {} to groups {}", username, groups);
@@ -511,7 +458,7 @@ public class BitbucketService extends AbstractVersionControlService {
             return true;
         }
         catch (HttpClientErrorException e) {
-            log.debug("Bitbucket project " + projectKey + " does not exit");
+            log.debug("Bitbucket project " + projectKey + " does not exist");
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 // only if this is the case, we additionally check that the project name is unique
 
@@ -547,9 +494,7 @@ public class BitbucketService extends AbstractVersionControlService {
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws BitbucketException {
         String projectKey = programmingExercise.getProjectKey();
         String projectName = programmingExercise.getProjectName();
-        Map<String, Object> body = new HashMap<>();
-        body.put("key", projectKey);
-        body.put("name", projectName);
+        final var body = new BitbucketProjectDTO(projectKey, projectName);
         HttpEntity<?> entity = new HttpEntity<>(body, null);
 
         log.debug("Creating Bitbucket project {} with key {}", projectName, projectKey);
@@ -599,8 +544,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @throws BitbucketException if the repo could not be created
      */
     private void createRepository(String projectKey, String repoName) throws BitbucketException {
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", repoName.toLowerCase());
+        final var body = new BitbucketRepositoryDTO(repoName.toLowerCase());
         HttpEntity<?> entity = new HttpEntity<>(body, null);
 
         log.debug("Creating Bitbucket repo {} with parent key {}", repoName, projectKey);
@@ -637,33 +581,28 @@ public class BitbucketService extends AbstractVersionControlService {
      * @return A map of all ids of the WebHooks to the URL they notify.
      * @throws BitbucketException if the request to get the WebHooks failed
      */
-    private Map<Integer, String> getExistingWebHooks(String projectKey, String repositorySlug) throws BitbucketException {
+    private List<BitbucketWebHookDTO> getExistingWebHooks(String projectKey, String repositorySlug) throws BitbucketException {
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
-        ResponseEntity<Map> response;
+        ResponseEntity<BitbucketSearchDTO<BitbucketWebHookDTO>> response;
         try {
-            response = restTemplate.exchange(baseUrl, HttpMethod.GET, null, Map.class);
+            response = restTemplate.exchange(baseUrl, HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+            });
         }
         catch (Exception e) {
             log.error("Error while getting existing WebHooks", e);
             throw new BitbucketException("Error while getting existing WebHooks", e);
         }
 
-        Map<Integer, String> webHooks = new HashMap<>();
-
-        if (response.getStatusCode().equals(HttpStatus.OK)) {
+        if (response.getStatusCode().equals(HttpStatus.OK) && response.getBody() != null) {
             // TODO: BitBucket uses a pagination API to split up the responses, so we might have to check all pages
-            List<Map<String, Object>> rawWebHooks = (List<Map<String, Object>>) response.getBody().get("values");
-            for (Map<String, Object> rawWebHook : rawWebHooks) {
-                webHooks.put((Integer) rawWebHook.get("id"), (String) rawWebHook.get("url"));
-            }
-            return webHooks;
+            return response.getBody().getSearchResults();
         }
         log.error("Error while getting existing WebHooks for {}-{}: Invalid response", projectKey, repositorySlug);
         throw new BitbucketException("Error while getting existing WebHooks: Invalid response");
     }
 
     private boolean webHookExists(String projectKey, String repositorySlug) {
-        Map<Integer, String> webHooks = getExistingWebHooks(projectKey, repositorySlug);
+        List<BitbucketWebHookDTO> webHooks = getExistingWebHooks(projectKey, repositorySlug);
         return !webHooks.isEmpty();
     }
 
@@ -671,12 +610,7 @@ public class BitbucketService extends AbstractVersionControlService {
         log.debug("Creating WebHook for Repository {}-{} ({})", projectKey, repositorySlug, notificationUrl);
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
 
-        // TODO: use a proper DTO here
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", webHookName);
-        body.put("url", notificationUrl);
-        body.put("events", new ArrayList<>());
-        ((List) body.get("events")).add("repo:refs_changed"); // Inform on push
+        final var body = new BitbucketWebHookDTO(webHookName, notificationUrl, List.of("repo:refs_changed"));
         // TODO: We might want to add a token to ensure the notification is valid
 
         HttpEntity<?> entity = new HttpEntity<>(body, null);
@@ -687,24 +621,6 @@ public class BitbucketService extends AbstractVersionControlService {
         catch (HttpClientErrorException e) {
             log.error("Could not add create WebHook for {}-{} ({})", projectKey, repositorySlug, notificationUrl, e);
             throw new BitbucketException("Error while creating WebHook");
-        }
-    }
-
-    private void deleteWebHook(String projectKey, String repositorySlug, Integer webHookId) {
-        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks/" + webHookId;
-        log.info("Delete WebHook {} on project {}-{}", webHookId, projectKey, repositorySlug);
-        try {
-            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
-        }
-        catch (Exception e) {
-            log.error("Could not delete WebHook", e);
-        }
-    }
-
-    private void deleteExistingWebHooks(String projectKey, String repositorySlug) {
-        Map<Integer, String> webHooks = getExistingWebHooks(projectKey, repositorySlug);
-        for (Integer webHookId : webHooks.keySet()) {
-            deleteWebHook(projectKey, repositorySlug, webHookId);
         }
     }
 
@@ -730,8 +646,8 @@ public class BitbucketService extends AbstractVersionControlService {
         String projectKey;
         String repositorySlug;
         try {
-            projectKey = getProjectKeyFromUrl(repositoryUrl);
-            repositorySlug = getRepositorySlugFromUrl(repositoryUrl);
+            projectKey = urlService.getProjectKeyFromUrl(repositoryUrl);
+            repositorySlug = urlService.getRepositorySlugFromUrl(repositoryUrl);
         }
         catch (BitbucketException e) {
             // Either the project Key or the repository slug could not be extracted, therefor this can't be a valid URL
@@ -799,8 +715,8 @@ public class BitbucketService extends AbstractVersionControlService {
             else {
                 repositoryURL = new URL(cloneLinks.get(0).get("href").asText());
             }
-            final var projectKey = getProjectKeyFromUrl(repositoryURL);
-            final var slug = getRepositorySlugFromUrl(repositoryURL);
+            final var projectKey = urlService.getProjectKeyFromUrl(repositoryURL);
+            final var slug = urlService.getRepositorySlugFromUrl(repositoryURL);
             final var uriBuilder = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI())
                     .pathSegment("rest", "api", "1.0", "projects", projectKey, "repos", slug, "commits", hash).build();
             final var commitInfo = restTemplate.exchange(uriBuilder.toUri(), HttpMethod.GET, null, JsonNode.class).getBody();
@@ -823,7 +739,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public String getRepositoryName(URL repositoryUrl) {
-        return getRepositorySlugFromUrl(repositoryUrl);
+        return urlService.getRepositorySlugFromUrl(repositoryUrl);
     }
 
     public final class BitbucketRepositoryUrl extends VcsRepositoryUrl {

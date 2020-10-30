@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
@@ -13,11 +14,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisDefaultCategory;
+import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 @Service
 public class StaticCodeAnalysisService {
@@ -131,5 +139,57 @@ public class StaticCodeAnalysisService {
         }
 
         return categoryPairsWithMapping;
+    }
+
+    /**
+     * Sets the category for each feedback and removes feedback with no or an inactive category.
+     * The feedback is removed permanently, which has the advantage that the server or client doesn't have to filter out
+     * invisible feedback every time it is requested. The drawback is that the re-evaluate functionality can't take
+     * the removed feedback into account.
+     *
+     * @param result of the build run
+     * @param staticCodeAnalysisFeedback List of static code analysis feedback objects
+     * @param programmingExercise The current exercise
+     * @return The filtered list of feedback objects
+     */
+    public List<Feedback> categorizeScaFeedback(Result result, List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
+        var categoryPairs = getCategoriesWithMappingForExercise(programmingExercise);
+
+        return staticCodeAnalysisFeedback.stream().filter(feedback -> {
+            // ObjectMapper to extract the static code analysis issue from the feedback
+            ObjectMapper mapper = new ObjectMapper();
+            // the category for this feedback
+            Optional<StaticCodeAnalysisCategory> category = Optional.empty();
+            try {
+
+                // extract the sca issue
+                var issue = mapper.readValue(feedback.getDetailText(), StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue.class);
+
+                // find the category for this issue
+                for (var categoryPair : categoryPairs) {
+                    var categoryMappings = categoryPair.right;
+                    if (categoryMappings.stream()
+                            .anyMatch(mapping -> mapping.getTool().name().equals(feedback.getReference()) && mapping.getCategory().equals(issue.getCategory()))) {
+                        category = Optional.of(categoryPair.left);
+                        break;
+                    }
+                }
+
+            }
+            catch (JsonProcessingException exception) {
+                log.debug("Error occurred parsing feedback " + feedback + " to static code analysis issue: " + exception.getMessage());
+            }
+
+            if (category.isEmpty() || category.get().getState().equals(CategoryState.INACTIVE)) {
+                // remove feedback in no or inactive category
+                result.removeFeedback(feedback);
+                return false; // filter this feedback
+            }
+            else {
+                // add the category name to the feedback text
+                feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + category.get().getName());
+                return true; // keep this feedback
+            }
+        }).collect(Collectors.toList());
     }
 }

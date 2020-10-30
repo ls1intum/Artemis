@@ -5,7 +5,8 @@
         "generic": {
             "yes": "Ja",
             "no": "Nein",
-            "emptyList": "Keine Elemente verfügbar"
+            "emptyList": "Keine Elemente verfügbar",
+            "unset": "Nicht gesetzt"
         },
         "menu": {
             "home": "Startseite",
@@ -207,7 +208,7 @@
             "attachments": "Anhänge",
             "saveAttachment": "Anhang speichern",
             "addAttachment": "Anhang hinzufügen",
-            "tutorCourseDashboard": "Tutor Kurs Dashboard",
+            "assessmentDashboard": "Bewertungs-Dashboard",
             "exerciseDashboard": "Aufgaben Dashboard",
             "newResult": "Neues Ergebnis",
             "updateResult": "Ergebnis bearbeiten",

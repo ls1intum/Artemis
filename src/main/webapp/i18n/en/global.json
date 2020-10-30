@@ -5,7 +5,8 @@
         "generic": {
             "yes": "Yes",
             "no": "No",
-            "emptyList": "No items available"
+            "emptyList": "No items available",
+            "unset": "Unset"
         },
         "menu": {
             "home": "Home",
@@ -208,7 +209,7 @@
             "attachments": "Attachments",
             "saveAttachment": "Save attachment",
             "addAttachment": "Add attachment",
-            "tutorCourseDashboard": "Tutor Course Dashboard",
+            "assessmentDashboard": "Assessment Dashboard",
             "exerciseDashboard": "Exercise Dashboard",
             "newResult": "New Result",
             "updateResult": "Update Result",

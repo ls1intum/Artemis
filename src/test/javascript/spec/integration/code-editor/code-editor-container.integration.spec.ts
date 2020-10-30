@@ -359,7 +359,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // init saving
         container.actions.saveChangedFiles().subscribe();
-        expect(container.commitState).to.equal(CommitState.CLEAN);
+        expect(container.commitState).to.equal(CommitState.UNCOMMITTED_CHANGES);
         expect(container.editorState).to.equal(EditorState.SAVING);
 
         // emit saving result
@@ -433,7 +433,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.errorFiles).to.be.empty;
     });
 
-    it('should first save unsaved files before triggering commit', () => {
+    it('should first save unsaved files before triggering commit', fakeAsync(() => {
         cleanInitialize();
         const successfulSubmission = { id: 1, buildFailed: false } as ProgrammingSubmission;
         const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
@@ -460,6 +460,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.commitState).to.equal(CommitState.COMMITTING);
         expect(container.fileBrowser.status.commitState).to.equal(CommitState.COMMITTING);
         saveFilesSubject.next({ [unsavedFile]: undefined });
+
         expect(container.editorState).to.equal(EditorState.CLEAN);
         subscribeForLatestResultOfParticipationSubject.next(successfulResult);
         getLatestPendingSubmissionSubject.next({
@@ -468,6 +469,7 @@ describe('CodeEditorContainerIntegration', () => {
             participationId: successfulResult!.participation!.id!,
         });
         containerFixture.detectChanges();
+        tick();
 
         // waiting for build result
         expect(container.commitState).to.equal(CommitState.CLEAN);
@@ -483,7 +485,10 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.buildOutput.isBuilding).to.be.false;
         expect(container.buildOutput.rawBuildLogs).to.deep.equal(expectedBuildLog);
         expect(container.fileBrowser.errorFiles).to.be.empty;
-    });
+
+        containerFixture.destroy();
+        flush();
+    }));
 
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
         const guidedTourMapping = {} as GuidedTourMapping;

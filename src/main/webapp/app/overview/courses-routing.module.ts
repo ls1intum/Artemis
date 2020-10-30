@@ -82,6 +82,13 @@ const routes: Routes = [
             pageTitle: 'overview.exercise',
         },
         canActivate: [UserRouteAccessService],
+        children: [
+            {
+                path: '',
+                pathMatch: 'full',
+                loadChildren: () => import('app/overview/student-questions/student-questions.module').then((m) => m.ArtemisStudentQuestionsModule),
+            },
+        ],
     },
     {
         path: 'courses/:courseId/exercises/:exerciseId/teams/:teamId',
@@ -100,6 +107,13 @@ const routes: Routes = [
             pageTitle: 'overview.lectures',
         },
         canActivate: [UserRouteAccessService],
+        children: [
+            {
+                path: '',
+                pathMatch: 'full',
+                loadChildren: () => import('app/overview/student-questions/student-questions.module').then((m) => m.ArtemisStudentQuestionsModule),
+            },
+        ],
     },
 ];
 

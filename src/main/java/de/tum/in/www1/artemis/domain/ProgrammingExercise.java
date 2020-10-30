@@ -19,12 +19,10 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
@@ -35,6 +33,7 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 @Entity
 @DiscriminatorValue(value = "P")
 @SecondaryTable(name = "programming_exercise_details")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExercise extends Exercise {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
@@ -98,6 +97,20 @@ public class ProgrammingExercise extends Exercise {
 
     @Transient
     private boolean isLocalSimulationTransient;
+
+    @Nullable
+    @Column(name = "project_type", table = "programming_exercise_details")
+    private ProjectType projectType;
+
+    /**
+     * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
+     * This property is only used when creating the exercise (the client sets this value when POSTing the new exercise to the server).
+     * It is not persisted as this setting can not be changed afterwards.
+     * This is currently only supported for HASKELL on BAMBOO, thus the default value is false.
+     */
+    @Transient
+    @JsonProperty
+    private boolean checkoutSolutionRepository = false;
 
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -287,10 +300,9 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         return submissions.stream().filter(submission -> {
-            if (submission.getResult() != null) {
-                return (submission.getResult().isRated() && !submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL))
-                        || submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)
-                                && (this.getAssessmentDueDate() == null || this.getAssessmentDueDate().isBefore(ZonedDateTime.now()));
+            Result result = submission.getResult();
+            if (result != null) {
+                return checkForRatedAndAssessedResult(result);
             }
             return this.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
                     || submission.getSubmissionDate().isBefore(this.getDueDate());
@@ -473,6 +485,15 @@ public class ProgrammingExercise extends Exercise {
         return super.getAssessmentType();
     }
 
+    @Nullable
+    public ProjectType getProjectType() {
+        return projectType;
+    }
+
+    public void setProjectType(@Nullable ProjectType projectType) {
+        this.projectType = projectType;
+    }
+
     /**
      * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
      */
@@ -488,40 +509,7 @@ public class ProgrammingExercise extends Exercise {
 
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-        return participation.getResults().stream()
-                .filter(result -> (result.getAssessmentType().equals(AssessmentType.MANUAL) && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
-                .collect(Collectors.toSet());
-    }
-
-    @Override
-    @Nullable
-    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
-        // for most types of exercises => return latest result (all results are relevant)
-        Submission latestSubmission = null;
-        // we get the results over the submissions
-        if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
-            return null;
-        }
-        for (var submission : participation.getSubmissions()) {
-            var result = submission.getResult();
-            if (result == null) {
-                continue;
-            }
-            // NOTE: for the dashboard we only use rated results with completion date or automatic result
-            boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-            if ((result.getAssessmentType().equals(AssessmentType.MANUAL) && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
-                // take the first found result that fulfills the above requirements
-                if (latestSubmission == null) {
-                    latestSubmission = submission;
-                }
-                // take newer results and thus disregard older ones
-                else if (latestSubmission.getResult().getCompletionDate().isBefore(result.getCompletionDate())) {
-                    latestSubmission = submission;
-                }
-            }
-        }
-        return latestSubmission;
+        return participation.getResults().stream().filter(result -> checkForRatedAndAssessedResult(result)).collect(Collectors.toSet());
     }
 
     /**
@@ -532,6 +520,12 @@ public class ProgrammingExercise extends Exercise {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
         final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
         return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
+    }
+
+    private boolean checkForRatedAndAssessedResult(Result result) {
+        boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
+        return Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null
+                && ((result.isManualResult() && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC));
     }
 
     @Override
@@ -548,5 +542,13 @@ public class ProgrammingExercise extends Exercise {
 
     public void setIsLocalSimulation(Boolean isLocalSimulationTransient) {
         this.isLocalSimulationTransient = isLocalSimulationTransient;
+    }
+
+    public boolean getCheckoutSolutionRepository() {
+        return this.checkoutSolutionRepository;
+    }
+
+    public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
+        this.checkoutSolutionRepository = checkoutSolutionRepository;
     }
 }

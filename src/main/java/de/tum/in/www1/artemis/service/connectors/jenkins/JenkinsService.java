@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -38,8 +39,14 @@ import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.FolderJob;
 import com.offbytwo.jenkins.model.JobWithDetails;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -70,7 +77,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    private JenkinsServer jenkinsServer;
+    private final JenkinsServer jenkinsServer;
 
     private final FeedbackService feedbackService;
 
@@ -84,11 +91,11 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL, URL solutionRepositoryURL) {
         try {
             // TODO support sequential test runs
             final var configBuilder = buildPlanCreatorProvider.builderFor(exercise.getProgrammingLanguage());
-            final var jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL);
+            Document jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL, Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
             planKey = exercise.getProjectKey() + "-" + planKey;
 
             jenkinsServer.createJob(getFolderJob(exercise.getProjectKey()), planKey, writeXmlToString(jobConfig), useCrumb);
@@ -306,7 +313,9 @@ public class JenkinsService implements ContinuousIntegrationService {
         result.setScore((long) calculateResultScore(report, testSum));
         result.setParticipation(participation);
         addFeedbackToResult(result, report);
-        result.setResultString(result.getHasFeedback() ? report.getSuccessful() + " of " + testSum + " passed" : "No tests found");
+        // We assume the build has failed if no test case feedback has been sent. Static code analysis feedback might exist even though the build failed
+        boolean hasTestCaseFeedback = result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isStaticCodeAnalysisFeedback());
+        result.setResultString(hasTestCaseFeedback ? report.getSuccessful() + " of " + testSum + " passed" : "No tests found");
 
         return result;
     }
@@ -364,25 +373,38 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private void addFeedbackToResult(Result result, TestResultsDTO report) {
-        // No feedback for build errors
-        if (report.getResults() == null || report.getResults().isEmpty()) {
-            result.setHasFeedback(false);
-            return;
-        }
+        final ProgrammingExercise programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
+        final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
 
-        final ProgrammingLanguage programmingLanguage = ((ProgrammingExercise) result.getParticipation().getExercise()).getProgrammingLanguage();
-
+        // Extract test case feedback
         for (final var testSuite : report.getResults()) {
             for (final var testCase : testSuite.getTestCases()) {
-                var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMessage());
-                var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMessage());
+                var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMostInformativeMessage());
+                var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMostInformativeMessage());
                 var errorList = errorMessage.or(() -> failureMessage).map(List::of).orElse(Collections.emptyList());
+                boolean successful = Optional.ofNullable(testCase.getErrors()).map(List::isEmpty).orElse(true)
+                        && Optional.ofNullable(testCase.getFailures()).map(List::isEmpty).orElse(true);
 
-                result.addFeedback(feedbackService.createFeedbackFromTestCase(testCase.getName(), errorList, errorList.isEmpty(), programmingLanguage));
+                if (!successful && errorList.isEmpty()) {
+                    var errorType = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getType());
+                    var failureType = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getType());
+                    var message = errorType.or(() -> failureType).map(t -> String.format("Unsuccessful due to an error of type: %s", t));
+                    if (message.isPresent()) {
+                        errorList = List.of(message.get());
+                    }
+                }
+
+                result.addFeedback(feedbackService.createFeedbackFromTestCase(testCase.getName(), errorList, successful, programmingLanguage));
             }
         }
 
-        result.setHasFeedback(true);
+        // Extract static code analysis feedback if option was enabled
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && report.getStaticCodeAnalysisReports() != null) {
+            var scaFeedback = feedbackService.createFeedbackFromStaticCodeAnalysisReports(report.getStaticCodeAnalysisReports());
+            result.addFeedbacks(scaFeedback);
+        }
+
+        result.setHasFeedback(!result.getFeedbacks().isEmpty());
     }
 
     @Override

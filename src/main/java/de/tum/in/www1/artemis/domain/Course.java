@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 
 import java.time.ZonedDateTime;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,6 +18,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.enumeration.AchievementType;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
@@ -70,6 +73,19 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private ZonedDateTime endDate;
 
+    @Column(name = "semester")
+    @JsonView(QuizView.Before.class)
+    private String semester;
+
+    @Column(name = "test_course")
+    @JsonView(QuizView.Before.class)
+    private boolean testCourse = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "language")
+    @JsonView(QuizView.Before.class)
+    private Language language;
+
     @Column(name = "online_course")
     @JsonView(QuizView.Before.class)
     private Boolean onlineCourse = false;
@@ -107,6 +123,11 @@ public class Course extends DomainObject {
 
     @Column(name = "achievements_enabled", columnDefinition = "Boolean default false")
     private Boolean achievementsEnabled = false; // default value
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "course_active_achievements", joinColumns = @JoinColumn(name = "course_id"))
+    @Column(name = "active_achievements")
+    private Set<AchievementType> activeAchievements = new HashSet<>();
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -214,6 +235,30 @@ public class Course extends DomainObject {
 
     public void setEndDate(ZonedDateTime endDate) {
         this.endDate = endDate;
+    }
+
+    public String getSemester() {
+        return semester;
+    }
+
+    public void setSemester(String semester) {
+        this.semester = semester;
+    }
+
+    public boolean isTestCourse() {
+        return testCourse;
+    }
+
+    public void setTestCourse(boolean testCourse) {
+        this.testCourse = testCourse;
+    }
+
+    public Language getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(Language language) {
+        this.language = language;
     }
 
     public Boolean isOnlineCourse() {
@@ -356,7 +401,21 @@ public class Course extends DomainObject {
     }
 
     public void setAchievementsEnabled(Boolean achievementsEnabled) {
+        if (achievementsEnabled) {
+            setActiveAchievements(EnumSet.allOf(AchievementType.class));
+        }
+        else {
+            setActiveAchievements(EnumSet.noneOf(AchievementType.class));
+        }
         this.achievementsEnabled = achievementsEnabled;
+    }
+
+    public Set<AchievementType> getActiveAchievements() {
+        return activeAchievements;
+    }
+
+    public void setActiveAchievements(Set<AchievementType> activeAchievements) {
+        this.activeAchievements = activeAchievements;
     }
 
     /*
@@ -411,9 +470,9 @@ public class Course extends DomainObject {
     public String toString() {
         return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
                 + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", instructorGroupName='"
-                + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", onlineCourse='" + isOnlineCourse() + "'"
-                + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + "'"
-                + ", presentationScore='" + getPresentationScore() + "}";
+                + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", semester='" + getSemester() + "'" + "'"
+                + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='"
+                + isRegistrationEnabled() + "'" + "'" + ", presentationScore='" + getPresentationScore() + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {

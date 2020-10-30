@@ -46,9 +46,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     private final String studentRepoBaseUrl = "/api/repository/";
 
     @Autowired
-    private RequestUtilService request;
-
-    @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
@@ -375,7 +372,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @WithMockUser(username = "student1", roles = "USER")
     public void testBuildLogsWithManualResult() throws Exception {
         var submission = database.createProgrammingSubmission(participation, true);
-        database.addResultToSubmission(submission, AssessmentType.MANUAL);
+        database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
         var receivedLogs = request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull();
         assertThat(receivedLogs).hasSize(0);

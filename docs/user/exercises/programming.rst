@@ -1,6 +1,15 @@
 Programming Exercise
 ====================
 
+.. contents:: Content of this document
+    :local:
+    :depth: 2
+
+|
+
+Overview
+--------
+
 Conducting a programming exercise consists of 7 steps distributed among
 instructor, Artemis and students:
 
@@ -34,8 +43,12 @@ The following activity diagram shows this exercise workflow.
 
    Exercise Workflow
 
-:download:`Tutorial: Create Programming Exercises <programming/Artemis Tutorial Setup Programming Exercises.pdf>`
+Setup
+--------
 
+The following sections describe the supported features and the process of creating a new programming exercise.
+
+.. include:: programming-exercise-setup.rst
 
 Online Editor
 -------------
@@ -70,44 +83,3 @@ Its main features are
 * utilities to test exercises using System.out and System.in comfortably
 
 **For more information see https://github.com/ls1intum/artemis-java-test-sandbox**
-
-
-Using adapters to support multiple VCS
---------------------------------------
-
-The following UML component diagram shows the details of the Version
-Control Adapter that allows to connect to multiple Version Control
-Systems. The other adapters for Continuous Integration and User
-Management have a similar structure
-
-.. figure:: programming/VersionControlAdapter.png
-   :alt: Version Control Adapter
-   :align: center
-
-   Version Control Adapter
-
-The **Version Control Adapter** includes abstract interface definitions.
-Among others, concrete connectors have to implement the following
-methods:
-
-::
-
-   + copyRepository(baseRepository, user)
-   + configureRepository(repository, user)
-   + deleteRepository(repository)
-   + getRepositoryWebUrl(repository)
-   + ...
-
-The **Continuous Integration Adapter** includes abstract interface
-definitions. Among others, concrete connectors have to implement the
-following methods:
-
-::
-
-   + copyBuildPlan(baseBuildPlan, user)
-   + configureBuildPlan(buildPlan, repository, user)
-   + deleteBuildPlan(buildPlan)
-   + onBuildCompleted(buildPlan)
-   + getBuildStatus(buildPlan)
-   + getBuildDetails(buildPlan)
-   + ...

@@ -14,7 +14,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AchievementRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AchievementService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -45,9 +48,6 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     ParticipationRepository participationRepository;
-
-    @Autowired
-    ResultRepository resultRepository;
 
     private User student;
 

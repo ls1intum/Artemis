@@ -170,24 +170,44 @@ under ``localhost:7990``.
    -  Add capabilities menu → Capability type ``JDK`` → insert ``JDK``
       as JDK label → insert ``/usr/lib/jvm/java-15-oracle`` as Java home.
 
-9. Generate a personal access token for Bamboo.
-   While username and password can still be used as a fallback, this option is already marked as deprecated and
-   will be removed in the future.
+9. Generate a personal access token
 
-   - Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
+   While username and password can still be used as a fallback, this option is already marked as deprecated and will
+   be removed in the future.
 
-       .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
-          :align: center
+   9.1 Personal access token for Bamboo.
+   
+      - Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
 
-   - Copy the generated token to your ``application-local.yml``:
+          .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
+             :align: center
 
-   .. code:: yaml
+      - Insert the generated token into the file ``application-artemis.yml`` in the section ``continuous-integration``:
 
-       artemis:
-           continuous-integration:
-               user: <username>
-               password: <password>
-               token: #insert the token here
+      .. code:: yaml
+
+          artemis:
+              continuous-integration:
+                  user: <username>
+                  password: <password>
+                  token: #insert the token here
+
+   9.2 Personal access token for Bitbucket.
+
+      - Log in as the admin user and go to Bitbucket -> View Profile (top right corner) -> Manage account -> Personal access tokens -> Create token
+      
+          .. figure:: bamboo-bitbucket-jira/bitbucket-create-token.png
+             :align: center
+
+      - Insert the generated token into the file ``application-artemis.yml`` in the section ``version-control``:
+
+      .. code:: yaml
+
+          artemis:
+              version-control:
+                  user: <username>
+                  password: <password>
+                  token: #insert the token here
 
 10. Disable XSRF checking
     Although XSRF checking is highly recommended, we currently have to disable it as Artemis does not yet support
@@ -224,6 +244,7 @@ Configure Artemis
                url: http://localhost:7990
                user:  <bitbucket-admin-user>
                password: <bitbuckt-admin-password>
+               token: <bitbucket-admin-token>
            continuous-integration:
                url: http://localhost:8085
                user:  <bamboo-admin-user>
