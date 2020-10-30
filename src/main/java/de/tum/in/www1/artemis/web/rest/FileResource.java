@@ -33,9 +33,11 @@ import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.lecture_unit.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.lecture_unit.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -55,6 +57,8 @@ public class FileResource {
 
     private final LectureRepository lectureRepository;
 
+    private final AttachmentUnitRepository attachmentUnitRepository;
+
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     private final TokenProvider tokenProvider;
@@ -73,13 +77,15 @@ public class FileResource {
     }
 
     public FileResource(FileService fileService, ResourceLoader resourceLoader, LectureRepository lectureRepository, TokenProvider tokenProvider,
-            FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository) {
+            FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
+            AttachmentUnitRepository attachmentUnitRepository) {
         this.fileService = fileService;
         this.resourceLoader = resourceLoader;
         this.lectureRepository = lectureRepository;
         this.tokenProvider = tokenProvider;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
+        this.attachmentUnitRepository = attachmentUnitRepository;
     }
 
     /**
@@ -287,9 +293,35 @@ public class FileResource {
     }
 
     /**
+     * GET files/attachments/attachment-unit/:attachmentUnitId/:filename : Get the lecture unit attachment
+     *
+     * @param attachmentUnitId     ID of the attachment unit, the attachment belongs to
+     * @param filename             the filename of the file
+     * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
+     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/{filename:.+}")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId, @PathVariable String filename,
+            @RequestParam("access_token") String temporaryAccessToken) {
+        log.debug("REST request to get file : {}", filename);
+        Optional<AttachmentUnit> optionalAttachmentUnit = attachmentUnitRepository.findById(attachmentUnitId);
+        if (optionalAttachmentUnit.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (!validateTemporaryAccessToken(temporaryAccessToken, filename)) {
+            // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
+            String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding attachmentUnit";
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
+        }
+        return buildFileResponse(FilePathService.getAttachmentUnitFilePath() + optionalAttachmentUnit.get().getId(), filename);
+    }
+
+    /**
      * Validates temporary access token
+     *
      * @param temporaryAccessToken token to be validated
-     * @param filename the name of the file
+     * @param filename             the name of the file
      * @return true if temporaryAccessToken is valid for this file, false otherwise
      */
     private boolean validateTemporaryAccessToken(String temporaryAccessToken, String filename) {
