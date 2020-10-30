@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.AchievementRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
@@ -57,7 +58,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private Course secondCourse;
 
-    private Exercise firstExercise;
+    private ModelingExercise firstExercise;
 
     @BeforeEach
     public void initTestCase() {
@@ -69,7 +70,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         firstCourse.setAchievementsEnabled(true);
         courseRepository.save(firstCourse);
         secondCourse = database.addCourseWithModelingAndTextAndFileUploadExercise();
-        firstExercise = firstCourse.getExercises().stream().findFirst().get();
+        firstExercise = (ModelingExercise) firstCourse.getExercises().stream().findFirst().get();
 
         achievementService.generateForCourse(firstCourse);
         achievementService.generateForCourse(secondCourse);
@@ -118,8 +119,8 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testRewardAchievement() throws Exception {
-        var participation = database.addParticipationForExercise(firstExercise, student.getLogin());
-        database.addResultToParticipation(participation, null);
+        var submission = database.addModelingSubmissionWithEmptyResult(firstExercise, "", student.getLogin());
+        database.addResultToParticipation(submission.getParticipation(), null);
         var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
         assertThat(achievementsFirstCourse.size()).as("User got one achievement").isEqualTo(1);
     }

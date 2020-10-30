@@ -47,7 +47,7 @@ public class TimeBasedAchievementService {
         Set<AchievementRank> ranks = new HashSet<>();
 
         for (Achievement achievement : achievements) {
-            if (submissionDay.minusDays(achievement.getParameter()).isEqual(exerciseReleaseDay)) {
+            if (submissionDay.minusDays(achievement.getSuccessCriteria()).isEqual(exerciseReleaseDay)) {
                 ranks.add(achievement.getRank());
             }
         }

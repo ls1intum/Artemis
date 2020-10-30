@@ -38,7 +38,7 @@ public class PointBasedAchievementService {
         Set<AchievementRank> ranks = new HashSet<>();
 
         for (Achievement achievement : achievements) {
-            if (score >= achievement.getParameter()) {
+            if (score >= achievement.getSuccessCriteria()) {
                 ranks.add(achievement.getRank());
             }
         }

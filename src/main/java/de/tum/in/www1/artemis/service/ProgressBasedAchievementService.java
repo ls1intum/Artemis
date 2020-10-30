@@ -51,7 +51,7 @@ public class ProgressBasedAchievementService {
         Set<AchievementRank> ranks = new HashSet<>();
 
         for (Achievement achievement : achievements) {
-            if (numberOfExercises >= achievement.getParameter()) {
+            if (numberOfExercises >= achievement.getSuccessCriteria()) {
                 ranks.add(achievement.getRank());
             }
         }
