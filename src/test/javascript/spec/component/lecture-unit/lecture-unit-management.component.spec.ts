@@ -1,4 +1,3 @@
-import { LectureService } from 'app/lecture/lecture.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
 import { Lecture } from 'app/entities/lecture.model';
@@ -24,7 +23,6 @@ const expect = chai.expect;
 describe('LectureUnitManagementComponent', () => {
     let comp: LectureUnitManagementComponent;
     let fixture: ComponentFixture<LectureUnitManagementComponent>;
-    let lectureService: LectureService;
 
     const attachments = [
         {
@@ -103,13 +101,12 @@ describe('LectureUnitManagementComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(LectureUnitManagementComponent);
                 comp = fixture.componentInstance;
+                comp.lectureUnits = [...lecture.lectureUnits!];
             });
     });
-
     it('should move down', () => {
         const moveDownSpy = sinon.spy(comp, 'moveDown');
         const moveUpSpy = sinon.spy(comp, 'moveUp');
-        comp.lectureUnits = lecture.lectureUnits!;
         fixture.detectChanges();
         const upButton = fixture.debugElement.query(By.css('#up-0'));
         expect(upButton).to.exist;
@@ -129,7 +126,6 @@ describe('LectureUnitManagementComponent', () => {
     it('should move up', () => {
         const moveDownSpy = sinon.spy(comp, 'moveDown');
         const moveUpSpy = sinon.spy(comp, 'moveUp');
-        comp.lectureUnits = lecture.lectureUnits!;
         fixture.detectChanges();
         const downButton = fixture.debugElement.query(By.css('#down-1'));
         expect(downButton).to.exist;
