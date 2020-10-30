@@ -20,10 +20,12 @@
             <table class="exercise-details-table">
                 <tr *ngIf="exercise.maxScore">
                     <td>
-                        <h6>{{ 'artemisApp.courseOverview.exerciseDetails.maxPoints' | translate }}</h6>
+                        <h6>{{ 'artemisApp.courseOverview.exerciseDetails.points' | translate }}</h6>
                     </td>
                     <td>
-                        <span>{{ exercise.maxScore }} pts.</span>
+                        <span>{{ exercise.maxScore }}
+                            <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | translate }} {{ exercise.bonusPoints }})</span>
+                        </span>
                         <jhi-difficulty-badge *ngIf="exercise.difficulty" class="ml-1" [exercise]="exercise"></jhi-difficulty-badge>
                     </td>
                 </tr>

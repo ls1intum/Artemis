@@ -120,10 +120,11 @@
             "exerciseDetails": {
                 "dueDate": "Einreichungsfrist:",
                 "categories": "Kategorien:",
-                "exerciseType": "Aufgaben-Typ:",
+                "exerciseType": "Typ:",
                 "difficulty": "Schwierigkeit:",
                 "exerciseStatus": "Aufgaben Status:",
-                "maxPoints": "Max. Punkte:",
+                "points": "Punkte:",
+                "bonus": "Bonus:",
                 "problemStatement": "Problemstellung:",
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {
