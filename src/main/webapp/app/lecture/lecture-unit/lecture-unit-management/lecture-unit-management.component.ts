@@ -101,14 +101,14 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         if (this.lectureUnits) {
             [this.lectureUnits[index], this.lectureUnits[index - 1]] = [this.lectureUnits[index - 1], this.lectureUnits[index]];
         }
-        this.updateOrderSubject.next();
+        this.updateOrderSubject.next('up');
     }
 
     moveDown(index: number): void {
         if (this.lectureUnits) {
             [this.lectureUnits[index], this.lectureUnits[index + 1]] = [this.lectureUnits[index + 1], this.lectureUnits[index]];
         }
-        this.updateOrderSubject.next();
+        this.updateOrderSubject.next('down');
     }
 
     createExerciseUnit() {
