@@ -62,7 +62,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let accountService: AccountService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let programmingSubmissionService: ProgrammingSubmissionService;
-    let manualResultService: ProgrammingAssessmentManualResultService;
 
     let updateAfterComplaintStub: SinonStub;
     let getStudentParticipationWithResultsStub: SinonStub;
@@ -83,8 +82,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     };
     result.submission!.id = 1;
     const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
-    const exercise = <ProgrammingExercise>{ id: 1, gradingInstructions: 'Grading Instructions', course: <Course>{ instructorGroupName: 'instructorGroup', id: 1 } };
-    const automaticResult: Result = { feedbacks: [new Feedback()], assessmentType: AssessmentType.AUTOMATIC, id: 1 };
+    const exercise = <ProgrammingExercise>{ id: 1, maxScore: 100, gradingInstructions: 'Grading Instructions', course: <Course>{ instructorGroupName: 'instructorGroup' } };
+    const automaticResult: Result = { feedbacks: [new Feedback()], assessmentType: AssessmentType.AUTOMATIC, id: 1, resultString: '1 of 13 passed' };
     const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
     participation.results = [result, automaticResult];
     participation.exercise = exercise;
@@ -95,8 +94,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     participation2.id = 12;
     unassessedSubmission.participation = participation2;
 
-    const afterComplaintResult = result;
+    const afterComplaintResult = new Result();
     afterComplaintResult.score = 100;
+
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, NgbModule, FormDateTimePickerModule, FormsModule, ArtemisProgrammingAssessmentModule],
@@ -130,7 +130,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 programmingAssessmentManualResultService = debugElement.injector.get(ProgrammingAssessmentManualResultService);
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
                 programmingSubmissionService = debugElement.injector.get(ProgrammingSubmissionService);
-                manualResultService = debugElement.injector.get(ProgrammingAssessmentManualResultService);
                 complaintService = debugElement.injector.get(ComplaintService);
                 accountService = debugElement.injector.get(AccountService);
 
@@ -197,10 +196,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     it('should save and submit manual result', fakeAsync(() => {
         comp.ngOnInit();
         tick(100);
-        comp.automaticFeedback[0] = { type: FeedbackType.AUTOMATIC, text: 'testCase1', detailText: 'testCase1 failed', credits: 0 };
-        comp.referencedFeedback[0] = { type: FeedbackType.MANUAL, text: 'manual feedback', detailText: 'manual feedback for a file:1', credits: 2, reference: 'file:1_line:1' };
-        comp.unreferencedFeedback[0] = { type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'unreferenced feedback', credits: 1 };
+        comp.automaticFeedback = [{ type: FeedbackType.AUTOMATIC, text: 'testCase1', detailText: 'testCase1 failed', credits: 0 }];
+        comp.referencedFeedback = [{ type: FeedbackType.MANUAL, text: 'manual feedback', detailText: 'manual feedback for a file:1', credits: 2, reference: 'file:1_line:1' }];
+        comp.unreferencedFeedback = [{ type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'unreferenced feedback', credits: 1 }];
         comp.generalFeedback = { detailText: 'general feedback' };
+        comp.validateFeedback();
         comp.save();
         const alertElement = debugElement.queryAll(By.css('jhi-alert'));
 
@@ -213,6 +213,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         // Reset feedbacks
         comp.manualResult!.feedbacks! = [];
+        comp.validateFeedback();
         comp.submit();
         const alertElementSubmit = debugElement.queryAll(By.css('jhi-alert'));
 

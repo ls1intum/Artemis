@@ -1818,6 +1818,11 @@ public class DatabaseUtilService {
         submission.setResult(result);
         submission.getParticipation().addResult(result);
         submission = programmingSubmissionRepo.save(submission);
+        // Manual results are always rated and have a resultString which is defined in the client
+        if (assessmentType.equals(AssessmentType.SEMI_AUTOMATIC)) {
+            result.rated(true);
+            result.resultString("1 of 13 passed, 1 issue, 5 of 10 points");
+        }
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
@@ -1960,6 +1965,7 @@ public class DatabaseUtilService {
         submission = saveTextSubmissionWithResultAndAssessor(exercise, submission, studentLogin, null, assessorLogin);
         Result result = submission.getResult();
         for (Feedback feedback : feedbacks) {
+            // this also invoked feedback.setResult(result)
             result.addFeedback(feedback);
         }
         // this automatically saves the feedback because of the CascadeType.All annotation

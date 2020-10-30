@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
 @Service
-@Profile("automaticText")
+@Profile("athene")
 public class AutomaticTextFeedbackService {
 
     private final FeedbackService feedbackService;

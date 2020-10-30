@@ -60,7 +60,7 @@ class TestOutput(AbstractProgramTest):
         printTester("Waiting for: '{}'".format(expected))
         while True:
             if self.pWrap.hasTerminated() and not self.pWrap.canReadLineStdout():
-                self.__progTerminatedUnexpectedly()
+                self._progTerminatedUnexpectedly()
             # Read a single line form the programm output:
             line: str = self.pWrap.readLineStdout()
             # Perform a "student save" compare:

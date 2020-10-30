@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
 import de.tum.in.www1.artemis.service.dto.TextFeedbackConflictRequestDTO;
 
 @Service
-@Profile("automaticText")
+@Profile("athene")
 public class AutomaticTextAssessmentConflictService {
 
     private final Logger log = LoggerFactory.getLogger(AutomaticTextAssessmentConflictService.class);
