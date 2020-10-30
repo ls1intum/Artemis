@@ -1,23 +1,27 @@
 package ${packageName};
 
-import ${packageName}.testutils.ClassNameScanner;
-import ${packageName}.testutils.ScanResultType;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.fail;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import ${packageName}.testutils.ClassNameScanner;
+import ${packageName}.testutils.ScanResultType;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 3.0 (25.09.2019)
+ * @version 4.0 (27.10.2020)
  * <br><br>
  * This test and its subclasses evaluate if the following specified elements of a given class in the structure oracle are
  * correctly implemented (in case they are specified):
@@ -36,7 +40,7 @@ import static org.junit.Assert.fail;
  * If no methods should be tested for correctness, remove {@link MethodTest}, otherwise one test will fail (limitation of JUnit)
  * If no attributes and no enums should be tested for correctness, remove {@link AttributeTest}, otherwise one test will fail (limitation of JUnit)
  */
-public class StructuralTest {
+public abstract class StructuralTest {
 
     protected static final String JSON_PROPERTY_SUPERCLASS = "superclass";
     protected static final String JSON_PROPERTY_INTERFACES = "interfaces";
@@ -52,25 +56,16 @@ public class StructuralTest {
     protected static final String JSON_PROPERTY_TYPE = "type";
     protected static final String JSON_PROPERTY_RETURN_TYPE = "returnType";
 
-    protected String expectedClassName;
-    protected String expectedPackageName;
-    protected JSONObject expectedClassJSON;
-
     protected static JSONArray structureOracleJSON = retrieveStructureOracleJSON("test.json");
-
-    public StructuralTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
-        this.expectedClassName = expectedClassName;
-        this.expectedPackageName = expectedPackageName;
-        this.expectedClassJSON = expectedClassJSON;
-    }
 
     /**
      * Scans the project and returns the class, if it's found. If not, return the message of the NamesScanner.
+     * @param expectedClassStructure: The class structure that we expect to find a class for.
      * @param typeOfTest: The name of the test type that currently called the NamesScanner. The name is displayed in the feedback, if it's negative.
      * @return The current class that undergoes the tests.
      */
-    protected Class<?> findClassForTestType(String typeOfTest) {
-        ClassNameScanner classNameScanner = new ClassNameScanner(expectedClassName, expectedPackageName, structureOracleJSON);
+    protected static Class<?> findClassForTestType(ExpectedClassStructure expectedClassStructure, String typeOfTest) {
+        ClassNameScanner classNameScanner = new ClassNameScanner(expectedClassStructure.getExpectedClassName(), expectedClassStructure.getExpectedPackageName());
         ScanResultType scanResultEnum = classNameScanner.getScanResult().getResult();
         String classNameScanMessage = classNameScanner.getScanResult().getMessage();
 
@@ -79,7 +74,7 @@ public class StructuralTest {
         }
 
         try {
-            return Class.forName(expectedPackageName + "." + expectedClassName);
+            return Class.forName(expectedClassStructure.getQualifiedClassName());
         } catch (ClassNotFoundException e) {
             fail("Problem during " + typeOfTest + " test: " + classNameScanMessage);
             return null;
@@ -93,7 +88,7 @@ public class StructuralTest {
      * @param expectedModifiers: The expected modifiers as a JSONArray.
      * @return True if they match, false otherwise.
      */
-    protected boolean checkModifiers(String[] observedModifiers, JSONArray expectedModifiers) {
+    protected static boolean checkModifiers(String[] observedModifiers, JSONArray expectedModifiers) {
         if (expectedModifiers == null) return true;
 
         String[] ignorableModifiers = new String[] { "final", "public" };
@@ -129,7 +124,7 @@ public class StructuralTest {
         return allModifiersAreImplemented;
     }
 
-    protected boolean checkAnnotations(Annotation[] observedAnnotations, JSONArray expectedAnnotations) {
+    protected static boolean checkAnnotations(Annotation[] observedAnnotations, JSONArray expectedAnnotations) {
 
         // If both the observed and expected elements have no annotations, then they match.
         // A note: for technical reasons, we get in case of no observed annotations, a string array with an empty string.
@@ -169,7 +164,7 @@ public class StructuralTest {
      * @param expectedParameters: The expected parameter type names as a JSONArray.
      * @return True if they match, false otherwise.
      */
-    protected boolean checkParameters(Class<?>[] observedParameters, JSONArray expectedParameters) {
+    protected static boolean checkParameters(Class<?>[] observedParameters, JSONArray expectedParameters) {
 
         // If both the observed and expected elements have no parameters, then they match.
         if(observedParameters.length == 0 && expectedParameters.length() == 0) {
@@ -204,7 +199,7 @@ public class StructuralTest {
      * @param parameterTypeNames
      * @return
      */
-    private Map<String, Integer> createParametersHashMap(String... parameterTypeNames) {
+    private static Map<String, Integer> createParametersHashMap(String... parameterTypeNames) {
         Map<String, Integer> parametersHashTable = new HashMap<String, Integer>();
 
         for(String parameterTypeName : parameterTypeNames) {
@@ -258,5 +253,51 @@ public class StructuralTest {
         }
 
         return new JSONArray(result.toString());
+    }
+
+    /**
+     * Container for a class that is tested including a JSON of the structure that we expect to find and test against.
+     * 
+     * @author Christian Femers
+     */
+    protected class ExpectedClassStructure {
+
+        private final String expectedClassName;
+        private final String expectedPackageName;
+        private final JSONObject expectedClassJson;
+
+        public ExpectedClassStructure(String expectedClassName, String expectedPackageName, JSONObject expectedClassJson) {
+            this.expectedClassName = Objects.requireNonNull(expectedClassName);
+            this.expectedPackageName = Objects.requireNonNull(expectedPackageName);
+            this.expectedClassJson = Objects.requireNonNull(expectedClassJson);
+        }
+
+        public String getExpectedClassName() {
+            return expectedClassName;
+        }
+
+        public String getExpectedPackageName() {
+            return expectedPackageName;
+        }
+
+        public JSONObject getExpectedClassJson() {
+            return expectedClassJson;
+        }
+
+        public String getQualifiedClassName() {
+            return expectedPackageName + "." + expectedClassName;
+        }
+
+        public boolean hasProperty(String propertyName) {
+            return getExpectedClassJson().has(propertyName);
+        }
+
+        public JSONObject getPropertyAsJsonObject(String propertyName) {
+            return getExpectedClassJson().getJSONObject(propertyName);
+        }
+
+        public JSONArray getPropertyAsJsonArray(String propertyName) {
+            return getExpectedClassJson().getJSONArray(propertyName);
+        }
     }
 }
