@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 @Entity
 @DiscriminatorValue("E")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class ExerciseUnit extends LectureUnit {
 
     // Note: Name and Release Date will always be taken from associated exercise
