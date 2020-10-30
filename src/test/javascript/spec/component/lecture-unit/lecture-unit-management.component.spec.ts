@@ -17,6 +17,7 @@ import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit
 import { By } from '@angular/platform-browser';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
+import sinon = require('sinon');
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -106,28 +107,35 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should move down', () => {
+        const moveDownSpy = sinon.spy(comp, 'moveDown');
+        const moveUpSpy = sinon.spy(comp, 'moveUp');
         comp.lectureUnits = lecture.lectureUnits!;
         fixture.detectChanges();
         const upButton = fixture.debugElement.query(By.css('#up-0'));
         expect(upButton).to.exist;
         upButton.nativeElement.click();
         fixture.detectChanges();
+        expect(moveUpSpy).to.not.have.been.calledOnce;
         // not moved as first one
         expect(comp.lectureUnits[0].id).to.equal(42);
         const downButton = fixture.debugElement.query(By.css('#down-0'));
         expect(downButton).to.exist;
         downButton.nativeElement.click();
         fixture.detectChanges();
+        expect(moveDownSpy).to.have.been.calledOnce;
         expect(comp.lectureUnits[0].id).to.equal(49);
     });
 
     it('should move up', () => {
+        const moveDownSpy = sinon.spy(comp, 'moveDown');
+        const moveUpSpy = sinon.spy(comp, 'moveUp');
         comp.lectureUnits = lecture.lectureUnits!;
         fixture.detectChanges();
         const downButton = fixture.debugElement.query(By.css('#down-1'));
         expect(downButton).to.exist;
         downButton.nativeElement.click();
         fixture.detectChanges();
+        expect(moveDownSpy).to.not.have.been.calledOnce;
         // not moved as last one
         expect(comp.lectureUnits[1].id).to.equal(49);
 
@@ -135,6 +143,7 @@ describe('LectureUnitManagementComponent', () => {
         expect(upButton).to.exist;
         upButton.nativeElement.click();
         fixture.detectChanges();
+        expect(moveUpSpy).to.have.been.calledOnce;
         expect(comp.lectureUnits[1].id).to.equal(42);
     });
 });
