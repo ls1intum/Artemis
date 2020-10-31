@@ -342,6 +342,7 @@ public class ProgrammingExerciseService {
 
             if (!programmingExercise.hasSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles" + "/**/*.*";
+
                 Resource[] testFileResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testFilePath);
 
                 sectionsMap.put("non-sequential", true);
@@ -352,6 +353,13 @@ public class ProgrammingExerciseService {
                 String packagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
                 fileService.copyResources(testUtils, prefix, packagePath, true);
                 fileService.copyResources(testFileResources, prefix, packagePath, false);
+
+                // Copy the static code analysis configurations files to the repository. Static code analysis is only available for non sequential test runs
+                if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
+                    String staticCodeAnalysisConfigPath = templatePath + "/staticCodeAnalysisConfig/**/*.*";
+                    Resource[] scaConfigResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(staticCodeAnalysisConfigPath);
+                    fileService.copyResources(scaConfigResources, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
+                }
             }
             else {
                 String stagePomXmlPath = templatePath + "/stagePom.xml";
