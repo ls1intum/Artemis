@@ -15,12 +15,16 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.ProgrammingExerciseTestService;
 
 public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
+
+    @Autowired
+    private ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
     @BeforeEach
     public void setup() throws Exception {
@@ -51,10 +55,12 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     @ParameterizedTest
-    @EnumSource(ProgrammingLanguage.class)
+    // TODO René Lalla: incldue Swift again as soon as it is fully supported
+    @EnumSource(value = ProgrammingLanguage.class, names = { "SWIFT" }, mode = EnumSource.Mode.EXCLUDE)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language) throws Exception {
-        programmingExerciseTestService.createProgrammingExercise_programmingLanguage_validExercise_created(language);
+        programmingExerciseTestService.createProgrammingExercise_programmingLanguage_validExercise_created(language,
+                programmingLanguageFeatureService.getProgrammingLanguageFeatures(language));
     }
 
     @Test
@@ -76,7 +82,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     @ParameterizedTest
-    @EnumSource(ProgrammingLanguage.class)
+    // TODO René Lalla: incldue Swift again as soon as it is fully supported
+    @EnumSource(value = ProgrammingLanguage.class, names = { "SWIFT" }, mode = EnumSource.Mode.EXCLUDE)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExerciseTestService.importExercise_created(programmingLanguage);
@@ -128,6 +135,48 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam() throws Exception {
         programmingExerciseTestService.repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_mode_changedToIndividual() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExercise_individual_modeChange();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_mode_changedToTeam() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExercise_team_modeChange();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void configureRepository_createTeamUserWhenLtiUserIsNotExistent() throws Exception {
+        programmingExerciseTestService.configureRepository_createTeamUserWhenLtiUserIsNotExistent();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void copyRepository_testInternalServerError() throws Exception {
+        programmingExerciseTestService.copyRepository_testInternalServerError();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void copyRepository_testBadRequestError() throws Exception {
+        programmingExerciseTestService.copyRepository_testBadRequestError();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void copyRepository_testConflictError() throws Exception {
+        programmingExerciseTestService.copyRepository_testConflictError();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void configureRepository_testBadRequestError() throws Exception {
+        programmingExerciseTestService.configureRepository_testBadRequestError();
     }
 
 }

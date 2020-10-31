@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Objects;
@@ -25,6 +24,7 @@ import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 
 /**
@@ -54,6 +54,9 @@ public class ProgrammingExerciseResultTestService {
     private ResultService resultService;
 
     @Autowired
+    private StaticCodeAnalysisService staticCodeAnalysisService;
+
+    @Autowired
     private FeedbackService feedbackService;
 
     @Autowired
@@ -69,23 +72,24 @@ public class ProgrammingExerciseResultTestService {
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipationStaticCodeAnalysis;
 
-    public void setup() throws Exception {
+    public void setup() {
         database.addUsers(10, 2, 2);
         Course course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAll().get(0);
         programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true);
+        staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         programmingExerciseStudentParticipationStaticCodeAnalysis = database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, "student1");
     }
 
-    public void tearDown() throws IOException {
+    public void tearDown() {
         database.resetDatabase();
     }
 
     // Test
-    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(Object resultNotification) throws Exception {
+    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(Object resultNotification) {
         database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
 
         Set<ProgrammingExerciseTestCase> expectedTestCases = new HashSet<>();
@@ -105,9 +109,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification) throws Exception {
-        final var staticCodeAnalysisFeedback = feedbackService
-                .createFeedbackFromStaticCodeAnalysisReports(ModelFactory.generateStaticCodeAnalysisReports(programmingExerciseWithStaticCodeAnalysis.getProgrammingLanguage()));
+    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification) {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
         final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
 
@@ -125,12 +127,11 @@ public class ProgrammingExerciseResultTestService {
         assertThat(optionalResult).isPresent();
         var result = optionalResult.get();
         assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(savedResult.getFeedbacks());
-        assertThat(savedResult.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(staticCodeAnalysisFeedback);
-        assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(staticCodeAnalysisFeedback);
+        assertThat(result.getFeedbacks().stream().filter(Feedback::isStaticCodeAnalysisFeedback).count()).isEqualTo(3);
     }
 
     // Test
-    public void shouldStoreBuildLogsForSubmission(Object resultNotification) throws Exception {
+    public void shouldStoreBuildLogsForSubmission(Object resultNotification) {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 
         var submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(programmingExerciseStudentParticipation.getId());

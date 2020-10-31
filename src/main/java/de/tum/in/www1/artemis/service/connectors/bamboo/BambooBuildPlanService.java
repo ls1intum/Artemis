@@ -185,11 +185,9 @@ public class BambooBuildPlanService {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "test-reports/*results.xml");
             }
             case HASKELL -> {
-                // Do not run the builds in extra docker containers if the dev-profile is active
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/test-reports/*.xml");
             }
             case VHDL, ASSEMBLER -> {
-                // Do not run the builds in extra docker containers if the dev-profile is active
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/result.xml");
             }
             // this is needed, otherwise the compiler complaints with missing return statement
@@ -300,7 +298,15 @@ public class BambooBuildPlanService {
     }
 
     private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage language) {
-        var dockerImage = bambooService.getDockerImageName(language);
+        var dockerImage = switch (language) {
+            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-2";
+            case PYTHON -> "ls1tum/artemis-python-docker:latest";
+            case C -> "ls1tum/artemis-c-docker:latest";
+            case HASKELL -> "tumfpv/fpv-stack:8.8.4";
+            case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
+            case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
+            case SWIFT -> "swift:latest";
+        };
         return new DockerConfiguration().image(dockerImage);
     }
 }

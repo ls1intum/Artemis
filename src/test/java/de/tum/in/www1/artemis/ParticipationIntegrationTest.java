@@ -232,7 +232,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteResultWithoutSubmission() throws Exception {
-        StudentParticipation studentParticipation = database.addParticipationForExercise(modelingExercise, "student1");
+        StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
         database.addResultToParticipation(null, null, studentParticipation);
         Long participationId = studentParticipation.getId();
 
@@ -255,11 +255,11 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "student1", roles = "USER")
     public void deleteParticipation_student() throws Exception {
         // Allow students to delete their own participation if it belongs to a guided tour
-        StudentParticipation studentParticipation = database.addParticipationForExercise(modelingExercise, "student1");
+        StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
         request.delete("/api/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
 
         // Returns forbidden if users do not delete their own participation
-        StudentParticipation studentParticipation2 = database.addParticipationForExercise(modelingExercise, "student2");
+        StudentParticipation studentParticipation2 = database.createAndSaveParticipationForExercise(modelingExercise, "student2");
         request.delete("/api/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
     }
 
@@ -267,11 +267,11 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "tutor1", roles = "TA")
     public void deleteParticipation_tutor() throws Exception {
         // Allow tutors to delete their own participation if it belongs to a guided tour
-        StudentParticipation studentParticipation = database.addParticipationForExercise(modelingExercise, "tutor1");
+        StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "tutor1");
         request.delete("/api/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
 
         // Returns forbidden if tutors do not delete their own participation
-        StudentParticipation studentParticipation2 = database.addParticipationForExercise(modelingExercise, "student1");
+        StudentParticipation studentParticipation2 = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
         request.delete("/api/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
     }
 
@@ -302,8 +302,8 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getAllParticipationsForExercise() throws Exception {
-        database.addParticipationForExercise(textExercise, "student1");
-        database.addParticipationForExercise(textExercise, "student2");
+        database.createAndSaveParticipationForExercise(textExercise, "student1");
+        database.createAndSaveParticipationForExercise(textExercise, "student2");
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
         assertThat(participations.size()).as("Exactly 2 participations are returned").isEqualTo(2);
         assertThat(participations.stream().allMatch(participation -> participation.getStudent().isPresent())).as("Only participation that has student are returned").isTrue();
@@ -313,8 +313,8 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getAllParticipationsForExercise_withLatestResult() throws Exception {
-        database.addParticipationForExercise(textExercise, "student1");
-        var participation = database.addParticipationForExercise(textExercise, "student2");
+        database.createAndSaveParticipationForExercise(textExercise, "student1");
+        var participation = database.createAndSaveParticipationForExercise(textExercise, "student2");
         database.addResultToParticipation(null, null, participation);
         var result = ModelFactory.generateResult(true, 70).participation(participation);
         resultRepository.save(result);
@@ -338,12 +338,12 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllParticipationsForCourse() throws Exception {
-        database.addParticipationForExercise(programmingExercise, "student1");
-        database.addParticipationForExercise(textExercise, "student2");
-        database.addParticipationForExercise(modelingExercise, "student1");
+        database.createAndSaveParticipationForExercise(programmingExercise, "student1");
+        database.createAndSaveParticipationForExercise(textExercise, "student2");
+        database.createAndSaveParticipationForExercise(modelingExercise, "student1");
         var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), course);
         exerciseRepo.save(quizEx);
-        database.addParticipationForExercise(quizEx, "student2");
+        database.createAndSaveParticipationForExercise(quizEx, "student2");
 
         var participations = request.getList("/api/courses/" + course.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
         assertThat(participations.size()).isEqualTo(4);
@@ -433,7 +433,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getParticipationWithLatestResult() throws Exception {
-        var participation = database.addParticipationForExercise(textExercise, "student1");
+        var participation = database.createAndSaveParticipationForExercise(textExercise, "student1");
         database.addResultToParticipation(null, null, participation);
         var result = ModelFactory.generateResult(true, 70);
         result.participation(participation).setCompletionDate(ZonedDateTime.now().minusHours(2));
@@ -457,7 +457,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getSubmissionOfParticipation() throws Exception {
-        var participation = database.addParticipationForExercise(textExercise, "student1");
+        var participation = database.createAndSaveParticipationForExercise(textExercise, "student1");
         var submission1 = database.addSubmission(participation, ModelFactory.generateTextSubmission("text", Language.ENGLISH, true));
         var submission2 = database.addSubmission(participation, ModelFactory.generateTextSubmission("text2", Language.ENGLISH, true));
         var submissions = request.getList("/api/participations/" + participation.getId() + "/submissions", HttpStatus.OK, Submission.class);
@@ -477,7 +477,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getParticipation() throws Exception {
-        var participation = database.addParticipationForExercise(textExercise, "student1");
+        var participation = database.createAndSaveParticipationForExercise(textExercise, "student1");
         var actualParticipation = request.get("/api/exercises/" + textExercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
     }
@@ -515,7 +515,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void getParticipation_quizExerciseFinished() throws Exception {
         var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(20), ZonedDateTime.now().minusMinutes(20), course).isPlannedToStart(true);
         quizEx = exerciseRepo.save(quizEx);
-        var participation = database.addParticipationForExercise(quizEx, "student1");
+        var participation = database.createAndSaveParticipationForExercise(quizEx, "student1");
         var submission = database.addSubmission(participation, new QuizSubmission().scoreInPoints(11D).submitted(true));
         database.addResultToParticipation(participation, submission);
         var actualParticipation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);

@@ -29,7 +29,7 @@ bootRun {
     args = []
 }
 
-task webpack(type: YarnTask, dependsOn: 'yarn_install') {
+task webpack(type: YarnTask, dependsOn: 'yarn') {
     inputs.dir("src/main/webapp/")
     inputs.files("yarn.lock")
     inputs.files("build.gradle")

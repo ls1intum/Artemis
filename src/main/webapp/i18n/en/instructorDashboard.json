@@ -27,6 +27,7 @@
         "exportRepos": {
             "warning": "Confirm Export",
             "title": "Download Repos",
+            "titleSingle": "Download Repo",
             "questions": {
                 "individual": "Enter all logins seperated by ',' (e.g ga87fix,ga63dut) of students you want to download the repository from",
                 "team": "Enter all short names seperated by ',' (e.g team1,team2) of teams you want to download the repository from"

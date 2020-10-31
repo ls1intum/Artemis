@@ -4,7 +4,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { FormsModule } from '@angular/forms';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { ProgrammingAssessmentManualResultButtonComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-button.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
@@ -35,13 +34,8 @@ import { AssessmentInstructionsModule } from 'app/assessment/assessment-instruct
         ArtemisProgrammingManualAssessmentModule,
         AssessmentInstructionsModule,
     ],
-    declarations: [
-        ProgrammingAssessmentManualResultButtonComponent,
-        ProgrammingAssessmentRepoExportButtonComponent,
-        ProgrammingAssessmentRepoExportDialogComponent,
-        CodeEditorTutorAssessmentContainerComponent,
-    ],
+    declarations: [ProgrammingAssessmentRepoExportButtonComponent, ProgrammingAssessmentRepoExportDialogComponent, CodeEditorTutorAssessmentContainerComponent],
     entryComponents: [ProgrammingAssessmentRepoExportDialogComponent],
-    exports: [ProgrammingAssessmentManualResultButtonComponent, ProgrammingAssessmentRepoExportButtonComponent],
+    exports: [ProgrammingAssessmentRepoExportButtonComponent],
 })
 export class ArtemisProgrammingAssessmentModule {}

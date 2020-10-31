@@ -2,23 +2,26 @@ package de.tum.in.www1.artemis.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.connector.athene.AtheneRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackConflictType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.TextAssessmentConflictService;
 import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
@@ -44,9 +47,13 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     @Autowired
     ResultRepository resultRepository;
 
-    AutomaticTextAssessmentConflictService automaticTextAssessmentConflictService;
-
+    @Autowired
     TextAssessmentConflictService textAssessmentConflictService;
+
+    @Autowired
+    private AtheneRequestMockProvider atheneRequestMockProvider;
+
+    AutomaticTextAssessmentConflictService automaticTextAssessmentConflictService;
 
     TextExercise textExercise;
 
@@ -54,26 +61,31 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     public void init() {
         database.addUsers(2, 1, 0);
         textExercise = (TextExercise) database.addCourseWithOneFinishedTextExercise().getExercises().iterator().next();
+
+        atheneRequestMockProvider.enableMockingOfRequests();
+        ReflectionTestUtils.setField(Objects.requireNonNull(ReflectionTestUtils.getField(textAssessmentConflictService, "connector")), "restTemplate",
+                atheneRequestMockProvider.restTemplate);
     }
 
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+        atheneRequestMockProvider.reset();
     }
 
     /**
      * Creates two text submissions with text blocks and feedback, adds text blocks to a cluster.
      * Mocks TextAssessmentConflictService class to not to connect to remote Athene service
      * Then checks if the text assessment conflicts are created and stored correctly.
-     * @throws NetworkingError - it never throws an error since the TextAssessmentConflictService is a mock class
+     * @throws JsonProcessingException - exception related to mapping the values to json
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createFeedbackConflicts() throws NetworkingError {
+    public void createFeedbackConflicts() throws JsonProcessingException {
         TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("first text submission", Language.ENGLISH, true);
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("second text submission", Language.ENGLISH, true);
-        database.addTextSubmission(textExercise, textSubmission1, "student1");
-        database.addTextSubmission(textExercise, textSubmission2, "student1");
+        database.saveTextSubmission(textExercise, textSubmission1, "student1");
+        database.saveTextSubmission(textExercise, textSubmission2, "student1");
 
         final TextCluster cluster = new TextCluster().exercise(textExercise);
         textClusterRepository.save(cluster);
@@ -87,21 +99,22 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         cluster.blocks(List.of(textBlock1, textBlock2));
         textClusterRepository.save(cluster);
 
-        final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock1.getId());
-        final Feedback feedback2 = new Feedback().detailText("Good answer").credits(2D).reference(textBlock2.getId());
+        Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock1.getId());
+        Feedback feedback2 = new Feedback().detailText("Good answer").credits(2D).reference(textBlock2.getId());
 
-        database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission1, "student1", "tutor1", List.of(feedback1));
-        database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, "student2", "tutor1", List.of(feedback2));
+        textSubmission1 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission1, "student1", "tutor1", List.of(feedback1));
+        textSubmission2 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, "student2", "tutor1", List.of(feedback2));
 
-        textAssessmentConflictService = mock(TextAssessmentConflictService.class);
-        when(textAssessmentConflictService.checkFeedbackConsistencies(any(), anyLong(), anyInt())).thenReturn(createRemoteServiceResponse(feedback1, feedback2));
+        // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
+        feedback1 = textSubmission1.getResult().getFeedbacks().get(0);
+        feedback2 = textSubmission2.getResult().getFeedbacks().get(0);
+
+        atheneRequestMockProvider.mockFeedbackConsistency(createRemoteServiceResponse(feedback1, feedback2));
 
         automaticTextAssessmentConflictService = new AutomaticTextAssessmentConflictService(feedbackConflictRepository, feedbackRepository, textBlockRepository,
                 textAssessmentConflictService);
 
         automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(List.of(textBlock1), new ArrayList<>(Collections.singletonList(feedback1)), textExercise.getId());
-
-        verify(textAssessmentConflictService, timeout(100).times(1)).checkFeedbackConsistencies(any(), anyLong(), anyInt());
 
         assertThat(feedbackConflictRepository.findAll(), hasSize(1));
         assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback(), either(is(feedback1)).or(is(feedback2)));
@@ -113,13 +126,13 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      * Creates and stores a Text Assessment Conflict in the database.
      * Then sends a conflict with same feedback ids and different conflict type.
      * Checks if the conflict type in the database has changed.
-     * @throws NetworkingError - it never throws an error since the TextAssessmentConflictService is a mock class
+     * @throws JsonProcessingException - exception related to mapping the values to json
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void changedFeedbackConflictsType() throws NetworkingError {
+    public void changedFeedbackConflictsType() throws JsonProcessingException {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
-        database.addTextSubmission(textExercise, textSubmission, "student1");
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
 
         final TextCluster cluster = new TextCluster().exercise(textExercise);
         textClusterRepository.save(cluster);
@@ -127,16 +140,18 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         final TextBlock textBlock = new TextBlock().startIndex(0).endIndex(15).automatic().cluster(cluster);
         database.addTextBlocksToTextSubmission(List.of(textBlock), textSubmission);
 
-        final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
-        final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
-        database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
+        Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
+        Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
+        textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
 
+        // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
+        feedback1 = textSubmission.getResult().getFeedbacks().get(0);
+        feedback2 = textSubmission.getResult().getFeedbacks().get(1);
         FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(feedback1, feedback2);
         feedbackConflict.setType(FeedbackConflictType.INCONSISTENT_COMMENT);
         feedbackConflictRepository.save(feedbackConflict);
 
-        textAssessmentConflictService = mock(TextAssessmentConflictService.class);
-        when(textAssessmentConflictService.checkFeedbackConsistencies(any(), anyLong(), anyInt())).thenReturn(createRemoteServiceResponse(feedback1, feedback2));
+        atheneRequestMockProvider.mockFeedbackConsistency(createRemoteServiceResponse(feedback1, feedback2));
 
         automaticTextAssessmentConflictService = new AutomaticTextAssessmentConflictService(feedbackConflictRepository, feedbackRepository, textBlockRepository,
                 textAssessmentConflictService);
@@ -154,13 +169,13 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      * Then a same feedback is sent to the conflict checking class.
      * Empty list is returned from the mock object. (meaning: no conflicts have found)
      * Checks if the conflict set as solved in the database.
-     * @throws NetworkingError - it never throws an error since the TextAssessmentConflictService is a mock class
+     * @throws JsonProcessingException - exception related to mapping the values to json
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void solveFeedbackConflicts() throws NetworkingError {
+    public void solveFeedbackConflicts() throws JsonProcessingException {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
-        database.addTextSubmission(textExercise, textSubmission, "student1");
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
 
         final TextCluster cluster = new TextCluster().exercise(textExercise);
         textClusterRepository.save(cluster);
@@ -168,15 +183,17 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         final TextBlock textBlock = new TextBlock().startIndex(0).endIndex(15).automatic().cluster(cluster);
         database.addTextBlocksToTextSubmission(List.of(textBlock), textSubmission);
 
-        final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
-        final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
-        database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
+        Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
+        Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
+        textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
 
+        // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
+        feedback1 = textSubmission.getResult().getFeedbacks().get(0);
+        feedback2 = textSubmission.getResult().getFeedbacks().get(1);
         FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(feedback1, feedback2);
         feedbackConflictRepository.save(feedbackConflict);
 
-        textAssessmentConflictService = mock(TextAssessmentConflictService.class);
-        when(textAssessmentConflictService.checkFeedbackConsistencies(any(), anyLong(), anyInt())).thenReturn(List.of());
+        atheneRequestMockProvider.mockFeedbackConsistency(List.of());
 
         automaticTextAssessmentConflictService = new AutomaticTextAssessmentConflictService(feedbackConflictRepository, feedbackRepository, textBlockRepository,
                 textAssessmentConflictService);
@@ -196,7 +213,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testSubmissionDelete() {
-        TextSubmission textSubmission = this.createTextSubmissionWithResultFeedbackAndConflicts();
+        TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
         textSubmissionRepository.deleteById(textSubmission.getId());
         assertThat(feedbackConflictRepository.findAll(), hasSize(0));
     }
@@ -207,7 +224,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testResultDelete() {
-        TextSubmission textSubmission = this.createTextSubmissionWithResultFeedbackAndConflicts();
+        TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
         resultRepository.deleteById(textSubmission.getResult().getId());
         assertThat(feedbackConflictRepository.findAll(), hasSize(0));
     }
@@ -229,7 +246,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testFeedbackConflictDelete() {
-        this.createTextSubmissionWithResultFeedbackAndConflicts();
+        createTextSubmissionWithResultFeedbackAndConflicts();
         feedbackConflictRepository.deleteAll();
         assertThat(feedbackRepository.findAll(), hasSize(2));
     }
@@ -244,13 +261,13 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
 
     private TextSubmission createTextSubmissionWithResultFeedbackAndConflicts() {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
-        database.addTextSubmission(textExercise, textSubmission, "student1");
-
         final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D);
         final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
-        database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
+        textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
 
-        FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(feedback1, feedback2);
+        // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
+        FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(textSubmission.getResult().getFeedbacks().get(0),
+                textSubmission.getResult().getFeedbacks().get(1));
         feedbackConflictRepository.save(feedbackConflict);
 
         return textSubmission;

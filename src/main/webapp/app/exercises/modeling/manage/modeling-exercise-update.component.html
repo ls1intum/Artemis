@@ -29,7 +29,7 @@
                 <jhi-difficulty-picker [exercise]="modelingExercise"></jhi-difficulty-picker>
             </div>
         </div>
-        <jhi-team-config-form-group [exercise]="modelingExercise"></jhi-team-config-form-group>
+        <jhi-team-config-form-group [exercise]="modelingExercise" [isImport]="isImport"></jhi-team-config-form-group>
         <div class="d-flex" *ngIf="!isExamMode">
             <div class="form-group-narrow flex-grow-1">
                 <jhi-date-time-picker

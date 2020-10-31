@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.lecture_unit.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -309,6 +310,24 @@ public class AuthorizationCheckService {
         }
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         return isInstructorInCourse(course, user) || isTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && exercise.isVisibleToStudents());
+    }
+
+    /**
+     * Determines if a user is allowed to see a lecture unit
+     *
+     * @param lectureUnit the lectureUnit for which to check permission
+     * @param user        the user for which to check permission
+     * @return true if the user is allowed, false otherwise
+     */
+    public boolean isAllowedToSeeLectureUnit(LectureUnit lectureUnit, User user) {
+        if (user == null || user.getGroups() == null) {
+            user = userService.getUserWithGroupsAndAuthorities();
+        }
+        if (isAdmin(user)) {
+            return true;
+        }
+        Course course = lectureUnit.getLecture().getCourse();
+        return isInstructorInCourse(course, user) || isTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && lectureUnit.isVisibleToStudents());
     }
 
     /**

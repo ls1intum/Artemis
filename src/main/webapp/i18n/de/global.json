@@ -5,7 +5,8 @@
         "generic": {
             "yes": "Ja",
             "no": "Nein",
-            "emptyList": "Keine Elemente verfügbar"
+            "emptyList": "Keine Elemente verfügbar",
+            "unset": "Nicht gesetzt"
         },
         "menu": {
             "home": "Startseite",
@@ -170,9 +171,11 @@
             "back": "Zurück",
             "cancel": "Abbrechen",
             "delete": "Löschen",
+            "unlink": "Trennen",
             "confirm": "Bestätigen",
             "download": "Herunterladen",
             "dashboard": "Dashboard",
+            "units": "Einheiten",
             "edit": "Bearbeiten",
             "editInEditor": "In Editor bearbeiten",
             "editInIntelliJ": "In IntelliJ bearbeiten",
@@ -227,6 +230,9 @@
         "delete": {
             "title": "Löschen bestätigen"
         },
+        "unlink": {
+            "title": "Trennen bestätigen"
+        },
         "reset": {
             "title": "Zurücksetzen bestätigen"
         },
@@ -265,6 +271,7 @@
         "emailexists": "Email wird bereits verwendet!",
         "idexists": "Ein neuer {{entityName}} kann noch keine ID haben",
         "invalid.template.build.plan.id": "Die Vorlage Build Plan ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
+        "missingname": "Ein neues {{entityName}} braucht einen namen",
         "invalid.solution.build.plan.id": "Die Lösung Build Plan ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
         "invalid.template.repository.url": "Die Vorlage Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
         "invalid.solution.repository.url": "Die Lösung Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",

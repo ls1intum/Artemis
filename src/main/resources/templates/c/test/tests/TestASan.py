@@ -31,5 +31,5 @@ class TestASan(AbstractProgramTest):
             self._failWith(
                 "Make for directory {} failed. Returncode is {}.".format(str(self.executionDirectory), retCode))
 
-        # Allways cleanup to make sure all threads get joined:
+        # Always cleanup to make sure all threads get joined:
         self.pWrap.cleanup()

@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.6.4"
+version = "4.7.1"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -189,7 +189,7 @@ dependencies {
 
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.5.5"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.6.0"
     implementation "net.logstash.logback:logstash-logback-encoder:6.4"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -223,16 +223,16 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:2.3.3.RELEASE"
-    implementation "org.springframework.data:spring-data-ldap:2.3.4.RELEASE"
+    implementation "org.springframework.data:spring-data-ldap:2.4.0"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.2.5.RELEASE"
     implementation "org.springframework.cloud:spring-cloud-starter-config:2.2.5.RELEASE"
-    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.10.RELEASE"
+    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.11.RELEASE"
 
     // https://docs.spring.io/spring/docs/4.3.15.RELEASE/spring-framework-reference/html/websocket.html#websocket-stomp-handle-broker-relay
     implementation "io.netty:netty-all:4.1.49.Final"
-    implementation "io.projectreactor.netty:reactor-netty:0.9.12.RELEASE"
-    implementation "org.springframework:spring-messaging:5.2.9.RELEASE"
+    implementation "io.projectreactor.netty:reactor-netty:1.0.0"
+    implementation "org.springframework:spring-messaging:5.3.0"
     implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.2.9.RELEASE_1"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
@@ -251,7 +251,7 @@ dependencies {
     implementation "mysql:mysql-connector-java:8.0.22"
 
     implementation "org.zalando:problem-spring-web:0.26.2"
-    implementation "com.ibm.icu:icu4j:67.1"
+    implementation "com.ibm.icu:icu4j:68.1"
     implementation "com.github.seancfoley:ipaddress:5.3.3"
     implementation "info.debatty:java-string-similarity:2.0.0"
 
@@ -267,7 +267,7 @@ dependencies {
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.17.2"
+    testImplementation "org.assertj:assertj-core:3.18.0"
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation "com.tngtech.archunit:archunit-junit5-api:0.14.1"
     testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:0.14.1"
@@ -337,9 +337,7 @@ task stage(dependsOn: "bootWar") {
 if (project.hasProperty("nodeInstall")) {
     node {
         version = "${node_version}"
-        npmVersion = "${npm_version}"
         yarnVersion = "${yarn_version}"
-        download = true
     }
 }
 
@@ -352,7 +350,7 @@ checkstyle {
 }
 
 task executeCheckstyle (type: Exec) {
-    commandLine "./gradlew", "checkstyleMain", "-x", "yarn_install", "-x", "webpack"
+    commandLine "./gradlew", "checkstyleMain", "-x", "yarn", "-x", "webpack"
 }
 
 task buildJarForDocker (type: Exec) {
@@ -362,13 +360,13 @@ task buildJarForDocker (type: Exec) {
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests with coverage report:           ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack
-// 2a) Execute tests without coverage report:       ./gradlew executeTests -x yarn_install -x webpack
+// 2) Execute tests with coverage report:           ./gradlew executeTests jacocoTestReport -x yarn -x webpack
+// 2a) Execute tests without coverage report:       ./gradlew executeTests -x yarn -x webpack
 // 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest or ./gradlew test --tests ExamIntegrationTest.testGetExamScore
-// 3) Check Java code format:                       ./gradlew spotlessCheck -x yarn_install -x webpack
-// 4) Apply Java code formatter:                    ./gradlew spotlessApply -x yarn_install -x webpack
+// 3) Check Java code format:                       ./gradlew spotlessCheck -x yarn -x webpack
+// 4) Apply Java code formatter:                    ./gradlew spotlessApply -x yarn -x webpack
 // 5) Find dependency updates:                      ./gradlew dependencyUpdates
-// 6) Check JavaDoc:                                ./gradlew checkstyleMain -x yarn_install -x webpack
+// 6) Check JavaDoc:                                ./gradlew checkstyleMain -x yarn -x webpack
 // 7) Generate Liquibase diff:                      ./gradlew liquibaseDiffChangelog
 // 8) Clear Liquibase checksums:                    ./gradlew liquibaseClearChecksums
 // 9) Enforce code coverage verification:           ./gradlew jacocoTestCoverageVerification

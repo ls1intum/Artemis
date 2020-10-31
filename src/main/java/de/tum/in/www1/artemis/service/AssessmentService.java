@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -40,9 +41,11 @@ public class AssessmentService {
 
     private final SubmissionRepository submissionRepository;
 
+    protected final GradingCriterionService gradingCriterionService;
+
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            SubmissionRepository submissionRepository, ExamService examService) {
+            SubmissionRepository submissionRepository, ExamService examService, GradingCriterionService gradingCriterionService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -51,10 +54,12 @@ public class AssessmentService {
         this.resultService = resultService;
         this.submissionRepository = submissionRepository;
         this.examService = examService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
-        Double maxScore = exercise.getMaxScore();
+        double maxScore = exercise.getMaxScore();
+        double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
         // Exam results and manual results of programming exercises are always to rated
         if (exercise.hasExerciseGroup() || exercise instanceof ProgrammingExercise) {
@@ -65,7 +70,9 @@ public class AssessmentService {
         }
 
         result.setCompletionDate(ZonedDateTime.now());
-        double totalScore = calculateTotalScore(calculatedScore, maxScore);
+        // Take bonus points into account to achieve a result score > 100%
+        double totalScore = calculateTotalScore(calculatedScore, maxScore + bonusPoints);
+        // Set score and resultString according to maxScore, to establish results with score > 100%
         result.setScore(totalScore, maxScore);
         result.setResultString(totalScore, maxScore);
         return resultRepository.save(result);
@@ -101,9 +108,23 @@ public class AssessmentService {
         }
 
         // Update the result that was complained about with the new feedback
-        originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks());
-        Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
-        return submitResult(originalResult, exercise, calculatedScore);
+        originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks(), exercise instanceof ProgrammingExercise);
+        if (exercise instanceof ProgrammingExercise) {
+            double points = ((ProgrammingAssessmentService) this).calculateTotalScore(originalResult);
+            originalResult.setScore(points, exercise.getMaxScore());
+            /*
+             * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
+             * student has achieved have changed
+             */
+            String[] resultStringParts = originalResult.getResultString().split(", ");
+            resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, exercise.getMaxScore());
+            originalResult.setResultString(String.join(", ", resultStringParts));
+            return resultRepository.save(originalResult);
+        }
+        else {
+            Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
+            return submitResult(originalResult, exercise, calculatedScore);
+        }
     }
 
     /**
@@ -191,9 +212,9 @@ public class AssessmentService {
      * @param submissionId The ID of the submission for which the result should be fetched
      * @return The example result, which is linked to the submission
      */
-    public Submission getSubmissionOfExampleSubmissionWithResult(long submissionId) {
+    public Submission findExampleSubmissionWithResult(long submissionId) {
         return submissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
+                .orElseThrow(() -> new EntityNotFoundException("Submission with id '" + submissionId + "' with 'exampleSubmission = true' does not exist"));
     }
 
     /**
@@ -232,34 +253,11 @@ public class AssessmentService {
      */
     public Double calculateTotalScore(List<Feedback> assessments) {
         double totalScore = 0.0;
-
         var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
+
         for (Feedback feedback : assessments) {
             if (feedback.getGradingInstruction() != null) {
-                if (gradingInstructions.get(feedback.getGradingInstruction().getId()) != null) {
-                    // We Encountered this grading instruction before
-                    var maxCount = feedback.getGradingInstruction().getUsageCount();
-                    var encounters = gradingInstructions.get(feedback.getGradingInstruction().getId());
-                    if (maxCount > 0) {
-                        if (encounters >= maxCount) {
-                            // the structured grading instruction was applied on assessment models more often that the usageCount limit allows so we don't sum the feedback credit
-                            gradingInstructions.put(feedback.getGradingInstruction().getId(), encounters + 1);
-                        }
-                        else {
-                            // the usageCount limit was not exceeded yet so we add the credit and increase the nrOfEncounters counter
-                            gradingInstructions.put(feedback.getGradingInstruction().getId(), encounters + 1);
-                            totalScore += feedback.getGradingInstruction().getCredits();
-                        }
-                    }
-                    else {
-                        totalScore += feedback.getCredits();
-                    }
-                }
-                else {
-                    // First time encountering the grading instruction
-                    gradingInstructions.put(feedback.getGradingInstruction().getId(), 1);
-                    totalScore += feedback.getCredits();
-                }
+                totalScore = gradingCriterionService.computeTotalScore(feedback, totalScore, gradingInstructions);
             }
             else {
                 // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit

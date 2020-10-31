@@ -31,6 +31,7 @@
             },
             "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it would be published immediately and visible to the students.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
+            "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
             "templateRepositoryUrl": "Template Repository Url",
             "testRepositoryUrl": "Test Repository Url",
             "solutionRepositoryUrl": "Solution Repository Url",
@@ -62,6 +63,7 @@
                 "description": "You can choose a value between 0 and 100 percent or leave the field empty. If the maximum penalty is 20% for a 10 point exercise, a maximum of two points can be deducted because of issues found by static code analysis. If the field is left empty, no penalty limit will be enforced."
             },
             "programmingLanguage": "Programming Language",
+            "projectType": "Project Type",
             "packageName": "Package Name",
             "templateResult": "Template Result",
             "solutionResult": "Solution Result",
@@ -116,6 +118,7 @@
                     "noUnsavedChanges": "No unsaved changes"
                 },
                 "testCases": {
+                    "title": "Test Cases",
                     "resetSuccessful": "The tests were reset successfully.",
                     "resetFailed": "The tests could not be reset.",
                     "updated": "The test cases were updated successfully.",
@@ -124,10 +127,20 @@
                     "showInactive": "Show inactivate test cases"
                 },
                 "categories": {
+                    "title": "Code Analysis Categories",
                     "notGraded": "Not graded.",
                     "noFeedback": "No visible feedback.",
                     "updated": "The categories were updated successfully.",
                     "couldNotBeUpdated": "The following categories could not be updated: {{categories}}."
+                },
+                "charts": {
+                    "title": "Charts",
+                    "preview": "Preview"
+                },
+                "help": {
+                    "state": "Determines whether issues in this category should be shown to the students and used for grading.",
+                    "penalty": "Penalty points given on each detected issue of this category.",
+                    "maxPenalty": "Maximum applied penalty across all issues of this category for one student."
                 },
                 "updatedGradingConfigShort": "Updated grading",
                 "updatedGradingConfig": "Warning: You have updated the exercise's grading configuration, but you have not triggered all student submissions with the new grading. Newly created results will be graded with the new configuration, existing results will not be changed. If you don't trigger all student submissions, the results across your students might therefore be inconsistent. You can still trigger the student submissions at a later point. Do you really want to leave the area?",

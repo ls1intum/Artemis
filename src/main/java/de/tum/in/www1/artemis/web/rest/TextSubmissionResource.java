@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.AtheneScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -50,7 +50,7 @@ public class TextSubmissionResource {
 
     private final GradingCriterionService gradingCriterionService;
 
-    private final Optional<TextClusteringScheduleService> textClusteringScheduleService;
+    private final Optional<AtheneScheduleService> atheneScheduleService;
 
     private final ExamSubmissionService examSubmissionService;
 
@@ -58,7 +58,7 @@ public class TextSubmissionResource {
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
             AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService,
-            GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<TextClusteringScheduleService> textClusteringScheduleService,
+            GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<AtheneScheduleService> atheneScheduleService,
             ExamSubmissionService examSubmissionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
@@ -67,7 +67,7 @@ public class TextSubmissionResource {
         this.textSubmissionService = textSubmissionService;
         this.userService = userService;
         this.gradingCriterionService = gradingCriterionService;
-        this.textClusteringScheduleService = textClusteringScheduleService;
+        this.atheneScheduleService = atheneScheduleService;
         this.textAssessmentService = textAssessmentService;
         this.examSubmissionService = examSubmissionService;
         this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
@@ -250,8 +250,8 @@ public class TextSubmissionResource {
             return forbidden();
         }
 
-        // Tutors cannot start assessing submissions if Athene is currently processing
-        if (textClusteringScheduleService.isPresent() && textClusteringScheduleService.get().currentlyProcessing((TextExercise) exercise)) {
+        // Tutors cannot start assessing submissions if Athene is currently processing automatic feedback
+        if (atheneScheduleService.isPresent() && atheneScheduleService.get().currentlyProcessing((TextExercise) exercise)) {
             return notFound();
         }
 

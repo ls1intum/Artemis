@@ -13,6 +13,7 @@
         "resultStringNull": "Error! Result Text is required.",
         "resultStringTooLong": "Error! Result Text is too long (max. 255 characters)",
         "scoreNull": "Error! Score is required.",
+        "resultNotRated": "Error! Result must be rated.",
         "submissionMissing": "Error! The submission is not connected with the result any more. Your changes were rejected.",
         "resultAlreadyExists": "A result already exists for this student in this exercise.",
         "scoreAndSuccessfulNotMatching": "Error! Only result with score 100% can be successful.",

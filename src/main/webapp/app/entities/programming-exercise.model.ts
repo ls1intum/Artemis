@@ -13,6 +13,12 @@ export enum ProgrammingLanguage {
     KOTLIN = 'KOTLIN',
     VHDL = 'VHDL',
     ASSEMBLER = 'ASSEMBLER',
+    SWIFT = 'SWIFT',
+}
+
+export enum ProjectType {
+    MAVEN = 'MAVEN',
+    ECLIPSE = 'ECLIPSE',
 }
 
 export class ProgrammingExercise extends Exercise {
@@ -33,6 +39,8 @@ export class ProgrammingExercise extends Exercise {
 
     public buildAndTestStudentSubmissionsAfterDueDate?: Moment;
     public testCasesChanged?: boolean;
+
+    public projectType?: ProjectType;
 
     // helper attributes
 
@@ -56,5 +64,6 @@ export class ProgrammingExercise extends Exercise {
         this.programmingLanguage = ProgrammingLanguage.JAVA; // default value
         this.noVersionControlAndContinuousIntegrationAvailable = false; // default value
         this.checkoutSolutionRepository = false; // default value
+        this.projectType = ProjectType.ECLIPSE; // default value
     }
 }

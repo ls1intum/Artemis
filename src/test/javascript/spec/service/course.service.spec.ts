@@ -11,7 +11,7 @@ import { Course } from 'app/entities/course.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
-import { expect } from '../helpers/jasmine.jest.fix';
+import { expect } from '../helpers/jest.fix';
 
 describe('Course Service', () => {
     let injector: TestBed;
@@ -42,6 +42,7 @@ describe('Course Service', () => {
         elemDefault.title = 'AAAAAAA';
         elemDefault.startDate = currentDate;
         elemDefault.endDate = currentDate;
+        elemDefault.semester = 'SS20';
         elemDefault.complaintsEnabled = false;
         elemDefault.studentQuestionsEnabled = false;
     });
