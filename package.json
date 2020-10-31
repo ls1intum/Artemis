@@ -14,6 +14,7 @@
     },
     "dependencies": {
         "@angular/animations": "10.2.1",
+        "@angular/youtube-player": "10.2.6",
         "@angular/common": "10.2.1",
         "@angular/compiler": "10.2.1",
         "@angular/core": "10.2.1",
