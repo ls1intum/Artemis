@@ -44,9 +44,7 @@
     </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
 </properties>
 <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.83">
-    <script>
-        #pipelineScript
-    </script>
+    <script>#pipelineScript</script>
     <sandbox>true</sandbox>
 </definition>
 <triggers/>

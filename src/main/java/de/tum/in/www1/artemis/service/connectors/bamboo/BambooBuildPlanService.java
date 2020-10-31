@@ -15,8 +15,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -50,6 +48,7 @@ import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
 import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
 
+import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
@@ -74,7 +73,7 @@ public class BambooBuildPlanService {
     @Value("${artemis.continuous-integration.vcs-application-link-name}")
     private String vcsApplicationLinkName;
 
-    private final ResourceLoader resourceLoader;
+    private final ResourceLoaderService resourceLoaderService;
 
     private final BambooServer bambooServer;
 
@@ -82,8 +81,8 @@ public class BambooBuildPlanService {
 
     private final BambooService bambooService;
 
-    public BambooBuildPlanService(ResourceLoader resourceLoader, BambooServer bambooServer, Environment env, @Lazy BambooService bambooService) {
-        this.resourceLoader = resourceLoader;
+    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, @Lazy BambooService bambooService) {
+        this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
         this.env = env;
         this.bambooService = bambooService;
@@ -271,11 +270,10 @@ public class BambooBuildPlanService {
     }
 
     private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns) {
-        final var directoryPattern = "classpath:templates/bamboo/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/")
-                + "*.sh";
+        final var directoryPattern = "templates/bamboo/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
         try {
             List<Task<?, ?>> tasks = new ArrayList<>();
-            final var scriptResources = Arrays.asList(ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(directoryPattern));
+            final var scriptResources = Arrays.asList(resourceLoaderService.getResources(directoryPattern));
             scriptResources.sort(Comparator.comparing(Resource::getFilename));
             for (final var resource : scriptResources) {
                 // 1_some_description.sh --> "some description"

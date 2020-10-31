@@ -19,13 +19,12 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -76,7 +75,7 @@ public class ProgrammingExerciseService {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final ResourceLoader resourceLoader;
+    private final ResourceLoaderService resourceLoaderService;
 
     private final InstanceMessageSendService instanceMessageSendService;
 
@@ -84,7 +83,7 @@ public class ProgrammingExerciseService {
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
-            ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService, ResourceLoader resourceLoader,
+            ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService, ResourceLoaderService resourceLoaderService,
             GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
@@ -97,7 +96,7 @@ public class ProgrammingExerciseService {
         this.resultRepository = resultRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
-        this.resourceLoader = resourceLoader;
+        this.resourceLoaderService = resourceLoaderService;
         this.groupNotificationService = groupNotificationService;
         this.instanceMessageSendService = instanceMessageSendService;
     }
@@ -235,9 +234,9 @@ public class ProgrammingExerciseService {
         String solutionPath = programmingLanguageTemplate + "/solution/**/*.*";
         String testPath = programmingLanguageTemplate + "/test/**/*.*";
 
-        Resource[] exerciseResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath);
-        Resource[] testResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
-        Resource[] solutionResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(solutionPath);
+        Resource[] exerciseResources = resourceLoaderService.getResources(exercisePath);
+        Resource[] testResources = resourceLoaderService.getResources(testPath);
+        Resource[] solutionResources = resourceLoaderService.getResources(solutionPath);
 
         String exercisePrefix = programmingLanguage + "/exercise";
         String testPrefix = programmingLanguage + "/test";
@@ -266,22 +265,9 @@ public class ProgrammingExerciseService {
             solutionPath = programmingLanguageProjectTypePath + "/solution/**/*.*";
             testPath = programmingLanguageProjectTypePath + "/test/**/*.*";
 
-            // We have to catch these exceptions as e.g. only some folders (e.g. only exercise and solution, but not tests) might be project-type specific
-            try {
-                projectTypeExerciseResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath);
-            }
-            catch (FileNotFoundException ignored) {
-            }
-            try {
-                projectTypeTestResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
-            }
-            catch (FileNotFoundException ignored) {
-            }
-            try {
-                projectTypeSolutionResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(solutionPath);
-            }
-            catch (FileNotFoundException ignored) {
-            }
+            projectTypeExerciseResources = resourceLoaderService.getResources(exercisePath);
+            projectTypeTestResources = resourceLoaderService.getResources(testPath);
+            projectTypeSolutionResources = resourceLoaderService.getResources(solutionPath);
         }
 
         try {
@@ -304,7 +290,7 @@ public class ProgrammingExerciseService {
     }
 
     private String getProgrammingLanguageTemplatePath(ProgrammingLanguage programmingLanguage) {
-        return "classpath:templates/" + programmingLanguage.name().toLowerCase();
+        return "templates/" + programmingLanguage.name().toLowerCase();
     }
 
     private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise, String templateRepoName, String testRepoName, String solutionRepoName) {
@@ -409,8 +395,8 @@ public class ProgrammingExerciseService {
             String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
             String testUtilsPath = templatePath + "/testutils/**/*.*";
 
-            Resource[] testUtils = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testUtilsPath);
-            Resource[] projectTemplate = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(projectTemplatePath);
+            Resource[] testUtils = resourceLoaderService.getResources(testUtilsPath);
+            Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
 
             fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
 
@@ -423,14 +409,10 @@ public class ProgrammingExerciseService {
                 String projectTypeProjectTemplatePath = projectTypeTemplatePath + "/projectTemplate/**/*.*";
                 String projectTypeTestUtilsPath = projectTypeTemplatePath + "/testutils/**/*.*";
 
-                try {
-                    projectTypeTestUtils = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(projectTypeTestUtilsPath);
-                }
-                catch (FileNotFoundException ignored) {
-                }
+                projectTypeTestUtils = resourceLoaderService.getResources(projectTypeTestUtilsPath);
 
                 try {
-                    Resource[] projectTypeProjectTemplate = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(projectTypeProjectTemplatePath);
+                    Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(projectTypeProjectTemplatePath);
                     fileService.copyResources(projectTypeProjectTemplate, projectTypePrefix, repository.getLocalPath().toAbsolutePath().toString(), false);
                 }
                 catch (FileNotFoundException ignored) {
@@ -444,7 +426,7 @@ public class ProgrammingExerciseService {
 
             if (!programmingExercise.hasSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles" + "/**/*.*";
-                Resource[] testFileResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testFilePath);
+                Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
                 String packagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
                 sectionsMap.put("non-sequential", true);
@@ -463,7 +445,7 @@ public class ProgrammingExerciseService {
                     }
 
                     try {
-                        Resource[] projectTypeTestFileResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(projectTypeTemplatePath);
+                        Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
                         fileService.copyResources(projectTypeTestFileResources, projectTypePrefix, packagePath, false);
                     }
                     catch (FileNotFoundException ignored) {
@@ -476,7 +458,7 @@ public class ProgrammingExerciseService {
                 if (new java.io.File(projectTemplatePath + "/stagePom.xml").exists()) {
                     stagePomXmlPath = projectTemplatePath + "/stagePom.xml";
                 }
-                Resource stagePomXml = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource(stagePomXmlPath);
+                Resource stagePomXml = resourceLoaderService.getResource(stagePomXmlPath);
 
                 // This is done to prepare for a feature where instructors/tas can add multiple build stages.
                 List<String> sequentialTestTasks = new ArrayList<>();
@@ -494,7 +476,7 @@ public class ProgrammingExerciseService {
                     Files.createDirectory(buildStagePath);
 
                     String buildStageResourcesPath = templatePath + "/testFiles/" + buildStage + "/**/*.*";
-                    Resource[] buildStageResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(buildStageResourcesPath);
+                    Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
 
                     Files.createDirectory(Paths.get(buildStagePath.toAbsolutePath().toString(), "test"));
                     Files.createDirectory(Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}"));
@@ -512,7 +494,7 @@ public class ProgrammingExerciseService {
                         }
                         buildStageResourcesPath = projectTemplatePath + "/testFiles/" + buildStage + "/**/*.*";
                         try {
-                            buildStageResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(buildStageResourcesPath);
+                            buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
                             fileService.copyResources(buildStageResources, prefix, packagePath, false);
                         }
                         catch (FileNotFoundException ignored) {

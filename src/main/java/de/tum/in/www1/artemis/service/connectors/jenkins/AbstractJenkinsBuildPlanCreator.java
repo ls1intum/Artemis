@@ -12,11 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.util.StreamUtils;
 import org.w3c.dom.Document;
 
+import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
@@ -62,12 +61,12 @@ public abstract class AbstractJenkinsBuildPlanCreator implements JenkinsXmlConfi
     @Value("${artemis.continuous-integration.artemis-authentication-token-key}")
     protected String ARTEMIS_AUTHENTICATION_TOKEN_KEY;
 
-    protected final ResourceLoader resourceLoader;
+    protected final ResourceLoaderService resourceLoaderService;
 
     protected final JenkinsService jenkinsService;
 
-    public AbstractJenkinsBuildPlanCreator(ResourceLoader resourceLoader, JenkinsService jenkinsService) {
-        this.resourceLoader = resourceLoader;
+    public AbstractJenkinsBuildPlanCreator(ResourceLoaderService resourceLoaderService, JenkinsService jenkinsService) {
+        this.resourceLoaderService = resourceLoaderService;
         this.jenkinsService = jenkinsService;
     }
 
@@ -90,12 +89,12 @@ public abstract class AbstractJenkinsBuildPlanCreator implements JenkinsXmlConfi
 
         Map<String, String> replacements = Map.of(REPLACE_PIPELINE_SCRIPT, pipeLineScript, REPLACE_PUSH_TOKEN, pushToken);
 
-        final var xmlResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:" + resourcePath);
+        final var xmlResource = resourceLoaderService.getResource(resourcePath.toString());
         return XmlFileUtils.readXmlFile(xmlResource, replacements);
     }
 
-    protected String replacePipelineScriptParameters(Path pipelineScriptPath, Map<String, String> variablesToReplace) {
-        final var resource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:" + pipelineScriptPath);
+    protected String replacePipelineScriptParameters(String[] pipelineScriptPath, Map<String, String> variablesToReplace) {
+        final var resource = resourceLoaderService.getResource(pipelineScriptPath);
         try {
             var pipelineScript = StreamUtils.copyToString(resource.getInputStream(), Charset.defaultCharset());
             if (variablesToReplace != null) {
