@@ -342,7 +342,6 @@ public class ProgrammingExerciseService {
 
             if (!programmingExercise.hasSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles" + "/**/*.*";
-
                 Resource[] testFileResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testFilePath);
 
                 sectionsMap.put("non-sequential", true);
