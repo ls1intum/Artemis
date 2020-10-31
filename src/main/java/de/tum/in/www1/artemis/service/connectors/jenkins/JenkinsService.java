@@ -135,20 +135,22 @@ public class JenkinsService implements ContinuousIntegrationService {
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
-        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, null /* not important */, participation.getRepositoryUrl(), Optional.empty());
+        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, null /* not important */, participation.getRepositoryUrl(),
+                participation.getProgrammingExercise().getTemplateRepositoryUrl(), Optional.empty());
         enablePlan(projectKey, planKey);
     }
 
     // TODO this was a bad design choice. We should only have one configureBuildPlan method i.m.o
     @Override
-    public void updatePlanRepository(String projectKey, String planName, String repoNameInCI, String vcsProject, String vcsRepositoryUrl, Optional<List<String>> triggeredBy) {
+    public void updatePlanRepository(String projectKey, String planName, String repoNameInCI, String vcsProject, String vcsRepositoryUrl, String templateRepositoryUrl,
+            Optional<List<String>> triggeredBy) {
 
         // remove potential username from repo URL. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URL
         final var repoUrl = vcsRepositoryUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
         final var jobXmlDocument = getJobXmlForBuildPlanWith(projectKey, planName);
 
         try {
-            replaceScriptParameters(jobXmlDocument, repoUrl, repoNameInCI);
+            replaceScriptParameters(jobXmlDocument, repoUrl, repoNameInCI, templateRepositoryUrl);
         }
         catch (IllegalArgumentException e) {
             log.info("Falling back to old Jenkins setup replacement");
@@ -159,7 +161,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         postXml(jobXmlDocument, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planName);
     }
 
-    private void replaceScriptParameters(Document jobXmlDocument, String repoUrl, String repoNameInCI) throws IllegalArgumentException {
+    private void replaceScriptParameters(Document jobXmlDocument, String repoUrl, String repoNameInCI, String baseRepoUrl) throws IllegalArgumentException {
         final var scriptNode = findScriptNode(jobXmlDocument);
         if (scriptNode == null || scriptNode.getFirstChild() == null) {
             log.info("Pipeline Script not found");
@@ -167,7 +169,8 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
         String pipeLineScript = scriptNode.getFirstChild().getTextContent();
         // Replace repo URL
-        pipeLineScript = pipeLineScript.replaceAll("name: '" + repoNameInCI + "', url: '.*\\.git'", "name: '" + repoNameInCI + "', url: '" + repoUrl + "'");
+        pipeLineScript = pipeLineScript.replace(baseRepoUrl, repoUrl);
+        // pipeLineScript = pipeLineScript.replaceAll("name: '" + repoNameInCI + "', url: '.*\\.git'", "name: '" + repoNameInCI + "', url: '" + repoUrl + "'");
 
         scriptNode.getFirstChild().setTextContent(pipeLineScript);
     }
