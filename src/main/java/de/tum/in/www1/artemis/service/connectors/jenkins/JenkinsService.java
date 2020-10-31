@@ -150,7 +150,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var jobXmlDocument = getJobXmlForBuildPlanWith(projectKey, planName);
 
         try {
-            replaceScriptParameters(jobXmlDocument, repoUrl, repoNameInCI, templateRepositoryUrl);
+            replaceScriptParameters(jobXmlDocument, repoUrl, templateRepositoryUrl);
         }
         catch (IllegalArgumentException e) {
             log.info("Falling back to old Jenkins setup replacement");
@@ -161,16 +161,21 @@ public class JenkinsService implements ContinuousIntegrationService {
         postXml(jobXmlDocument, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planName);
     }
 
-    private void replaceScriptParameters(Document jobXmlDocument, String repoUrl, String repoNameInCI, String baseRepoUrl) throws IllegalArgumentException {
+    private void replaceScriptParameters(Document jobXmlDocument, String repoUrl, String baseRepoUrl) throws IllegalArgumentException {
         final var scriptNode = findScriptNode(jobXmlDocument);
         if (scriptNode == null || scriptNode.getFirstChild() == null) {
-            log.info("Pipeline Script not found");
+            log.debug("Pipeline Script not found");
             throw new IllegalArgumentException("Pipeline Script not found");
         }
+
         String pipeLineScript = scriptNode.getFirstChild().getTextContent();
+        // If the script does not start with "pipeline", it is not actually a pipeline script, but a deprecated programming exercise with an old configuration
+        if (!pipeLineScript.trim().startsWith("pipeline")) {
+            log.debug("Pipeline Script not found");
+            throw new IllegalArgumentException("Pipeline Script not found");
+        }
         // Replace repo URL
         pipeLineScript = pipeLineScript.replace(baseRepoUrl, repoUrl);
-        // pipeLineScript = pipeLineScript.replaceAll("name: '" + repoNameInCI + "', url: '.*\\.git'", "name: '" + repoNameInCI + "', url: '" + repoUrl + "'");
 
         scriptNode.getFirstChild().setTextContent(pipeLineScript);
     }
