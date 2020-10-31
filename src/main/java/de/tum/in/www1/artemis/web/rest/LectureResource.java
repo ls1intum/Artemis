@@ -17,8 +17,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -52,13 +55,16 @@ public class LectureResource {
 
     private final UserService userService;
 
+    private final CourseResource courseResource;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, CourseService courseService, UserService userService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, CourseResource courseResource) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.courseService = courseService;
         this.userService = userService;
         this.authCheckService = authCheckService;
+        this.courseResource = courseResource;
     }
 
     /**
@@ -156,13 +162,35 @@ public class LectureResource {
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
-        List<LectureUnit> lectureUnitsStudentIsAllowedToSee = lecture.getLectureUnits().stream()
-                .filter(lectureUnit -> authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)).collect(Collectors.toList());
-        lecture.setLectureUnits(lectureUnitsStudentIsAllowedToSee);
+        lecture = lectureService.filterActiveAttachments(lecture, user);
 
-        Lecture lectureWithFilteredAttachments = lectureService.filterActiveAttachments(lecture, user);
+        // to make sure that the information provided for lecture units is equal to the one in the course dashboard
+        // ToDo Improve performance by constructing a more precise call
+        course = this.courseResource.getCourseForDashboard(course.getId());
+        Set<Exercise> exercisesUserIsAllowedToSee = course.getExercises();
 
-        return ResponseEntity.ok(lectureWithFilteredAttachments);
+        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().parallelStream().filter(lectureUnit -> {
+            if (lectureUnit instanceof ExerciseUnit) {
+                return ((ExerciseUnit) lectureUnit).getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
+                        && exercisesUserIsAllowedToSee.contains(((ExerciseUnit) lectureUnit).getExercise());
+            }
+            else if (lectureUnit instanceof AttachmentUnit) {
+                return ((AttachmentUnit) lectureUnit).getAttachment() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
+            }
+            else {
+                return authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
+            }
+        }).map(lectureUnit -> {
+            if (lectureUnit instanceof ExerciseUnit) {
+                Exercise exercise = ((ExerciseUnit) lectureUnit).getExercise();
+                exercisesUserIsAllowedToSee.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
+            }
+            return lectureUnit;
+        }).collect(Collectors.toList());
+
+        lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
+
+        return ResponseEntity.ok(lecture);
     }
 
     /**
