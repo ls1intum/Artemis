@@ -72,7 +72,7 @@ public class VideoUnitResource {
      * PUT /lectures/:lectureId/video-units : Updates an existing video unit .
      *
      * @param lectureId      the id of the lecture to which the video unit belongs to update
-     * @param attachmentUnit the video unit to update
+     * @param videoUnit the video unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated videoUnit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -104,7 +104,7 @@ public class VideoUnitResource {
      * POST /lectures/:lectureId/video-units : creates a new video unit.
      *
      * @param lectureId      the id of the lecture to which the video unit should be added
-     * @param attachmentUnit the video unit that should be created
+     * @param videoUnit the video unit that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new video unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
