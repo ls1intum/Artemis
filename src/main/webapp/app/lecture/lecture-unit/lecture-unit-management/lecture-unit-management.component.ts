@@ -47,7 +47,17 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.navigationEndSubscription.unsubscribe();
     }
 
+    initYouTubeApi() {
+        // This code loads the IFrame Player API code asynchronously, according to the instructions at
+        // https://developers.google.com/youtube/iframe_api_reference#Getting_Started
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode!.insertBefore(tag, firstScriptTag);
+    }
+
     ngOnInit(): void {
+        this.initYouTubeApi();
         this.navigationEndSubscription = this.router.events.pipe(filter((value) => value instanceof NavigationEnd)).subscribe(() => {
             this.loadData();
         });
@@ -121,6 +131,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.router.navigate(['attachment-units', 'create'], { relativeTo: this.activatedRoute });
     }
 
+    createVideoUnit() {
+        this.router.navigate(['video-units', 'create'], { relativeTo: this.activatedRoute });
+    }
+
     identify(index: number, lectureUnit: LectureUnit) {
         return `${index}-${lectureUnit.id}`;
     }
@@ -132,6 +146,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
             return 'artemisApp.attachmentUnit.delete.question';
         }
+        if (lectureUnit.type === LectureUnitType.VIDEO) {
+            return 'artemisApp.videoUnit.delete.question';
+        }
     }
 
     getDeleteConfirmationTextKey(lectureUnit: LectureUnit) {
@@ -140,6 +157,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
         if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
             return 'artemisApp.attachmentUnit.delete.typeNameToConfirm';
+        }
+        if (lectureUnit.type === LectureUnitType.VIDEO) {
+            return 'artemisApp.videoUnit.delete.typeNameToConfirm';
         }
     }
 
@@ -177,6 +197,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             case LectureUnitType.ATTACHMENT:
                 this.router.navigate(['attachment-units', lectureUnit.id, 'edit'], { relativeTo: this.activatedRoute });
                 break;
+            case LectureUnitType.VIDEO: {
+                this.router.navigate(['video-units', lectureUnit.id, 'edit'], { relativeTo: this.activatedRoute });
+                break;
+            }
             default:
                 return;
         }

@@ -50,7 +50,17 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
+    initYouTubeApi() {
+        // This code loads the IFrame Player API code asynchronously, according to the instructions at
+        // https://developers.google.com/youtube/iframe_api_reference#Getting_Started
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode!.insertBefore(tag, firstScriptTag);
+    }
+
     ngOnInit(): void {
+        this.initYouTubeApi();
         this.subscription = this.route.params.subscribe((params) => {
             if (!this.lecture || this.lecture.id !== params.lectureId) {
                 this.lecture = null;

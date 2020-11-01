@@ -13,6 +13,43 @@
             },
             "releaseDate": "Veröffentlichungsdatum"
         },
+        "videoUnit": {
+            "created": "Eine neue Videoeinheit wurde erstellt",
+            "updated": "Videoeinheit geupdated",
+            "tooltip": "Das ist eine Videoeinheit.",
+            "description": "Beschreibung",
+            "notReleasedTooltip": "Video nur sichtbar für Tutoren und Dozenten. Veröffentlichkeitsdatum:",
+            "youTube": {
+                "errorCode2": "Die Anfrage enthält einen ungültigen Parameterwert. Dieser Fehler tritt beispielsweise auf, wenn du eine Video-ID angibst, die nicht aus elf Zeichen besteht, oder wenn die Video-ID ungültige Zeichen wie z. B. Ausrufezeichen oder Sternchen enthält.",
+                "errorCode5": " Der angeforderte Inhalt kann nicht mit einem HTML5-Player wiedergegeben werden oder es ist ein anderer Fehler im Zusammenhang mit dem HTML5-Player aufgetreten.",
+                "errorCode100": " Der angeforderte Video wurde nicht gefunden. Dieser Fehler tritt auf, wenn ein Video aus irgendeinem Grund entfernt oder als privat markiert wurde.",
+                "errorCode101Or150": "Der Rechteinhaber des angeforderten Videos untersagt die Wiedergabe des Videos in eingebetteten Playern",
+                "unknownError": "An Error ist beim Starten des Videos aufgetreten."
+            },
+            "createVideoUnit": {
+                "title": "Erstelle Videoeinheit",
+                "name": "Name",
+                "namePlaceHolder": "Gib der Videoeinheit einen Namen",
+                "description": "Beschreibung",
+                "descriptionPlaceHolder": "Gib der Videoeinheit eine Beschreibung",
+                "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",
+                "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein.",
+                "descriptionMaxLengthValidationError": "Die Beschreibung kann maximal 255 Zeichen lang sein.",
+                "source": "YouTube Video Id",
+                "sourcePlaceHolder": "YouTube Video Id",
+                "sourceRequiredValidationError": "YouTube Video Id ist ein Pflichtfeld",
+                "urlPlaceholder": "Hier eine YouTube Video URL einfügen für Video Id Extraktion",
+                "urlPatternValidationError": "URL stimmt nicht mit einer gültigen YouTube Video Url überein"
+            },
+            "editVideoUnit": {
+                "title": "Bearbeite eine Videoeinheut"
+            },
+            "delete": {
+                "question": "Willst du wirklich die Videoeinheit <strong>{{ title }}</strong> löschen?Du kannst diese Aktion nicht rückgängig machen!",
+                "typeNameToConfirm": "Bitte gib den Namen der Videoeinheit zur Bestätigung ein.",
+                "buttonText": "Löschen"
+            }
+        },
         "attachmentUnit": {
             "created": "Eine neue Dateieinheit wurde erstellt",
             "updated": "Dateieinheit bearbeitet",

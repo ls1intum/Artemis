@@ -1,0 +1,9 @@
+<div *ngIf="isLoading" class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+</div>
+
+<div *ngIf="!isLoading" class="container">
+    <jhi-video-unit-form [formData]="formData" (formSubmitted)="updateVideoUnit($event)" [isEditMode]="true"></jhi-video-unit-form>
+</div>

@@ -1,0 +1,54 @@
+<div class="row align-items-center mb-2 mt-2" (click)="handleUnitClick()">
+    <div class="col-auto d-none d-sm-block">
+        <div class="exercise-row-icon">
+            <fa-icon [icon]="'video'" size="2x" placement="right" [ngbTooltip]="'artemisApp.videoUnit.tooltip' | translate" container="body"></fa-icon>
+        </div>
+    </div>
+    <div class="col">
+        <div class="row">
+            <div class="col-auto d-sm-none">
+                <h4>
+                    <fa-icon [icon]="'video'"></fa-icon>
+                </h4>
+            </div>
+            <div class="col-sm col">
+                <h4>{{ videoUnit?.name }}</h4>
+                <hr *ngIf="videoUnit?.releaseDate" />
+                <div *ngIf="videoUnit?.releaseDate">
+                    <span class="font-weight-bold"> {{ 'artemisApp.lectureUnit.releaseDate' | translate }}: </span>
+                    {{ videoUnit?.releaseDate | artemisDate }}
+                </div>
+                <hr *ngIf="videoUnit?.releaseDate" />
+                <h6 *ngIf="videoUnit?.description">{{ 'artemisApp.videoUnit.description' | translate }}:</h6>
+                {{ videoUnit?.description }}
+            </div>
+        </div>
+        <div class="row" *ngIf="!videoUnit.visibleToStudents">
+            <div class="exercise-tags col-auto">
+                <hr />
+                <h4>
+                    <span
+                        class="badge badge-warning"
+                        placement="right"
+                        ngbTooltip="{{ 'artemisApp.video.notReleasedTooltip' | translate }} {{ videoUnit?.releaseDate | artemisDate }}"
+                    >
+                        {{ 'artemisApp.courseOverview.exerciseList.notReleased' | translate }}</span
+                    >
+                </h4>
+            </div>
+        </div>
+        <div class="row" *ngIf="videoUnit?.source" [ngbCollapse]="isCollapsed">
+            <div class="col-12">
+                <youtube-player
+                    #youtubePlayer
+                    class="embed-responsive embed-responsive-16by9"
+                    [videoId]="videoUnit?.source"
+                    [playerVars]="playerVars"
+                    (error)="handleVideoError($event)"
+                ></youtube-player>
+                <!-- video errors -->
+                <jhi-alert (click)="$event.stopPropagation()"></jhi-alert>
+            </div>
+        </div>
+    </div>
+</div>

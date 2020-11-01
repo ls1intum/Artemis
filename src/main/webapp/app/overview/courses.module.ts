@@ -32,6 +32,8 @@ import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.com
 import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
 import { ExerciseUnitComponent } from './course-lectures/exercise-unit/exercise-unit.component';
 import { AttachmentUnitComponent } from './course-lectures/attachment-unit/attachment-unit.component';
+import { VideoUnitComponent } from './course-lectures/video-unit/video-unit.component';
+import { YouTubePlayerModule } from '@angular/youtube-player';
 
 @NgModule({
     imports: [
@@ -50,6 +52,7 @@ import { AttachmentUnitComponent } from './course-lectures/attachment-unit/attac
         ProgrammingExerciseUtilsModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisTeamModule,
+        YouTubePlayerModule,
     ],
     declarations: [
         CoursesComponent,
@@ -70,7 +73,8 @@ import { AttachmentUnitComponent } from './course-lectures/attachment-unit/attac
         CourseExamDetailComponent,
         ExerciseUnitComponent,
         AttachmentUnitComponent,
+        VideoUnitComponent,
     ],
-    exports: [ExerciseActionButtonComponent, ExerciseDetailsStudentActionsComponent, ExerciseUnitComponent, AttachmentUnitComponent],
+    exports: [ExerciseActionButtonComponent, ExerciseDetailsStudentActionsComponent, ExerciseUnitComponent, AttachmentUnitComponent, VideoUnitComponent],
 })
 export class ArtemisCoursesModule {}

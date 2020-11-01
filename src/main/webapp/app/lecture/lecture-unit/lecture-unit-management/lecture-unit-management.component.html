@@ -12,6 +12,7 @@
         <div class="col-10 col-md-6 offset-md-3" [ngSwitch]="lectureUnit.type">
             <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture?.course"></jhi-exercise-unit>
             <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
+            <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit"></jhi-video-unit>
         </div>
         <div class="col-1 my-auto">
             <div class="container">
@@ -50,7 +51,11 @@
     <!-- Unit Creation Card Row-->
     <div class="row">
         <div class="col-12 mx-auto">
-            <jhi-unit-creation-card (createExerciseUnit)="createExerciseUnit()" (createAttachmentUnit)="createAttachmentUnit()"></jhi-unit-creation-card>
+            <jhi-unit-creation-card
+                (createExerciseUnit)="createExerciseUnit()"
+                (createAttachmentUnit)="createAttachmentUnit()"
+                (createVideoUnit)="createVideoUnit()"
+            ></jhi-unit-creation-card>
         </div>
     </div>
 </div>

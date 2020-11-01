@@ -135,7 +135,7 @@ public class AttachmentUnitResource {
         Lecture updatedLecture = lectureRepository.save(lecture);
         AttachmentUnit persistedAttachmentUnit = (AttachmentUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
 
-        return ResponseEntity.created(new URI("/api/exercise-units/" + persistedAttachmentUnit.getId()))
+        return ResponseEntity.created(new URI("/api/attachment-units/" + persistedAttachmentUnit.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedAttachmentUnit);
 
     }
