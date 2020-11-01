@@ -26,7 +26,7 @@ public class DefaultJenkinsBuildPlanCreator extends AbstractJenkinsBuildPlanCrea
         final var replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
                 gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_TESTS_CHECKOUT_PATH, Constants.TESTS_CHECKOUT_PATH,
                 REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY, REPLACE_DOCKER_IMAGE_NAME,
-                jenkinsService.getDockerImageName(ProgrammingLanguage.C));
+                jenkinsService.getDockerImageName(programmingLanguage));
 
         return replacePipelineScriptParameters(resourcePath, replacements);
     }
