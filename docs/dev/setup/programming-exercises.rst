@@ -1,0 +1,57 @@
+Adjustments for programming exercises
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+There are several variables that can be configured when using programming exercises.
+They are present in this seperate page to keep the 'normal' setup guide shorter.
+
+
+Path variables
+##############
+
+There are variables for several paths:
+
+- ```artemis.repo-clone-path```
+  
+  Repositories that the Artemis server needs are stored in this folder.
+  This e.g. affects repositories from students which use the online code editor or the template/solution repositories of new exercises, as they are pushed to the VCS after modification.
+
+  Files in this directory are usally not critical, as the latest pushed version of these repositories is also stored at the VCS.
+  However, changed that are saved in the online code editor but not yet commited will be lost when this folder is deleted.
+
+- ```artemis.repo-clone-path```
+
+  Repositories that were downloaded from Artemis are stored in this directory.
+
+  Files in this directory can be removed without loss of data, if the downloaded repositoies are still present at the VCS.
+  No changes to the data in the VCS are stored in this directory (or they can be retrieved by performing the download-action again).
+
+- ```artemis.template-path```
+
+  Templates are available within Artemis. The templates should fit to most environment, but there might cases where one wants to change the templates.
+  
+  This value specified the path were the templates that should be overwritten are stored.
+  Note that this is the folder to the path where the `templates` folder is located, not the path to the `templates` folder itself.
+
+
+
+Templates
+#########
+
+Templates are shipped with Artemis (they can be found within the ```src/main/resources/templates``` folder in Github).
+These templates should fit well for many deployments, but one might to change some of them in special deployments.
+
+You can overwrite all folders that are present within the ```src/main/resources/templates``` folder, except the ```mail``` folder.
+Files that are present in the file system will be used, if a file is not present in the file system, it is loaded from the classpath (e.g. the .war archive).
+
+Jenkins template
+----------------
+The build process in Jenkins is stored in a ```config.xml```-file (```src/main/resources/templates/jenkins```) that shares common steps for all programming languages (e.g. triggering a build when a push to GitLab occurred).
+It is extended by a ```Jenkinsfile``` that is dependent on the used programming language which will be included in the generic ```config.xml``` file.
+The builds steps (including used docker images, the checkout process, the actual build steps, and the reporting of the results to Artemis) is included in the ```Jenkinsfile```.
+
+A sample ```Jenkinsfile``` can be found at ```src/main/resources/templates/jenkins/java/Jenkinsfile```.
+Note that the ```Jenkinsfile``` **must** start with `pipeline` (there must not be a comment before pipeline, but there can be one at any other position, if the Jenkinsfile-syntax allows it).
+
+The variables `#dockerImage`, `#testRepository`, `#assignmentRepository`, `#jenkinsNotificationToken` and `#notificationsUrl` will automatically be replaced (for the normal Jenkinsfile, within the Jenkinsfile-staticCodeAnalysis, #staticCodeAnalysisScript is also replaced).
+
+You should not need to touch any of these variables, except the `#dockerImage` variable, if you want to use a different agent setup (e.g. a Kubernetes setup).
