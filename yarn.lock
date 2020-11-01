@@ -1777,10 +1777,10 @@
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.6.tgz#f4c7ec43e81b319a9815115031709f26987891f0"
   integrity sha512-3c+yGKvVP5Y9TYBEibGNR+kLtijnj7mYrXRg+WpFb2X9xm04g/DXYkfg4hmzJQosc9snFNUPkbYIhu+KAm6jJw==
 
-"@types/lodash@4.14.163":
-  version "4.14.163"
-  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.163.tgz#6026f73c8267a0b7d41c7c8aadacfa2a5255774f"
-  integrity sha512-BeZM/FZaV53emqyHxn9L39Oz6XbHMBRLA1b1quROku48J/1kYYxPmVOJ/qSQheb81on4BI7H6QDo6bkUuRaDNQ==
+"@types/lodash@4.14.164":
+  version "4.14.164"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.164.tgz#52348bcf909ac7b4c1bcbeda5c23135176e5dfa0"
+  integrity sha512-fXCEmONnrtbYUc5014avwBeMdhHHO8YJCkOBflUL9EoJBSKZ1dei+VO74fA7JkTHZ1GvZack2TyIw5U+1lT8jg==
 
 "@types/minimatch@*":
   version "3.0.3"
@@ -8628,10 +8628,10 @@ ng-jhipster@0.16.0:
   dependencies:
     tslib "^2.0.0"
 
-ng-mocks@10.4.0:
-  version "10.4.0"
-  resolved "https://registry.yarnpkg.com/ng-mocks/-/ng-mocks-10.4.0.tgz#5a6920bcffb2be6c2fa2e7f36e10a85501100b43"
-  integrity sha512-riVQJQW0iPY9g83rzSX40ZKKPN9XnFFFvNW3GRKBHoK5q2s/oDamA/arv7wrPEKPAgon11nIM289ESko8sb9vw==
+ng-mocks@10.5.0:
+  version "10.5.0"
+  resolved "https://registry.yarnpkg.com/ng-mocks/-/ng-mocks-10.5.0.tgz#1716e67a291087c22bb2222506e34d084dd20da9"
+  integrity sha512-emFC5GpLV4FmB1ifM14QcqXyzxNLyFUNzKvze+sAjTBcM/SW39En5yBBUGhWqJmiDPXdPv/5RRhKXqW22lDc0A==
 
 ng-pick-datetime@7.0.0:
   version "7.0.0"
@@ -10918,10 +10918,10 @@ sass-loader@10.0.4:
     schema-utils "^3.0.0"
     semver "^7.3.2"
 
-sass@1.27.1:
-  version "1.27.1"
-  resolved "https://registry.yarnpkg.com/sass/-/sass-1.27.1.tgz#fe4c730f2abfe1502ecff047798b35a7b792dc03"
-  integrity sha512-Co5i3s4kN0AgXe8ZFfIl4pfjHjPgotT81O68m3buwdj7v3oHjYiWNqp0oXTKXnEqyKU30KAYC5u8uUF4x+BKfw==
+sass@1.28.0:
+  version "1.28.0"
+  resolved "https://registry.yarnpkg.com/sass/-/sass-1.28.0.tgz#546f1308ff74cc4ec2ad735fd35dc18bc3f51f72"
+  integrity sha512-9FWX/0wuE1KxwfiP02chZhHaPzu6adpx9+wGch7WMOuHy5npOo0UapRI3FNSHva2CczaYJu2yNUBN8cCSqHz/A==
   dependencies:
     chokidar ">=2.0.0 <4.0.0"
 
