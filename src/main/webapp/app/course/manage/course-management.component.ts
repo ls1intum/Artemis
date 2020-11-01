@@ -16,6 +16,7 @@ import { SortService } from 'app/shared/service/sort.service';
     selector: 'jhi-course',
     templateUrl: './course-management.component.html',
     styles: ['.course-table {padding-bottom: 5rem}'],
+    styleUrls: ['./course-management.component.scss'],
 })
 export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewInit {
     predicate: string;
@@ -24,6 +25,8 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     showExamButton = true;
 
     courses: Course[];
+    courseSemesters: string[];
+    semesterCollapsed: object;
     eventSubscriber: Subscription;
 
     private dialogErrorSource = new Subject<string>();
@@ -53,6 +56,32 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, tutorAssessmentTour, true);
+                this.courseSemesters = this.courses
+                    .map((c) => c.semester ?? '')
+                    .filter((value, index, self) => {
+                        // filter down to unique values
+                        return self.indexOf(value) === index;
+                    })
+                    .sort((a, b) => {
+                        if (a === '') {
+                            return 1;
+                        }
+                        if (b === '') {
+                            return -1;
+                        }
+                        const yearsCompared = parseInt(b.substr(2, 2), 10) - parseInt(a.substr(2, 2), 10);
+                        if (yearsCompared !== 0) {
+                            return yearsCompared;
+                        }
+                        // if years are the same, sort WS over SS
+                        return a.substr(0, 2) === 'WS' ? -1 : 1;
+                    });
+                this.semesterCollapsed = {};
+                let firstUncollapsed = false;
+                for (const semester of this.courseSemesters) {
+                    this.semesterCollapsed[semester] = firstUncollapsed;
+                    firstUncollapsed = true;
+                }
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );
