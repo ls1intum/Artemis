@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -29,6 +30,9 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    LectureRepository lectureRepository;
+
     Lecture lecture1;
 
     Attachment attachment;
@@ -42,7 +46,6 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
         this.lecture1 = this.database.createCourseWithLecture(true);
         this.attachmentUnit = new AttachmentUnit();
         this.attachmentUnit.setDescription("Lorem Ipsum");
-        this.attachmentUnit.setLecture(this.lecture1);
 
         // Add users that are not in the course
         userRepository.save(ModelFactory.generateActivatedUser("student42"));
@@ -96,7 +99,12 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateAttachmentUnit_asInstructor_shouldUpdateAttachmentUnit() throws Exception {
-        this.attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+
+        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
+        lecture1.addLectureUnit(this.attachmentUnit);
+        lectureRepository.save(lecture1);
+        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+
         this.attachment.setAttachmentUnit(this.attachmentUnit);
         this.attachment = attachmentRepository.save(attachment);
         this.attachmentUnit.setDescription("Changed");
@@ -113,7 +121,11 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
     public void updateAttachmentUnit_notInstructorInCourse_shouldReturnForbidden() throws Exception {
-        this.attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
+        lecture1.addLectureUnit(this.attachmentUnit);
+        lectureRepository.save(lecture1);
+        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+
         this.attachment.setAttachmentUnit(this.attachmentUnit);
         this.attachment = attachmentRepository.save(attachment);
         this.attachmentUnit.setDescription("Changed");
@@ -124,7 +136,11 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateAttachmentUnit_noId_shouldReturnBadRequest() throws Exception {
-        this.attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
+        lecture1.addLectureUnit(this.attachmentUnit);
+        lectureRepository.save(lecture1);
+        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+
         this.attachment.setAttachmentUnit(this.attachmentUnit);
         this.attachment = attachmentRepository.save(attachment);
         this.attachmentUnit.setDescription("Changed");
@@ -136,7 +152,11 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAttachmentUnit_correctId_shouldReturnAttachmentUnit() throws Exception {
-        this.attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
+        lecture1.addLectureUnit(this.attachmentUnit);
+        lectureRepository.save(lecture1);
+        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+
         this.attachment.setAttachmentUnit(this.attachmentUnit);
         this.attachment = attachmentRepository.save(attachment);
         this.attachmentUnit = request.get("/api/attachment-units/" + this.attachmentUnit.getId(), HttpStatus.OK, AttachmentUnit.class);
