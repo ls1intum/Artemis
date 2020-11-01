@@ -692,7 +692,9 @@ Prerequisites:
 8. Add a new node (select a name and select `Permanent Agent`):
     Set the number of executors so that it matches your machine's specs: This is the number of concurrent builds this agent can handle
 
-    Set the remote root directory to ```/home/jenkins/remote_agent```
+    Set the remote root directory to ```/home/jenkins/remote_agent```.
+
+    Add a label ```docker``` to the agent.
 
     Set the launch method to `Launch via SSH` and add the host of the machine. Select the credentials you just created and select `Manually trusted key Verification Strategy` as Host key verification Strategy.
     Save it.

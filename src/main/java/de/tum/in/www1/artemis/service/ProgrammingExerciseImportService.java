@@ -166,7 +166,8 @@ public class ProgrammingExerciseImportService {
         // running the plan for the first time
         cloneAndEnableAllBuildPlans(templateExercise, newExercise);
 
-        updatePlanRepositoriesInBuildPlans(newExercise, templateParticipation, solutionParticipation, targetExerciseProjectKey);
+        updatePlanRepositoriesInBuildPlans(newExercise, templateParticipation, solutionParticipation, targetExerciseProjectKey, templateExercise.getTemplateRepositoryUrl(),
+                templateExercise.getSolutionRepositoryUrl(), templateExercise.getTestRepositoryUrl());
 
         try {
             continuousIntegrationService.get().triggerBuild(templateParticipation);
@@ -179,19 +180,20 @@ public class ProgrammingExerciseImportService {
     }
 
     private void updatePlanRepositoriesInBuildPlans(ProgrammingExercise newExercise, TemplateProgrammingExerciseParticipation templateParticipation,
-            SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey) {
+            SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey, String oldExerciseRepoUrl, String oldSolutionRepoUrl,
+            String oldTestRepoUrl) {
         // update 2 repositories for the template (BASE) build plan --> adapt the triggers so that only the assignment repo (and not the tests repo) will trigger the BASE build
         // plan
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTemplateRepositoryUrl(), templateParticipation.getRepositoryUrl(), Optional.of(List.of(ASSIGNMENT_REPO_NAME)));
+                newExercise.getTemplateRepositoryUrl(), oldExerciseRepoUrl, Optional.of(List.of(ASSIGNMENT_REPO_NAME)));
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTestRepositoryUrl(), solutionParticipation.getRepositoryUrl(), Optional.empty());
+                newExercise.getTestRepositoryUrl(), oldTestRepoUrl, Optional.empty());
 
         // update 2 repositories for the solution (SOLUTION) build plan
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getSolutionRepositoryUrl(), solutionParticipation.getRepositoryUrl(), Optional.empty());
+                newExercise.getSolutionRepositoryUrl(), oldSolutionRepoUrl, Optional.empty());
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTestRepositoryUrl(), solutionParticipation.getRepositoryUrl(), Optional.empty());
+                newExercise.getTestRepositoryUrl(), oldTestRepoUrl, Optional.empty());
     }
 
     private void cloneAndEnableAllBuildPlans(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) {
