@@ -33,7 +33,7 @@ import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam
 import { ExerciseUnitComponent } from './course-lectures/exercise-unit/exercise-unit.component';
 import { AttachmentUnitComponent } from './course-lectures/attachment-unit/attachment-unit.component';
 import { VideoUnitComponent } from './course-lectures/video-unit/video-unit.component';
-import { YouTubePlayerModule } from '@angular/youtube-player';
+import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 
 @NgModule({
     imports: [
@@ -42,6 +42,7 @@ import { YouTubePlayerModule } from '@angular/youtube-player';
         ChartsModule,
         ClipboardModule,
         MomentModule,
+        ArtemisSharedPipesModule,
         ArtemisResultModule,
         ArtemisSidePanelModule,
         ArtemisCoursesRoutingModule,
@@ -52,7 +53,6 @@ import { YouTubePlayerModule } from '@angular/youtube-player';
         ProgrammingExerciseUtilsModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisTeamModule,
-        YouTubePlayerModule,
     ],
     declarations: [
         CoursesComponent,

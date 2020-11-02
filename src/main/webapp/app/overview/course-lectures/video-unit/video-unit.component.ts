@@ -1,7 +1,7 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
-import { YouTubePlayer } from '@angular/youtube-player';
+import { Component, Input, OnInit } from '@angular/core';
+import { SafeResourceUrl } from '@angular/platform-browser';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
-import { JhiAlertService } from 'ng-jhipster';
+import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 
 @Component({
     selector: 'jhi-video-unit',
@@ -9,47 +9,21 @@ import { JhiAlertService } from 'ng-jhipster';
     styleUrls: ['../../course-exercises/course-exercise-row.scss'],
 })
 export class VideoUnitComponent implements OnInit {
-    @ViewChild('youtubePlayer')
-    youtubePlayer: YouTubePlayer;
-
     @Input()
     videoUnit: VideoUnit;
 
+    youTubeUrl: SafeResourceUrl;
+
     isCollapsed = true;
 
-    playerVars = {
-        modestbranding: 1,
-        rel: 0,
-    };
+    constructor(private safeResourceUrlPipe: SafeResourceUrlPipe) {}
 
-    constructor(private alertService: JhiAlertService) {}
-
-    ngOnInit() {}
-
-    // error codes are described here: https://developers.google.com/youtube/iframe_api_reference
-    handleVideoError($event: any) {
-        switch ($event.data) {
-            case 2:
-                this.alertService.error('artemisApp.videoUnit.youTube.errorCode2');
-                break;
-            case 5:
-                this.alertService.error('artemisApp.videoUnit.youTube.errorCode5');
-                break;
-            case 100:
-                this.alertService.error('artemisApp.videoUnit.youTube.errorCode100');
-                break;
-            case 101:
-            case 150:
-                this.alertService.error('artemisApp.videoUnit.youTube.errorCode101Or150');
-                break;
-            default:
-                this.alertService.error('artemisApp.videoUnit.youTube.unknownError');
-                break;
-        }
+    ngOnInit() {
+        this.youTubeUrl = this.safeResourceUrlPipe.transform(`https://www.youtube.com/embed/${this.videoUnit.source}`);
     }
 
-    handleUnitClick() {
+    handleUnitClick($event: any) {
+        $event.stopPropagation();
         this.isCollapsed = !this.isCollapsed;
-        this.youtubePlayer.pauseVideo();
     }
 }

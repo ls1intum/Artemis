@@ -1,4 +1,4 @@
-<div class="row align-items-center mb-2 mt-2" (click)="handleUnitClick()">
+<div class="row align-items-center mb-2 mt-2" (click)="handleUnitClick($event)">
     <div class="col-auto d-none d-sm-block">
         <div class="exercise-row-icon">
             <fa-icon [icon]="'video'" size="2x" placement="right" [ngbTooltip]="'artemisApp.videoUnit.tooltip' | translate" container="body"></fa-icon>
@@ -39,15 +39,9 @@
         </div>
         <div class="row" *ngIf="videoUnit?.source" [ngbCollapse]="isCollapsed">
             <div class="col-12">
-                <youtube-player
-                    #youtubePlayer
-                    class="embed-responsive embed-responsive-16by9"
-                    [videoId]="videoUnit?.source"
-                    [playerVars]="playerVars"
-                    (error)="handleVideoError($event)"
-                ></youtube-player>
-                <!-- video errors -->
-                <jhi-alert (click)="$event.stopPropagation()"></jhi-alert>
+                <div class="embed-responsive embed-responsive-16by9">
+                    <iframe class="embed-responsive-item" [src]="youTubeUrl" allowfullscreen></iframe>
+                </div>
             </div>
         </div>
     </div>
