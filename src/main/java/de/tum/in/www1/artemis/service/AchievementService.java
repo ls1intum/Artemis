@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AchievementRank;
 import de.tum.in.www1.artemis.domain.enumeration.AchievementType;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.AchievementRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
@@ -102,15 +103,11 @@ public class AchievementService {
      * @param result
      */
     public void checkForAchievements(Result result) {
-        var participation = result.getParticipation();
+        var participation = (StudentParticipation) result.getParticipation();
         if (participation == null || participation.getId() == null) {
             return;
         }
-        var studentParticipation = participationService.findOneWithEagerCourse(participation.getId());
-        if (studentParticipation == null) {
-            return;
-        }
-        var exercise = studentParticipation.getExercise();
+        var exercise = participation.getExercise();
         if (exercise == null || exercise.getExerciseGroup() != null) {
             return;
         }
@@ -118,12 +115,12 @@ public class AchievementService {
         if (course == null || !course.getAchievementsEnabled()) {
             return;
         }
-
-        var optionalUser = studentParticipation.getStudent();
+        var optionalUser = participation.getStudent();
         if (optionalUser.isEmpty()) {
             return;
         }
         var user = optionalUser.get();
+        user = userRepository.findOneWithEagerAchievements(user.getId());
 
         var pointBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.POINT);
         var pointRank = pointBasedAchievementService.checkForAchievement(result, pointBasedAchievements);

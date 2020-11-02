@@ -22,7 +22,7 @@ public class ResultListener {
     @PreUpdate
     @PrePersist
     public void checkForAchievements(Result result) {
-        if (result.getScore() != null) {
+        if (result.getScore() != null && result.isRated() != null && result.isRated()) {
             achievementService.checkForAchievements(result);
         }
     }
