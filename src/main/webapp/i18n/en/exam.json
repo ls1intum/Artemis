@@ -4,7 +4,7 @@
             "overview": {
                 "start": "Start: {{start}}",
                 "duration": "Duration: {{duration}} min",
-                "maxPoints": "max. Points: {{points}}"
+                "maxPoints": "Points: {{points}}"
             },
             "examSummary": {
                 "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
@@ -19,7 +19,8 @@
                     "exercise": "Exercise",
                     "overview": "Overview",
                     "yourPoints": "Your points",
-                    "maxPoints": "Max. points",
+                    "maxPoints": "Points",
+                    "bonus": "Bonus points",
                     "sum": "Sum"
                 }
             },
