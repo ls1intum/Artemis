@@ -1,12 +1,12 @@
 @import 'src/main/webapp/content/scss/artemis-mixins';
 @import 'src/main/webapp/content/scss/artemis-variables';
 
-.title{
+.title {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    & > span{
+    & > span {
         margin-bottom: 10px;
     }
 }
