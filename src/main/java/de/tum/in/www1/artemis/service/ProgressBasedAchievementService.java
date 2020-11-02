@@ -43,7 +43,7 @@ public class ProgressBasedAchievementService {
                 continue;
             }
             var score = latestResult.getScore();
-            if (score != null && score >= achievements.iterator().next().getMinScoreToQualify()) {
+            if (score != null && achievements.iterator().hasNext() && score >= achievements.iterator().next().getMinScoreToQualify()) {
                 numberOfExercises++;
             }
         }

@@ -33,7 +33,7 @@ public class TimeBasedAchievementService {
     }
 
     public AchievementRank checkForAchievement(Result result, Set<Achievement> achievements) {
-        if (result.getScore() == null || result.getScore() < achievements.iterator().next().getMinScoreToQualify()) {
+        if (result.getScore() == null || !achievements.iterator().hasNext() || result.getScore() < achievements.iterator().next().getMinScoreToQualify()) {
             return null;
         }
         var submission = result.getSubmission();
