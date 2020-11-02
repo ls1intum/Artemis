@@ -9,6 +9,12 @@ public class BitbucketBranchProtectionDTO {
 
     private MatcherDTO matcher;
 
+    /**
+     * needed for Jackson
+     */
+    public BitbucketBranchProtectionDTO() {
+    }
+
     public BitbucketBranchProtectionDTO(String protectionType, MatcherDTO matcher) {
         this.protectionType = protectionType;
         this.matcher = matcher;
@@ -39,6 +45,12 @@ public class BitbucketBranchProtectionDTO {
         private TypeDTO type;
 
         private boolean active;
+
+        /**
+         * needed for Jackson
+         */
+        public MatcherDTO() {
+        }
 
         public MatcherDTO(String displayId, String id, TypeDTO type, boolean active) {
             this.displayId = displayId;
@@ -85,6 +97,12 @@ public class BitbucketBranchProtectionDTO {
         private String id;
 
         private String name;
+
+        /**
+         * needed for Jackson
+         */
+        public TypeDTO() {
+        }
 
         public TypeDTO(String id, String name) {
             this.id = id;
