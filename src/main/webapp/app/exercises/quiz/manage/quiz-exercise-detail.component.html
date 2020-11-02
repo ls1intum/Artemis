@@ -21,7 +21,7 @@
                     class="form-control"
                     [(ngModel)]="quizExercise.title"
                     (ngModelChange)="cacheValidation()"
-                    placeholder="{{ 'artemisApp.quizExercise.placeholder.title' | translate}}"
+                    placeholder="{{ 'artemisApp.quizExercise.placeholder.title' | translate }}"
                 />
             </div>
             <div *ngIf="!isExamMode" class="form-group-narrow position-relative">
@@ -179,12 +179,13 @@
             </div>
             <!--Integrate the template for existingQuestions if the button is clicked-->
             <ng-container *ngIf="showExistingQuestions; then existingQuestionsTemplate"></ng-container>
+            <ng-container *ngIf="showExistingQuestions && showExistingQuestionsFromAnotherCourse; then existingQuestionsFromCourseTemplate"></ng-container>
             <hr />
-            <div class="question-options row d-flex justify-content-start" *ngIf="!showExistingQuestions">
-                <div class="col-lg-3">
-                    <span jhiTranslate="artemisApp.quizExercise.importJSON" class="colon-suffix no-flex-shrink"> </span>
+            <div class="question-options row d-flex justify-content-start" *ngIf="showExistingQuestions && !showExistingQuestionsFromAnotherCourse">
+                <div class="mr-2 col flex-grow-0" style="white-space: nowrap">
+                    <span jhiTranslate="artemisApp.quizExercise.importJSON" class="font-weight-bold colon-suffix no-flex-shrink"> </span>
                 </div>
-                <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10">
+                <div class="input-group flex-grow-1 col">
                     <div class="custom-file">
                         <input id="importFileInput" type="file" accept=".json" class="custom-file-input" (change)="setImportFile($event)" placeholder="Upload file..." />
                         <label class="custom-file-label overflow-ellipsis" for="importFileInput">{{ importFileName }}</label>
@@ -306,9 +307,29 @@
             </div>
         </div>
         <ng-template #existingQuestionsTemplate>
+            <div class="w100 row justify-content-center card-header">
+                <div class="btn-group">
+                    <div
+                        class="btn"
+                        [ngClass]="{ 'btn-primary': !showExistingQuestionsFromAnotherCourse, 'btn-default': showExistingQuestionsFromAnotherCourse }"
+                        (click)="setExistingQuestionSourceToCourse(false)"
+                    >
+                        From a file
+                    </div>
+                    <div
+                        class="btn"
+                        [ngClass]="{ 'btn-primary': showExistingQuestionsFromAnotherCourse, 'btn-default': !showExistingQuestionsFromAnotherCourse }"
+                        (click)="setExistingQuestionSourceToCourse(true)"
+                    >
+                        From a course
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+        <ng-template #existingQuestionsFromCourseTemplate>
             <hr />
             <div class="form-group question-options">
-                <div class="existing-question-select-course card-header w-100">
+                <div class="existing-question-select-course w-100">
                     <span jhiTranslate="artemisApp.quizExercise.selectCourse" class="font-weight-bold align-middle"></span>
                     <select class="form-control ml-5" [(ngModel)]="selectedCourseId" (change)="onCourseSelect()" style="flex: 1">
                         <option *ngFor="let course of courses" [value]="course.id">{{ course.title }}</option>

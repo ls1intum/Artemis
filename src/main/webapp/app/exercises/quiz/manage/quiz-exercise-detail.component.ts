@@ -86,6 +86,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
+    showExistingQuestionsFromAnotherCourse = false;
     courses: Course[] = [];
     selectedCourseId?: number;
     quizExercises: QuizExercise[];
@@ -145,6 +146,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     ngOnInit(): void {
         /** Initialize local constants **/
         this.showExistingQuestions = false;
+        this.showExistingQuestionsFromAnotherCourse = false;
         this.courses = [];
         this.quizExercises = [];
         this.allExistingQuestions = [];
@@ -401,6 +403,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             });
         }
         this.showExistingQuestions = !this.showExistingQuestions;
+        this.showExistingQuestionsFromAnotherCourse = false;
         this.selectedCourseId = undefined;
         this.allExistingQuestions = this.existingQuestions = [];
         this.changeDetector.detectChanges();
@@ -498,6 +501,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         }
         this.verifyAndImportQuestions(questions);
         this.showExistingQuestions = !this.showExistingQuestions;
+        this.showExistingQuestionsFromAnotherCourse = false;
         this.selectedCourseId = undefined;
         this.allExistingQuestions = this.existingQuestions = [];
         this.cacheValidation();
@@ -1206,6 +1210,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (this.duration.seconds !== undefined) {
             this.duration.seconds = duration.seconds();
         }
+    }
+
+    /**
+     * Update adding existing questions from a file or course 
+     */
+    setExistingQuestionSourceToCourse(setToCourse: boolean): void {
+        this.showExistingQuestionsFromAnotherCourse = setToCourse;
     }
 
     /**
