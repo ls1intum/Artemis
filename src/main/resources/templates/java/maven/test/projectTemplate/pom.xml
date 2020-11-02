@@ -14,6 +14,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         %static-code-analysis-start%
+        <scaConfigDirectory>${project.basedir}/staticCodeAnalysisConfig</scaConfigDirectory>
         <analyzeTests>false</analyzeTests>
         %static-code-analysis-stop%
     </properties>
@@ -80,13 +81,13 @@
                     <includeTests>${analyzeTests}</includeTests>
                     <xmlOutput>true</xmlOutput>
                     <!-- Do not report bugs matching the rules defined in this file -->
-                    <excludeFilterFile>${testSourceDirectory}/spotbugs-exclusions.xml</excludeFilterFile>
+                    <excludeFilterFile>${scaConfigDirectory}/spotbugs-exclusions.xml</excludeFilterFile>
                     <!-- Only include bugs matching the rules defined in this file -->
                     <includeFilterFile/>
                     <!-- Analysis with high effort are more precise and can potentially find more bugs at the cost of
                     memory consumption and computation time. See https://spotbugs.readthedocs.io/en/stable/effort.html
                     for more information -->
-                    <effort/>
+                    <effort>Default</effort>
                     <!-- Minimum bug severity to report. Low reports all bugs -->
                     <threshold>Low</threshold>
                 </configuration>
@@ -108,7 +109,7 @@
                     <!-- Use the Artemis default configuration. Two other predefined rulesets are available:
                      Add sun_checks.xml to check for the official Oracle code conventions or add google_checks.xml to
                      check for the Google's Java Style Guide -->
-                    <configLocation>${testSourceDirectory}/checkstyle-configuration.xml</configLocation>
+                    <configLocation>${scaConfigDirectory}/checkstyle-configuration.xml</configLocation>
                     <!-- No documentation and not needed -->
                     <enableRSS>false</enableRSS>
                 </configuration>
@@ -136,7 +137,7 @@
                     <minimumPriority>5</minimumPriority>
                     <!-- Add multiple rulesets for fine-grained control of file exclusions per rule -->
                     <rulesets>
-                        <ruleset>${testSourceDirectory}/pmd-configuration.xml</ruleset>
+                        <ruleset>${scaConfigDirectory}/pmd-configuration.xml</ruleset>
                     </rulesets>
                 </configuration>
             </plugin>

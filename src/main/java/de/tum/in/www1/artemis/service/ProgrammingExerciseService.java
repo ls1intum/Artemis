@@ -474,7 +474,7 @@ public class ProgrammingExerciseService {
                 if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                     String staticCodeAnalysisConfigPath = templatePath + "/staticCodeAnalysisConfig/**/*.*";
                     Resource[] staticCodeAnalysisResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(staticCodeAnalysisConfigPath);
-                    fileService.copyResources(staticCodeAnalysisResources, prefix, packagePath, false);
+                    fileService.copyResources(staticCodeAnalysisResources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
                 }
             }
             else {
