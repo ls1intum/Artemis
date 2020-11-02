@@ -8,6 +8,7 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -46,10 +48,12 @@ public class ProgrammingExerciseParticipationService {
 
     private final UserService userService;
 
+    private final GitService gitService;
+
     public ProgrammingExerciseParticipationService(ParticipationService participationService, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ParticipationRepository participationRepository, TeamRepository teamRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, Optional<VersionControlService> versionControlService, UserService userService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, GitService gitService) {
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
@@ -59,6 +63,7 @@ public class ProgrammingExerciseParticipationService {
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
         this.userService = userService;
+        this.gitService = gitService;
     }
 
     public Participation findParticipation(Long participationId) throws EntityNotFoundException {
@@ -323,6 +328,34 @@ public class ProgrammingExerciseParticipationService {
         }
         else {
             log.warn("Cannot unlock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+        }
+    }
+
+    /**
+     * Stashes all changes, which were not submitted/committed before the due date, of a programming participation
+     *
+     * @param programmingExercise exercise with information about the due date
+     * @param participation student participation whose not submitted changes will be stashed
+     */
+    public void stashChangesInStudentRepositoryAfterDueDateHasPassed(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
+        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
+            try {
+                if (programmingExercise.getDueDate().isBefore(ZonedDateTime.now())) {
+                    Repository repo = gitService.getOrCheckoutRepository(participation);
+                    gitService.stashChanges(repo);
+                }
+                else {
+                    log.warn("Cannot stash student repository for participation " + participation.getId() + " because the due date has not passed yet!");
+                }
+
+            }
+            catch (InterruptedException | GitAPIException e) {
+                log.error("Stashing student repository for participation" + participation.getId() + " in exercise '" + programmingExercise.getTitle()
+                        + "' did not work as expected: " + e.getMessage());
+            }
+        }
+        else {
+            log.warn("Cannot stash student repository for participation " + participation.getId() + " because the repository was not copied yet!");
         }
     }
 }
