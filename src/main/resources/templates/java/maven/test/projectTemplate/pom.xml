@@ -13,6 +13,9 @@
     <name>${exerciseName} Tests</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        %static-code-analysis-start%
+        <analyzeTests>false</analyzeTests>
+        %static-code-analysis-stop%
     </properties>
     <dependencies>
         <dependency>
