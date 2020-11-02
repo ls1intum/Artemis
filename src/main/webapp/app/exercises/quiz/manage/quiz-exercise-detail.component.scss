@@ -6,6 +6,7 @@
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
+
     & > span {
         margin-bottom: 10px;
     }
@@ -38,7 +39,16 @@
             margin-top: -15px;
             width: 3.25rem;
         }
+        
+        .question-title,
+        .question-score {
+            flex: 1;
 
+            input.form-control {
+                width: 100%;
+            }
+        }
+        
         .question-card-header-inputs {
             display: flex;
             align-items: center;
@@ -46,17 +56,9 @@
             @media (max-width: map-get($grid-breakpoints, 'md')) {
                 flex: 100%;
             }
+
             .question-score {
                 flex: 1;
-            }
-        }
-
-        .question-title,
-        .question-score {
-            flex: 1;
-
-            input.form-control {
-                width: 100%;
             }
         }
 
@@ -156,9 +158,11 @@
                 margin-left: 10px;
             }
         }
+
         button {
             margin-bottom: 10px;
         }
+
         @media (max-width: map-get($grid-breakpoints, 'md')) {
             .checkboxes {
                 margin: 10px 0;
