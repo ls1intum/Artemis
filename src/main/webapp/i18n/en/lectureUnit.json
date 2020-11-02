@@ -16,7 +16,7 @@
         "videoUnit": {
             "created": "A new video unit created",
             "updated": "Video unit updated",
-            "tooltip": "This is a Video Unit.",
+            "tooltip": "This is a video unit.",
             "description": "Description",
             "notReleasedTooltip": "Video only visible to teaching assistants and instructors. Release date:",
             "youTube": {
@@ -29,7 +29,7 @@
             "createVideoUnit": {
                 "title": "Create Video Unit",
                 "name": "Name",
-                "namePlaceHolder": "Give the Video Unit a name",
+                "namePlaceHolder": "Give the video unit a name",
                 "description": "Description",
                 "descriptionPlaceHolder": "Give the video a description",
                 "nameRequiredValidationError": "Name is required.",
