@@ -22,7 +22,7 @@
             "youTube": {
                 "errorCode2": "Die Anfrage enthält einen ungültigen Parameterwert. Dieser Fehler tritt beispielsweise auf, wenn du eine Video-ID angibst, die nicht aus elf Zeichen besteht, oder wenn die Video-ID ungültige Zeichen wie z. B. Ausrufezeichen oder Sternchen enthält.",
                 "errorCode5": " Der angeforderte Inhalt kann nicht mit einem HTML5-Player wiedergegeben werden oder es ist ein anderer Fehler im Zusammenhang mit dem HTML5-Player aufgetreten.",
-                "errorCode100": " Der angeforderte Video wurde nicht gefunden. Dieser Fehler tritt auf, wenn ein Video aus irgendeinem Grund entfernt oder als privat markiert wurde.",
+                "errorCode100": " Das angeforderte Video wurde nicht gefunden. Dieser Fehler tritt auf, wenn ein Video aus irgendeinem Grund entfernt oder als privat markiert wurde.",
                 "errorCode101Or150": "Der Rechteinhaber des angeforderten Videos untersagt die Wiedergabe des Videos in eingebetteten Playern",
                 "unknownError": "An Error ist beim Starten des Videos aufgetreten."
             },
