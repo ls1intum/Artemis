@@ -15,13 +15,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.repository.AchievementRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AchievementService;
-import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -36,9 +33,6 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     AchievementService achievementService;
 
     @Autowired
-    CourseService courseService;
-
-    @Autowired
     UserRepository userRepository;
 
     @Autowired
@@ -48,7 +42,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     CourseRepository courseRepository;
 
     @Autowired
-    ParticipationRepository participationRepository;
+    ResultRepository resultRepository;
 
     private User student;
 
@@ -120,7 +114,8 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(value = "student1", roles = "USER")
     public void testRewardAchievement() throws Exception {
         var submission = database.addModelingSubmissionWithEmptyResult(firstExercise, "", student.getLogin());
-        database.addResultToParticipation(submission.getParticipation(), null);
+        var result = ModelFactory.generateResult(true, 100).participation(submission.getParticipation());
+        resultRepository.save(result);
         var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
         assertThat(achievementsFirstCourse.size()).as("User got one achievement").isEqualTo(1);
     }
