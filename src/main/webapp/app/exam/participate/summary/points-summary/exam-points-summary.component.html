@@ -7,6 +7,7 @@
                 <th scope="col">{{ 'artemisApp.exam.examSummary.points.exercise' | translate }}</th>
                 <th scope="col">{{ 'artemisApp.exam.examSummary.points.yourPoints' | translate }}</th>
                 <th scope="col">{{ 'artemisApp.exam.examSummary.points.maxPoints' | translate }}</th>
+                <th scope="col">{{ 'artemisApp.exam.examSummary.points.bonus' | translate }}</th>
             </tr>
         </thead>
         <tbody>
@@ -20,6 +21,9 @@
                 </td>
                 <td>
                     <span *ngIf="exercise.maxScore">{{ exercise.maxScore }}</span>
+                </td>
+                <td>
+                    <span *ngIf="exercise.bonusPoints">{{ exercise.bonusPoints }}</span>
                 </td>
             </tr>
             <tr>
