@@ -100,10 +100,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateAttachmentUnit_asInstructor_shouldUpdateAttachmentUnit() throws Exception {
 
-        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
-        lecture1.addLectureUnit(this.attachmentUnit);
-        lectureRepository.save(lecture1);
-        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        persistAttachmentUnitWithLecture();
 
         this.attachment.setAttachmentUnit(this.attachmentUnit);
         this.attachment = attachmentRepository.save(attachment);
@@ -118,13 +115,17 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
 
     }
 
-    @Test
-    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    public void updateAttachmentUnit_notInstructorInCourse_shouldReturnForbidden() throws Exception {
+    private void persistAttachmentUnitWithLecture() {
         lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
         lecture1.addLectureUnit(this.attachmentUnit);
         lectureRepository.save(lecture1);
         this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
+    public void updateAttachmentUnit_notInstructorInCourse_shouldReturnForbidden() throws Exception {
+        persistAttachmentUnitWithLecture();
 
         this.attachment.setAttachmentUnit(this.attachmentUnit);
         this.attachment = attachmentRepository.save(attachment);
@@ -136,10 +137,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateAttachmentUnit_noId_shouldReturnBadRequest() throws Exception {
-        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
-        lecture1.addLectureUnit(this.attachmentUnit);
-        lectureRepository.save(lecture1);
-        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        persistAttachmentUnitWithLecture();
 
         this.attachment.setAttachmentUnit(this.attachmentUnit);
         this.attachment = attachmentRepository.save(attachment);
@@ -152,10 +150,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAttachmentUnit_correctId_shouldReturnAttachmentUnit() throws Exception {
-        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
-        lecture1.addLectureUnit(this.attachmentUnit);
-        lectureRepository.save(lecture1);
-        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        persistAttachmentUnitWithLecture();
 
         this.attachment.setAttachmentUnit(this.attachmentUnit);
         this.attachment = attachmentRepository.save(attachment);
