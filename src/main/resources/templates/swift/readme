@@ -16,7 +16,7 @@ Implement the method `performSort([Date])` in the class `MergeSort`. Make sure t
 
 ### Part 2: Strategy Pattern
 
-We want the application to apply different algorithms for sorting a `List` of `Date` objects.
+We want the application to apply different algorithms for sorting an `Array` of `Date` objects.
 Use the strategy pattern to select the right sorting algorithm at runtime.
 
 **You have the following tasks:**
@@ -31,10 +31,10 @@ Create and implement a `Context` class following the below class diagram
 Create and implement a `Policy` class following the below class diagram with a simple configuration mechanism:
 
     1. [task][Select MergeSort]
-    Select `MergeSort` when the List has more than 10 dates.
+    Select `MergeSort` when the Array has more than 10 dates.
 
     2. [task][Select BubbleSort]
-    Select `BubbleSort` when the List has less or equal 10 dates.
+    Select `BubbleSort` when the Array has less or equal 10 dates.
 
 4. Complete the `Client` class which demonstrates switching between two strategies at runtime.
 
@@ -53,30 +53,30 @@ class Client {
 }
 
 class Policy {
-  <color:testsColor(testMethods[Policy])>+configure()</color>
+  +configure()
 }
 
 class Context {
-  <color:testsColor(testAttributes[Context])>-dates: [Date]</color>
-  <color:testsColor(testMethods[Context])>+sort()</color>
+  -dates: [Date]
+  +sort()
 }
 
 interface SortStrategy {
-  <color:testsColor(testMethods[SortStrategy])>+performSort([Date])</color>
+  +performSort([Date])
 }
 
 class BubbleSort {
-  <color:testsColor(testBubbleSort)>+performSort([Date])</color>
+  +performSort([Date])
 }
 
 class MergeSort {
-  <color:testsColor(testMergeSort)>+performSort([Date])</color>
+  +performSort([Date])
 }
 
-MergeSort -up-|> SortStrategy #testsColor(testClass[MergeSort])
-BubbleSort -up-|> SortStrategy #testsColor(testClass[BubbleSort])
-Policy -right-> Context #testsColor(testAttributes[Policy]): context
-Context -right-> SortStrategy #testsColor(testAttributes[Context]): sortAlgorithm
+MergeSort -up-|> SortStrategy
+BubbleSort -up-|> SortStrategy
+Policy -right-> Context : context
+Context -right-> SortStrategy : sortAlgorithm
 Client .down.> Policy
 Client .down.> Context
 
