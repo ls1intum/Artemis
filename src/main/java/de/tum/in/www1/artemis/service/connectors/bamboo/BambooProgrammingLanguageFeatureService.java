@@ -17,7 +17,7 @@ public class BambooProgrammingLanguageFeatureService extends ProgrammingLanguage
 
     public BambooProgrammingLanguageFeatureService() {
         // Must be extended once a new programming language is added
-        programmingLanguageFeatures.put(JAVA, new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of()));
+        programmingLanguageFeatures.put(JAVA, new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(ECLIPSE, MAVEN)));
         programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, true, false, true, false, false, List.of()));
         programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, false, true, false, false, List.of()));
         programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, true, true, false, false, true, List.of()));
