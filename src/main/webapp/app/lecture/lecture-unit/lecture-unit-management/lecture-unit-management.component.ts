@@ -142,26 +142,28 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     getDeleteQuestionKey(lectureUnit: LectureUnit) {
-        if (lectureUnit.type === LectureUnitType.EXERCISE) {
-            return 'artemisApp.exerciseUnit.delete.question';
-        }
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
-            return 'artemisApp.attachmentUnit.delete.question';
-        }
-        if (lectureUnit.type === LectureUnitType.VIDEO) {
-            return 'artemisApp.videoUnit.delete.question';
+        switch (lectureUnit.type) {
+            case LectureUnitType.EXERCISE:
+                return 'artemisApp.exerciseUnit.delete.question';
+            case LectureUnitType.ATTACHMENT:
+                return 'artemisApp.attachmentUnit.delete.question';
+            case LectureUnitType.VIDEO:
+                return 'artemisApp.videoUnit.delete.question';
+            case LectureUnitType.TEXT:
+                return 'artemisApp.textUnit.delete.question';
         }
     }
 
     getDeleteConfirmationTextKey(lectureUnit: LectureUnit) {
-        if (lectureUnit.type === LectureUnitType.EXERCISE) {
-            return 'artemisApp.exerciseUnit.delete.typeNameToConfirm';
-        }
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
-            return 'artemisApp.attachmentUnit.delete.typeNameToConfirm';
-        }
-        if (lectureUnit.type === LectureUnitType.VIDEO) {
-            return 'artemisApp.videoUnit.delete.typeNameToConfirm';
+        switch (lectureUnit.type) {
+            case LectureUnitType.EXERCISE:
+                return 'artemisApp.exerciseUnit.delete.typeNameToConfirm';
+            case LectureUnitType.ATTACHMENT:
+                return 'artemisApp.attachmentUnit.delete.typeNameToConfirm';
+            case LectureUnitType.VIDEO:
+                return 'artemisApp.videoUnit.delete.typeNameToConfirm';
+            case LectureUnitType.TEXT:
+                return 'artemisApp.textUnit.delete.typeNameToConfirm';
         }
     }
 
