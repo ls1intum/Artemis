@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Observable, Subject } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
@@ -29,6 +29,7 @@ import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/sha
 export class ProgrammingExerciseUpdateComponent implements OnInit {
     FeatureToggle = FeatureToggle;
     ProgrammingLanguage = ProgrammingLanguage;
+    ProjectType = ProjectType;
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
@@ -47,6 +48,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     rerenderSubject = new Subject<void>();
     // This is used to revert the select if the user cancels to override the new selected programming language.
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
+    // This is used to revert the select if the user cancels to override the new selected project type.
+    private selectedProjectTypeValue: ProjectType;
 
     maxScorePattern = MAX_SCORE_PATTERN;
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
@@ -76,6 +79,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public checkoutSolutionRepositoryAllowed = false;
     public sequentialTestRunsAllowed = false;
 
+    public projectTypes: ProjectType[] = [];
+
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseService: CourseManagementService,
@@ -96,6 +101,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * @param language to change to.
      */
     set selectedProgrammingLanguage(language: ProgrammingLanguage) {
+        const languageChanged = this.selectedProgrammingLanguageValue !== language;
         this.selectedProgrammingLanguageValue = language;
 
         const programmingLanguageFeature = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(language);
@@ -103,6 +109,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.staticCodeAnalysisAllowed = programmingLanguageFeature.staticCodeAnalysis;
         this.checkoutSolutionRepositoryAllowed = programmingLanguageFeature.checkoutSolutionRepositoryAllowed;
         this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
+        this.projectTypes = programmingLanguageFeature.projectTypes;
+
+        if (languageChanged) {
+            // Reset project type when changing programming language as not all programming languages support (the same) project types
+            this.programmingExercise.projectType = this.projectTypes[0];
+            this.selectedProjectTypeValue = this.projectTypes[0]!;
+        }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
         if (!this.staticCodeAnalysisAllowed) {
@@ -111,7 +124,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
         // Don't override the problem statement with the template in edit mode.
         if (this.programmingExercise.id === undefined) {
-            this.loadProgrammingLanguageTemplate(language);
+            this.loadProgrammingLanguageTemplate(language, this.programmingExercise.projectType!);
             // Rerender the instructions as the template has changed.
             this.rerenderSubject.next();
         }
@@ -119,6 +132,26 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     get selectedProgrammingLanguage() {
         return this.selectedProgrammingLanguageValue;
+    }
+
+    /**
+     * Will also trigger loading the corresponding project type template.
+     *
+     * @param type to change to.
+     */
+    set selectedProjectType(type: ProjectType) {
+        this.selectedProjectTypeValue = type;
+
+        // Don't override the problem statement with the template in edit mode.
+        if (this.programmingExercise.id === undefined) {
+            this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!, type);
+            // Rerender the instructions as the template has changed.
+            this.rerenderSubject.next();
+        }
+    }
+
+    get selectedProjectType() {
+        return this.selectedProjectTypeValue;
     }
 
     /**
@@ -130,6 +163,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
+            this.selectedProjectTypeValue = this.programmingExercise.projectType!;
         });
         // If it is an import, just get the course, otherwise handle the edit and new cases
         this.activatedRoute.url
@@ -319,6 +353,25 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return language;
     }
 
+    /**
+     * When setting the project type, a change guard is triggered.
+     * This is because we want to reload the instructions template for a project type, but don't want the user to loose unsaved changes.
+     * If the user cancels the project type will not be changed.
+     *
+     * @param projectType to switch to.
+     */
+    onProjectTypeChange(projectType: ProjectType) {
+        // If there are unsaved changes and the user does not confirm, the language doesn't get changed
+        if (this.hasUnsavedChanges) {
+            const confirmLanguageChangeText = this.translateService.instant(this.translationBasePath + 'unsavedChangesProjectTypeChange');
+            if (!window.confirm(confirmLanguageChangeText)) {
+                return this.selectedProjectType;
+            }
+        }
+        this.selectedProjectType = projectType;
+        return projectType;
+    }
+
     onStaticCodeAnalysisChanged() {
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
@@ -337,13 +390,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * will see a confirmation dialog about switching to a new template
      *
      * @param language The new programming language
+     * @param type The new project type
      */
-    private loadProgrammingLanguageTemplate(language: ProgrammingLanguage) {
+    private loadProgrammingLanguageTemplate(language: ProgrammingLanguage, type: ProjectType) {
         // Otherwise, just change the language and load the new template
         this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
-        this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage).subscribe(
+        this.programmingExercise.projectType = type;
+        this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe(
             (file) => {
                 this.programmingExercise.problemStatement = file;
                 this.problemStatementLoaded = true;

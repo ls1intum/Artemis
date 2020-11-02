@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
+import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.*;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;

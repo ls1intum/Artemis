@@ -109,6 +109,7 @@
             },
             "lectureDetails": {
                 "description": "Beschreibung",
+                "lectureUnits": "Vorlesungseinheiten",
                 "attachments": "Anhänge",
                 "noAttachments": "Für diese Vorlesung sind keine Anhänge verfügbar.",
                 "date": "Datum",

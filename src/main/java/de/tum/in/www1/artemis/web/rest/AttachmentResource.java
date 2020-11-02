@@ -100,6 +100,11 @@ public class AttachmentResource {
         if (attachment.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
+
+        // Make sure that the original references are preserved.
+        Optional<Attachment> originalAttachment = attachmentRepository.findById(attachment.getId());
+        originalAttachment.ifPresent(value -> attachment.setAttachmentUnit(value.getAttachmentUnit()));
+
         Attachment result = attachmentRepository.save(attachment);
         this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
         if (notificationText != null) {
@@ -132,7 +137,7 @@ public class AttachmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Attachment> getAttachmentsForLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
-        return attachmentService.findAllByLectureId(lectureId);
+        return attachmentRepository.findAllByLectureId(lectureId);
     }
 
     /**

@@ -78,7 +78,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetTemplateFile() throws Exception {
-        String javaReadme = request.get("/api/files/templates/JAVA/readme", HttpStatus.OK, String.class);
+        String javaReadme = request.get("/api/files/templates/JAVA/ECLIPSE/readme", HttpStatus.OK, String.class);
         assertThat(javaReadme).isNotEmpty();
         String cReadme = request.get("/api/files/templates/C/readme", HttpStatus.OK, String.class);
         assertThat(cReadme).isNotEmpty();

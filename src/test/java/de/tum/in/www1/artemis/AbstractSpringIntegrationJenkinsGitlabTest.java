@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
@@ -32,11 +33,12 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import de.tum.in.www1.artemis.util.Verifiable;
 
-@SpringBootTest
+@SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
+        "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ "artemis", "gitlab", "jenkins", "automaticText" })
+@ActiveProfiles({ "artemis", "gitlab", "jenkins", "athene" })
 @TestPropertySource(properties = "artemis.user-management.use-external=false")
 public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends AbstractArtemisIntegrationTest {
 
@@ -88,7 +90,13 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users) throws IOException, URISyntaxException {
+    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
+        // TODO: implement
+    }
+
+    @Override
+    public List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
+            throws IOException, URISyntaxException {
         // TODO: implement
         return null;
     }
@@ -110,7 +118,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockRepositoryWritePermissions(Team team, User newStudent, ProgrammingExercise exercise) throws URISyntaxException {
+    public void mockRepositoryWritePermissions(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws URISyntaxException {
         // TODO: implement
     }
 

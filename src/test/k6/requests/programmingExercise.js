@@ -93,6 +93,7 @@ export function createProgrammingExercise(artemis, courseId, programmingLanguage
         staticCodeAnalysisEnabled: false,
         sequentialTestRuns: false,
         mode: 'INDIVIDUAL',
+        projectType: programmingLanguage === 'JAVA' ? 'ECLIPSE' : undefined,
     };
 
     if (courseId) {

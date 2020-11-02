@@ -111,6 +111,7 @@
             },
             "lectureDetails": {
                 "description": "Description",
+                "lectureUnits": "Lecture Units",
                 "attachments": "Attachments",
                 "noAttachments": "There are no attachments available for this lecture.",
                 "date": "Date",

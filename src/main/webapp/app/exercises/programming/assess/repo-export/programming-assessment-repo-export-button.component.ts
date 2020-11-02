@@ -14,7 +14,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
             [shouldSubmit]="false"
             [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [icon]="'download'"
-            [title]="'instructorDashboard.exportRepos.title'"
+            [title]="singleParticipantMode ? 'instructorDashboard.exportRepos.titleSingle' : 'instructorDashboard.exportRepos.title'"
             (onClick)="openRepoExportDialog($event)"
         ></jhi-button>
     `,

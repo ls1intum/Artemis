@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { tap } from 'rxjs/operators';
@@ -15,6 +15,7 @@ export type ProgrammingLanguageFeature = {
     plagiarismCheckSupported: boolean;
     packageNameRequired: boolean;
     checkoutSolutionRepositoryAllowed: boolean;
+    projectTypes: ProjectType[];
 };
 
 @Injectable({ providedIn: 'root' })

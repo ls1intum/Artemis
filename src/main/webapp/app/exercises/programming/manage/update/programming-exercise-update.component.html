@@ -79,7 +79,7 @@
                         <jhi-difficulty-picker [exercise]="programmingExercise"></jhi-difficulty-picker>
                     </div>
                 </div>
-                <jhi-team-config-form-group [exercise]="programmingExercise"></jhi-team-config-form-group>
+                <jhi-team-config-form-group [exercise]="programmingExercise" [isImport]="isImport"></jhi-team-config-form-group>
                 <div class="form-group-narrow">
                     <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage">Programming Language</label>
                     <select
@@ -100,6 +100,23 @@
                         <option value="VHDL" *ngIf="supportsVHDL">VHDL</option>
                         <option value="ASSEMBLER" *ngIf="supportsAssembler">Assembler</option>
                         <option value="SWIFT" *ngIf="supportsSwift">Swift</option>
+                    </select>
+                </div>
+
+                <div class="form-group-narrow" *ngIf="programmingExercise.programmingLanguage && projectTypes && projectTypes.length > 0">
+                    <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType">Project Type</label>
+                    <select
+                        #select
+                        required
+                        class="form-control"
+                        [ngModel]="selectedProjectType"
+                        (ngModelChange)="select.value = onProjectTypeChange($event)"
+                        name="projectType"
+                        id="field_projectType"
+                        [disabled]="isImport || programmingExercise.id"
+                    >
+                        <option value="ECLIPSE" *ngIf="projectTypes.includes(ProjectType.ECLIPSE)">Eclipse</option>
+                        <option value="MAVEN" *ngIf="projectTypes.includes(ProjectType.MAVEN)">Maven</option>
                     </select>
                 </div>
 

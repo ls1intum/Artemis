@@ -34,6 +34,7 @@ import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizStatus, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { StudentQuestionsComponent } from 'app/overview/student-questions/student-questions.component';
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
 @Component({
@@ -64,6 +65,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     isAfterAssessmentDueDate: boolean;
     public gradingCriteria: GradingCriterion[];
     showWelcomeAlert = false;
+    private studentQuestions?: StudentQuestionsComponent;
 
     /**
      * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
@@ -159,6 +161,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
         this.subscribeForNewResults();
         this.subscribeToTeamAssignmentUpdates();
+
+        if (this.studentQuestions && this.exercise) {
+            // We need to manually update the exercise property of the student questions component
+            this.studentQuestions.exercise = this.exercise;
+            this.studentQuestions.loadQuestions(); // reload the student questions
+        }
     }
 
     /**
@@ -358,6 +366,19 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return this.quizExerciseService.getStatus(this.exercise as QuizExercise);
         }
         return undefined;
+    }
+
+    /**
+     * This function gets called if the router outlet gets activated. This is
+     * used only for the StudentQuestionsComponent
+     * @param instance The component instance
+     */
+    onChildActivate(instance: StudentQuestionsComponent) {
+        this.studentQuestions = instance; // save the reference to the component instance
+        if (this.exercise) {
+            instance.exercise = this.exercise;
+            instance.loadQuestions(); // reload the student questions
+        }
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
