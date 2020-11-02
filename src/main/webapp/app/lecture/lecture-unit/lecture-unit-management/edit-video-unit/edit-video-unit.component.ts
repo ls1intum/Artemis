@@ -62,6 +62,7 @@ export class EditVideoUnitComponent implements OnInit {
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
+                    // navigate back to unit-management from :courseId/lectures/:lectureId/unit-management/video-units/:videoUnitId/edit
                     this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
                 }),
             )
