@@ -14,27 +14,24 @@ export interface VideoUnitFormData {
 export function extractVideoService(url: string) {
     if (!url) {
         return undefined;
-    } else {
-        return getVideoId(url).service;
     }
+    return getVideoId(url).service;
 }
 
 export function extractVideoId(url: string) {
     if (!url) {
         return undefined;
-    } else {
-        return getVideoId(url).id;
     }
+    return getVideoId(url).id;
 }
 
 export function youtubeURLValidator(c: AbstractControl) {
     if (c.value === undefined || c.value === null || c.value === '' || extractVideoService(c.value) === 'youtube') {
         return null;
-    } else {
-        return {
-            youTubeUrl: c.value,
-        };
     }
+    return {
+        youTubeUrl: c.value,
+    };
 }
 
 @Component({
