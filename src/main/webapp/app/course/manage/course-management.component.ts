@@ -76,6 +76,10 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                         // if years are the same, sort WS over SS
                         return a.substr(0, 2) === 'WS' ? -1 : 1;
                     });
+                // add an extra category for test courses
+                if (this.courses.find((c) => c.testCourse) !== null) {
+                    this.courseSemesters[this.courseSemesters.length] = 'test';
+                }
                 this.semesterCollapsed = {};
                 let firstUncollapsed = false;
                 for (const semester of this.courseSemesters) {
