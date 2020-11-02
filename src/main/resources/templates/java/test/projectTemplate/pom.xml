@@ -75,7 +75,7 @@
                     <includeTests>${analyzeTests}</includeTests>
                     <xmlOutput>true</xmlOutput>
                     <!-- Do not report bugs matching the rules defined in this file -->
-                    <excludeFilterFile>${project.basedir}/spotbugs-exclusions.xml</excludeFilterFile>
+                    <excludeFilterFile>${testSourceDirectory}/spotbugs-exclusions.xml</excludeFilterFile>
                     <!-- Only include bugs matching the rules defined in this file -->
                     <includeFilterFile/>
                     <!-- Analysis with high effort are more precise and can potentially find more bugs at the cost of
@@ -103,7 +103,7 @@
                     <!-- Use the Artemis default configuration. Two other predefined rulesets are available:
                      Add sun_checks.xml to check for the official Oracle code conventions or add google_checks.xml to
                      check for the Google's Java Style Guide -->
-                    <configLocation>${project.basedir}/checkstyle-configuration.xml</configLocation>
+                    <configLocation>${testSourceDirectory}/checkstyle-configuration.xml</configLocation>
                     <!-- No documentation and not needed -->
                     <enableRSS>false</enableRSS>
                 </configuration>
@@ -131,7 +131,7 @@
                     <minimumPriority>5</minimumPriority>
                     <!-- Add multiple rulesets for fine-grained control of file exclusions per rule -->
                     <rulesets>
-                        <ruleset>${project.basedir}/pmd-configuration.xml</ruleset>
+                        <ruleset>${testSourceDirectory}/pmd-configuration.xml</ruleset>
                     </rulesets>
                 </configuration>
             </plugin>
