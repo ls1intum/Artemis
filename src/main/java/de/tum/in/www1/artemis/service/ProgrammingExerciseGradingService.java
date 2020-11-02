@@ -384,7 +384,7 @@ public class ProgrammingExerciseGradingService {
             }
 
             // The score is calculated as a percentage of the maximum points
-            long score = (long) (successfulTestPoints / maxScoreRespectingZeroPointExercises * 100.0);
+            long score = Math.round(successfulTestPoints / maxScoreRespectingZeroPointExercises * 100.0);
 
             result.setScore(score);
         }
