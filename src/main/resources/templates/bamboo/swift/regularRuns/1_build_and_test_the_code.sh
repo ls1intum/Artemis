@@ -1,14 +1,8 @@
-cd assignment
+echo "---------- mv assignment to root ----------"
+mv assignment/Sources .
 
-echo "move Tests to assignment"
-mv ../Tests .
-
-echo "use Package.swift file from test repo"
-rm Package.swift
-mv ../Package.swift .
-
-echo "swift build"
+echo "---------- swift build ----------"
 swift build
 
-echo "swift test"
+echo "---------- swift test ----------"
 swift test
