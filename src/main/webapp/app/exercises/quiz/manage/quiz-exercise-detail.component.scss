@@ -1,9 +1,17 @@
 @import 'src/main/webapp/content/scss/artemis-mixins';
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+.title{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    & > span{
+        margin-bottom: 10px;
+    }
+}
 
 .edit-quiz {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     margin-bottom: 100px;
 
     #quiz-title {
@@ -31,12 +39,29 @@
             width: 3.25rem;
         }
 
-        .question-title {
+        .question-card-header-inputs {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            @media (max-width: map-get($grid-breakpoints, 'md')) {
+                flex: 100%;
+            }
+            .question-score {
+                flex: 1;
+            }
+        }
+
+        .question-title,
+        .question-score {
             flex: 1;
 
             input.form-control {
                 width: 100%;
             }
+        }
+
+        .question-type {
+            margin-bottom: 15px;
         }
 
         .mc-question,
@@ -87,9 +112,9 @@
                 height: 350px;
             }
         }
+
         /** css style for child components end **/
     }
-
     .edit-quiz-footer {
         height: 80px;
         position: fixed;
@@ -102,6 +127,48 @@
 
         .container {
             height: 100%;
+        }
+    }
+
+    .existing-question-select-course {
+        display: flex;
+        align-items: center;
+    }
+
+    .existing-question-filter {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        padding: 10px;
+
+        .search-query {
+            flex: 1;
+            margin-bottom: 10px;
+        }
+
+        .checkboxes {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            margin: 0 10px 10px 0;
+            .custom-checkbox {
+                margin-left: 10px;
+            }
+        }
+        button {
+            margin-bottom: 10px;
+        }
+        @media (max-width: map-get($grid-breakpoints, 'md')) {
+            .checkboxes {
+                margin: 10px 0;
+                width: 100%;
+                .custom-checkbox {
+                    &:first-of-type {
+                        margin-left: 0;
+                    }
+                }
+            }
         }
     }
 }

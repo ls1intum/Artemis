@@ -213,7 +213,12 @@
             },
             "explanationAnswered": "Du hast die Frage beantwortet",
             "explanationNotAnswered": "Du hast die Frage noch nicht beantwortet",
-            "submissionWarning": "Bist du sicher, dass du einreichen willst? Du hast nicht alle Fragen beantwortet und hast noch etwas Zeit übrig!"
+            "submissionWarning": "Bist du sicher, dass du einreichen willst? Du hast nicht alle Fragen beantwortet und hast noch etwas Zeit übrig!",
+            "placeholder":{
+                "title": "Kurzer Quiz Titel",
+                "questionTitle":"Frage Titel",
+                "shortQuestionTitle": "Kurzer Frage Title"
+            }
         },
         "quizLiveModal": {
             "title": "Go-Live einer neuen Quiz-Übung",
@@ -221,5 +226,6 @@
             "cancelButton": "Abbrechen",
             "goToButton": "Weiter zum Quiz"
         }
+       
     }
 }

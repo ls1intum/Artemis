@@ -8,22 +8,24 @@
         >
             <fa-icon size="3x" [icon]="isQuestionCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
         </button>
-        <div class="form-group question-title col-lg-9 col-md-7 col-sm-12 col-xs-12">
-            <input class="form-control" [(ngModel)]="question.title" (ngModelChange)="questionUpdated.emit()" placeholder="Short Question Title" />
+        <div class="form-group question-title">
+            <input class="form-control" [(ngModel)]="question.title" (ngModelChange)="questionUpdated.emit()" placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | translate}}" />
         </div>
-        <div class="form-group col-lg-2 col-md-3 col-sm-7 col-xs-8">
+        <div class="question-card-header-inputs">
+        <div class="form-group question-score">
             <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
             <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score" (ngModelChange)="questionUpdated.emit()" />
         </div>
-        <div class="col-lg-1 col-md-2 col-sm-4 col-xs-4">
-            <h3><span class="badge badge-warning align-text-top">DnD</span></h3>
+        <div class="question-type">
+            <h3 class="mb-0"><span class="badge badge-warning align-text-top">DnD</span></h3>
+        </div>
         </div>
     </div>
     <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex }}">
         <div class="row" *ngIf="reEvaluationInProgress">
             <div class="col-md-10 text-left">
                 <div class="input-group">
-                    <input class="form-control" [(ngModel)]="question.title" (ngModelChange)="questionUpdated.emit()" placeholder="Question Title" style="height: 33px" />
+                    <input class="form-control" [(ngModel)]="question.title" (ngModelChange)="questionUpdated.emit()" placeholder="{{ 'artemisApp.quizExercise.placeholder.questionTitle' | translate}}" style="height: 33px" />
                     <span class="input-group-btn">
                         <button class="btn btn-outline-secondary" type="button" (click)="resetQuestionTitle()">
                             <fa-icon [icon]="'undo'"></fa-icon>

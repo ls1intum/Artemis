@@ -219,6 +219,11 @@
                 "body": "The Quiz {{quizName}} for Course {{courseName}} is now live! Click on the 'Go to Quiz' button in order to access the quiz.",
                 "cancelButton": "Cancel",
                 "goToButton": "Go to quiz"
+            },
+            "placeholder":{
+                "title": "Short Quiz Title",
+                "questionTitle":"Question Title",
+                "shortQuestionTitle": "Short Question Title"
             }
         }
     }
