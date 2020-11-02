@@ -1,11 +1,11 @@
 import XCTest
 @testable import swiftExerciseLib
 
-class SortTests: XCTestCase {  
+class SortTests: XCTestCase {
     let dateFormat: DateFormatter = DateFormatter()
     var unorderedDates: [Date]!
     var orderedDates: [Date]!
-    
+
     static var allTests = [
         ("testBubbleSort", testBubbleSort),
         ("testMergeSort", testMergeSort),
@@ -35,13 +35,13 @@ class SortTests: XCTestCase {
         let bubbleSort: BubbleSort = BubbleSort()
         bubbleSort.performSort(&unorderedDates)
 
-        XCTAssertEqual(unorderedDates, orderedDates, "BubbleSort does not sort correctly.")
+        XCTAssertEqual(unorderedDates!, orderedDates!, "BubbleSort does not sort correctly.")
     }
-    
+
     func testMergeSort() {
         let mergeSort: MergeSort = MergeSort()
         mergeSort.performSort(&unorderedDates)
 
-        XCTAssertEqual(unorderedDates, orderedDates, "MergeSort does not sort correctly.")
+        XCTAssertEqual(unorderedDates!, orderedDates!, "MergeSort does not sort correctly.")
     }
 }

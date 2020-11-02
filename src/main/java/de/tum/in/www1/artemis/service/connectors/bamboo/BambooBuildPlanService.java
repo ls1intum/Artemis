@@ -183,8 +183,11 @@ public class BambooBuildPlanService {
             case HASKELL -> {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/test-reports/*.xml");
             }
-            case VHDL, ASSEMBLER, SWIFT -> {
+            case VHDL, ASSEMBLER -> {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/result.xml");
+            }
+            case SWIFT -> {
+                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/tests.xml");
             }
             // this is needed, otherwise the compiler complaints with missing return statement
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
