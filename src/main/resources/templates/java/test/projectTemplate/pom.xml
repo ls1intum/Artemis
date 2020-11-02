@@ -13,6 +13,9 @@
     <name>${exerciseName} Tests</name>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        %static-code-analysis-start%
+        <analyzeTests>false</analyzeTests>
+        %static-code-analysis-stop%
 	</properties>
     <dependencies>
         <dependency>
@@ -65,12 +68,21 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.1.3</version>
+                <version>4.1.4</version>
                 <configuration>
-                    <xmlOutput>true</xmlOutput>
                     <!-- Do not analyze the files in the test directory -->
-                    <includeTests>false</includeTests>
+                    <includeTests>${analyzeTests}</includeTests>
+                    <xmlOutput>true</xmlOutput>
+                    <!-- Do not report bugs matching the rules defined in this file -->
                     <excludeFilterFile>${project.basedir}/spotbugs-exclusions.xml</excludeFilterFile>
+                    <!-- Only include bugs matching the rules defined in this file -->
+                    <includeFilterFile/>
+                    <!-- Analysis with high effort are more precise and can potentially find more bugs at the cost of
+                    memory consumption and computation time. See https://spotbugs.readthedocs.io/en/stable/effort.html
+                    for more information -->
+                    <effort/>
+                    <!-- Minimum bug severity to report. Low reports all bugs -->
+                    <threshold>Low</threshold>
                 </configuration>
             </plugin>
             <plugin>
@@ -81,9 +93,19 @@
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>8.36.2</version>
+                        <version>8.37</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <!-- Do not analyze the files in the test directory -->
+                    <includeTestSourceDirectory>${analyzeTests}</includeTestSourceDirectory>
+                    <!-- Use the Artemis default configuration. Two other predefined rulesets are available:
+                     Add sun_checks.xml to check for the official Oracle code conventions or add google_checks.xml to
+                     check for the Google's Java Style Guide -->
+                    <configLocation>${project.basedir}/checkstyle-configuration.xml</configLocation>
+                    <!-- No documentation and not needed -->
+                    <enableRSS>false</enableRSS>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -93,14 +115,24 @@
                     <dependency>
                         <groupId>net.sourceforge.pmd</groupId>
                         <artifactId>pmd-core</artifactId>
-                        <version>6.28.0</version>
+                        <version>6.29.0</version>
                     </dependency>
                     <dependency>
                         <groupId>net.sourceforge.pmd</groupId>
                         <artifactId>pmd-java</artifactId>
-                        <version>6.28.0</version>
+                        <version>6.29.0</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <!-- Do not analyze the files in the test directory -->
+                    <includeTests>${analyzeTests}</includeTests>
+                    <!-- Bugs reported have at least this priority. 1 is the highest and 5 is the lowest priority -->
+                    <minimumPriority>5</minimumPriority>
+                    <!-- Add multiple rulesets for fine-grained control of file exclusions per rule -->
+                    <rulesets>
+                        <ruleset>${project.basedir}/pmd-configuration.xml</ruleset>
+                    </rulesets>
+                </configuration>
             </plugin>
             %static-code-analysis-stop%
         </plugins>
