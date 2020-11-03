@@ -2,6 +2,7 @@ package ${packageName};
 
 import java.text.*;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class Client {
 
