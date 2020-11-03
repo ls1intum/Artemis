@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { DifferencePipe } from 'ngx-moment';
 import { HttpResponse } from '@angular/common/http';
+import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -321,5 +322,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.paramSub.unsubscribe();
         this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise);
+    }
+
+    formatDate(date: Moment | Date | undefined) {
+        return date ? moment(date).format('MMM DD YYYY, HH:mm:ss') : '';
     }
 }
