@@ -167,7 +167,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
         this.attachment.setAttachmentUnit(persistedAttachmentUnit);
         var persistedAttachment = request.postWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.CREATED);
 
-        request.delete("/api/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
+        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachment.getId(), HttpStatus.NOT_FOUND, Attachment.class);
 
     }

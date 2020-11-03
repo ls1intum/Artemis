@@ -133,7 +133,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
     public void deleteVideoUnit_correctId_shouldDeleteVideoUnit() throws Exception {
         var persistedVideoUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.CREATED);
         assertThat(persistedVideoUnit.getId()).isNotNull();
-        request.delete("/api/lecture-units/" + persistedVideoUnit.getId(), HttpStatus.OK);
+        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedVideoUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/video-units/" + persistedVideoUnit.getId(), HttpStatus.NOT_FOUND, VideoUnit.class);
     }
 
