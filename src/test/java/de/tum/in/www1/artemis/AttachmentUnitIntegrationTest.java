@@ -56,7 +56,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
     private void testAllPreAuthorize() throws Exception {
         request.put("/api/lectures/" + lecture1.getId() + "/attachment-units", attachmentUnit, HttpStatus.FORBIDDEN);
         request.post("/api/lectures/" + lecture1.getId() + "/attachment-units", attachmentUnit, HttpStatus.FORBIDDEN);
-        request.get("/api/attachment-units/0", HttpStatus.FORBIDDEN, AttachmentUnit.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/0", HttpStatus.FORBIDDEN, AttachmentUnit.class);
     }
 
     @AfterEach
@@ -154,7 +154,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
 
         this.attachment.setAttachmentUnit(this.attachmentUnit);
         this.attachment = attachmentRepository.save(attachment);
-        this.attachmentUnit = request.get("/api/attachment-units/" + this.attachmentUnit.getId(), HttpStatus.OK, AttachmentUnit.class);
+        this.attachmentUnit = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + this.attachmentUnit.getId(), HttpStatus.OK, AttachmentUnit.class);
         assertThat(this.attachmentUnit.getAttachment()).isEqualTo(this.attachment);
     }
 
@@ -168,7 +168,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
         var persistedAttachment = request.postWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.CREATED);
 
         request.delete("/api/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
-        request.get("/api/attachments/" + persistedAttachment.getId(), HttpStatus.NOT_FOUND, Attachment.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachment.getId(), HttpStatus.NOT_FOUND, Attachment.class);
 
     }
 

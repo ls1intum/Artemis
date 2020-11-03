@@ -44,14 +44,14 @@ public class AttachmentUnitResource {
     }
 
     /**
-     * GET /attachment-units/:attachmentUnitId : gets the attachment unit with the specified id
+     * GET /lectures/:lectureId/attachment-units/:attachmentUnitId : gets the attachment unit with the specified id
      *
      * @param attachmentUnitId the id of the attachmentUnit to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the attachment unit, or with status 404 (Not Found)
      */
-    @GetMapping("/attachment-units/{attachmentUnitId}")
+    @GetMapping("/lectures/{lectureId}/attachment-units/{attachmentUnitId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    public ResponseEntity<AttachmentUnit> getAttachmentUnit(@PathVariable Long attachmentUnitId) {
+    public ResponseEntity<AttachmentUnit> getAttachmentUnit(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentUnit : {}", attachmentUnitId);
         Optional<AttachmentUnit> optionalAttachmentUnit = attachmentUnitRepository.findById(attachmentUnitId);
         if (optionalAttachmentUnit.isEmpty()) {
@@ -59,6 +59,9 @@ public class AttachmentUnitResource {
         }
         AttachmentUnit attachmentUnit = optionalAttachmentUnit.get();
         if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null) {
+            return conflict();
+        }
+        if (!attachmentUnit.getLecture().getId().equals(lectureId)) {
             return conflict();
         }
 
