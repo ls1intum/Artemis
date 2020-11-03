@@ -371,7 +371,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private handleFeedback(): void {
         // Setup automatic feedback
-        this.automaticFeedback = this.automaticResult?.feedbacks!;
+        this.automaticFeedback = this.automaticResult?.feedbacks ?? [];
         this.automaticFeedback.forEach((feedback) => {
             feedback.id = undefined;
             if (!feedback.credits) {
