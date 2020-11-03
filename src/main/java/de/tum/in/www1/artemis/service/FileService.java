@@ -195,7 +195,7 @@ public class FileService implements DisposableBean {
         String filename = Paths.get(actualPath).getFileName().toString();
 
         // generate part for id
-        String id = entityId == null ? Constants.FILEPATH_ID_PLACHEOLDER : entityId.toString();
+        String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
 
         // check for known path to convert
         if (actualPath.contains(FilePathService.getTempFilepath())) {

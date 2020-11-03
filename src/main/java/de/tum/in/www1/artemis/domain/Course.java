@@ -440,8 +440,8 @@ public class Course extends DomainObject {
     @PostLoad
     public void onLoad() {
         // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
-        if (courseIcon != null && courseIcon.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
-            courseIcon = courseIcon.replace(Constants.FILEPATH_ID_PLACHEOLDER, getId().toString());
+        if (courseIcon != null && courseIcon.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
+            courseIcon = courseIcon.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
         }
         prevCourseIcon = courseIcon; // save current path as old path (needed to know old path in onUpdate() and onDelete())
     }
@@ -455,8 +455,8 @@ public class Course extends DomainObject {
     @PostPersist
     public void afterCreate() {
         // replace placeholder with actual id if necessary (id is no longer null at this point)
-        if (courseIcon != null && courseIcon.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
-            courseIcon = courseIcon.replace(Constants.FILEPATH_ID_PLACHEOLDER, getId().toString());
+        if (courseIcon != null && courseIcon.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
+            courseIcon = courseIcon.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
         }
     }
 
