@@ -77,6 +77,8 @@
             "addDragAndDropQuestion": "Drag-And-Drop Frage hinzufügen",
             "addShortAnswerQuestion": "Short-Answer Frage hinzufügen",
             "addExistingQuestions": "Vorhandene Fragen hinzufügen",
+            "fromAFile": "Aus einer Datei",
+            "fromACourse": "Von einem Kurs",
             "selectCourse": "Wähle einen Kurs",
             "selectQuizExercise": "Wähle eine Quiz Übung aus",
             "addSelectedQuestions": "Ausgewählte Fragen hinzufügen",

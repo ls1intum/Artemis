@@ -1,5 +1,4 @@
 @import 'src/main/webapp/content/scss/artemis-mixins';
-@import 'src/main/webapp/content/scss/artemis-variables';
 
 .title {
     display: flex;
@@ -54,7 +53,7 @@
             align-items: center;
             justify-content: space-between;
 
-            @media (max-width: map-get($grid-breakpoints, 'md')) {
+            @media (max-width: 699px) {
                 flex: 100%;
             }
 
@@ -170,7 +169,7 @@
             margin-bottom: 10px;
         }
 
-        @media (max-width: map-get($grid-breakpoints, 'md')) {
+        @media (max-width: 699px) {
             .checkboxes {
                 margin: 10px 0;
                 width: 100%;

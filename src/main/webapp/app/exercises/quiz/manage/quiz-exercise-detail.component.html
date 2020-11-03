@@ -198,8 +198,8 @@
             <div class="edit-quiz-footer">
                 <div class="container">
                     <div class="edit-quiz-footer-content">
-                        <div class="form-group flex-fill ml-1" *ngIf="!isExamMode">
-                            <div class="form-group flex-fill" *ngIf="quizExercise.id">
+                        <div class="form-group flex-fill ml-1" *ngIf="!isExamMode && quizExercise.id">
+                            <div class="form-group flex-fill">
                                 <input
                                     minlength="3"
                                     type="text"
@@ -315,14 +315,14 @@
                         [ngClass]="{ 'btn-primary': !showExistingQuestionsFromAnotherCourse, 'btn-default': showExistingQuestionsFromAnotherCourse }"
                         (click)="setExistingQuestionSourceToCourse(false)"
                     >
-                        From a file
+                        <span jhiTranslate="artemisApp.quizExercise.fromAFile"></span>
                     </div>
                     <div
                         class="btn"
                         [ngClass]="{ 'btn-primary': showExistingQuestionsFromAnotherCourse, 'btn-default': !showExistingQuestionsFromAnotherCourse }"
                         (click)="setExistingQuestionSourceToCourse(true)"
                     >
-                        From a course
+                        <span jhiTranslate="artemisApp.quizExercise.fromACourse"></span>
                     </div>
                 </div>
             </div>

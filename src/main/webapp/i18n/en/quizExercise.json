@@ -77,6 +77,8 @@
             "addDragAndDropQuestion": "Add Drag-And-Drop Question",
             "addShortAnswerQuestion": "Add Short-Answer Question",
             "addExistingQuestions": "Add Existing Questions",
+            "fromAFile": "From a file",
+            "fromACourse": "From a course",
             "addSelectedQuestions": "Add Selected Questions",
             "selectCourse": "Select a Course",
             "selectQuizExercise": "Select a Quiz Exercise",
