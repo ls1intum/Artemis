@@ -92,7 +92,7 @@ public final class Client {
      * @return random long within the given range
      */
     private static long randomLongWithin(long low, long high) {
-        return low + (long) (Math.random() * (high - low));
+        return ThreadLocalRandom.current().nextLong(low, high + 1);
     }
 
     /**
