@@ -47,6 +47,7 @@ public class AttachmentUnitResource {
      * GET /lectures/:lectureId/attachment-units/:attachmentUnitId : gets the attachment unit with the specified id
      *
      * @param attachmentUnitId the id of the attachmentUnit to retrieve
+     * @param lectureId the id of the lecture to which the unit belongs
      * @return the ResponseEntity with status 200 (OK) and with body the attachment unit, or with status 404 (Not Found)
      */
     @GetMapping("/lectures/{lectureId}/attachment-units/{attachmentUnitId}")

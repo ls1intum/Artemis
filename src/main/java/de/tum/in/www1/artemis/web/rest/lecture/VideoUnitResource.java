@@ -47,6 +47,7 @@ public class VideoUnitResource {
      * GET lectures/:lectureId/video-units/:videoUnitId: gets the video unit with the specified id
      *
      * @param videoUnitId the id of the videoUnit to retrieve
+     * @param lectureId the id of the lecture to which the unit belongs
      * @return the ResponseEntity with status 200 (OK) and with body the video unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/video-units/{videoUnitId}")

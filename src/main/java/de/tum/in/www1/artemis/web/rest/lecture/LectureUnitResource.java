@@ -94,7 +94,7 @@ public class LectureUnitResource {
 
     /**
      * DELETE lectures/:lectureId/lecture-units/:lectureUnitId
-     *
+     * @param lectureId the id of the lecture to which the unit belongs
      * @param lectureUnitId the id of the lecture unit to remove
      * @return the ResponseEntity with status 200 (OK)
      */
