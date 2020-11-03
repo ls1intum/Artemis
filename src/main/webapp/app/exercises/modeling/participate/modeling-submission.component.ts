@@ -237,8 +237,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
             if (this.autoSaveTimer >= 60 && !this.canDeactivate()) {
-                // attempt once every 60 seconds to save
-                this.autoSaveTimer = 0;
                 this.saveDiagram();
             }
         }, 1000);
@@ -265,6 +263,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
         this.updateSubmissionModel();
         this.isSaving = true;
+        this.autoSaveTimer = 0;
 
         if (this.submission.id) {
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.id!).subscribe(
