@@ -1,0 +1,65 @@
+on: 
+  workflow_dispatch:
+    inputs:
+      host:
+        description: 'Testserver'
+        required: true
+        default: 'artemistest5'
+      branch:
+        description: 'Branch'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+# Downlaod WAR file from latest build in branch
+    - run: echo "Deploy Branach \"Artemis.war\" to \"${{ github.event.inputs.host }}\""
+    - name: Download Artemis WAR artifact
+      uses: dawidd6/action-download-artifact@v2
+      with:
+        github_token: ${{secrets.GITHUB_TOKEN}}
+        workflow: build.yml
+        branch: Artemis.war
+        name: Artemis.war
+    - run: ls -l
+
+# Install vpnc and connect to MWN
+    - name: Install, configure, connect, and test LRZ VPN
+# Fill config from Secret (https://www.lrz.de/services/netz/mobil/vpnpda/)
+      run: |
+        sudo apt-get install vpnc
+        echo "${{ secrets.LRZ_VPN_CONFIG }}" > lrz.conf
+        sudo mkdir -p /etc/vpnc
+        sudo mv lrz.conf /etc/vpnc/
+        sudo chmod 600 /etc/vpnc/lrz.conf
+        sudo vpnc lrz
+        ping -c 5 sophos.lrz.de
+
+# Configure SSH Key
+    - name: Setup SSH Keys and known_hosts
+      env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan ${{ github.event.inputs.host }}.ase.in.tum.de >> ~/.ssh/known_hosts
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+
+# Downlaod artemis-server-cli from GH without cloning the Repo
+    - name: Fetch Artemis CLI
+      run: |
+        wget https://raw.githubusercontent.com/ls1intum/Artemis/develop/artemis-server-cli
+        chmod +x artemis-server-cli
+
+    - name: Deploy Artemis WAR artifact
+      env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      run: ./artemis-server-cli deploy bamboo@${{ github.event.inputs.host }}.ase.in.tum.de -w ./Artemis.war
+
+# Always disconnect from VPN
+    - name: Disconncet VPN
+      run: |
+        sudo vpnc-disconnect
+        sudo rm /etc/vpnc/lrz.conf
+      if: always()
