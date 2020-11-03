@@ -16,17 +16,27 @@ public class Client {
     // TODO: Create and implement a Context class according to the UML class diagram
     // TODO: Create and implement a Policy class as described in the problem statement
 
+    private static final int ITERATIONS = 10;
+
+    private static final int RANDOM_FLOOR = 5;
+
+    private static final int RANDOM_CEILING = 15;
+
+    private Client() {
+    }
+
     /**
      * Main method.
      * Add code to demonstrate your implementation here.
+     *
+     * @param args command line arguments
      */
     public static void main(String[] args) throws ParseException {
 
         // TODO: Init Context and Policy
 
-
-        // Run 10 times to simulate different sorting strategies for different Array sizes
-        for (int i = 0; i < 10; i++) {
+        // Run multiple times to simulate different sorting strategies for different Array sizes
+        for (int i = 0; i < ITERATIONS; i++) {
             List<Date> dates = createRandomDatesList();
 
             // TODO: Configure context
@@ -42,15 +52,19 @@ public class Client {
     }
 
     /**
-     * Generates a List of random Date objects with random List size between 5 and 15.
+     * Generates a List of random Date objects with random List size between
+     * {@link #RANDOM_FLOOR} and {@link #RANDOM_CEILING}.
+     *
+     * @return a List of random Date objects
+     * @throws ParserException if date string cannot be parsed
      */
     private static List<Date> createRandomDatesList() throws ParseException {
-        int listLength = RandomUtils.nextInt(5, 15);
+        int listLength = RandomUtils.nextInt(RANDOM_FLOOR, RANDOM_CEILING);
         List<Date> list = new ArrayList<>();
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         Date lowestDate = dateFormat.parse("08.11.2016");
-        Date highestDate = dateFormat.parse("15.04.2019");
+        Date highestDate = dateFormat.parse("03.11.2020");
 
         for (int i = 0; i < listLength; i++) {
             Date randomDate = randomDateWithin(lowestDate, highestDate);
@@ -60,7 +74,11 @@ public class Client {
     }
 
     /**
-     * Creates a random Date within given Range
+     * Creates a random Date within the given range.
+     *
+     * @param low the lower bound
+     * @param high the upper bound
+     * @return random Date within the given range
      */
     private static Date randomDateWithin(Date low, Date high) {
         long randomLong = RandomUtils.nextLong(low.getTime(), high.getTime());
@@ -68,7 +86,9 @@ public class Client {
     }
 
     /**
-     * Prints out given Array of Date objects
+     * Prints out the given Array of Date objects.
+     *
+     * @param list of the dates to print
      */
     private static void printDateList(List<Date> list) {
         System.out.println(list.toString());
