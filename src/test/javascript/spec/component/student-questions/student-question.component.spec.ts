@@ -1,5 +1,6 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
+import { ActivatedRoute } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { StudentQuestionComponent } from 'app/overview/student-questions/student-question/student-question.component';
@@ -8,6 +9,7 @@ import { StudentQuestion } from 'app/entities/student-question.model';
 import { User } from 'app/core/user/user.model';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -51,6 +53,7 @@ describe('StudentQuestionComponent', () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
             declarations: [StudentQuestionComponent],
+            providers: [{ provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects }],
         })
             .overrideTemplate(StudentQuestionComponent, '')
             .compileComponents()
