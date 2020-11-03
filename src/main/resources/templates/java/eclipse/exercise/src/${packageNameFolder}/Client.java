@@ -91,7 +91,7 @@ public final class Client {
      * @return random long within the given range
      */
     private static long randomLongWithin(long low, long high) {
-        return low + RANDOM.nextLong() * (high - low);
+        return low + (long) Math.random() * (high - low);
     }
 
     /**
@@ -102,7 +102,7 @@ public final class Client {
      * @return random int within the given range
      */
     private static int randomIntegerWithin(int low, int high) {
-        return low + RANDOM.nextInt() * (high - low);
+        return low + (int) Math.random() * (high - low);
     }
 
     /**
