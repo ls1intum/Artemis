@@ -139,10 +139,8 @@ public class ProgrammingExerciseService {
         // Save participations to get the ids required for the webhooks
         connectBaseParticipationsToExerciseAndSave(programmingExercise);
 
-        setupExerciseTemplate(programmingExercise, user, programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getTestRepositoryUrlAsUrl(),
-                programmingExercise.getSolutionRepositoryUrlAsUrl());
-        setupBuildPlansForNewExercise(programmingExercise, programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getTestRepositoryUrlAsUrl(),
-                programmingExercise.getSolutionRepositoryUrlAsUrl());
+        setupExerciseTemplate(programmingExercise, user);
+        setupBuildPlansForNewExercise(programmingExercise);
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
@@ -165,8 +163,13 @@ public class ProgrammingExerciseService {
         instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExerciseId);
     }
 
-    private void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl) {
+    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
+        // Get URLs for repos
+        URL exerciseRepoUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
+        URL testsRepoUrl = programmingExercise.getTestRepositoryUrlAsUrl();
+        URL solutionRepoUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
+
         continuousIntegrationService.get().createProjectForExercise(programmingExercise);
         // template build plan
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
@@ -213,12 +216,13 @@ public class ProgrammingExerciseService {
      * Setup the exercise template by determining the files needed for the template and copying them.
      * @param programmingExercise the programming exercise that should be set up
      * @param user the User that performed the action (used as Git commit author)
-     * @param exerciseRepoUrl the URL where the exercise repo is located
-     * @param testsRepoUrl the URL where the tests repo is located
-     * @param solutionRepoUrl the URL where the solution repo is located
      */
-    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl)
-            throws IOException, GitAPIException, InterruptedException {
+    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user) throws IOException, GitAPIException, InterruptedException {
+
+        // Get URLs for repos
+        URL exerciseRepoUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
+        URL testsRepoUrl = programmingExercise.getTestRepositoryUrlAsUrl();
+        URL solutionRepoUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
 
         // Checkout repositories
         Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl, true);
