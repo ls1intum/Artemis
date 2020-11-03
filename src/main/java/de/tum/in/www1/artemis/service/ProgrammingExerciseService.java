@@ -131,24 +131,18 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final var user = userService.getUser();
-        final var projectKey = programmingExercise.getProjectKey();
-        // TODO: the following code is used quite often and should be done in only one place
-        final var exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        final var solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
-        final var exerciseRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).getURL();
-        final var testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).getURL();
-        final var solutionRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).getURL();
 
-        createRepositoriesForNewExercise(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
+        createRepositoriesForNewExercise(programmingExercise);
         initParticipations(programmingExercise);
-        setURLsAndBuildPlanIDsForNewExercise(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
+        setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
 
         // Save participations to get the ids required for the webhooks
         connectBaseParticipationsToExerciseAndSave(programmingExercise);
 
-        setupExerciseTemplate(programmingExercise, user, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
-        setupBuildPlansForNewExercise(programmingExercise, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
+        setupExerciseTemplate(programmingExercise, user, programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getTestRepositoryUrlAsUrl(),
+                programmingExercise.getSolutionRepositoryUrlAsUrl());
+        setupBuildPlansForNewExercise(programmingExercise, programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getTestRepositoryUrlAsUrl(),
+                programmingExercise.getSolutionRepositoryUrlAsUrl());
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
@@ -198,16 +192,19 @@ public class ProgrammingExerciseService {
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
     }
 
-    private void setURLsAndBuildPlanIDsForNewExercise(ProgrammingExercise programmingExercise, String exerciseRepoName, String testRepoName, String solutionRepoName) {
+    private void setURLsAndBuildPlanIDsForNewExercise(ProgrammingExercise programmingExercise) {
         final var projectKey = programmingExercise.getProjectKey();
         final var templateParticipation = programmingExercise.getTemplateParticipation();
         final var solutionParticipation = programmingExercise.getSolutionParticipation();
-        final var templatePlanName = TEMPLATE.getName();
-        final var solutionPlanName = SOLUTION.getName();
+        final var templatePlanId = programmingExercise.getBuildPlanId(TEMPLATE);
+        final var solutionPlanId = programmingExercise.getBuildPlanId(SOLUTION);
+        final var exerciseRepoName = programmingExercise.getRepositoryName(RepositoryType.TEMPLATE);
+        final var solutionRepoName = programmingExercise.getRepositoryName(RepositoryType.SOLUTION);
+        final var testRepoName = programmingExercise.getRepositoryName(RepositoryType.TESTS);
 
-        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName); // Set build plan id to newly created BaseBuild plan
+        templateParticipation.setBuildPlanId(templatePlanId); // Set build plan id to newly created BaseBuild plan
         templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
-        solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
+        solutionParticipation.setBuildPlanId(solutionPlanId);
         solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
     }
@@ -307,12 +304,12 @@ public class ProgrammingExerciseService {
         return "classpath:templates/" + programmingLanguage.name().toLowerCase();
     }
 
-    private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise, String templateRepoName, String testRepoName, String solutionRepoName) {
+    private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) {
         final var projectKey = programmingExercise.getProjectKey();
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
-        versionControlService.get().createRepository(projectKey, templateRepoName, null); // Create template repository
-        versionControlService.get().createRepository(projectKey, testRepoName, null); // Create tests repository
-        versionControlService.get().createRepository(projectKey, solutionRepoName, null); // Create solution repository
+        versionControlService.get().createRepository(projectKey, programmingExercise.getRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
+        versionControlService.get().createRepository(projectKey, programmingExercise.getRepositoryName(RepositoryType.TESTS), null); // Create tests repository
+        versionControlService.get().createRepository(projectKey, programmingExercise.getRepositoryName(RepositoryType.SOLUTION), null); // Create solution repository
     }
 
     /**

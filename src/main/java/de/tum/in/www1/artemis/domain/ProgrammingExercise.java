@@ -271,6 +271,30 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
+     * Returns the repository name for a given repository type.
+     *
+     * @param repositoryType The repository type
+     * @return The repository name
+     */
+    @JsonIgnore
+    public String getRepositoryName(RepositoryType repositoryType) {
+        generateAndSetProjectKey();
+        return this.projectKey.toLowerCase() + "-" + repositoryType.getName();
+    }
+
+    /**
+     * Returns the build plan id for a given build plan type.
+     *
+     * @param buildPlanType The build plan type
+     * @return The build plan id
+     */
+    @JsonIgnore
+    public String getBuildPlanId(BuildPlanType buildPlanType) {
+        generateAndSetProjectKey();
+        return this.projectKey + "-" + buildPlanType.getName();
+    }
+
+    /**
      * Generates a unique project key based on the course short name and the exercise short name. This should only be used
      * for instantiating a new exercise
      *
