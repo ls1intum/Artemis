@@ -120,8 +120,10 @@ public class AchievementService {
         if (optionalUser.isEmpty()) {
             return;
         }
-        var user = optionalUser.get();
-        user = userRepository.findOneWithEagerAchievements(user.getId());
+        var user = userRepository.findOneWithEagerAchievements(optionalUser.get().getId());
+        if (user == null) {
+            return;
+        }
 
         var pointBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.POINT);
         var pointRank = pointBasedAchievementService.checkForAchievement(result, pointBasedAchievements);
