@@ -42,6 +42,12 @@ describe('Submission Service', () => {
         req.flush({ status: 200 });
     });
 
+    it('should get test run submission for a given exercise', async () => {
+        service.getTestRunSubmissionsForExercise(123).subscribe((resp) => expect(resp.ok));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush({ status: 200 });
+    });
+
     afterEach(() => {
         httpMock.verify();
     });
