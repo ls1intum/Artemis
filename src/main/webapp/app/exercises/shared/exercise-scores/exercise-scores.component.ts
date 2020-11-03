@@ -8,7 +8,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { take, tap } from 'rxjs/operators';
-import { of, zip } from 'rxjs';
+import { of, zip, forkJoin } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -90,11 +90,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
             this.isLoading = true;
-            this.courseService.find(params['courseId']).subscribe((res: HttpResponse<Course>) => {
-                this.course = res.body!;
-            });
-            this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
-                this.exercise = res.body!;
+            const findCourse = this.courseService.find(params['courseId']);
+            const findExercise = this.exerciseService.find(params['exerciseId']);
+
+            forkJoin(findCourse, findExercise).subscribe(([courseRes, exerciseRes]) => {
+                this.course = courseRes.body!;
+                this.exercise = exerciseRes.body!;
                 // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
                 zip(this.getResults(), this.loadAndCacheProgrammingExerciseSubmissionState())
                     .pipe(take(1))
