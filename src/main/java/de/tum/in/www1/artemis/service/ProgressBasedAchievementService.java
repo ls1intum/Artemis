@@ -39,6 +39,7 @@ public class ProgressBasedAchievementService {
      * @param course the given course
      * @param user the given user
      * @param achievements all progress based achievements within the given course
+     * @return the highest rank reached, returns null if no rank was reached
      */
     public AchievementRank checkForAchievement(Course course, User user, Set<Achievement> achievements) {
         var participations = studentParticipationRepository.findAllByCourseIdAndUserId(course.getId(), user.getId());

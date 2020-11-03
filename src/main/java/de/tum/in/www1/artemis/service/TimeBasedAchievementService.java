@@ -36,6 +36,7 @@ public class TimeBasedAchievementService {
      * Checks whether a user earned time based achievements
      * @param result the result which is checked if it earned any achievements
      * @param achievements all time based achievements within the given course
+     * @return the highest rank reached by the result, returns null if no rank was reached
      */
     public AchievementRank checkForAchievement(Result result, Set<Achievement> achievements) {
         if (result.getScore() == null || !achievements.iterator().hasNext() || result.getScore() < achievements.iterator().next().getMinScoreToQualify()) {

@@ -32,6 +32,7 @@ public class PointBasedAchievementService {
      * Checks whether a user earned point based achievements
      * @param result the result which is checked if it earned any achievements
      * @param achievements all point based achievements within the given course
+     * @return the highest rank reached by the result, returns null if no rank was reached
      */
     public AchievementRank checkForAchievement(Result result, Set<Achievement> achievements) {
         var score = result.getScore();
