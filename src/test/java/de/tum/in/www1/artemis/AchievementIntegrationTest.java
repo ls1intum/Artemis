@@ -113,7 +113,8 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testRewardAchievement() throws Exception {
-        var submission = database.addModelingSubmissionWithEmptyResult(firstExercise, "", student.getLogin());
+        var submission = ModelFactory.generateModelingSubmission("", true);
+        submission = database.addModelingSubmission(firstExercise, submission, student.getLogin());
         var result = ModelFactory.generateResult(true, 100).participation(submission.getParticipation());
         resultRepository.save(result);
         var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
