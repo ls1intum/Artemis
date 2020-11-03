@@ -448,7 +448,7 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise,
-            @PathVariable boolean recreateBuildPlans) {
+            @RequestParam(defaultValue = "false") boolean recreateBuildPlans) {
         if (sourceExerciseId < 0) {
             return badRequest();
         }
