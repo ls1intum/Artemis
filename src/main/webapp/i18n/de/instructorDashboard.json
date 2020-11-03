@@ -27,6 +27,7 @@
         "exportRepos": {
             "warning": "Export zustimmen",
             "title": "Abgaben herunterladen",
+            "titleSingle": "Abgabe herunterladen",
             "questions": {
                 "individual": "Tragen sie hier alle Kennungen der Studenten ein, die heruntergeladen werden sollen getrennt durch ein Komma (z.B. ga87fix,ga63dut)",
                 "team": "Tragen sie hier alle Kurznamen der Teams ein, die heruntergeladen werden sollen getrennt durch ein Komma (z.B. team1,team2)"

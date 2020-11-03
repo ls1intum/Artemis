@@ -11,6 +11,7 @@ import { FileService } from 'app/shared/http/file.service';
 import { Attachment } from 'app/entities/attachment.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { AttachmentService } from 'app/lecture/attachment.service';
+import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { StudentQuestionsComponent } from 'app/overview/student-questions/student-questions.component';
 
 @Component({
@@ -22,6 +23,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     public lecture: Lecture | null;
     public isDownloadingLink: string | null;
+    public lectureUnits: LectureUnit[] = [];
+    readonly LectureUnitType = LectureUnitType;
     private studentQuestions?: StudentQuestionsComponent;
 
     constructor(
@@ -53,6 +56,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 this.lecture = null;
                 this.lectureService.find(params.lectureId).subscribe((lectureResponse: HttpResponse<Lecture>) => {
                     this.lecture = lectureResponse.body;
+                    if (this.lecture?.lectureUnits) {
+                        this.lectureUnits = this.lecture.lectureUnits;
+                    }
                     if (this.studentQuestions && this.lecture) {
                         // We need to manually update the lecture property of the student questions component
                         this.studentQuestions.lecture = this.lecture;

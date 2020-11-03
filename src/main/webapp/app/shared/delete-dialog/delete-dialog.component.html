@@ -5,6 +5,7 @@
             <span *ngSwitchCase="actionTypes.Reset" jhiTranslate="entity.reset.title">Confirm reset operation</span>
             <span *ngSwitchCase="actionTypes.Cleanup" jhiTranslate="entity.cleanup.title">Confirm cleanup operation</span>
             <span *ngSwitchCase="actionTypes.Remove" jhiTranslate="entity.remove.title">Confirm remove operation</span>
+            <span *ngSwitchCase="actionTypes.Unlink" jhiTranslate="entity.unlink.title">Confirm unlink operation</span>
         </h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
@@ -41,6 +42,7 @@
             <span *ngSwitchCase="actionTypes.Reset" jhiTranslate="entity.action.reset">Reset</span>
             <span *ngSwitchCase="actionTypes.Cleanup" jhiTranslate="entity.action.cleanup">Cleanup</span>
             <span *ngSwitchCase="actionTypes.Remove" jhiTranslate="entity.action.remove">Remove</span>
+            <span *ngSwitchCase="actionTypes.Unlink" jhiTranslate="entity.action.unlink">Unlink</span>
         </button>
     </div>
 </form>

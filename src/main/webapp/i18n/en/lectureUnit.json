@@ -1,0 +1,66 @@
+{
+    "artemisApp": {
+        "lectureUnit": {
+            "home": {
+                "title": "Lecture Modules"
+            },
+            "unitCreationCard": {
+                "title": "Add a new Lecture Unit",
+                "text": "Text",
+                "exercise": "Exercise",
+                "video": "Video",
+                "file": "File"
+            },
+            "releaseDate": "Release Date"
+        },
+        "attachmentUnit": {
+            "created": "A new attachment unit created",
+            "updated": "Attachment unit updated",
+            "notReleasedTooltip": "Only visible to teaching assistants and instructors. Release date:",
+            "createAttachmentUnit": {
+                "title": "Create Attachment Unit",
+                "name": "Name",
+                "namePlaceHolder": "Give the attachment a name",
+                "description": "Description",
+                "updateNotificationText": "Update Notification Text",
+                "updateNotificationTextPlaceholder": "Optional notification text for students about changes.",
+                "updateNotificationTextMaxLengthValidationError": "The notification text can be max 255 characters long.",
+                "descriptionPlaceHolder": "Give the attachment a description",
+                "nameRequiredValidationError": "Name is required.",
+                "nameMaxLengthValidationError": "Name can be max 255 characters long.",
+                "descriptionMaxLengthValidationError": "Description can be max 255 characters long.",
+                "file": "File",
+                "version": "Version",
+                "fileRequiredValidationError": "You must select a file to upload.",
+                "chooseFile": "Choose File",
+                "fileLimitations": "Supported Types: \".png\", \".jpg\", \".jpeg\", \".svg\", \".pdf\", \".zip\". Max. file size 10 mb"
+            },
+            "editAttachmentUnit": {
+                "title": "Edit Attachment Unit"
+            },
+            "tooltip": "This is an Attachment.",
+            "uploadDate": "Upload Date",
+            "version": "Version",
+            "FileName": "Filename",
+            "description": "Description",
+            "delete": {
+                "question": "Do you really want to delete the attachment unit <strong>{{ title }}</strong>? The attachment will also be removed! You can not undo this action!",
+                "typeNameToConfirm": "Please enter the name of the attachment for confirmation.",
+                "buttonText": "Delete"
+            }
+        },
+        "exerciseUnit": {
+            "created": "Exercise connected with lecture",
+            "createExerciseUnit": {
+                "title": "Exercise Unit",
+                "headline": "Connect an Exercise with the Lecture",
+                "description": "Select all the Exercises to connect with the Lecture."
+            },
+            "delete": {
+                "question": "Do you really want to unlink the exercise <strong>{{ title }}</strong>? The exercise will be kept! You can not undo this action!",
+                "typeNameToConfirm": "Please enter the name of the exercise for confirmation.",
+                "buttonText": "Unlink"
+            }
+        }
+    }
+}

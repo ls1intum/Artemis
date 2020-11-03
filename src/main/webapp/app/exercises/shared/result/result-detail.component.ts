@@ -142,7 +142,7 @@ export class ResultDetailComponent implements OnInit {
                         type: FeedbackItemType.Issue,
                         category: 'Code Issue',
                         title: `${scaCategory} Issue in file ${this.getIssueLocation(scaIssue)}`.trim(),
-                        text: `${scaIssue.rule}: ${scaIssue.message}`,
+                        text: this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message,
                         positive: false,
                         credits: feedback.credits,
                     };

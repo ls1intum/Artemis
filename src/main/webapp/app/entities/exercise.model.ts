@@ -13,6 +13,7 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
 import { Team } from 'app/entities/team.model';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { LearningGoal } from 'app/entities/learningGoal.model';
 
 export enum DifficultyLevel {
     EASY = 'EASY',
@@ -85,6 +86,7 @@ export abstract class Exercise implements BaseEntity {
     public exerciseHints?: ExerciseHint[];
     public gradingCriteria?: GradingCriterion[];
     public exerciseGroup?: ExerciseGroup;
+    public learningGoals?: LearningGoal[];
 
     // transient objects which might not be set
     public numberOfSubmissions?: DueDateStat;
