@@ -103,7 +103,7 @@ public final class Client {
      * @return random int within the given range
      */
     private static int randomIntegerWithin(int low, int high) {
-        return low + (int) (Math.random() * (high - low));
+        return ThreadLocalRandom.current().nextInt(low, high + 1);
     }
 
     /**
