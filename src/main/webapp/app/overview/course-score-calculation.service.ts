@@ -29,7 +29,7 @@ export class CourseScoreCalculationService {
         let presentationScore = 0;
         for (const exercise of courseExercises) {
             if (exercise.maxScore != null && (!exercise.dueDate || exercise.dueDate.isBefore(moment()))) {
-                maxScore = maxScore + exercise.maxScore + (exercise.bonusPoints ?? 0);
+                maxScore = maxScore + exercise.maxScore;
                 const participation = this.getParticipationForExercise(exercise);
                 if (participation) {
                     const result = this.getResultForParticipation(participation, exercise.dueDate!);
@@ -40,7 +40,7 @@ export class CourseScoreCalculationService {
                             score = 0;
                         }
                         absoluteScore = absoluteScore + score * this.SCORE_NORMALIZATION_VALUE * exercise.maxScore;
-                        reachableScore += exercise.maxScore + (exercise.bonusPoints ?? 0);
+                        reachableScore += exercise.maxScore;
                     }
                     presentationScore += participation.presentationScore ? participation.presentationScore : 0;
 
@@ -49,7 +49,7 @@ export class CourseScoreCalculationService {
                         reachableScore += exercise.maxScore;
                     }
                 } else {
-                    reachableScore += exercise.maxScore + (exercise.bonusPoints ?? 0);
+                    reachableScore += exercise.maxScore;
                 }
             }
         }
