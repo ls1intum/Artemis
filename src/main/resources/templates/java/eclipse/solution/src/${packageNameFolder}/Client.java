@@ -2,6 +2,7 @@ package ${packageName};
 
 import java.text.*;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class Client {
 
@@ -86,7 +87,7 @@ public final class Client {
      * @return random long within the given range
      */
     private static long randomLongWithin(long low, long high) {
-        return low + (long) (Math.random() * (high - low));
+        return ThreadLocalRandom.current().nextLong(low, high + 1);
     }
 
     /**
@@ -97,7 +98,7 @@ public final class Client {
      * @return random int within the given range
      */
     private static int randomIntegerWithin(int low, int high) {
-        return low + (int) (Math.random() * (high - low));
+        return ThreadLocalRandom.current().nextInt(low, high + 1);
     }
 
     /**
