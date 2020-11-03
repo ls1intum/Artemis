@@ -8,10 +8,10 @@ First, we need to implement two sorting algorithms, in this case `MergeSort` and
 
 **You have the following tasks:**
 
-1. [Implement Bubble Sort](testBubbleSort)
+1. [task][Implement Bubble Sort](testBubbleSort)
 Implement the method `performSort([Date])` in the class `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.
 
-2. [Implement Merge Sort](testMergeSort)
+2. [task][Implement Merge Sort](testMergeSort)
 Implement the method `performSort([Date])` in the class `MergeSort`. Make sure to follow the Merge Sort algorithm exactly.
 
 ### Part 2: Strategy Pattern
@@ -21,19 +21,19 @@ Use the strategy pattern to select the right sorting algorithm at runtime.
 
 **You have the following tasks:**
 
-1. [SortStrategy Protocol]
+1. **SortStrategy Protocol**
 Create a `SortStrategy` protocol and adjust the sorting algorithms so that they implement this protocol.
 
-2. [Context Class]
+2. **Context Class**
 Create and implement a `Context` class following the below class diagram
 
-3. [Context Policy]
+3. **Context Policy**
 Create and implement a `Policy` class following the below class diagram with a simple configuration mechanism:
 
-    1. [Select MergeSort]
+    1. **Select MergeSort**
     Select `MergeSort` when the Array has more than 10 dates.
 
-    2. [Select BubbleSort]
+    2. **Select BubbleSort**
     Select `BubbleSort` when the Array has less or equal 10 dates.
 
 4. Complete the `Client` class which demonstrates switching between two strategies at runtime.
