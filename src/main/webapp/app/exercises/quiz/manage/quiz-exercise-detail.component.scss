@@ -39,7 +39,7 @@
             margin-top: -15px;
             width: 3.25rem;
         }
-        
+
         .question-title,
         .question-score {
             flex: 1;
@@ -48,11 +48,12 @@
                 width: 100%;
             }
         }
-        
+
         .question-card-header-inputs {
             display: flex;
             align-items: center;
             justify-content: space-between;
+
             @media (max-width: map-get($grid-breakpoints, 'md')) {
                 flex: 100%;
             }
@@ -127,9 +128,11 @@
         box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
         background: white;
         padding-top: 10px;
+
         .container {
             height: 100%;
-            .edit-quiz-footer-content{
+
+            .edit-quiz-footer-content {
                 flex-wrap: wrap;
             }
         }
@@ -157,6 +160,7 @@
             align-items: center;
             justify-content: space-around;
             margin: 0 10px 10px 0;
+
             .custom-checkbox {
                 margin-left: 10px;
             }
@@ -170,6 +174,7 @@
             .checkboxes {
                 margin: 10px 0;
                 width: 100%;
+
                 .custom-checkbox {
                     &:first-of-type {
                         margin-left: 0;

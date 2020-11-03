@@ -9,17 +9,23 @@
             <fa-icon size="3x" [icon]="isQuestionCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
         </button>
         <div class="form-group question-title">
-            <input id="mc-question-title" class="form-control" [(ngModel)]="question.title" (ngModelChange)="questionUpdated.emit()" placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | translate}}" />
+            <input
+                id="mc-question-title"
+                class="form-control"
+                [(ngModel)]="question.title"
+                (ngModelChange)="questionUpdated.emit()"
+                placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | translate }}"
+            />
         </div>
         <div class="question-card-header-inputs">
-        <div class="form-group question-score">
-            <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-            <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score" (ngModelChange)="questionUpdated.emit()" />
+            <div class="form-group question-score">
+                <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
+                <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score" (ngModelChange)="questionUpdated.emit()" />
+            </div>
+            <div class="question-type">
+                <h3 class="mb-0"><span class="badge badge-info align-text-top">MC</span></h3>
+            </div>
         </div>
-        <div class="question-type">
-            <h3 class="mb-0"><span class="badge badge-info align-text-top">MC</span></h3>
-        </div>
-    </div>
     </div>
     <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex }}">
         <div class="question-options" [hidden]="showPreview">

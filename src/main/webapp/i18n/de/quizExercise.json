@@ -214,9 +214,9 @@
             "explanationAnswered": "Du hast die Frage beantwortet",
             "explanationNotAnswered": "Du hast die Frage noch nicht beantwortet",
             "submissionWarning": "Bist du sicher, dass du einreichen willst? Du hast nicht alle Fragen beantwortet und hast noch etwas Zeit übrig!",
-            "placeholder":{
+            "placeholder": {
                 "title": "Kurzer Quiz Titel",
-                "questionTitle":"Frage Titel",
+                "questionTitle": "Frage Titel",
                 "shortQuestionTitle": "Kurzer Frage Title"
             }
         },
@@ -226,6 +226,5 @@
             "cancelButton": "Abbrechen",
             "goToButton": "Weiter zum Quiz"
         }
-       
     }
 }
