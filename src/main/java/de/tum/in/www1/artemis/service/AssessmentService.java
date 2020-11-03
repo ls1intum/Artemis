@@ -75,7 +75,6 @@ public class AssessmentService {
         // Set score and resultString according to maxScore, to establish results with score > 100%
         result.setScore(totalScore, maxScore);
         result.setResultString(totalScore, maxScore);
-
         return resultRepository.save(result);
     }
 
