@@ -132,6 +132,17 @@ export class CourseScoreCalculationService {
                 return chosenResult;
             }
 
+            const gracePeriodInSeconds = 10;
+            if (dueDate == null || dueDate.add(gracePeriodInSeconds, 'seconds') >= resultsArray[0].completionDate!) {
+                // find the first result that is before the due date
+                chosenResult = resultsArray[0];
+            } else if (dueDate.add(gracePeriodInSeconds, 'seconds') < resultsArray[0].completionDate!) {
+                chosenResult = new Result();
+                chosenResult.score = 0;
+            } else {
+                chosenResult = resultsArray[resultsArray.length - 1];
+            }
+
             const ratedResults = resultsArray.filter((el) => el.rated);
 
             if (ratedResults.length === 1) {
@@ -148,17 +159,6 @@ export class CourseScoreCalculationService {
                 }
                 return 0;
             });
-
-            const gracePeriodInSeconds = 10;
-            if (dueDate == null || dueDate.add(gracePeriodInSeconds, 'seconds') >= resultsArray[0].completionDate!) {
-                // find the first result that is before the due date
-                chosenResult = resultsArray[0];
-            } else if (dueDate.add(gracePeriodInSeconds, 'seconds') < resultsArray[0].completionDate!) {
-                chosenResult = new Result();
-                chosenResult.score = 0;
-            } else {
-                chosenResult = resultsArray[resultsArray.length - 1];
-            }
         } else {
             chosenResult = new Result();
             chosenResult.score = 0;
