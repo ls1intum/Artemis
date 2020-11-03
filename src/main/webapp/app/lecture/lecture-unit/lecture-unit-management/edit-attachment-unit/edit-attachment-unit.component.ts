@@ -45,7 +45,7 @@ export class EditAttachmentUnitComponent implements OnInit {
                 switchMap((params) => {
                     const attachmentUnitId = Number(params.get('attachmentUnitId'));
                     this.lectureId = Number(params.get('lectureId'));
-                    return this.attachmentUnitService.findById(attachmentUnitId);
+                    return this.attachmentUnitService.findById(attachmentUnitId, this.lectureId);
                 }),
                 finalize(() => {
                     this.isLoading = false;

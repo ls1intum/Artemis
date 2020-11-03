@@ -7568,6 +7568,11 @@ js-base64@^2.1.8:
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"
   integrity sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==
 
+js-video-url-parser@0.4.2:
+  version "0.4.2"
+  resolved "https://registry.yarnpkg.com/js-video-url-parser/-/js-video-url-parser-0.4.2.tgz#db14c7e99cccac183708c00d4d8ba66da122d227"
+  integrity sha512-8EFeqsPxhrGdkKj6v2PSTkWznTDV+9fQZpvlz4uEBCFbLPGDU7vY/RNeeH6QufHzTjHI8QaW4xP6fzch2EHmoA==
+
 js-yaml@3.14.0, js-yaml@^3.13.1:
   version "3.14.0"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.14.0.tgz#a7a34170f26a21bb162424d8adacb4113a69e482"

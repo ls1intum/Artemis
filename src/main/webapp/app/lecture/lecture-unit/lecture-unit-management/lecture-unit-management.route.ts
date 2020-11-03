@@ -5,6 +5,8 @@ import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture
 import { CreateExerciseUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
 import { CreateAttachmentUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-attachment-unit/create-attachment-unit.component';
 import { EditAttachmentUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-attachment-unit/edit-attachment-unit.component';
+import { CreateVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-video-unit/create-video-unit.component';
+import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-video-unit/edit-video-unit.component';
 
 export const lectureUnitRoute: Routes = [
     {
@@ -38,6 +40,22 @@ export const lectureUnitRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.attachmentUnit.editAttachmentUnit.title',
+        },
+    },
+    {
+        path: ':courseId/lectures/:lectureId/unit-management/video-units/create',
+        component: CreateVideoUnitComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.videoUnit.createVideoUnit.title',
+        },
+    },
+    {
+        path: ':courseId/lectures/:lectureId/unit-management/video-units/:videoUnitId/edit',
+        component: EditVideoUnitComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.videoUnit.editVideoUnit.title',
         },
     },
 ];
