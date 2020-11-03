@@ -2,6 +2,7 @@ import { Moment } from 'moment';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 export const enum AttachmentType {
     FILE = 'FILE',
@@ -18,6 +19,7 @@ export class Attachment implements BaseEntity {
     attachmentType?: AttachmentType;
     lecture?: Lecture;
     exercise?: Exercise;
+    attachmentUnit?: AttachmentUnit;
 
     constructor() {}
 }

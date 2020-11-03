@@ -12,6 +12,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import interact from 'interactjs';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-student-questions',
@@ -21,6 +22,7 @@ import interact from 'interactjs';
 export class StudentQuestionsComponent implements OnInit, AfterViewInit {
     @Input() exercise: Exercise;
     @Input() lecture: Lecture;
+
     studentQuestions: StudentQuestion[];
     isEditMode: boolean;
     collapsed = false;
@@ -32,7 +34,12 @@ export class StudentQuestionsComponent implements OnInit, AfterViewInit {
     domainCommands = [new KatexCommand()];
     courseId: number;
 
-    constructor(private accountService: AccountService, private studentQuestionService: StudentQuestionService, private exerciseService: ExerciseService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private accountService: AccountService,
+        private studentQuestionService: StudentQuestionService,
+        private exerciseService: ExerciseService,
+    ) {}
 
     /**
      * get the current user and check if he is at least a tutor for this course
@@ -41,12 +48,16 @@ export class StudentQuestionsComponent implements OnInit, AfterViewInit {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
         });
+        this.loadQuestions();
+    }
+
+    loadQuestions() {
         if (this.exercise) {
             // in this case the student questions are preloaded
             this.studentQuestions = StudentQuestionsComponent.sortStudentQuestionsByVote(this.exercise.studentQuestions!);
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
             this.courseId = this.exercise.course!.id!;
-        } else {
+        } else if (this.lecture) {
             // in this case the student questions are preloaded
             this.studentQuestions = StudentQuestionsComponent.sortStudentQuestionsByVote(this.lecture.studentQuestions!);
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.lecture.course!);

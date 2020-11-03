@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -260,6 +261,15 @@ public class DatabaseUtilService {
 
     @Autowired
     private DatabaseCleanupService databaseCleanupService;
+
+    @Value("${info.guided-tour.course-group-students:#{null}}")
+    private Optional<String> tutorialGroupStudents;
+
+    @Value("${info.guided-tour.course-group-tutors:#{null}}")
+    private Optional<String> tutorialGroupTutors;
+
+    @Value("${info.guided-tour.course-group-instructors:#{null}}")
+    private Optional<String> tutorialGroupInstructors;
 
     public void resetDatabase() {
         databaseCleanupService.clearDatabase();
@@ -1549,6 +1559,17 @@ public class DatabaseUtilService {
     }
 
     /**
+     * @return A tutorial course with the names specified in application-dev or application-prod
+     */
+    public Course addTutorialCourse() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), tutorialGroupStudents.get(), tutorialGroupTutors.get(),
+                tutorialGroupInstructors.get());
+        courseRepo.save(course);
+        assertThat(courseRepo.findById(course.getId())).as("tutorial course is initialized").isPresent();
+        return course;
+    }
+
+    /**
      * @param title The title reflect the genre of exercise that will be added to the course
      * @return A course that is added in other group different from the group that created in beforeEach() method
      */
@@ -1818,6 +1839,11 @@ public class DatabaseUtilService {
         submission.setResult(result);
         submission.getParticipation().addResult(result);
         submission = programmingSubmissionRepo.save(submission);
+        // Manual results are always rated and have a resultString which is defined in the client
+        if (assessmentType.equals(AssessmentType.SEMI_AUTOMATIC)) {
+            result.rated(true);
+            result.resultString("1 of 13 passed, 1 issue, 5 of 10 points");
+        }
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
@@ -1960,6 +1986,7 @@ public class DatabaseUtilService {
         submission = saveTextSubmissionWithResultAndAssessor(exercise, submission, studentLogin, null, assessorLogin);
         Result result = submission.getResult();
         for (Feedback feedback : feedbacks) {
+            // this also invoked feedback.setResult(result)
             result.addFeedback(feedback);
         }
         // this automatically saves the feedback because of the CascadeType.All annotation

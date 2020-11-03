@@ -163,6 +163,10 @@ public class FileService implements DisposableBean {
             String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
             return FilePathService.getLectureAttachmentFilepath() + lectureId + filename;
         }
+        if (publicPath.contains("files/attachments/attachment-unit")) {
+            String attachmentUnitId = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "");
+            return FilePathService.getAttachmentUnitFilePath() + attachmentUnitId + filename;
+        }
         if (publicPath.contains("files/file-upload-exercises")) {
             final var uploadSubPath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
             final var shouldBeExerciseId = uploadSubPath[0];
@@ -191,7 +195,7 @@ public class FileService implements DisposableBean {
         String filename = Paths.get(actualPath).getFileName().toString();
 
         // generate part for id
-        String id = entityId == null ? Constants.FILEPATH_ID_PLACHEOLDER : entityId.toString();
+        String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
 
         // check for known path to convert
         if (actualPath.contains(FilePathService.getTempFilepath())) {
@@ -208,6 +212,9 @@ public class FileService implements DisposableBean {
         }
         if (actualPath.contains(FilePathService.getLectureAttachmentFilepath())) {
             return "/api/files/attachments/lecture/" + id + "/" + filename;
+        }
+        if (actualPath.contains(FilePathService.getAttachmentUnitFilePath())) {
+            return "/api/files/attachments/attachment-unit/" + id + "/" + filename;
         }
         if (actualPath.contains(FilePathService.getFileUploadExercisesFilepath())) {
             final var path = Paths.get(actualPath);
@@ -249,6 +256,9 @@ public class FileService implements DisposableBean {
         }
         if (targetFolder.contains(FilePathService.getLectureAttachmentFilepath())) {
             filenameBase = "LectureAttachment_";
+        }
+        if (targetFolder.contains(FilePathService.getAttachmentUnitFilePath())) {
+            filenameBase = "AttachmentUnit_";
         }
 
         // extract the file extension
@@ -320,6 +330,14 @@ public class FileService implements DisposableBean {
             // special case for 'Makefile' files which would not be included in the build otherwise
             if (targetFilePath.endsWith("Makefile.file")) {
                 targetFilePath = targetFilePath.replace("Makefile.file", "Makefile");
+            }
+            // special case for '.project' files which would not be included in the build otherwise
+            if (targetFilePath.endsWith("project.file")) {
+                targetFilePath = targetFilePath.replace("project.file", ".project");
+            }
+            // special case for '.classpath' files which would not be included in the build otherwise
+            if (targetFilePath.endsWith("classpath.file")) {
+                targetFilePath = targetFilePath.replace("classpath.file", ".classpath");
             }
 
             Path copyPath = Paths.get(targetDirectoryPath + targetFilePath);

@@ -206,8 +206,6 @@ public class ExerciseResource {
         }
 
         StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise, exercise.hasExerciseGroup());
-        stats.setNumberOfOpenComplaints(0L);
-        stats.setNumberOfOpenMoreFeedbackRequests(0L);
 
         return ResponseEntity.ok(stats);
     }

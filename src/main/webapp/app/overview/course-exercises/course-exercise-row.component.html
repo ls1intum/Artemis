@@ -7,12 +7,14 @@
     <div class="col">
         <div class="row">
             <div class="col-auto d-sm-none">
-                <h4><fa-icon [icon]="getIcon(exercise.type)"></fa-icon></h4>
+                <h4>
+                    <fa-icon [icon]="getIcon(exercise.type)"></fa-icon>
+                </h4>
             </div>
             <div class="col-sm col">
                 <h4>{{ exercise.title }}</h4>
             </div>
-            <jhi-submission-result-status [exercise]="exercise" [short]="true"></jhi-submission-result-status>
+            <jhi-submission-result-status *ngIf="!isPresentationMode" [exercise]="exercise" [short]="true"></jhi-submission-result-status>
         </div>
         <div class="row">
             <jhi-exercise-details-student-actions
@@ -25,6 +27,7 @@
                 [equalColumns]="false"
                 [exercise]="exercise"
                 [ngClass]="'mt-2 mb-2'"
+                *ngIf="!isPresentationMode"
             ></jhi-exercise-details-student-actions>
             <div class="exercise-tags col-auto col-sm d-flex justify-content-center mt-2">
                 <h4>
@@ -37,7 +40,7 @@
                         {{ 'artemisApp.courseOverview.exerciseList.notReleased' | translate }}</span
                     >
                 </h4>
-                <h4>
+                <h4 *ngIf="!isPresentationMode">
                     <span class="badge badge-success mr-1" [hidden]="!asQuizExercise(exercise).isActiveQuiz">{{ 'artemisApp.courseOverview.exerciseList.live' | translate }}</span>
                 </h4>
                 <h4 *ngFor="let category of exerciseCategories">

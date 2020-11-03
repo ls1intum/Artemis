@@ -1,0 +1,96 @@
+<form class="row">
+    <div class="col-12">
+        <form [formGroup]="form" (ngSubmit)="submitForm()">
+            <div class="form-group">
+                <label class="required" for="name">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.name' | translate }}*</label>
+                <input
+                    type="text"
+                    class="form-control"
+                    id="name"
+                    formControlName="name"
+                    [placeholder]="'artemisApp.attachmentUnit.createAttachmentUnit.namePlaceHolder' | translate"
+                />
+                <div *ngIf="nameControl?.invalid && (nameControl?.dirty || nameControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="nameControl?.errors?.required">
+                        {{ 'artemisApp.attachmentUnit.createAttachmentUnit.nameRequiredValidationError' | translate }}
+                    </div>
+                    <div *ngIf="nameControl?.errors?.maxlength">
+                        {{ 'artemisApp.attachmentUnit.createAttachmentUnit.nameMaxLengthValidationError' | translate }}
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="description">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.description' | translate }}</label>
+                <textarea
+                    class="form-control"
+                    id="description"
+                    rows="3"
+                    formControlName="description"
+                    [placeholder]="'artemisApp.attachmentUnit.createAttachmentUnit.descriptionPlaceHolder' | translate"
+                ></textarea>
+                <div *ngIf="descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="descriptionControl?.errors?.maxlength">
+                        {{ 'artemisApp.attachmentUnit.createAttachmentUnit.descriptionMaxLengthValidationError' | translate }}
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="required">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.file' | translate }}*</label>
+                <small id="fileHelp" class="form-text text-muted">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitations' | translate }}</small>
+                <div class="input-group background-file">
+                    <div class="custom-file overflow-ellipsis">
+                        <input
+                            #fileInput
+                            id="fileInput"
+                            type="file"
+                            class="custom-file-input"
+                            (change)="onFileChange($event)"
+                            aria-describedby="fileHelp"
+                            placeholder="fileNamePlaceholder"
+                            (click)="fileInputTouched = true"
+                        />
+                        <label class="custom-file-label overflow-ellipsis" for="fileInput">{{ fileName }}</label>
+                    </div>
+                </div>
+                <ng-container *ngIf="fileUploadErrorMessage">
+                    <div id="too-large-file-alert" class="alert alert-danger">
+                        {{ fileUploadErrorMessage }}
+                    </div>
+                </ng-container>
+                <div *ngIf="fileName === fileNamePlaceholder && fileInputTouched && !this.fileUploadErrorMessage" class="alert alert-danger">
+                    {{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError' | translate }}
+                </div>
+            </div>
+            <div class="form-group">
+                <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | translate" formControlName="releaseDate"></jhi-date-time-picker>
+            </div>
+            <div class="form-group" [hidden]="!isEditMode">
+                <label for="updateNotificationText">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.updateNotificationText' | translate }}</label>
+                <textarea
+                    class="form-control"
+                    id="updateNotificationText"
+                    rows="3"
+                    formControlName="updateNotificationText"
+                    [placeholder]="'artemisApp.attachmentUnit.createAttachmentUnit.updateNotificationTextPlaceholder' | translate"
+                    maxlength="255"
+                ></textarea>
+                <div *ngIf="updateNotificationTextControl?.invalid && (updateNotificationTextControl?.dirty || updateNotificationTextControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="updateNotificationTextControl?.errors?.maxlength">
+                        {{ 'artemisApp.attachmentUnit.createAttachmentUnit.updateNotificationTextMaxLengthValidationError' | translate }}
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="version">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.version' | translate }}</label>
+                <input id="version" class="form-control" type="text" readonly formControlName="version" />
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <button class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                        <span>{{ 'entity.action.submit' | translate }}</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</form>

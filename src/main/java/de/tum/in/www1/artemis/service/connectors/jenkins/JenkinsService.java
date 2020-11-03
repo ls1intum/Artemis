@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -38,8 +39,14 @@ import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.FolderJob;
 import com.offbytwo.jenkins.model.JobWithDetails;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -372,11 +379,22 @@ public class JenkinsService implements ContinuousIntegrationService {
         // Extract test case feedback
         for (final var testSuite : report.getResults()) {
             for (final var testCase : testSuite.getTestCases()) {
-                var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMessage());
-                var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMessage());
+                var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMostInformativeMessage());
+                var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMostInformativeMessage());
                 var errorList = errorMessage.or(() -> failureMessage).map(List::of).orElse(Collections.emptyList());
+                boolean successful = Optional.ofNullable(testCase.getErrors()).map(List::isEmpty).orElse(true)
+                        && Optional.ofNullable(testCase.getFailures()).map(List::isEmpty).orElse(true);
 
-                result.addFeedback(feedbackService.createFeedbackFromTestCase(testCase.getName(), errorList, errorList.isEmpty(), programmingLanguage));
+                if (!successful && errorList.isEmpty()) {
+                    var errorType = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getType());
+                    var failureType = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getType());
+                    var message = errorType.or(() -> failureType).map(t -> String.format("Unsuccessful due to an error of type: %s", t));
+                    if (message.isPresent()) {
+                        errorList = List.of(message.get());
+                    }
+                }
+
+                result.addFeedback(feedbackService.createFeedbackFromTestCase(testCase.getName(), errorList, successful, programmingLanguage));
             }
         }
 

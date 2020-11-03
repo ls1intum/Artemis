@@ -13,39 +13,27 @@
     Feedbacks container
 -->
     <ng-template #feedbackContainer>
-        <ng-container *ngIf="!loadingFailed && feedbackList && feedbackList.length; else buildLogsContainer">
-            <div *ngFor="let feedback of feedbackList | removepositiveautomaticfeedback; last as isLast">
-                <p *ngIf="feedback.type === 'AUTOMATIC' && feedback.positive === false && showTestNames">
-                    Error in &nbsp;<span class="code-error">{{ feedback.text }}</span
-                    >:
-                </p>
-                <p *ngIf="feedback.type === 'AUTOMATIC' && feedback.positive === undefined && showTestNames">
-                    No result information for &nbsp;<span class="code-warning">{{ feedback.text }}:</span>
-                </p>
-                <p *ngIf="feedback.type === 'MANUAL' && !feedback.positive">
-                    <span class="code-error">Feedback &nbsp;{{ feedback.text }}:</span>
-                </p>
-                <p *ngIf="feedback.type === 'MANUAL' && feedback.positive">
-                    <span class="code-success">Feedback &nbsp;{{ feedback.text }}:</span>
-                </p>
-                <pre *ngIf="feedback.detailText">{{ feedback.detailText }}</pre>
-                <pre *ngIf="!feedback.detailText">No feedback available</pre>
-                <hr *ngIf="!isLast" />
+        <div *ngIf="!loadingFailed && filteredFeedbackList && filteredFeedbackList.length; else buildLogsContainer" class="result-detail-container">
+            <div *ngIf="showScoreChart && result.participation?.exercise" class="result-score-chart">
+                <span class="result-score-chart-title"
+                    ><span jhiTranslate="artemisApp.result.score">Score</span>: {{ result.score }}%
+                    <span *ngIf="resultIsPreliminary()" class="badge badge-warning" [ngbTooltip]="'artemisApp.result.preliminaryTooltip' | translate">{{
+                        'artemisApp.result.preliminary' | translate | uppercase
+                    }}</span>
+                </span>
+                <div style="height: 100px"><jhi-chart [preset]="scoreChartPreset"></jhi-chart></div>
+                <hr />
             </div>
-        </ng-container>
-        <!-- Static Code Analysis Feedback -->
-        <ng-container *ngIf="!loadingFailed && staticCodeAnalysisIssues && staticCodeAnalysisIssues.length">
-            <hr />
-            <h6>Static Code Analysis Issues</h6>
-            <hr />
-            <div *ngFor="let issue of staticCodeAnalysisIssues; last as isLast">
-                <p>
-                    Issue in file <span class="code-error">{{ issue | staticCodeAnalysisLocationText }}</span> detected:
-                </p>
-                <pre>{{ issue.message }}</pre>
-                <hr *ngIf="!isLast" />
+            <div class="feedback-list">
+                <div *ngFor="let feedback of filteredFeedbackList; last as isLast" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedback)]">
+                    <span>{{ feedback.category }}</span>
+                    <span class="feedback-points" *ngIf="feedback.credits">{{ feedback.credits.toFixed(1) }}P</span>
+                    <span class="feedback-title" *ngIf="feedback.title">{{ feedback.title }}</span>
+                    <p *ngIf="feedback.text">{{ feedback.text }}</p>
+                    <p *ngElse>No feedback available</p>
+                </div>
             </div>
-        </ng-container>
+        </div>
     </ng-template>
     <!--
     Build logs container
