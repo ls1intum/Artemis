@@ -15,6 +15,10 @@ When using pip, consider using [Python virtual environments].
 ```bash
 pip install -r requirements.txt
 ```
+or
+```bash
+pip3 install -r requirements.txt
+```
 The [Installing Sphinx] documentation explains more install options.
 
 ## Running Sphinx Locally
