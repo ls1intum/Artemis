@@ -29,7 +29,7 @@ export class CreateVideoUnitComponent implements OnInit {
         this.videoUnitToCreate = new VideoUnit();
     }
 
-    createAttachmentUnit(formData: VideoUnitFormData) {
+    createVideoUnit(formData: VideoUnitFormData) {
         if (!formData?.name || !formData?.source) {
             return;
         }
