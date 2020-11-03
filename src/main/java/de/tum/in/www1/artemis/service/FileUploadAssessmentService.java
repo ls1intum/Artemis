@@ -85,7 +85,6 @@ public class FileUploadAssessmentService extends AssessmentService {
             fileUploadSubmission.setResult(result);
             fileUploadSubmissionRepository.save(fileUploadSubmission);
         }
-
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.
         return resultRepository.save(result);
