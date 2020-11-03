@@ -44,14 +44,14 @@ public class VideoUnitResource {
     }
 
     /**
-     * GET /video-units/:videoUnitId : gets the video unit with the specified id
+     * GET lectures/:lectureId/video-units/:videoUnitId: gets the video unit with the specified id
      *
      * @param videoUnitId the id of the videoUnit to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the video unit, or with status 404 (Not Found)
      */
-    @GetMapping("/video-units/{videoUnitId}")
+    @GetMapping("lectures/{lectureId}/video-units/{videoUnitId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    public ResponseEntity<VideoUnit> getVideoUnit(@PathVariable Long videoUnitId) {
+    public ResponseEntity<VideoUnit> getVideoUnit(@PathVariable Long videoUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get VideoUnit : {}", videoUnitId);
         Optional<VideoUnit> optionalVideoUnit = videoUnitRepository.findById(videoUnitId);
         if (optionalVideoUnit.isEmpty()) {
@@ -61,7 +61,9 @@ public class VideoUnitResource {
         if (videoUnit.getLecture() == null || videoUnit.getLecture().getCourse() == null) {
             return conflict();
         }
-
+        if (!videoUnit.getLecture().getId().equals(lectureId)) {
+            return conflict();
+        }
         if (!authorizationCheckService.isAtLeastInstructorInCourse(videoUnit.getLecture().getCourse(), null)) {
             return forbidden();
         }

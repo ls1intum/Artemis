@@ -50,7 +50,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
     private void testAllPreAuthorize() throws Exception {
         request.put("/api/lectures/" + lecture1.getId() + "/video-units", videoUnit, HttpStatus.FORBIDDEN);
         request.post("/api/lectures/" + lecture1.getId() + "/video-units", videoUnit, HttpStatus.FORBIDDEN);
-        request.get("/api/video-units/0", HttpStatus.FORBIDDEN, AttachmentUnit.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/video-units/0", HttpStatus.FORBIDDEN, AttachmentUnit.class);
     }
 
     @AfterEach
@@ -124,7 +124,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
         lecture1.addLectureUnit(this.videoUnit);
         lectureRepository.save(lecture1);
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
-        VideoUnit videoUnitFromRequest = request.get("/api/video-units/" + this.videoUnit.getId(), HttpStatus.OK, VideoUnit.class);
+        VideoUnit videoUnitFromRequest = request.get("/api/lectures/" + lecture1.getId() + "/video-units/" + this.videoUnit.getId(), HttpStatus.OK, VideoUnit.class);
         assertThat(this.videoUnit.getId()).isEqualTo(videoUnitFromRequest.getId());
     }
 
@@ -134,7 +134,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
         var persistedVideoUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.CREATED);
         assertThat(persistedVideoUnit.getId()).isNotNull();
         request.delete("/api/lecture-units/" + persistedVideoUnit.getId(), HttpStatus.OK);
-        request.get("/api/video-units/" + persistedVideoUnit.getId(), HttpStatus.NOT_FOUND, VideoUnit.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/video-units/" + persistedVideoUnit.getId(), HttpStatus.NOT_FOUND, VideoUnit.class);
     }
 
 }

@@ -22,9 +22,9 @@ export class VideoUnitService {
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
     }
 
-    findById(videoUnitId: number) {
+    findById(videoUnitId: number, lectureId: number) {
         return this.httpClient
-            .get<VideoUnit>(`${this.resourceURL}/video-units/${videoUnitId}`, { observe: 'response' })
+            .get<VideoUnit>(`${this.resourceURL}/lectures/${lectureId}/video-units/${videoUnitId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
     }
 
