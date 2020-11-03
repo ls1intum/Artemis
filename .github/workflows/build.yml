@@ -122,7 +122,7 @@ jobs:
         access-token: ${{ secrets.GITHUB_TOKEN }}
         path: build/test-results/test/*.xml
 
-client-tests:
+  client-tests:
     if: github.event_name != 'release'
     runs-on: ubuntu-latest
     steps:
