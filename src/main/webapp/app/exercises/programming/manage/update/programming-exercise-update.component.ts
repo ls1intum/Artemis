@@ -292,12 +292,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         Exercise.sanitize(this.programmingExercise);
 
         this.isSaving = true;
-        const requestOptions = {} as any;
 
         if (this.isImport) {
-            requestOptions.recreateBuildPlans = this.recreateBuildPlans;
-            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, requestOptions));
+            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans));
         } else if (this.programmingExercise.id !== undefined) {
+            const requestOptions = {} as any;
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }
