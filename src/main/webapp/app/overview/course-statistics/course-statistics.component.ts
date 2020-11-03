@@ -280,7 +280,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         currentRelativeScore: 0,
                     };
                 }
-                // const maxResultScore = Math.round((((exercise.bonusPoints ?? 0) + exercise.maxScore!) / exercise.maxScore!) * 100);
 
                 if (!exercise.studentParticipations || exercise.studentParticipations.length === 0) {
                     groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title!, 'exerciseNotParticipated', false);
