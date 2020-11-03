@@ -12,6 +12,9 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ReactiveFormsModule } from '@angular/forms';
 import { AttachmentUnitFormComponent } from './attachment-unit-form/attachment-unit-form.component';
 import { EditAttachmentUnitComponent } from './edit-attachment-unit/edit-attachment-unit.component';
+import { CreateVideoUnitComponent } from './create-video-unit/create-video-unit.component';
+import { EditVideoUnitComponent } from './edit-video-unit/edit-video-unit.component';
+import { VideoUnitFormComponent } from './video-unit-form/video-unit-form.component';
 
 const ENTITY_STATES = [...lectureUnitRoute];
 
@@ -24,6 +27,9 @@ const ENTITY_STATES = [...lectureUnitRoute];
         CreateAttachmentUnitComponent,
         AttachmentUnitFormComponent,
         EditAttachmentUnitComponent,
+        CreateVideoUnitComponent,
+        EditVideoUnitComponent,
+        VideoUnitFormComponent,
     ],
 })
 export class ArtemisLectureUnitManagementModule {}

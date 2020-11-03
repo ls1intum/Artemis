@@ -3,11 +3,10 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import * as moment from 'moment';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
-import { FormBuilder } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { JhiAlertService } from 'ng-jhipster';
@@ -29,13 +28,11 @@ export class CreateAttachmentUnitComponent implements OnInit {
     courseId: number;
 
     constructor(
-        protected activatedRoute: ActivatedRoute,
+        private activatedRoute: ActivatedRoute,
         private router: Router,
         private attachmentService: AttachmentService,
-        private httpClient: HttpClient,
         private fileUploaderService: FileUploaderService,
         private attachmentUnitService: AttachmentUnitService,
-        private fb: FormBuilder,
         private alertService: JhiAlertService,
     ) {}
 
