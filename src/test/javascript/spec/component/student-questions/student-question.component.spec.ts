@@ -65,29 +65,20 @@ describe('StudentQuestionComponent', () => {
 
     it('should toggle edit mode and reset editor Text', () => {
         component.studentQuestion = studentQuestion;
-        componentFixture.detectChanges();
         component.isEditMode = true;
-        componentFixture.detectChanges();
         component.editText = 'test';
-        componentFixture.detectChanges();
         component.toggleEditMode();
-        componentFixture.detectChanges();
         expect(component.editText).to.deep.equal('question');
         expect(component.isEditMode).to.be.false;
         component.toggleEditMode();
-        componentFixture.detectChanges();
         expect(component.isEditMode).to.be.true;
     });
 
     it('should update questionText', () => {
         component.studentQuestion = studentQuestion;
-        componentFixture.detectChanges();
         component.isEditMode = true;
-        componentFixture.detectChanges();
         component.editText = 'test';
-        componentFixture.detectChanges();
         component.saveQuestion();
-        componentFixture.detectChanges();
         expect(component.studentQuestion.questionText).to.deep.equal('test');
     });
 });
