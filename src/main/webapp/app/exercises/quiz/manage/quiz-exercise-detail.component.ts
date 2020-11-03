@@ -403,10 +403,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             });
         }
         this.showExistingQuestions = !this.showExistingQuestions;
-        this.showExistingQuestionsFromAnotherCourse = false;
-        this.selectedCourseId = undefined;
-        this.allExistingQuestions = this.existingQuestions = [];
-        this.changeDetector.detectChanges();
+        this.setExistingQuestionSourceToCourse(false);
     }
 
     /**
@@ -1213,10 +1210,17 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * Update adding existing questions from a file or course 
+     * Update adding existing questions from a file or course
      */
     setExistingQuestionSourceToCourse(setToCourse: boolean): void {
         this.showExistingQuestionsFromAnotherCourse = setToCourse;
+        this.selectedCourseId = undefined;
+        this.allExistingQuestions = this.existingQuestions = [];
+        this.importFile = undefined;
+        this.importFileName = '';
+        const control = document.getElementById('importFileInput') as HTMLInputElement;
+        control.value = '';
+        this.changeDetector.detectChanges();
     }
 
     /**

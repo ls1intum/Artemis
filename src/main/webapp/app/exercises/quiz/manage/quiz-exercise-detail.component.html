@@ -180,7 +180,7 @@
             <!--Integrate the template for existingQuestions if the button is clicked-->
             <ng-container *ngIf="showExistingQuestions; then existingQuestionsTemplate"></ng-container>
             <ng-container *ngIf="showExistingQuestions && showExistingQuestionsFromAnotherCourse; then existingQuestionsFromCourseTemplate"></ng-container>
-            <hr />
+            
             <div class="question-options row d-flex justify-content-start" *ngIf="showExistingQuestions && !showExistingQuestionsFromAnotherCourse">
                 <div class="mr-2 col flex-grow-0" style="white-space: nowrap">
                     <span jhiTranslate="artemisApp.quizExercise.importJSON" class="font-weight-bold colon-suffix no-flex-shrink"> </span>
@@ -198,6 +198,19 @@
             <div class="edit-quiz-footer">
                 <div class="container">
                     <div class="edit-quiz-footer-content">
+                        <div class="form-group flex-fill ml-1" *ngIf="!isExamMode">
+                            <div class="form-group flex-fill" *ngIf="quizExercise.id">
+                                <input
+                                    minlength="3"
+                                    type="text"
+                                    placeholder="{{ 'artemisApp.exercise.notificationText' | translate }}"
+                                    class="form-control flex-fill"
+                                    name="notificationtText"
+                                    id="field_notification_text"
+                                    [(ngModel)]="notificationText"
+                                />
+                            </div>
+                        </div>
                         <div class="form-group" *ngIf="!isExamMode">
                             <span jhiTranslate="artemisApp.quizExercise.status" class="colon-suffix"></span>
                             <select
@@ -230,19 +243,7 @@
                                 </option>
                             </select>
                         </div>
-                        <div class="form-group flex-fill ml-5" *ngIf="!isExamMode">
-                            <div class="form-group flex-fill" *ngIf="quizExercise.id">
-                                <input
-                                    minlength="3"
-                                    type="text"
-                                    placeholder="{{ 'artemisApp.exercise.notificationText' | translate }}"
-                                    class="form-control flex-fill"
-                                    name="notificationtText"
-                                    id="field_notification_text"
-                                    [(ngModel)]="notificationText"
-                                />
-                            </div>
-                        </div>
+                        
                         <div class="form-group">
                             <span *ngIf="!pendingChangesCache && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.saved" class="badge badge-success"> </span>
                             <span *ngIf="pendingChangesCache && quizIsValid && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge badge-secondary">
@@ -325,9 +326,9 @@
                     </div>
                 </div>
             </div>
+            <hr />
         </ng-template>
         <ng-template #existingQuestionsFromCourseTemplate>
-            <hr />
             <div class="form-group question-options">
                 <div class="existing-question-select-course w-100">
                     <span jhiTranslate="artemisApp.quizExercise.selectCourse" class="font-weight-bold align-middle"></span>
