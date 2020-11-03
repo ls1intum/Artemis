@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { StudentQuestion } from 'app/entities/student-question.model';
 import { StudentQuestionService } from 'app/overview/student-questions/student-question/student-question.service';
@@ -32,16 +33,16 @@ export class StudentQuestionComponent implements OnInit {
     EditorMode = EditorMode;
     courseId: number;
 
-    constructor(private studentQuestionService: StudentQuestionService) {}
+    constructor(private studentQuestionService: StudentQuestionService, private route: ActivatedRoute) {}
 
     /**
      * checks if the user is the author of the question
      * sets the question text as the editor text
      */
     ngOnInit(): void {
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         if (this.user) {
             this.isQuestionAuthor = this.studentQuestion.author!.id === this.user.id;
-            this.courseId = this.studentQuestion.exercise ? this.studentQuestion.exercise.course!.id! : this.studentQuestion.lecture!.course!.id!;
         }
         this.editText = this.studentQuestion.questionText;
     }

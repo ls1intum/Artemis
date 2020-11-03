@@ -295,5 +295,6 @@
     "connectionStatus": {
         "connected": "Verbunden",
         "disconnected": "Verbindung getrennt"
-    }
+    },
+    "loading": "Lädt..."
 }
