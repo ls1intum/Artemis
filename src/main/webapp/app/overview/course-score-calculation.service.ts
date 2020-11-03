@@ -150,7 +150,7 @@ export class CourseScoreCalculationService {
             });
 
             const gracePeriodInSeconds = 10;
-            if (!!!dueDate || dueDate.add(gracePeriodInSeconds, 'seconds') >= resultsArray[0].completionDate!) {
+            if (dueDate == null || dueDate.add(gracePeriodInSeconds, 'seconds') >= resultsArray[0].completionDate!) {
                 // find the first result that is before the due date
                 chosenResult = resultsArray[0];
             } else if (dueDate.add(gracePeriodInSeconds, 'seconds') < resultsArray[0].completionDate!) {
