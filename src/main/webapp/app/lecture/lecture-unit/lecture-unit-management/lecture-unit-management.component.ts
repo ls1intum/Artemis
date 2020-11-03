@@ -21,6 +21,7 @@ import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     lectureId: number;
     lectureUnits: LectureUnit[] = [];
+    lecture: Lecture;
     isLoading = false;
     updateOrderSubject: Subject<any>;
     updateOrderSubjectSubscription: Subscription;
@@ -77,6 +78,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             )
             .subscribe(
                 (lecture) => {
+                    this.lecture = lecture;
                     if (lecture?.lectureUnits) {
                         this.lectureUnits = lecture?.lectureUnits;
                     } else {
