@@ -219,7 +219,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(persistedExerciseUnits.size()).isEqualTo(exercisesOfCourse.size());
 
         for (ExerciseUnit exerciseUnit : persistedExerciseUnits) {
-            request.delete("/api/lecture-units/" + exerciseUnit.getId(), HttpStatus.OK);
+            request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + exerciseUnit.getId(), HttpStatus.OK);
         }
 
         for (Exercise exercise : exercisesOfCourse) {
