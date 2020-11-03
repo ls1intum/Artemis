@@ -116,8 +116,13 @@ jobs:
     - name: Java Documentation
       run: ./gradlew checkstyleMain -x yarn -x webpack
       if: success() || failure()
+    - uses: ashley-taylor/junit-report-annotations-action@1.3
+      if: always()
+      with:
+        access-token: ${{ secrets.GITHUB_TOKEN }}
+        path: build/test-results/test/*.xml
 
-  client-tests:
+client-tests:
     if: github.event_name != 'release'
     runs-on: ubuntu-latest
     steps:
@@ -149,6 +154,11 @@ jobs:
     - name: TypeScript Code Style
       run: yarn lint
       if: success() || failure()
+    - uses: ashley-taylor/junit-report-annotations-action@1.3
+      if: always()
+      with:
+        access-token: ${{ secrets.GITHUB_TOKEN }}
+        path: junit.xml
 
   docs:
     runs-on: ubuntu-latest
