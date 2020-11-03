@@ -365,7 +365,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const split = replaced.split(' ');
 
         const missedPoints = parseFloat(split[2]) - parseFloat(split[0]) > 0 ? parseFloat(split[2]) - parseFloat(split[0]) : 0;
-        // This score is used to cap bonus points, sot that we not have negative values for the missedScores
+        // This score is used to cap bonus points, so that we not have negative values for the missedScores
         const score = result.score! >= 100 ? 100 : result.score!;
         // custom result strings
         if (!replaced.includes('passed') && !replaced.includes('points')) {
