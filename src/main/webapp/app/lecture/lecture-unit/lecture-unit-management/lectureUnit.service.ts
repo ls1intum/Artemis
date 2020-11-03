@@ -21,6 +21,14 @@ export class LectureUnitService {
     constructor(private httpClient: HttpClient, private attachmentService: AttachmentService, private exerciseService: ExerciseService) {}
 
     updateOrder(lectureId: number, lectureUnits: LectureUnit[]): Observable<HttpResponse<LectureUnit[]>> {
+        // need to remove participations from exercise units to prevent circular structure failure
+        lectureUnits = lectureUnits.map((lectureUnit) => {
+            if (lectureUnit.type === LectureUnitType.EXERCISE && (lectureUnit as ExerciseUnit).exercise) {
+                (lectureUnit as ExerciseUnit).exercise!.studentParticipations = undefined;
+                (lectureUnit as ExerciseUnit).exercise!.tutorParticipations = undefined;
+            }
+            return lectureUnit;
+        });
         return this.httpClient
             .put<LectureUnit[]>(`${this.resourceURL}/lectures/${lectureId}/lecture-units-order`, lectureUnits, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServerResponse(res)));

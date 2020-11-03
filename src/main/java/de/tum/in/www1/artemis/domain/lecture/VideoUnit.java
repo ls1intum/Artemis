@@ -1,19 +1,15 @@
-package de.tum.in.www1.artemis.domain.lecture_unit;
+package de.tum.in.www1.artemis.domain.lecture;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Lob;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Entity
 @DiscriminatorValue("V")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class VideoUnit extends LectureUnit {
 
     @Column(name = "description")
