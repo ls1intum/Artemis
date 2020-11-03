@@ -163,6 +163,15 @@ public class ProgrammingExerciseService {
         instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExerciseId);
     }
 
+    /**
+     * Creates build plans for a new programming exercise.
+     * 1. Create the project for the exercise on the CI Server
+     * 2. Create template and solution build plan in this project
+     * 3. Configure CI permissions
+     *
+     * @param programmingExercise Programming exercise for the the build plans should be generated. The programming
+     *                            exercise should contain a fully initialized template and solution participation.
+     */
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
         // Get URLs for repos
