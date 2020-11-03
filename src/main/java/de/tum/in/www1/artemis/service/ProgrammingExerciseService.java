@@ -537,9 +537,11 @@ public class ProgrammingExerciseService {
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
     public void replacePlaceholders(ProgrammingExercise programmingExercise, Repository repository) throws IOException {
-        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN
-                || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
+        }
+        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
+            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageName());
         }
 
         Map<String, String> replacements = new HashMap<>();

@@ -55,8 +55,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
     // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
-    packageNamePattern =
+    packageNamePatternForJavaKotlin =
         '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$';
+    // Swift package names should not include any separators like '.'
+    packageNamePatternForSwift =
+        '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Za-z][0-9A-Za-z]*$';
+    packageNamePattern = '';
+
     shortNamePattern = '^[a-zA-Z][a-zA-Z0-9]*'; // must start with a letter and cannot contain special characters
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
     exerciseCategories: ExerciseCategory[];
@@ -211,6 +216,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.programmingExercise.id) {
             this.problemStatementLoaded = true;
         }
+        // Select the correct pattern
+        this.setPackageNamePattern(this.selectedProgrammingLanguage);
 
         // Checks if the current environment is production
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -349,8 +356,23 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 return this.selectedProgrammingLanguage;
             }
         }
+        // Select the correct pattern
+        this.setPackageNamePattern(language);
         this.selectedProgrammingLanguage = language;
         return language;
+    }
+
+    /**
+     * Sets the regex pattern for the package name for the selected programming language.
+     *
+     * @param language to choose from
+     */
+    setPackageNamePattern(language: ProgrammingLanguage) {
+        if (language === ProgrammingLanguage.SWIFT) {
+            this.packageNamePattern = this.packageNamePatternForSwift;
+        } else {
+            this.packageNamePattern = this.packageNamePatternForJavaKotlin;
+        }
     }
 
     /**

@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -106,7 +107,11 @@ public class ProgrammingExerciseResource {
      */
     private final String packageNameRegex = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$";
 
+    private final String packageNameRegexForSwift = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Za-z][0-9A-Za-z]*$";
+
     private final Pattern packageNamePattern = Pattern.compile(packageNameRegex);
+
+    private final Pattern packageNamePatternForSwift = Pattern.compile(packageNameRegexForSwift);
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
@@ -328,6 +333,9 @@ public class ProgrammingExerciseResource {
 
             // Check if package name matches regex
             Matcher packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
+            if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
+                packageNameMatcher = packageNamePatternForSwift.matcher(programmingExercise.getPackageName());
+            }
             if (!packageNameMatcher.matches()) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
             }
