@@ -102,13 +102,6 @@ export default function (data) {
             buildErrorContent = buildErrorContentC;
             somePassedString = '5 of 22 passed';
             break;
-        case 'SWIFT':
-            // TODO: swift add test case for ...swift
-            someSuccessfulErrorContent = someSuccessfulErrorContentJava;
-            allSuccessfulContent = allSuccessfulContentJava;
-            buildErrorContent = buildErrorContentJava;
-            somePassedString = '2 of 13 passed';
-            break;
     }
 
     group('Participate in Programming Exercise', function () {
