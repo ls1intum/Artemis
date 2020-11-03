@@ -34,6 +34,12 @@ public class ProgressBasedAchievementService {
         this.achievementRepository = achievementRepository;
     }
 
+    /**
+     * Checks whether a user earned progress based achievements
+     * @param course the given course
+     * @param user the given user
+     * @param achievements all progress based achievements within the given course
+     */
     public AchievementRank checkForAchievement(Course course, User user, Set<Achievement> achievements) {
         var participations = studentParticipationRepository.findAllByCourseIdAndUserId(course.getId(), user.getId());
         var numberOfExercises = 0;
