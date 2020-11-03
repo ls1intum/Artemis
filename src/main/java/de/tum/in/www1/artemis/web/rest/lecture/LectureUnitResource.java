@@ -93,14 +93,14 @@ public class LectureUnitResource {
     }
 
     /**
-     * DELETE /lecture-units/:lectureUnitId
-     *
+     * DELETE lectures/:lectureId/lecture-units/:lectureUnitId
+     * @param lectureId the id of the lecture to which the unit belongs
      * @param lectureUnitId the id of the lecture unit to remove
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/lecture-units/{lectureUnitId}")
+    @DeleteMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}")
     @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
-    public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId) {
+    public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
         Optional<LectureUnit> lectureUnitOptional = lectureUnitRepository.findById(lectureUnitId);
         if (lectureUnitOptional.isEmpty()) {
@@ -108,6 +108,9 @@ public class LectureUnitResource {
         }
         LectureUnit lectureUnit = lectureUnitOptional.get();
         if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
+            return conflict();
+        }
+        if (!lectureUnit.getLecture().getId().equals(lectureId)) {
             return conflict();
         }
         if (!authorizationCheckService.isAtLeastInstructorInCourse(lectureUnit.getLecture().getCourse(), null)) {
