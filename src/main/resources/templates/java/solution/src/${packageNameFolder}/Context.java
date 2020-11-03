@@ -27,6 +27,8 @@ public class Context {
      * Runs the configured sort algorithm.
      */
     public void sort() {
-        sortAlgorithm.performSort(this.dates);
+        if (sortAlgorithm != null) {
+            sortAlgorithm.performSort(this.dates);
+        }
     }
 }
