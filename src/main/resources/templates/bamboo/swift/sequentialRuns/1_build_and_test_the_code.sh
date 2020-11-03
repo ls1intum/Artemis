@@ -1,4 +1,4 @@
-echo "---------- mv assignment to root ----------"
+# mv assignment to root
 mv assignment/Sources .
 
 echo "---------- swift build ----------"

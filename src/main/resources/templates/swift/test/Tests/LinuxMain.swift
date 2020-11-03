@@ -1,10 +1,10 @@
 import XCTest
 import SwiftTestReporter
-import swiftExerciseTests
+import ${packageName}Tests
 
 _ = TestObserver()
 
 var tests = [XCTestCaseEntry]()
-tests += swiftExerciseTests.__allTests()
+tests += ${packageName}Tests.__allTests()
 
 XCTMain(tests)

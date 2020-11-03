@@ -1,5 +1,5 @@
 import XCTest
-@testable import swiftExerciseLib
+@testable import ${packageName}Lib
 
 class SortTests: XCTestCase {
     let dateFormat: DateFormatter = DateFormatter()
