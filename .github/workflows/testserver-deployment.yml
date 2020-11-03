@@ -1,3 +1,5 @@
+name: Testserver Deployment
+
 on: 
   workflow_dispatch:
     inputs:
@@ -14,27 +16,30 @@ jobs:
     steps:
 
 # Downlaod WAR file from latest build in branch
-    - run: echo "Deploy Branach \"Artemis.war\" to \"${{ github.event.inputs.host }}\""
-    - name: Download Artemis WAR artifact
+    - name: Download Artemis WAR artifact for Branch "${{ github.event.inputs.branch }}"
       uses: dawidd6/action-download-artifact@v2
       with:
         github_token: ${{secrets.GITHUB_TOKEN}}
         workflow: build.yml
-        branch: Artemis.war
+        branch: ${{ github.event.inputs.branch }}
         name: Artemis.war
-    - run: ls -l
+    - name: Store Artifact Name
+      id: artifact-name
+      run: echo "::set-output name=war-file::$(ls)"
 
-# Install vpnc and connect to MWN
-    - name: Install, configure, connect, and test LRZ VPN
+    - name: Install vpnc
+      run: sudo apt-get install vpnc
 # Fill config from Secret (https://www.lrz.de/services/netz/mobil/vpnpda/)
+    - name: Configure LRZ VPN
       run: |
-        sudo apt-get install vpnc
         echo "${{ secrets.LRZ_VPN_CONFIG }}" > lrz.conf
         sudo mkdir -p /etc/vpnc
         sudo mv lrz.conf /etc/vpnc/
         sudo chmod 600 /etc/vpnc/lrz.conf
-        sudo vpnc lrz
-        ping -c 5 sophos.lrz.de
+    - name: Connect VPN
+      run: sudo vpnc lrz
+    - name: Ping sophos.lrz.de (only accessible inside MWN)
+      run: ping -c 5 sophos.lrz.de
 
 # Configure SSH Key
     - name: Setup SSH Keys and known_hosts
@@ -55,7 +60,7 @@ jobs:
     - name: Deploy Artemis WAR artifact
       env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-      run: ./artemis-server-cli deploy bamboo@${{ github.event.inputs.host }}.ase.in.tum.de -w ./Artemis.war
+      run: ./artemis-server-cli deploy bamboo@${{ github.event.inputs.host }}.ase.in.tum.de -w ./${{steps.artifact-name.outputs.war-file}} -y
 
 # Always disconnect from VPN
     - name: Disconncet VPN
