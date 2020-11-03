@@ -16,7 +16,7 @@ Implement the method `performSort(List<Date>)` in the class `MergeSort`. Make su
 
 ### Part 2: Strategy Pattern
 
-We want the application to apply different algorithms for sorting a `List` of `Date` objects. 
+We want the application to apply different algorithms for sorting a `List` of `Date` objects.
 Use the strategy pattern to select the right sorting algorithm at runtime.
 
 **You have the following tasks:**
@@ -42,6 +42,7 @@ Create and implement a `Policy` class following the below class diagram with a s
 
 skinparam ArrowFontSize 16
 skinparam shadowing false
+skinparam classAttributeIconSize 0
 skinparam class {
     FontSize 20
     AttributeFontSize 16
@@ -90,6 +91,6 @@ Client .down.> Context
 1. Create a new class `QuickSort` that implements `SortStrategy` and implement the Quick Sort algorithm.
 
 2. Make the method `performSort(List<Dates>)` generic, so that other objects can also be sorted by the same method.
-**Hint:** Have a look at Java Generics and the interface `Comparable`.  
+**Hint:** Have a look at Java Generics and the interface `Comparable`.
 
 3. Think about a useful decision in `Policy` when to use the new `QuickSort` algorithm.

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.lecture_unit;
+package de.tum.in.www1.artemis.domain.lecture;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
