@@ -2,7 +2,7 @@ import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureU
 
 export class VideoUnit extends LectureUnit {
     public description?: string;
-    // id of a YouTube video
+    // src link of a video
     public source?: string;
 
     constructor() {

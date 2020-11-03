@@ -1,8 +1,7 @@
 import { Moment } from 'moment';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
-
-const getVideoId = require('get-video-id');
+import urlParser from 'js-video-url-parser';
 
 export interface VideoUnitFormData {
     name?: string;
@@ -11,27 +10,32 @@ export interface VideoUnitFormData {
     source?: string;
 }
 
-export function extractVideoService(url: string) {
-    if (!url) {
-        return undefined;
-    }
-    return getVideoId(url).service;
-}
-
-export function extractVideoId(url: string) {
-    if (!url) {
-        return undefined;
-    }
-    return getVideoId(url).id;
-}
-
-export function youtubeURLValidator(c: AbstractControl) {
-    if (c.value === undefined || c.value === null || c.value === '' || extractVideoService(c.value) === 'youtube') {
+function videoUrlValidator(control: AbstractControl) {
+    if (control.value === undefined || control.value === null || control.value === '') {
         return null;
     }
-    return {
-        youTubeUrl: c.value,
-    };
+
+    const videoInfo = urlParser.parse(control.value);
+    return videoInfo ? null : { invalidVideoUrl: true };
+}
+
+function urlValidator(control: AbstractControl) {
+    let validUrl = true;
+
+    // for certain cases like embed links for vimeo
+    const regex = /^\/\/.*$/;
+    if (control.value && control.value.match(regex)) {
+        return null;
+    }
+
+    try {
+        // tslint:disable-next-line:no-unused-expression-chai
+        new URL(control.value);
+    } catch {
+        validUrl = false;
+    }
+
+    return validUrl ? null : { invalidUrl: true };
 }
 
 @Component({
@@ -67,8 +71,8 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
         return this.form.get('source');
     }
 
-    get urlControl() {
-        return this.form.get('url');
+    get urlHelperControl() {
+        return this.form.get('urlHelper');
     }
 
     ngOnChanges(): void {
@@ -90,8 +94,8 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
             name: [undefined, [Validators.required, Validators.maxLength(255)]],
             description: [undefined, [Validators.maxLength(255)]],
             releaseDate: [undefined],
-            source: [undefined, Validators.required],
-            url: [undefined, youtubeURLValidator],
+            source: [undefined, [Validators.required, urlValidator]],
+            urlHelper: [undefined, videoUrlValidator],
         });
     }
 
@@ -108,16 +112,21 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
         return !this.form.invalid;
     }
 
-    get isIdExtractable() {
-        if (this.urlControl!.value === undefined || this.urlControl!.value === null || this.urlControl!.value === '') {
+    get isTransformable() {
+        if (this.urlHelperControl!.value === undefined || this.urlHelperControl!.value === null || this.urlHelperControl!.value === '') {
             return false;
         } else {
-            return !this.urlControl?.invalid;
+            return !this.urlHelperControl?.invalid;
         }
     }
 
-    extractId(event: any) {
+    createEmbeddableVideoUrl(event: any) {
         event.stopPropagation();
-        this.sourceControl!.setValue(extractVideoId(this.urlControl?.value));
+        this.sourceControl!.setValue(
+            urlParser.create({
+                videoInfo: urlParser.parse(this.urlHelperControl!.value)!,
+                format: 'embed',
+            }),
+        );
     }
 }

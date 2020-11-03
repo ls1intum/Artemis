@@ -12,14 +12,14 @@ export class VideoUnitComponent implements OnInit {
     @Input()
     videoUnit: VideoUnit;
 
-    youTubeUrl: SafeResourceUrl;
+    videoUrl: SafeResourceUrl;
 
     isCollapsed = true;
 
     constructor(private safeResourceUrlPipe: SafeResourceUrlPipe) {}
 
     ngOnInit() {
-        this.youTubeUrl = this.safeResourceUrlPipe.transform(`https://www.youtube.com/embed/${this.videoUnit.source}`);
+        this.videoUrl = this.safeResourceUrlPipe.transform(this.videoUnit.source);
     }
 
     handleUnitClick($event: any) {

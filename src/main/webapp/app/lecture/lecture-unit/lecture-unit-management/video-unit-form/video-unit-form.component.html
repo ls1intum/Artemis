@@ -35,7 +35,6 @@
                 <div class="form-group col-4">
                     <label class="required" for="source">{{ 'artemisApp.videoUnit.createVideoUnit.source' | translate }}*</label>
                     <input
-                        readonly
                         type="text"
                         class="form-control"
                         id="source"
@@ -46,19 +45,28 @@
                         <div *ngIf="sourceControl?.errors?.required">
                             {{ 'artemisApp.videoUnit.createVideoUnit.sourceRequiredValidationError' | translate }}
                         </div>
+                        <div *ngIf="sourceControl?.errors?.invalidUrl">
+                            {{ 'artemisApp.videoUnit.createVideoUnit.sourceURLValidationError' | translate }}
+                        </div>
                     </div>
                 </div>
                 <div class="col-1 mx-auto mt-3 text-center align-self-center">
-                    <button type="button" class="btn btn-sm btn-primary" [disabled]="!isIdExtractable" (click)="extractId($event)">
+                    <button type="button" class="btn btn-sm btn-primary" [disabled]="!isTransformable" (click)="createEmbeddableVideoUrl($event)">
                         <fa-icon [icon]="'arrow-left'"></fa-icon>
                     </button>
                 </div>
                 <div class="form-group col-7">
-                    <label for="url">YouTube Video URL</label>
-                    <input type="text" class="form-control" id="url" formControlName="url" [placeholder]="'artemisApp.videoUnit.createVideoUnit.urlPlaceholder' | translate" />
-                    <div *ngIf="urlControl?.invalid && (urlControl?.dirty || urlControl?.touched)" class="alert alert-danger">
-                        <div *ngIf="urlControl?.errors?.youTubeUrl">
-                            {{ 'artemisApp.videoUnit.createVideoUnit.urlPatternValidationError' | translate }}
+                    <label for="urlHelper">Create Embedabble URL from Video URL</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="urlHelper"
+                        formControlName="urlHelper"
+                        [placeholder]="'artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder' | translate"
+                    />
+                    <div *ngIf="urlHelperControl?.invalid && (urlHelperControl?.dirty || urlHelperControl?.touched)" class="alert alert-danger">
+                        <div *ngIf="urlHelperControl?.errors?.invalidVideoUrl">
+                            {{ 'artemisApp.videoUnit.createVideoUnit.urlHelperValidationError' | translate }}
                         </div>
                     </div>
                 </div>
