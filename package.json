@@ -14,7 +14,6 @@
     },
     "dependencies": {
         "@angular/animations": "10.2.1",
-        "@angular/youtube-player": "10.2.6",
         "@angular/common": "10.2.1",
         "@angular/compiler": "10.2.1",
         "@angular/core": "10.2.1",
@@ -39,7 +38,6 @@
         "blob-util": "2.0.2",
         "bootstrap": "4.5.3",
         "chart.js": "2.9.4",
-        "get-video-id": "3.1.4",
         "compare-versions": "3.6.0",
         "core-js": "3.6.5",
         "dompurify": "2.2.0",
@@ -47,6 +45,7 @@
         "franc-min": "5.0.0",
         "interactjs": "1.10.0",
         "jquery": "3.5.1",
+        "js-video-url-parser": "^0.4.2",
         "lodash": "4.17.20",
         "lodash.template": "4.5.0",
         "mobile-drag-drop": "2.3.0-rc.2",
