@@ -76,6 +76,15 @@ public class UserService {
     @Value("${artemis.user-management.internal-admin.password:#{null}}")
     private Optional<String> artemisInternalAdminPassword;
 
+    @Value("${info.guided-tour.course-group-students:#{null}}")
+    private Optional<String> tutorialGroupStudents;
+
+    @Value("${info.guided-tour.course-group-tutors:#{null}}")
+    private Optional<String> tutorialGroupTutors;
+
+    @Value("${info.guided-tour.course-group-instructors:#{null}}")
+    private Optional<String> tutorialGroupInstructors;
+
     private final UserRepository userRepository;
 
     private final CourseRepository courseRepository;
@@ -474,6 +483,9 @@ public class UserService {
         user.setPassword(encryptedPassword);
         user.setResetKey(RandomUtil.generateResetKey());
         user.setResetDate(Instant.now());
+        if (!useExternalUserManagement) {
+            addTutorialGroups(userDTO); // Automatically add interactive tutorial course groups to the new created user if it has been specified
+        }
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
         userRepository.save(user);
@@ -900,12 +912,40 @@ public class UserService {
         if (optionalVcsUserManagementService.isPresent()) {
             final var oldGroups = new TreeSet<>(user.getGroups());
             artemisAuthenticationProvider.addUserToGroup(user, group);
-            updateUserInConnectorsAndAuthProvider(user, oldGroups, true);
+            updateUserInConnectorsAndAuthProvider(user, oldGroups, false);
         }
         else {
             artemisAuthenticationProvider.addUserToGroup(user, group);
         }
 
+    }
+
+    /**
+     * Adds the tutorial course groups to a user basing on its authorities,
+     * if a course with the given group names exist
+     * The groups can be customized in application-dev.yml or application-prod.yml
+     * at {info.tutorial-course-groups}
+     * @param user the userDTO to add to the groups to
+     */
+    private void addTutorialGroups(ManagedUserVM user) {
+        if (tutorialGroupInstructors.isPresent() || tutorialGroupTutors.isPresent() || tutorialGroupStudents.isPresent()) {
+            Set<String> groupsToAdd = new TreeSet<>();
+            if (tutorialGroupStudents.isPresent() && courseRepository.findCourseByStudentGroupName(tutorialGroupStudents.get()) != null) {
+                groupsToAdd.add(tutorialGroupStudents.get());
+            }
+            if (tutorialGroupTutors.isPresent() && user.getAuthorities().contains(TEACHING_ASSISTANT)
+                    && courseRepository.findCourseByTeachingAssistantGroupName(tutorialGroupTutors.get()) != null) {
+                groupsToAdd.add(tutorialGroupTutors.get());
+            }
+            if (tutorialGroupInstructors.isPresent() && user.getAuthorities().contains(INSTRUCTOR)
+                    && courseRepository.findCourseByInstructorGroupName(tutorialGroupInstructors.get()) != null) {
+                groupsToAdd.add(tutorialGroupInstructors.get());
+            }
+            if (user.getGroups() != null) {
+                groupsToAdd.addAll(user.getGroups());
+            }
+            user.setGroups(groupsToAdd);
+        }
     }
 
     /**
@@ -919,7 +959,7 @@ public class UserService {
         if (optionalVcsUserManagementService.isPresent()) {
             final var oldGroups = new TreeSet<>(user.getGroups());
             artemisAuthenticationProvider.removeUserFromGroup(user, group);
-            updateUserInConnectorsAndAuthProvider(user, oldGroups, true);
+            updateUserInConnectorsAndAuthProvider(user, oldGroups, false);
         }
         else {
             artemisAuthenticationProvider.removeUserFromGroup(user, group);

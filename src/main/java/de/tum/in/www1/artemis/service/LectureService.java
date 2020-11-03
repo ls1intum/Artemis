@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -22,6 +23,14 @@ public class LectureService {
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
+    }
+
+    public Lecture save(Lecture lecture) {
+        return lectureRepository.save(lecture);
+    }
+
+    public Optional<Lecture> findByIdWithStudentQuestionsAndLectureModules(Long lectureId) {
+        return lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lectureId);
     }
 
     public Set<Lecture> findAllByCourseId(Long courseId) {

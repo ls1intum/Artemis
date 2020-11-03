@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import * as moment from 'moment';
+import { now } from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
@@ -28,7 +29,6 @@ import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util'
 import { Course } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { now } from 'moment';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
@@ -73,7 +73,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     generalFeedback = new Feedback();
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
-    totalScore = 0;
+    automaticFeedback: Feedback[] = [];
+
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
         private router: Router,
@@ -156,7 +157,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     save(): void {
         this.saveBusy = true;
-        this.setFeedbacksForManualResult();
         this.avoidCircularStructure();
         this.manualResultService.save(this.participation.id!, this.manualResult!).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
@@ -169,7 +169,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     submit(): void {
         this.submitBusy = true;
-        this.setFeedbacksForManualResult();
         this.avoidCircularStructure();
         this.manualResultService.save(this.participation.id!, this.manualResult!, true).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
@@ -273,7 +272,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     /**
      * Updates the referenced feedbacks, which are the inline feedbacks added directly in the code.
-     * @param feedbacks Inline feedbacks from th ecode
+     * @param feedbacks Inline feedbacks directly in the code
      */
     onUpdateFeedback(feedbacks: Feedback[]) {
         // Filter out other feedback than manual feedback
@@ -332,9 +331,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private getLatestManualResult(results?: Result[]): Result {
-        const manualResults = (results || []).filter((result) => result.assessmentType === AssessmentType.MANUAL);
+        const manualResults = (results || []).filter((result) => Result.isManualResult(result));
         const sortedResults = this.sortResults(manualResults);
         const initialManualResult = new Result();
+        // Manual results are always rated
+        initialManualResult.rated = true;
         return sortedResults.length > 0 ? sortedResults[0] : initialManualResult;
     }
 
@@ -369,12 +370,23 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleFeedback(): void {
-        // Setup feedbacks
+        // Setup automatic feedback
+        this.automaticFeedback = this.automaticResult?.feedbacks!;
+        this.automaticFeedback.forEach((feedback) => {
+            feedback.id = undefined;
+            if (!feedback.credits) {
+                feedback.credits = 0;
+            }
+        });
+
+        // Setup not automatically generated feedbacks
         const feedbacks = this.manualResult?.feedbacks || [];
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
 
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != null && feedbackElement.type === FeedbackType.MANUAL);
-        const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
+        const generalFeedbackIndex = feedbacks.findIndex(
+            (feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED && feedbackElement.type !== FeedbackType.AUTOMATIC,
+        );
         if (generalFeedbackIndex !== -1) {
             this.generalFeedback = feedbacks[generalFeedbackIndex];
         } else {
@@ -385,10 +397,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private setFeedbacksForManualResult() {
         if (Feedback.hasDetailText(this.generalFeedback)) {
-            this.manualResult!.feedbacks = [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback];
+            this.manualResult!.feedbacks = [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
         } else {
-            this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback];
+            this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
         }
+    }
+
+    private setAttributesForManualResult(totalScore: number) {
+        this.setFeedbacksForManualResult();
+        this.manualResult!.hasFeedback = this.manualResult!.feedbacks!.length > 0;
+        this.manualResult!.resultString = `${this.automaticResult!.resultString}, ${totalScore} of ${this.exercise.maxScore} points`;
+        this.manualResult!.score = Math.round((totalScore / this.exercise.maxScore!) * 100);
+        // This is done to update the result string in result.component.ts
+        this.manualResult = cloneDeep(this.manualResult);
     }
 
     private avoidCircularStructure() {
@@ -398,7 +419,42 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private calculateTotalScore() {
-        const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback];
-        this.totalScore = this.structuredGradingCriterionService.computeTotalScore(feedbacks);
+        const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
+        const maxPoints = this.exercise.maxScore! + (this.exercise.bonusPoints! ?? 0.0);
+        let totalScore = 0.0;
+        let scoreAutomaticTests = 0.0;
+        const gradingInstructions = {}; // { instructionId: noOfEncounters }
+
+        feedbacks.forEach((feedback) => {
+            // Check for feedback from automatic tests and store them separately
+            if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isStaticCodeAnalysisFeedback(feedback)) {
+                scoreAutomaticTests += feedback.credits!;
+            } else {
+                if (feedback.gradingInstruction) {
+                    totalScore = this.structuredGradingCriterionService.calculateScoreForGradingInstructions(feedback, totalScore, gradingInstructions);
+                } else {
+                    totalScore += feedback.credits!;
+                }
+            }
+        });
+
+        // Cap automatic test feedback to maxScore + bonus points of exercise
+        if (scoreAutomaticTests > maxPoints) {
+            scoreAutomaticTests = maxPoints;
+        }
+        totalScore += scoreAutomaticTests;
+        // Do not allow negative score
+        if (totalScore < 0) {
+            totalScore = 0;
+        }
+        // Cap totalScore to maxPoints
+        if (totalScore > maxPoints) {
+            totalScore = maxPoints;
+        }
+
+        totalScore = +totalScore.toFixed(2);
+
+        // Set attributes of manual result
+        this.setAttributesForManualResult(totalScore);
     }
 }

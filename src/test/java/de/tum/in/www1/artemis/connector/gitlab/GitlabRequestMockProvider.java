@@ -67,14 +67,21 @@ public class GitlabRequestMockProvider {
         mockAddUserToGroup(exercise);
     }
 
-    private void mockGetUserID() throws GitLabApiException {
-        org.gitlab4j.api.models.User instructor = new org.gitlab4j.api.models.User();
-        org.gitlab4j.api.models.User tutor = new org.gitlab4j.api.models.User();
+    /**
+     * Method to mock the getUser method to return mocked users with their id's
+     * @throws GitLabApiException
+     */
+    public void mockGetUserID() throws GitLabApiException {
+        User instructor = new User();
+        User tutor = new User();
+        User user = new User();
         instructor.setId(2);
         tutor.setId(3);
+        user.setId(4);
 
         doReturn(instructor).when(userApi).getUser("instructor1");
         doReturn(tutor).when(userApi).getUser("tutor1");
+        doReturn(user).when(userApi).getUser("user1");
     }
 
     public void mockUpdateUser() throws GitLabApiException {
@@ -117,5 +124,27 @@ public class GitlabRequestMockProvider {
     public void mockAddAuthenticatedWebHook() throws GitLabApiException {
         final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false);
         doReturn(hook).when(projectApi).addHook(any(), anyString(), any(ProjectHook.class), anyBoolean(), anyString());
+    }
+
+    public void mockFailOnGetUserById(String login) throws GitLabApiException {
+        UserApi userApi = mock(UserApi.class);
+        doReturn(userApi).when(gitLabApi).getUserApi();
+        doReturn(null).when(userApi).getUser(eq(login));
+    }
+
+    /**
+     * Mocks that given user is not found in GitLab and is hence created.
+     * @param login Login of the user who's creation is mocked
+     * @throws GitLabApiException Never
+     */
+    public void mockCreationOfUser(String login) throws GitLabApiException {
+        UserApi userApi = mock(UserApi.class);
+        doReturn(userApi).when(gitLabApi).getUserApi();
+        doReturn(null).when(userApi).getUser(eq(login));
+        doAnswer(invocation -> {
+            User user = (User) invocation.getArguments()[0];
+            user.setId(1234);
+            return user;
+        }).when(userApi).createUser(any(), any(), anyBoolean());
     }
 }

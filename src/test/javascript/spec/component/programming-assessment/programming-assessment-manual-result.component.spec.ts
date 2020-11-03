@@ -1,16 +1,15 @@
 import * as ace from 'brace';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { SinonStub, stub } from 'sinon';
+import { SinonStub, spy, stub } from 'sinon';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -28,7 +27,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Complaint } from 'app/entities/complaint.model';
@@ -46,6 +45,8 @@ import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/asse
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { delay } from 'rxjs/operators';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { ComplaintResponse } from 'app/entities/complaint-response.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -60,11 +61,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let complaintService: ComplaintService;
     let accountService: AccountService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
+    let programmingSubmissionService: ProgrammingSubmissionService;
 
     let updateAfterComplaintStub: SinonStub;
     let getStudentParticipationWithResultsStub: SinonStub;
     let findByResultIdStub: SinonStub;
     let getIdentityStub: SinonStub;
+    let getProgrammingSubmissionForExerciseWithoutAssessmentStub: SinonStub;
     const user = <User>{ id: 99, groups: ['instructorGroup'] };
     const result: Result = <any>{
         feedbacks: [new Feedback()],
@@ -74,16 +77,25 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         submission: new ProgrammingSubmission(),
         assessor: user,
         hasComplaint: true,
-        assessmentType: AssessmentType.MANUAL,
-        id: 1,
+        assessmentType: AssessmentType.SEMI_AUTOMATIC,
+        id: 2,
     };
     result.submission!.id = 1;
     const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
-    const exercise = <ProgrammingExercise>{ id: 1, gradingInstructions: 'Grading Instructions', course: <Course>{ instructorGroupName: 'instructorGroup' } };
+    const exercise = <ProgrammingExercise>{ id: 1, maxScore: 100, gradingInstructions: 'Grading Instructions', course: <Course>{ instructorGroupName: 'instructorGroup' } };
+    const automaticResult: Result = { feedbacks: [new Feedback()], assessmentType: AssessmentType.AUTOMATIC, id: 1, resultString: '1 of 13 passed' };
     const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
-    participation.results = [result];
+    participation.results = [result, automaticResult];
     participation.exercise = exercise;
     participation.id = 1;
+
+    const unassessedSubmission = new ProgrammingSubmission();
+    const participation2 = new ProgrammingExerciseStudentParticipation();
+    participation2.id = 12;
+    unassessedSubmission.participation = participation2;
+
+    const afterComplaintResult = new Result();
+    afterComplaintResult.score = 100;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -96,7 +108,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 BuildLogService,
                 AccountService,
                 JhiAlertService,
-                { provide: ResultService, useClass: MockResultService },
+                ResultService,
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
                 { provide: ExerciseHintService, useClass: MockExerciseHintService },
@@ -117,15 +129,19 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 debugElement = fixture.debugElement;
                 programmingAssessmentManualResultService = debugElement.injector.get(ProgrammingAssessmentManualResultService);
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
+                programmingSubmissionService = debugElement.injector.get(ProgrammingSubmissionService);
                 complaintService = debugElement.injector.get(ComplaintService);
                 accountService = debugElement.injector.get(AccountService);
 
-                updateAfterComplaintStub = stub(programmingAssessmentManualResultService, 'updateAfterComplaint');
+                updateAfterComplaintStub = stub(programmingAssessmentManualResultService, 'updateAfterComplaint').returns(of(afterComplaintResult));
                 getStudentParticipationWithResultsStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithResults').returns(
                     of(participation).pipe(delay(100)),
                 );
                 findByResultIdStub = stub(complaintService, 'findByResultId').returns(of({ body: complaint } as HttpResponse<Complaint>));
                 getIdentityStub = stub(accountService, 'identity').returns(new Promise((promise) => promise(user)));
+                getProgrammingSubmissionForExerciseWithoutAssessmentStub = stub(programmingSubmissionService, 'getProgrammingSubmissionForExerciseWithoutAssessment').returns(
+                    of(unassessedSubmission),
+                );
             });
     });
 
@@ -141,8 +157,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
-        comp.manualResult = result;
-        comp.exercise = exercise;
         comp.ngOnInit();
         tick(100);
 
@@ -161,10 +175,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         tick(100);
     }));
 
-    it("should not show complaint when result doesn't have it", fakeAsync(() => {
+    it('should not show complaint when result does not have it', fakeAsync(() => {
         result.hasComplaint = false;
-        comp.manualResult = result;
-        comp.exercise = exercise;
         comp.ngOnInit();
         tick(100);
 
@@ -179,5 +191,67 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         // Wait until periodic timer has passed out
         tick(100);
+    }));
+
+    it('should save and submit manual result', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+        comp.automaticFeedback = [{ type: FeedbackType.AUTOMATIC, text: 'testCase1', detailText: 'testCase1 failed', credits: 0 }];
+        comp.referencedFeedback = [{ type: FeedbackType.MANUAL, text: 'manual feedback', detailText: 'manual feedback for a file:1', credits: 2, reference: 'file:1_line:1' }];
+        comp.unreferencedFeedback = [{ type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'unreferenced feedback', credits: 1 }];
+        comp.generalFeedback = { detailText: 'general feedback' };
+        comp.validateFeedback();
+        comp.save();
+        const alertElement = debugElement.queryAll(By.css('jhi-alert'));
+
+        expect(comp.manualResult?.feedbacks?.length).to.be.equal(4);
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).to.be.true;
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).to.be.true;
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).to.be.true;
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED && feedback.reference == null)).to.be.true;
+        expect(alertElement).to.exist;
+
+        // Reset feedbacks
+        comp.manualResult!.feedbacks! = [];
+        comp.validateFeedback();
+        comp.submit();
+        const alertElementSubmit = debugElement.queryAll(By.css('jhi-alert'));
+
+        expect(comp.manualResult?.feedbacks?.length).to.be.equal(4);
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).to.be.true;
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).to.be.true;
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).to.be.true;
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED && feedback.reference == null)).to.be.true;
+        expect(alertElementSubmit).to.exist;
+        flush();
+    }));
+
+    it('should cancel the assessment and navigate back', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+        const navigateBackStub = stub(comp, 'navigateBack');
+        global.confirm = () => true;
+        const confirmSpy = spy(window, 'confirm');
+        comp.cancel();
+
+        expect(confirmSpy).to.be.calledOnce;
+        expect(comp.cancelBusy).to.be.true;
+        expect(navigateBackStub).to.be.calledOnce;
+    }));
+
+    it('should go to next submission', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+        comp.nextSubmission();
+        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
+    }));
+
+    it('should update assessment after complaint', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+        comp.onUpdateAssessmentAfterComplaint(new ComplaintResponse());
+        expect(updateAfterComplaintStub).to.be.calledOnce;
+        expect(comp.manualResult!.score).to.be.equal(100);
+        flush();
     }));
 });

@@ -8,6 +8,7 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -16,6 +17,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity
 @DiscriminatorValue(value = "PESP")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExerciseStudentParticipation extends StudentParticipation implements ProgrammingExerciseParticipation {
 
     @Column(name = "repository_url")

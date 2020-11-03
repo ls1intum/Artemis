@@ -1,12 +1,30 @@
-## Test Repository instructions
+# Test Repository Instructions
 
-#### Test tool & command
-Tests will be run using stack: https://docs.haskellstack.org/en/stable/README/
+## Requirements
 
-#### Note
-This template has only experimental support so far.
+Tests are run using [stack](https://docs.haskellstack.org/en/stable/README/) in a docker container.
 
-It will be extended in the upcoming weeks (as of 24.06.2020).
+## Setup
 
-This template does not work out of the box with CI at the moment.
- Among other things, it requires the build process to checkout the solution folder, which is not yet done automatically.
+The executables specified in `test.cabal` expect the solution repository checked out in the `solution` subdirectory and the submission checked out in the `assignment` subdirectory.
+Moreover, `test.cabal` provides an executable to test the template repository locally.
+For this, it expects the template repository in the `template` subdirectory.
+
+You can find a script to conveniently setup this folder structure when checking out a new exercise in the [programming exercise setup documentation](https://artemis-platform.readthedocs.io/en/latest/user/exercises/programming/#setup).
+
+## Running Tests
+
+Refer to `test.cabal` for detailed information about the targets and flags provided.
+
+### Locally
+
+You can run executables specified in `test.cabal` using `stack run <executableName>`.
+
+### On Artemis
+
+By default, Artemis runs `./run.sh -s` to execute the tests.
+You can modify `run.sh` to adapt the build and test process.
+
+## Updating Dependencies
+
+If you plan to update the stack resolver including its GHC version, you also have to create a new docker image and update the corresponding Bamboo configuration.

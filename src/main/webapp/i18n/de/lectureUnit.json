@@ -1,0 +1,66 @@
+{
+    "artemisApp": {
+        "lectureUnit": {
+            "home": {
+                "title": "Vorlesungseinheiten"
+            },
+            "unitCreationCard": {
+                "title": "Hinzufügen einer neuen Vorlesungseinheit",
+                "text": "Text",
+                "exercise": "Übung",
+                "video": "Video",
+                "file": "Datei"
+            },
+            "releaseDate": "Veröffentlichungsdatum"
+        },
+        "attachmentUnit": {
+            "created": "Eine neue Dateieinheit wurde erstellt",
+            "updated": "Dateieinheit bearbeitet",
+            "notReleasedTooltip": "Nur sichtbar für Tutoren und Dozenten. Veröffentlichkeitsdatum:",
+            "createAttachmentUnit": {
+                "title": "Dateieinheit erstellen",
+                "name": "Name",
+                "namePlaceHolder": "Gib der Datei einen Namen",
+                "description": "Beschreibung",
+                "updateNotificationText": "Update Benachrichtigungstext",
+                "updateNotificationTextPlaceholder": "Optionaler Benachrichtigungstext für Studenten über Änderungen.",
+                "updateNotificationTextMaxLengthValidationError": "Der Benachrichtigungstext kann maximal 255 Zeichen lang sein.",
+                "descriptionPlaceHolder": "Gib der Datei eine Beschreibung",
+                "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",
+                "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein.",
+                "descriptionMaxLengthValidationError": "Die Beschreibung kann maximal 255 Zeichen lang sein.",
+                "file": "Datei",
+                "version": "Version",
+                "fileRequiredValidationError": "Du musst eine Datei zum uploaden auswählen.",
+                "chooseFile": "Datei auswählen",
+                "fileLimitations": "Unterstützte Formate: \".png\", \".jpg\", \".jpeg\", \".svg\", \".pdf\", \".zip\". Max. Dateigrösse 10 mb"
+            },
+            "editAttachmentUnit": {
+                "title": "Bearbeite Dateieinheit"
+            },
+            "tooltip": "Das ist eine Datei.",
+            "uploadDate": "Upload Datum",
+            "version": "Version",
+            "FileName": "Dateiname",
+            "description": "Beschreibung",
+            "delete": {
+                "question": "Willst du wirklich die Dateieinheit <strong>{{ title }}</strong> löschen? Die Datei wird auch gelöscht! Du kannst diese Aktion nicht rückgängig machen!",
+                "typeNameToConfirm": "Bitte gib den Namen der Dateieinheit zur Bestätigung ein.",
+                "buttonText": "Löschen"
+            }
+        },
+        "exerciseUnit": {
+            "created": "Übung mit Vorlesung verbunden",
+            "createExerciseUnit": {
+                "title": "Übungseinheit",
+                "headline": "Verbindung eine Übung mit der Vorlesung",
+                "description": "Wähle alle Übungen zur Verbindung mit der Vorlesung aus."
+            },
+            "delete": {
+                "question": "Willst du wirklich die Verknüpfung mit der Übung <strong>{{ title }}</strong> entfernen? Die Übung bleibt erhalten! Du kannst diese Aktion nicht rückgängig machen!",
+                "typeNameToConfirm": "Bitte gib den Namen der Übung zur Bestätigung ein.",
+                "buttonText": "Trennen"
+            }
+        }
+    }
+}

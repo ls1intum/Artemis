@@ -1,7 +1,7 @@
 package ${packageName};
 
 import static java.util.Objects.requireNonNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
@@ -9,7 +9,7 @@ import java.util.StringJoiner;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 3.1 (10.05.2020)
+ * @version 3.2 (27.10.2020)
  * <br><br>
  *
  * This class serves as an API to Java Reflection to facilitate various operations that are performed

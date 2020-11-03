@@ -6,27 +6,29 @@ import {
     StaticCodeAnalysisCategoryUpdate,
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
+import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 
 export class MockProgrammingExerciseGradingService implements IProgrammingExerciseGradingService {
-    private subject = new BehaviorSubject<ProgrammingExerciseTestCase[] | undefined>(undefined);
+    private testCaseSubject = new BehaviorSubject<ProgrammingExerciseTestCase[] | undefined>(undefined);
+    private categorySubject = new BehaviorSubject<StaticCodeAnalysisCategory[] | undefined>(undefined);
 
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
-        return this.subject as Observable<ProgrammingExerciseTestCase[]>;
+        return this.testCaseSubject as Observable<ProgrammingExerciseTestCase[]>;
     }
 
     initSubject(initialValue: ProgrammingExerciseTestCase[]) {
-        if (this.subject) {
-            this.subject.complete();
+        if (this.testCaseSubject) {
+            this.testCaseSubject.complete();
         }
-        this.subject = new BehaviorSubject(initialValue);
+        this.testCaseSubject = new BehaviorSubject(initialValue);
     }
 
-    next(value: ProgrammingExerciseTestCase[] | undefined) {
-        this.subject.next(value);
+    nextTestCases(value: ProgrammingExerciseTestCase[] | undefined) {
+        this.testCaseSubject.next(value);
     }
 
     notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void {
-        this.subject.next(testCases);
+        this.testCaseSubject.next(testCases);
     }
 
     reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
@@ -38,10 +40,18 @@ export class MockProgrammingExerciseGradingService implements IProgrammingExerci
     }
 
     getCodeAnalysisCategories(exerciseId: number): Observable<StaticCodeAnalysisCategory[]> {
-        return of();
+        return this.categorySubject as Observable<StaticCodeAnalysisCategory[]>;
     }
 
     updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<StaticCodeAnalysisCategoryUpdate[]> {
+        return of();
+    }
+
+    nextCategories(value: StaticCodeAnalysisCategory[]) {
+        this.categorySubject.next(value);
+    }
+
+    getGradingStatistics(exerciseId: number): Observable<ProgrammingExerciseGradingStatistics> {
         return of();
     }
 }

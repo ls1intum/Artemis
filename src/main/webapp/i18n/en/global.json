@@ -5,7 +5,8 @@
         "generic": {
             "yes": "Yes",
             "no": "No",
-            "emptyList": "No items available"
+            "emptyList": "No items available",
+            "unset": "Unset"
         },
         "menu": {
             "home": "Home",
@@ -169,9 +170,11 @@
             "addimage": "Add image",
             "back": "Back",
             "cancel": "Cancel",
+            "units": "Units",
             "dashboard": "Dashboard",
             "exportRepos": "Download Repositories",
             "delete": "Delete",
+            "unlink": "Unlink",
             "confirm": "Confirm",
             "download": "Download",
             "edit": "Edit",
@@ -228,6 +231,9 @@
         "delete": {
             "title": "Confirm delete operation"
         },
+        "unlink": {
+            "title": "Confirm unlink operation"
+        },
         "reset": {
             "title": "Confirm reset operation"
         },
@@ -266,6 +272,7 @@
         "userexists": "Login name already used!",
         "emailexists": "Email is already in use!",
         "idexists": "A new {{ entityName }} cannot already have an ID",
+        "missingname": "A new {{entityName}} needs a name",
         "invalid.template.build.plan.id": "The Template Build Plan ID seems to be invalid. Please make sure it exists and is accessible for Artemis.",
         "invalid.solution.build.plan.id": "The Solution Build Plan ID seems to be invalid. Please make sure it exists and is accessible for Artemis.",
         "invalid.template.repository.url": "The Template Repository URL seems to be invalid. Please make sure it exists and is accessible for Artemis.",
