@@ -13,12 +13,6 @@
             </div>
             <div class="col-sm col">
                 <h4>{{ videoUnit?.name }}</h4>
-                <hr *ngIf="videoUnit?.releaseDate" />
-                <div *ngIf="videoUnit?.releaseDate">
-                    <span class="font-weight-bold"> {{ 'artemisApp.lectureUnit.releaseDate' | translate }}: </span>
-                    {{ videoUnit?.releaseDate | artemisDate }}
-                </div>
-                <hr *ngIf="videoUnit?.releaseDate" />
                 <h6 *ngIf="videoUnit?.description">{{ 'artemisApp.videoUnit.description' | translate }}:</h6>
                 {{ videoUnit?.description }}
             </div>
