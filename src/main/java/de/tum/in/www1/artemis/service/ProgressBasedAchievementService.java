@@ -37,13 +37,17 @@ public class ProgressBasedAchievementService {
     public AchievementRank checkForAchievement(Course course, User user, Set<Achievement> achievements) {
         var participations = studentParticipationRepository.findAllByCourseIdAndUserId(course.getId(), user.getId());
         var numberOfExercises = 0;
+        if (!achievements.iterator().hasNext()) {
+            return null;
+        }
+        var minScore = achievements.iterator().next().getMinScoreToQualify();
         for (var participation : participations) {
             var latestResult = participation.findLatestResult();
             if (latestResult == null) {
                 continue;
             }
             var score = latestResult.getScore();
-            if (score != null && achievements.iterator().hasNext() && score >= achievements.iterator().next().getMinScoreToQualify()) {
+            if (score != null && score >= minScore) {
                 numberOfExercises++;
             }
         }
