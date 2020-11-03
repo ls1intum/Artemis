@@ -29,7 +29,7 @@ public final class Client {
      *
      * @param args command line arguments
      */
-    public static void main(final String[] args) throws ParseException {
+    public static void main(String[] args) throws ParseException {
 
         // TODO: Init Context and Policy
 
