@@ -436,7 +436,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const textExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, ABSOLUTE_SCORE);
         const fileUploadExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, ABSOLUTE_SCORE);
         this.totalScore = this.calculateTotalScoreForTheCourse(ABSOLUTE_SCORE);
-        const totalMissedPoints = this.reachableScore - this.totalScore;
+        let totalMissedPoints = this.reachableScore - this.totalScore;
+        if (totalMissedPoints < 0) {
+            totalMissedPoints = 0;
+        }
         const absoluteScores = {};
         absoluteScores[ExerciseType.QUIZ] = quizzesTotalScore;
         absoluteScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalScore;
