@@ -45,6 +45,7 @@
         "franc-min": "5.0.0",
         "interactjs": "1.10.0",
         "jquery": "3.5.1",
+        "js-video-url-parser": "0.4.2",
         "lodash": "4.17.20",
         "lodash.template": "4.5.0",
         "mobile-drag-drop": "2.3.0-rc.2",
