@@ -1,24 +1,9 @@
 package ${packageName};
 
-import java.security.SecureRandom;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.text.*;
+import java.util.*;
 
 public final class Client {
-
-    private static final int ITERATIONS = 10;
-
-    private static final int RANDOM_FLOOR = 5;
-
-    private static final int RANDOM_CEILING = 15;
-
-    private static final SecureRandom RANDOM = new SecureRandom();
-
-    private Client() {
-    }
 
     // TODO: Implement BubbleSort
     // TODO: Implement MergeSort
@@ -29,6 +14,15 @@ public final class Client {
     // TODO: Create and implement a Context class according to the UML class diagram
     // TODO: Create and implement a Policy class as described in the problem statement
 
+    private static final int ITERATIONS = 10;
+
+    private static final int RANDOM_FLOOR = 5;
+
+    private static final int RANDOM_CEILING = 15;
+
+    private Client() {
+    }
+
     /**
      * Main method.
      * Add code to demonstrate your implementation here.
@@ -38,7 +32,6 @@ public final class Client {
     public static void main(final String[] args) throws ParseException {
 
         // TODO: Init Context and Policy
-
 
         // Run multiple times to simulate different sorting strategies for different Array sizes
         for (int i = 0; i < ITERATIONS; i++) {
@@ -58,7 +51,7 @@ public final class Client {
 
     /**
      * Generates a List of random Date objects with random List size between
-     * {@link #ANDOM_FLOOR} and {@link #RANDOM_CEILING}.
+     * {@link #RANDOM_FLOOR} and {@link #RANDOM_CEILING}.
      *
      * @return a List of random Date objects
      * @throws ParserException if date string cannot be parsed
@@ -69,7 +62,7 @@ public final class Client {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         Date lowestDate = dateFormat.parse("08.11.2016");
-        Date highestDate = dateFormat.parse("26.10.2020");
+        Date highestDate = dateFormat.parse("03.11.2020");
 
         for (int i = 0; i < listLength; i++) {
             Date randomDate = randomDateWithin(lowestDate, highestDate);
@@ -115,7 +108,7 @@ public final class Client {
     /**
      * Prints out the given Array of Date objects.
      *
-     * @param list the dates to print
+     * @param list of the dates to print
      */
     private static void printDateList(List<Date> list) {
         System.out.println(list.toString());

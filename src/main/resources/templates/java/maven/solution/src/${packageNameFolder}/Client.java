@@ -5,7 +5,7 @@ import org.apache.commons.lang3.RandomUtils;
 import java.text.*;
 import java.util.*;
 
-public class Client {
+public final class Client {
 
     private static final int ITERATIONS = 10;
 
@@ -59,7 +59,7 @@ public class Client {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         Date lowestDate = dateFormat.parse("08.11.2016");
-        Date highestDate = dateFormat.parse("15.04.2017");
+        Date highestDate = dateFormat.parse("03.11.2020");
 
         for (int i = 0; i < listLength; i++) {
             Date randomDate = randomDateWithin(lowestDate, highestDate);

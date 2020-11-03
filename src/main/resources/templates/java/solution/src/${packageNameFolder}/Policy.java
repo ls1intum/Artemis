@@ -2,7 +2,7 @@ package ${packageName};
 
 public class Policy {
 
-    private final static int DATES_SIZE_THRESHOLD = 10;
+    private static final int DATES_SIZE_THRESHOLD = 10;
 
     private Context context;
 
@@ -10,6 +10,9 @@ public class Policy {
         this.context = context;
     }
 
+    /**
+     * Chooses a strategy depending on the number of date objects.
+     */
     public void configure() {
         if (this.context.getDates().size() > DATES_SIZE_THRESHOLD) {
             System.out.println("More than " + DATES_SIZE_THRESHOLD + " dates, choosing merge sort!");

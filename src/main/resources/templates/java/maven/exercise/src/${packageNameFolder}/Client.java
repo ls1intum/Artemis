@@ -5,7 +5,7 @@ import org.apache.commons.lang3.RandomUtils;
 import java.text.*;
 import java.util.*;
 
-public class Client {
+public final class Client {
 
     // TODO: Implement BubbleSort
     // TODO: Implement MergeSort

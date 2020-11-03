@@ -23,6 +23,9 @@ public class Context {
         return sortAlgorithm;
     }
 
+    /**
+     * Runs the configured sort algorithm.
+     */
     public void sort() {
         sortAlgorithm.performSort(this.dates);
     }

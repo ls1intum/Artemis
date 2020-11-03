@@ -78,7 +78,11 @@
         <module name="JavadocType"/>
         <!--<module name="JavadocVariable"/> -->
         <module name="JavadocStyle"/>
-        <module name="MissingJavadocMethod"/>
+        <module name="MissingJavadocMethod">
+            <property name="allowMissingPropertyJavadoc" value="true"/>
+            <property name="allowedAnnotations" value="Override,Test"/>
+            <property name="tokens" value="METHOD_DEF,ANNOTATION_FIELD_DEF,COMPACT_CTOR_DEF"/>
+        </module>
 
         <!-- Checks for Naming Conventions.                  -->
         <!-- See https://checkstyle.org/config_naming.html -->
@@ -128,15 +132,19 @@
         <!-- See https://checkstyle.org/config_blocks.html -->
         <module name="AvoidNestedBlocks"/>
         <module name="EmptyBlock"/>
-        <module name="LeftCurly"/>
+        <!-- <module name="LeftCurly"/> -->
         <module name="NeedBraces"/>
-        <module name="RightCurly"/>
+        <!-- <module name="RightCurly"/> -->
 
         <!-- Checks for common coding problems               -->
         <!-- See https://checkstyle.org/config_coding.html -->
         <module name="EmptyStatement"/>
         <module name="EqualsHashCode"/>
-        <module name="HiddenField"/>
+        <module name="HiddenField">
+            <property name="ignoreConstructorParameter" value="true"/>
+            <property name="ignoreSetter" value="true"/>
+            <property name="setterCanReturnItsClass" value="true"/>
+        </module>
         <module name="IllegalInstantiation"/>
         <module name="InnerAssignment"/>
         <module name="MagicNumber"/>
@@ -147,7 +155,7 @@
 
         <!-- Checks for class design                         -->
         <!-- See https://checkstyle.org/config_design.html -->
-        <module name="DesignForExtension"/>
+        <!--<module name="DesignForExtension"/> -->
         <module name="FinalClass"/>
         <module name="HideUtilityClassConstructor"/>
         <module name="InterfaceIsType"/>
