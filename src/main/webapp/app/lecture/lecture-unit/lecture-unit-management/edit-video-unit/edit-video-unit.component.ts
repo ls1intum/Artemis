@@ -29,7 +29,7 @@ export class EditVideoUnitComponent implements OnInit {
                 switchMap((params) => {
                     const videoUnitId = Number(params.get('videoUnitId'));
                     this.lectureId = Number(params.get('lectureId'));
-                    return this.videoUnitService.findById(this.lectureId, videoUnitId);
+                    return this.videoUnitService.findById(videoUnitId, this.lectureId);
                 }),
                 finalize(() => {
                     this.isLoading = false;
