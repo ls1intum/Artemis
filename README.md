@@ -11,7 +11,7 @@ Artemis was initially generated using JHipster 6.10.3. ([Documentation and help]
 
 [![Latest version)](https://img.shields.io/github/v/tag/ls1intum/Artemis?label=%20Latest%20version&sort=semver)](https://github.com/ls1intum/Artemis/releases/latest)
 
-### Main features
+## Main features
 Artemis supports the following exercises:
 1. **[Programming exercises](docs/user/exercises/programming.rst)** with version control and automatic assessment with test cases and continuous integration
 2. **[Quiz exercises](docs/user/exercises/quiz.rst)** with multiple choice, drag and drop and short answer quiz questions
@@ -23,33 +23,33 @@ Artemis supports all these exercises to run either live in the lecture with inst
 
 Artemis also supports an exam mode now. You can find more information on [Exam mode student features](https://artemis.ase.in.tum.de/#/features/students) and on [Exam mode instructor features](https://artemis.ase.in.tum.de/#/features/instructors).
 
-### Setup, guides and contributing
+## Setup, guides and contributing
 
-#### Development setup, coding and design guidelines
+### Development setup, coding and design guidelines
 
 * [How to set up your local development environment](docs/dev/setup.rst)
 * [Server coding and design guidelines](docs/dev/guidelines/server.rst)
 * [Client coding and design guidelines](docs/dev/guidelines/client.rst)
 
-#### Documentation
+### Documentation
 
 [Read the Docs](https://readthedocs.org) hosts the [Artemis documentation](https://artemis-platform.readthedocs.io).
 You can find a guide on [how to write documentation](docs/README.md).
 
-#### Server setup
+### Server setup
 
 You can find the guide for setting up Artemis in conjunction with either `GitLab and Jenkins` [here](docs/dev/setup/jenkins-gitlab.rst) or with `Jira, Bitbucket and Bamboo` [here](docs/dev/setup/bamboo-bitbucket-jira.rst).
 Artemis uses these external tools for user management and the configuration of programming exercises.
 
-#### Administration setup
+### Administration setup
 
 You can find information on how to set up user registration [here](docs/admin/registration.rst)
 
-#### Contributing 
+### Contributing 
 
-Find here a guide on [how to contribute](/CONTRIBUTING.md) to Artemis.
+Please read the guid on [how to contribute](/CONTRIBUTING.md) to Artemis.
 
-#### Building for production
+### Building for production
 
 To build and optimize the Artemis application for production, run:
 
@@ -87,13 +87,13 @@ While Artemis includes generic adapters to these three external systems with a d
 2. **CIS:** Atlassian Bamboo Server
 3. **UMS:** Atlassian JIRA Server (more specifically Atlassian Crowd on the JIRA Server)
 
-#### Server architecture
+### Server architecture
 
 The following UML component diagram shows more details of the Artemis application server architecture and its REST interfaces to the application client.
 
 ![Server Architecture](docs/dev/system-design/ServerArchitecture.png "Server Architecture")
 
-#### Deployment
+### Deployment
 
 The following UML deployment diagram shows a typical deployment of Artemis application server and application client. Student, Instructor and Teaching Assistant (TA) computers are all equipped equally with the Artemis application client being displayed in the browser.
 
@@ -101,7 +101,7 @@ The Continuous Integration Server typically delegates the build jobs to local bu
 
 ![Deployment Overview](docs/dev/system-design/DeploymentOverview.svg "Deployment Overview")
 
-#### Data model
+### Data model
 
 The Artemis application server uses the following (simplified) data model in the MySQL database (note that the figure does not include all entities, attributes and relationships). It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. 
 Then a repository and a build plan for the student (User) will be created and configured. The initialization state variable (Enum) helps to track the progress of this complex operation and allows recovering from errors. 

@@ -5,7 +5,7 @@ To get started with RST, check out the [Quickstart] or this [cheatsheet].
 
 ## Documentation Hosting
 
-[Read the Docs] (RtD) hosts the [Artemis documentation] for `develop` (latest) branch, as well as for git tags. The latest tag is always the _stable_ version.
+[Read the Docs] (RtD) hosts the [Artemis documentation] for the `develop` (latest) branch, as well as for git tags. The latest tag is always the _stable_ version.
 RtD will build and deploy changes automatically.
 
 ## Installing Sphinx Locally
