@@ -102,12 +102,13 @@
                 </dependencies>
                 <configuration>
                     <!-- Minimum amount of duplicated tokens triggering the copy-paste detection -->
-                    <minimumTokens>70</minimumTokens>
+                    <minimumTokens>60</minimumTokens>
                     <!-- Ignore literal value differences when evaluating a duplicate block.
                     If true, foo=42; and foo=43; will be seen as equivalent -->
                     <ignoreLiterals>true</ignoreLiterals>
-                    <!-- Similar to ignoreLiterals but for identifiers, i.e. variable names, methods names -->
-                    <ignoreIdentifiers>true</ignoreIdentifiers>
+                    <!-- Similar to ignoreLiterals but for identifiers, i.e. variable names, methods names.
+                    If activated, most tokens will be ignored so minimumTokens must be lowered significantly -->
+                    <ignoreIdentifiers>false</ignoreIdentifiers>
                 </configuration>
             </plugin>
             %static-code-analysis-stop%
