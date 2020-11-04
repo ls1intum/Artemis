@@ -48,7 +48,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     registerForCourse() {
         this.courseService.registerForCourse(this.course.id!).subscribe(
             (userResponse) => {
-                if (userResponse.body != null) {
+                if (userResponse.body != undefined) {
                     const message = 'Registered user for course ' + this.course.title;
                     const jhiAlert = this.jhiAlertService.info(message);
                     jhiAlert.msg = message;

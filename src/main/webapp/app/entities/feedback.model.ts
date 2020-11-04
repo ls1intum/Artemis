@@ -49,7 +49,7 @@ export class Feedback implements BaseEntity {
     }
 
     public static hasDetailText(that: Feedback): boolean {
-        return that.detailText != null && that.detailText.length > 0;
+        return that.detailText != undefined && that.detailText.length > 0;
     }
 
     public static isEmpty(that: Feedback): boolean {
