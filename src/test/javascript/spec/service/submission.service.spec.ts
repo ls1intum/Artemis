@@ -10,6 +10,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import moment = require('moment');
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { Result } from 'app/entities/result.model';
+import { Feedback } from 'app/entities/feedback.model';
+import { SERVER_API_URL } from 'app/app.constants';
 
 describe('Submission Service', () => {
     let injector: TestBed;
@@ -63,10 +67,35 @@ describe('Submission Service', () => {
     });
 
     it('should get test run submission for a given exercise', async () => {
-        const returnedFromService = Object.assign({}, elemDefault);
-        service.getTestRunSubmissionsForExercise(123).subscribe((body) => expect(body).toBe({ body: elemDefault }));
-        const req = httpMock.expectOne(`api/exercises/123/test-run-submissions`);
-        req.flush(returnedFromService);
+        const exerciseId = 187;
+        const submission = ({
+            id: 1,
+            submitted: true,
+            type: 'AUTOMATIC',
+            text: 'Test\n\nTest\n\nTest',
+        } as unknown) as TextSubmission;
+        submission.result = ({
+            id: 2374,
+            resultString: '1 of 12 points',
+            score: 8,
+            rated: true,
+            hasFeedback: true,
+            hasComplaint: false,
+        } as unknown) as Result;
+        submission.result.feedbacks = [
+            {
+                id: 2,
+                detailText: 'Feedback',
+                credits: 1,
+            } as Feedback,
+        ];
+        const returnedFromService = Object.assign({}, [submission]);
+        service
+            .getTestRunSubmissionsForExercise(exerciseId)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: [submission] }));
+        const req = httpMock.expectOne({ url: `api/exercises/${exerciseId}/test-run-submissions`, method: 'GET' });
+        req.flush(JSON.stringify(returnedFromService));
     });
 
     afterEach(() => {
