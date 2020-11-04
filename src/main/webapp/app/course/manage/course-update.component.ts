@@ -341,5 +341,5 @@ const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {
     const onlineCourse = formGroup.controls['onlineCourse'].value;
     const registrationEnabled = formGroup.controls['registrationEnabled'].value;
     // it cannot be the case that both values are true
-    return onlineCourse != null && registrationEnabled != null && !(onlineCourse && registrationEnabled) ? null : { range: true };
+    return onlineCourse != undefined && registrationEnabled != undefined && !(onlineCourse && registrationEnabled) ? null : { range: true };
 };
