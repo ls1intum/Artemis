@@ -8,7 +8,7 @@ export class SessionStorageStrategy extends IStorageStrategy {
     private masterCacheKey: string = GlobalCacheConfig.globalCacheKey;
     constructor() {
         super();
-        if (typeof sessionStorage === 'undefined') {
+        if (sessionStorage == undefined) {
             throw new Error('Platform not supported.');
         }
     }
