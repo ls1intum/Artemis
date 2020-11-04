@@ -294,8 +294,8 @@ public class CourseResource {
     }
 
     private void validateRegistrationConfirmationMessage(Course course) {
-        if (course.getRegistrationConfirmationMessage() != null && course.getRegistrationConfirmationMessage().length() > 255) {
-            throw new BadRequestAlertException("Confirmation registration message must be shorter than 255 characters", ENTITY_NAME, "confirmationRegistrationMessageInvalid",
+        if (course.getRegistrationConfirmationMessage() != null && course.getRegistrationConfirmationMessage().length() > 2000) {
+            throw new BadRequestAlertException("Confirmation registration message must be shorter than 2000 characters", ENTITY_NAME, "confirmationRegistrationMessageInvalid",
                     true);
         }
     }

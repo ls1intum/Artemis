@@ -59,7 +59,7 @@
             "assessmentDueDateError": "Assessment Due Date must be after Release and Due Date. Please check your selection again",
             "dateNotSet": "No date set",
             "points": "Points",
-            "bonusPoints": "Bonus Points",
+            "bonusPoints": "Bonus points",
             "difficulty": "Difficulty",
             "noLevel": "No Level",
             "easy": "Easy",

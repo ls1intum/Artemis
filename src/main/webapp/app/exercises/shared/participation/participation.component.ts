@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
-import { JhiEventManager } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute } from '@angular/router';
@@ -14,9 +14,10 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise-utils';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { JhiAlertService } from 'ng-jhipster';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
+import * as moment from 'moment';
+import { Moment } from 'moment';
 
 enum FilterProp {
     ALL = 'all',
@@ -42,7 +43,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     paramSub: Subscription;
     exercise: Exercise;
     newManualResultAllowed: boolean;
-
     hasLoadedPendingSubmissions = false;
     presentationScoreEnabled = false;
 
@@ -113,6 +113,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 this.hasAccessRights();
             });
         });
+    }
+
+    formatDate(date: Moment | Date | undefined) {
+        return date ? moment(date).format('MMM DD YYYY, HH:mm:ss') : '';
     }
 
     hasAccessRights() {

@@ -47,7 +47,8 @@
                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon><span jhiTranslate="artemisApp.exam.examSummary.viewResult">&nbsp;View Result</span>
                 </button>
             </div>
-            <h5>{{ exercise.title }} [{{ exercise.maxScore }}p]</h5>
+            <!-- prettier-ignore -->
+            <h5>{{ exercise.title }} [{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}<span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span>]</h5>
             <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING">
                 <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
             </h6>

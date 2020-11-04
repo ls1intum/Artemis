@@ -288,7 +288,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         if (participation.results && participation.results.length > 0) {
                             const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
                             if (participationResult && participationResult.rated) {
-                                const participationScore = participationResult.score!;
+                                const participationScore = participationResult.score! >= 100 ? 100 : participationResult.score!;
                                 const missedScore = 100 - participationScore;
                                 groupedExercises[index].scores.data.push(participationScore);
                                 groupedExercises[index].missedScores.data.push(missedScore);
@@ -364,14 +364,17 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const replaced = result.resultString.replace(',', '.');
         const split = replaced.split(' ');
 
+        const missedPoints = parseFloat(split[2]) - parseFloat(split[0]) > 0 ? parseFloat(split[2]) - parseFloat(split[0]) : 0;
+        // This score is used to cap bonus points, so that we not have negative values for the missedScores
+        const score = result.score! >= 100 ? 100 : result.score!;
         // custom result strings
         if (!replaced.includes('passed') && !replaced.includes('points')) {
             if (result.score! >= 50) {
                 groupedExercise.scores.tooltips.push(`${result.resultString} (${result.score}%)`);
-                groupedExercise.missedScores.tooltips.push(`(${100 - result.score!}%)`);
+                groupedExercise.missedScores.tooltips.push(`(${100 - score}%)`);
             } else {
                 groupedExercise.scores.tooltips.push(`(${result.score}%)`);
-                groupedExercise.missedScores.tooltips.push(`${result.resultString} (${100 - result.score!}%)`);
+                groupedExercise.missedScores.tooltips.push(`${result.resultString} (${100 - score}%)`);
             }
 
             return;
@@ -389,7 +392,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 groupedExercise.missedScores.tooltips.push(
                     this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
                         points: '',
-                        percentage: 100 - result.score!,
+                        percentage: 100 - score,
                     }),
                 );
                 return;
@@ -403,8 +406,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 );
                 groupedExercise.missedScores.tooltips.push(
                     this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
-                        points: parseFloat(split[2]) - parseFloat(split[0]),
-                        percentage: 100 - result.score!,
+                        points: missedPoints,
+                        percentage: 100 - score,
                     }),
                 );
                 return;
@@ -415,12 +418,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         if (replaced.includes('passed')) {
             if (split.length === 2) {
                 groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).');
-                groupedExercise.missedScores.tooltips.push('(' + (100 - result.score!) + '%)');
+                groupedExercise.missedScores.tooltips.push('(' + (100 - score) + '%)');
                 return;
             }
             if (split.length === 4) {
                 groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).');
-                groupedExercise.missedScores.tooltips.push(parseFloat(split[2]) - parseFloat(split[0]) + ' tests failed (' + (100 - result.score!) + '%).');
+                groupedExercise.missedScores.tooltips.push(missedPoints + ' tests failed (' + (100 - score) + '%).');
                 return;
             }
         }
@@ -433,7 +436,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const textExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, ABSOLUTE_SCORE);
         const fileUploadExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, ABSOLUTE_SCORE);
         this.totalScore = this.calculateTotalScoreForTheCourse(ABSOLUTE_SCORE);
-        const totalMissedPoints = this.reachableScore - this.totalScore;
+        let totalMissedPoints = this.reachableScore - this.totalScore;
+        if (totalMissedPoints < 0) {
+            totalMissedPoints = 0;
+        }
         const absoluteScores = {};
         absoluteScores[ExerciseType.QUIZ] = quizzesTotalScore;
         absoluteScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalScore;
