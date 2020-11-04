@@ -26,10 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.FileType;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -211,23 +208,10 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         assertThat(database.getUserByLogin("student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
     }
 
-    private List<FileSubmission> getFileSubmissions() {
-        List<FileSubmission> fileSubmissions = new ArrayList();
-        FileSubmission fileSubmission = new FileSubmission();
-        fileSubmission.setFileName(currentLocalFileName);
-        fileSubmission.setFileContent("updatedFileContent");
-        fileSubmissions.add(fileSubmission);
-        return fileSubmissions;
-    }
-
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testSaveFiles() throws Exception {
-        assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
-        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
-
-        Path filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
-        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
+        saveFile(HttpStatus.OK);
     }
 
     @Test
@@ -238,7 +222,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
 
-        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", getFileSubmissions(), HttpStatus.OK);
+        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
 
         var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
@@ -457,5 +441,40 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.FORBIDDEN, null);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testStashChanges() throws Exception {
+        Path filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
+        // Do initial commit
+        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", getFileSubmissions("initial commit"), HttpStatus.OK);
+        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+
+        // Save file
+        saveFile(HttpStatus.OK);
+        Repository localRepo = gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath());
+        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
+
+        // Stash changes
+        gitService.stashChanges(localRepo);
+        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+    }
+
+    private void saveFile(HttpStatus expectedStatus) throws Exception {
+        assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), expectedStatus);
+
+        Path filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
+        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
+    }
+
+    private List<FileSubmission> getFileSubmissions(String fileContent) {
+        List<FileSubmission> fileSubmissions = new ArrayList();
+        FileSubmission fileSubmission = new FileSubmission();
+        fileSubmission.setFileName(currentLocalFileName);
+        fileSubmission.setFileContent(fileContent);
+        fileSubmissions.add(fileSubmission);
+        return fileSubmissions;
     }
 }
