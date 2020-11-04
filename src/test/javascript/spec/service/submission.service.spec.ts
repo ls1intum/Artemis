@@ -64,14 +64,8 @@ describe('Submission Service', () => {
 
     it('should get test run submission for a given exercise', async () => {
         const returnedFromService = Object.assign({}, elemDefault);
-        service
-            .getTestRunSubmissionsForExercise(123)
-            .pipe(
-                take(1),
-                map((resp) => resp.body),
-            )
-            .subscribe((body) => expect(body).toMatchObject({ body: elemDefault }));
-        const req = httpMock.expectOne({ method: 'GET' });
+        service.getTestRunSubmissionsForExercise(123).subscribe((body) => expect(body).toBe({ body: elemDefault }));
+        const req = httpMock.expectOne(`api/exercises/123/test-run-submissions`);
         req.flush(returnedFromService);
     });
 
