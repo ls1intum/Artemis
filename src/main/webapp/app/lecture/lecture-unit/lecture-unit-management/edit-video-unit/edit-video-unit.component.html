@@ -5,5 +5,5 @@
 </div>
 
 <div *ngIf="!isLoading" class="container">
-    <jhi-attachment-unit-form #attachmentUnitForm [isEditMode]="false" (formSubmitted)="createAttachmentUnit($event)"></jhi-attachment-unit-form>
+    <jhi-video-unit-form [formData]="formData" (formSubmitted)="updateVideoUnit($event)" [isEditMode]="true"></jhi-video-unit-form>
 </div>

@@ -64,16 +64,14 @@ function deploy {
     # Trigger Commands to replace and restart Artemis Application
     ssh $1 << COMMAND
 chmod +x artemis.war.new
-sudo mv ~/artemis.war.new /opt/artemis/
+sudo mv ~/artemis.war.new /opt/artemis/artemis.war.new
 
-cd /opt/artemis/
-
-sudo rm artemis.war.old
+sudo rm /opt/artemis/artemis.war.old
 
 sudo systemctl stop artemis
 
-sudo mv artemis.war artemis.war.old
-sudo mv artemis.war.new artemis.war
+sudo mv /opt/artemis/artemis.war /opt/artemis/artemis.war.old
+sudo mv /opt/artemis/artemis.war.new /opt/artemis/artemis.war
 
 sudo systemctl start artemis
 COMMAND
