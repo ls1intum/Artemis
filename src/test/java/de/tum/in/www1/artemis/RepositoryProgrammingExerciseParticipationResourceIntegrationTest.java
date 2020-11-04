@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.atLeastOnce;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -13,6 +13,8 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseParticipationService;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.MergeResult;
@@ -47,6 +49,9 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Autowired
     StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -105,6 +110,8 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         doReturn(gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath())).when(gitService)
                 .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl(), false);
+        doReturn(gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath())).when(gitService)
+            .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation));
 
         logs.add(buildLogEntry);
         logs.add(largeBuildLogEntry);
@@ -460,6 +467,34 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         gitService.stashChanges(localRepo);
         assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
     }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testStashChangesInStudentRepositoryAfterDueDateHasPassed_dueDateNotPassed() {
+        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        verify(programmingExerciseParticipationServiceSpy, atLeastOnce()).stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testStashChangesInStudentRepositoryAfterDueDateHasPassed_dueDatePassed() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        Path filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
+        // Do initial commit
+        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", getFileSubmissions("initial commit"), HttpStatus.OK);
+        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+
+        // Save file
+        saveFile(HttpStatus.OK);
+        Repository localRepo = gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath());
+        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
+
+        // Stash changes using service
+        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        verify(programmingExerciseParticipationServiceSpy, atLeastOnce()).stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+    }
+
 
     private void saveFile(HttpStatus expectedStatus) throws Exception {
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
