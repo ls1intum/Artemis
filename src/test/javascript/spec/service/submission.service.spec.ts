@@ -1,4 +1,4 @@
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { EntityArrayResponseType, SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { expect } from '../helpers/jest.fix';
 import { map, take } from 'rxjs/operators';
@@ -9,6 +9,7 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import moment = require('moment');
 
 describe('Submission Service', () => {
     let injector: TestBed;
@@ -53,9 +54,15 @@ describe('Submission Service', () => {
         // httpMock.verify();
     });
 
-    it('should get test run submission for a given exercise', async () => {
-        // service.getTestRunSubmissionsForExercise(123).subscribe(val => console.log(val));
+    it('should find all submissions of a given participation, 2.0', async () => {
+        const returnedFromService = Object.assign({}, elemDefault);
+        service.findAllSubmissionsOfParticipation(187).subscribe((body) => expect(body).toBe({ body: [elemDefault] }));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(JSON.stringify([returnedFromService]));
+        // httpMock.verify();
+    });
 
+    it('should get test run submission for a given exercise', async () => {
         const returnedFromService = Object.assign({}, elemDefault);
         service
             .getTestRunSubmissionsForExercise(123)
