@@ -208,7 +208,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).to.be.true;
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).to.be.true;
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).to.be.true;
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED && feedback.reference == null)).to.be.true;
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED && feedback.reference == undefined)).to.be.true;
         expect(alertElement).to.exist;
 
         // Reset feedbacks
@@ -221,7 +221,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).to.be.true;
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).to.be.true;
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).to.be.true;
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED && feedback.reference == null)).to.be.true;
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED && feedback.reference == undefined)).to.be.true;
         expect(alertElementSubmit).to.exist;
         flush();
     }));
