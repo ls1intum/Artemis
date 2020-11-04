@@ -690,7 +690,7 @@ Prerequisites:
       Jenkins SSH Credentials
 
 8. Add a new node (select a name and select `Permanent Agent`):
-    Set the number of executors so that it matches your machine's specs: This is the number of concurrent builds this agent can handle
+    Set the number of executors so that it matches your machine's specs: This is the number of concurrent builds this agent can handle. It is recommended to match the number of cores of the machine, but you might want to adjust this later if needed.
 
     Set the remote root directory to ```/home/jenkins/remote_agent```.
 
