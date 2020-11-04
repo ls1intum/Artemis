@@ -1352,10 +1352,10 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
-"@ls1intum/apollon@2.2.9":
-  version "2.2.9"
-  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.2.9.tgz#771a7c8ca0ec17af2291b5daea315d57e2824a07"
-  integrity sha512-kt74T6HqXV47Ni/iBrk6BQ719NGUWadSZJtqFYIXCF63lK6sARKV5EGqQm89SyHobAUunqjm/aOs2ZHy53OoNg==
+"@ls1intum/apollon@2.2.10":
+  version "2.2.10"
+  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.2.10.tgz#f0c27608ce5ad8b8fcea2da375cf837d0dad7c62"
+  integrity sha512-7gaHRxH7VzRGLq/quK7V9t+F22Mn7OKdE8nvZ+JzIxr+eeP/UZruos1jKUmQ7+CswMaSMOeyeNRhOSaJLzwMyg==
   dependencies:
     is-mobile "2.2.2"
     pepjs "0.5.2"
@@ -7567,6 +7567,11 @@ js-base64@^2.1.8:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"
   integrity sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==
+
+js-video-url-parser@0.4.2:
+  version "0.4.2"
+  resolved "https://registry.yarnpkg.com/js-video-url-parser/-/js-video-url-parser-0.4.2.tgz#db14c7e99cccac183708c00d4d8ba66da122d227"
+  integrity sha512-8EFeqsPxhrGdkKj6v2PSTkWznTDV+9fQZpvlz4uEBCFbLPGDU7vY/RNeeH6QufHzTjHI8QaW4xP6fzch2EHmoA==
 
 js-yaml@3.14.0, js-yaml@^3.13.1:
   version "3.14.0"

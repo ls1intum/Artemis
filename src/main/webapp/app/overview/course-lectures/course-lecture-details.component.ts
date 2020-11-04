@@ -49,7 +49,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             this.lecture = stateLecture;
         }
     }
-
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {
             if (!this.lecture || this.lecture.id !== params.lectureId) {
