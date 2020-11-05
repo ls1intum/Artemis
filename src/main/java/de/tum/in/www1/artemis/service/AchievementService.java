@@ -26,8 +26,6 @@ public class AchievementService {
 
     private final ProgressBasedAchievementService progressBasedAchievementService;
 
-    private final ParticipationService participationService;
-
     private final AchievementRepository achievementRepository;
 
     private final UserRepository userRepository;
@@ -35,13 +33,12 @@ public class AchievementService {
     private final Logger log = LoggerFactory.getLogger(AchievementService.class);
 
     public AchievementService(AchievementRepository achievementRepository, UserRepository userRepository, PointBasedAchievementService pointBasedAchievementService,
-            TimeBasedAchievementService timeBasedAchievementService, ProgressBasedAchievementService progressBasedAchievementService, ParticipationService participationService) {
+            TimeBasedAchievementService timeBasedAchievementService, ProgressBasedAchievementService progressBasedAchievementService) {
         this.achievementRepository = achievementRepository;
         this.pointBasedAchievementService = pointBasedAchievementService;
         this.timeBasedAchievementService = timeBasedAchievementService;
         this.progressBasedAchievementService = progressBasedAchievementService;
         this.userRepository = userRepository;
-        this.participationService = participationService;
     }
 
     /**
