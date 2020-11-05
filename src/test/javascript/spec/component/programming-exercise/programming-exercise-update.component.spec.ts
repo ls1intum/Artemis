@@ -7,7 +7,7 @@ import * as moment from 'moment';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -128,6 +128,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 plagiarismCheckSupported: true,
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: true,
+                projectTypes: [ProjectType.ECLIPSE, ProjectType.MAVEN],
             };
             spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(of(programmingLanguageFeature));
 
@@ -167,6 +168,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 plagiarismCheckSupported: true,
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: true,
+                projectTypes: [ProjectType.ECLIPSE, ProjectType.MAVEN],
             };
             spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(of(programmingLanguageFeature));
 

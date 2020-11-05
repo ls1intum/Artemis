@@ -16,7 +16,7 @@ public final class Constants {
 
     public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 5;
 
-    public static final String FILEPATH_ID_PLACHEOLDER = "PLACEHOLDER_FOR_ID";
+    public static final String FILEPATH_ID_PLACEHOLDER = "PLACEHOLDER_FOR_ID";
 
     public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
 
@@ -33,6 +33,10 @@ public final class Constants {
     public static final String PROGRAMMING_SUBMISSION_RESOURCE_PATH = "/programming-submissions/";
 
     public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH;
+
+    public static final String ATHENE_RESULT_PATH = "/athene-result/";
+
+    public static final String ATHENE_RESULT_API_PATH = "/api" + ATHENE_RESULT_PATH;
 
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH = "/system-notifications/";
 

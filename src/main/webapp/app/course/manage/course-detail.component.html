@@ -37,10 +37,20 @@
                 <dd>
                     <span>{{ course.endDate | artemisDate }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.course.onlineCourse">Online Course</span></dt>
+                <dt><span jhiTranslate="artemisApp.course.semester">Semester</span></dt>
                 <dd>
-                    <span *ngIf="course.onlineCourse">{{ 'artemisApp.course.onlineCourseTrue' | translate }}</span>
-                    <span *ngIf="!course.onlineCourse">{{ 'artemisApp.course.onlineCourseFalse' | translate }}</span>
+                    <span *ngIf="course.semester && course.semester !== ''">{{ course.semester }}</span>
+                    <span *ngIf="!course.semester || course.semester === ''">{{ 'global.generic.unset' | translate }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.course.testCourse.title">Test Course</span></dt>
+                <dd>
+                    <span *ngIf="course.testCourse">{{ 'global.generic.yes' | translate }}</span>
+                    <span *ngIf="!course.testCourse">{{ 'global.generic.no' | translate }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.course.onlineCourse.title">Online Course</span></dt>
+                <dd>
+                    <span *ngIf="course.onlineCourse">{{ 'global.generic.yes' | translate }}</span>
+                    <span *ngIf="!course.onlineCourse">{{ 'global.generic.no' | translate }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.presentationScoreEnabled.title">Presentation Score Enabled</span></dt>
                 <dd>

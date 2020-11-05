@@ -120,6 +120,7 @@ jhipster:
 info:
     guided-tour:
         courseShortName: 'artemistutorial'
+        course-group-students: 'artemis-artemistutorial-students'
         tours:
             - cancel_tour: ''
             - code_editor_tour: 'tutorial'

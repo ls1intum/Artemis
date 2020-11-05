@@ -122,18 +122,29 @@ public class Result extends DomainObject {
     }
 
     /**
-     * builds and sets the resultString attribute
+     * Sets the resultString attribute
      *
      * @param totalScore total amount of scored points between 0 and maxScore
      * @param maxScore   maximum score reachable at corresponding exercise
      */
     public void setResultString(Double totalScore, @Nullable Double maxScore) {
+        resultString = createResultString(totalScore, maxScore);
+    }
+
+    /**
+     * Builds the resultString attribute
+     *
+     * @param totalScore total amount of scored points
+     * @param maxScore   maximum score reachable at corresponding exercise
+     * @return String with result string in this format "2 of 13 points" or "2 points"
+     */
+    public String createResultString(Double totalScore, @Nullable Double maxScore) {
         DecimalFormat formatter = new DecimalFormat("#.##");
         if (maxScore == null) {
-            resultString = (formatter.format(totalScore) + " points");
+            return formatter.format(totalScore) + " points";
         }
         else {
-            resultString = (formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points");
+            return formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points";
         }
     }
 
@@ -312,9 +323,13 @@ public class Result extends DomainObject {
      * assigns the new feedback afterwards. IMPORTANT: This method should not be used for Quiz and Programming exercises with completely automatic assessments!
      *
      * @param feedbacks the new feedback list
+     * @param skipAutomaticResults if true automatic results won't be updated
      */
-    public void updateAllFeedbackItems(List<Feedback> feedbacks) {
+    public void updateAllFeedbackItems(List<Feedback> feedbacks, boolean skipAutomaticResults) {
         for (Feedback feedback : feedbacks) {
+            if (skipAutomaticResults && feedback.getType() == FeedbackType.AUTOMATIC) {
+                continue;
+            }
             if (feedback.getCredits() != null) {
                 feedback.setPositive(feedback.getCredits() >= 0);
             }

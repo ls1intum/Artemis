@@ -89,9 +89,11 @@
                             <span jhiTranslate="artemisApp.studentExamDetail.result">Your points</span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.exam.examSummary.points.maxPoints">Max. points</span>
+                            <span jhiTranslate="artemisApp.exam.examSummary.points.maxPoints">Points</span>
                         </th>
-
+                        <th>
+                            <span jhiTranslate="artemisApp.exam.examSummary.points.bonus">Bonus points</span>
+                        </th>
                         <th>
                             <span jhiTranslate="artemisApp.studentExamDetail.reviewer">Reviewer</span>
                         </th>
@@ -115,6 +117,9 @@
                         </td>
                         <td class="align-middle">
                             {{ exercise?.maxScore }}
+                        </td>
+                        <td class="align-middle">
+                            {{ exercise?.bonusPoints }}
                         </td>
                         <td class="align-middle">
                             <ng-container

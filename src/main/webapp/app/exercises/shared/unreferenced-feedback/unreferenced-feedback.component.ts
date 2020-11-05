@@ -33,7 +33,7 @@ export class UnreferencedFeedbackComponent {
             return;
         }
         for (const feedback of this.unreferencedFeedback) {
-            if (feedback.credits == null || isNaN(feedback.credits)) {
+            if (feedback.credits == undefined || isNaN(feedback.credits)) {
                 this.assessmentsAreValid = false;
                 return;
             }

@@ -12,7 +12,7 @@ export class ParticipationSubmissionPopupService {
 
     open(component: Component, participationId?: number | any, submissionId?: number | any): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve) => {
-            if (this.ngbModalRef != null) {
+            if (this.ngbModalRef != undefined) {
                 resolve(this.ngbModalRef);
             }
 
