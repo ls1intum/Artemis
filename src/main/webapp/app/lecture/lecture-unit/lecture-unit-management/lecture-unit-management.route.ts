@@ -5,8 +5,8 @@ import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture
 import { CreateExerciseUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
 import { CreateAttachmentUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-attachment-unit/create-attachment-unit.component';
 import { EditAttachmentUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-attachment-unit/edit-attachment-unit.component';
-import { CreateVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-video-unit/create-video-unit.component';
-import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-video-unit/edit-video-unit.component';
+import { CreateTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-text-unit/create-text-unit.component';
+import { EditTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-text-unit/edit-text-unit.component';
 
 export const lectureUnitRoute: Routes = [
     {
@@ -43,19 +43,19 @@ export const lectureUnitRoute: Routes = [
         },
     },
     {
-        path: ':courseId/lectures/:lectureId/unit-management/video-units/create',
-        component: CreateVideoUnitComponent,
+        path: ':courseId/lectures/:lectureId/unit-management/text-units/create',
+        component: CreateTextUnitComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.videoUnit.createVideoUnit.title',
+            pageTitle: 'artemisApp.textUnit.createTextUnit.title',
         },
     },
     {
-        path: ':courseId/lectures/:lectureId/unit-management/video-units/:videoUnitId/edit',
-        component: EditVideoUnitComponent,
+        path: ':courseId/lectures/:lectureId/unit-management/text-units/:textUnitId/edit',
+        component: EditTextUnitComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.videoUnit.editVideoUnit.title',
+            pageTitle: 'artemisApp.textUnit.editTextUnit.title',
         },
     },
 ];

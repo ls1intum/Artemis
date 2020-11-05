@@ -34,6 +34,7 @@ import { ExerciseUnitComponent } from './course-lectures/exercise-unit/exercise-
 import { AttachmentUnitComponent } from './course-lectures/attachment-unit/attachment-unit.component';
 import { VideoUnitComponent } from './course-lectures/video-unit/video-unit.component';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
+import { TextUnitComponent } from './course-lectures/text-unit/text-unit.component';
 
 @NgModule({
     imports: [
@@ -74,7 +75,8 @@ import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
         ExerciseUnitComponent,
         AttachmentUnitComponent,
         VideoUnitComponent,
+        TextUnitComponent,
     ],
-    exports: [ExerciseActionButtonComponent, ExerciseDetailsStudentActionsComponent, ExerciseUnitComponent, AttachmentUnitComponent, VideoUnitComponent],
+    exports: [ExerciseActionButtonComponent, ExerciseDetailsStudentActionsComponent, ExerciseUnitComponent, AttachmentUnitComponent, VideoUnitComponent, TextUnitComponent],
 })
 export class ArtemisCoursesModule {}

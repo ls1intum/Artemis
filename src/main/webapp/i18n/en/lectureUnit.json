@@ -13,6 +13,19 @@
             },
             "releaseDate": "Release Date"
         },
+        "textUnit": {
+            "createTextUnit": {
+                "title": "Create Text Unit"
+            },
+            "editTextUnit": {
+                "title": "Edit Text Unit"
+            },
+            "delete": {
+                "question": "Do you really want to delete the text unit <strong>{{ title }}</strong>? You can not undo this action!",
+                "typeNameToConfirm": "Please enter the name of the text unit for confirmation.",
+                "buttonText": "Delete"
+            }
+        },
         "videoUnit": {
             "created": "A new video unit created",
             "updated": "Video unit updated",
