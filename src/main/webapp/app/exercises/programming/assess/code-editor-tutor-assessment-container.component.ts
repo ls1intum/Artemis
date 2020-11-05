@@ -276,7 +276,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     onUpdateFeedback(feedbacks: Feedback[]) {
         // Filter out other feedback than manual feedback
-        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != null && feedbackElement.type === FeedbackType.MANUAL);
+        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         this.validateFeedback();
     }
 
@@ -381,11 +381,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         // Setup not automatically generated feedbacks
         const feedbacks = this.manualResult?.feedbacks || [];
-        this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+        this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
 
-        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != null && feedbackElement.type === FeedbackType.MANUAL);
+        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         const generalFeedbackIndex = feedbacks.findIndex(
-            (feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED && feedbackElement.type !== FeedbackType.AUTOMATIC,
+            (feedbackElement) =>
+                feedbackElement.reference == undefined && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED && feedbackElement.type !== FeedbackType.AUTOMATIC,
         );
         if (generalFeedbackIndex !== -1) {
             this.generalFeedback = feedbacks[generalFeedbackIndex];

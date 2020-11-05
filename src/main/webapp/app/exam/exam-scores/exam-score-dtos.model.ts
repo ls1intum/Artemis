@@ -1,45 +1,56 @@
 export class ExamScoreDTO {
-    constructor(
-        public examId: number,
-        public title: string,
-        public maxPoints: number,
-        public averagePointsAchieved: number,
-        public exerciseGroups: ExerciseGroup[],
-        public studentResults: StudentResult[],
-    ) {}
+    public examId: number;
+    public title: string;
+    public maxPoints: number;
+    public averagePointsAchieved: number;
+    public exerciseGroups: ExerciseGroup[];
+    public studentResults: StudentResult[];
+
+    constructor() {}
 }
 
 export class ExerciseGroup {
-    constructor(public id: number, public title: string, public maxPoints: number, public numberOfParticipants: number, public containedExercises: ExerciseInfo[]) {}
+    public id: number;
+    public title: string;
+    public maxPoints: number;
+    public numberOfParticipants: number;
+    public containedExercises: ExerciseInfo[];
+
+    constructor() {}
 }
 
 export class ExerciseInfo {
-    constructor(public exerciseId: number, public title: string, public maxPoints: number, public numberOfParticipants: number) {}
+    public exerciseId: number;
+    public title: string;
+    public maxPoints: number;
+    public numberOfParticipants: number;
+
+    constructor() {}
 }
 
 export class StudentResult {
-    constructor(
-        public userId: number,
-        public name: string,
-        public login: string,
-        public eMail: string,
-        public registrationNumber: string,
-        public overallPointsAchieved: number,
-        public overallScoreAchieved: number,
-        public submitted: boolean,
-        public exerciseGroupIdToExerciseResult: { [key: number]: ExerciseResult },
-    ) {}
+    public userId: number;
+    public name: string;
+    public login: string;
+    public eMail: string;
+    public registrationNumber: string;
+    public overallPointsAchieved?: number;
+    public overallScoreAchieved?: number;
+    public submitted: boolean;
+    public exerciseGroupIdToExerciseResult: { [key: number]: ExerciseResult };
+
+    constructor() {}
 }
 
 export class ExerciseResult {
-    constructor(
-        public exerciseId: number,
-        public title: string,
-        public maxScore: number,
-        public achievedScore: number,
-        public achievedPoints: number,
-        public hasNonEmptySubmission: boolean,
-    ) {}
+    public exerciseId: number;
+    public title: string;
+    public maxScore: number;
+    public achievedScore?: number;
+    public achievedPoints?: number;
+    public hasNonEmptySubmission: boolean;
+
+    constructor() {}
 }
 
 export class AggregatedExamResult {
