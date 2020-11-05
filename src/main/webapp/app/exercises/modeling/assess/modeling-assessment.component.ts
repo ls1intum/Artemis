@@ -37,8 +37,10 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
 
     ngAfterViewInit(): void {
         if (this.feedbacks) {
-            this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != null);
-            this.unreferencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+            this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
+            this.unreferencedFeedbacks = this.feedbacks.filter(
+                (feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED,
+            );
         }
         this.initializeApollonEditor();
         if (this.highlightedElements) {

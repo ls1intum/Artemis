@@ -135,7 +135,7 @@ export class ResultComponent implements OnInit, OnChanges {
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = this.getTextColorClass();
             this.resultIconClass = this.getResultIconClass();
-        } else if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == null || this.showUngradedResults)) {
+        } else if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
@@ -212,7 +212,7 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     private dateAsMoment(date: any) {
-        if (date == null) {
+        if (date == undefined) {
             return null;
         }
         return moment.isMoment(date) ? date : moment(date);
@@ -319,7 +319,7 @@ export class ResultComponent implements OnInit, OnChanges {
             return 'result--late';
         }
         const result = this.result!;
-        if (result.score == null) {
+        if (result.score == undefined) {
             if (result.successful) {
                 return 'text-success';
             }
@@ -340,7 +340,7 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     getResultIconClass(): string[] {
         const result = this.result!;
-        if (result.score == null) {
+        if (result.score == undefined) {
             if (result.successful) {
                 return ['far', 'check-circle'];
             }
