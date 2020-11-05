@@ -112,7 +112,7 @@ export class CourseUpdateComponent implements OnInit {
                 studentQuestionsEnabled: new FormControl(this.course.studentQuestionsEnabled),
                 registrationEnabled: new FormControl(this.course.registrationEnabled),
                 registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
-                    validators: [Validators.maxLength(255)],
+                    validators: [Validators.maxLength(2000)],
                 }),
                 presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
                     Validators.min(1),
@@ -341,5 +341,5 @@ const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {
     const onlineCourse = formGroup.controls['onlineCourse'].value;
     const registrationEnabled = formGroup.controls['registrationEnabled'].value;
     // it cannot be the case that both values are true
-    return onlineCourse != null && registrationEnabled != null && !(onlineCourse && registrationEnabled) ? null : { range: true };
+    return onlineCourse != undefined && registrationEnabled != undefined && !(onlineCourse && registrationEnabled) ? null : { range: true };
 };

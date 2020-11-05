@@ -144,7 +144,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private setPropertiesFromServerResponse(studentParticipation: StudentParticipation) {
         this.resetComponent();
 
-        if (studentParticipation == null) {
+        if (studentParticipation == undefined) {
             // Show "No New Submission" banner on .../submissions/new/assessment route
             this.noNewSubmissions = this.isNewAssessmentRoute;
             return;
@@ -321,8 +321,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             return;
         }
         const feedbacks = this.result.feedbacks || [];
-        this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
-        const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
+        this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+        const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
         if (generalFeedbackIndex !== -1) {
             this.generalFeedback = feedbacks[generalFeedbackIndex];
             feedbacks.splice(generalFeedbackIndex, 1);
