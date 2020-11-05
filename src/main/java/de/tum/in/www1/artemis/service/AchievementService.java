@@ -104,29 +104,34 @@ public class AchievementService {
      * @param result
      */
     public void checkForAchievements(Result result) {
+        log.debug("checkForAchievements was invoked");
         var participation = result.getParticipation();
         if (participation == null || participation.getId() == null || !(participation instanceof StudentParticipation)) {
             return;
         }
+        log.debug("first check passed");
         var studentParticipation = (StudentParticipation) participation;
         var exercise = studentParticipation.getExercise();
         if (exercise == null || exercise.getExerciseGroup() != null) {
             return;
         }
+        log.debug("second check passed");
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (course == null || !course.getAchievementsEnabled()) {
             return;
         }
+        log.debug("third check passed");
         var optionalUser = studentParticipation.getStudent();
         if (optionalUser.isEmpty()) {
             return;
         }
+        log.debug("fourth check passed");
         var user = userRepository.findOneWithEagerAchievements(optionalUser.get().getId());
         if (user == null) {
             return;
         }
 
-        log.debug("All checks passed in AchievementService");
+        log.debug("all checks passed");
 
         var pointBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.POINT);
         var pointRank = pointBasedAchievementService.checkForAchievement(result, pointBasedAchievements);
