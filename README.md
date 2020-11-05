@@ -110,3 +110,12 @@ In addition, teaching assistants can assess student solutions and "manually" cre
 The current data model is more complex and supports more features such as online exams, lectures, student questions and static code analysis.
 
 ![Data Model](docs/dev/system-design/DataModel.svg "Data Model")
+
+### Universities with Artemis in Use
+
+* [Technical University of Munich](https://artemis.ase.in.tum.de)
+* [University of Stuttgart](https://artemis.sqa.ddnss.org)
+* [LFU Innsbruck](https://artemis.codeability.uibk.ac.at)
+* [Uni Salzburg](https://artemis.codeability.uibk.ac.at)
+* [JKU Linz](https://artemis.codeability.uibk.ac.at)
+* [AAU Klagenfurt](https://artemis.codeability.uibk.ac.at)

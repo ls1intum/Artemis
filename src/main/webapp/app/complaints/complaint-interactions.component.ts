@@ -25,7 +25,7 @@ export class ComplaintInteractionsComponent implements OnInit {
     isCurrentUserSubmissionAuthor: boolean;
 
     get isExamMode() {
-        return this.exam != null;
+        return this.exam != undefined;
     }
 
     showRequestMoreFeedbackForm = false;
@@ -73,7 +73,7 @@ export class ComplaintInteractionsComponent implements OnInit {
             if (this.result && this.result.completionDate) {
                 this.complaintService.findByResultId(this.result.id!).subscribe((res) => {
                     if (res.body) {
-                        if (res.body.complaintType == null || res.body.complaintType === ComplaintType.COMPLAINT) {
+                        if (res.body.complaintType == undefined || res.body.complaintType === ComplaintType.COMPLAINT) {
                             this.hasComplaint = true;
                         } else {
                             this.hasRequestMoreFeedback = true;

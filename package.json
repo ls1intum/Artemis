@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "4.7.1",
+    "version": "4.7.2",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -78,7 +78,7 @@
         "tslib": "2.0.3",
         "webstomp-client": "1.2.6",
         "yarn": "1.22.10",
-        "zone.js": "0.11.2"
+        "zone.js": "0.11.3"
     },
     "devDependencies": {
         "@angular/cdk": "10.2.7",
@@ -92,7 +92,7 @@
         "@types/chai-string": "1.4.2",
         "@types/chart.js": "2.9.27",
         "@types/dompurify": "2.0.4",
-        "@types/jasmine": "3.6.0",
+        "@types/jasmine": "3.6.1",
         "@types/jest": "26.0.15",
         "@types/jquery": "3.5.4",
         "@types/lodash": "4.14.164",
@@ -132,7 +132,7 @@
         "html-webpack-plugin": "4.5.0",
         "husky": "4.3.0",
         "jasmine-core": "3.6.0",
-        "jest": "26.6.2",
+        "jest": "26.6.3",
         "jest-canvas-mock": "2.3.0",
         "jest-date-mock": "1.0.8",
         "jest-junit": "12.0.0",
@@ -143,7 +143,7 @@
         "mocha": "8.2.1",
         "mocha-junit-reporter": "2.0.0",
         "moment-locales-webpack-plugin": "1.2.0",
-        "ng-mocks": "10.5.1",
+        "ng-mocks": "10.5.2",
         "node-sass": "5.0.0",
         "optimize-css-assets-webpack-plugin": "5.0.4",
         "postcss": "8.1.4",

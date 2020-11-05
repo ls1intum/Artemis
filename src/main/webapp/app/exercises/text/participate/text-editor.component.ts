@@ -166,8 +166,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     get generalFeedback(): Feedback | null {
         if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
-            const feedbackWithoutReference = this.result.feedbacks.find((f) => f.reference == null && f.type !== FeedbackType.MANUAL_UNREFERENCED) || null;
-            if (feedbackWithoutReference != null && feedbackWithoutReference.detailText != null && feedbackWithoutReference.detailText.length > 0) {
+            const feedbackWithoutReference = this.result.feedbacks.find((f) => f.reference == undefined && f.type !== FeedbackType.MANUAL_UNREFERENCED) || null;
+            if (feedbackWithoutReference != undefined && feedbackWithoutReference.detailText != undefined && feedbackWithoutReference.detailText.length > 0) {
                 return feedbackWithoutReference;
             }
         }
@@ -181,7 +181,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     get unreferencedFeedback(): Feedback[] | null {
         if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
             const feedbackWithoutReference = this.result.feedbacks.filter(
-                (feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED,
+                (feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED,
             );
             return feedbackWithoutReference;
         }

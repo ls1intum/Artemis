@@ -547,7 +547,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return this.programmingSubmissionService
             .getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true)
             .pipe(
-                filter((submissionStateObj) => submissionStateObj != null),
+                filter((submissionStateObj) => submissionStateObj != undefined),
                 distinctUntilChanged(),
             )
             .subscribe((programmingSubmissionObj) => {
