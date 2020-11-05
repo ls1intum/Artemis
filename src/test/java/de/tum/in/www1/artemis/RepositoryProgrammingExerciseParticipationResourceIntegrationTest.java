@@ -620,7 +620,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         // Save file, without commit
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), expectedStatus);
-        // Check local and remote repo
+        // Check repo
         assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
     }
 }
