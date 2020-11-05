@@ -17,16 +17,12 @@ public class JenkinsBuildPlanCreatorProvider {
 
     private final HaskellJenkinsBuildPlanCreator haskellJenkinsBuildPlanCreator;
 
-    private final SwiftJenkinsBuildPlanCreator swiftJenkinsBuildPlanCreator;
-
     public JenkinsBuildPlanCreatorProvider(JavaJenkinsBuildPlanCreator javaJenkinsBuildPlanCreator, PythonJenkinsBuildPlanCreator pythonJenkinsBuildPlanCreator,
-            CJenkinsBuildPlanCreator cJenkinsBuildPlanCreator, HaskellJenkinsBuildPlanCreator haskellJenkinsBuildPlanCreator,
-            SwiftJenkinsBuildPlanCreator swiftJenkinsBuildPlanCreator) {
+            CJenkinsBuildPlanCreator cJenkinsBuildPlanCreator, HaskellJenkinsBuildPlanCreator haskellJenkinsBuildPlanCreator) {
         this.javaJenkinsBuildPlanCreator = javaJenkinsBuildPlanCreator;
         this.pythonJenkinsBuildPlanCreator = pythonJenkinsBuildPlanCreator;
         this.cJenkinsBuildPlanCreator = cJenkinsBuildPlanCreator;
         this.haskellJenkinsBuildPlanCreator = haskellJenkinsBuildPlanCreator;
-        this.swiftJenkinsBuildPlanCreator = swiftJenkinsBuildPlanCreator;
     }
 
     /**
