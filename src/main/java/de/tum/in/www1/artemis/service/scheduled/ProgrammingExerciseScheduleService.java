@@ -237,15 +237,21 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 if (programmingExercise.isEmpty()) {
                     throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
                 }
-                if (numberOfFailedLockOperations > 0 || numberOfFailedStashOperations > 0) {
+                if (numberOfFailedLockOperations > 0) {
                     groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
-                            Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION + numberOfFailedLockOperations
-                                    + ". Furthermore, When stashing the not submitted changes, not all stash operations were successfull. Number of failed stash operations: "
-                                    + numberOfFailedStashOperations);
+                            Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION + numberOfFailedLockOperations);
                 }
                 else {
                     groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
-                            Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_STASH_OPERATION_NOTIFICATION);
+                            Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION);
+                }
+                if (numberOfFailedStashOperations > 0) {
+                    groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                            Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION + numberOfFailedStashOperations);
+                }
+                else {
+                    groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                            Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION);
                 }
             }
             catch (EntityNotFoundException ex) {

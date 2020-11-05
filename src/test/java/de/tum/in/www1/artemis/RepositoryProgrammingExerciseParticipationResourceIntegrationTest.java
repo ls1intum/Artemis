@@ -113,7 +113,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         // add folder to the repository folder
         Path folderPath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFolderName);
-        var folder = Files.createDirectory(folderPath).toFile();
+        Files.createDirectory(folderPath).toFile();
 
         var localRepoUrl = new GitUtilService.MockFileRepositoryUrl(studentRepository.localRepoFile);
         database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURL());
