@@ -18,7 +18,7 @@ There are variables for several paths:
   Files in this directory are usually not critical, as the latest pushed version of these repositories is also stored at the VCS.
   However, changed that are saved in the online code editor but not yet commited will be lost when this folder is deleted.
 
-- ``artemis.repo-clone-path``
+- ``artemis.repo-download-clone-path``
 
   Repositories that were downloaded from Artemis are stored in this directory.
 
