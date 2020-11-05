@@ -29,13 +29,13 @@ export class ComplaintResponseService {
 
     private convertDateFromClient(complaintResponse: ComplaintResponse): ComplaintResponse {
         return Object.assign({}, complaintResponse, {
-            submittedTime: complaintResponse.submittedTime != null && moment(complaintResponse.submittedTime).isValid ? complaintResponse.submittedTime.toJSON() : undefined,
+            submittedTime: complaintResponse.submittedTime != undefined && moment(complaintResponse.submittedTime).isValid ? complaintResponse.submittedTime.toJSON() : undefined,
         });
     }
 
     private convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.submittedTime = res.body.submittedTime != null ? moment(res.body.submittedTime) : undefined;
+            res.body.submittedTime = res.body.submittedTime != undefined ? moment(res.body.submittedTime) : undefined;
         }
         return res;
     }

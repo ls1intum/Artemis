@@ -46,7 +46,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.unsubscribe();
         this.navigationEndSubscription.unsubscribe();
     }
-
     ngOnInit(): void {
         this.navigationEndSubscription = this.router.events.pipe(filter((value) => value instanceof NavigationEnd)).subscribe(() => {
             this.loadData();
@@ -121,25 +120,37 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.router.navigate(['attachment-units', 'create'], { relativeTo: this.activatedRoute });
     }
 
+    createVideoUnit() {
+        this.router.navigate(['video-units', 'create'], { relativeTo: this.activatedRoute });
+    }
+
     identify(index: number, lectureUnit: LectureUnit) {
         return `${index}-${lectureUnit.id}`;
     }
 
     getDeleteQuestionKey(lectureUnit: LectureUnit) {
-        if (lectureUnit.type === LectureUnitType.EXERCISE) {
-            return 'artemisApp.exerciseUnit.delete.question';
-        }
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
-            return 'artemisApp.attachmentUnit.delete.question';
+        switch (lectureUnit.type) {
+            case LectureUnitType.EXERCISE:
+                return 'artemisApp.exerciseUnit.delete.question';
+            case LectureUnitType.ATTACHMENT:
+                return 'artemisApp.attachmentUnit.delete.question';
+            case LectureUnitType.VIDEO:
+                return 'artemisApp.videoUnit.delete.question';
+            case LectureUnitType.TEXT:
+                return 'artemisApp.textUnit.delete.question';
         }
     }
 
     getDeleteConfirmationTextKey(lectureUnit: LectureUnit) {
-        if (lectureUnit.type === LectureUnitType.EXERCISE) {
-            return 'artemisApp.exerciseUnit.delete.typeNameToConfirm';
-        }
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
-            return 'artemisApp.attachmentUnit.delete.typeNameToConfirm';
+        switch (lectureUnit.type) {
+            case LectureUnitType.EXERCISE:
+                return 'artemisApp.exerciseUnit.delete.typeNameToConfirm';
+            case LectureUnitType.ATTACHMENT:
+                return 'artemisApp.attachmentUnit.delete.typeNameToConfirm';
+            case LectureUnitType.VIDEO:
+                return 'artemisApp.videoUnit.delete.typeNameToConfirm';
+            case LectureUnitType.TEXT:
+                return 'artemisApp.textUnit.delete.typeNameToConfirm';
         }
     }
 
@@ -152,7 +163,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     deleteLectureUnit(lectureUnitId: number) {
-        this.lectureUnitService.delete(lectureUnitId).subscribe(
+        this.lectureUnitService.delete(lectureUnitId, this.lectureId).subscribe(
             () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
@@ -177,6 +188,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             case LectureUnitType.ATTACHMENT:
                 this.router.navigate(['attachment-units', lectureUnit.id, 'edit'], { relativeTo: this.activatedRoute });
                 break;
+            case LectureUnitType.VIDEO: {
+                this.router.navigate(['video-units', lectureUnit.id, 'edit'], { relativeTo: this.activatedRoute });
+                break;
+            }
             default:
                 return;
         }

@@ -1,5 +1,6 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
+import { ActivatedRoute } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { StudentQuestionComponent } from 'app/overview/student-questions/student-question/student-question.component';
@@ -8,6 +9,7 @@ import { StudentQuestion } from 'app/entities/student-question.model';
 import { User } from 'app/core/user/user.model';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -51,6 +53,7 @@ describe('StudentQuestionComponent', () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
             declarations: [StudentQuestionComponent],
+            providers: [{ provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects }],
         })
             .overrideTemplate(StudentQuestionComponent, '')
             .compileComponents()
@@ -62,29 +65,20 @@ describe('StudentQuestionComponent', () => {
 
     it('should toggle edit mode and reset editor Text', () => {
         component.studentQuestion = studentQuestion;
-        componentFixture.detectChanges();
         component.isEditMode = true;
-        componentFixture.detectChanges();
         component.editText = 'test';
-        componentFixture.detectChanges();
         component.toggleEditMode();
-        componentFixture.detectChanges();
         expect(component.editText).to.deep.equal('question');
         expect(component.isEditMode).to.be.false;
         component.toggleEditMode();
-        componentFixture.detectChanges();
         expect(component.isEditMode).to.be.true;
     });
 
     it('should update questionText', () => {
         component.studentQuestion = studentQuestion;
-        componentFixture.detectChanges();
         component.isEditMode = true;
-        componentFixture.detectChanges();
         component.editText = 'test';
-        componentFixture.detectChanges();
         component.saveQuestion();
-        componentFixture.detectChanges();
         expect(component.studentQuestion.questionText).to.deep.equal('test');
     });
 });
