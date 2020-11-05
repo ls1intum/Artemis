@@ -332,9 +332,12 @@ public class ProgrammingExerciseResource {
             }
 
             // Check if package name matches regex
-            Matcher packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
+            Matcher packageNameMatcher;
             if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
                 packageNameMatcher = packageNamePatternForSwift.matcher(programmingExercise.getPackageName());
+            }
+            else {
+                packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
             }
             if (!packageNameMatcher.matches()) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
