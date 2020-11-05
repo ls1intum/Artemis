@@ -36,7 +36,7 @@ export const systemNotificationManagementRoute: Routes = [
         },
     },
     {
-        path: 'system-notification-management/:id/view',
+        path: 'system-notification-management/:id',
         component: SystemNotificationManagementDetailComponent,
         resolve: {
             notification: SystemNotificationManagementResolve,

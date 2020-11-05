@@ -51,7 +51,7 @@
             <tbody *ngIf="users">
                 <tr *ngFor="let user of users; trackBy: trackIdentity">
                     <td>
-                        <a [routerLink]="['./', user.login, 'view']">{{ user.id }}</a>
+                        <a [routerLink]="['./', user.login]">{{ user.id }}</a>
                     </td>
                     <td>
                         <ngb-highlight [result]="user.login" [term]="searchTerm"></ngb-highlight>
@@ -90,7 +90,7 @@
                     <td>{{ user.lastModifiedDate | artemisDate }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
-                            <button type="submit" [routerLink]="['./', user.login, 'view']" class="btn btn-info btn-sm">
+                            <button type="submit" [routerLink]="['./', user.login]" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="'eye'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                             </button>
