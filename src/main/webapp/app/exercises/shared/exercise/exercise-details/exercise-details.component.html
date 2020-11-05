@@ -1,18 +1,18 @@
 <dt *ngIf="superExerciseDetails.course || superExerciseDetails.exerciseGroup"><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
 <dd *ngIf="superExerciseDetails.course">
     <div>
-        <a [routerLink]="['/course-management', superExerciseDetails.course?.id, 'view']">{{ superExerciseDetails.course?.title }}</a>
+        <a [routerLink]="['/course-management', superExerciseDetails.course?.id]">{{ superExerciseDetails.course?.title }}</a>
     </div>
 </dd>
 <dd *ngIf="superExerciseDetails.exerciseGroup">
     <div>
-        <a [routerLink]="['/course-management', superExerciseDetails.exerciseGroup?.exam?.course?.id, 'view']">{{ superExerciseDetails.exerciseGroup?.exam?.course?.title }}</a>
+        <a [routerLink]="['/course-management', superExerciseDetails.exerciseGroup?.exam?.course?.id]">{{ superExerciseDetails.exerciseGroup?.exam?.course?.title }}</a>
     </div>
 </dd>
 <dt *ngIf="superExerciseDetails.exerciseGroup"><span jhiTranslate="artemisApp.exercise.exam">Exam</span></dt>
 <dd *ngIf="superExerciseDetails.exerciseGroup">
     <div>
-        <a [routerLink]="['/course-management', superExerciseDetails.exerciseGroup?.exam?.course?.id, 'exams', superExerciseDetails.exerciseGroup?.exam?.id, 'view']">{{
+        <a [routerLink]="['/course-management', superExerciseDetails.exerciseGroup?.exam?.course?.id, 'exams', superExerciseDetails.exerciseGroup?.exam?.id]">{{
             superExerciseDetails.exerciseGroup?.exam?.title
         }}</a>
         <span>{{ superExerciseDetails.exerciseGroup?.exam?.title }}</span>

@@ -88,7 +88,11 @@ public final class Constants {
 
     public static final String PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION = "The due date of this programming exercise has passed. When removing the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
 
+    public static final String PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION = "The due date of this programming exercise has passed. When stashing the changes for the student repositories, not all operations were successful. Number of failed operations: ";
+
     public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were locked successfully when the due date passed.";
+
+    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION = "The unsubmitted changes in the student repositories for this programming exercise were stashed successfully when the due date passed.";
 
     public static final String PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION = "The visible date of the exam of the programming exercise has passed. When adding the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
 
