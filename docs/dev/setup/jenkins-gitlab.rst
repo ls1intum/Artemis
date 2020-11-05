@@ -71,7 +71,7 @@ Please read :doc:`../setup` for more details.
 For a local setup on Windows you can use `http://host.docker.internal` appended
 by the chosen ports as the version-control and continuous-integration url.
 
-Make sure to change the ``server.url`` value in ``application-dev.yml``
+Make sure to change the ``server.jenkins_nodeurl`` value in ``application-dev.yml``
 or ``application-prod.yml`` accordingly. This value will be used for the
 communication hooks from Gitlab to Artemis and from Jenkins to Artemis.
 In case you use a different port than 80 (http) or 443 (https) for the
@@ -693,6 +693,8 @@ Prerequisites:
     Set the number of executors so that it matches your machine's specs: This is the number of concurrent builds this agent can handle. It is recommended to match the number of cores of the machine, but you might want to adjust this later if needed.
 
     Set the remote root directory to ```/home/jenkins/remote_agent```.
+
+    Set the usage to `Only build jobs with label expressions matching this node`. This ensures that only docker-jobs will be built on this agent, and not other jobs.
 
     Add a label ```docker``` to the agent.
 
