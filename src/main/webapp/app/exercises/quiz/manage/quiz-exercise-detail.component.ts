@@ -300,7 +300,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * Add an empty multiple choice question to the quiz
      */
     addMultipleChoiceQuestion() {
-        if (typeof this.quizExercise === 'undefined') {
+        if (this.quizExercise == undefined) {
             this.quizExercise = this.entity;
         }
 
@@ -331,7 +331,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * Add an empty drag and drop question to the quiz
      */
     addDragAndDropQuestion(): void {
-        if (typeof this.quizExercise === 'undefined') {
+        if (this.quizExercise == undefined) {
             this.quizExercise = this.entity;
         }
 
@@ -353,7 +353,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * Add an empty short answer question to the quiz
      */
     addShortAnswerQuestion(): void {
-        if (typeof this.quizExercise === 'undefined') {
+        if (this.quizExercise == undefined) {
             this.quizExercise = this.entity;
         }
 

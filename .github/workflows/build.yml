@@ -4,18 +4,15 @@ on:
   pull_request:
   push:
     branches:
-    - master
     - develop
-    - release/**
+    - main
     tags: '[0-9]+.[0-9]+.[0-9]+'
     paths-ignore:
-    - 'doc/**'
     - 'README.md'
     - 'CODE_OF_CONDUCT.md'
     - 'CONTRIBUTING.md'
     - 'LICENSE'
     - 'SECURITY.md'
-    - 'data/**'
     - '.github/**'
     - '!.github/workflows/build.yml'
   release:

@@ -126,7 +126,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             const exerciseId = Number(params['exerciseId']);
             this.courseId = Number(params['courseId']);
 
-            if (this.exercise == null || this.exercise.id !== exerciseId) {
+            if (this.exercise == undefined || this.exercise.id !== exerciseId) {
                 if (this.testCaseSubscription) {
                     this.testCaseSubscription.unsubscribe();
                 }
