@@ -149,7 +149,7 @@ public class GitLabService extends AbstractVersionControlService {
             unprotectBranch(repositoryId, branch);
         }
         catch (GitLabException ex) {
-            log.warn("Could not unprotectBranch branch (but will try to protect it) due to the following reason: " + ex.getMessage());
+            log.warn("Could not unprotectBranch branch (but will try to protect it) due to the following reason: ", ex);
         }
 
         try {
