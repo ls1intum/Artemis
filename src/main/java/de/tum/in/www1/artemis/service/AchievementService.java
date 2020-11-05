@@ -126,10 +126,16 @@ public class AchievementService {
             return;
         }
         log.debug("fourth check passed");
-        var user = userRepository.findOneWithEagerAchievements(optionalUser.get().getId());
-        if (user == null) {
+        // var user = userRepository.findOneWithEagerAchievements(optionalUser.get().getId());
+        // if (user == null) {
+        // return;
+        // }
+        var achievements = achievementRepository.findAllByUserId(optionalUser.get().getId());
+        if (achievements == null) {
             return;
         }
+        var user = optionalUser.get();
+        user.setAchievements(achievements);
 
         log.debug("all checks passed");
 
