@@ -19,7 +19,7 @@ export class QuizExercisePopupService {
      */
     open(component: Component, quizExercise: QuizExercise): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve) => {
-            if (this.ngbModalRef == null) {
+            if (this.ngbModalRef == undefined) {
                 this.ngbModalRef = this.quizExerciseModalRef(component, quizExercise);
             }
             resolve(this.ngbModalRef);

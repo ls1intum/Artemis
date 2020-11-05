@@ -294,7 +294,7 @@ export class ResultDetailComponent implements OnInit {
         // cap sca penalty points
         if (exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = exercise as ProgrammingExercise;
-            if (programmingExercise.staticCodeAnalysisEnabled && programmingExercise.maxStaticCodeAnalysisPenalty != null) {
+            if (programmingExercise.staticCodeAnalysisEnabled && programmingExercise.maxStaticCodeAnalysisPenalty != undefined) {
                 const maxPoints = programmingExercise.maxScore! + (programmingExercise.bonusPoints || 0) === 0 ? 100 : programmingExercise.maxScore!;
                 const maxPenaltyCredits = (maxPoints * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
                 codeIssueCredits = Math.min(codeIssueCredits, maxPenaltyCredits);

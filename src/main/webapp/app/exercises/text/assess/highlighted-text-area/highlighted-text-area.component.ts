@@ -49,7 +49,7 @@ export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
         }
 
         return this.assessments.reduce((content: string, assessment: Feedback, currentIndex: number) => {
-            if (assessment.reference == null) {
+            if (assessment.reference == undefined) {
                 return content;
             }
 
