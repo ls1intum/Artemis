@@ -223,7 +223,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      * @param channel The channel the listener listens on
      */
     receive(channel: string): Observable<any> {
-        if (channel != null && (this.myListeners.size === 0 || !this.myListeners.has(channel))) {
+        if (channel != undefined && (this.myListeners.size === 0 || !this.myListeners.has(channel))) {
             this.myListeners.set(channel, this.createListener(channel));
         }
         return this.myListeners.get(channel)!;
@@ -246,7 +246,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      */
     subscribe(channel: string) {
         this.connection.then(() => {
-            if (channel != null && (this.myListeners.size === 0 || !this.myListeners.has(channel))) {
+            if (channel != undefined && (this.myListeners.size === 0 || !this.myListeners.has(channel))) {
                 this.myListeners.set(channel, this.createListener(channel));
             }
             this.subscribers.set(

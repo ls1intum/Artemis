@@ -58,7 +58,7 @@ export class TestRunManagementComponent implements OnInit {
             (error) => this.onError(error),
         );
         this.accountService.fetch().subscribe((res) => {
-            if (res.body != null) {
+            if (res.body != undefined) {
                 this.instructor = res.body;
             }
         });
@@ -74,7 +74,7 @@ export class TestRunManagementComponent implements OnInit {
             .then((testRunConfiguration: StudentExam) => {
                 this.examManagementService.createTestRun(this.course.id!, this.exam.id!, testRunConfiguration).subscribe(
                     (res) => {
-                        if (res.body != null) {
+                        if (res.body != undefined) {
                             this.testRuns.push(res.body!);
                         }
                     },

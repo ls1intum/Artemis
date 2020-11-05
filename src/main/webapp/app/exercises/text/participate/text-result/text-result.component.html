@@ -5,7 +5,7 @@
             <fa-icon *ngFor="let i of repeatForEachCredit(block)" icon="{{ block.icon }}"></fa-icon>
         </span>
         <div class="feedback-text mt-1" [ngClass]="block.feedbackCssClass" *ngIf="block.feedback.detailText">
-            <b><fa-icon [icon]="['far', block.icon + '-circle']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:</b>
+            <b><fa-icon *ngIf="block.icon" [icon]="['far', block.icon + '-circle']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:</b>
             {{ block.feedback.detailText }}
         </div>
     </ng-container>

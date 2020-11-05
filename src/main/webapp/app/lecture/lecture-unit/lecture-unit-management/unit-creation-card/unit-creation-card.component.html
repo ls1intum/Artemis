@@ -16,7 +16,7 @@
                 <fa-icon [icon]="'check'"></fa-icon>
                 <span class="ml-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.exercise">Exercise</span>
             </button>
-            <button type="button" jhiDebounceClick class="btn btn-lg btn-primary m-1 disabled" (debounceClick)="createVideoUnit.emit()" [debounceDuration]="200">
+            <button type="button" jhiDebounceClick class="btn btn-lg btn-primary m-1" (debounceClick)="createVideoUnit.emit()" [debounceDuration]="200">
                 <fa-icon [icon]="'video'"></fa-icon>
                 <span class="ml-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.video">Video</span>
             </button>

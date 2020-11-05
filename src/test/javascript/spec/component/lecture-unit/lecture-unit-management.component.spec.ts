@@ -107,6 +107,7 @@ describe('LectureUnitManagementComponent', () => {
                 fixture = TestBed.createComponent(LectureUnitManagementComponent);
                 comp = fixture.componentInstance;
                 comp.lectureUnits = [...lecture.lectureUnits!];
+                fixture.detectChanges();
             });
     });
     it('should move down', () => {

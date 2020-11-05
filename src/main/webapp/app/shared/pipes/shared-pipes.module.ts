@@ -44,5 +44,6 @@ import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.
         SafeResourceUrlPipe,
         AverageByPipe,
     ],
+    providers: [SafeResourceUrlPipe],
 })
 export class ArtemisSharedPipesModule {}

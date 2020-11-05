@@ -242,7 +242,7 @@ export class ShortAnswerQuestionUtil {
      * @return {boolean}
      */
     isSameSpot(a?: ShortAnswerSpot, b?: ShortAnswerSpot): boolean {
-        return a === b || (a !== undefined && b !== undefined && ((a.id && b.id && a.id === b.id) || (a.tempID != null && b.tempID != null && a.tempID === b.tempID)));
+        return a === b || (a !== undefined && b !== undefined && ((a.id && b.id && a.id === b.id) || (a.tempID != undefined && b.tempID != undefined && a.tempID === b.tempID)));
     }
 
     /**
@@ -253,7 +253,7 @@ export class ShortAnswerQuestionUtil {
      * @return {boolean}
      */
     isSameSolution(a?: ShortAnswerSolution, b?: ShortAnswerSolution): boolean {
-        return a === b || (a !== undefined && b !== undefined && ((a.id && b.id && a.id === b.id) || (a.tempID != null && b.tempID != null && a.tempID === b.tempID)));
+        return a === b || (a !== undefined && b !== undefined && ((a.id && b.id && a.id === b.id) || (a.tempID != undefined && b.tempID != undefined && a.tempID === b.tempID)));
     }
 
     /**
