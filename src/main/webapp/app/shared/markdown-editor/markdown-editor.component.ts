@@ -156,7 +156,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
-        return this.previewChild == null;
+        return this.previewChild == undefined;
     }
 
     /** opens the button for selecting the color */
@@ -198,7 +198,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
         });
         this.aceEditorContainer.getEditor().completers = [];
 
-        if (this.domainCommands == null || this.domainCommands.length === 0) {
+        if (this.domainCommands == undefined || this.domainCommands.length === 0) {
             [...this.defaultCommands, ...this.colorCommands, ...(this.headerCommands || []), ...this.metaCommands].forEach((command) => {
                 command.setEditor(this.aceEditorContainer.getEditor());
                 command.setMarkdownWrapper(this.wrapper);

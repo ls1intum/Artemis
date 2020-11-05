@@ -142,7 +142,7 @@
                             {{ value.team.shortName }}
                         </a>
                         <ng-template #defaultMode>
-                            <a [routerLink]="['/admin', 'user-management', value.student.login, 'view']">
+                            <a [routerLink]="['/admin', 'user-management', value.student.login]">
                                 {{ value.student.login }}
                             </a>
                         </ng-template>
@@ -158,7 +158,7 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <!-- TODO: Had to Remove Date Pipe as UI did not update when sorting. Investigate the reason -->
-                        {{ value.format('MMM DD YYYY, HH:mm:ss') }}
+                        {{ formatDate(value) }}
                     </ng-template>
                 </ngx-datatable-column>
 
