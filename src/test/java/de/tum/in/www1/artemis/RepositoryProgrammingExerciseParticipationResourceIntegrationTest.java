@@ -8,6 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +98,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @BeforeEach
     public void setup() throws Exception {
-        database.addUsers(1, 1, 0);
+        database.addUsers(1, 0, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
@@ -539,33 +540,50 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    void testCanAccessParticipation_asTeachingAssistant() {
-        var response = programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
-        assertThat(response).isTrue();
-
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCanAccessParticipation_asInstructor() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
+        // Check for canAccessParticipation(participation)
+        var response = programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
+        assertThat(response).isTrue();
 
         var responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
         assertThat(responseSolution).isTrue();
 
         var responseTemplate = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
         assertThat(responseTemplate).isTrue();
+
+        var responseOther = programmingExerciseParticipationService.canAccessParticipation(null);
+        assertThat(responseOther).isFalse();
+
+        // Check for canAccessParticipation(participation, principal)
+        final var username = "instructor1";
+        final Principal principal = () -> username;
+
+        response = programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation, principal);
+        assertThat(response).isFalse();
+
+        responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation(), principal);
+        assertThat(responseSolution).isTrue();
+
+        responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation(), principal);
+        assertThat(responseSolution).isTrue();
+
+        responseSolution = programmingExerciseParticipationService.canAccessParticipation(null, principal);
+        assertThat(responseSolution).isFalse();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void testCanAccessParticipation_atStudent() {
+    void testCanAccessParticipation_asStudent() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        // Fetch exercise
-        programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
 
+        // Check for canAccessParticipation(participation)
         var response = programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
         assertThat(response).isTrue();
 
@@ -574,19 +592,46 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         var responseTemplate = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
         assertThat(responseTemplate).isFalse();
+
+        var responseOther = programmingExerciseParticipationService.canAccessParticipation(null);
+        assertThat(responseOther).isFalse();
+
+        // Check for canAccessParticipation(participation, principal)
+        final var username = "student1";
+        final Principal principal = () -> username;
+        response = programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation, principal);
+        assertThat(response).isTrue();
+
+        responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation(), principal);
+        assertThat(responseSolution).isFalse();
+
+        responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation(), principal);
+        assertThat(responseSolution).isFalse();
+
+        responseSolution = programmingExerciseParticipationService.canAccessParticipation(null, principal);
+        assertThat(responseSolution).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testFindStudentParticipation() {
+        var response = programmingExerciseParticipationService.findStudentParticipation(participation.getId());
+        assertThat(response.isPresent()).isTrue();
+        assertThat(response.get().getId()).isEqualTo(participation.getId());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testUnlockStudentRepository() {
         doAnswer((Answer<Void>) invocation -> {
-            programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+            ((ProgrammingExercise) participation.getExercise()).setBuildAndTestStudentSubmissionsAfterDueDate(null);
             return null;
-        }).when(programmingExerciseParticipationService).unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        }).when(versionControlService).configureRepository(programmingExercise, ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl(),
+                participation.getStudents(), true);
 
         programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
 
-        assertThat(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
+        assertThat(((ProgrammingExercise) participation.getExercise()).getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
         assertThat(programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseStudentParticipation) participation)).isFalse();
     }
 
@@ -600,6 +645,31 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         List<ILoggingEvent> logsList = listAppender.list;
         assertThat(logsList.get(0).getMessage())
                 .isEqualTo("Cannot unlock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testLockStudentRepository() {
+        doAnswer((Answer<Void>) invocation -> {
+            participation.getExercise().setDueDate(ZonedDateTime.now().minusHours(1));
+            return null;
+        }).when(versionControlService).setRepositoryPermissionsToReadOnly(((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl(),
+                programmingExercise.getProjectKey(), participation.getStudents());
+
+        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        assertThat(programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseStudentParticipation) participation)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testLockStudentRepository_beforeStateRepoConfigured() {
+        participation.setInitializationState(InitializationState.REPO_COPIED);
+        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+
+        // Check the logs
+        List<ILoggingEvent> logsList = listAppender.list;
+        assertThat(logsList.get(0).getMessage())
+                .isEqualTo("Cannot lock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
     }
 
     private List<FileSubmission> getFileSubmissions(String fileContent) {

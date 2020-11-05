@@ -247,16 +247,16 @@ public class ProgrammingExerciseParticipationService {
         return false;
     }
 
-    public boolean canAccessParticipation(ProgrammingExerciseStudentParticipation participation, Principal principal) {
+    private boolean canAccessParticipation(ProgrammingExerciseStudentParticipation participation, Principal principal) {
         return participation.isOwnedBy(principal.getName());
     }
 
-    public boolean canAccessParticipation(SolutionProgrammingExerciseParticipation participation, Principal principal) {
+    private boolean canAccessParticipation(SolutionProgrammingExerciseParticipation participation, Principal principal) {
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
         return authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user);
     }
 
-    public boolean canAccessParticipation(TemplateProgrammingExerciseParticipation participation, Principal principal) {
+    private boolean canAccessParticipation(TemplateProgrammingExerciseParticipation participation, Principal principal) {
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
         return authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user);
     }
