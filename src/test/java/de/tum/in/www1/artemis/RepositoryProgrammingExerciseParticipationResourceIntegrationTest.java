@@ -20,6 +20,7 @@ import org.eclipse.jgit.merge.MergeStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.stubbing.Answer;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -34,12 +35,11 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -57,6 +57,9 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Autowired
     ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    @Autowired
+    ProgrammingExerciseService programmingExerciseService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -94,7 +97,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @BeforeEach
     public void setup() throws Exception {
-        database.addUsers(1, 0, 0);
+        database.addUsers(1, 1, 0);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
@@ -533,6 +536,70 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
         assertThat(logsList.get(0).getLevel()).isEqualTo(Level.ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void testCanAccessParticipation_asTeachingAssistant() {
+        var response = programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
+        assertThat(response).isTrue();
+
+        // Set solution and template participation
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
+
+        var responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
+        assertThat(responseSolution).isTrue();
+
+        var responseTemplate = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
+        assertThat(responseTemplate).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testCanAccessParticipation_atStudent() {
+        // Set solution and template participation
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        // Fetch exercise
+        programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
+
+        var response = programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
+        assertThat(response).isTrue();
+
+        var responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
+        assertThat(responseSolution).isFalse();
+
+        var responseTemplate = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
+        assertThat(responseTemplate).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testUnlockStudentRepository() {
+        doAnswer((Answer<Void>) invocation -> {
+            programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+            return null;
+        }).when(programmingExerciseParticipationService).unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+
+        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+
+        assertThat(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
+        assertThat(programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseStudentParticipation) participation)).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testUnlockStudentRepository_beforeStateRepoConfigured() {
+        participation.setInitializationState(InitializationState.REPO_COPIED);
+        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+
+        // Check the logs
+        List<ILoggingEvent> logsList = listAppender.list;
+        assertThat(logsList.get(0).getMessage())
+                .isEqualTo("Cannot unlock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
     }
 
     private List<FileSubmission> getFileSubmissions(String fileContent) {
