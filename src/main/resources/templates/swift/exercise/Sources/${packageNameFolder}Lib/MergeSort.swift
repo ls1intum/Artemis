@@ -2,9 +2,9 @@
 
 public class MergeSort {
 
-	public func performSort(_ input: inout [Date]) {
+    public func performSort(_ input: inout [Date]) {
 
-		//TODO: implement
-	}
+        //TODO: implement
+    }
 
 }
