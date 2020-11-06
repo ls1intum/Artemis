@@ -82,6 +82,9 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final FeedbackService feedbackService;
 
+    // Pattern of the DateTime that is included in the logs received from Jenkins
+    private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
+
     public JenkinsService(JenkinsBuildPlanCreatorProvider buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
             ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackService feedbackService) {
         this.buildPlanCreatorProvider = buildPlanCreatorFactory;
@@ -524,7 +527,7 @@ public class JenkinsService implements ContinuousIntegrationService {
                         final String log;
                         if (node.attributes().get("class").contains("timestamp")) {
                             final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
-                            final var time = ZonedDateTime.parse(timeAsString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX"));
+                            final var time = ZonedDateTime.parse(timeAsString, logDateTimeFormatter);
                             var contentCandidate = nodeIterator.next();
 
                             // Skip invisible entries (they contain only the timestamp, but we already got that above)
@@ -558,7 +561,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             // For timestamps, parse the <b> tag containing the time as hh:mm:ss
             if (node.attributes().get("class").contains("timestamp")) {
                 final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
-                final var time = ZonedDateTime.parse(timeAsString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX"));
+                final var time = ZonedDateTime.parse(timeAsString, logDateTimeFormatter);
                 log = reduceToText(iterator.next());
                 buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log)));
             }
