@@ -705,4 +705,16 @@ public class GitService {
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
         return Files.exists(localPath);
     }
+
+    /**
+     * Stashes not submitted/committed changes of the repo.
+     *
+     * @param repo student repo of a participation in a programming exercise
+     * @throws GitAPIException
+     */
+    public void stashChanges(Repository repo) throws GitAPIException {
+        Git git = new Git(repo);
+        git.stashCreate().call();
+        git.close();
+    }
 }

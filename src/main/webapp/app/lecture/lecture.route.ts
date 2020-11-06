@@ -39,7 +39,7 @@ export const lectureRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/lectures/:id/view',
+        path: ':courseId/lectures/:id',
         component: LectureDetailComponent,
         resolve: {
             lecture: LectureResolve,
