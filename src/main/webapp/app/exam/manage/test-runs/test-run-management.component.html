@@ -71,7 +71,7 @@
             <tbody>
                 <tr *ngFor="let testRun of testRuns; trackBy: trackId">
                     <td class="d-none d-md-table-cell">
-                        <a [routerLink]="[testRun.id, 'view']">{{ testRun.id }}</a>
+                        <a [routerLink]="[testRun.id]">{{ testRun.id }}</a>
                     </td>
                     <td>
                         <a> {{ testRun.user.name }}</a>
@@ -103,7 +103,7 @@
                                 </ng-template>
                                 <button
                                     class="btn btn-primary btn-sm mr-1 mb-1"
-                                    [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', this.testRun.id, 'view']"
+                                    [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', this.testRun.id]"
                                     [disabled]="testRun.started"
                                 >
                                     <span jhiTranslate="artemisApp.examManagement.testRun.manage">Manage Working Time</span>

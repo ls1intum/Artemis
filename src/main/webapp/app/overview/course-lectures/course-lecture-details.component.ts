@@ -49,7 +49,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             this.lecture = stateLecture;
         }
     }
-
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {
             if (!this.lecture || this.lecture.id !== params.lectureId) {
@@ -80,7 +79,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     attachmentNotReleased(attachment: Attachment): boolean {
-        return attachment.releaseDate != null && !moment(attachment.releaseDate).isBefore(moment())!;
+        return attachment.releaseDate != undefined && !moment(attachment.releaseDate).isBefore(moment())!;
     }
 
     attachmentExtension(attachment: Attachment): string {

@@ -195,7 +195,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     }
 
     protected applyDomainChange(domainType: any, domainValue: any) {
-        if (this.codeEditorContainer != null) {
+        if (this.codeEditorContainer != undefined) {
             this.codeEditorContainer.initializeProperties();
         }
         if (domainType === DomainType.PARTICIPATION) {

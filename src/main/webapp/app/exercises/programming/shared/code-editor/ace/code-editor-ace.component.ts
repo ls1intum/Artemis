@@ -276,7 +276,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             const sessionAnnotations = this.loadAnnotations();
             this.annotationsArray = annotations.map((a) => {
                 const hash = a.fileName + a.row + a.column + a.text;
-                if (sessionAnnotations[hash] == null || sessionAnnotations[hash].timestamp < a.timestamp) {
+                if (sessionAnnotations[hash] == undefined || sessionAnnotations[hash].timestamp < a.timestamp) {
                     return { ...a, hash };
                 } else {
                     return sessionAnnotations[hash];
