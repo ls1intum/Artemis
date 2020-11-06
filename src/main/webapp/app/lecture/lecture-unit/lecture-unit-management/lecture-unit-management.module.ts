@@ -18,11 +18,20 @@ import { VideoUnitFormComponent } from './video-unit-form/video-unit-form.compon
 import { CreateTextUnitComponent } from './create-text-unit/create-text-unit.component';
 import { TextUnitFormComponent } from './text-unit-form/text-unit-form.component';
 import { EditTextUnitComponent } from './edit-text-unit/edit-text-unit.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 const ENTITY_STATES = [...lectureUnitRoute];
 
 @NgModule({
-    imports: [ArtemisSharedModule, ReactiveFormsModule, ArtemisSharedComponentModule, RouterModule.forChild(ENTITY_STATES), ArtemisCoursesModule, FormDateTimePickerModule],
+    imports: [
+        ArtemisMarkdownEditorModule,
+        ArtemisSharedModule,
+        ReactiveFormsModule,
+        ArtemisSharedComponentModule,
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisCoursesModule,
+        FormDateTimePickerModule,
+    ],
     declarations: [
         LectureUnitManagementComponent,
         UnitCreationCardComponent,

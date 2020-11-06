@@ -15,7 +15,12 @@
         },
         "textUnit": {
             "createTextUnit": {
-                "title": "Create Text Unit"
+                "title": "Create Text Unit",
+                "name": "Name",
+                "content": "Content",
+                "namePlaceHolder": "Give the text unit a name",
+                "nameRequiredValidationError": "Name is required.",
+                "nameMaxLengthValidationError": "Name can be max 255 characters long."
             },
             "editTextUnit": {
                 "title": "Edit Text Unit"
