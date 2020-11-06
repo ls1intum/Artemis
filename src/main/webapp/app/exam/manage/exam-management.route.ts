@@ -139,7 +139,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/view',
+        path: ':examId',
         component: ExamDetailComponent,
         resolve: {
             exam: ExamResolve,
@@ -189,7 +189,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/view',
+        path: ':examId/exercise-groups/:exerciseGroupId',
         component: ExerciseGroupDetailComponent,
         resolve: {
             exerciseGroup: ExerciseGroupResolve,
@@ -246,7 +246,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/test-runs/:studentExamId/view',
+        path: ':examId/test-runs/:studentExamId',
         component: StudentExamDetailComponent,
         resolve: {
             studentExam: StudentExamResolve,
@@ -258,7 +258,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/student-exams/:studentExamId/view',
+        path: ':examId/student-exams/:studentExamId',
         component: StudentExamDetailComponent,
         resolve: {
             studentExam: StudentExamResolve,

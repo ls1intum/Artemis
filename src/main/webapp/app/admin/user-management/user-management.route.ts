@@ -36,7 +36,7 @@ export const userMgmtRoute1: Route = {
 };
 
 export const userMgmtRoute2: Route = {
-    path: 'user-management/:login/view',
+    path: 'user-management/:login',
     component: UserManagementDetailComponent,
     resolve: {
         user: UserMgmtResolve,

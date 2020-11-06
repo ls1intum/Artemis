@@ -55,8 +55,8 @@ export const stringifyIgnoringFields = (val: any, ...ignoredFields: string[]): s
  * @param value
  * @param exp
  */
-export const round = (value: any, exp: number) => {
-    if (typeof exp === 'undefined' || +exp === 0) {
+export const round = (value: any, exp?: number) => {
+    if (exp == undefined || +exp === 0) {
         return Math.round(value);
     }
 

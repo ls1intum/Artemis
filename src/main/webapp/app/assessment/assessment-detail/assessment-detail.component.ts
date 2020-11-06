@@ -45,7 +45,7 @@ export class AssessmentDetailComponent implements AfterViewInit {
      */
     public delete() {
         const referencedText = convertFromHtmlLinebreaks(this.text);
-        const confirmationMessage = referencedText ? `Delete Assessment for "${referencedText}"?` : 'Delete Assessment?';
+        const confirmationMessage = referencedText ? `Delete Feedback of "${referencedText}"?` : 'Delete Feedback?';
         const confirmation = confirm(confirmationMessage);
         if (confirmation) {
             this.deleteAssessment.emit(this.assessment);

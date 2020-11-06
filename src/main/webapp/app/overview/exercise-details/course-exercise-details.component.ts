@@ -224,7 +224,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.studentParticipation = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
                 this.sortResults();
                 // Add exercise to studentParticipation, as the result component is dependent on its existence.
-                if (this.studentParticipation && this.studentParticipation.exercise == null) {
+                if (this.studentParticipation && this.studentParticipation.exercise == undefined) {
                     this.studentParticipation.exercise = this.exercise;
                 }
             } else if (this.studentParticipation) {

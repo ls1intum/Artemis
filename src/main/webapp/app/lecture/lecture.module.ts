@@ -10,11 +10,19 @@ import { LectureComponent } from 'app/lecture/lecture.component';
 import { LectureDetailComponent } from 'app/lecture/lecture-detail.component';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { lectureRoute } from 'app/lecture/lecture.route';
+import { ArtemisLectureUnitManagementModule } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.module';
 
 const ENTITY_STATES = [...lectureRoute];
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), FormDateTimePickerModule, ArtemisSharedComponentModule, ArtemisMarkdownEditorModule],
+    imports: [
+        ArtemisSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisLectureUnitManagementModule,
+        FormDateTimePickerModule,
+        ArtemisSharedComponentModule,
+        ArtemisMarkdownEditorModule,
+    ],
     declarations: [LectureComponent, LectureDetailComponent, LectureUpdateComponent, LectureAttachmentsComponent],
 })
 export class ArtemisLectureModule {}

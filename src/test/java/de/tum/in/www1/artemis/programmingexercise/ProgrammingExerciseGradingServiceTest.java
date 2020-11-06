@@ -119,6 +119,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
+        result.assessmentType(AssessmentType.AUTOMATIC);
         Long scoreBeforeUpdate = result.getScore();
 
         gradingService.updateResult(result, programmingExercise, true);
@@ -180,7 +181,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(result1.getFeedbacks()).hasSize(3);
 
         // Assertions result2 - calculated
-        assertThat(result2.getScore()).isEqualTo(66L);
+        assertThat(result2.getScore()).isEqualTo(67L);
         assertThat(result2.getResultString()).isEqualTo("1 of 3 passed");
         assertThat(result2.getHasFeedback()).isTrue();
         assertThat(result2.isSuccessful()).isFalse();
@@ -505,7 +506,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
             var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findAny();
             assertThat(manualResultOptional).isPresent();
-            testParticipationResult(manualResultOptional.get(), 86, "86 of 100 points", true, 6, AssessmentType.SEMI_AUTOMATIC);
+            testParticipationResult(manualResultOptional.get(), 86, "1 of 3 passed, 86 of 100 points", true, 6, AssessmentType.SEMI_AUTOMATIC);
             assertThat(manualResultOptional.get()).isEqualTo(participation.findLatestResult());
 
             var automaticResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC).findAny();
@@ -755,7 +756,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 11L, "2 of 3 passed, 9 issues", true, 12, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 12L, "2 of 3 passed, 9 issues", true, 12, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
     }
@@ -833,7 +834,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 4L, "1 of 3 passed, 2 issues", true, 5, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 5L, "1 of 3 passed, 2 issues", true, 5, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
         {

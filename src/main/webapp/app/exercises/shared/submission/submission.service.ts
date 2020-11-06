@@ -70,7 +70,7 @@ export class SubmissionService {
 
     convertResultsDateFromServer(results?: Result[]) {
         const convertedResults: Result[] = [];
-        if (results != null && results.length > 0) {
+        if (results != undefined && results.length > 0) {
             results.forEach((result: Result) => {
                 result.completionDate = result.completionDate ? moment(result.completionDate) : undefined;
                 convertedResults.push(result);
@@ -81,7 +81,7 @@ export class SubmissionService {
 
     convertSubmissionsDateFromServer(submissions?: Submission[]) {
         const convertedSubmissions: Submission[] = [];
-        if (submissions != null && submissions.length > 0) {
+        if (submissions != undefined && submissions.length > 0) {
             submissions.forEach((submission: Submission) => {
                 if (submission !== null) {
                     submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : undefined;

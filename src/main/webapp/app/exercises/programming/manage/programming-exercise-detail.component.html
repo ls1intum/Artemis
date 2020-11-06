@@ -46,6 +46,10 @@
                 <dd>
                     <span>{{ programmingExercise.maxScore }}</span>
                 </dd>
+                <dt *ngIf="programmingExercise.bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus points</span></dt>
+                <dd *ngIf="programmingExercise.bonusPoints">
+                    <span>{{ programmingExercise.bonusPoints }}</span>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
                 <dd>
                     <span *ngIf="programmingExercise.presentationScoreEnabled">{{ 'global.generic.yes' | translate }}</span>

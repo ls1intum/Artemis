@@ -40,6 +40,10 @@ public class FilePathService {
         return FILE_UPLOAD_PATH + File.separator + "attachments" + File.separator + "lecture" + File.separator;
     }
 
+    public static String getAttachmentUnitFilePath() {
+        return FILE_UPLOAD_PATH + File.separator + "attachments" + File.separator + "attachment-unit" + File.separator;
+    }
+
     public static String getFileUploadExercisesFilepath() {
         return FILE_UPLOAD_PATH + File.separator + "file-upload-exercises" + File.separator;
     }
