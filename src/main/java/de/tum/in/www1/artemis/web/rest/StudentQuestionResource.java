@@ -138,6 +138,7 @@ public class StudentQuestionResource {
         if (mayUpdateOrDeleteStudentQuestion(optionalStudentQuestion.get(), user)) {
             StudentQuestion updatedStudentQuestion = optionalStudentQuestion.get();
             updatedStudentQuestion.setQuestionText(studentQuestion.getQuestionText());
+            updatedStudentQuestion.setVisibleForStudents(studentQuestion.isVisibleForStudents());
             StudentQuestion result = studentQuestionRepository.save(updatedStudentQuestion);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestion.getId().toString())).body(result);
         }
