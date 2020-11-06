@@ -36,8 +36,8 @@ export const systemNotificationManagementRoute: Routes = [
         },
     },
     {
-        path: 'system-notification-management/:id',
-        component: SystemNotificationManagementDetailComponent,
+        path: 'system-notification-management/new',
+        component: SystemNotificationManagementUpdateComponent,
         resolve: {
             notification: SystemNotificationManagementResolve,
         },
@@ -46,8 +46,8 @@ export const systemNotificationManagementRoute: Routes = [
         },
     },
     {
-        path: 'system-notification-management/new',
-        component: SystemNotificationManagementUpdateComponent,
+        path: 'system-notification-management/:id',
+        component: SystemNotificationManagementDetailComponent,
         resolve: {
             notification: SystemNotificationManagementResolve,
         },
