@@ -36,16 +36,6 @@ export const userMgmtRoute1: Route = {
 };
 
 export const userMgmtRoute2: Route = {
-    path: 'user-management/:login/view',
-    component: UserManagementDetailComponent,
-    resolve: {
-        user: UserMgmtResolve,
-    },
-    data: {
-        pageTitle: 'userManagement.home.title',
-    },
-};
-export const userMgmtRoute3: Route = {
     path: 'user-management/new',
     component: UserManagementUpdateComponent,
     resolve: {
@@ -53,6 +43,16 @@ export const userMgmtRoute3: Route = {
     },
     data: {
         pageTitle: 'userManagement.home.createLabel',
+    },
+};
+export const userMgmtRoute3: Route = {
+    path: 'user-management/:login',
+    component: UserManagementDetailComponent,
+    resolve: {
+        user: UserMgmtResolve,
+    },
+    data: {
+        pageTitle: 'userManagement.home.title',
     },
 };
 

@@ -1,20 +1,25 @@
 package ${packageName};
 
 public class Policy {
-	
-	private Context context;
 
-	public Policy(Context context) {
-		this.context = context;
-	}
+    private static final int DATES_SIZE_THRESHOLD = 10;
 
-	public void configure() {
-		if(this.context.getDates().size() > 10) {
-			System.out.println("More than 10 dates, choosing merge sort!");
-			this.context.setSortAlgorithm(new MergeSort());
-		} else {
-			System.out.println("Less or equal than 10 dates. choosing quick sort!");
-			this.context.setSortAlgorithm(new BubbleSort());
-		}
-	}
+    private Context context;
+
+    public Policy(Context context) {
+        this.context = context;
+    }
+
+    /**
+     * Chooses a strategy depending on the number of date objects.
+     */
+    public void configure() {
+        if (this.context.getDates().size() > DATES_SIZE_THRESHOLD) {
+            System.out.println("More than " + DATES_SIZE_THRESHOLD + " dates, choosing merge sort!");
+            this.context.setSortAlgorithm(new MergeSort());
+        } else {
+            System.out.println("Less or equal than " + DATES_SIZE_THRESHOLD + " dates. choosing quick sort!");
+            this.context.setSortAlgorithm(new BubbleSort());
+        }
+    }
 }

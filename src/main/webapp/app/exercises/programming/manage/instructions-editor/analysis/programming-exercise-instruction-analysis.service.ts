@@ -14,7 +14,7 @@ import {
  */
 @Injectable()
 export class ProgrammingExerciseInstructionAnalysisService {
-    private readonly TEST_CASE_REGEX = new RegExp('.*\\((.*)\\)');
+    private readonly TEST_CASE_REGEX = new RegExp('.*?\\((.*)\\)');
     private readonly HINT_REGEX = new RegExp('.*{(.*)}');
     private readonly INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
     private readonly INVALID_HINT_TRANSLATION = 'artemisApp.programmingExercise.hintsAnalysis.invalidHint';
@@ -152,7 +152,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
                     uniq,
                     filter((m) => !!m),
                     flatten,
-                )(match.split(',').map((m: string) => m.trim()));
+                )(match.split(/,(?![^(]*?\))/).map((m: string) => m.trim()));
                 return [lineNumber, cleanedMatches];
             }),
             filter(([, testCases]) => !!testCases),

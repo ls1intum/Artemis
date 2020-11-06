@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!--
+    Spotbugs uses filter files to configure the reporting of bugs. Add the path of the filter file to the configuration
+    of the Spotbugs Maven plugin in the Project Object Model (POM).
+    Use <includeFilterFile>/<excludeFilterFile> to include/exclude all bugs matching the criteria defined in such a file.
+    For more information about filters consult the official Spotbugs documentation https://spotbugs.readthedocs.io/en/stable/filter.html#.
+    The examples below show some filter options.
+    -->
+
+    <!-- Matches a whole class
+    <Match>
+        <Class name="com.foobar.ClassNotToBeAnalyzed" />
+    </Match> -->
+
+    <!-- Matches specific rules in a class
+    <Match>
+        <Class name="com.foobar.ClassWithSomeBugsMatched" />
+        <Bug code="DE,UrF,SIC" />
+    </Match> -->
+
+    <!-- Match all XYZ violations
+    <Match>
+        <Bug code="XYZ" />
+    </Match>  -->
+
+    <!-- Match a method with a dead local store false positive (medium priority)
+    <Match>
+        <Class name="com.foobar.MyClass" />
+        <Method name="someMethod" />
+        <Bug pattern="DLS_DEAD_LOCAL_STORE" />
+        <Priority value="2" />
+    </Match> -->
+
+    <!-- All bugs in test classes, except for JUnit-specific bugs
+    <Match>
+        <Class name="~.*\.*Test" />
+        <Not>
+            <Bug code="IJU" />
+        </Not>
+    </Match> -->
+</FindBugsFilter>
