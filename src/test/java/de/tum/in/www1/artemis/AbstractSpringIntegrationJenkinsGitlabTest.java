@@ -72,9 +72,9 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws Exception {
         final var projectKey = exercise.getProjectKey();
-        String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+        final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
+        final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
         gitlabRequestMockProvider.mockCheckIfProjectExists(exercise, false);
         gitlabRequestMockProvider.mockCreateProjectForExercise(exercise);
         gitlabRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);

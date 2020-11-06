@@ -72,14 +72,9 @@ public class ProgrammingExerciseSimulationService {
     @Transactional
     public ProgrammingExercise createProgrammingExerciseWithoutVersionControlAndContinuousIntegrationAvailable(ProgrammingExercise programmingExercise) {
         programmingExercise.generateAndSetProjectKey();
-        final var projectKey = programmingExercise.getProjectKey();
-        // TODO: the following code is used quite often and should be done in only one place
-        final var exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        final var solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
 
         programmingExerciseService.initParticipations(programmingExercise);
-        setURLsAndBuildPlanIDsForNewExerciseWithoutVersionControlAndContinuousIntegrationAvailable(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
+        setURLsAndBuildPlanIDsForNewExerciseWithoutVersionControlAndContinuousIntegrationAvailable(programmingExercise);
         // Save participations to get the ids required for the webhooks
         programmingExerciseService.connectBaseParticipationsToExerciseAndSave(programmingExercise);
 
@@ -97,13 +92,13 @@ public class ProgrammingExerciseSimulationService {
     /**
      * Sets the url and buildplan ids for the new exercise
      * @param programmingExercise the new exercise
-     * @param exerciseRepoName the repo name of the new exercise
-     * @param testRepoName the test repo name of the new exercise
-     * @param solutionRepoName the solution repo name of the new exercise
      * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      */
-    private void setURLsAndBuildPlanIDsForNewExerciseWithoutVersionControlAndContinuousIntegrationAvailable(ProgrammingExercise programmingExercise, String exerciseRepoName,
-            String testRepoName, String solutionRepoName) {
+    private void setURLsAndBuildPlanIDsForNewExerciseWithoutVersionControlAndContinuousIntegrationAvailable(ProgrammingExercise programmingExercise) {
+        final var exerciseRepoName = programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var solutionRepoName = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
+        final var testRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
+
         final var projectKey = programmingExercise.getProjectKey();
         final var templateParticipation = programmingExercise.getTemplateParticipation();
         final var solutionParticipation = programmingExercise.getSolutionParticipation();

@@ -208,11 +208,11 @@ public class ProgrammingExerciseService {
         final var projectKey = programmingExercise.getProjectKey();
         final var templateParticipation = programmingExercise.getTemplateParticipation();
         final var solutionParticipation = programmingExercise.getSolutionParticipation();
-        final var templatePlanId = programmingExercise.getBuildPlanId(TEMPLATE);
-        final var solutionPlanId = programmingExercise.getBuildPlanId(SOLUTION);
-        final var exerciseRepoName = programmingExercise.getRepositoryName(RepositoryType.TEMPLATE);
-        final var solutionRepoName = programmingExercise.getRepositoryName(RepositoryType.SOLUTION);
-        final var testRepoName = programmingExercise.getRepositoryName(RepositoryType.TESTS);
+        final var templatePlanId = programmingExercise.generateBuildPlanId(TEMPLATE);
+        final var solutionPlanId = programmingExercise.generateBuildPlanId(SOLUTION);
+        final var exerciseRepoName = programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var solutionRepoName = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
+        final var testRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
 
         templateParticipation.setBuildPlanId(templatePlanId); // Set build plan id to newly created BaseBuild plan
         templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
@@ -320,9 +320,9 @@ public class ProgrammingExerciseService {
     private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) {
         final var projectKey = programmingExercise.getProjectKey();
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
-        versionControlService.get().createRepository(projectKey, programmingExercise.getRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
-        versionControlService.get().createRepository(projectKey, programmingExercise.getRepositoryName(RepositoryType.TESTS), null); // Create tests repository
-        versionControlService.get().createRepository(projectKey, programmingExercise.getRepositoryName(RepositoryType.SOLUTION), null); // Create solution repository
+        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
+        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests repository
+        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution repository
     }
 
     /**

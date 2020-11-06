@@ -169,9 +169,9 @@ public class ProgrammingExerciseTestService {
             throws Exception {
         final var projectKey = exercise.getProjectKey();
 
-        String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+        final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
+        final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
 
         var exerciseRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(exerciseRepository.originRepoFile);
         var testRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(testRepository.originRepoFile);

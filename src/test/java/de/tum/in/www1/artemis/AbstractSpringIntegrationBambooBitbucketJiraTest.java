@@ -150,10 +150,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws Exception {
-        final var projectKey = exercise.getProjectKey();
-        String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+        final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
+        final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
         bambooRequestMockProvider.mockCheckIfProjectExists(exercise, false);
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, false);
         bitbucketRequestMockProvider.mockCreateProjectForExercise(exercise);
@@ -177,9 +176,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         final var verifications = new ArrayList<Verifiable>();
         final var projectKey = exerciseToBeImported.getProjectKey();
         final var sourceProjectKey = sourceExercise.getProjectKey();
-        final var templateRepoName = (projectKey + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase();
-        final var solutionRepoName = (projectKey + "-" + RepositoryType.SOLUTION.getName()).toLowerCase();
-        final var testsRepoName = (projectKey + "-" + RepositoryType.TESTS.getName()).toLowerCase();
+        final var templateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var solutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
+        final var testsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
         var nextParticipationId = sourceExercise.getTemplateParticipation().getId() + 1;
         final var artemisSolutionHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
         final var artemisTemplateHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId;
