@@ -28,6 +28,11 @@ public class TextExerciseUtilService {
 
     private final Random random = new Random();
 
+    /**
+     * Generate a set of specified size containing TextBlocks with dummy Text
+     * @param count expected size of TextBlock set
+     * @return Set of dummy TextBlocks
+     */
     public Set<TextBlock> generateTextBlocks(int count) {
         Set<TextBlock> textBlocks = new HashSet<>();
         TextBlock textBlock;
@@ -39,6 +44,13 @@ public class TextExerciseUtilService {
         return textBlocks;
     }
 
+    /**
+     * Create n TextClusters and randomly assign TextBlocks to new clusters.
+     * @param textBlocks TextBlocks to fake cluster
+     * @param clusterSizes Number of new clusters
+     * @param textExercise TextExercise
+     * @return List of TextClusters with assigned TextBlocks
+     */
     public List<TextCluster> addTextBlocksToCluster(Set<TextBlock> textBlocks, int[] clusterSizes, TextExercise textExercise) {
 
         if (Arrays.stream(clusterSizes).sum() != textBlocks.size()) {
