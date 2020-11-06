@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +21,7 @@ public class ResourceLoaderService {
     private final ResourceLoader resourceLoader;
 
     @Value("${artemis.template-path:#{null}}")
-    private String templateFileSystemPath;
+    private Optional<String> templateFileSystemPath;
 
     // Files that start with a prefix that is included in this list can be overwritten from the file system
     private final List<String> allowedOverridePrefixes = new ArrayList<>();
@@ -107,15 +108,15 @@ public class ResourceLoaderService {
      * @return the template system path if defined (with a trailing '/') or "" if is not set
      */
     private String getTemplateFileSystemPath() {
-        if (templateFileSystemPath == null) {
+        if (templateFileSystemPath.isEmpty()) {
             return "";
         }
 
-        if (templateFileSystemPath.endsWith("/")) {
-            return templateFileSystemPath;
+        if (templateFileSystemPath.get().endsWith("/")) {
+            return templateFileSystemPath.get();
         }
         else {
-            return templateFileSystemPath + "/";
+            return templateFileSystemPath.get() + "/";
         }
     }
 
