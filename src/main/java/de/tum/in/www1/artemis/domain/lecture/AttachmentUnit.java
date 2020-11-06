@@ -1,9 +1,6 @@
-package de.tum.in.www1.artemis.domain.lecture_unit;
+package de.tum.in.www1.artemis.domain.lecture;
 
 import javax.persistence.*;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -12,7 +9,6 @@ import de.tum.in.www1.artemis.domain.Attachment;
 @Entity
 @DiscriminatorValue("A")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class AttachmentUnit extends LectureUnit {
 
     // Note: Name and Release Date will always be taken from associated attachment

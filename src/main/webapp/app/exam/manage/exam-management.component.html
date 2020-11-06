@@ -60,7 +60,7 @@
             <tbody>
                 <tr *ngFor="let exam of exams; trackBy: trackId">
                     <td class="d-none d-md-table-cell">
-                        <a [routerLink]="[exam.id, 'view']">{{ exam.id }}</a>
+                        <a [routerLink]="[exam.id]">{{ exam.id }}</a>
                     </td>
                     <td class="d-none d-md-table-cell">
                         <span class="bold">{{ exam.title }}</span>

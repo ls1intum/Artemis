@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { Course } from 'app/entities/course.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 
 @Component({
@@ -9,6 +10,9 @@ import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 export class ExerciseUnitComponent {
     @Input()
     exerciseUnit: ExerciseUnit;
+
+    @Input()
+    course: Course;
 
     @Input()
     isPresentationMode: false;

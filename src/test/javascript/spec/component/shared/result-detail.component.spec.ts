@@ -58,7 +58,7 @@ describe('ResultDetailComponent', () => {
             item: makeFeedbackItem({
                 type: FeedbackItemType.Issue,
                 category: 'Code Issue',
-                title: category + ' Issue in file www/packet/File.java at line ' + line + (column != null ? ' column ' + column : ''),
+                title: category + ' Issue in file www/packet/File.java at line ' + line + (column != undefined ? ' column ' + column : ''),
                 text: showDetails ? 'Rule: This is a code issue' : 'This is a code issue',
                 credits,
                 positive: false,

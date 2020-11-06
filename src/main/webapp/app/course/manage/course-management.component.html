@@ -45,7 +45,6 @@
                             <span>{{ 'global.field.id' | translate }}</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
-
                         <th jhiSortBy="title">
                             <span>{{ 'artemisApp.course.title' | translate }}</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
@@ -88,7 +87,7 @@
                                 <div [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR, width: '15px', height: '20px' }">&nbsp;</div>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <a [routerLink]="['/course-management', course.id, 'view']">{{ course.id }}</a>
+                                <a [routerLink]="['/course-management', course.id]">{{ course.id }}</a>
                             </td>
                             <td>
                                 <span class="bold">{{ course.title }}</span

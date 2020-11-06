@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.lecture_unit;
+package de.tum.in.www1.artemis.web.rest.lecture;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
@@ -13,11 +13,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.lecture_unit.AttachmentUnit;
-import de.tum.in.www1.artemis.domain.lecture_unit.ExerciseUnit;
-import de.tum.in.www1.artemis.domain.lecture_unit.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.lecture_unit.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -93,14 +93,14 @@ public class LectureUnitResource {
     }
 
     /**
-     * DELETE /lecture-units/:lectureUnitId
-     *
+     * DELETE lectures/:lectureId/lecture-units/:lectureUnitId
+     * @param lectureId the id of the lecture to which the unit belongs
      * @param lectureUnitId the id of the lecture unit to remove
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/lecture-units/{lectureUnitId}")
+    @DeleteMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}")
     @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
-    public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId) {
+    public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
         Optional<LectureUnit> lectureUnitOptional = lectureUnitRepository.findById(lectureUnitId);
         if (lectureUnitOptional.isEmpty()) {
@@ -108,6 +108,9 @@ public class LectureUnitResource {
         }
         LectureUnit lectureUnit = lectureUnitOptional.get();
         if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
+            return conflict();
+        }
+        if (!lectureUnit.getLecture().getId().equals(lectureId)) {
             return conflict();
         }
         if (!authorizationCheckService.isAtLeastInstructorInCourse(lectureUnit.getLecture().getCourse(), null)) {
