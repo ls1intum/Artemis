@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Achievement;
@@ -103,6 +104,7 @@ public class AchievementService {
      * Checks the result if it earned any achievements
      * @param result
      */
+    @Transactional
     public void checkForAchievements(Result result) {
         log.debug("checkForAchievements was invoked");
         var participation = result.getParticipation();
