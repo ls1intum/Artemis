@@ -57,7 +57,7 @@ export const courseManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/view',
+        path: ':courseId',
         component: CourseDetailComponent,
         resolve: {
             course: CourseResolve,

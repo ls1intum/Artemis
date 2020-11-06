@@ -40,6 +40,17 @@ Navbar
             color: #fff;
         }
     }
+
+    .breadcrumb {
+        color: #0065bd;
+        background-color: #353d47;
+        margin-left: 1rem;
+        margin-bottom: 0;
+    }
+
+    .breadcrumb-item {
+        font-size: medium;
+    }
 }
 
 @media screen and (min-width: 768px) {

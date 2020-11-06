@@ -51,6 +51,8 @@ public class StaticCodeAnalysisConfigurer {
                 new StaticCodeAnalysisDefaultCategory("Potential Bugs", 0.5D, 5D, CategoryState.FEEDBACK,
                         List.of(createMapping(StaticCodeAnalysisTool.SPOTBUGS, "CORRECTNESS"), createMapping(StaticCodeAnalysisTool.SPOTBUGS, "MT_CORRECTNESS"),
                                 createMapping(StaticCodeAnalysisTool.PMD, "Error Prone"), createMapping(StaticCodeAnalysisTool.PMD, "Multithreading"))),
+                new StaticCodeAnalysisDefaultCategory("Copy/Paste Detection", 1D, 5D, CategoryState.FEEDBACK,
+                        List.of(createMapping(StaticCodeAnalysisTool.PMD_CPD, "Copy/Paste Detection"))),
                 new StaticCodeAnalysisDefaultCategory("Security", 2.5D, 10D, CategoryState.FEEDBACK,
                         List.of(createMapping(StaticCodeAnalysisTool.SPOTBUGS, "MALICIOUS_CODE"), createMapping(StaticCodeAnalysisTool.SPOTBUGS, "SECURITY"),
                                 createMapping(StaticCodeAnalysisTool.PMD, "Security"))),
