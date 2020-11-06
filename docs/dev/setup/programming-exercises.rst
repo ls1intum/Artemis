@@ -27,7 +27,7 @@ There are variables for several paths:
 
 - ``artemis.template-path``
 
-  Templates are available within Artemis. The templates should fit to most environment, but there might cases where one wants to change the templates.
+  Templates are available within Artemis. The templates should fit to most environments, but there might be cases where one wants to change the templates.
 
   This value specified the path were the templates that should be overwritten are stored.
   Note that this is the folder to the path where the `templates` folder is located, not the path to the `templates` folder itself.
