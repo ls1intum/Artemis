@@ -485,9 +485,16 @@ public class JenkinsService implements ContinuousIntegrationService {
                         || entry.getLog().startsWith("[ERROR] [Help 1]") || entry.getLog().startsWith("[ERROR] For more information about the errors and possible solutions")
                         || entry.getLog().startsWith("[ERROR] Re-run Maven using") || entry.getLog().startsWith("[ERROR] To see the full stack trace of the errors")
                         || entry.getLog().startsWith("[ERROR] -> [Help 1]") || entry.getLog().equals("[ERROR] "))) {
+
                     // Remove the path from the log entries
+                    // When using local agents, this is the path where the workspace should be located
                     String path = "/var/jenkins_home/workspace/" + projectKey + "/" + buildPlanId + "/";
                     entry.setLog(entry.getLog().replace(path, ""));
+
+                    // When using remote agents, this is the path where the workspace should be located
+                    path = "/home/jenkins/remote_agent/workspace/" + projectKey + "/" + buildPlanId + "/";
+                    entry.setLog(entry.getLog().replace(path, ""));
+
                     prunedBuildLog.add(entry);
                 }
             }
