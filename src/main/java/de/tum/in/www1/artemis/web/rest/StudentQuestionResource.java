@@ -136,7 +136,9 @@ public class StudentQuestionResource {
             return forbidden();
         }
         if (mayUpdateOrDeleteStudentQuestion(optionalStudentQuestion.get(), user)) {
-            StudentQuestion result = studentQuestionRepository.save(studentQuestion);
+            StudentQuestion updatedStudentQuestion = optionalStudentQuestion.get();
+            updatedStudentQuestion.setQuestionText(studentQuestion.getQuestionText());
+            StudentQuestion result = studentQuestionRepository.save(updatedStudentQuestion);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestion.getId().toString())).body(result);
         }
         else {
