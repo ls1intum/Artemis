@@ -667,7 +667,7 @@ Installing remote build agents
 You might want to run the builds on additional Jenkins agents, especially if a large amount of students should use the system at the same time.
 Jenkins supports remote build agents: The actual compilation of the students submissions happens on these other machines but the whole process is transparent to Artemis.
 
-This setup guide is for setting up a remote agent on an Ubuntu virtual machine that supports docker builds.
+This guide explains setting up a remote agent on an Ubuntu virtual machine that supports docker builds.
 
 Prerequisites:
 1. Install Docker on the remote machine: https://docs.docker.com/engine/install/ubuntu/
@@ -910,4 +910,3 @@ Artemis
 
 6. Stop the Artemis docker container with Control-C and re-run
    ``docker-compose up``
-
