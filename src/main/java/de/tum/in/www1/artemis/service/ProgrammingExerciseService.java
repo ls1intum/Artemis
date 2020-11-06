@@ -455,7 +455,7 @@ public class ProgrammingExerciseService {
                 // Copy static code analysis config files
                 if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                     String staticCodeAnalysisConfigPath = templatePath + "/staticCodeAnalysisConfig/**/*.*";
-                    Resource[] staticCodeAnalysisResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(staticCodeAnalysisConfigPath);
+                    Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
                     fileService.copyResources(staticCodeAnalysisResources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
                 }
             }
