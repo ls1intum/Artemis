@@ -132,7 +132,7 @@ public class StudentQuestionResource {
         if (optionalStudentQuestion.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        if (!studentQuestion.getCourse().getId().equals(courseId)) {
+        if (!optionalStudentQuestion.get().getCourse().getId().equals(courseId)) {
             return forbidden();
         }
         if (mayUpdateOrDeleteStudentQuestion(optionalStudentQuestion.get(), user)) {
