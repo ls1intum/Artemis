@@ -29,7 +29,7 @@ There are variables for several paths:
 
   Templates are available within Artemis. The templates should fit to most environments, but there might be cases where one wants to change the templates.
 
-  This value specified the path were the templates that should be overwritten are stored.
+  This value specifies the path to the templates which should overwrite the default ones.
   Note that this is the path to the folder where the `templates` folder is located, not the path to the `templates` folder itself.
 
 
