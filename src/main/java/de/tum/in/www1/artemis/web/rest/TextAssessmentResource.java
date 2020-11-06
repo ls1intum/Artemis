@@ -410,13 +410,13 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param textBlocks received from Client
      * @param textSubmission to associate blocks with
      */
-    private void saveTextBlocks(Set<TextBlock> textBlocks, TextSubmission textSubmission) {
+    private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission) {
         if (textBlocks != null) {
             final Set<String> existingTextBlockIds = textSubmission.getBlocks().stream().map(TextBlock::getId).collect(toSet());
-            textBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> {
+            final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> {
                 tb.setSubmission(textSubmission);
             }).collect(toSet());
-            textBlockRepository.saveAll(textBlocks);
+            textBlockRepository.saveAll(updatedTextBlocks);
         }
     }
 }
