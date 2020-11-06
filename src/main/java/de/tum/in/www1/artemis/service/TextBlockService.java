@@ -34,7 +34,7 @@ public class TextBlockService {
     }
 
     public Set<TextBlock> computeTextBlocksForSubmissionBasedOnSyntax(TextSubmission textSubmission) {
-        final var blocks = new HashSet<>(splitSubmissionIntoBlocks(textSubmission));
+        final var blocks = splitSubmissionIntoBlocks(textSubmission);
         textSubmission.setBlocks(blocks);
         return blocks;
     }
@@ -46,23 +46,24 @@ public class TextBlockService {
      * @param submission TextSubmission to split
      * @return List of TextBlocks
      */
-    public List<TextBlock> splitSubmissionIntoBlocks(TextSubmission submission) {
+    public Set<TextBlock> splitSubmissionIntoBlocks(TextSubmission submission) {
+        final Set<TextBlock> blocks = new HashSet<>();
+
+        // Return empty set for missing submission text.
         final String submissionText = submission.getText();
         if (submissionText == null) {
-            return new ArrayList<>();
+            return blocks;
         }
-        // Return empty list for missing submission text.
 
         // Javas Sentence BreakIterator handles sentence splitting.
         BreakIterator breakIterator = BreakIterator.getSentenceInstance();
         breakIterator.setText(submissionText);
-        List<TextBlock> blocks = new ArrayList<>();
 
         int start = breakIterator.first();
 
         // Iterate over Sentences
         for (int end = breakIterator.next(); end != BreakIterator.DONE; start = end, end = breakIterator.next()) {
-            String sentence = submissionText.substring(start, end).trim();
+            final String sentence = submissionText.substring(start, end).trim();
 
             // The BreakIterator does not take linebreaks into account.
             // Therefore, we split each determined sentence by linebreaks.

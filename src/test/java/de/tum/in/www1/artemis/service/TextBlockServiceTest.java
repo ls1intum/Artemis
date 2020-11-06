@@ -3,9 +3,15 @@ package de.tum.in.www1.artemis.service;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
+import java.util.Objects;
+
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 
 public class TextBlockServiceTest {
@@ -42,7 +48,7 @@ public class TextBlockServiceTest {
         final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
 
         assertThat(textBlocks, hasSize(1));
-        assertThat(textBlocks.get(0).getText(), is(equalTo("Hello World.")));
+        assertThat(textBlocks.iterator().next().getText(), is(equalTo("Hello World.")));
     }
 
     @Test
@@ -51,8 +57,8 @@ public class TextBlockServiceTest {
         final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
 
         assertThat(textBlocks, hasSize(2));
-        assertThat(textBlocks.get(0).getText(), is(equalTo("Hello World.")));
-        assertThat(textBlocks.get(1).getText(), is(equalTo("This is a Test.")));
+        assertThat(textBlocks, hasItem(textBlockWithEqualText("Hello World.")));
+        assertThat(textBlocks, hasItem(textBlockWithEqualText("This is a Test.")));
     }
 
     @Test
@@ -61,9 +67,9 @@ public class TextBlockServiceTest {
         final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
 
         assertThat(textBlocks, hasSize(3));
-        assertThat(textBlocks.get(0).getText(), is(equalTo("Hello World.")));
-        assertThat(textBlocks.get(1).getText(), is(equalTo("This is a Test")));
-        assertThat(textBlocks.get(2).getText(), is(equalTo("Another Test")));
+        assertThat(textBlocks, hasItem(textBlockWithEqualText("Hello World.")));
+        assertThat(textBlocks, hasItem(textBlockWithEqualText("This is a Test")));
+        assertThat(textBlocks, hasItem(textBlockWithEqualText("Another Test")));
     }
 
     @Test
@@ -73,8 +79,23 @@ public class TextBlockServiceTest {
 
         String[] sections = new String[] { "Example:", "This is the first example", "Section 2:", "- Here is a list", "- Of many bullet  points" };
         assertThat(textBlocks, hasSize(sections.length));
-        for (int i = 0; i < sections.length; i++) {
-            assertThat(textBlocks.get(i).getText(), is(equalTo(sections[i])));
+        for (String section : sections) {
+            assertThat(textBlocks, hasItem(textBlockWithEqualText(section)));
         }
+    }
+
+    private Matcher<TextBlock> textBlockWithEqualText(String expextedText) {
+        return new TypeSafeMatcher<>() {
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("text block with \"text\" property set to").appendValue(expextedText);
+            }
+
+            @Override
+            protected boolean matchesSafely(TextBlock item) {
+                return Objects.equals(item.getText(), expextedText);
+            }
+        };
     }
 }
