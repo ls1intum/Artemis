@@ -60,10 +60,6 @@
                             <span>{{ 'artemisApp.course.endDate' | translate }}</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
-                        <th class="d-none d-md-table-cell" jhiSortBy="testCourse">
-                            <span>{{ 'artemisApp.course.testCourse.title' | translate }}</span>
-                            <fa-icon [icon]="'sort'"></fa-icon>
-                        </th>
                         <th class="d-none d-md-table-cell" jhiSortBy="onlineCourse">
                             <span>{{ 'artemisApp.course.onlineCourse.title' | translate }}</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
@@ -79,7 +75,7 @@
                     <tr *ngFor="let course of courses; trackBy: trackId">
                         <ng-container
                             *ngIf="
-                                (course.semester === semester || (!course.semester && semester === '') || (semester === 'test' && course.testCourse)) &&
+                                (((course.semester === semester || (!course.semester && semester === '')) && !course.testCourse) || (semester === 'test' && course.testCourse)) &&
                                 (!showOnlyActive || !course.endDate || (course.endDate | amIsAfter: today:'second'))
                             "
                         >
@@ -124,10 +120,6 @@
                             </td>
                             <td>{{ course.startDate | artemisDate }}</td>
                             <td>{{ course.endDate | artemisDate }}</td>
-                            <td class="d-none d-md-table-cell">
-                                <span *ngIf="course.testCourse">{{ 'global.generic.yes' | translate }}</span>
-                                <span *ngIf="!course.testCourse">{{ 'global.generic.no' | translate }}</span>
-                            </td>
                             <td class="d-none d-md-table-cell">
                                 <span *ngIf="course.onlineCourse">{{ 'global.generic.yes' | translate }}</span>
                                 <span *ngIf="!course.onlineCourse">{{ 'global.generic.no' | translate }}</span>
