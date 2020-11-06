@@ -102,14 +102,12 @@ public class ProgrammingExerciseSimulationService {
         final var projectKey = programmingExercise.getProjectKey();
         final var templateParticipation = programmingExercise.getTemplateParticipation();
         final var solutionParticipation = programmingExercise.getSolutionParticipation();
-        final var templatePlanName = TEMPLATE.getName();
-        final var solutionPlanName = SOLUTION.getName();
         final var exerciseRepoUrl = "http://" + domain + projectKey + "/" + exerciseRepoName + ".git";
         final var testsRepoUrl = "http://" + domain + projectKey + "/" + testRepoName + ".git";
         final var solutionRepoUrl = "http://" + domain + projectKey + "/" + solutionRepoName + ".git";
-        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName);
+        templateParticipation.setBuildPlanId(programmingExercise.generateBuildPlanId(TEMPLATE));
         templateParticipation.setRepositoryUrl(exerciseRepoUrl);
-        solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
+        solutionParticipation.setBuildPlanId(programmingExercise.generateBuildPlanId(SOLUTION));
         solutionParticipation.setRepositoryUrl(solutionRepoUrl);
         programmingExercise.setTestRepositoryUrl(testsRepoUrl);
     }
