@@ -5,9 +5,11 @@ import static org.gitlab4j.api.models.AccessLevel.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.Executor;
 
 import javax.annotation.PostConstruct;
 
+import com.google.common.base.Strings;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.*;
@@ -52,6 +54,11 @@ public class GitLabService extends AbstractVersionControlService {
     @Value("${artemis.lti.user-prefix-edx:#{null}}")
     private Optional<String> USER_PREFIX_EDX;
 
+    @Value("${artemis.version-control.fork-validation.delay:#{3000}}")
+    private int GITLAB_FORK_VALIDATION_DELAY;
+    @Value("${artemis.version-control.fork-validation.retries:#{6}}")
+    private int GITLAB_FORK_VALIDATION_RETRIES;
+
     @Value("${artemis.lti.user-prefix-u4i:#{null}}")
     private Optional<String> USER_PREFIX_U4I;
 
@@ -70,13 +77,16 @@ public class GitLabService extends AbstractVersionControlService {
 
     private final UrlService urlService;
 
+    private final Executor taskExecutor;
+
     public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, GitLabApi gitlab,
-            GitLabUserManagementService gitLabUserManagementService, UrlService urlService) {
+            GitLabUserManagementService gitLabUserManagementService, UrlService urlService, @Qualifier("taskExecutor") Executor taskExecutor) {
         this.userService = userService;
         this.restTemplate = restTemplate;
         this.gitlab = gitlab;
         this.gitLabUserManagementService = gitLabUserManagementService;
         this.urlService = urlService;
+        this.taskExecutor = taskExecutor;
     }
 
     @PostConstruct
@@ -102,12 +112,15 @@ public class GitLabService extends AbstractVersionControlService {
             }
         }
 
-        try {
-            protectBranch("master", repositoryUrl);
-        }
-        catch (GitLabException ex) {
-            log.warn("Could not protect branch (but will still continue) due to the following reason: ", ex);
-        }
+        taskExecutor.execute(() -> {
+            //Async because we might need to wait for Fork to be fully created
+            try {
+                protectBranch("master", repositoryUrl);
+            }
+            catch (GitLabException ex) {
+                log.error("Could not protect branch (but will still continue) due to the following reason: ", ex);
+            }
+        });
     }
 
     @Override
@@ -144,6 +157,7 @@ public class GitLabService extends AbstractVersionControlService {
 
     private void protectBranch(String branch, URL repositoryUrl) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        waitForForkCreation(repositoryId);
         // we have to first unprotect the branch in order to set the correct access level
         try {
             unprotectBranch(repositoryId, branch);
@@ -355,6 +369,38 @@ public class GitLabService extends AbstractVersionControlService {
         }
 
         return new GitLabRepositoryUrl(targetProjectKey, targetRepoSlug);
+    }
+
+    private void waitForForkCreation(String repositoryId) {
+        //We need to wait for the Fork to be created because all we are gonna do after might fail if we do not
+        int retries= GITLAB_FORK_VALIDATION_RETRIES;
+        while (retries>0){
+            try{
+                ImportStatus importStatus = gitlab.getImportExportApi().getImportStatus(repositoryId);
+
+                log.trace("Received Fork status: {}", importStatus);
+                if(!Strings.isNullOrEmpty(importStatus.getImportError())){
+                    //Fork failed
+                    log.error("Fork failed with error: '{}'", importStatus.getImportError());
+                    break;
+                }
+
+                ImportStatus.Status valueImportStatus = importStatus.getImportStatus();
+                boolean importFinished = ImportStatus.Status.FINISHED.equals(valueImportStatus) || ImportStatus.Status.NONE.equals(valueImportStatus);
+                if(importFinished){
+                    return;
+                } else {
+                    log.debug("Fork with id '{}' is not finished yet, waiting for it to finish", repositoryId);
+                    Thread.sleep(GITLAB_FORK_VALIDATION_DELAY);
+                }
+            }
+            catch (Exception e){
+                log.warn("There was an unexpected Exception while validating the creation of a fork, trying again.", e);
+            }finally {
+                retries--;
+            }
+        }
+        log.error("Timeout for validating the successful creation of the Fork with id '{}'. We are trying to configure the repo anyways.", repositoryId);
     }
 
     @Override

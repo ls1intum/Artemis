@@ -339,7 +339,7 @@ public class ParticipationService {
                 }
                 catch (VersionControlException e) {
                     log.error("Removing write permissions failed for programming exercise with id " + programmingExercise.getId() + " for student repository with participation id "
-                            + programmingParticipation.getId() + ": " + e.getMessage());
+                            + programmingParticipation.getId() + ": ", e);
                 }
             }
         }
