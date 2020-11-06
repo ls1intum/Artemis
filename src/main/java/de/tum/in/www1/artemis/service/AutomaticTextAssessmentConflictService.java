@@ -145,9 +145,9 @@ public class AutomaticTextAssessmentConflictService {
                 return (TextSubmission) conflict.getFirstFeedback().getResult().getSubmission();
             }
         }).collect(toSet());
-        var allTextBlocks = textBlockRepository.findAllBySubmissionIdIn(textSubmissionSet.stream().map(TextSubmission::getId).collect(toSet()));
-        final Map<Long, List<TextBlock>> textBlocks = allTextBlocks.stream().collect(groupingBy(block -> block.getSubmission().getId()));
-        textSubmissionSet.forEach(textSubmission -> textSubmission.setBlocks(new HashSet<>(textBlocks.get(textSubmission.getId()))));
+        final var allTextBlocks = textBlockRepository.findAllBySubmissionIdIn(textSubmissionSet.stream().map(TextSubmission::getId).collect(toSet()));
+        final var textBlockGroupedBySubmissionId = allTextBlocks.stream().collect(groupingBy(block -> block.getSubmission().getId(), toSet()));
+        textSubmissionSet.forEach(textSubmission -> textSubmission.setBlocks(textBlockGroupedBySubmissionId.get(textSubmission.getId())));
         return textSubmissionSet;
     }
 
