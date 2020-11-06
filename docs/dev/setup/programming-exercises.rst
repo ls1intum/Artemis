@@ -38,7 +38,7 @@ Templates
 #########
 
 Templates are shipped with Artemis (they can be found within the ``src/main/resources/templates`` folder in Github).
-These templates should fit well for many deployments, but one might to change some of them in special deployments.
+These templates should fit well for many deployments, but one might want to change some of them for special deployments.
 
 As of now, you can overwrite the ``jenkins`` folders that is present within the ``src/main/resources/templates`` folder.
 Files that are present in the file system will be used, if a file is not present in the file system, it is loaded from the classpath (e.g. the .war archive).
