@@ -2,7 +2,7 @@ Adjustments for programming exercises
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 There are several variables that can be configured when using programming exercises.
-They are present in this separate page to keep the 'normal' setup guide shorter.
+They are presented in this separate page to keep the 'normal' setup guide shorter.
 
 
 Path variables
