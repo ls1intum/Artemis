@@ -1,14 +1,14 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,21 +21,26 @@ import org.eclipse.jgit.merge.MergeStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.stubbing.Answer;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.FileType;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -50,6 +55,12 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Autowired
     StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    @Autowired
+    ProgrammingExerciseService programmingExerciseService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -79,9 +90,15 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     StudentParticipation participation;
 
+    ListAppender<ILoggingEvent> listAppender;
+
+    Logger logger;
+
+    Path filePath;
+
     @BeforeEach
     public void setup() throws Exception {
-        database.addUsers(1, 0, 0);
+        database.addUsers(1, 0, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
@@ -89,15 +106,15 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo");
 
         // add file to the repository folder
-        Path filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
+        filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
         var file = Files.createFile(filePath).toFile();
 
         // write content to the created file
         FileUtils.write(file, currentLocalFileContent, Charset.defaultCharset());
 
         // add folder to the repository folder
-        filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFolderName);
-        var folder = Files.createDirectory(filePath).toFile();
+        Path folderPath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFolderName);
+        Files.createDirectory(folderPath).toFile();
 
         var localRepoUrl = new GitUtilService.MockFileRepositoryUrl(studentRepository.localRepoFile);
         database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURL());
@@ -108,9 +125,22 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         doReturn(gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath())).when(gitService)
                 .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl(), false);
+        doReturn(gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath())).when(gitService)
+                .getOrCheckoutRepository((ProgrammingExerciseParticipation) participation);
 
         logs.add(buildLogEntry);
         logs.add(largeBuildLogEntry);
+
+        // Following setup is to check log messages see: https://stackoverflow.com/a/51812144
+        // Get Logback Logger
+        logger = (Logger) LoggerFactory.getLogger(ProgrammingExerciseParticipationService.class);
+
+        // Create and start a ListAppender
+        listAppender = new ListAppender<>();
+        listAppender.start();
+
+        // Add the appender to the logger, the addAppender is outdated now
+        logger.addAppender(listAppender);
     }
 
     @AfterEach
@@ -211,22 +241,11 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         assertThat(database.getUserByLogin("student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
     }
 
-    private List<FileSubmission> getFileSubmissions() {
-        List<FileSubmission> fileSubmissions = new ArrayList();
-        FileSubmission fileSubmission = new FileSubmission();
-        fileSubmission.setFileName(currentLocalFileName);
-        fileSubmission.setFileContent("updatedFileContent");
-        fileSubmissions.add(fileSubmission);
-        return fileSubmissions;
-    }
-
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testSaveFiles() throws Exception {
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
-        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
-
-        Path filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
+        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
         assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
     }
 
@@ -238,12 +257,11 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
 
-        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", getFileSubmissions(), HttpStatus.OK);
+        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
 
         var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
 
-        Path filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
         assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
 
         var testRepoCommits = studentRepository.getAllLocalCommits();
@@ -457,5 +475,222 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.FORBIDDEN, null);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testStashChanges() throws Exception {
+        // Make initial commit and save files afterwards
+        initialCommitAndSaveFiles(HttpStatus.OK);
+        Repository localRepo = gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath());
+
+        // Stash changes
+        gitService.stashChanges(localRepo);
+        // Local repo has no unsubmitted changes
+        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testStashChangesInStudentRepositoryAfterDueDateHasPassed_beforeStateRepoConfigured() {
+        participation.setInitializationState(InitializationState.REPO_COPIED);
+        // Try to stash changes
+        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+
+        // Check the logs
+        List<ILoggingEvent> logsList = listAppender.list;
+        assertThat(logsList.get(0).getMessage())
+                .isEqualTo("Cannot stash student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testStashChangesInStudentRepositoryAfterDueDateHasPassed_dueDatePassed() throws Exception {
+        // Make initial commit and save files afterwards
+        initialCommitAndSaveFiles(HttpStatus.OK);
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+
+        // Stash changes using service
+        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testStashChangesInStudentRepositoryAfterDueDateHasPassed_dueDateNotPassed() {
+        // Try to stash changes
+        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+
+        // Check the logs
+        List<ILoggingEvent> logsList = listAppender.list;
+        assertThat(logsList.get(0).getMessage())
+                .isEqualTo("Cannot stash student repository for participation " + participation.getId() + " because the due date has not passed yet!");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testStashChangesInStudentRepositoryAfterDueDateHasPassed_throwError() {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        // Try to stash changes, but it will throw error as the HEAD is not initialized in the remote repo (this is done with the initial commit)
+        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+
+        // Check the logs
+        List<ILoggingEvent> logsList = listAppender.list;
+        assertThat(logsList.get(0).getLevel()).isEqualTo(Level.ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCanAccessParticipation_asInstructor() {
+        // Set solution and template participation
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        // Check for canAccessParticipation(participation)
+        var response = programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
+        assertThat(response).isTrue();
+
+        var responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
+        assertThat(responseSolution).isTrue();
+
+        var responseTemplate = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
+        assertThat(responseTemplate).isTrue();
+
+        var responseOther = programmingExerciseParticipationService.canAccessParticipation(null);
+        assertThat(responseOther).isFalse();
+
+        // Check for canAccessParticipation(participation, principal)
+        final var username = "instructor1";
+        final Principal principal = () -> username;
+
+        response = programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation, principal);
+        assertThat(response).isFalse();
+
+        responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation(), principal);
+        assertThat(responseSolution).isTrue();
+
+        responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation(), principal);
+        assertThat(responseSolution).isTrue();
+
+        responseSolution = programmingExerciseParticipationService.canAccessParticipation(null, principal);
+        assertThat(responseSolution).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testCanAccessParticipation_asStudent() {
+        // Set solution and template participation
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        // Check for canAccessParticipation(participation)
+        var response = programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
+        assertThat(response).isTrue();
+
+        var responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
+        assertThat(responseSolution).isFalse();
+
+        var responseTemplate = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
+        assertThat(responseTemplate).isFalse();
+
+        var responseOther = programmingExerciseParticipationService.canAccessParticipation(null);
+        assertThat(responseOther).isFalse();
+
+        // Check for canAccessParticipation(participation, principal)
+        final var username = "student1";
+        final Principal principal = () -> username;
+        response = programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation, principal);
+        assertThat(response).isTrue();
+
+        responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation(), principal);
+        assertThat(responseSolution).isFalse();
+
+        responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation(), principal);
+        assertThat(responseSolution).isFalse();
+
+        responseSolution = programmingExerciseParticipationService.canAccessParticipation(null, principal);
+        assertThat(responseSolution).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testFindStudentParticipation() {
+        var response = programmingExerciseParticipationService.findStudentParticipation(participation.getId());
+        assertThat(response.isPresent()).isTrue();
+        assertThat(response.get().getId()).isEqualTo(participation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testUnlockStudentRepository() {
+        doAnswer((Answer<Void>) invocation -> {
+            ((ProgrammingExercise) participation.getExercise()).setBuildAndTestStudentSubmissionsAfterDueDate(null);
+            return null;
+        }).when(versionControlService).configureRepository(programmingExercise, ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl(),
+                participation.getStudents(), true);
+
+        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+
+        assertThat(((ProgrammingExercise) participation.getExercise()).getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
+        assertThat(programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseStudentParticipation) participation)).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testUnlockStudentRepository_beforeStateRepoConfigured() {
+        participation.setInitializationState(InitializationState.REPO_COPIED);
+        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+
+        // Check the logs
+        List<ILoggingEvent> logsList = listAppender.list;
+        assertThat(logsList.get(0).getMessage())
+                .isEqualTo("Cannot unlock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testLockStudentRepository() {
+        doAnswer((Answer<Void>) invocation -> {
+            participation.getExercise().setDueDate(ZonedDateTime.now().minusHours(1));
+            return null;
+        }).when(versionControlService).setRepositoryPermissionsToReadOnly(((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl(),
+                programmingExercise.getProjectKey(), participation.getStudents());
+
+        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        assertThat(programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseStudentParticipation) participation)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testLockStudentRepository_beforeStateRepoConfigured() {
+        participation.setInitializationState(InitializationState.REPO_COPIED);
+        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+
+        // Check the logs
+        List<ILoggingEvent> logsList = listAppender.list;
+        assertThat(logsList.get(0).getMessage())
+                .isEqualTo("Cannot lock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+    }
+
+    private List<FileSubmission> getFileSubmissions(String fileContent) {
+        List<FileSubmission> fileSubmissions = new ArrayList();
+        FileSubmission fileSubmission = new FileSubmission();
+        fileSubmission.setFileName(currentLocalFileName);
+        fileSubmission.setFileContent(fileContent);
+        fileSubmissions.add(fileSubmission);
+        return fileSubmissions;
+    }
+
+    private void initialCommitAndSaveFiles(HttpStatus expectedStatus) throws Exception {
+        assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        // Do initial commit
+        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", getFileSubmissions("initial commit"), expectedStatus);
+        // Check repo
+        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+
+        // Save file, without commit
+        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), expectedStatus);
+        // Check repo
+        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
     }
 }

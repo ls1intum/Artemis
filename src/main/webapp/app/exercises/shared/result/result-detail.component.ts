@@ -87,8 +87,12 @@ export class ResultDetailComponent implements OnInit {
                         }
                     }
                     // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
-                    if (this.exerciseType === ExerciseType.PROGRAMMING && (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)) {
-                        return this.fetchAndSetBuildLogs(this.result.participation!.id!);
+                    if (
+                        this.exerciseType === ExerciseType.PROGRAMMING &&
+                        this.result.participation &&
+                        (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)
+                    ) {
+                        return this.fetchAndSetBuildLogs(this.result.participation.id!);
                     }
                     return of(null);
                 }),
