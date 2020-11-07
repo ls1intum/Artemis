@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Achievement;
@@ -104,30 +103,24 @@ public class AchievementService {
      * Checks the result if it earned any achievements
      * @param result
      */
-    @Transactional
     public void checkForAchievements(Result result) {
-        log.debug("checkForAchievements was invoked");
         var participation = result.getParticipation();
         if (participation == null || participation.getId() == null || !(participation instanceof StudentParticipation)) {
             return;
         }
-        log.debug("first check passed");
         var studentParticipation = (StudentParticipation) participation;
         var exercise = studentParticipation.getExercise();
         if (exercise == null || exercise.getExerciseGroup() != null) {
             return;
         }
-        log.debug("second check passed");
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (course == null || !course.getAchievementsEnabled()) {
             return;
         }
-        log.debug("third check passed");
         var optionalUser = studentParticipation.getStudent();
         if (optionalUser.isEmpty()) {
             return;
         }
-        log.debug("fourth check passed");
         // var user = userRepository.findOneWithEagerAchievements(optionalUser.get().getId());
         // if (user == null) {
         // return;
@@ -139,24 +132,17 @@ public class AchievementService {
         var user = optionalUser.get();
         user.setAchievements(achievements);
 
-        log.debug("all checks passed");
-
         var pointBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.POINT);
+        log.debug("point based achievements found : {}", pointBasedAchievements.size());
         var pointRank = pointBasedAchievementService.checkForAchievement(result, pointBasedAchievements);
-
-        log.debug("reward pointBased invoked with {} achievements and rank : {}", pointBasedAchievements.size(), pointRank);
         rewardAchievement(pointBasedAchievements, pointRank, user);
 
         var timeBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.TIME);
         var timeRank = timeBasedAchievementService.checkForAchievement(result, timeBasedAchievements);
-
-        log.debug("reward timeBased invoked with {} achievements and rank : {}", timeBasedAchievements.size(), timeRank);
         rewardAchievement(timeBasedAchievements, timeRank, user);
 
         var progressBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.PROGRESS);
         var progressRank = progressBasedAchievementService.checkForAchievement(course, user, progressBasedAchievements);
-
-        log.debug("reward progressBased invoked with {} achievements and rank : {}", progressBasedAchievements.size(), progressRank);
         rewardAchievement(progressBasedAchievements, progressRank, user);
     }
 

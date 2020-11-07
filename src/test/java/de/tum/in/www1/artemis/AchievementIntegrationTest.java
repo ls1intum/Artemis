@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -118,7 +117,6 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         submission = database.addModelingSubmission(firstExercise, submission, student.getLogin());
         var result = ModelFactory.generateResult(true, 100).participation(submission.getParticipation());
         resultRepository.save(result);
-        TimeUnit.SECONDS.sleep(10);
         var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
         assertThat(achievementsFirstCourse.size()).as("User got one achievement").isEqualTo(1);
     }
