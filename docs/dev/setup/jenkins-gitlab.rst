@@ -71,7 +71,7 @@ Please read :doc:`../setup` for more details.
 For a local setup on Windows you can use `http://host.docker.internal` appended
 by the chosen ports as the version-control and continuous-integration url.
 
-Make sure to change the ``server.jenkins_nodeurl`` value in ``application-dev.yml``
+Make sure to change the ``server.url`` value in ``application-dev.yml``
 or ``application-prod.yml`` accordingly. This value will be used for the
 communication hooks from Gitlab to Artemis and from Jenkins to Artemis.
 In case you use a different port than 80 (http) or 443 (https) for the
