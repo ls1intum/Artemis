@@ -5,7 +5,6 @@ import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Result } from 'app/entities/result.model';
-import { Participation } from 'app/entities/participation/participation.model';
 import { Submission } from 'app/entities/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
