@@ -51,23 +51,6 @@ export class SubmissionService {
             );
     }
 
-    protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            res.body.submissionDate = res.body.submissionDate ? moment(res.body.submissionDate) : undefined;
-            res.body.participation = this.convertParticipationDateFromServer(res.body.participation);
-        }
-        return res;
-    }
-
-    protected convertParticipationDateFromServer(participation?: Participation) {
-        if (participation) {
-            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : undefined;
-            participation.results = this.convertResultsDateFromServer(participation.results);
-            participation.submissions = this.convertSubmissionsDateFromServer(participation.submissions);
-        }
-        return participation;
-    }
-
     convertResultsDateFromServer(results?: Result[]) {
         const convertedResults: Result[] = [];
         if (results != undefined && results.length > 0) {
