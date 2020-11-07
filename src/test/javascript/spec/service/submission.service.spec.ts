@@ -73,15 +73,6 @@ describe('Submission Service', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: [submission] }));
         const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/participations/${participationId}/submissions`, method: 'GET' });
         req.flush(JSON.stringify([returnedFromService]));
-        // httpMock.verify();
-    });
-
-    it('should find all submissions of a given participation, 2.0', async () => {
-        const returnedFromService = Object.assign({}, elemDefault);
-        service.findAllSubmissionsOfParticipation(187).subscribe((body) => expect(body).toBe({ body: [elemDefault] }));
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(JSON.stringify([returnedFromService]));
-        // httpMock.verify();
     });
 
     it('should get test run submission for a given exercise', async () => {
