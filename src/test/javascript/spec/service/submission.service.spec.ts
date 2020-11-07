@@ -8,7 +8,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -18,7 +17,6 @@ describe('Submission Service', () => {
     let injector: TestBed;
     let service: SubmissionService;
     let httpMock: HttpTestingController;
-    let elemDefault: Submission;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -32,9 +30,6 @@ describe('Submission Service', () => {
         injector = getTestBed();
         service = injector.get(SubmissionService);
         httpMock = injector.get(HttpTestingController);
-
-        // @ts-ignore
-        elemDefault = new Submission(SubmissionExerciseType.TEXT);
     });
 
     it('should delete an existing submission', async () => {
