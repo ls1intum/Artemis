@@ -95,8 +95,6 @@ describe('Example Submission Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
-            console.log(expectedResult);
-            console.log(returnedFromService);
             expect(expectedResult.body).to.deep.equal(expected);
         });
 
