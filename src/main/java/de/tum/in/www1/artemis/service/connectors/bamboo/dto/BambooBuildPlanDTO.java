@@ -24,9 +24,9 @@ public class BambooBuildPlanDTO {
 
     private boolean enabled;
 
-    private boolean active;
+    private boolean isActive;
 
-    private boolean building;
+    private boolean isBuilding;
 
     private Map<String, BambooRepositoryDTO> repositories = new HashMap<>();
 
@@ -40,9 +40,9 @@ public class BambooBuildPlanDTO {
         this.key = key;
     }
 
-    public BambooBuildPlanDTO(boolean active, boolean building) {
-        this.active = active;
-        this.building = building;
+    public BambooBuildPlanDTO(boolean isActive, boolean isBuilding) {
+        this.isActive = isActive;
+        this.isBuilding = isBuilding;
     }
 
     public String getName() {
@@ -110,19 +110,19 @@ public class BambooBuildPlanDTO {
     }
 
     public boolean isActive() {
-        return active;
+        return isActive;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setIsActive(boolean active) {
+        this.isActive = active;
     }
 
     public boolean isBuilding() {
-        return building;
+        return isBuilding;
     }
 
-    public void setBuilding(boolean building) {
-        this.building = building;
+    public void setIsBuilding(boolean building) {
+        this.isBuilding = building;
     }
 
     public BambooRepositoryDTO getRepository(String name) {
