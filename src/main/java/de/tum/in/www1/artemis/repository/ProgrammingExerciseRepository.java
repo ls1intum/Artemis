@@ -38,7 +38,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     // Get an a programmingExercise with template and solution participation, each with the latest result and feedbacks.
     @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp "
             + "left join fetch tp.results as tpr left join fetch sp.results as spr left join fetch tpr.feedbacks left join fetch spr.feedbacks "
-            + "where pe.id = :#{#exerciseId} and (tpr.id = (select max(id) from tp.results) or tpr.id = null) "
+            + "left join fetch tpr.submission left join fetch spr.submission " + "where pe.id = :#{#exerciseId} and (tpr.id = (select max(id) from tp.results) or tpr.id = null) "
             + "and (spr.id = (select max(id) from sp.results) or spr.id = null)")
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(@Param("exerciseId") Long exerciseId);
 
