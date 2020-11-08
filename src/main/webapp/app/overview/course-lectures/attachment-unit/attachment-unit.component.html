@@ -1,0 +1,53 @@
+<div class="row align-items-center mb-2 mt-2" (click)="downloadAttachment()">
+    <div class="col-auto d-none d-sm-block">
+        <div class="exercise-row-icon">
+            <fa-icon [icon]="getAttachmentIcon()" size="2x" placement="right" [ngbTooltip]="'artemisApp.attachmentUnit.tooltip' | translate" container="body"></fa-icon>
+        </div>
+    </div>
+    <div class="col">
+        <div class="row">
+            <div class="col-auto d-sm-none">
+                <h4>
+                    <fa-icon [icon]="getAttachmentIcon()"></fa-icon>
+                </h4>
+            </div>
+            <div class="col-sm col">
+                <h4>{{ attachmentUnit?.attachment?.name }}</h4>
+                <hr />
+                <div *ngIf="attachmentUnit?.attachment?.uploadDate">
+                    <span class="font-weight-bold"> {{ 'artemisApp.attachmentUnit.uploadDate' | translate }}: </span>
+                    {{ attachmentUnit?.attachment?.uploadDate | artemisDate }}
+                </div>
+                <div *ngIf="attachmentUnit?.attachment?.version">
+                    <span class="font-weight-bold"> {{ 'artemisApp.attachmentUnit.version' | translate }}: </span>
+                    {{ attachmentUnit?.attachment?.version }}
+                </div>
+                <div *ngIf="attachmentUnit?.attachment?.releaseDate">
+                    <span class="font-weight-bold"> {{ 'artemisApp.lectureUnit.releaseDate' | translate }}: </span>
+                    {{ attachmentUnit?.attachment?.releaseDate | artemisDate }}
+                </div>
+                <div *ngIf="attachmentUnit?.attachment?.link">
+                    <span class="font-weight-bold"> {{ 'artemisApp.attachmentUnit.FileName' | translate }}: </span>
+                    {{ getFileName() }}
+                </div>
+                <hr />
+                <h6 *ngIf="attachmentUnit?.description">{{ 'artemisApp.attachmentUnit.description' | translate }}:</h6>
+                {{ attachmentUnit?.description }}
+            </div>
+        </div>
+        <div class="row" *ngIf="!attachmentUnit.visibleToStudents">
+            <div class="exercise-tags col-auto">
+                <hr />
+                <h4>
+                    <span
+                        class="badge badge-warning"
+                        placement="right"
+                        ngbTooltip="{{ 'artemisApp.attachmentUnit.notReleasedTooltip' | translate }} {{ attachmentUnit?.attachment?.releaseDate | artemisDate }}"
+                    >
+                        {{ 'artemisApp.courseOverview.exerciseList.notReleased' | translate }}</span
+                    >
+                </h4>
+            </div>
+        </div>
+    </div>
+</div>

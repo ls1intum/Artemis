@@ -165,7 +165,7 @@ export class QuizExerciseService {
     }
 
     getStatus(quizExercise: QuizExercise) {
-        if (quizExercise.isPlannedToStart && quizExercise.remainingTime != null) {
+        if (quizExercise.isPlannedToStart && quizExercise.remainingTime != undefined) {
             if (quizExercise.remainingTime <= 0) {
                 // the quiz is over
                 return quizExercise.isOpenForPractice ? QuizStatus.OPEN_FOR_PRACTICE : QuizStatus.CLOSED;

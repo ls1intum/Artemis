@@ -10,7 +10,7 @@ export class DatePipe implements PipeTransform {
      * @param date The date expression (number or string)
      */
     transform(date: any): any {
-        if (date == null) {
+        if (date == undefined) {
             return 'DD MMMM YYYY, hh:mm:ss PM';
         }
         const d = new Date(date);

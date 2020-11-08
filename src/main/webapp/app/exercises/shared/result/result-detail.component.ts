@@ -87,8 +87,12 @@ export class ResultDetailComponent implements OnInit {
                         }
                     }
                     // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
-                    if (this.exerciseType === ExerciseType.PROGRAMMING && (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)) {
-                        return this.fetchAndSetBuildLogs(this.result.participation!.id!);
+                    if (
+                        this.exerciseType === ExerciseType.PROGRAMMING &&
+                        this.result.participation &&
+                        (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)
+                    ) {
+                        return this.fetchAndSetBuildLogs(this.result.participation.id!);
                     }
                     return of(null);
                 }),
@@ -142,7 +146,7 @@ export class ResultDetailComponent implements OnInit {
                         type: FeedbackItemType.Issue,
                         category: 'Code Issue',
                         title: `${scaCategory} Issue in file ${this.getIssueLocation(scaIssue)}`.trim(),
-                        text: `${scaIssue.rule}: ${scaIssue.message}`,
+                        text: this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message,
                         positive: false,
                         credits: feedback.credits,
                     };
@@ -294,7 +298,7 @@ export class ResultDetailComponent implements OnInit {
         // cap sca penalty points
         if (exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = exercise as ProgrammingExercise;
-            if (programmingExercise.staticCodeAnalysisEnabled && programmingExercise.maxStaticCodeAnalysisPenalty != null) {
+            if (programmingExercise.staticCodeAnalysisEnabled && programmingExercise.maxStaticCodeAnalysisPenalty != undefined) {
                 const maxPoints = programmingExercise.maxScore! + (programmingExercise.bonusPoints || 0) === 0 ? 100 : programmingExercise.maxScore!;
                 const maxPenaltyCredits = (maxPoints * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
                 codeIssueCredits = Math.min(codeIssueCredits, maxPenaltyCredits);

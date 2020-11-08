@@ -187,7 +187,7 @@ export class CourseManagementService {
             .post<User>(`${this.resourceUrl}/${courseId}/register`, null, { observe: 'response' })
             .pipe(
                 map((res: HttpResponse<User>) => {
-                    if (res.body != null) {
+                    if (res.body != undefined) {
                         this.accountService.syncGroups(res.body);
                     }
                     return res;

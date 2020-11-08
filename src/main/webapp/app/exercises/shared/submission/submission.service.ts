@@ -5,7 +5,6 @@ import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Result } from 'app/entities/result.model';
-import { Participation } from 'app/entities/participation/participation.model';
 import { Submission } from 'app/entities/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -51,26 +50,9 @@ export class SubmissionService {
             );
     }
 
-    protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            res.body.submissionDate = res.body.submissionDate ? moment(res.body.submissionDate) : undefined;
-            res.body.participation = this.convertParticipationDateFromServer(res.body.participation);
-        }
-        return res;
-    }
-
-    protected convertParticipationDateFromServer(participation?: Participation) {
-        if (participation) {
-            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : undefined;
-            participation.results = this.convertResultsDateFromServer(participation.results);
-            participation.submissions = this.convertSubmissionsDateFromServer(participation.submissions);
-        }
-        return participation;
-    }
-
     convertResultsDateFromServer(results?: Result[]) {
         const convertedResults: Result[] = [];
-        if (results != null && results.length > 0) {
+        if (results != undefined && results.length > 0) {
             results.forEach((result: Result) => {
                 result.completionDate = result.completionDate ? moment(result.completionDate) : undefined;
                 convertedResults.push(result);
@@ -81,7 +63,7 @@ export class SubmissionService {
 
     convertSubmissionsDateFromServer(submissions?: Submission[]) {
         const convertedSubmissions: Submission[] = [];
-        if (submissions != null && submissions.length > 0) {
+        if (submissions != undefined && submissions.length > 0) {
             submissions.forEach((submission: Submission) => {
                 if (submission !== null) {
                     submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : undefined;

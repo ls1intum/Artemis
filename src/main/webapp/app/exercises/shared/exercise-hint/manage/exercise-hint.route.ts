@@ -33,8 +33,8 @@ export class ExerciseHintResolve implements Resolve<ExerciseHint | null> {
 
 export const exerciseHintRoute: Routes = [
     {
-        path: ':courseId/exercises/:exerciseId/hints/:hintId/view',
-        component: ExerciseHintDetailComponent,
+        path: ':courseId/exercises/:exerciseId/hints/new',
+        component: ExerciseHintUpdateComponent,
         resolve: {
             exerciseHint: ExerciseHintResolve,
         },
@@ -45,8 +45,8 @@ export const exerciseHintRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/exercises/:exerciseId/hints/new',
-        component: ExerciseHintUpdateComponent,
+        path: ':courseId/exercises/:exerciseId/hints/:hintId',
+        component: ExerciseHintDetailComponent,
         resolve: {
             exerciseHint: ExerciseHintResolve,
         },

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -8,7 +9,6 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.regex.Pattern;
 
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -39,8 +39,14 @@ import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.FolderJob;
 import com.offbytwo.jenkins.model.JobWithDetails;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -58,8 +64,6 @@ import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 public class JenkinsService implements ContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
-
-    private static final Pattern JVM_RESULT_MESSAGE_MATCHER = prepareJVMResultMessageMatcher(List.of("java.lang.AssertionError", "org.opentest4j.AssertionFailedError"));
 
     @Value("${artemis.continuous-integration.url}")
     private URL JENKINS_SERVER_URL;
@@ -375,10 +379,9 @@ public class JenkinsService implements ContinuousIntegrationService {
         // Extract test case feedback
         for (final var testSuite : report.getResults()) {
             for (final var testCase : testSuite.getTestCases()) {
-                var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMessage());
-                var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMessage());
-                var errorList = errorMessage.or(() -> failureMessage).map(message -> processResultErrorMessage(programmingLanguage, message)).map(List::of)
-                        .orElse(Collections.emptyList());
+                var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMostInformativeMessage());
+                var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMostInformativeMessage());
+                var errorList = errorMessage.or(() -> failureMessage).map(List::of).orElse(Collections.emptyList());
                 boolean successful = Optional.ofNullable(testCase.getErrors()).map(List::isEmpty).orElse(true)
                         && Optional.ofNullable(testCase.getFailures()).map(List::isEmpty).orElse(true);
 
@@ -391,7 +394,7 @@ public class JenkinsService implements ContinuousIntegrationService {
                     }
                 }
 
-                result.addFeedback(feedbackService.createFeedbackFromTestCase(testCase.getName(), errorList, successful, programmingLanguage, false));
+                result.addFeedback(feedbackService.createFeedbackFromTestCase(testCase.getName(), errorList, successful, programmingLanguage));
             }
         }
 
@@ -402,39 +405,6 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
 
         result.setHasFeedback(!result.getFeedbacks().isEmpty());
-    }
-
-    /**
-     * Filters and processes a feedback error message, thereby removing any unwanted strings depending on
-     * the programming language, or just reformatting it to only show the most important details.
-     *
-     * ToDo: Move back to FeedbackService once a solution that works with Bamboo has been found
-     *
-     * @param programmingLanguage The programming language for which the feedback was generated
-     * @param message The raw error message in the feedback
-     * @return A filtered and better formatted error message
-     */
-    private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final String message) {
-        if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
-            return JVM_RESULT_MESSAGE_MATCHER.matcher(message.trim()).replaceAll("");
-        }
-
-        return message;
-    }
-
-    /**
-     * Builds the regex used in {@link #processResultErrorMessage(ProgrammingLanguage, String)} on results from JVM languages.
-     *
-     * @param jvmExceptionsToFilter Exceptions at the start of lines that should be filtered out in the processing step
-     * @return A regex that can be used to process result messages
-     */
-    private static Pattern prepareJVMResultMessageMatcher(List<String> jvmExceptionsToFilter) {
-        // Replace all "." with "\\." and join with regex alternative symbol "|"
-        String assertionRegex = jvmExceptionsToFilter.stream().map(s -> s.replaceAll("\\.", "\\\\.")).reduce("", (a, b) -> String.join("|", a, b));
-        // Match any of the exceptions at the start of the line and with ": " after it
-        String pattern = String.format("^(?:%s): \n*", assertionRegex);
-
-        return Pattern.compile(pattern, Pattern.MULTILINE);
     }
 
     @Override

@@ -28,6 +28,15 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("select distinct course.instructorGroupName from Course course")
     Set<String> findAllInstructorGroupNames();
 
+    @Query("select distinct course from Course course where course.instructorGroupName like :#{#name}")
+    Course findCourseByInstructorGroupName(@Param("name") String name);
+
+    @Query("select distinct course from Course course where course.studentGroupName like :#{#name}")
+    Course findCourseByStudentGroupName(@Param("name") String name);
+
+    @Query("select distinct course from Course course where course.teachingAssistantGroupName like :#{#name}")
+    Course findCourseByTeachingAssistantGroupName(@Param("name") String name);
+
     @Query("select distinct course from Course course where (course.startDate <= :#{#now} or course.startDate is null) and (course.endDate >= :#{#now} or course.endDate is null)")
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 

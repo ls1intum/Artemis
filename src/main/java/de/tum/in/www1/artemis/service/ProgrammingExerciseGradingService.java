@@ -14,7 +14,6 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -385,7 +384,7 @@ public class ProgrammingExerciseGradingService {
             }
 
             // The score is calculated as a percentage of the maximum points
-            long score = (long) (successfulTestPoints / maxScoreRespectingZeroPointExercises * 100.0);
+            long score = Math.round(successfulTestPoints / maxScoreRespectingZeroPointExercises * 100.0);
 
             result.setScore(score);
         }
@@ -456,32 +455,28 @@ public class ProgrammingExerciseGradingService {
      */
     private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests, List<Feedback> scaFeedback,
             ProgrammingExercise exercise) {
-        if (result.getAssessmentType() == AssessmentType.AUTOMATIC) {
-            // Create a new result string that reflects passed, failed & not executed test cases.
-            String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
+        // Create a new result string that reflects passed, failed & not executed test cases.
+        String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
 
-            // Show number of found quality issues if static code analysis is enabled
-            if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
-                String issueTerm = scaFeedback.size() == 1 ? ", 1 issue" : ", " + scaFeedback.size() + " issues";
-                newResultString += issueTerm;
-            }
-            result.setResultString(newResultString);
+        // Show number of found quality issues if static code analysis is enabled
+        if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
+            String issueTerm = scaFeedback.size() == 1 ? ", 1 issue" : ", " + scaFeedback.size() + " issues";
+            newResultString += issueTerm;
         }
-        else {
-            // Calculate different scores for totalScore calculation and set resultString for manual results
+        if (result.isManualResult()) {
+            // Calculate different scores for totalScore calculation and add points and maxScore to result string
             double maxScore = getMaxScoreRespectingZeroPointExercises(exercise);
-            double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
-            double calculatedScore = programmingAssessmentService.calculateTotalScore(result.getFeedbacks());
-            double totalScore = programmingAssessmentService.calculateTotalScore(calculatedScore, maxScore + bonusPoints);
-            result.setScore(totalScore, maxScore);
-            result.setResultString(totalScore, maxScore);
+            double points = programmingAssessmentService.calculateTotalScore(result);
+            result.setScore(points, maxScore);
+            newResultString += ", " + result.createResultString(points, maxScore);
         }
+        result.setResultString(newResultString);
     }
 
     /**
      * Returns the maximum amount of regular points for the given exercise or a replacement point amount if the exercise has zero points (neither regular nor bonus points).
      * <p>
-     * <b>Must only be used for the exercise-local score calculation and display messages and never for the actual score of a student in a course.</b>  
+     * <b>Must only be used for the exercise-local score calculation and display messages and never for the actual score of a student in a course.</b>
      * @param programmingExercise the exercise to the the maxScore for
      * @return {@link Exercise#getMaxScore()} or {@link #PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES}
      */

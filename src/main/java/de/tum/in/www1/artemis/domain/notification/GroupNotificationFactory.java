@@ -31,10 +31,18 @@ public class GroupNotificationFactory {
             text = notificationText;
         }
 
-        Course course = attachment.getLecture().getCourse();
+        Lecture lecture;
+        // we get the lecture either from the directly connected lecture or from the attachment unit
+        if (attachment.getAttachmentUnit() != null) {
+            lecture = attachment.getAttachmentUnit().getLecture();
+        }
+        else {
+            lecture = attachment.getLecture();
+        }
+        Course course = lecture.getCourse();
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
 
-        notification.setTarget(notification.getAttachmentUpdated(attachment.getLecture()));
+        notification.setTarget(notification.getAttachmentUpdated(lecture));
 
         return notification;
     }

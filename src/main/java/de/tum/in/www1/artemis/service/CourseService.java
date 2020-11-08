@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -119,6 +120,9 @@ public class CourseService {
      */
     public Course findOneWithExercisesAndLecturesForUser(Long courseId, User user) {
         Course course = findOneWithLecturesAndExams(courseId);
+        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
         course.setExercises(exerciseService.findAllForCourse(course, user));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {

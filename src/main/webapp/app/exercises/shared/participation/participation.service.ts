@@ -48,7 +48,7 @@ export class ParticipationService {
             .get<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participation`, { observe: 'response' })
             .pipe(
                 map((res: EntityResponseType) => {
-                    if (typeof res === 'undefined' || res === null) {
+                    if (res == undefined) {
                         return null;
                     }
                     return this.convertDateFromServer(res);
@@ -118,7 +118,7 @@ export class ParticipationService {
     }
 
     protected convertExerciseDateFromServer(exercise?: Exercise) {
-        if (exercise != null) {
+        if (exercise != undefined) {
             exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : undefined;
             exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : undefined;
         }
@@ -126,7 +126,7 @@ export class ParticipationService {
     }
 
     protected convertParticipationDateFromServer(participation?: StudentParticipation) {
-        if (participation != null) {
+        if (participation != undefined) {
             participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : undefined;
             participation.results = this.submissionService.convertResultsDateFromServer(participation.results);
             participation.submissions = this.submissionService.convertSubmissionsDateFromServer(participation.submissions);
@@ -136,7 +136,7 @@ export class ParticipationService {
 
     public convertParticipationsDateFromServer(participations?: StudentParticipation[]) {
         const convertedParticipations: StudentParticipation[] = [];
-        if (participations != null && participations.length > 0) {
+        if (participations != undefined && participations.length > 0) {
             participations.forEach((participation: StudentParticipation) => {
                 convertedParticipations.push(this.convertParticipationDateFromServer(participation)!);
             });
