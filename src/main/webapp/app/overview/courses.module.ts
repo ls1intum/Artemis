@@ -35,9 +35,11 @@ import { AttachmentUnitComponent } from './course-lectures/attachment-unit/attac
 import { VideoUnitComponent } from './course-lectures/video-unit/video-unit.component';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { TextUnitComponent } from './course-lectures/text-unit/text-unit.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 @NgModule({
     imports: [
+        ArtemisMarkdownEditorModule,
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
         ChartsModule,

@@ -2,6 +2,9 @@ import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 
 type EntityResponseType = HttpResponse<TextUnit>;
 type EntityArrayResponseType = HttpResponse<TextUnit[]>;
@@ -12,5 +15,11 @@ type EntityArrayResponseType = HttpResponse<TextUnit[]>;
 export class TextUnitService {
     private resourceURL = SERVER_API_URL + 'api';
 
-    constructor(private httpClient: HttpClient) {}
+    constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
+
+    create(textUnit: TextUnit, lectureId: number): Observable<EntityResponseType> {
+        return this.httpClient
+            .post<TextUnit>(`${this.resourceURL}/lectures/${lectureId}/text-units`, textUnit, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+    }
 }

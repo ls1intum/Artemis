@@ -15,15 +15,19 @@ export interface TextUnitFormData {
 })
 export class TextUnitFormComponent implements OnInit, OnChanges {
     @Input()
-    formData: TextUnitFormData;
+    formData: TextUnitFormData = {
+        name: undefined,
+        releaseDate: undefined,
+        content: undefined,
+    };
+
     @Input()
     isEditMode = false;
-
     @Output()
     formSubmitted: EventEmitter<TextUnitFormData> = new EventEmitter<TextUnitFormData>();
     form: FormGroup;
-    // not included via reactive form as
-    content: string;
+    // not included in reactive form
+    content: string | undefined;
 
     constructor(private fb: FormBuilder) {}
 
@@ -58,10 +62,12 @@ export class TextUnitFormComponent implements OnInit, OnChanges {
 
     private setFormValues(formData: TextUnitFormData) {
         this.form.patchValue(formData);
+        this.content = formData.content;
     }
 
     submitForm() {
         const textUnitFormData: TextUnitFormData = { ...this.form.value };
+        textUnitFormData.content = this.content;
         this.formSubmitted.emit(textUnitFormData);
     }
 

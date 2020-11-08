@@ -1,1 +1,38 @@
-<p>text-unit works!</p>
+<div class="row align-items-center mb-2 mt-2" (click)="handleUnitClick($event)">
+    <div class="col-auto d-none d-sm-block">
+        <div class="exercise-row-icon">
+            <fa-icon [icon]="'scroll'" size="2x" placement="right" [ngbTooltip]="'artemisApp.textUnit.tooltip' | translate" container="body"></fa-icon>
+        </div>
+    </div>
+    <div class="col">
+        <div class="row">
+            <div class="col-auto d-sm-none">
+                <h4>
+                    <fa-icon [icon]="'scroll'"></fa-icon>
+                </h4>
+            </div>
+            <div class="col-sm col">
+                <h4>{{ textUnit?.name }}</h4>
+            </div>
+        </div>
+        <div class="row" *ngIf="!textUnit.visibleToStudents">
+            <div class="exercise-tags col-auto">
+                <hr />
+                <h4>
+                    <span
+                        class="badge badge-warning"
+                        placement="right"
+                        ngbTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | translate }} {{ textUnit?.releaseDate | artemisDate }}"
+                    >
+                        {{ 'artemisApp.courseOverview.exerciseList.notReleased' | translate }}</span
+                    >
+                </h4>
+            </div>
+        </div>
+        <div class="row" *ngIf="formattedContent" [ngbCollapse]="isCollapsed">
+            <div class="col-12">
+                <div [innerHtml]="formattedContent"></div>
+            </div>
+        </div>
+    </div>
+</div>

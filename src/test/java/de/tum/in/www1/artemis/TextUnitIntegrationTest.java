@@ -1,0 +1,138 @@
+package de.tum.in.www1.artemis;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.lecture.TextUnit;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.TextUnitRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.util.ModelFactory;
+
+public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    TextUnitRepository textUnitRepository;
+
+    @Autowired
+    LectureRepository lectureRepository;
+
+    Lecture lecture1;
+
+    TextUnit textUnit;
+
+    @BeforeEach
+    public void initTestCase() throws Exception {
+        this.database.addUsers(1, 1, 1);
+        this.lecture1 = this.database.createCourseWithLecture(true);
+        this.textUnit = new TextUnit();
+        this.textUnit.setName("LoremIpsum");
+        this.textUnit.setContent("This is a Test");
+
+        // Add users that are not in the course
+        userRepository.save(ModelFactory.generateActivatedUser("student42"));
+        userRepository.save(ModelFactory.generateActivatedUser("tutor42"));
+        userRepository.save(ModelFactory.generateActivatedUser("instructor42"));
+    }
+
+    private void testAllPreAuthorize() throws Exception {
+        request.put("/api/lectures/" + lecture1.getId() + "/text-units", textUnit, HttpStatus.FORBIDDEN);
+        request.post("/api/lectures/" + lecture1.getId() + "/text-units", textUnit, HttpStatus.FORBIDDEN);
+        request.get("/api/lectures/" + lecture1.getId() + "/text-units/0", HttpStatus.FORBIDDEN, TextUnit.class);
+    }
+
+    @AfterEach
+    public void resetDatabase() {
+        database.resetDatabase();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testAll_asTutor() throws Exception {
+        this.testAllPreAuthorize();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testAll_asStudent() throws Exception {
+        this.testAllPreAuthorize();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createTextUnit_asInstructor_shouldCreateTextUnitUnit() throws Exception {
+        var persistedTextUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CREATED);
+        assertThat(persistedTextUnit.getId()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
+    public void createTextUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
+        request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextUnit_asInstructor_shouldUpdateTextUnit() throws Exception {
+        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
+        lecture1.addLectureUnit(this.textUnit);
+        lectureRepository.save(lecture1);
+        this.textUnit = (TextUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.textUnit.setContent("Changed");
+        this.textUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/text-units", this.textUnit, TextUnit.class, HttpStatus.OK);
+        assertThat(this.textUnit.getContent()).isEqualTo("Changed");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
+    public void updateTextUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
+        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
+        lecture1.addLectureUnit(this.textUnit);
+        lectureRepository.save(lecture1);
+        this.textUnit = (TextUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.textUnit.setContent("Changed");
+        this.textUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/text-units", this.textUnit, TextUnit.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextUnit_noId_shouldReturnBadRequest() throws Exception {
+        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
+        lecture1.addLectureUnit(this.textUnit);
+        lectureRepository.save(lecture1);
+        this.textUnit = (TextUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.textUnit.setId(null);
+        this.textUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/text-units", this.textUnit, TextUnit.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getTextUnit_correctId_shouldReturnTextUnit() throws Exception {
+        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
+        lecture1.addLectureUnit(this.textUnit);
+        lectureRepository.save(lecture1);
+        this.textUnit = (TextUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture1.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
+        assertThat(this.textUnit.getId()).isEqualTo(textUnitFromRequest.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteTextUnit_correctId_shouldDeleteTextUnit() throws Exception {
+        var persistedTextUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CREATED);
+        assertThat(persistedTextUnit.getId()).isNotNull();
+        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedTextUnit.getId(), HttpStatus.OK);
+        request.get("/api/lectures/" + lecture1.getId() + "/text-units/" + persistedTextUnit.getId(), HttpStatus.NOT_FOUND, TextUnit.class);
+    }
+
+}

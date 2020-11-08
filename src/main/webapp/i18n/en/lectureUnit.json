@@ -14,6 +14,8 @@
             "releaseDate": "Release Date"
         },
         "textUnit": {
+            "tooltip": "This is a text unit.",
+            "notReleasedTooltip": "Text only visible to teaching assistants and instructors. Release date:",
             "createTextUnit": {
                 "title": "Create Text Unit",
                 "name": "Name",

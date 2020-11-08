@@ -5,5 +5,5 @@
 </div>
 
 <div *ngIf="!isLoading" class="container">
-    <jhi-text-unit-form></jhi-text-unit-form>
+    <jhi-text-unit-form [isEditMode]="false" (formSubmitted)="createTextUnit($event)"></jhi-text-unit-form>
 </div>
