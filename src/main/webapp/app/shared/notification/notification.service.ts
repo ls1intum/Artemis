@@ -157,7 +157,6 @@ export class NotificationService {
      * Get the notificationObserver.
      * @return {BehaviorSubject<Notification}
      */
-    // TODO: remove -> notification.sidebar.component
     subscribeToSocketMessages(): BehaviorSubject<Notification | undefined> {
         return this.notificationObserver;
     }
@@ -172,7 +171,6 @@ export class NotificationService {
     private convertDateArrayFromServer(res: HttpResponse<Notification[]>): HttpResponse<Notification[]> {
         if (res.body) {
             res.body.forEach((notification: Notification) => {
-                // TODO
                 notification.notificationDate = notification.notificationDate ? moment(notification.notificationDate) : undefined;
             });
         }
