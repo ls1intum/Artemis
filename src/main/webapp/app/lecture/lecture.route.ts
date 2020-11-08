@@ -39,7 +39,19 @@ export const lectureRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/lectures/:id/view',
+        path: ':courseId/lectures/new',
+        component: LectureUpdateComponent,
+        resolve: {
+            lecture: LectureResolve,
+        },
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.lecture.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/lectures/:id',
         component: LectureDetailComponent,
         resolve: {
             lecture: LectureResolve,
@@ -59,18 +71,6 @@ export const lectureRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.lecture.attachments.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/lectures/new',
-        component: LectureUpdateComponent,
-        resolve: {
-            lecture: LectureResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
