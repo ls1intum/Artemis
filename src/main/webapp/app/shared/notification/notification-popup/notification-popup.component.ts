@@ -20,7 +20,7 @@ export class NotificationPopupComponent implements OnInit {
      * Subscribe to notification updates that are received via websocket if the user is logged in.
      */
     ngOnInit(): void {
-        this.accountService.getAuthenticationState().subscribe((user: User | null) => {
+        this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
                 this.subscribeToNotificationUpdates();
             }
@@ -52,9 +52,12 @@ export class NotificationPopupComponent implements OnInit {
         this.router.navigateByUrl(this.notificationTargetRoute(notification));
     }
 
-    private notificationTargetRoute(notification: Notification): UrlTree {
-        const target = JSON.parse(notification.target);
-        return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id]);
+    private notificationTargetRoute(notification: Notification): UrlTree | string {
+        if (notification.target != null) {
+            const target = JSON.parse(notification.target);
+            return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id]);
+        }
+        return this.router.url;
     }
 
     private subscribeToNotificationUpdates(): void {
