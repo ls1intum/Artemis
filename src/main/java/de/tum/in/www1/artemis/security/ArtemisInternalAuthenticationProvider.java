@@ -75,6 +75,16 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
     }
 
     @Override
+    public void addUserToGroup(User user, String group) {
+        // nothing to do, this was already done by the UserService
+    }
+
+    @Override
+    public void removeUserFromGroup(User user, String group) {
+        // nothing to do, this was already done by the UserService
+    }
+
+    @Override
     public void addUserToGroups(User user, Set<String> groups) {
         if (groups == null) {
             return;
@@ -89,7 +99,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
 
         if (userChanged) {
             // we only save if this is needed
-            userRepository.save(user);
+            userService.save(user);
         }
     }
 

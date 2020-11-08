@@ -10,12 +10,12 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import javax.validation.constraints.NotNull;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;

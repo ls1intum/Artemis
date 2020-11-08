@@ -54,9 +54,6 @@ import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
-/**
- * Created by muenchdo on 08/06/16.
- */
 @Component
 @Profile("jira")
 @Primary
@@ -176,8 +173,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             if (!user.getActivated()) {
                 userService.activateUser(user);
             }
-            userRepository.save(user);
-            return user;
+            return userService.save(user);
         }
         else {
             throw new InternalAuthenticationServiceException("JIRA Authentication failed for user " + username);
@@ -217,8 +213,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
      */
     @Override
     public void addUserToGroup(User user, String group) throws ArtemisAuthenticationException {
-        // we first add the user to the group in the Artemis database
-        super.addUserToGroup(user, group);
         // then we also make sure to add it into JIRA so that the synchronization during the next login does not remove the group again
         log.info("Add user " + user.getLogin() + " to group " + group + " in JIRA");
         if (!isGroupAvailable(group)) {
@@ -308,8 +302,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     @Override
     public void removeUserFromGroup(User user, String group) {
-        // we first remove the user from the group in the Artemis database
-        super.removeUserFromGroup(user, group);
         // then we also make sure to remove it in JIRA so that the synchronization during the next login does not add the group again
         log.info("Remove user {} from group {}", user.getLogin(), group);
         try {
@@ -347,7 +339,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             Set<String> groups = user.getGroups();
             groups.add(courseStudentGroupName);
             user.setGroups(groups);
-            userRepository.save(user);
+            userService.save(user);
             var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
             auditEventRepository.add(auditEvent);
             log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
