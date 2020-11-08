@@ -83,16 +83,18 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     private addQuizNotification(notification: Notification): void {
-        const target = JSON.parse(notification.target);
-        target.entity = 'quiz-exercises';
-        const notificationWithLiveQuizTarget = {
-            target: JSON.stringify(target),
-        } as GroupNotification;
-        if (
-            !this.router.isActive(this.notificationTargetRoute(notification), true) &&
-            !this.router.isActive(this.notificationTargetRoute(notificationWithLiveQuizTarget) + '/live', true)
-        ) {
-            this.notifications.unshift(notification);
+        if (notification.target != null) {
+            const target = JSON.parse(notification.target);
+            target.entity = 'quiz-exercises';
+            const notificationWithLiveQuizTarget = {
+                target: JSON.stringify(target),
+            } as GroupNotification;
+            if (
+                !this.router.isActive(this.notificationTargetRoute(notification), true) &&
+                !this.router.isActive(this.notificationTargetRoute(notificationWithLiveQuizTarget) + '/live', true)
+            ) {
+                this.notifications.unshift(notification);
+            }
         }
     }
 
