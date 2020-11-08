@@ -109,7 +109,7 @@ public class TextUnitResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new text unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/lectures/{lectureId}/video-units")
+    @PostMapping("/lectures/{lectureId}/text-units")
     @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<TextUnit> createTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) throws URISyntaxException {
         log.debug("REST request to create TextUnit : {}", textUnit);
