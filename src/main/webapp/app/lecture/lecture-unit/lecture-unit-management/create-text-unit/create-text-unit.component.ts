@@ -18,7 +18,6 @@ export class CreateTextUnitComponent implements OnInit {
     isLoading: boolean;
     lectureId: number;
     courseId: number;
-
     constructor(private activatedRoute: ActivatedRoute, private router: Router, private textUnitService: TextUnitService, private alertService: JhiAlertService) {}
 
     ngOnInit(): void {

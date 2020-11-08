@@ -1,38 +1,29 @@
-<div class="row align-items-center mb-2 mt-2" (click)="handleUnitClick($event)">
-    <div class="col-auto d-none d-sm-block">
-        <div class="exercise-row-icon">
-            <fa-icon [icon]="'scroll'" size="2x" placement="right" [ngbTooltip]="'artemisApp.textUnit.tooltip' | translate" container="body"></fa-icon>
-        </div>
-    </div>
-    <div class="col">
-        <div class="row">
-            <div class="col-auto d-sm-none">
-                <h4>
-                    <fa-icon [icon]="'scroll'"></fa-icon>
-                </h4>
-            </div>
-            <div class="col-sm col">
-                <h4>{{ textUnit?.name }}</h4>
-            </div>
-        </div>
-        <div class="row" *ngIf="!textUnit.visibleToStudents">
-            <div class="exercise-tags col-auto">
-                <hr />
-                <h4>
-                    <span
-                        class="badge badge-warning"
-                        placement="right"
-                        ngbTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | translate }} {{ textUnit?.releaseDate | artemisDate }}"
-                    >
-                        {{ 'artemisApp.courseOverview.exerciseList.notReleased' | translate }}</span
-                    >
-                </h4>
+<div class="row align-items-center mb-2 mt-2">
+    <div class="card text-unit">
+        <div class="text-unit-header container" (click)="handleCollapse($event)">
+            <div class="row">
+                <div class="col-10 my-auto">
+                    <h5 class="card-title">
+                        <fa-icon class="mr-2" [icon]="'scroll'" [ngbTooltip]="'artemisApp.textUnit.tooltip' | translate"></fa-icon>
+                        {{ textUnit.name }}
+                        <span
+                            *ngIf="!textUnit.visibleToStudents"
+                            class="badge badge-warning"
+                            placement="right"
+                            ngbTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | translate }} {{ textUnit?.releaseDate | artemisDate }}"
+                        >
+                            {{ 'artemisApp.courseOverview.exerciseList.notReleased' | translate }}</span
+                        >
+                    </h5>
+                </div>
+                <div class="col-2 btn-group flex-btn-group-container p-2">
+                    <button type="button" class="btn btn-sm btn-primary" (click)="openPopup($event)">
+                        <fa-icon [icon]="'external-link-alt'"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.textUnit.popup">View in Popup</span>
+                    </button>
+                </div>
             </div>
         </div>
-        <div class="row" *ngIf="formattedContent" [ngbCollapse]="isCollapsed">
-            <div class="col-12">
-                <div [innerHtml]="formattedContent"></div>
-            </div>
-        </div>
+        <div class="card-body markdown-preview" id="printContent" [ngbCollapse]="isCollapsed" [innerHtml]="formattedContent"></div>
     </div>
 </div>

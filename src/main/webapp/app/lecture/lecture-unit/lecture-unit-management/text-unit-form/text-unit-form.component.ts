@@ -1,6 +1,11 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import * as moment from 'moment';
 import { Moment } from 'moment';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface TextUnitFormData {
     name?: string;
@@ -13,7 +18,7 @@ export interface TextUnitFormData {
     templateUrl: './text-unit-form.component.html',
     styles: [],
 })
-export class TextUnitFormComponent implements OnInit, OnChanges {
+export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     @Input()
     formData: TextUnitFormData = {
         name: undefined,
@@ -25,11 +30,15 @@ export class TextUnitFormComponent implements OnInit, OnChanges {
     isEditMode = false;
     @Output()
     formSubmitted: EventEmitter<TextUnitFormData> = new EventEmitter<TextUnitFormData>();
+
     form: FormGroup;
     // not included in reactive form
     content: string | undefined;
 
-    constructor(private fb: FormBuilder) {}
+    private markdownChanges = new Subject<string>();
+    private markdownChangesSubscription: Subscription;
+
+    constructor(private fb: FormBuilder, private router: Router, private translateService: TranslateService) {}
 
     get nameControl() {
         return this.form.get('name');
@@ -46,7 +55,19 @@ export class TextUnitFormComponent implements OnInit, OnChanges {
         }
     }
 
+    ngOnDestroy() {
+        this.markdownChangesSubscription.unsubscribe();
+    }
+
     ngOnInit(): void {
+        if (window.localStorage && window.localStorage.getItem(this.router.url)) {
+            const cache = JSON.parse(window.localStorage.getItem(this.router.url)!);
+
+            if (confirm(this.translateService.instant('artemisApp.textUnit.cachedMarkdown') + ' ' + cache.date)) {
+                this.content = cache.markdown!;
+            }
+        }
+        this.markdownChangesSubscription = this.markdownChanges.pipe(debounceTime(500)).subscribe((markdown) => this.writeToLocalStorage(markdown));
         this.initializeForm();
     }
 
@@ -68,10 +89,24 @@ export class TextUnitFormComponent implements OnInit, OnChanges {
     submitForm() {
         const textUnitFormData: TextUnitFormData = { ...this.form.value };
         textUnitFormData.content = this.content;
+        if (window.localStorage) {
+            localStorage.removeItem(this.router.url);
+        }
         this.formSubmitted.emit(textUnitFormData);
     }
 
     get isSubmitPossible() {
         return !this.form.invalid;
+    }
+
+    onMarkdownChange(markdown: string) {
+        this.markdownChanges.next(markdown);
+    }
+
+    private writeToLocalStorage(markdown: string) {
+        if (window.localStorage) {
+            const cache = { markdown, date: moment().format('MMM DD YYYY, HH:mm:ss') };
+            localStorage.setItem(this.router.url, JSON.stringify(cache));
+        }
     }
 }
