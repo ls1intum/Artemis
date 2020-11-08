@@ -525,13 +525,15 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 "instructor");
         Course courseNotActiveFuture = ModelFactory.generateCourse(3L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "tumuser", "tutor",
                 "instructor");
-        courseRepo.save(courseActive);
+        courseActive = courseRepo.save(courseActive);
         courseRepo.save(courseNotActivePast);
         courseRepo.save(courseNotActiveFuture);
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
         assertThat(courses.size()).as("Exactly one course is returned").isEqualTo(1);
-        courses.get(0).setId(courseActive.getId());
         assertThat(courses.get(0)).as("Active course is returned").isEqualTo(courseActive);
+        List<Course> coursesForNotifications = request.getList("/api/courses/for-notifications", HttpStatus.OK, Course.class);
+        assertThat(coursesForNotifications.size()).as("Exactly one course is returned").isEqualTo(1);
+        assertThat(coursesForNotifications.get(0)).as("Active course is returned").isEqualTo(courseActive);
     }
 
     @Test
