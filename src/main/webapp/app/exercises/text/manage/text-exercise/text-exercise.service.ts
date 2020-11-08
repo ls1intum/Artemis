@@ -102,10 +102,9 @@ export class TextExerciseService {
      *
      * @param exerciseId
      */
-    checkPlagiarismJPlag(exerciseId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
+    checkPlagiarismJPlag(exerciseId: number): Observable<HttpResponse<JPlagResult>> {
+        return this.http.get<JPlagResult>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
             observe: 'response',
-            responseType: 'blob',
             params: {
                 strategy: 'JPlag',
             },
