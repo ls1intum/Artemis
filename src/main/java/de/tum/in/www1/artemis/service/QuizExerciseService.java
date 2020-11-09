@@ -358,7 +358,7 @@ public class QuizExerciseService {
             // For each change we send the same message. The client needs to decide how to handle the date based on the quiz status
             if (quizExercise.isVisibleToStudents() && quizExercise.hasCourse()) {
                 // Create a group notification if actions is 'start-now'.
-                if (quizChange.equals("start-now")) {
+                if ("start-now".equals(quizChange)) {
                     groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
                 }
                 // Send quiz via websocket.
