@@ -18,7 +18,6 @@ import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashb
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Submission } from 'app/entities/submission.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
@@ -36,13 +35,7 @@ export class CourseManagementService {
     private coursesForNotifications: BehaviorSubject<Course[] | null> = new BehaviorSubject<Course[] | null>(null);
     private fetchingCoursesForNotifications = false;
 
-    constructor(
-        private http: HttpClient,
-        private exerciseService: ExerciseService,
-        private lectureService: LectureService,
-        private notificationService: NotificationService,
-        private accountService: AccountService,
-    ) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService, private lectureService: LectureService, private accountService: AccountService) {}
 
     /**
      * creates a course using a POST request
