@@ -88,7 +88,7 @@ public class ProgrammingExerciseExportService {
      * @return a zip file containing all requested participations
      */
     public File exportStudentRepositories(long programmingExerciseId, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
-            RepositoryExportOptionsDTO repositoryExportOptions) {
+            RepositoryExportOptionsDTO repositoryExportOptions, boolean hideStudentName) {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId).get();
 
         if (repositoryExportOptions.isExportAllParticipants()) {
@@ -108,7 +108,7 @@ public class ProgrammingExerciseExportService {
                     log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
                     return;
                 }
-                repo = zipRepositoryForParticipation(programmingExercise, participation, repositoryExportOptions, pathsToZippedRepoFiles);
+                repo = zipRepositoryForParticipation(programmingExercise, participation, repositoryExportOptions, pathsToZippedRepoFiles, hideStudentName);
             }
             catch (IOException | GitException | GitAPIException | InterruptedException ex) {
                 log.error("export student repository " + participation.getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle() + "' did not work as expected: "
@@ -287,7 +287,8 @@ public class ProgrammingExerciseExportService {
      * @throws IOException
      */
     private Repository zipRepositoryForParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
-            final RepositoryExportOptionsDTO repositoryExportOptions, List<Path> pathsToZippedRepos) throws GitAPIException, InterruptedException, IOException {
+            final RepositoryExportOptionsDTO repositoryExportOptions, List<Path> pathsToZippedRepos, boolean hideStudentName)
+            throws GitAPIException, InterruptedException, IOException {
         final var repository = gitService.getOrCheckoutRepository(participation, REPO_DOWNLOAD_CLONE_PATH);
         gitService.resetToOriginMaster(repository); // start with clean state
 
@@ -317,7 +318,7 @@ public class ProgrammingExerciseExportService {
         }
 
         log.debug("Create temporary zip file for repository " + repository.getLocalPath().toString());
-        Path zippedRepoFile = gitService.zipRepository(repository, REPO_DOWNLOAD_CLONE_PATH);
+        Path zippedRepoFile = gitService.zipRepository(repository, REPO_DOWNLOAD_CLONE_PATH, hideStudentName);
         pathsToZippedRepos.add(zippedRepoFile);
 
         // if repository is not closed, it causes weird IO issues when trying to delete the repository again

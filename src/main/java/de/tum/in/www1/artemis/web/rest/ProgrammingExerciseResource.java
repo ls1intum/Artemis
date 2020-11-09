@@ -836,7 +836,8 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
-            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions, @RequestParam(value = "hideStudentName", defaultValue = "false") boolean hideStudentName)
+            throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
 
@@ -870,7 +871,7 @@ public class ProgrammingExerciseResource {
                 exportedStudentParticipations.add(programmingStudentParticipation);
             }
         }
-        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
+        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions, hideStudentName);
     }
 
     /**
@@ -886,7 +887,8 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
-            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions, @RequestParam(value = "hideStudentName", defaultValue = "false") boolean hideStudentName)
+            throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
@@ -903,11 +905,11 @@ public class ProgrammingExerciseResource {
         List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = programmingExercise.getStudentParticipations().stream()
                 .filter(participation -> participationIdSet.contains(participation.getId())).map(participation -> (ProgrammingExerciseStudentParticipation) participation)
                 .collect(Collectors.toList());
-        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
+        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions, hideStudentName);
     }
 
     private ResponseEntity<Resource> provideZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations,
-            ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+            ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions, boolean hideStudentName) throws IOException {
 
         long start = System.nanoTime();
 
@@ -918,7 +920,8 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
 
-        File zipFile = programmingExerciseExportService.exportStudentRepositories(programmingExercise.getId(), exportedStudentParticipations, repositoryExportOptions);
+        File zipFile = programmingExerciseExportService.exportStudentRepositories(programmingExercise.getId(), exportedStudentParticipations, repositoryExportOptions,
+                hideStudentName);
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);

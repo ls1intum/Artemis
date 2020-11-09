@@ -657,7 +657,7 @@ public class GitService {
      * @return path to zip file.
      */
     public Path zipRepository(Repository repo) throws IOException {
-        return zipRepository(repo, REPO_CLONE_PATH);
+        return zipRepository(repo, REPO_CLONE_PATH, false);
     }
 
     /**
@@ -668,12 +668,18 @@ public class GitService {
      * @throws IOException if the zipping process failed.
      * @return path to zip file.
      */
-    public Path zipRepository(Repository repo, String targetPath) throws IOException {
+    public Path zipRepository(Repository repo, String targetPath, boolean hideStudentName) throws IOException {
         String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split(File.separator);
         ProgrammingExercise exercise = repo.getParticipation().getProgrammingExercise();
         String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName().replaceAll("\\s", "");
-        // take the last component
-        String zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";
+        String zipRepoName;
+        if (hideStudentName) {
+            zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 2].toLowerCase() + "-student-submission" + ".zip";
+        }
+        else {
+            // take the last component
+            zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";
+        }
 
         Path repoPath = repo.getLocalPath();
         Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipRepoName);
