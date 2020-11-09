@@ -27,6 +27,8 @@
             class="btn btn-small"
             [ngbTooltip]="'artemisApp.editor.fileBrowser.renameFolderDisabledTooltip' | translate"
             [disableTooltip]="disableActions || !(isCompressed && item.children && item.children.length)"
+            container="body"
+            placement="bottom"
         >
             <fa-icon [icon]="'edit'" title="{{ 'artemisApp.editor.fileBrowser.renameFolder' | translate }}"></fa-icon>
         </button>
