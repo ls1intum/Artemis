@@ -21,16 +21,16 @@
         <button [disabled]="disableActions" (click)="setCreatingNodeInFolder($event, FileType.FOLDER)" class="btn btn-small">
             <fa-icon [icon]="'folder'" title="{{ 'artemisApp.editor.fileBrowser.createFolder' | translate }}"></fa-icon>
         </button>
-        <button
-            [disabled]="disableActions || (isCompressed && item.children && item.children.length)"
-            (click)="setRenamingNode($event)"
-            class="btn btn-small"
-            [ngbTooltip]="'artemisApp.editor.fileBrowser.renameFolderDisabledTooltip' | translate"
-            [disableTooltip]="disableActions || !(isCompressed && item.children && item.children.length)"
-            container="body"
-            placement="bottom"
-        >
-            <fa-icon [icon]="'edit'" title="{{ 'artemisApp.editor.fileBrowser.renameFolder' | translate }}"></fa-icon>
+        <button [disabled]="disableActions || (isCompressed && item.children && item.children.length)" (click)="setRenamingNode($event)" class="btn btn-small">
+            <fa-icon
+                [icon]="'edit'"
+                title="{{
+                    (!disableActions && isCompressed && item.children && item.children.length
+                        ? 'artemisApp.editor.fileBrowser.renameFolderDisabledTooltip'
+                        : 'artemisApp.editor.fileBrowser.renameFolder'
+                    ) | translate
+                }}"
+            ></fa-icon>
         </button>
         <button [disabled]="disableActions" (click)="deleteNode($event)" class="btn btn-small">
             <fa-icon [icon]="'trash'" title="{{ 'artemisApp.editor.fileBrowser.deleteFolder' | translate }}"></fa-icon>
