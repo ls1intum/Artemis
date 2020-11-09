@@ -64,7 +64,7 @@
             },
             "recreateBuildPlans": {
                 "title": "Build Pläne neu erstellen",
-                "description": "Durch Aktivierung dieser Option werden die Build Pläne neu erstellt und nicht von der importierten Aufgabe kopiert."
+                "description": "Durch Aktivierung dieser Option werden die Build Pläne neu erstellt und nicht von der importierten Aufgabe kopiert. Neu erstellte Build Pläne unterstützen standardmäßig die neuesten Features der Artemis Aufgabenvorlagen."
             },
             "programmingLanguage": "Programmiersprache",
             "projectType": "Projekt Typ",
