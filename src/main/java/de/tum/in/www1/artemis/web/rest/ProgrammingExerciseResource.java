@@ -111,7 +111,7 @@ public class ProgrammingExerciseResource {
      * Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
      * with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
      */
-    private static final String packageNameRegexForSwift = "^(?!.*(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_)(?:\\.|$))[A-Za-z][0-9A-Za-z]*$";
+    private static final String packageNameRegexForSwift = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_)$)[A-Za-z][0-9A-Za-z]*$";
 
     private final Pattern packageNamePattern = Pattern.compile(packageNameRegex);
 
