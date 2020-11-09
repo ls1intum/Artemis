@@ -64,7 +64,7 @@
             },
             "recreateBuildPlans": {
                 "title": "Recreate Build Plans",
-                "description": "Activate this option to create new build plans instead of copying them from the imported exercise."
+                "description": "Activate this option to create new build plans instead of copying them from the imported exercise. Newly created build plans support the latest features of the Artemis exercise templates by default."
             },
             "programmingLanguage": "Programming Language",
             "projectType": "Project Type",
