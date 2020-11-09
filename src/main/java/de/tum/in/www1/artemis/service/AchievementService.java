@@ -33,6 +33,15 @@ public class AchievementService {
     }
 
     /**
+     * Finds all achievements in a given course and returns them as a set
+     * @param courseId
+     * @return set of achievements
+     */
+    public Set<Achievement> findAllByCourseId(Long courseId) {
+        return achievementRepository.findAllByCourseId(courseId);
+    }
+
+    /**
      * Finds all achievements for a user in a given course and returns them as a set
      * @param userId
      * @param courseId
@@ -48,7 +57,7 @@ public class AchievementService {
      * @param courseId
      */
     public void deleteByCourseId(Long courseId) {
-        Set<Achievement> achievements = achievementRepository.findAllByCourseId(courseId);
+        Set<Achievement> achievements = findAllByCourseId(courseId);
         for (Achievement achievement : achievements) {
             removeFromUsers(achievement);
         }

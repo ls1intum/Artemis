@@ -14,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.AchievementRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -39,9 +38,6 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     UserRepository userRepository;
-
-    @Autowired
-    AchievementRepository achievementRepository;
 
     @Autowired
     CourseRepository courseRepository;
@@ -116,8 +112,8 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     private void initTest() throws Exception {
-        var allAchievements = achievementRepository.findAllByCourseId(firstCourse.getId());
-        allAchievements.addAll(achievementRepository.findAllByCourseId(secondCourse.getId()));
+        var allAchievements = achievementService.findAllByCourseId(firstCourse.getId());
+        allAchievements.addAll(achievementService.findAllByCourseId(secondCourse.getId()));
 
         for (Achievement achievement : allAchievements) {
             student.addAchievement(achievement);

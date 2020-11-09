@@ -208,6 +208,19 @@ public class CourseService {
     }
 
     /**
+     * Get one course by id.
+     *
+     * @param courseId the id of the entity
+     * @return the entity
+     */
+    @NotNull
+    public Course findOneWithActiveAchievementTypes(Long courseId) {
+        log.debug("Request to get Course : {}", courseId);
+        return courseRepository.findOneWithEagerAchievementTypesById(courseId)
+                .orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
+    }
+
+    /**
      * Deletes all elements associated with the course including:
      * <ul>
      *     <li>The Course</li>
