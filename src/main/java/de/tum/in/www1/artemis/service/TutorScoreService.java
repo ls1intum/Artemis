@@ -215,10 +215,20 @@ public class TutorScoreService {
     /**
      * Helper method for updating complaints and feedback requests in tutor scores.
      */
-    public void addComplaintOrFeedbackRequest(Complaint complaint, Exercise exercise) {
-        TutorScore tutorScore = findTutorScoreFromExercise(exercise, complaint.getResult().getAssessor()).get();
+    public void addComplaintOrFeedbackRequest(Complaint complaint) {
+        var exercise = complaint.getResult().getParticipation().getExercise();
+        var optionalTutorScore = findTutorScoreFromExercise(exercise, complaint.getResult().getAssessor());
 
-        // add complaints and feedback requests
+        TutorScore tutorScore;
+
+        if (optionalTutorScore.isPresent()) {
+            tutorScore = optionalTutorScore.get();
+        }
+        else {
+            tutorScore = new TutorScore(complaint.getResult().getAssessor(), exercise, 0, 0);
+        }
+
+        // add complaints or feedback requests
         if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
             tutorScore.setAllComplaints(tutorScore.getAllComplaints() + 1);
             tutorScore.setComplaintsPoints(tutorScore.getComplaintsPoints() + exercise.getMaxScore());
@@ -237,9 +247,9 @@ public class TutorScoreService {
      * Add ComplaintResponse or AnsweredFeedbackRequest to TutorScore.
      *
      * @param complaintResponse complaintResponse
-     * @param exercise exercise
      */
-    public void addComplaintResponseOrAnsweredFeedbackRequest(ComplaintResponse complaintResponse, Exercise exercise) {
+    public void addComplaintResponseOrAnsweredFeedbackRequest(ComplaintResponse complaintResponse) {
+        var exercise = complaintResponse.getComplaint().getResult().getParticipation().getExercise();
         var complaint = complaintResponse.getComplaint();
         var optionalTutorScore = findTutorScoreFromExercise(exercise, complaintResponse.getReviewer());
 

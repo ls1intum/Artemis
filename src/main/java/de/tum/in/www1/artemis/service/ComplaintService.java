@@ -116,10 +116,6 @@ public class ComplaintService {
         complaint = complaintRepository.save(complaint);
 
         originalResult.setComplaint(complaint);
-        originalResult = resultRepository.save(originalResult);
-
-        // add complaint to matching TutorScore
-        tutorScoreService.addComplaintOrFeedbackRequest(complaint, originalResult.getParticipation().getExercise());
 
         return complaint;
     }

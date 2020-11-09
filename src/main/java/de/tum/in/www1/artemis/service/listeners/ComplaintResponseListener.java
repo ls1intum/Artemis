@@ -34,6 +34,6 @@ public class ComplaintResponseListener {
 
         // update tutor scores
         log.info("TutorScores for ComplaintResponse " + newComplaintResponse + " will be updated");
-        // tutorScoreService.addComplaintResponseOrAnsweredFeedbackRequest(newComplaintResponse);
+        tutorScoreService.addComplaintResponseOrAnsweredFeedbackRequest(newComplaintResponse);
     }
 }

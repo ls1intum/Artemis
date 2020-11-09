@@ -34,6 +34,6 @@ public class ComplaintListener {
 
         // update tutor scores
         log.info("TutorScores for Complaint " + newComplaint + " will be updated");
-        // tutorScoreService.addComplaintOrFeedbackRequest(newComplaint);
+        tutorScoreService.addComplaintOrFeedbackRequest(newComplaint);
     }
 }

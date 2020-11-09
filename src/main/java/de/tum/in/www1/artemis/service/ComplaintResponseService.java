@@ -93,9 +93,6 @@ public class ComplaintResponseService {
 
         complaintResponse = complaintResponseRepository.save(complaintResponse);
 
-        // add complaint response to TutorScores
-        tutorScoreService.addComplaintResponseOrAnsweredFeedbackRequest(complaintResponse, originalResult.getParticipation().getExercise());
-
         return complaintResponse;
     }
 
