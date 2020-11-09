@@ -30,7 +30,10 @@ export class TextUnitComponent implements OnInit {
 
     openPopup($event: any) {
         $event.stopPropagation();
-        const win = window.open('', '', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=780,height=200');
+
+        const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+        const height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+        const win = window.open('', ' ', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,' + `width=${width},height=${height}`);
         win!.document.write(`<html><head><title>${this.textUnit.name}</title>`);
         win!.document.write(
             '<link rel="stylesheet" ' +
