@@ -102,7 +102,7 @@
             "score": "Punktzahl",
             "duration": "Dauer",
             "showBuildFailed": "Nur fehlgeschlagene Builds anzeigen",
-            "showFailed": "Nur fehlgeschlagene Einreichungen (ohne Ergebnis) anzeigen",
+            "showFailed": "Nur die letzten Einreichungen ohne Ergebnis anzeigen",
             "showNoSubmissions": "Nur ohne Einreichungen anzeigen",
             "showUnsuccessful": "Nur unerfolgreiche anzeigen",
             "showSuccessful": "Nur erfolgreiche anzeigen",

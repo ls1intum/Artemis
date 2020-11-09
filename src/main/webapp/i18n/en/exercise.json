@@ -102,7 +102,7 @@
             "score": "Score",
             "duration": "Duration",
             "showBuildFailed": "Show Build Failed",
-            "showFailed": "Show Failed Submissions (without Result)",
+            "showFailed": "Show Latest Submission without Result",
             "showNoSubmissions": "Show No Submissions",
             "showUnsuccessful": "Show Unsuccessful",
             "showSuccessful": "Show Successful",
