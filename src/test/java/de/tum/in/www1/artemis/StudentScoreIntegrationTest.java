@@ -79,7 +79,8 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
 
         // score for student1 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(0);
-        studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
+        studentParticipation = new StudentParticipation().exercise(exercise);
+        studentParticipation.setParticipant(user);
         studentParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepo.save(studentParticipation);
         result = new Result();
@@ -90,7 +91,8 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
 
         // score for student2 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(1);
-        studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
+        studentParticipation = new StudentParticipation().exercise(exercise);
+        studentParticipation.setParticipant(user);
         studentParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepo.save(studentParticipation);
         result = new Result();
@@ -111,7 +113,8 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
 
         // score for student1 in exercise2 in course2
         user = userRepo.findAllInGroup("tumuser").get(0);
-        studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
+        studentParticipation = new StudentParticipation().exercise(exercise);
+        studentParticipation.setParticipant(user);
         studentParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepo.save(studentParticipation);
         result = new Result();
@@ -139,7 +142,8 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         exercise = new TextExercise().course(course);
         exerciseRepo.save(exercise);
         // score for student2 in exercise3 in course1
-        studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
+        studentParticipation = new StudentParticipation().exercise(exercise);
+        studentParticipation.setParticipant(user);
         studentParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepo.save(studentParticipation);
         result = new Result();
@@ -194,7 +198,8 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         exercise = new TextExercise().course(course);
         exerciseRepo.save(exercise);
         // score for student2 in exercise3 in course1
-        studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
+        studentParticipation = new StudentParticipation().exercise(exercise);
+        studentParticipation.setParticipant(user);
         studentParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepo.save(studentParticipation);
         result = new Result();
@@ -243,7 +248,8 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(responseExerciseOne.size()).as("response has length 2").isEqualTo(2);
 
         // score for student3 in exercise1 in course1
-        studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
+        studentParticipation = new StudentParticipation().exercise(exercise);
+        studentParticipation.setParticipant(user);
         studentParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepo.save(studentParticipation);
         result = new Result();
