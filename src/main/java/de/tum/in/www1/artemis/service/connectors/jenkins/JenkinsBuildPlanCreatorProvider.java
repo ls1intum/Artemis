@@ -40,6 +40,7 @@ public class JenkinsBuildPlanCreatorProvider {
             case HASKELL -> haskellJenkinsBuildPlanCreator;
             case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
             case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
+            case SWIFT -> throw new UnsupportedOperationException("Swift templates are not available for Jenkins.");
         };
     }
 }

@@ -4,7 +4,11 @@ import java.util.*;
 
 public class MergeSort implements SortStrategy {
 
-    // Wrapper method for the real algorithm.
+    /**
+     * Wrapper method for the real MergeSort algorithm.
+     *
+     * @param input the List of Dates to be sorted
+     */
     public void performSort(List<Date> input) {
         mergesort(input, 0, input.size() - 1);
     }

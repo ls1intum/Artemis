@@ -64,17 +64,19 @@ public class ExerciseService {
 
     private final TeamService teamService;
 
+    private final ExerciseUnitRepository exerciseUnitRepository;
+
     private final StudentScoreService studentScoreService;
 
     private final TutorScoreService tutorScoreService;
 
-    public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, QuizScheduleService quizScheduleService,
-            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamRepository studentExamRepository,
-            ExamRepository examRepository, StudentScoreService studentScoreService, TutorScoreService tutorScoreService) {
+    public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
+            AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
+            QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
+            AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService,
+            StudentExamRepository studentExamRepository, ExamRepository exampRepository, StudentScoreService studentScoreService, TutorScoreService tutorScoreService) {
         this.exerciseRepository = exerciseRepository;
-        this.examRepository = examRepository;
+        this.examRepository = exampRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.programmingExerciseService = programmingExerciseService;
@@ -87,6 +89,7 @@ public class ExerciseService {
         this.quizExerciseService = quizExerciseService;
         this.quizScheduleService = quizScheduleService;
         this.studentExamRepository = studentExamRepository;
+        this.exerciseUnitRepository = exerciseUnitRepository;
         this.studentScoreService = studentScoreService;
         this.tutorScoreService = tutorScoreService;
     }
@@ -282,6 +285,9 @@ public class ExerciseService {
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
         final var exercise = findOne(exerciseId);
+
+        // delete all exercise units linking to the exercise
+        this.exerciseUnitRepository.removeAllByExerciseId(exerciseId);
 
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);

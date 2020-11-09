@@ -6,12 +6,14 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A PointCounter.
  */
 @Entity
 @DiscriminatorValue(value = "PC")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PointCounter extends QuizStatisticCounter {
 
     @Column(name = "points")

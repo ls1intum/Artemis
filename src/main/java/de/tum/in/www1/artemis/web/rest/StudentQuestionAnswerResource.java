@@ -14,10 +14,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.StudentQuestion;
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
+import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.SingleUserNotificationService;
@@ -44,6 +46,8 @@ public class StudentQuestionAnswerResource {
 
     private final CourseRepository courseRepository;
 
+    private final StudentQuestionRepository studentQuestionRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final UserService userService;
@@ -54,9 +58,10 @@ public class StudentQuestionAnswerResource {
 
     public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository, GroupNotificationService groupNotificationService,
             SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authorizationCheckService, UserService userService,
-            CourseRepository courseRepository) {
+            CourseRepository courseRepository, StudentQuestionRepository studentQuestionRepository) {
         this.studentQuestionAnswerRepository = studentQuestionAnswerRepository;
         this.courseRepository = courseRepository;
+        this.studentQuestionRepository = studentQuestionRepository;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.authorizationCheckService = authorizationCheckService;
@@ -88,6 +93,13 @@ public class StudentQuestionAnswerResource {
         if (!this.authorizationCheckService.isAtLeastStudentInCourse(optionalCourse.get(), user)) {
             return forbidden();
         }
+        Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(studentQuestionAnswer.getQuestion().getId());
+        if (optionalStudentQuestion.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!optionalStudentQuestion.get().getCourse().getId().equals(courseId)) {
+            return forbidden();
+        }
         // answer to approved if written by an instructor
         studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(optionalCourse.get(), user));
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
@@ -110,12 +122,10 @@ public class StudentQuestionAnswerResource {
      * @param studentQuestionAnswer the studentQuestionAnswer to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated studentQuestionAnswer, or with status 400 (Bad Request) if the studentQuestionAnswer is not valid,
      *         or with status 500 (Internal Server Error) if the studentQuestionAnswer couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("courses/{courseId}/student-question-answers")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer)
-            throws URISyntaxException {
+    public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer) {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to update StudentQuestionAnswer : {}", studentQuestionAnswer);
         if (studentQuestionAnswer.getId() == null) {
@@ -128,6 +138,9 @@ public class StudentQuestionAnswerResource {
         Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(studentQuestionAnswer.getId());
         if (optionalStudentQuestionAnswer.isEmpty()) {
             return ResponseEntity.notFound().build();
+        }
+        if (!optionalStudentQuestionAnswer.get().getQuestion().getCourse().getId().equals(courseId)) {
+            return forbidden();
         }
         if (mayUpdateOrDeleteStudentQuestionAnswer(optionalStudentQuestionAnswer.get(), user)) {
             StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
@@ -158,6 +171,12 @@ public class StudentQuestionAnswerResource {
             return forbidden();
         }
         Optional<StudentQuestionAnswer> questionAnswer = studentQuestionAnswerRepository.findById(id);
+        if (questionAnswer.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!questionAnswer.get().getQuestion().getCourse().getId().equals(courseId)) {
+            return forbidden();
+        }
         return ResponseUtil.wrapOrNotFound(questionAnswer);
     }
 
@@ -192,6 +211,9 @@ public class StudentQuestionAnswerResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
+        if (!course.getId().equals(courseId)) {
+            return forbidden();
+        }
         if (mayUpdateOrDeleteStudentQuestionAnswer(studentQuestionAnswer, user)) {
             log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + studentQuestionAnswer.getAnswerText() + " for " + entity, user.getLogin());
             studentQuestionAnswerRepository.deleteById(id);
@@ -207,7 +229,7 @@ public class StudentQuestionAnswerResource {
      *
      * @param studentQuestionAnswer studentQuestionAnswer for which to check
      * @param user user for which to check
-     * @return Boolean if StudenQuestionAnswer can updated or deleted
+     * @return Boolean if StudentQuestionAnswer can updated or deleted
      */
     private boolean mayUpdateOrDeleteStudentQuestionAnswer(StudentQuestionAnswer studentQuestionAnswer, User user) {
         Course course = studentQuestionAnswer.getQuestion().getCourse();

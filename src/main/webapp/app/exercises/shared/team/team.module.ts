@@ -19,19 +19,12 @@ import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-impo
 import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
 import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exercise-search/team-exercise-search.component';
 import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-participation-table/team-participation-table.component';
-import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
+import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 
 const ENTITY_STATES = [...teamRoute];
 
 @NgModule({
-    imports: [
-        RouterModule.forChild(ENTITY_STATES),
-        ArtemisSharedModule,
-        NgxDatatableModule,
-        ArtemisDataTableModule,
-        ArtemisSharedComponentModule,
-        ArtemisProgrammingAssessmentModule,
-    ],
+    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule, ArtemisSharedComponentModule, ArtemisResultModule],
     declarations: [
         TeamsComponent,
         TeamUpdateButtonComponent,

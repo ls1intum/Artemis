@@ -23,6 +23,7 @@ import * as Chart from 'chart.js';
 import { ChartDataSets, ChartOptions, ChartType, LinearTickOptions } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -68,6 +69,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private changeDetector: ChangeDetectorRef,
         private languageHelper: JhiLanguageHelper,
         private localeConversionService: LocaleConversionService,
+        private translateService: TranslateService,
     ) {}
 
     ngOnInit() {
@@ -143,6 +145,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             scales: {
                 yAxes: [
                     {
+                        scaleLabel: {
+                            display: true,
+                            labelString: this.translateService.instant('artemisApp.examScores.yAxes'),
+                        },
                         ticks: {
                             maxTicksLimit: 11,
                             beginAtZero: true,
@@ -150,6 +156,14 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                             min: 0,
                             max: this.calculateTickMax(),
                         } as LinearTickOptions,
+                    },
+                ],
+                xAxes: [
+                    {
+                        scaleLabel: {
+                            display: true,
+                            labelString: this.translateService.instant('artemisApp.examScores.xAxes'),
+                        },
                     },
                 ],
             },
@@ -214,7 +228,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 continue;
             }
             // Update histogram data structure
-            let histogramIndex = Math.floor(studentResult.overallScoreAchieved / this.binWidth);
+            let histogramIndex = Math.floor(studentResult.overallScoreAchieved! / this.binWidth);
             if (histogramIndex >= 100 / this.binWidth) {
                 // This happens, for 100%, if the exam total points were not set correctly or bonus points were given
                 histogramIndex = 100 / this.binWidth - 1;
@@ -233,7 +247,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     throw new Error(`ExerciseGroup with id ${exGroupId} does not exist in this exam!`);
                 }
                 exGroupResult.noOfParticipantsWithFilter++;
-                exGroupResult.totalPoints += studentExerciseResult.achievedPoints;
+                exGroupResult.totalPoints += studentExerciseResult.achievedPoints!;
 
                 // Update the specific exercise statistic
                 const exerciseResult = exGroupResult.exerciseResults.find((exResult) => exResult.exerciseId === studentExerciseResult.exerciseId);
@@ -242,7 +256,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     throw new Error(`Exercise with id ${studentExerciseResult.exerciseId} does not exist in this exam!`);
                 } else {
                     exerciseResult.noOfParticipantsWithFilter++;
-                    exerciseResult.totalPoints += studentExerciseResult.achievedPoints;
+                    exerciseResult.totalPoints += studentExerciseResult.achievedPoints!;
                 }
             }
         }
@@ -266,9 +280,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
         // Collect student points independent from the filter settings
         for (const studentResult of this.studentResults) {
-            studentPointsTotal.push(studentResult.overallPointsAchieved);
+            studentPointsTotal.push(studentResult.overallPointsAchieved!);
             if (studentResult.submitted) {
-                studentPointsSubmitted.push(studentResult.overallPointsAchieved);
+                studentPointsSubmitted.push(studentResult.overallPointsAchieved!);
             }
         }
 
@@ -377,30 +391,20 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.exerciseGroups.forEach((exerciseGroup) => {
             const exerciseResult = studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id];
             if (exerciseResult) {
-                csvRow[exerciseGroup.title + 'AssignedExercise'] = exerciseResult.title ? exerciseResult.title : '';
-                csvRow[exerciseGroup.title + 'AchievedPoints'] =
-                    typeof exerciseResult.achievedPoints === 'undefined' || exerciseResult.achievedPoints === null
-                        ? ''
-                        : this.localeConversionService.toLocaleString(round(exerciseResult.achievedPoints, 1));
-                csvRow[exerciseGroup.title + 'AchievedScore(%)'] =
-                    typeof exerciseResult.achievedScore === 'undefined' || exerciseResult.achievedScore === null
-                        ? ''
-                        : this.localeConversionService.toLocaleString(round(exerciseResult.achievedScore, 2), 2);
+                csvRow[exerciseGroup.title + ' Assigned Exercise'] = exerciseResult.title ? exerciseResult.title : '';
+                csvRow[exerciseGroup.title + ' Achieved Points'] =
+                    exerciseResult.achievedPoints == undefined ? '' : this.localeConversionService.toLocaleString(round(exerciseResult.achievedPoints, 1));
+                csvRow[exerciseGroup.title + ' Achieved Score (%)'] =
+                    exerciseResult.achievedScore == undefined ? '' : this.localeConversionService.toLocaleString(round(exerciseResult.achievedScore, 2), 2);
             } else {
-                csvRow[exerciseGroup.title + 'AssignedExercise'] = '';
-                csvRow[exerciseGroup.title + 'AchievedPoints'] = '';
-                csvRow[exerciseGroup.title + 'AchievedScore(%)'] = '';
+                csvRow[exerciseGroup.title + ' Assigned Exercise'] = '';
+                csvRow[exerciseGroup.title + ' Achieved Points'] = '';
+                csvRow[exerciseGroup.title + ' Achieved Score (%)'] = '';
             }
         });
 
-        csvRow.overAllPoints =
-            typeof studentResult.overallPointsAchieved === 'undefined' || studentResult.overallPointsAchieved === null
-                ? ''
-                : this.localeConversionService.toLocaleString(round(studentResult.overallPointsAchieved, 1));
-        csvRow.overAllScore =
-            typeof studentResult.overallScoreAchieved === 'undefined' || studentResult.overallScoreAchieved === null
-                ? ''
-                : this.localeConversionService.toLocaleString(round(studentResult.overallScoreAchieved, 2), 2);
+        csvRow.overAllPoints = studentResult.overallPointsAchieved == undefined ? '' : this.localeConversionService.toLocaleString(round(studentResult.overallPointsAchieved, 1));
+        csvRow.overAllScore = studentResult.overallScoreAchieved == undefined ? '' : this.localeConversionService.toLocaleString(round(studentResult.overallScoreAchieved, 2), 2);
         csvRow.submitted = studentResult.submitted ? 'yes' : 'no';
         return csvRow;
     }

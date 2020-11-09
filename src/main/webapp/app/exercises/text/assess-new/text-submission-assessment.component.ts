@@ -144,7 +144,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private setPropertiesFromServerResponse(studentParticipation: StudentParticipation) {
         this.resetComponent();
 
-        if (studentParticipation == null) {
+        if (studentParticipation == undefined) {
             // Show "No New Submission" banner on .../submissions/new/assessment route
             this.noNewSubmissions = this.isNewAssessmentRoute;
             return;
@@ -237,11 +237,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         response.body!.feedbacks?.forEach((newFeedback) => {
             newFeedback.conflictingTextAssessments = this.result?.feedbacks?.find((feedback) => feedback.id === newFeedback.id)?.conflictingTextAssessments;
         });
-        response.body!.completionDate = this.result?.completionDate;
-        response.body!.submission = undefined;
-        response.body!.participation = undefined;
         this.result = response.body!;
-        this.participation!.results![0] = this.result;
         this.submission!.result = this.result;
         this.saveBusy = this.submitBusy = false;
     }
@@ -270,7 +266,11 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * @param feedbackId - selected feedback id with conflicts.
      */
     async navigateToConflictingSubmissions(feedbackId: number): Promise<void> {
-        const navigationExtras: NavigationExtras = { state: { submission: this.submission } };
+        const tempSubmission = this.submission!;
+        tempSubmission!.result!.completionDate = undefined;
+        tempSubmission!.result!.submission = undefined;
+        tempSubmission!.result!.participation = undefined;
+        const navigationExtras: NavigationExtras = { state: { submission: tempSubmission } };
         await this.router.navigate(
             ['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'text-feedback-conflict', feedbackId],
             navigationExtras,
@@ -321,8 +321,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             return;
         }
         const feedbacks = this.result.feedbacks || [];
-        this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
-        const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
+        this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+        const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
         if (generalFeedbackIndex !== -1) {
             this.generalFeedback = feedbacks[generalFeedbackIndex];
             feedbacks.splice(generalFeedbackIndex, 1);

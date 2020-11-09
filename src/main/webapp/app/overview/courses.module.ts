@@ -10,7 +10,6 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview/exercise-details/programming-exercise-student-ide-actions.component';
 import { CourseCardComponent } from 'app/overview/course-card.component';
-import { ArtemisStudentQuestionsModule } from 'app/overview/student-questions/student-questions.module';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 import { ExerciseActionButtonComponent } from 'app/overview/exercise-details/exercise-action-button.component';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
@@ -31,6 +30,10 @@ import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
+import { ExerciseUnitComponent } from './course-lectures/exercise-unit/exercise-unit.component';
+import { AttachmentUnitComponent } from './course-lectures/attachment-unit/attachment-unit.component';
+import { VideoUnitComponent } from './course-lectures/video-unit/video-unit.component';
+import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 
 @NgModule({
     imports: [
@@ -39,8 +42,8 @@ import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam
         ChartsModule,
         ClipboardModule,
         MomentModule,
+        ArtemisSharedPipesModule,
         ArtemisResultModule,
-        ArtemisStudentQuestionsModule,
         ArtemisSidePanelModule,
         ArtemisCoursesRoutingModule,
         ArtemisHeaderExercisePageWithDetailsModule,
@@ -68,7 +71,10 @@ import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam
         ProgrammingExerciseStudentIdeActionsComponent,
         CourseExamsComponent,
         CourseExamDetailComponent,
+        ExerciseUnitComponent,
+        AttachmentUnitComponent,
+        VideoUnitComponent,
     ],
-    exports: [ExerciseActionButtonComponent, ExerciseDetailsStudentActionsComponent],
+    exports: [ExerciseActionButtonComponent, ExerciseDetailsStudentActionsComponent, ExerciseUnitComponent, AttachmentUnitComponent, VideoUnitComponent],
 })
 export class ArtemisCoursesModule {}

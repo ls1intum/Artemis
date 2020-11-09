@@ -1,3 +1,16 @@
 # Haskell output files
 *.o
 *.hi
+
+# Stack output
+.stack-work/
+
+# Test output
+test-reports/
+
+# Subdirectories containing other repositories
+template/
+solution/
+
+# Subdirectories with test submission
+assignment/

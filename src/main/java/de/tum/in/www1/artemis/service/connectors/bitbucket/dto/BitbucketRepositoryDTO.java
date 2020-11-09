@@ -29,6 +29,15 @@ public class BitbucketRepositoryDTO {
     public BitbucketRepositoryDTO() {
     }
 
+    public BitbucketRepositoryDTO(String name) {
+        this.name = name;
+    }
+
+    public BitbucketRepositoryDTO(String name, String projectKey) {
+        this.name = name;
+        this.project = new BitbucketProjectDTO(projectKey);
+    }
+
     public BitbucketRepositoryDTO(String id, String slug, String projectKey, String cloneSshUrl) {
         this.id = id;
         this.slug = slug;
@@ -148,6 +157,12 @@ public class BitbucketRepositoryDTO {
         private List<CloneDTO> clone = new ArrayList<>();
 
         private List<CloneDTO> self = new ArrayList<>();
+
+        /**
+         * needed for Jackson
+         */
+        public LinksDTO() {
+        }
 
         public List<CloneDTO> getClone() {
             return clone;

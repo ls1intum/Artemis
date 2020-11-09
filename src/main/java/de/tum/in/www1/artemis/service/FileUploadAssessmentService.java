@@ -26,9 +26,9 @@ public class FileUploadAssessmentService extends AssessmentService {
     public FileUploadAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository,
             StudentParticipationRepository studentParticipationRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
-            SubmissionRepository submissionRepository, ExamService examService, TutorScoreService tutorScoreService) {
-        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository,
-                examService);
+            SubmissionRepository submissionRepository, ExamService examService, GradingCriterionService gradingCriterionService, TutorScoreService tutorScoreService) {
+        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository, examService,
+                gradingCriterionService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.userService = userService;
@@ -82,7 +82,7 @@ public class FileUploadAssessmentService extends AssessmentService {
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);
-        result.updateAllFeedbackItems(fileUploadAssessment);
+        result.updateAllFeedbackItems(fileUploadAssessment, false);
         // Note: this boolean flag is only used for programming exercises
         result.setHasFeedback(false);
 

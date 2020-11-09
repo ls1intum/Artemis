@@ -9,12 +9,11 @@ import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { Duration, Option } from './quiz-exercise-interfaces';
-import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { Exercise, ExerciseCategory } from 'app/entities/exercise.model';
@@ -301,7 +300,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * Add an empty multiple choice question to the quiz
      */
     addMultipleChoiceQuestion() {
-        if (typeof this.quizExercise === 'undefined') {
+        if (this.quizExercise == undefined) {
             this.quizExercise = this.entity;
         }
 
@@ -332,7 +331,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * Add an empty drag and drop question to the quiz
      */
     addDragAndDropQuestion(): void {
-        if (typeof this.quizExercise === 'undefined') {
+        if (this.quizExercise == undefined) {
             this.quizExercise = this.entity;
         }
 
@@ -354,7 +353,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * Add an empty short answer question to the quiz
      */
     addShortAnswerQuestion(): void {
-        if (typeof this.quizExercise === 'undefined') {
+        if (this.quizExercise == undefined) {
             this.quizExercise = this.entity;
         }
 

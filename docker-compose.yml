@@ -25,7 +25,7 @@ services:
     command: sh -c "yarn install && yarn start-docker"
     depends_on:
       - artemis-server
-    image: node:13.12.0-alpine
+    image: node:14.15.0-alpine
     networks:
       - artemis
     ports:
@@ -40,7 +40,7 @@ services:
       - MYSQL_USER=root
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_DATABASE=Artemis
-    image: mysql:8.0.21
+    image: mysql:8.0.22
     networks:
       - artemis
     ports:

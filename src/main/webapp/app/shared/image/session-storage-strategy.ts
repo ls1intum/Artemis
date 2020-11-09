@@ -1,4 +1,4 @@
-import { GlobalCacheConfig, ICachePair, IStorageStrategy } from 'ngx-cacheable';
+import { GlobalCacheConfig, ICachePair, IStorageStrategy } from 'ts-cacheable';
 
 /**
  * This is the same as the DOMStorageStrategy, only using the sessionStorage
@@ -8,7 +8,7 @@ export class SessionStorageStrategy extends IStorageStrategy {
     private masterCacheKey: string = GlobalCacheConfig.globalCacheKey;
     constructor() {
         super();
-        if (typeof sessionStorage === 'undefined') {
+        if (sessionStorage == undefined) {
             throw new Error('Platform not supported.');
         }
     }

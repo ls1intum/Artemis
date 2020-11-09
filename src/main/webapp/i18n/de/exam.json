@@ -4,7 +4,7 @@
             "overview": {
                 "start": "Beginn: {{start}}",
                 "duration": "Dauer: {{duration}} min",
-                "maxPoints": "max. Punkte: {{points}}"
+                "maxPoints": "Punkte: {{points}}"
             },
             "examSummary": {
                 "yourSubmissionTo": "Deine Abgabe für {{examTitle}} ({{studentName}})",
@@ -19,7 +19,8 @@
                     "exercise": "Aufgabe",
                     "overview": "Übersicht",
                     "yourPoints": "Deine Punkte",
-                    "maxPoints": "Max. Punkte",
+                    "maxPoints": "Punkte",
+                    "bonus": "Bonus Punkte",
                     "sum": "Summe"
                 }
             },
@@ -59,6 +60,8 @@
             }
         },
         "examScores": {
+            "xAxes": "Ergebnis in %",
+            "yAxes": "Teilnehmeranzahl",
             "maxPoints": "Maximale Punktzahl",
             "title": "Klausur Ergebnisse",
             "examStatisticsTitle": "Klausur Statistik",
@@ -114,6 +117,7 @@
             "generateParticipationFailed": "Das Vorbereiten der Aufgabe ist fehlgeschlagen.",
             "generateParticipationRetry": "Erneut versuchen",
             "points": "Punkte",
+            "bonus": "Bonus Punkte",
             "synced": "Aufgabe gespeichert",
             "notSynced": "Aufgabe nicht gespeichert",
             "submitted": "Du hast eine Lösung für die Aufgabe eingereicht. Du kannst die Aufgabe weiter bearbeiten und erneut abgeben.",
@@ -258,7 +262,7 @@
                 "update": "Aufgabengruppe bearbeiten",
                 "type": "Type",
                 "title": "Titel",
-                "maxPoints": "Max. Punktzahl",
+                "points": "Punktzahl",
                 "mandatory": "Verpflichtend",
                 "optional": "Optional",
                 "noExercises": "Es wurden noch keine Aufgaben hinzugefügt.",

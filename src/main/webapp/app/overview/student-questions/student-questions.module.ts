@@ -8,9 +8,18 @@ import { StudentQuestionComponent } from 'app/overview/student-questions/student
 import { StudentQuestionAnswerComponent } from 'app/overview/student-questions/student-question-answer/student-question-answer.component';
 import { StudentVotesComponent } from 'app/overview/student-questions/student-votes/student-votes.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { RouterModule, Routes } from '@angular/router';
+
+const routes: Routes = [
+    {
+        path: '',
+        pathMatch: 'full',
+        component: StudentQuestionsComponent,
+    },
+];
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSidePanelModule, ArtemisConfirmIconModule, ArtemisMarkdownEditorModule],
+    imports: [RouterModule.forChild(routes), ArtemisSharedModule, ArtemisSidePanelModule, ArtemisConfirmIconModule, ArtemisMarkdownEditorModule],
     declarations: [StudentQuestionsComponent, StudentQuestionRowComponent, StudentQuestionComponent, StudentQuestionAnswerComponent, StudentVotesComponent],
     exports: [StudentQuestionsComponent],
 })
