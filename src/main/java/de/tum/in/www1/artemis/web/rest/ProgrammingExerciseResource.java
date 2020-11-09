@@ -829,6 +829,7 @@ public class ProgrammingExerciseResource {
      * @param exerciseId the id of the exercise to get the repos from
      * @param participantIdentifiers the identifiers of the participants (student logins or team short names) for whom to zip the submissions, separated by commas
      * @param repositoryExportOptions the options that should be used for the export
+     * @param hideStudentName option to hide to student name for the export
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
@@ -880,6 +881,7 @@ public class ProgrammingExerciseResource {
      * @param exerciseId the id of the exercise to get the repos from
      * @param participationIds the participationIds seperated via semicolon to get their submissions (used for double blind assessment)
      * @param repositoryExportOptions the options that should be used for the export. Export all students is not supported here!
+     * @param hideStudentName the option to hide the student name for the export.
      * @return ResponseEntity with status
      * @throws IOException if submissions can't be zippedRequestBody
      */

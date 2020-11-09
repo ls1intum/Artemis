@@ -665,6 +665,7 @@ public class GitService {
      *
      * @param repo Local Repository Object.
      * @param targetPath path where the repo is located on disk
+     * @param hideStudentName option to hide the student name for the zip file
      * @throws IOException if the zipping process failed.
      * @return path to zip file.
      */

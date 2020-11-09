@@ -85,6 +85,7 @@ public class ProgrammingExerciseExportService {
      * @param programmingExerciseId the id of the exercise entity
      * @param participations participations that should be exported
      * @param repositoryExportOptions the options that should be used for the export
+     * @param hideStudentName the option to hide the student name for the export
      * @return a zip file containing all requested participations
      */
     public File exportStudentRepositories(long programmingExerciseId, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
