@@ -53,7 +53,7 @@ export class NotificationPopupComponent implements OnInit {
     }
 
     private notificationTargetRoute(notification: Notification): UrlTree | string {
-        if (notification.target != null) {
+        if (notification.target) {
             const target = JSON.parse(notification.target);
             return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id]);
         }
@@ -83,7 +83,7 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     private addQuizNotification(notification: Notification): void {
-        if (notification.target != null) {
+        if (notification.target) {
             const target = JSON.parse(notification.target);
             target.entity = 'quiz-exercises';
             const notificationWithLiveQuizTarget = {
