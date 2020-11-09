@@ -790,6 +790,7 @@ public class ModelFactory {
             case SPOTBUGS -> "BAD_PRACTICE";
             case PMD -> "Best Practices";
             case CHECKSTYLE -> "coding";
+            case PMD_CPD -> "Copy/Paste Detection";
         };
 
         var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();

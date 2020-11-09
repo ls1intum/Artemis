@@ -5,7 +5,6 @@ import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Result } from 'app/entities/result.model';
-import { Participation } from 'app/entities/participation/participation.model';
 import { Submission } from 'app/entities/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -49,23 +48,6 @@ export class SubmissionService {
                     }),
                 ),
             );
-    }
-
-    protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            res.body.submissionDate = res.body.submissionDate ? moment(res.body.submissionDate) : undefined;
-            res.body.participation = this.convertParticipationDateFromServer(res.body.participation);
-        }
-        return res;
-    }
-
-    protected convertParticipationDateFromServer(participation?: Participation) {
-        if (participation) {
-            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : undefined;
-            participation.results = this.convertResultsDateFromServer(participation.results);
-            participation.submissions = this.convertSubmissionsDateFromServer(participation.submissions);
-        }
-        return participation;
     }
 
     convertResultsDateFromServer(results?: Result[]) {

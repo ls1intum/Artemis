@@ -8,7 +8,7 @@
             <div>
                 <span class="d-inline-block">
                     <span class="text-muted font-weight-bolder">Tutor:</span>
-                    <a *ngIf="isAdmin && team.owner" [routerLink]="['/admin', 'user-management', team.owner?.login, 'view']">{{ team.owner?.name }}</a>
+                    <a *ngIf="isAdmin && team.owner" [routerLink]="['/admin', 'user-management', team.owner?.login]">{{ team.owner?.name }}</a>
                     <a *ngIf="!isAdmin && team.owner" [href]="'mailto:' + team.owner.email">{{ team.owner?.name }}</a>
                     <span *ngIf="!team.owner" class="font-weight-bold" jhiTranslate="artemisApp.team.detail.noOwner">No tutor</span>
                 </span>
@@ -17,14 +17,14 @@
                     <span ngbTooltip="{{ team.createdDate | artemisDate }}" placement="top" tooltipClass="date-tooltip">
                         {{ team.createdDate!.fromNow() }}
                     </span>
-                    <a *ngIf="isAdmin" [routerLink]="['/admin', 'user-management', team.createdBy, 'view']">({{ team.createdBy }})</a>
+                    <a *ngIf="isAdmin" [routerLink]="['/admin', 'user-management', team.createdBy]">({{ team.createdBy }})</a>
                 </span>
                 <span class="d-inline-block ml-2" *ngIf="team.lastModifiedDate && team.lastModifiedDate.isAfter(team.createdDate)">
                     <span class="text-muted font-weight-bolder">Last modified:</span>
                     <span ngbTooltip="{{ team.lastModifiedDate | artemisDate }}" position="top" tooltipClass="date-tooltip">
                         {{ team.lastModifiedDate!.fromNow() }}
                     </span>
-                    <a *ngIf="isAdmin" [routerLink]="['/admin', 'user-management', team.lastModifiedBy, 'view']">({{ team.lastModifiedBy }})</a>
+                    <a *ngIf="isAdmin" [routerLink]="['/admin', 'user-management', team.lastModifiedBy]">({{ team.lastModifiedBy }})</a>
                 </span>
             </div>
         </div>
