@@ -64,7 +64,7 @@
             },
             "recreateBuildPlans": {
                 "title": "Recreate Build Plans",
-                "description": "Activate this options to create new build plans and don't copy them from the imported exercise."
+                "description": "Activate this option to create new build plans instead of copying them from the imported exercise."
             },
             "programmingLanguage": "Programming Language",
             "projectType": "Project Type",
