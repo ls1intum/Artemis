@@ -21,11 +21,13 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { CodeEditorConfirmRefreshModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-confirm-refresh-modal.component';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 @NgModule({
     imports: [
         AceEditorModule,
         MomentModule,
+        NgbModule,
         ArtemisSharedModule,
         FeatureToggleModule,
         TreeviewModule.forRoot(),

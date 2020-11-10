@@ -1541,6 +1541,7 @@ public class DatabaseUtilService {
         if (enableStaticCodeAnalysis) {
             programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
         }
+        // Note: package name not allowed for Swift, no separators are allowed
         programmingExercise.setPackageName("de.test");
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
@@ -1986,8 +1987,9 @@ public class DatabaseUtilService {
         submission = saveTextSubmissionWithResultAndAssessor(exercise, submission, studentLogin, null, assessorLogin);
         Result result = submission.getResult();
         for (Feedback feedback : feedbacks) {
-            // this also invoked feedback.setResult(result)
+            // this also invokes feedback.setResult(result)
             result.addFeedback(feedback);
+            feedbackRepo.save(feedback);
         }
         // this automatically saves the feedback because of the CascadeType.All annotation
         result = resultRepo.save(result);
