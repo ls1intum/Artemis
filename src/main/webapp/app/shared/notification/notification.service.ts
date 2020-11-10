@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Observable, ReplaySubject } from 'rxjs';
 import * as moment from 'moment';
 import { map } from 'rxjs/operators';
 
@@ -20,7 +20,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 export class NotificationService {
     public resourceUrl = SERVER_API_URL + 'api/notifications';
     subscribedTopics: string[] = [];
-    notificationObserver: BehaviorSubject<Notification | undefined>;
+    notificationObserver: ReplaySubject<Notification>;
     cachedNotifications: Observable<HttpResponse<Notification[]>>;
 
     constructor(
@@ -78,9 +78,9 @@ export class NotificationService {
     /**
      * Subscribe to single user notification, group notification and quiz updates if it was not already subscribed.
      * Then it returns a BehaviorSubject the calling component can listen on to actually receive the notifications.
-     * @returns {BehaviorSubject<Notification | undefined>}
+     * @returns {ReplaySubject<Notification>}
      */
-    subscribeToNotificationUpdates(): BehaviorSubject<Notification | undefined> {
+    subscribeToNotificationUpdates(): ReplaySubject<Notification> {
         this.subscribeToSingleUserNotificationUpdates();
         this.courseManagementService.getCoursesForNotifications().subscribe((courses) => {
             if (courses) {
@@ -153,14 +153,6 @@ export class NotificationService {
         } as GroupNotification;
     }
 
-    /**
-     * Get the notificationObserver.
-     * @return {BehaviorSubject<Notification}
-     */
-    subscribeToSocketMessages(): BehaviorSubject<Notification | undefined> {
-        return this.notificationObserver;
-    }
-
     private addNotificationToObserver(notification: Notification): void {
         if (notification && notification.notificationDate) {
             notification.notificationDate = moment(notification.notificationDate);
@@ -181,6 +173,6 @@ export class NotificationService {
      * Set new notification observer.
      */
     private initNotificationObserver(): void {
-        this.notificationObserver = new BehaviorSubject<Notification | undefined>(undefined);
+        this.notificationObserver = new ReplaySubject<Notification>();
     }
 }
