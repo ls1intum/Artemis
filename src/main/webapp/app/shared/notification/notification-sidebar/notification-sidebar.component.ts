@@ -125,7 +125,7 @@ export class NotificationSidebarComponent implements OnInit {
     private addNotifications(notifications: Notification[]): void {
         if (notifications) {
             notifications.forEach((notification: Notification) => {
-                if (!this.notifications.some(({ id }) => id === notification.id) && notification.notificationDate) {
+                if (notification && !this.notifications.some(({ id }) => id === notification.id) && notification.notificationDate) {
                     this.notifications.push(notification);
                 }
             });
