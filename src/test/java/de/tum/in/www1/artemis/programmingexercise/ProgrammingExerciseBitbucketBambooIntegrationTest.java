@@ -4,8 +4,6 @@ import static de.tum.in.www1.artemis.util.ProgrammingExerciseTestService.student
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
