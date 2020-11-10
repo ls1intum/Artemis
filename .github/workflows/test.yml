@@ -63,7 +63,7 @@ jobs:
       with:
         access-token: ${{ secrets.GITHUB_TOKEN }}
         path: build/test-results/test/*.xml
-        ashley-taylor/junit-report-annotations-action: 99
+        numFailures: 99
 
   client-tests:
     if: github.event_name != 'release'
@@ -102,4 +102,4 @@ jobs:
       with:
         access-token: ${{ secrets.GITHUB_TOKEN }}
         path: junit.xml
-        ashley-taylor/junit-report-annotations-action: 99
+        numFailures: 99
