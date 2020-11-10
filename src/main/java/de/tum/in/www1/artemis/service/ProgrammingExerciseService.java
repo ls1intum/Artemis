@@ -285,11 +285,11 @@ public class ProgrammingExerciseService {
         }
     }
 
-    private String getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
+    public String getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
         return getProgrammingLanguageTemplatePath(programmingLanguage) + "/" + projectType.name().toLowerCase();
     }
 
-    private String getProgrammingLanguageTemplatePath(ProgrammingLanguage programmingLanguage) {
+    public String getProgrammingLanguageTemplatePath(ProgrammingLanguage programmingLanguage) {
         return "templates/" + programmingLanguage.name().toLowerCase();
     }
 

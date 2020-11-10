@@ -3,14 +3,28 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import org.apache.http.HttpException;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +41,8 @@ import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+
+import javax.management.modelmbean.XMLParseException;
 
 @Service
 public class ProgrammingExerciseImportService {
@@ -49,6 +65,8 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final ResourceLoader resourceLoader;
+
     private final GitService gitService;
 
     private final FileService fileService;
@@ -59,7 +77,7 @@ public class ProgrammingExerciseImportService {
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService,
-            UserService userService) {
+            UserService userService, ResourceLoader resourceLoader) {
         this.exerciseHintService = exerciseHintService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -71,6 +89,7 @@ public class ProgrammingExerciseImportService {
         this.gitService = gitService;
         this.fileService = fileService;
         this.userService = userService;
+        this.resourceLoader = resourceLoader;
     }
 
     /**
@@ -177,6 +196,106 @@ public class ProgrammingExerciseImportService {
             log.error("Unable to trigger imported build plans", e);
             throw e;
         }
+    }
+
+    public void upgradeRepository(ProgrammingExercise exercise) throws IOException, GitAPIException, InterruptedException, XmlPullParserException {
+        if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || exercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
+            // Get general template poms
+            String programmingLanguageTemplate = programmingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage());
+            String templatePath = programmingLanguageTemplate + "/exercise/**/pom.xml";
+
+            Resource[] templateResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(templatePath);
+
+            // Get project type specific template poms
+            if (exercise.getProjectType() != null) {
+                String projectTypeTemplate = programmingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType());
+                String projectTypeExercisePath = projectTypeTemplate + "/exercise/**/pom.xml";
+
+                Resource[] projectTypeTemplateResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(projectTypeExercisePath);
+
+                // Prefer project type specific poms
+                templateResources = projectTypeTemplateResources.length > 0 ? projectTypeTemplateResources : templateResources;
+            }
+
+            // Checkout repository
+            Repository repo = gitService.getOrCheckoutRepository(exercise.getTemplateRepositoryUrlAsUrl(), true);
+            List<File> repoPoms = gitService.listFiles(repo).stream().filter(file -> file.getName().equals("pom.xml")).collect(Collectors.toList());
+
+            // Validate that template and repository have the same number of pom files, otherwise no upgrade will take place
+            // TODO: Improve matching of repo and template poms, support sequential test runs
+            if (templateResources.length == 1 && repoPoms.size() == 1) {
+                Model updatedRepoModel = upgradeProjectObjectModel(templateResources[0], repoPoms.get(0));
+                writeProjectObjectModel(updatedRepoModel, repoPoms.get(0));
+            }
+        }
+
+    }
+
+    private void writeProjectObjectModel(Model model, File repoPom) {
+
+        try () {
+            var pomWriter = new MavenXpp3Reader();
+            Model templateModel = pomWriter.read(templateInput);
+            Model repoModel = pomReader.read(repoInput);
+        }
+    }
+
+    private Model upgradeProjectObjectModel(Resource templatePom, File repositoryPom) throws IOException, XmlPullParserException {
+        try (InputStream templateInput = templatePom.getInputStream();
+             InputStream repoInput = new FileInputStream(repositoryPom)) {
+
+            var pomReader = new MavenXpp3Reader();
+            Model templateModel = pomReader.read(templateInput);
+            Model repoModel = pomReader.read(repoInput);
+
+            // Update dependency versions
+            updateDependencies(repoModel, templateModel);
+
+            // Switch out JUnit4 for Ares (contains JUnit5)
+            replacePlugin(repoModel, templateModel, "junit", "junit", "de.tum.in.ase", "artemis-java-test-sandbox");
+
+            // Update Maven Compiler Plugin with JDK version, Maven Surefire Plugin and Maven Failsafe Plugin by replacing them with template plugins
+            upgradePlugin(repoModel, templateModel, "org.apache.maven.plugins", "maven-compiler-plugin");
+            upgradePlugin(repoModel, templateModel, "org.apache.maven.plugins", "maven-surefire-plugin");
+            upgradePlugin(repoModel, templateModel, "org.apache.maven.plugins", "maven-failsafe-plugin");
+
+            return repoModel;
+        }
+    }
+
+    private void updateDependencies(Model repositoryModel, Model templateModel) {
+        for (var templateDependency : templateModel.getDependencies()) {
+            var repoDependency = repositoryModel.getDependencies().stream().filter(isSameDependency(templateDependency)).findFirst();
+            // TODO: Only update dependency if new version is 'higher' than old version?
+            repoDependency.ifPresent(dependency -> dependency.setVersion(templateDependency.getVersion()));
+        }
+    }
+
+    private void upgradePlugin(Model repositoryModel, Model templateModel, String groupId, String artifactId) {
+        replacePlugin(repositoryModel, templateModel, groupId, artifactId, groupId, artifactId);
+    }
+
+    private void replacePlugin(Model repositoryModel, Model templateModel, String oldGroupId, String oldArtifactId, String newGroupId, String newArtifactId) {
+        var oldPlugin = repositoryModel.getBuild().getPlugins().stream()
+            .filter(isSamePlugin(oldGroupId, oldArtifactId)).findFirst();
+        var replacementPlugin = templateModel.getBuild().getPlugins().stream()
+            .filter(isSamePlugin(newGroupId, newArtifactId)).findFirst();
+        if (oldPlugin.isPresent() && replacementPlugin.isPresent()) {
+            repositoryModel.getBuild().removePlugin(oldPlugin.get());
+            repositoryModel.getBuild().addPlugin(replacementPlugin.get());
+        }
+    }
+
+    private Predicate<Dependency> isSameDependency(Dependency otherDependency) {
+        return isSameDependency(otherDependency.getGroupId(), otherDependency.getArtifactId());
+    }
+
+    private Predicate<Dependency> isSameDependency(String groupId, String artifactId) {
+        return sourceDependency -> sourceDependency.getGroupId().equals(groupId) && sourceDependency.getArtifactId().equals(artifactId);
+    }
+
+    private Predicate<Plugin> isSamePlugin(String groupId, String artifactId) {
+        return plugin -> plugin.getGroupId().equals(groupId) && plugin.getArtifactId().equals(artifactId);
     }
 
     private void updatePlanRepositoriesInBuildPlans(ProgrammingExercise newExercise, TemplateProgrammingExerciseParticipation templateParticipation,
