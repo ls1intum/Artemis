@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "plagiarism": {
+            "plagiarism-detection": "Plagiatskontrolle",
             "confirm": "Bestätigen",
             "deny": "Ablehnen",
             "warning": "Die Bestätigung/Ablehnung eines Plagiats geht beim Neuladen der Seite verloren.",
