@@ -1,9 +1,10 @@
-name: Build
+name: Build Documentation
 
 on:
   pull_request:
     paths:
     - 'docs/**'
+    - '.github/workflows/docs.yml'
   push:
     branches:
     - develop
