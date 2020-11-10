@@ -100,7 +100,7 @@ public class LectureUnitResource {
      */
     @DeleteMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}")
     @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
-    public ResponseEntity<LectureUnit> deleteLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId) {
+    public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
         Optional<LectureUnit> lectureUnitOptional = lectureUnitRepository.findById(lectureUnitId);
         if (lectureUnitOptional.isEmpty()) {
