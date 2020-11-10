@@ -1,39 +1,40 @@
 package de.tum.in.www1.artemis.service.listeners;
 
 import javax.persistence.PostPersist;
-import javax.persistence.PostUpdate;
 import javax.persistence.PreRemove;
 import javax.persistence.PreUpdate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Configurable;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.service.StudentScoreService;
 import de.tum.in.www1.artemis.service.TutorScoreService;
 
-@Component
+@Configurable
 public class ResultListener {
 
     private final Logger log = LoggerFactory.getLogger(ResultListener.class);
 
-    // Note: this solution is not ideal, but everything else does not work, because of dependency injection problems with EntityListeners
-    private static StudentScoreService studentScoreService;
+    private @Nullable ObjectFactory<StudentScoreService> studentScoreService;
 
-    private static TutorScoreService tutorScoreService;
+    private @Nullable ObjectFactory<TutorScoreService> tutorScoreService;
 
     @Autowired
-    // we use lazy injection here, because a EntityListener needs an empty constructor
-    public void setStudentScoreService(StudentScoreService studentScoreService) {
-        ResultListener.studentScoreService = studentScoreService;
+    public void setStudentScoreService(ObjectFactory<StudentScoreService> studentScoreService) {
+        Assert.notNull(studentScoreService, "StudentScoreService must not be null!");
+        this.studentScoreService = studentScoreService;
     }
 
     @Autowired
-    // we use lazy injection here, because a EntityListener needs an empty constructor
-    public void setTutorScoresService(TutorScoreService tutorScoreService) {
-        ResultListener.tutorScoreService = tutorScoreService;
+    public void setTutorScoreService(ObjectFactory<TutorScoreService> tutorScoreService) {
+        Assert.notNull(tutorScoreService, "TutorScoreService must not be null!");
+        this.tutorScoreService = tutorScoreService;
     }
 
     /**
@@ -46,11 +47,8 @@ public class ResultListener {
         log.info("Result " + deletedResult + " was deleted");
 
         // remove from Student Scores and Tutor Scores
-        log.info("Result " + deletedResult + " will be deleted from StudentScores");
-        studentScoreService.removeResult(deletedResult);
-
-        log.info("Result " + deletedResult + " will be deleted from TutorScores");
-        tutorScoreService.removeResult(deletedResult);
+        studentScoreService.getObject().removeResult(deletedResult);
+        tutorScoreService.getObject().removeResult(deletedResult);
     }
 
     /**
@@ -62,32 +60,11 @@ public class ResultListener {
     public void preUpdate(Result updatedResult) {
         log.info("Result " + updatedResult + " will be updated");
 
-        // update student score
-        log.info("StudentScore for Result " + updatedResult + " will be updated");
-        studentScoreService.updateResult(updatedResult);
+        // update scores
+        studentScoreService.getObject().updateResult(updatedResult);
 
         if (updatedResult.getAssessor() != null) {
-            tutorScoreService.updateResult(updatedResult);
-        }
-    }
-
-    /**
-     * After result gets updated, update all StudentScores/TutorScores with this result.
-     *
-     * @param updatedResult updated result
-     */
-    @PostUpdate
-    public void postUpdate(Result updatedResult) {
-        log.info("Result " + updatedResult + " was updated");
-
-        // update student score
-        log.info("StudentScore for Result " + updatedResult + " will be updated");
-        // studentScoreService.updateResult(updatedResult);
-
-        if (updatedResult.getAssessor() != null) {
-            // update tutor scores
-            log.info("TutorScores for Result " + updatedResult + " will be updated");
-            // tutorScoreService.updateResult(updatedResult);
+            tutorScoreService.getObject().updateResult(updatedResult);
         }
     }
 
@@ -98,16 +75,9 @@ public class ResultListener {
      */
     @PostPersist
     public void postPersist(Result newResult) {
-        log.info("Result " + newResult + " was updated");
+        log.info("Result " + newResult + " was persisted");
 
-        // update student score
-        log.info("StudentScore for Result " + newResult + " will be added");
-        studentScoreService.updateResult(newResult);
-
-        if (newResult.getAssessor() != null) {
-            // update tutor scores
-            log.info("TutorScores for Result " + newResult + " will be updated");
-            // tutorScoreService.updateResult(newResult);
-        }
+        // update score
+        studentScoreService.getObject().updateResult(newResult);
     }
 }

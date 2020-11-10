@@ -348,9 +348,8 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         resultRepo.save(result);
 
         // complaint
-        complaint = new Complaint().result(result).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+        complaint = new Complaint().result(result).complaintType(ComplaintType.COMPLAINT);
         complaintRepo.save(complaint);
-        tutorScoreService.addComplaintOrFeedbackRequest(complaint);
 
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAllComplaints()).as("complaints amount is as expected").isEqualTo(1);
@@ -390,9 +389,8 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         resultRepo.save(result);
 
         // feedback request
-        feedbackRequest = new Complaint().result(result).complaintText("More please").complaintType(ComplaintType.MORE_FEEDBACK);
+        feedbackRequest = new Complaint().result(result).complaintType(ComplaintType.MORE_FEEDBACK);
         complaintRepo.save(feedbackRequest);
-        tutorScoreService.addComplaintOrFeedbackRequest(feedbackRequest);
 
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAllFeedbackRequests()).as("feedback request amount is as expected").isEqualTo(1);
@@ -432,14 +430,8 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         resultRepo.save(result);
 
         // complaint
-        complaint = new Complaint().result(result).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+        complaint = new Complaint().result(result).complaintType(ComplaintType.COMPLAINT);
         complaintRepo.save(complaint);
-
-        // weird behaviour
-        // tutorScoreService.addComplaintOrFeedbackRequest(complaint);
-        response.setAssessmentsPoints(exercise.getMaxScore());
-        response.setAllComplaints(1L);
-        tutorScoresRepo.save(response);
 
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAssessmentsPoints()).as("assessment points are as expected").isEqualTo(exercise.getMaxScore());
@@ -489,13 +481,13 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         resultRepo.save(result);
 
         // feedback request
-        feedbackRequest = new Complaint().result(result).complaintText("More please").complaintType(ComplaintType.MORE_FEEDBACK);
+        feedbackRequest = new Complaint().result(result).complaintType(ComplaintType.MORE_FEEDBACK);
         complaintRepo.save(feedbackRequest);
-        tutorScoreService.addComplaintOrFeedbackRequest(feedbackRequest);
 
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAssessmentsPoints()).as("assessment points are as expected").isEqualTo(exercise.getMaxScore());
         assertThat(response.getAllFeedbackRequests()).as("feedback requests amount is as expected").isEqualTo(1);
+        assertThat(response.getNotAnsweredFeedbackRequests()).as("not answered feedback requests amount is as expected").isEqualTo(1);
 
         complaintRepo.delete(feedbackRequest);
         result.setHasComplaint(false);

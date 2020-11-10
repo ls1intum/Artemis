@@ -204,7 +204,7 @@ public class TutorScoreService {
         var tutorScores = exercise.getTutorScores();
 
         for (TutorScore score : tutorScores) {
-            if (score.getTutor().getId() == assessor.getId()) {
+            if (score.getTutor().getId().equals(assessor.getId())) {
                 return Optional.of(score);
             }
         }

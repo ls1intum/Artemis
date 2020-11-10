@@ -14,11 +14,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.Participant;
+import de.tum.in.www1.artemis.service.listeners.ComplaintListener;
 
 /**
  * A Complaint.
  */
 @Entity
+@EntityListeners(ComplaintListener.class)
 @Table(name = "complaint")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

@@ -10,10 +10,13 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.service.listeners.ComplaintResponseListener;
+
 /**
  * A ComplaintResponse.
  */
 @Entity
+@EntityListeners(ComplaintResponseListener.class)
 @Table(name = "complaint_response")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
