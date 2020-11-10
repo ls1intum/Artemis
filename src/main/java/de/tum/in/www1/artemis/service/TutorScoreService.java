@@ -203,6 +203,10 @@ public class TutorScoreService {
     private Optional<TutorScore> findTutorScoreFromExercise(Exercise exercise, User assessor) {
         var tutorScores = exercise.getTutorScores();
 
+        if (assessor == null) {
+            return Optional.empty();
+        }
+
         for (TutorScore score : tutorScores) {
             if (score.getTutor().getId().equals(assessor.getId())) {
                 return Optional.of(score);
