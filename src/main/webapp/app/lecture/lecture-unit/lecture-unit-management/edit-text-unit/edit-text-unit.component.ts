@@ -32,9 +32,7 @@ export class EditTextUnitComponent implements OnInit {
                     this.lectureId = Number(params.get('lectureId'));
                     return this.textUnitService.findById(textUnitId, this.lectureId);
                 }),
-                finalize(() => {
-                    this.isLoading = false;
-                }),
+                finalize(() => this.isLoading = false),
             )
             .subscribe(
                 (textUnitResponse: HttpResponse<VideoUnit>) => {
