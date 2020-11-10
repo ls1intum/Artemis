@@ -22,5 +22,6 @@ public class JenkinsProgrammingLanguageFeatureService extends ProgrammingLanguag
         // TODO: Should be re-enabled once Jenkins Pipelines are used
         // programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, false, true, false, false));
         // programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, false, false, false, false, false));
+        // programmingLanguageFeatures.put(SWIFT, new ProgrammingLanguageFeature(SWIFT, false, false, false, false, false));
     }
 }
