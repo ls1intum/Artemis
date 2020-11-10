@@ -145,7 +145,7 @@ export class NotificationService {
             text: 'Quiz "' + quizExercise.title + '" just started.',
             notificationDate: moment(),
             target: JSON.stringify({
-                course: { id: quizExercise.course!.id },
+                course: quizExercise.course!.id,
                 mainPage: 'courses',
                 entity: 'exercises',
                 id: quizExercise.id,
