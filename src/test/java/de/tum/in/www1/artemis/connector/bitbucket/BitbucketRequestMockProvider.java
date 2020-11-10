@@ -128,7 +128,7 @@ public class BitbucketRequestMockProvider {
 
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
-        final var templateRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
+        final var templateRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var clonedRepoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
 
         mockCopyRepository(projectKey, projectKey, templateRepoName, clonedRepoName, status);
