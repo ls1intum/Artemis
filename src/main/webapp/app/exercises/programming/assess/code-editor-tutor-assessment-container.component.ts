@@ -308,6 +308,20 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
+    /**
+     * Removes the login from the repositoryURL
+     */
+    adjustedRepositoryURL(): string {
+        let newRepositoryUrl: string = this.participation.repositoryUrl || '';
+        if (this.participation.student != null && this.participation.repositoryUrl != null) {
+            const userName = this.participation.student.login + '@';
+            if (this.participation.repositoryUrl.includes(userName)) {
+                newRepositoryUrl = this.participation.repositoryUrl.replace(userName, '');
+            }
+        }
+        return newRepositoryUrl;
+    }
+
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         this.participationForManualResult.results![0] = this.manualResult = response.body!;
         this.jhiAlertService.clear();
