@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -496,7 +497,7 @@ public class UserService {
         save(user);
 
         createUserInExternalSystems(user);
-        artemisAuthenticationProvider.addUserToGroups(user, userDTO.getGroups());
+        addUserToGroupsInternal(user, userDTO.getGroups());
 
         log.debug("Created Information for User: {}", user);
         return user;
@@ -576,7 +577,12 @@ public class UserService {
         final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, removedGroups, addedGroups, true));
         removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group)); // e.g. Jira
-        addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(user, group)); // e.g. Jira
+        try {
+            addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(user, group)); // e.g. Jira
+        }
+        catch (ArtemisAuthenticationException e) {
+            // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
+        }
     }
 
     /**
@@ -927,7 +933,12 @@ public class UserService {
      */
     public void addUserToGroup(User user, String group) {
         addUserToGroupInternal(user, group); // internal Artemis database
-        artemisAuthenticationProvider.addUserToGroup(user, group);  // e.g. JIRA
+        try {
+            artemisAuthenticationProvider.addUserToGroup(user, group);  // e.g. JIRA
+        }
+        catch (ArtemisAuthenticationException e) {
+            // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
+        }
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, Set.of(), Set.of(group), false)); // e.g. Gitlab
     }
 
@@ -942,6 +953,30 @@ public class UserService {
         if (!user.getGroups().contains(group)) {
             user.getGroups().add(group);
             user.setAuthorities(buildAuthorities(user));
+            save(user);
+        }
+    }
+
+    /**
+     * Adds a user to the specified set of groups.
+     *
+     * @param user the user who should be added to the given groups
+     * @param groups the groups in which the user should be added
+     */
+    private void addUserToGroupsInternal(User user, @Nullable Set<String> groups) {
+        if (groups == null) {
+            return;
+        }
+        boolean userChanged = false;
+        for (String group : groups) {
+            if (!user.getGroups().contains(group)) {
+                userChanged = true;
+                user.getGroups().add(group);
+            }
+        }
+
+        if (userChanged) {
+            // we only save if this is needed
             save(user);
         }
     }

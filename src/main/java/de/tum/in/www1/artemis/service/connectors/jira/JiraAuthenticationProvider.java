@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Primary;
@@ -38,8 +37,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
@@ -254,14 +251,10 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         }
     }
 
-    @Override
-    public void addUserToGroups(User user, Set<String> groups) {
-        // NOTE: this method should only be invoked for newly created users.
-        // We currently cannot support the creation of new users in JIRA, so we cannot update their groups
-        // The reason is that JIRA is using the readonly LDAP user directory to the TUM on the production server as first choice
-        // and the internal directory as second choice. However, users can only be created in the first user directory and there is no option
-        // to create them in the second user directory
-    }
+    // NOTE: We currently cannot support the creation of new users in JIRA, so we cannot update their groups
+    // The reason is that JIRA is using the readonly LDAP user directory to the TUM on the production server as first choice
+    // and the internal directory as second choice. However, users can only be created in the first user directory and there is no option
+    // to create them in the second user directory
 
     @Override
     public void createGroup(String groupName) {
@@ -330,29 +323,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             }
         }
         return false;
-    }
-
-    @Override
-    public void registerUserForCourse(User user, Course course) {
-        String courseStudentGroupName = course.getStudentGroupName();
-        if (!user.getGroups().contains(courseStudentGroupName)) {
-            Set<String> groups = user.getGroups();
-            groups.add(courseStudentGroupName);
-            user.setGroups(groups);
-            userService.save(user);
-            var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
-            auditEventRepository.add(auditEvent);
-            log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
-        }
-        try {
-            addUserToGroup(user, courseStudentGroupName);
-        }
-        catch (ArtemisAuthenticationException e) {
-            /*
-             * This might throw exceptions, for example if the group does not exist on the authentication service. TODO: At the moment we ignore them, but it would be better to
-             * handle them properly
-             */
-        }
     }
 
     /**

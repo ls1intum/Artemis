@@ -313,9 +313,7 @@ public class LtiService {
                     artemisAuthenticationProvider.addUserToGroup(user, courseStudentGroupName);
                 }
                 catch (ArtemisAuthenticationException e) {
-                    /*
-                     * This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore them.
-                     */
+                    // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
                 }
             }
         }
