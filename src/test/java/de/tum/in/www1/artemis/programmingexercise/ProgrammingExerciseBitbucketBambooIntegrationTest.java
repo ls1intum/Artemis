@@ -55,8 +55,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     @ParameterizedTest
-    // TODO René Lalla: incldue Swift again as soon as it is fully supported
-    @EnumSource(value = ProgrammingLanguage.class, names = { "SWIFT" }, mode = EnumSource.Mode.EXCLUDE)
+    @EnumSource(ProgrammingLanguage.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language) throws Exception {
         programmingExerciseTestService.createProgrammingExercise_programmingLanguage_validExercise_created(language,
@@ -82,8 +81,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     @ParameterizedTest
-    // TODO René Lalla: incldue Swift again as soon as it is fully supported
-    @EnumSource(value = ProgrammingLanguage.class, names = { "SWIFT" }, mode = EnumSource.Mode.EXCLUDE)
+    @EnumSource(ProgrammingLanguage.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExerciseTestService.importExercise_created(programmingLanguage);

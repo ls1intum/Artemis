@@ -137,7 +137,11 @@
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein!"
                 },
                 "packageName": {
-                    "pattern": "Der Package Name muss aus einem oder mehreren gültigen Java-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.java\"!"
+                    "pattern": {
+                        "JAVA": "Der Package Name muss aus einem oder mehreren gültigen Java-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.java\"!",
+                        "KOTLIN": "Der Package Name muss aus einem oder mehreren gültigen Kotlin-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.kotlin\"!",
+                        "SWIFT": "Der Package Name muss aus einem oder mehreren gültigen Swift-Bezeichnern bestehen, die nicht voneinander separiert sind, z.B. \"SwiftEx\"!"
+                    }
                 },
                 "points": {
                     "pattern": "Die Punktzahl muss zwischen 1 und 9999 liegen!"
