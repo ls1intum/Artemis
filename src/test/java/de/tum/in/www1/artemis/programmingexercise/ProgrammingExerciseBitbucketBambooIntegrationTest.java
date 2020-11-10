@@ -87,9 +87,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     private static Stream<Arguments> generateArgumentsForImportExercise() {
-        return Arrays.stream(ProgrammingLanguage.values())
-                .map(language -> List.of(Arguments.of(language, true), Arguments.of(language, false)))
-                .flatMap(Collection::stream);
+        return Arrays.stream(ProgrammingLanguage.values()).flatMap(language -> Stream.of(Arguments.of(language, true), Arguments.of(language, false)));
     }
 
     @ParameterizedTest
