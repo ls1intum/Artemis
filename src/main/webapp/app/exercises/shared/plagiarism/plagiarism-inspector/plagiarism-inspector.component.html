@@ -45,20 +45,7 @@
                 </ul>
             </div>
         </aside>
-        <div class="plagiarism-main">
-            <div class="plagiarism-empty" *ngIf="selectedPlagiarismIndex == undefined">{{ 'artemisApp.plagiarism.not-selected' | translate }}</div>
-            <div *ngIf="selectedPlagiarismIndex != undefined" class="plagiarism-content">
-                <jhi-plagiarism-header
-                    [comparisonIdx]="selectedPlagiarismIndex + 1"
-                    (splitViewChange)="handleSplitViewChange($event)"
-                    (plagiarismStatusChange)="handlePlagiarismStatusChange($event)"
-                ></jhi-plagiarism-header>
-                <jhi-plagiarism-split-view
-                    [comparison]="modelingSubmissionComparisons ? modelingSubmissionComparisons[selectedPlagiarismIndex] : null"
-                    [splitControl]="splitControlSubject.asObservable()"
-                    [diagramType]="DiagramType.ClassDiagram"
-                ></jhi-plagiarism-split-view>
-            </div>
-        </div>
+
+        <jhi-plagiarism-viewer></jhi-plagiarism-viewer>
     </div>
 </div>

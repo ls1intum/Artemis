@@ -21,6 +21,7 @@ $footer-height: 31px;
     .plagiarism-body {
         position: relative;
         flex-grow: 1;
+        padding-left: 240px;
 
         .plagiarism-sidebar {
             border-right: 1px solid $body-bg;
