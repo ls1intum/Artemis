@@ -132,11 +132,14 @@ public class StudentQuestionResource {
         if (optionalStudentQuestion.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        if (!studentQuestion.getCourse().getId().equals(courseId)) {
+        if (!optionalStudentQuestion.get().getCourse().getId().equals(courseId)) {
             return forbidden();
         }
         if (mayUpdateOrDeleteStudentQuestion(optionalStudentQuestion.get(), user)) {
-            StudentQuestion result = studentQuestionRepository.save(studentQuestion);
+            StudentQuestion updatedStudentQuestion = optionalStudentQuestion.get();
+            updatedStudentQuestion.setQuestionText(studentQuestion.getQuestionText());
+            updatedStudentQuestion.setVisibleForStudents(studentQuestion.isVisibleForStudents());
+            StudentQuestion result = studentQuestionRepository.save(updatedStudentQuestion);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestion.getId().toString())).body(result);
         }
         else {

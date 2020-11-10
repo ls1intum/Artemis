@@ -225,6 +225,9 @@ public class ProgrammingExerciseTestService {
     public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language, ProgrammingLanguageFeature programmingLanguageFeature)
             throws Exception {
         exercise.setProgrammingLanguage(language);
+        if (language == ProgrammingLanguage.SWIFT) {
+            exercise.setPackageName("swiftTest");
+        }
         exercise.setProjectType(programmingLanguageFeature.getProjectTypes().size() > 0 ? programmingLanguageFeature.getProjectTypes().get(0) : null);
         mockDelegate.mockConnectorRequestsForSetup(exercise);
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
@@ -275,6 +278,9 @@ public class ProgrammingExerciseTestService {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceExercise.setProgrammingLanguage(programmingLanguage);
+        if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+            sourceExercise.setPackageName("swiftTest");
+        }
         sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         database.addTestCasesToProgrammingExercise(sourceExercise);
         database.addHintsToExercise(sourceExercise);

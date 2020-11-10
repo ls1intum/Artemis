@@ -546,10 +546,14 @@ public class ProgrammingExerciseService {
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
         }
+        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
+            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageName());
+        }
 
         Map<String, String> replacements = new HashMap<>();
 
-        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN
+                || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
             replacements.put("${packageName}", programmingExercise.getPackageName());
         }
         // there is no need in python to replace package names

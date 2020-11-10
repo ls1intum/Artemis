@@ -69,6 +69,7 @@
                 "createFile": "Create file",
                 "renameFolder": "Rename folder",
                 "renameFile": "Rename file",
+                "renameFolderDisabledTooltip": "To rename this folder, deactivate the combining of folders in the toolbar above.",
                 "deleteFolder": "Delete folder",
                 "deleteFile": "Delete file",
                 "compressTree": "Combine empty folders"
