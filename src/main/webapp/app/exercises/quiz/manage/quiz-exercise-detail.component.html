@@ -179,9 +179,9 @@
             </div>
             <!--Integrate the template for existingQuestions if the button is clicked-->
             <ng-container *ngIf="showExistingQuestions; then existingQuestionsTemplate"></ng-container>
-            <ng-container *ngIf="showExistingQuestions && showExistingQuestionsFromAnotherCourse; then existingQuestionsFromCourseTemplate"></ng-container>
+            <ng-container *ngIf="showExistingQuestions && showExistingQuestionsFromCourse; then existingQuestionsFromCourseTemplate"></ng-container>
 
-            <div class="question-options row d-flex justify-content-start" *ngIf="showExistingQuestions && !showExistingQuestionsFromAnotherCourse">
+            <div class="question-options row d-flex justify-content-start" *ngIf="showExistingQuestions && !showExistingQuestionsFromCourse">
                 <div class="mr-2 col flex-grow-0" style="white-space: nowrap">
                     <span jhiTranslate="artemisApp.quizExercise.importJSON" class="font-weight-bold colon-suffix no-flex-shrink"> </span>
                 </div>
@@ -312,17 +312,17 @@
                 <div class="btn-group">
                     <div
                         class="btn"
-                        [ngClass]="{ 'btn-primary': !showExistingQuestionsFromAnotherCourse, 'btn-default': showExistingQuestionsFromAnotherCourse }"
-                        (click)="setExistingQuestionSourceToCourse(false)"
-                    >
-                        <span jhiTranslate="artemisApp.quizExercise.fromAFile"></span>
-                    </div>
-                    <div
-                        class="btn"
-                        [ngClass]="{ 'btn-primary': showExistingQuestionsFromAnotherCourse, 'btn-default': !showExistingQuestionsFromAnotherCourse }"
+                        [ngClass]="{ 'btn-primary': showExistingQuestionsFromCourse, 'btn-default': !showExistingQuestionsFromCourse }"
                         (click)="setExistingQuestionSourceToCourse(true)"
                     >
                         <span jhiTranslate="artemisApp.quizExercise.fromACourse"></span>
+                    </div>
+                    <div
+                        class="btn"
+                        [ngClass]="{ 'btn-primary': !showExistingQuestionsFromCourse, 'btn-default': showExistingQuestionsFromCourse }"
+                        (click)="setExistingQuestionSourceToCourse(false)"
+                    >
+                        <span jhiTranslate="artemisApp.quizExercise.fromAFile"></span>
                     </div>
                 </div>
             </div>

@@ -86,7 +86,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
-    showExistingQuestionsFromAnotherCourse = false;
+    showExistingQuestionsFromCourse = true;
     courses: Course[] = [];
     selectedCourseId?: number;
     quizExercises: QuizExercise[];
@@ -146,7 +146,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     ngOnInit(): void {
         /** Initialize local constants **/
         this.showExistingQuestions = false;
-        this.showExistingQuestionsFromAnotherCourse = false;
+        this.showExistingQuestionsFromCourse = true;
         this.courses = [];
         this.quizExercises = [];
         this.allExistingQuestions = [];
@@ -403,7 +403,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             });
         }
         this.showExistingQuestions = !this.showExistingQuestions;
-        this.setExistingQuestionSourceToCourse(false);
+        this.setExistingQuestionSourceToCourse(true);
     }
 
     /**
@@ -498,7 +498,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         }
         this.verifyAndImportQuestions(questions);
         this.showExistingQuestions = !this.showExistingQuestions;
-        this.showExistingQuestionsFromAnotherCourse = false;
+        this.showExistingQuestionsFromCourse = true;
         this.selectedCourseId = undefined;
         this.allExistingQuestions = this.existingQuestions = [];
         this.cacheValidation();
@@ -1213,7 +1213,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * Update adding existing questions from a file or course
      */
     setExistingQuestionSourceToCourse(setToCourse: boolean): void {
-        this.showExistingQuestionsFromAnotherCourse = setToCourse;
+        this.showExistingQuestionsFromCourse = setToCourse;
         this.selectedCourseId = undefined;
         this.allExistingQuestions = this.existingQuestions = [];
         this.importFile = undefined;
