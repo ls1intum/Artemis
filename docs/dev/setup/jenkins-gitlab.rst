@@ -452,6 +452,21 @@ recommended ones that got installed during the setup process):
 5.  `Timestamper <https://plugins.jenkins.io/timestamper/>`__ for adding the
     time to every line of the build output (Timestamper might already be installed)
 
+Plugins required for the new Pipeline-Setup:
+
+1.  `GitLab <https://plugins.jenkins.io/gitlab-plugin/>`__ for enabling
+    webhooks to and from GitLab
+
+2.  `Timestamper <https://plugins.jenkins.io/timestamper/>`__ for adding the
+    time to every line of the build output (Timestamper might already be installed)
+
+3.  `Pipeline <https://plugins.jenkins.io/workflow-aggregator/>`__ for defining the
+    build description using declarative files (Pipeline might already be installed)
+
+    **Note:** This is a suite of plugins that will install multiple plugins
+
+4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines.
+
 Choose “Download now and install after restart” and checking the
 “Restart Jenkins when installation is complete and no jobs are running” box
 
@@ -646,6 +661,67 @@ the following steps:
     Depending on the version this setting might not be available anymore.
     Have a look `here <https://unix.stackexchange.com/questions/444177/how-to-disable-the-csrf-protection-in-jenkins-by-default>`__ on how you can disable CSRF protection.
 
+
+Installing remote build agents
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+You might want to run the builds on additional Jenkins agents, especially if a large amount of students should use the system at the same time.
+Jenkins supports remote build agents: The actual compilation of the students submissions happens on these other machines but the whole process is transparent to Artemis.
+
+This guide explains setting up a remote agent on an Ubuntu virtual machine that supports docker builds.
+
+Prerequisites:
+1. Install Docker on the remote machine: https://docs.docker.com/engine/install/ubuntu/
+
+2. Add a new user to the remote machine that Jenkins will use: ```sudo adduser --disabled-password --gecos "" jenkins```
+
+3. Add the jenkins user to the docker group (This allows the jenkins user to interact with docker): ```sudo usermod -a -G docker jenkins```
+
+4. Generate a new SSH key locally (e.g. using ```ssh-keygen```) and add the public key to the ```.ssh/authorized_keys``` file of the jenkins user on the agent VM.
+
+5. Validate that you can connect to the build agent machine using SSH and the generated private key and validate that you can use docker (`docker ps` should not show an error)
+
+6. Log in with your normal account on the build agent machine and install Java: ```sudo apt install default-jre```
+
+7. Add a new secret in Jenkins, enter private key you just generated and add the passphrase, if set:
+
+   .. figure:: jenkins-gitlab/jenkins_ssh_credentials.png
+      :align: center
+
+      Jenkins SSH Credentials
+
+8. Add a new node (select a name and select `Permanent Agent`):
+    Set the number of executors so that it matches your machine's specs: This is the number of concurrent builds this agent can handle. It is recommended to match the number of cores of the machine, but you might want to adjust this later if needed.
+
+    Set the remote root directory to ```/home/jenkins/remote_agent```.
+
+    Set the usage to `Only build jobs with label expressions matching this node`. This ensures that only docker-jobs will be built on this agent, and not other jobs.
+
+    Add a label ```docker``` to the agent.
+
+    Set the launch method to `Launch via SSH` and add the host of the machine. Select the credentials you just created and select `Manually trusted key Verification Strategy` as Host key verification Strategy.
+    Save it.
+
+
+   .. figure:: jenkins-gitlab/jenkins_node.png
+      :align: center
+
+      Add a Jenkins node
+
+9. Wait for some moments while jenkins installs it's remote agent on the agent's machine.
+    You can track the progress using the `Log` page when selecting the agent. System information should also be available.
+
+10. Change the settings of the master node to be used only for specific jobs.
+    This ensures that the docker tasks are not executed on the master agent but on the remote agent.
+
+
+   .. figure:: jenkins-gitlab/jenkins_master_node.png
+      :align: center
+
+      Adjust Jenkins master node settings
+
+11. You are finished, the new agent should now also process builds.
+
+
 Upgrade Jenkins
 ~~~~~~~~~~~~~~~
 
@@ -834,4 +910,3 @@ Artemis
 
 6. Stop the Artemis docker container with Control-C and re-run
    ``docker-compose up``
-

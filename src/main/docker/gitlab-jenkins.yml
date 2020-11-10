@@ -13,7 +13,8 @@ services:
         mem_limit: 3000m
         hostname: gitlab
         networks:
-          - artemis
+            artemis:
+                ipv4_address: 172.19.0.2
     jenkins:
         build: jenkins
         volumes:
@@ -23,11 +24,16 @@ services:
             - "8083:8080"
         hostname: jenkins
         networks:
-            - artemis
+            artemis:
+                ipv4_address: 172.19.0.3
 
 networks:
     artemis:
         driver: "bridge"
+        ipam:
+            driver: default
+            config:
+                - subnet: 172.19.0.0/24
 
 volumes:
     artemis-gitlab-data:
