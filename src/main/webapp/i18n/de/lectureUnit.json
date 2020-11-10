@@ -20,7 +20,7 @@
             "tooltip": "Das ist eine Texteinheit.",
             "popup": "In Popup öffnen",
             "notReleasedTooltip": "Text nur sichtbar für Tutoren und Dozenten. Veröffentlichkeitsdatum:",
-            "markdownHelp": "Hier kann Markdown eingegeben werden. Mehr informationen: ",
+            "markdownHelp": "Hier kann Markdown eingegeben werden. Mehr informationen:",
             "cachedMarkdown": "Artemis fand ungespeichertes Markdown im local storage. Möchtest du es laden? Speicherdatum:",
             "createTextUnit": {
                 "title": "Erstelle Texteinheit",
@@ -34,7 +34,7 @@
                 "title": "Bearbeite Texteinheit"
             },
             "delete": {
-                "question": "Willst du wirklich die Texteinheit <strong>{{ title }}</strong> löschen?Du kannst diese Aktion nicht rückgängig machen!",
+                "question": "Willst du wirklich die Texteinheit <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
                 "typeNameToConfirm": "Bitte gib den Namen der Texteinheit zur Bestätigung ein.",
                 "buttonText": "Löschen"
             }

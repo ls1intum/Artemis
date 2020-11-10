@@ -7,7 +7,6 @@ import { map } from 'rxjs/operators';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 
 type EntityResponseType = HttpResponse<TextUnit>;
-type EntityArrayResponseType = HttpResponse<TextUnit[]>;
 
 @Injectable({
     providedIn: 'root',
