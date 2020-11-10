@@ -23,6 +23,10 @@ public class ResultListener {
         this.achievementService = achievementService;
     }
 
+    /**
+     * Checks if a user has earned an achievement by looking at the saved or updated result.
+     * @param result
+     */
     @PreUpdate
     @PrePersist
     public void checkForAchievements(Result result) {
