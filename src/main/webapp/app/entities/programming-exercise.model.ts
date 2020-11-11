@@ -35,6 +35,7 @@ export class ProgrammingExercise extends Exercise {
     public packageName?: string;
     public problemStatement?: string;
     public sequentialTestRuns?: boolean;
+    public showTestNamesToStudents?: boolean;
     public checkoutSolutionRepository?: boolean;
 
     public buildAndTestStudentSubmissionsAfterDueDate?: Moment;
