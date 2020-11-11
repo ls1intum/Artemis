@@ -73,6 +73,8 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
             mappings.add("html", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
             // CloudFoundry issue, see https://github.com/cloudfoundry/gorouter/issues/64
             mappings.add("json", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
+            // Sentry issue, see https://sentry.io/organizations/ls1intum/issues/1941422520/
+            mappings.add("ico", "image/x-icon");
             ConfigurableServletWebServerFactory servletWebServer = (ConfigurableServletWebServerFactory) server;
             servletWebServer.setMimeMappings(mappings);
         }

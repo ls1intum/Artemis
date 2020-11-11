@@ -150,10 +150,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws Exception {
-        final var projectKey = exercise.getProjectKey();
-        String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+        final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
+        final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
         bambooRequestMockProvider.mockCheckIfProjectExists(exercise, false);
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, false);
         bitbucketRequestMockProvider.mockCreateProjectForExercise(exercise);
@@ -161,33 +160,30 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockCreateRepository(exercise, testRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
-        bambooRequestMockProvider.mockRemoveAllDefaultProjectPermissions(exercise);
-        bambooRequestMockProvider.mockGiveProjectPermissions(exercise);
+        mockBambooBuildPlanCreation(exercise);
+    }
 
+    private void mockBambooBuildPlanCreation(ProgrammingExercise exercise) throws IOException, URISyntaxException {
         // TODO: check the actual plan and plan permissions that get passed here
         doReturn(null).when(bambooServer).publish(any());
+        bambooRequestMockProvider.mockRemoveAllDefaultProjectPermissions(exercise);
+        bambooRequestMockProvider.mockGiveProjectPermissions(exercise);
     }
 
     @Override
-    public List<Verifiable> mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported) throws IOException, URISyntaxException {
+    public List<Verifiable> mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans)
+            throws IOException, URISyntaxException {
         final var verifications = new ArrayList<Verifiable>();
         final var projectKey = exerciseToBeImported.getProjectKey();
         final var sourceProjectKey = sourceExercise.getProjectKey();
-        final var templateRepoName = (projectKey + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase();
-        final var solutionRepoName = (projectKey + "-" + RepositoryType.SOLUTION.getName()).toLowerCase();
-        final var testsRepoName = (projectKey + "-" + RepositoryType.TESTS.getName()).toLowerCase();
+        final var templateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var solutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
+        final var testsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
         var nextParticipationId = sourceExercise.getTemplateParticipation().getId() + 1;
         final var artemisSolutionHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
         final var artemisTemplateHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId;
         final var artemisTestsHookPath = artemisServerUrl + TEST_CASE_CHANGED_API_PATH + (sourceExercise.getId() + 1);
 
-        bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
-        bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName(), false);
-        bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName(), true);
-        doReturn(null).when(bambooServer).publish(any());
-        bambooRequestMockProvider.mockGiveProjectPermissions(exerciseToBeImported);
-        bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName());
-        bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName());
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
         bitbucketRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
         bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, sourceExercise.getTemplateRepositoryName(), templateRepoName);
@@ -199,12 +195,29 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, solutionRepoName, artemisSolutionHookPath);
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, testsRepoName);
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, testsRepoName, artemisTestsHookPath);
-        mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName, List.of(ASSIGNMENT_REPO_NAME));
-        mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName, List.of());
-        mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName, List.of());
-        mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), TEST_REPO_NAME, testsRepoName, List.of());
-        bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName());
-        bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + SOLUTION.getName());
+
+        bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
+        if (!recreateBuildPlans) {
+            // Mocks for copying the build plans
+            bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName(), false);
+            bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName(), true);
+            // TODO: Mock continuousIntegrationService.givePlanPermissions for Template and Solution plan
+            doReturn(null).when(bambooServer).publish(any());
+            bambooRequestMockProvider.mockGiveProjectPermissions(exerciseToBeImported);
+            bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName());
+            bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName());
+            mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName, List.of(ASSIGNMENT_REPO_NAME));
+            mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName, List.of());
+            mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName, List.of());
+            mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), TEST_REPO_NAME, testsRepoName, List.of());
+            bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName());
+            bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + SOLUTION.getName());
+        }
+        else {
+            // Mocks for recreating the build plans
+            mockBambooBuildPlanCreation(exerciseToBeImported);
+        }
+
         return verifications;
     }
 
