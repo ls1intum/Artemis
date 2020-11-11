@@ -220,6 +220,8 @@ public class ParticipationService {
             programmingExerciseStudentParticipation = copyRepository(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = configureRepository((ProgrammingExercise) exercise, programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = copyBuildPlan(programmingExerciseStudentParticipation);
+            // Restore programming exercise that got removed due to saving the programmingExerciseStudentParticipation
+            programmingExerciseStudentParticipation.setProgrammingExercise((ProgrammingExercise) exercise);
             programmingExerciseStudentParticipation = configureBuildPlan(programmingExerciseStudentParticipation);
             // we might need to perform an empty commit (depends on the CI system), we perform this here, because it should not trigger a new programming submission
             programmingExerciseStudentParticipation = performEmptyCommit(programmingExerciseStudentParticipation);
