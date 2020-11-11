@@ -190,8 +190,8 @@ public class ProgrammingSubmissionResource {
         if (lastGraded && submission.get().getType() != SubmissionType.INSTRUCTOR && submission.get().getType() != SubmissionType.TEST
                 && submission.get().getParticipation().getExercise().getDueDate() != null
                 && submission.get().getParticipation().getExercise().getDueDate().isBefore(ZonedDateTime.now())) {
-            // If the submission is not the latest but the last graded, there is no point in triggering the build again as this would build the most recent VCS commit (=different
-            // commit hash than submission).
+            // If the submission is not the latest but the last graded, there is no point in triggering the build again as this would build the most recent VCS commit.
+            // This applies only to students submissions after the exercise due date.
             return notFound();
         }
         // If there is no result on the CIS, we trigger a new build and hope it will arrive in Artemis this time.
