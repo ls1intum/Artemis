@@ -60,6 +60,10 @@ export class Feedback implements BaseEntity {
         return !Feedback.isEmpty(that);
     }
 
+    public static areValid(that: Feedback[]): boolean {
+        return that.filter(Feedback.isValid).length > 0 && that.filter(Feedback.isValid).length === that.length;
+    }
+
     public static forModeling(credits: number, text?: string, referenceId?: string, referenceType?: string): Feedback {
         const that = new Feedback();
         that.referenceId = referenceId;
