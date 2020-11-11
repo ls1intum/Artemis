@@ -6,6 +6,8 @@ import { ExerciseHintStudentDialogComponent } from 'app/exercises/shared/exercis
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
+import { getExercise } from 'app/entities/participation/participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',
@@ -23,6 +25,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     }
     @Input() exerciseHints: ExerciseHint[] = [];
     @Input() latestResult?: Result;
+    @Input() showTestDetails: boolean;
 
     ngbModalRef?: NgbModalRef;
 
@@ -60,9 +63,11 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
             return;
         }
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.result = this.latestResult;
-        modalRef.componentInstance.feedbackFilter = this.tests;
-        modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
+        const componentInstance = modalRef.componentInstance as ResultDetailComponent;
+        componentInstance.result = this.latestResult;
+        componentInstance.feedbackFilter = this.tests;
+        componentInstance.exerciseType = ExerciseType.PROGRAMMING;
+        componentInstance.showTestDetails = this.showTestDetails;
     }
 
     /**

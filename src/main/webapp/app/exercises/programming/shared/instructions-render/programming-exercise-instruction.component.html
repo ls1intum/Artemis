@@ -1,5 +1,5 @@
 <div class="instructions__content border-0" *ngIf="!isLoading; else loadingInstructions">
-    <jhi-programming-exercise-instructions-step-wizard [latestResult]="latestResult" [tasks]="tasks"></jhi-programming-exercise-instructions-step-wizard>
+    <jhi-programming-exercise-instructions-step-wizard [latestResult]="latestResult" [tasks]="tasks" [showTestDetails]="exercise.showTestNamesToStudents"></jhi-programming-exercise-instructions-step-wizard>
     <!-- Rendered markdown will be inserted in this div -->
     <div
         id="programming-exercise-instructions-content"

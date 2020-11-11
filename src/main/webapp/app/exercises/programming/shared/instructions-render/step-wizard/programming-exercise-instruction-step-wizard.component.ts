@@ -5,6 +5,8 @@ import { TaskArray } from 'app/exercises/programming/shared/instructions-render/
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
+import { getExercise } from 'app/entities/participation/participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-step-wizard',
@@ -16,6 +18,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
 
     @Input() latestResult?: Result;
     @Input() tasks: TaskArray;
+    @Input() showTestDetails?: boolean;
 
     steps: Array<{ done: TestCaseState; title: string; tests: string[] }>;
 
@@ -50,8 +53,10 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
             return;
         }
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.result = this.latestResult;
-        modalRef.componentInstance.feedbackFilter = tests;
-        modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
+        const componentInstance = modalRef.componentInstance as ResultDetailComponent;
+        componentInstance.result = this.latestResult;
+        componentInstance.feedbackFilter = tests;
+        componentInstance.exerciseType = ExerciseType.PROGRAMMING;
+        componentInstance.showTestDetails = this.showTestDetails || false;
     }
 }
