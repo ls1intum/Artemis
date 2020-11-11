@@ -72,7 +72,6 @@ jobs:
           ${{ runner.os }}-gradle-
     - name: Java Code Style
       run: ./gradlew spotlessCheck
-      if: success() || failure()
     - name: Java Documentation
       run: ./gradlew checkstyleMain -x yarn -x webpack
       if: success() || failure()
@@ -128,7 +127,6 @@ jobs:
       run: yarn install
     - name: TypeScript Formatting
       run: yarn prettier:check
-      if: success() || failure()
     - name: TypeScript Code Style
       run: yarn lint
       if: success() || failure()
