@@ -7,7 +7,9 @@ import java.lang.reflect.Method;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class FunctionalTest extends BehaviorTest {
+import de.tum.in.test.api.behavior.BehaviorTest;
+
+public class SortingExampleBehaviorTest extends BehaviorTest {
 
     private Context context;
     private Policy policy;

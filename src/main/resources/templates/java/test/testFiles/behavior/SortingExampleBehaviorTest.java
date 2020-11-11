@@ -9,9 +9,11 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 
+import de.tum.in.test.api.behavior.BehaviorTest;
+
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 4.0 (27.10.2020)
+ * @version 5.0 (11.11.2020)
  */
 public class SortingExampleBehaviorTest extends BehaviorTest {
 
