@@ -44,6 +44,7 @@
             "onlineEditor": "Online Editor",
             "allowOfflineIde": "Offline IDE erlauben",
             "offlineIde": "Offline IDE",
+            "showTestNamesToStudents": "Zeige Testnamen an Studenten",
             "participationMode": "Teilnahme Modus",
             "noVersionControlAndContinuousIntegrationAvailable": "Setup ohne Verbindung zur VCS und CI",
             "sequentialTestRuns": {
