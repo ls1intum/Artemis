@@ -109,7 +109,7 @@ public class BambooBuildPlanDTO {
         this.enabled = enabled;
     }
 
-    public boolean isActive() {
+    public boolean getIsActive() {
         return isActive;
     }
 
@@ -117,7 +117,7 @@ public class BambooBuildPlanDTO {
         this.isActive = active;
     }
 
-    public boolean isBuilding() {
+    public boolean getIsBuilding() {
         return isBuilding;
     }
 
