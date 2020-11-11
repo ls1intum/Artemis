@@ -13,7 +13,7 @@ buildscript {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
         // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-        classpath "com.github.ben-manes:gradle-versions-plugin:0.35.0"
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.36.0"
     }
 }
 
@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.7.2"
+version = "4.7.3"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -225,14 +225,14 @@ dependencies {
     implementation "org.springframework.ldap:spring-ldap-core:2.3.3.RELEASE"
     implementation "org.springframework.data:spring-data-ldap:2.4.0"
 
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.2.5.RELEASE"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:2.2.5.RELEASE"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.2.6.RELEASE"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:2.2.6.RELEASE"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.11.RELEASE"
 
     // https://docs.spring.io/spring/docs/4.3.15.RELEASE/spring-framework-reference/html/websocket.html#websocket-stomp-handle-broker-relay
     implementation "io.netty:netty-all:4.1.49.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.0.0"
-    implementation "org.springframework:spring-messaging:5.3.0"
+    implementation "org.springframework:spring-messaging:5.3.1"
     implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.2.9.RELEASE_1"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
