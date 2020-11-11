@@ -175,9 +175,11 @@ public interface ContinuousIntegrationService {
      * @param bambooRepositoryName  The name of the configured repository in the CI plan.
      * @param repoProjectName       The key of the project that contains the repository.
      * @param repoUrl               The url of the newly to be referenced repository.
+     * @param templateRepositoryUrl The url of the template repository (that should be replaced).
      * @param triggeredBy           Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten
      */
-    void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoUrl, Optional<List<String>> triggeredBy);
+    void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoUrl, String templateRepositoryUrl,
+            Optional<List<String>> triggeredBy);
 
     /**
      * Gives overall roles permissions for the defined project. A role can e.g. be all logged in users
@@ -274,5 +276,23 @@ public interface ContinuousIntegrationService {
          * @return The path to the subdirectory as a String to which some repository should get checked out to.
          */
         String forProgrammingLanguage(ProgrammingLanguage language);
+    }
+
+    /**
+     * Name of the docker image used for the given programming language.
+     *
+     * @param language The programming language for which the docker image name is requested
+     * @return The name of the image (published on hub.docker.com)
+     */
+    default String getDockerImageName(ProgrammingLanguage language) {
+        return switch (language) {
+            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-2";
+            case PYTHON -> "ls1tum/artemis-python-docker:latest";
+            case C -> "ls1tum/artemis-c-docker:latest";
+            case HASKELL -> "tumfpv/fpv-stack:8.8.4";
+            case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
+            case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
+            case SWIFT -> "swift:latest";
+        };
     }
 }
