@@ -295,8 +295,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     validateFeedback(): void {
         this.calculateTotalScore();
-        const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
-        const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isPresent).length > 0;
+        const hasReferencedFeedback =
+            this.referencedFeedback.filter(Feedback.isValid).length > 0 && this.referencedFeedback.filter(Feedback.isValid).length === this.referencedFeedback.length;
+        const hasUnreferencedFeedback =
+            this.unreferencedFeedback.filter(Feedback.isValid).length > 0 && this.unreferencedFeedback.filter(Feedback.isValid).length === this.unreferencedFeedback.length;
         const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
         this.assessmentsAreValid = ((hasReferencedFeedback || hasGeneralFeedback) && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
