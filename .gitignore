@@ -146,6 +146,7 @@ Desktop.ini
 .dbus/
 repos/
 repos-download/
+/templates/
 
 ######################
 # Gradle Wrapper

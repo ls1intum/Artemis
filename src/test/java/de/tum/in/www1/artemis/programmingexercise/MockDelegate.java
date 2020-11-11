@@ -22,7 +22,8 @@ public interface MockDelegate {
 
     void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws Exception;
 
-    List<Verifiable> mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported) throws IOException, URISyntaxException;
+    List<Verifiable> mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans)
+            throws IOException, URISyntaxException;
 
     List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
             throws IOException, URISyntaxException;

@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -24,9 +25,11 @@ public interface PersistenceAuditEventRepository extends JpaRepository<Persisten
     @EntityGraph(type = LOAD, attributePaths = { "data" })
     Page<PersistentAuditEvent> findAllByAuditEventDateBetween(Instant fromDate, Instant toDate, Pageable pageable);
 
+    @NotNull
     @EntityGraph(type = LOAD, attributePaths = { "data" })
-    Page<PersistentAuditEvent> findAll(Pageable pageable);
+    Page<PersistentAuditEvent> findAll(@NotNull Pageable pageable);
 
+    @NotNull
     @EntityGraph(type = LOAD, attributePaths = { "data" })
-    Optional<PersistentAuditEvent> findById(Long auditEventId);
+    Optional<PersistentAuditEvent> findById(@NotNull Long auditEventId);
 }
