@@ -28,7 +28,6 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
     @Input() participationIdList: number[];
     @Input() participantIdentifierList: string; // comma separated
     @Input() singleParticipantMode = false;
-    @Input() hideStudentName = false;
 
     constructor(private modalService: NgbModal) {}
 
@@ -44,6 +43,5 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
         modalRef.componentInstance.participationIdList = this.participationIdList;
         modalRef.componentInstance.participantIdentifierList = this.participantIdentifierList;
         modalRef.componentInstance.singleParticipantMode = this.singleParticipantMode;
-        modalRef.componentInstance.hideStudentName = this.hideStudentName;
     }
 }

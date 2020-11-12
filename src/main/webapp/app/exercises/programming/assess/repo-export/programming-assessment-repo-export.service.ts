@@ -3,7 +3,6 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Moment } from 'moment';
-import { buildUrlWithParams } from 'app/shared/util/global.utils';
 
 export type RepositoryExportOptions = {
     exportAllParticipants: boolean;
@@ -12,6 +11,7 @@ export type RepositoryExportOptions = {
     addParticipantName: boolean;
     combineStudentCommits: boolean;
     normalizeCodeStyle: boolean;
+    hideStudentNameInZippedFolder: boolean;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -27,16 +27,8 @@ export class ProgrammingAssessmentRepoExportService {
      * @param {string[]} participantIdentifiers - Identifiers of participants
      * @param {RepositoryExportOptions} repositoryExportOptions
      */
-    exportReposByParticipantIdentifiers(
-        exerciseId: number,
-        participantIdentifiers: string[],
-        repositoryExportOptions: RepositoryExportOptions,
-        hideStudentName = false,
-    ): Observable<HttpResponse<Blob>> {
-        let url = `${this.resourceUrl}/${exerciseId}/export-repos-by-participant-identifiers/${participantIdentifiers}`;
-        if (hideStudentName) {
-            url = buildUrlWithParams(url, ['hideStudentName=true']);
-        }
+    exportReposByParticipantIdentifiers(exerciseId: number, participantIdentifiers: string[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
+        const url = `${this.resourceUrl}/${exerciseId}/export-repos-by-participant-identifiers/${participantIdentifiers}`;
         return this.http.post(url, repositoryExportOptions, {
             observe: 'response',
             responseType: 'blob',
@@ -49,16 +41,8 @@ export class ProgrammingAssessmentRepoExportService {
      * @param {number[]} participationIds - Ids of participations
      * @param {RepositoryExportOptions} repositoryExportOptions
      */
-    exportReposByParticipations(
-        exerciseId: number,
-        participationIds: number[],
-        repositoryExportOptions: RepositoryExportOptions,
-        hideStudentName = false,
-    ): Observable<HttpResponse<Blob>> {
-        let url = `${this.resourceUrl}/${exerciseId}/export-repos-by-participation-ids/${participationIds}`;
-        if (hideStudentName) {
-            url = buildUrlWithParams(url, ['hideStudentName=true']);
-        }
+    exportReposByParticipations(exerciseId: number, participationIds: number[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
+        const url = `${this.resourceUrl}/${exerciseId}/export-repos-by-participation-ids/${participationIds}`;
         return this.http.post(url, repositoryExportOptions, {
             observe: 'response',
             responseType: 'blob',

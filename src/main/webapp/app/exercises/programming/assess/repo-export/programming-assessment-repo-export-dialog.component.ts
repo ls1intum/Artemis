@@ -22,7 +22,6 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     @Input() participationIdList: number[];
     @Input() participantIdentifierList: string; // TODO: Should be a list and not a comma separated string.
     @Input() singleParticipantMode = false;
-    @Input() hideStudentName = false;
     readonly FeatureToggle = FeatureToggle;
     exercise: Exercise;
     exportInProgress: boolean;
@@ -45,6 +44,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             addParticipantName: true,
             combineStudentCommits: false,
             normalizeCodeStyle: false, // disabled by default because it is rather unstable
+            hideStudentNameInZippedFolder: false,
         };
         this.exerciseService
             .find(this.exerciseId)
@@ -76,18 +76,17 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         if (this.participationIdList) {
             // We anonymize the assessment process ("double-blind").
             this.repositoryExportOptions.addParticipantName = false;
-            this.repoExportService
-                .exportReposByParticipations(exerciseId, this.participationIdList, this.repositoryExportOptions, this.hideStudentName)
-                .subscribe(this.handleExportRepoResponse, () => {
-                    this.exportInProgress = false;
-                });
+            this.repositoryExportOptions.hideStudentNameInZippedFolder = true;
+            this.repoExportService.exportReposByParticipations(exerciseId, this.participationIdList, this.repositoryExportOptions).subscribe(this.handleExportRepoResponse, () => {
+                this.exportInProgress = false;
+            });
             return;
         }
         const participantIdentifierList =
             this.participantIdentifierList !== undefined && this.participantIdentifierList !== '' ? this.participantIdentifierList.split(',').map((e) => e.trim()) : ['ALL'];
 
         this.repoExportService
-            .exportReposByParticipantIdentifiers(exerciseId, participantIdentifierList, this.repositoryExportOptions, this.hideStudentName)
+            .exportReposByParticipantIdentifiers(exerciseId, participantIdentifierList, this.repositoryExportOptions)
             .subscribe(this.handleExportRepoResponse, () => {
                 this.exportInProgress = false;
             });
