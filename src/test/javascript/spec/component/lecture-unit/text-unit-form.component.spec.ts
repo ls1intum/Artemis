@@ -1,6 +1,7 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
+import { SinonStub } from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -12,6 +13,8 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import * as moment from 'moment';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -24,11 +27,27 @@ class MarkdownEditorStubComponent {
 }
 
 describe('TextUnitFormComponent', () => {
+    let store = {};
     const sandbox = sinon.createSandbox();
     let textUnitFormComponentFixture: ComponentFixture<TextUnitFormComponent>;
     let textUnitFormComponent: TextUnitFormComponent;
-
+    let getItemStub: SinonStub;
+    let removeItemStub: SinonStub;
+    let setItemStub: SinonStub;
     beforeEach(() => {
+        // mocking router
+        // mocking the local storage for cache testing
+        store = {};
+        getItemStub = sandbox.stub(localStorage, 'getItem').callsFake((key: string) => {
+            return store[key] || null;
+        });
+        removeItemStub = sandbox.stub(localStorage, 'removeItem').callsFake((key: string) => {
+            delete store[key];
+        });
+        setItemStub = sandbox.stub(localStorage, 'setItem').callsFake((key: string, value: string) => {
+            return (store[key] = <string>value);
+        });
+
         TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule, ArtemisTestModule],
             declarations: [TextUnitFormComponent, MarkdownEditorStubComponent, MockComponent(FormDateTimePickerComponent), MockPipe(TranslatePipe)],
@@ -46,9 +65,31 @@ describe('TextUnitFormComponent', () => {
         sandbox.restore();
     });
 
-    it('should instantiate correctly', () => {
+    it('should be invalid if name is not set and valid if set', fakeAsync(() => {
         textUnitFormComponentFixture.detectChanges(); // ngOnInit
-    });
+        tick();
+        expect(textUnitFormComponent.form.invalid).to.be.true;
+        const name = textUnitFormComponent.form.get('name');
+        name!.setValue('');
+        expect(textUnitFormComponent.form.invalid).to.be.true;
+        name!.setValue('test');
+        expect(textUnitFormComponent.form.invalid).to.be.false;
+    }));
+
+    it('should update local storage on markdown change', fakeAsync(() => {
+        const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as any);
+        const fakeUrl = '/test';
+        routerMock.setUrl(fakeUrl);
+        textUnitFormComponentFixture.detectChanges(); // ngOnInit
+        tick();
+        const markdownEditor: MarkdownEditorStubComponent = textUnitFormComponentFixture.debugElement.query(By.directive(MarkdownEditorStubComponent)).componentInstance;
+        const exampleMarkdown = 'Lorem Ipsum';
+        markdownEditor.markdownChange.emit(exampleMarkdown);
+        tick(500);
+        const savedCache = JSON.parse(store[fakeUrl]);
+        expect(savedCache).to.be.ok;
+        expect(savedCache.markdown).to.equal(exampleMarkdown);
+    }));
 
     it('should correctly set form values in edit mode', fakeAsync(() => {
         const formData: TextUnitFormData = {
