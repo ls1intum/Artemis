@@ -852,7 +852,6 @@ public class ProgrammingExerciseResource {
      * @param exerciseId the id of the exercise to get the repos from
      * @param participantIdentifiers the identifiers of the participants (student logins or team short names) for whom to zip the submissions, separated by commas
      * @param repositoryExportOptions the options that should be used for the export
-     * @param hideStudentName option to hide to student name for the export
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
@@ -860,8 +859,7 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
-            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions, @RequestParam(value = "hideStudentName", defaultValue = "false") boolean hideStudentName)
-            throws IOException {
+            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
 
@@ -895,7 +893,7 @@ public class ProgrammingExerciseResource {
                 exportedStudentParticipations.add(programmingStudentParticipation);
             }
         }
-        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions, hideStudentName);
+        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
     }
 
     /**
@@ -904,7 +902,6 @@ public class ProgrammingExerciseResource {
      * @param exerciseId the id of the exercise to get the repos from
      * @param participationIds the participationIds seperated via semicolon to get their submissions (used for double blind assessment)
      * @param repositoryExportOptions the options that should be used for the export. Export all students is not supported here!
-     * @param hideStudentName the option to hide the student name for the export.
      * @return ResponseEntity with status
      * @throws IOException if submissions can't be zippedRequestBody
      */
@@ -912,8 +909,7 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
-            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions, @RequestParam(value = "hideStudentName", defaultValue = "false") boolean hideStudentName)
-            throws IOException {
+            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
@@ -930,11 +926,11 @@ public class ProgrammingExerciseResource {
         List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = programmingExercise.getStudentParticipations().stream()
                 .filter(participation -> participationIdSet.contains(participation.getId())).map(participation -> (ProgrammingExerciseStudentParticipation) participation)
                 .collect(Collectors.toList());
-        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions, hideStudentName);
+        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
     }
 
     private ResponseEntity<Resource> provideZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations,
-            ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions, boolean hideStudentName) throws IOException {
+            ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
 
         long start = System.nanoTime();
 
@@ -945,8 +941,7 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
 
-        File zipFile = programmingExerciseExportService.exportStudentRepositories(programmingExercise.getId(), exportedStudentParticipations, repositoryExportOptions,
-                hideStudentName);
+        File zipFile = programmingExerciseExportService.exportStudentRepositories(programmingExercise.getId(), exportedStudentParticipations, repositoryExportOptions);
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
