@@ -670,15 +670,20 @@ public class GitService {
      * @return path to zip file.
      */
     public Path zipRepository(Repository repo, String targetPath, boolean hideStudentName) throws IOException {
+        /*
+         * This will split the repositoryUrl e.g. http://artemis-admin@localhost:7990/scm/TC1SCHEDULER1/tc1scheduler1-artemis-admin.git into a string array e.g. ["http", "",
+         * "artemis-admin@localhost:7990", "scm", "TC1SCHEDULER1", "tc1scheduler1-artemis-admin.git"]
+         */
         String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split(File.separator);
         ProgrammingExercise exercise = repo.getParticipation().getProgrammingExercise();
         String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName().replaceAll("\\s", "");
         String zipRepoName;
         if (hideStudentName) {
-            zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 2].toLowerCase() + "-student-submission" + ".zip";
+            // Take the last but one component, which does not contain the students name
+            zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 2].toLowerCase() + "-student-submission.git" + ".zip";
         }
         else {
-            // take the last component
+            // Take the last component, which contains the students name
             zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";
         }
 
