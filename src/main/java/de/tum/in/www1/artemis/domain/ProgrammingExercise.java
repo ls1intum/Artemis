@@ -66,7 +66,7 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "sequential_test_runs")
     private Boolean sequentialTestRuns;
 
-    @Column(name = "show_test_names_to_students")
+    @Column(name = "show_test_names_to_students", table = "programming_exercise_details")
     private Boolean showTestNamesToStudents;
 
     @Nullable
