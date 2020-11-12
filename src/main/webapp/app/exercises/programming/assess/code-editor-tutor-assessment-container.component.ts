@@ -65,6 +65,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     participationCouldNotBeFetched = false;
     showEditorInstructions = true;
     hasAssessmentDueDatePassed: boolean;
+    adjustedRepositoryURL: string;
 
     private get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
@@ -131,6 +132,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     if (this.manualResult && this.manualResult.hasComplaint) {
                         this.getComplaint();
                     }
+                    this.createAdjustedRepositoryUrl();
                 },
                 () => {
                     this.participationCouldNotBeFetched = true;
@@ -276,7 +278,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     onUpdateFeedback(feedbacks: Feedback[]) {
         // Filter out other feedback than manual feedback
-        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != null && feedbackElement.type === FeedbackType.MANUAL);
+        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         this.validateFeedback();
     }
 
@@ -306,6 +308,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     readOnly() {
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+    }
+
+    /**
+     * Removes the login from the repositoryURL
+     */
+    private createAdjustedRepositoryUrl() {
+        this.adjustedRepositoryURL = this.participation.repositoryUrl || '';
+        if (this.participation.student && this.participation.repositoryUrl) {
+            const userName = this.participation.student.login + '@';
+            if (this.participation.repositoryUrl.includes(userName)) {
+                this.adjustedRepositoryURL = this.participation.repositoryUrl.replace(userName, '');
+            }
+        }
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
@@ -371,7 +386,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private handleFeedback(): void {
         // Setup automatic feedback
-        this.automaticFeedback = this.automaticResult?.feedbacks!;
+        this.automaticFeedback = this.automaticResult?.feedbacks ?? [];
         this.automaticFeedback.forEach((feedback) => {
             feedback.id = undefined;
             if (!feedback.credits) {
@@ -381,11 +396,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         // Setup not automatically generated feedbacks
         const feedbacks = this.manualResult?.feedbacks || [];
-        this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+        this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
 
-        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != null && feedbackElement.type === FeedbackType.MANUAL);
+        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         const generalFeedbackIndex = feedbacks.findIndex(
-            (feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED && feedbackElement.type !== FeedbackType.AUTOMATIC,
+            (feedbackElement) =>
+                feedbackElement.reference == undefined && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED && feedbackElement.type !== FeedbackType.AUTOMATIC,
         );
         if (generalFeedbackIndex !== -1) {
             this.generalFeedback = feedbacks[generalFeedbackIndex];

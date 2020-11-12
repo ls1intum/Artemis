@@ -95,13 +95,10 @@ public class ProgrammingExerciseImportService {
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
-        final var projectKey = newExercise.getProjectKey();
-        final var templatePlanName = BuildPlanType.TEMPLATE.getName();
-        final var solutionPlanName = BuildPlanType.SOLUTION.getName();
 
-        programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise, projectKey, solutionPlanName);
-        programmingExerciseParticipationService.setupInitalTemplateParticipation(newExercise, projectKey, templatePlanName);
-        setupTestRepository(newExercise, projectKey);
+        programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise);
+        programmingExerciseParticipationService.setupInitalTemplateParticipation(newExercise);
+        setupTestRepository(newExercise);
         programmingExerciseService.initParticipations(newExercise);
 
         // Hints, test cases and static code analysis categories
@@ -166,7 +163,8 @@ public class ProgrammingExerciseImportService {
         // running the plan for the first time
         cloneAndEnableAllBuildPlans(templateExercise, newExercise);
 
-        updatePlanRepositoriesInBuildPlans(newExercise, templateParticipation, solutionParticipation, targetExerciseProjectKey);
+        updatePlanRepositoriesInBuildPlans(newExercise, templateParticipation, solutionParticipation, targetExerciseProjectKey, templateExercise.getTemplateRepositoryUrl(),
+                templateExercise.getSolutionRepositoryUrl(), templateExercise.getTestRepositoryUrl());
 
         try {
             continuousIntegrationService.get().triggerBuild(templateParticipation);
@@ -179,19 +177,20 @@ public class ProgrammingExerciseImportService {
     }
 
     private void updatePlanRepositoriesInBuildPlans(ProgrammingExercise newExercise, TemplateProgrammingExerciseParticipation templateParticipation,
-            SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey) {
+            SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey, String oldExerciseRepoUrl, String oldSolutionRepoUrl,
+            String oldTestRepoUrl) {
         // update 2 repositories for the template (BASE) build plan --> adapt the triggers so that only the assignment repo (and not the tests repo) will trigger the BASE build
         // plan
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTemplateRepositoryUrl(), Optional.of(List.of(ASSIGNMENT_REPO_NAME)));
+                newExercise.getTemplateRepositoryUrl(), oldExerciseRepoUrl, Optional.of(List.of(ASSIGNMENT_REPO_NAME)));
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTestRepositoryUrl(), Optional.empty());
+                newExercise.getTestRepositoryUrl(), oldTestRepoUrl, Optional.empty());
 
         // update 2 repositories for the solution (SOLUTION) build plan
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getSolutionRepositoryUrl(), Optional.empty());
+                newExercise.getSolutionRepositoryUrl(), oldSolutionRepoUrl, Optional.empty());
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTestRepositoryUrl(), Optional.empty());
+                newExercise.getTestRepositoryUrl(), oldTestRepoUrl, Optional.empty());
     }
 
     private void cloneAndEnableAllBuildPlans(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) {
@@ -291,11 +290,10 @@ public class ProgrammingExerciseImportService {
      * repository on the version control server!
      *
      * @param newExercise the new exercises that should be created during import
-     * @param projectKey the unique project key for the exercise
      */
-    private void setupTestRepository(ProgrammingExercise newExercise, String projectKey) {
-        final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
+    private void setupTestRepository(ProgrammingExercise newExercise) {
+        final var testRepoName = newExercise.generateRepositoryName(RepositoryType.TESTS);
+        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getProjectKey(), testRepoName).toString());
     }
 
     /**
@@ -320,9 +318,9 @@ public class ProgrammingExerciseImportService {
 
         final var user = userService.getUser();
 
-        adjustProjectName(replacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName(), user);
-        adjustProjectName(replacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName(), user);
-        adjustProjectName(replacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName(), user);
+        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TEMPLATE), user);
+        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TESTS), user);
+        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.SOLUTION), user);
     }
 
     /**

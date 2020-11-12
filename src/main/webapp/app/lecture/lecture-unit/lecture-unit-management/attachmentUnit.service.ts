@@ -16,9 +16,9 @@ export class AttachmentUnitService {
 
     constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
 
-    findById(attachmentUnitId: number) {
+    findById(attachmentUnitId: number, lectureId: number) {
         return this.httpClient
-            .get<AttachmentUnit>(`${this.resourceURL}/attachment-units/${attachmentUnitId}`, { observe: 'response' })
+            .get<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
     }
 

@@ -65,6 +65,7 @@
                 "createFile": "Datei erstellen",
                 "renameFolder": "Verzeichnis umbenennen",
                 "renameFile": "Datei umbenennen",
+                "renameFolderDisabledTooltip": "Um Verzeichnisse umzubenennen, deaktiviere das Zusammenfassen von Verzeichnissen in der obrigen Leiste.",
                 "deleteFolder": "Verzeichnis löschen",
                 "deleteFile": "Datei löschen",
                 "compressTree": "Leere Verzeichnisse zusammenfassen"

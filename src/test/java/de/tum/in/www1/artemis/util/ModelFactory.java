@@ -118,7 +118,7 @@ public class ModelFactory {
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(ProjectType.ECLIPSE);
         programmingExercise.setPackageName("de.test");
-        final var repoName = (programmingExercise.getProjectKey() + "-" + RepositoryType.TESTS.getName()).toLowerCase();
+        final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
         String testRepoUrl = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUrl(testRepoUrl);
     }
@@ -790,6 +790,7 @@ public class ModelFactory {
             case SPOTBUGS -> "BAD_PRACTICE";
             case PMD -> "Best Practices";
             case CHECKSTYLE -> "coding";
+            case PMD_CPD -> "Copy/Paste Detection";
         };
 
         var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();

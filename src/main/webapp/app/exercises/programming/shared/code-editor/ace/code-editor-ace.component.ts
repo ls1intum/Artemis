@@ -5,6 +5,11 @@ import 'brace/mode/markdown';
 import 'brace/mode/haskell';
 import 'brace/mode/c_cpp';
 import 'brace/mode/python';
+import 'brace/mode/swift';
+import 'brace/mode/makefile';
+import 'brace/mode/kotlin';
+import 'brace/mode/assembly_x86';
+import 'brace/mode/vhdl';
 import 'brace/theme/dreamweaver';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
@@ -276,7 +281,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             const sessionAnnotations = this.loadAnnotations();
             this.annotationsArray = annotations.map((a) => {
                 const hash = a.fileName + a.row + a.column + a.text;
-                if (sessionAnnotations[hash] == null || sessionAnnotations[hash].timestamp < a.timestamp) {
+                if (sessionAnnotations[hash] == undefined || sessionAnnotations[hash].timestamp < a.timestamp) {
                     return { ...a, hash };
                 } else {
                     return sessionAnnotations[hash];
