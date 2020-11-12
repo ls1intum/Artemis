@@ -130,24 +130,16 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final var user = userService.getUser();
-        final var projectKey = programmingExercise.getProjectKey();
-        // TODO: the following code is used quite often and should be done in only one place
-        final var exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        final var solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
-        final var exerciseRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).getURL();
-        final var testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).getURL();
-        final var solutionRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).getURL();
 
-        createRepositoriesForNewExercise(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
+        createRepositoriesForNewExercise(programmingExercise);
         initParticipations(programmingExercise);
-        setURLsAndBuildPlanIDsForNewExercise(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
+        setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
 
         // Save participations to get the ids required for the webhooks
         connectBaseParticipationsToExerciseAndSave(programmingExercise);
 
-        setupExerciseTemplate(programmingExercise, user, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
-        setupBuildPlansForNewExercise(programmingExercise, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
+        setupExerciseTemplate(programmingExercise, user);
+        setupBuildPlansForNewExercise(programmingExercise);
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
@@ -170,8 +162,22 @@ public class ProgrammingExerciseService {
         instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExerciseId);
     }
 
-    private void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl) {
+    /**
+     * Creates build plans for a new programming exercise.
+     * 1. Create the project for the exercise on the CI Server
+     * 2. Create template and solution build plan in this project
+     * 3. Configure CI permissions
+     *
+     * @param programmingExercise Programming exercise for the the build plans should be generated. The programming
+     *                            exercise should contain a fully initialized template and solution participation.
+     */
+    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
+        // Get URLs for repos
+        URL exerciseRepoUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
+        URL testsRepoUrl = programmingExercise.getTestRepositoryUrlAsUrl();
+        URL solutionRepoUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
+
         continuousIntegrationService.get().createProjectForExercise(programmingExercise);
         // template build plan
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
@@ -197,16 +203,19 @@ public class ProgrammingExerciseService {
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
     }
 
-    private void setURLsAndBuildPlanIDsForNewExercise(ProgrammingExercise programmingExercise, String exerciseRepoName, String testRepoName, String solutionRepoName) {
+    private void setURLsAndBuildPlanIDsForNewExercise(ProgrammingExercise programmingExercise) {
         final var projectKey = programmingExercise.getProjectKey();
         final var templateParticipation = programmingExercise.getTemplateParticipation();
         final var solutionParticipation = programmingExercise.getSolutionParticipation();
-        final var templatePlanName = TEMPLATE.getName();
-        final var solutionPlanName = SOLUTION.getName();
+        final var templatePlanId = programmingExercise.generateBuildPlanId(TEMPLATE);
+        final var solutionPlanId = programmingExercise.generateBuildPlanId(SOLUTION);
+        final var exerciseRepoName = programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var solutionRepoName = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
+        final var testRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
 
-        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName); // Set build plan id to newly created BaseBuild plan
+        templateParticipation.setBuildPlanId(templatePlanId); // Set build plan id to newly created BaseBuild plan
         templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
-        solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
+        solutionParticipation.setBuildPlanId(solutionPlanId);
         solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
     }
@@ -215,12 +224,13 @@ public class ProgrammingExerciseService {
      * Setup the exercise template by determining the files needed for the template and copying them.
      * @param programmingExercise the programming exercise that should be set up
      * @param user the User that performed the action (used as Git commit author)
-     * @param exerciseRepoUrl the URL where the exercise repo is located
-     * @param testsRepoUrl the URL where the tests repo is located
-     * @param solutionRepoUrl the URL where the solution repo is located
      */
-    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl)
-            throws IOException, GitAPIException, InterruptedException {
+    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user) throws IOException, GitAPIException, InterruptedException {
+
+        // Get URLs for repos
+        URL exerciseRepoUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
+        URL testsRepoUrl = programmingExercise.getTestRepositoryUrlAsUrl();
+        URL solutionRepoUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
 
         // Checkout repositories
         Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl, true);
@@ -293,12 +303,12 @@ public class ProgrammingExerciseService {
         return "templates/" + programmingLanguage.name().toLowerCase();
     }
 
-    private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise, String templateRepoName, String testRepoName, String solutionRepoName) {
+    private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) {
         final var projectKey = programmingExercise.getProjectKey();
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
-        versionControlService.get().createRepository(projectKey, templateRepoName, null); // Create template repository
-        versionControlService.get().createRepository(projectKey, testRepoName, null); // Create tests repository
-        versionControlService.get().createRepository(projectKey, solutionRepoName, null); // Create solution repository
+        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
+        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests repository
+        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution repository
     }
 
     /**
