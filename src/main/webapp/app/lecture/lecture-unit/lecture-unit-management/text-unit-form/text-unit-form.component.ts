@@ -50,7 +50,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
 
     ngOnChanges(): void {
         this.initializeForm();
-        if (this.isEditMode) {
+        if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);
         }
     }
