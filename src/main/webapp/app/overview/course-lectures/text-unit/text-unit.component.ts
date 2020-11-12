@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { SERVER_API_URL } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-text-unit',
@@ -35,11 +36,7 @@ export class TextUnitComponent implements OnInit {
         const height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
         const win = window.open('', ' ', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,' + `width=${width},height=${height}`);
         win!.document.write(`<html><head><title>${this.textUnit.name}</title>`);
-        win!.document.write(
-            '<link rel="stylesheet" ' +
-                'href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css" ' +
-                'integrity="sha512-Oy18vBnbSJkXTndr2n6lDMO5NN31UljR8e/ICzVPrGpSud4Gkckb8yUpqhKuUNoE+o9gAb4O/rAxxw1ojyUVzg==" crossorigin="anonymous" />',
-        );
+        win!.document.write(`<link rel="stylesheet" href="${SERVER_API_URL}public/content/github-markdown.css">`);
         win!.document.write('</head><body class="markdown-body">');
         win!.document.write('</body></html>');
         win!.document.close();
