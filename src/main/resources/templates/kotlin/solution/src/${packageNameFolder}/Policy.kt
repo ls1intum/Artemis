@@ -1,6 +1,6 @@
 package ${packageName}
 
-class Policy(private var context: Context) {
+class Policy(private val context: Context) {
 
     fun configure(timeIsImportant: Boolean, spaceIsImportant: Boolean) {
         if (timeIsImportant && !spaceIsImportant) {
