@@ -6,10 +6,8 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { ArtemisTestModule } from '../../test.module';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import * as moment from 'moment';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -49,10 +47,10 @@ describe('TextUnitFormComponent', () => {
         });
 
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, ArtemisTestModule],
+            imports: [ReactiveFormsModule, FormsModule],
             declarations: [TextUnitFormComponent, MarkdownEditorStubComponent, MockComponent(FormDateTimePickerComponent), MockPipe(TranslatePipe)],
+            providers: [MockProvider(TranslateService), { provide: Router, useClass: MockRouter }],
             schemas: [],
-            providers: [{ provide: TranslateService, useValue: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -64,6 +62,66 @@ describe('TextUnitFormComponent', () => {
     afterEach(function () {
         sandbox.restore();
     });
+
+    it('should take markdown from cache', fakeAsync(() => {
+        // Setting up the fake local storage
+        const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as any);
+        const fakeUrl = '/test';
+        routerMock.setUrl(fakeUrl);
+        const cache = {
+            markdown: 'Lorem Ipsum',
+            date: moment({ years: 2010, months: 3, date: 5 }).format('MMM DD YYYY, HH:mm:ss'),
+        };
+        store[fakeUrl] = JSON.stringify(cache);
+
+        sandbox.stub(window, 'confirm').callsFake(() => {
+            return true;
+        });
+
+        const translateService = TestBed.inject(TranslateService);
+        sandbox.stub(translateService, 'instant').callsFake(() => {
+            return '';
+        });
+        textUnitFormComponentFixture.detectChanges(); // ngOnInit
+        tick();
+
+        expect(textUnitFormComponent.content).to.equal(cache.markdown);
+    }));
+
+    it('should submit valid form', fakeAsync(() => {
+        textUnitFormComponentFixture.detectChanges(); // ngOnInit
+        tick();
+
+        // simulate setting name
+        const exampleName = 'Test';
+        textUnitFormComponent.form.get('name')!.setValue(exampleName);
+        // simulate setting markdown
+        const markdownEditor: MarkdownEditorStubComponent = textUnitFormComponentFixture.debugElement.query(By.directive(MarkdownEditorStubComponent)).componentInstance;
+        const exampleMarkdown = 'Lorem Ipsum';
+        markdownEditor.markdownChange.emit(exampleMarkdown);
+
+        textUnitFormComponentFixture.detectChanges();
+        tick(500);
+        expect(textUnitFormComponent.form.valid).to.be.true;
+
+        const submitFormSpy = sinon.spy(textUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = sinon.spy(textUnitFormComponent.formSubmitted, 'emit');
+
+        const submitButton = textUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        submitButton.click();
+
+        textUnitFormComponentFixture.whenStable().then(() => {
+            expect(submitFormSpy).to.have.been.called;
+            expect(submitFormEventSpy).to.have.been.calledWith({
+                name: 'Test',
+                releaseDate: null,
+                content: exampleMarkdown,
+            });
+        });
+
+        submitFormSpy.restore();
+        submitFormEventSpy.restore();
+    }));
 
     it('should be invalid if name is not set and valid if set', fakeAsync(() => {
         textUnitFormComponentFixture.detectChanges(); // ngOnInit
@@ -89,6 +147,7 @@ describe('TextUnitFormComponent', () => {
         const savedCache = JSON.parse(store[fakeUrl]);
         expect(savedCache).to.be.ok;
         expect(savedCache.markdown).to.equal(exampleMarkdown);
+        expect(textUnitFormComponent.content).to.equal(exampleMarkdown);
     }));
 
     it('should correctly set form values in edit mode', fakeAsync(() => {
