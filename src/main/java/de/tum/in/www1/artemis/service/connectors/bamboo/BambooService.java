@@ -281,10 +281,10 @@ public class BambooService implements ContinuousIntegrationService {
         if (buildPlan == null) {
             return BuildStatus.INACTIVE;
         }
-        if (buildPlan.isActive() && !buildPlan.isBuilding()) {
+        if (buildPlan.getIsActive() && !buildPlan.getIsBuilding()) {
             return BuildStatus.QUEUED;
         }
-        else if (buildPlan.isActive() && buildPlan.isBuilding()) {
+        else if (buildPlan.getIsActive() && buildPlan.getIsBuilding()) {
             return BuildStatus.BUILDING;
         }
         else {
