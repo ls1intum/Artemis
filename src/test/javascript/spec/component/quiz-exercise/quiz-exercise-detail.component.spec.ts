@@ -31,7 +31,6 @@ import { ArtemisTestModule } from '../../test.module';
 import { advanceTo } from 'jest-date-mock';
 import { By } from '@angular/platform-browser';
 
-
 chai.use(sinonChai);
 const expect = chai.expect;
 
@@ -65,7 +64,7 @@ describe('QuizExercise Management Detail Component', () => {
         mcQuestion.title = 'test';
         mcQuestion.answerOptions = [answerOption];
         quizExercise.quizQuestions = [mcQuestion];
-    }
+    };
 
     const createValidMCQuestion = () => {
         const question = new MultipleChoiceQuestion();
@@ -81,11 +80,11 @@ describe('QuizExercise Management Detail Component', () => {
         answerOption1.isCorrect = true;
         question.answerOptions = [answerOption1, answerOption2];
         return { question, answerOption1, answerOption2 };
-    }
+    };
 
     const createValidDnDQuestion = () => {
         const question = new DragAndDropQuestion();
-        question.title = 'test'
+        question.title = 'test';
         const dragItem1 = new DragItem();
         dragItem1.text = 'dragItem 1';
         const dragItem2 = new DragItem();
@@ -100,7 +99,7 @@ describe('QuizExercise Management Detail Component', () => {
         const dragAndDropMapping = new DragAndDropMapping(dragItem1, dropLocation1);
         question.correctMappings = [dragAndDropMapping];
         return { question, dragItem1, dragItem2, dropLocation1 };
-    }
+    };
 
     const createValidSAQuestion = () => {
         const question = new ShortAnswerQuestion();
@@ -122,26 +121,27 @@ describe('QuizExercise Management Detail Component', () => {
         const shortAnswerMapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
         const shortAnswerMapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
         question.correctMappings = [shortAnswerMapping1, shortAnswerMapping2];
-        return { question, shortAnswerMapping1, shortAnswerMapping2, spot1, spot2, shortAnswerSolution1, shortAnswerSolution2 }
-    }
+        return { question, shortAnswerMapping1, shortAnswerMapping2, spot1, spot2, shortAnswerSolution1, shortAnswerSolution2 };
+    };
 
-    beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [QuizExerciseDetailComponent],
-            providers: [
-                { provide: ActivatedRoute, useValue: route },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
-        })
-            .overrideTemplate(QuizExerciseDetailComponent, '')
-            .compileComponents();
-    }))
+    beforeEach(
+        waitForAsync(() => {
+            TestBed.configureTestingModule({
+                imports: [ArtemisTestModule],
+                declarations: [QuizExerciseDetailComponent],
+                providers: [
+                    { provide: ActivatedRoute, useValue: route },
+                    { provide: LocalStorageService, useClass: MockSyncStorage },
+                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                ],
+            })
+                .overrideTemplate(QuizExerciseDetailComponent, '')
+                .compileComponents();
+        }),
+    );
 
     beforeEach(() => {
-
         fixture = TestBed.createComponent(QuizExerciseDetailComponent);
         comp = fixture.componentInstance;
         courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
@@ -241,7 +241,7 @@ describe('QuizExercise Management Detail Component', () => {
 
         afterAll(() => {
             quizExercise.quizQuestions = [mcQuestion];
-        })
+        });
     });
 
     describe('delete questions', () => {
@@ -277,7 +277,6 @@ describe('QuizExercise Management Detail Component', () => {
             expect(comp.quizExercise.quizQuestions).to.have.lengthOf(amountQuizQuestions - 1);
             expect(comp.quizExercise.quizQuestions?.filter((question) => question === questionToDelete));
         });
-
     });
 
     describe('import questions', () => {
@@ -366,7 +365,7 @@ describe('QuizExercise Management Detail Component', () => {
             comp.quizExercise.quizQuestions = [question];
             comp.cacheValidation();
             expect(comp.quizIsValid).to.equal(true);
-        })
+        });
 
         it('should not be valid if MC question has no title', () => {
             const { question } = createValidMCQuestion();
@@ -389,7 +388,7 @@ describe('QuizExercise Management Detail Component', () => {
             comp.quizExercise.quizQuestions = [question];
             comp.cacheValidation();
             expect(comp.quizIsValid).to.equal(true);
-        })
+        });
 
         it('should not be valid if DnD question has no title', () => {
             const { question } = createValidDnDQuestion();
@@ -412,7 +411,7 @@ describe('QuizExercise Management Detail Component', () => {
             comp.quizExercise.quizQuestions = [question];
             comp.cacheValidation();
             expect(comp.quizIsValid).to.equal(true);
-        })
+        });
 
         it('should not be valid if SA question has no title', () => {
             const { question } = createValidSAQuestion();
@@ -420,7 +419,7 @@ describe('QuizExercise Management Detail Component', () => {
             comp.quizExercise.quizQuestions = [question];
             comp.cacheValidation();
             expect(comp.quizIsValid).to.equal(false);
-        })
+        });
 
         it('should not be valid if SA question has no correct mapping', () => {
             const { question } = createValidSAQuestion();
@@ -428,8 +427,7 @@ describe('QuizExercise Management Detail Component', () => {
             comp.quizExercise.quizQuestions = [question];
             comp.cacheValidation();
             expect(comp.quizIsValid).to.equal(false);
-        })
-
+        });
     });
 
     describe('saving', () => {
@@ -456,26 +454,25 @@ describe('QuizExercise Management Detail Component', () => {
             comp.quizExercise.id = undefined;
             comp.cacheValidation();
             comp.pendingChangesCache = true;
-            comp.save()
+            comp.save();
             expect(quizExerciseServiceCreateStub).to.have.been.called;
             expect(quizExerciseServiceUpdateStub).to.not.have.been.called;
-        })
+        });
 
         it('should update if valid and quiz exercise has id', () => {
             comp.cacheValidation();
             comp.pendingChangesCache = true;
-            comp.save()
+            comp.save();
             expect(quizExerciseServiceCreateStub).to.not.have.been.called;
             expect(quizExerciseServiceUpdateStub).to.have.been.called;
-        })
+        });
 
         it('should not save if not valid', () => {
             comp.cacheValidation();
             comp.pendingChangesCache = true;
-            comp.save()
+            comp.save();
             expect(quizExerciseServiceCreateStub).to.not.have.been.called;
             expect(quizExerciseServiceUpdateStub).to.have.been.called;
-        })
-    })
-
+        });
+    });
 });
