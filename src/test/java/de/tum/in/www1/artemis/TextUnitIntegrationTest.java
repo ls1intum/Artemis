@@ -84,46 +84,28 @@ public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateTextUnit_asInstructor_shouldUpdateTextUnit() throws Exception {
-        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
-        lecture1.addLectureUnit(this.textUnit);
-        lectureRepository.save(lecture1);
-        this.textUnit = (TextUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
-        this.textUnit.setContent("Changed");
-        this.textUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/text-units", this.textUnit, TextUnit.class, HttpStatus.OK);
-        assertThat(this.textUnit.getContent()).isEqualTo("Changed");
-    }
-
-    @Test
-    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    public void updateTextUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
-        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
-        lecture1.addLectureUnit(this.textUnit);
-        lectureRepository.save(lecture1);
-        this.textUnit = (TextUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
-        this.textUnit.setContent("Changed");
-        this.textUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/text-units", this.textUnit, TextUnit.class, HttpStatus.FORBIDDEN);
+        var persistedTextUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/text-units", this.textUnit, TextUnit.class, HttpStatus.CREATED);
+        TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture1.getId() + "/text-units/" + persistedTextUnit.getId(), HttpStatus.OK, TextUnit.class);
+        textUnitFromRequest.setContent("Changed");
+        TextUnit updatedTextUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.OK);
+        assertThat(updatedTextUnit.getContent()).isEqualTo("Changed");
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateTextUnit_noId_shouldReturnBadRequest() throws Exception {
-        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
-        lecture1.addLectureUnit(this.textUnit);
-        lectureRepository.save(lecture1);
-        this.textUnit = (TextUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
-        this.textUnit.setId(null);
-        this.textUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/text-units", this.textUnit, TextUnit.class, HttpStatus.BAD_REQUEST);
+        var persistedTextUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/text-units", this.textUnit, TextUnit.class, HttpStatus.CREATED);
+        TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture1.getId() + "/text-units/" + persistedTextUnit.getId(), HttpStatus.OK, TextUnit.class);
+        textUnitFromRequest.setId(null);
+        request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getTextUnit_correctId_shouldReturnTextUnit() throws Exception {
-        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
-        lecture1.addLectureUnit(this.textUnit);
-        lectureRepository.save(lecture1);
-        this.textUnit = (TextUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
-        TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture1.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
-        assertThat(this.textUnit.getId()).isEqualTo(textUnitFromRequest.getId());
+        var persistedTextUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/text-units", this.textUnit, TextUnit.class, HttpStatus.CREATED);
+        TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture1.getId() + "/text-units/" + persistedTextUnit.getId(), HttpStatus.OK, TextUnit.class);
+        assertThat(persistedTextUnit.getId()).isEqualTo(textUnitFromRequest.getId());
     }
 
     @Test
