@@ -5,8 +5,6 @@ import { TaskArray } from 'app/exercises/programming/shared/instructions-render/
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
-import { getExercise } from 'app/entities/participation/participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-step-wizard',
