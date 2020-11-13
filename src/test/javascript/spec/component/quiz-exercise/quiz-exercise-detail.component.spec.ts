@@ -237,14 +237,13 @@ describe('QuizExercise Management Detail Component', () => {
     });
 
     describe('delete questions', () => {
-
         const deleteQuestionAndExpect = () => {
             const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
             const questionToDelete = comp.quizExercise.quizQuestions![amountQuizQuestions - 1];
             comp.deleteQuestion(questionToDelete);
             expect(comp.quizExercise.quizQuestions).to.have.lengthOf(amountQuizQuestions - 1);
             expect(comp.quizExercise.quizQuestions?.filter((question) => question === questionToDelete));
-        }
+        };
         // setup
         beforeEach(() => {
             resetQuizExercise();
@@ -268,7 +267,6 @@ describe('QuizExercise Management Detail Component', () => {
     });
 
     describe('import questions', () => {
-
         const importQuestionAndExpectOneMoreQuestionInQuestions = (question: QuizQuestion, withTick: boolean) => {
             const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
             comp.verifyAndImportQuestions([question]);
@@ -276,7 +274,7 @@ describe('QuizExercise Management Detail Component', () => {
                 tick();
             }
             expect(comp.quizExercise.quizQuestions).to.have.lengthOf(amountQuizQuestions + 1);
-        }
+        };
         // setup
         beforeEach(() => {
             resetQuizExercise();
@@ -332,14 +330,14 @@ describe('QuizExercise Management Detail Component', () => {
             comp.quizExercise.quizQuestions = [question];
             comp.cacheValidation();
             expect(comp.quizIsValid).to.equal(false);
-        }
+        };
 
         const removeCorrectMappingsAndExpectInvalidQuiz = (question: DragAndDropQuestion | ShortAnswerQuestion) => {
             question.correctMappings = [];
             comp.quizExercise.quizQuestions = [question];
             comp.cacheValidation();
             expect(comp.quizIsValid).to.equal(false);
-        }
+        };
 
         beforeEach(() => {
             resetQuizExercise();
@@ -420,7 +418,7 @@ describe('QuizExercise Management Detail Component', () => {
             comp.cacheValidation();
             comp.pendingChangesCache = true;
             comp.save();
-        }
+        };
 
         beforeEach(() => {
             resetQuizExercise();
