@@ -1,10 +1,10 @@
-import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { async, ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { ActivatedRoute, convertToParamMap, ParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
 import { Mutable } from '../../helpers/mutable';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -37,6 +37,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import moment = require('moment');
+import { flush } from '@sentry/browser';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -46,11 +48,9 @@ describe('ModelingAssessmentEditorComponent', () => {
     let fixture: ComponentFixture<ModelingAssessmentEditorComponent>;
     let service: ModelingAssessmentService;
     let mockAuth: MockAccountService;
+    let router: MockRouter;
 
-    let httpMock: HttpTestingController;
-    let expectedResult: any;
-
-    beforeEach(async(() => {
+    beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
             imports: [RouterTestingModule, TranslateModule.forRoot(), ArtemisTestModule, ArtemisModelingAssessmentEditorModule],
             declarations: [],
@@ -68,14 +68,16 @@ describe('ModelingAssessmentEditorComponent', () => {
                 component = fixture.componentInstance;
                 service = TestBed.inject(ModelingAssessmentService);
 
-                httpMock = TestBed.get(HttpTestingController);
                 mockAuth = (fixture.debugElement.injector.get(AccountService) as any) as MockAccountService;
                 mockAuth.hasAnyAuthorityDirect([]);
                 mockAuth.identity();
                 fixture.detectChanges();
             });
-        expectedResult = {} as HttpResponse<ExampleSubmission[]>;
     }));
+
+    afterEach(() => {
+        sinon.restore();
+    });
 
     it('should create', () => {
         expect(component.ngOnInit()).to.be.undefined; // not perfect yet, returns undefined
@@ -293,7 +295,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             text: 'Test\n\nTest\n\nTest',
         } as unknown) as ModelingSubmission;
 
-        const fake = sinon.fake.returns(new Observable<any>()); // syntaxError in service
+        const fake = sinon.fake.returns(of()); // syntaxError in service
         sinon.replace(service, 'cancelAssessment', fake);
         // const fake = sinon.fake.returns(true);
         // sinon.replace(component, 'navigateBack', fake);
@@ -301,5 +303,42 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.onCancelAssessment();
         expect(windowFake).to.have.been.calledOnce;
         expect(fake).to.have.been.calledOnce;
+    }));
+
+    it('should handle changed feedback', fakeAsync(() => {
+        let feedbacks = [
+            {
+                id: 0,
+                credits: 3,
+                reference: 'reference',
+            } as Feedback,
+            {
+                id: 1,
+                credits: 1,
+            } as Feedback,
+        ];
+        let course = new Course();
+        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+        component.modelingExercise.maxScore = 5;
+        component.modelingExercise.bonusPoints = 5;
+
+        component.onFeedbackChanged(feedbacks);
+        expect(component.referencedFeedback).to.have.lengthOf(1);
+        expect(component.totalScore).to.be.equal(3);
+    }));
+
+    it('no submissions left', fakeAsync(() => {
+        let course = new Course();
+        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+        component.modelingExercise.id = 1;
+
+        const numbers: number[] = [];
+        const fake = sinon.fake.returns(of(numbers));
+        sinon.replace(service, 'getOptimalSubmissions', fake);
+        component.ngOnInit();
+        tick(500);
+        component.assessNextOptimal();
+        expect(fake).to.have.been.calledOnce;
+        // maybe expect jhiAlertService
     }));
 });
