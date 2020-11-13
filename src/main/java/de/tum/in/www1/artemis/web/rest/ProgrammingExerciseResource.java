@@ -456,13 +456,15 @@ public class ProgrammingExerciseResource {
      * @see ProgrammingExerciseImportService#importRepositories(ProgrammingExercise, ProgrammingExercise)
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param newExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @param recreateBuildPlans Flag which determines whether the build plans should be copied or re-created from scratch
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
      *         (403) if the user is not at least an instructor in the target course.
      */
     @PostMapping(Endpoints.IMPORT)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
+    public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise,
+            @RequestParam(defaultValue = "false") boolean recreateBuildPlans) {
         if (sourceExerciseId < 0) {
             return badRequest();
         }
@@ -547,10 +549,16 @@ public class ProgrammingExerciseResource {
         HttpHeaders responseHeaders;
         programmingExerciseImportService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
         try {
-            // We have removed the automatic build trigger from test to base for new programming exercises.
-            // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
-            // The importBuildPlans method includes this process
-            programmingExerciseImportService.importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
+            if (recreateBuildPlans) {
+                // Create completely new build plans for the exercise
+                programmingExerciseService.setupBuildPlansForNewExercise(importedProgrammingExercise);
+            }
+            else {
+                // We have removed the automatic build trigger from test to base for new programming exercises.
+                // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
+                // The importBuildPlans method includes this process
+                programmingExerciseImportService.importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
+            }
             responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle());
         }
         catch (HttpException e) {
