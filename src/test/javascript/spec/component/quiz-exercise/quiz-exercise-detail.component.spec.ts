@@ -11,7 +11,7 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
@@ -44,16 +44,6 @@ describe('QuizExercise Management Detail Component', () => {
     const mcQuestion = new MultipleChoiceQuestion();
     const answerOption = new AnswerOption();
 
-    quizExercise.id = 456;
-    quizExercise.title = 'test';
-    quizExercise.duration = 600;
-    answerOption.isCorrect = true;
-    mcQuestion.title = 'test';
-    mcQuestion.answerOptions = [answerOption];
-    quizExercise.quizQuestions = [mcQuestion];
-
-    const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id }) } } as any) as ActivatedRoute;
-
     const resetQuizExercise = () => {
         quizExercise.id = 456;
         quizExercise.title = 'test';
@@ -63,6 +53,10 @@ describe('QuizExercise Management Detail Component', () => {
         mcQuestion.answerOptions = [answerOption];
         quizExercise.quizQuestions = [mcQuestion];
     };
+
+    resetQuizExercise();
+
+    const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id }) } } as any) as ActivatedRoute;
 
     const createValidMCQuestion = () => {
         const question = new MultipleChoiceQuestion();
@@ -243,6 +237,14 @@ describe('QuizExercise Management Detail Component', () => {
     });
 
     describe('delete questions', () => {
+
+        const deleteQuestionAndExpect = () => {
+            const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
+            const questionToDelete = comp.quizExercise.quizQuestions![amountQuizQuestions - 1];
+            comp.deleteQuestion(questionToDelete);
+            expect(comp.quizExercise.quizQuestions).to.have.lengthOf(amountQuizQuestions - 1);
+            expect(comp.quizExercise.quizQuestions?.filter((question) => question === questionToDelete));
+        }
         // setup
         beforeEach(() => {
             resetQuizExercise();
@@ -251,33 +253,30 @@ describe('QuizExercise Management Detail Component', () => {
 
         it('should delete MC question', () => {
             comp.addMultipleChoiceQuestion();
-            const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
-            const questionToDelete = comp.quizExercise.quizQuestions![amountQuizQuestions - 1];
-            comp.deleteQuestion(questionToDelete);
-            expect(comp.quizExercise.quizQuestions).to.have.lengthOf(amountQuizQuestions - 1);
-            expect(comp.quizExercise.quizQuestions?.filter((question) => question === questionToDelete));
+            deleteQuestionAndExpect();
         });
 
         it('should delete DnD question', () => {
             comp.addDragAndDropQuestion();
-            const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
-            const questionToDelete = comp.quizExercise.quizQuestions![amountQuizQuestions - 1];
-            comp.deleteQuestion(questionToDelete);
-            expect(comp.quizExercise.quizQuestions).to.have.lengthOf(amountQuizQuestions - 1);
-            expect(comp.quizExercise.quizQuestions?.filter((question) => question === questionToDelete));
+            deleteQuestionAndExpect();
         });
 
         it('should delete SA question', () => {
             comp.addShortAnswerQuestion();
-            const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
-            const questionToDelete = comp.quizExercise.quizQuestions![amountQuizQuestions - 1];
-            comp.deleteQuestion(questionToDelete);
-            expect(comp.quizExercise.quizQuestions).to.have.lengthOf(amountQuizQuestions - 1);
-            expect(comp.quizExercise.quizQuestions?.filter((question) => question === questionToDelete));
+            deleteQuestionAndExpect();
         });
     });
 
     describe('import questions', () => {
+
+        const importQuestionAndExpectOneMoreQuestionInQuestions = (question: QuizQuestion, withTick: boolean) => {
+            const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
+            comp.verifyAndImportQuestions([question]);
+            if (withTick) {
+                tick();
+            }
+            expect(comp.quizExercise.quizQuestions).to.have.lengthOf(amountQuizQuestions + 1);
+        }
         // setup
         beforeEach(() => {
             resetQuizExercise();
@@ -286,12 +285,7 @@ describe('QuizExercise Management Detail Component', () => {
 
         it('should import MC question ', () => {
             const { question, answerOption1, answerOption2 } = createValidMCQuestion();
-
-            const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
-
-            comp.verifyAndImportQuestions([question]);
-
-            expect(comp.quizExercise.quizQuestions).to.have.lengthOf(amountQuizQuestions + 1);
+            importQuestionAndExpectOneMoreQuestionInQuestions(question, false);
             const lastAddedQuestion = comp.quizExercise.quizQuestions![comp.quizExercise.quizQuestions!.length - 1] as MultipleChoiceQuestion;
             expect(lastAddedQuestion.type).to.equal(QuizQuestionType.MULTIPLE_CHOICE);
             expect(lastAddedQuestion.answerOptions).to.have.lengthOf(2);
@@ -304,12 +298,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             // mock fileUploaderService
             spyOn(fileUploaderService, 'duplicateFile').and.returnValue(Promise.resolve({ path: 'test' }));
-
-            const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
-            comp.verifyAndImportQuestions([question]);
-            tick();
-
-            expect(comp.quizExercise.quizQuestions).to.have.lengthOf(amountQuizQuestions + 1);
+            importQuestionAndExpectOneMoreQuestionInQuestions(question, true);
             const lastAddedQuestion = comp.quizExercise.quizQuestions![comp.quizExercise.quizQuestions!.length - 1] as DragAndDropQuestion;
             expect(lastAddedQuestion.type).to.equal(QuizQuestionType.DRAG_AND_DROP);
             expect(lastAddedQuestion.correctMappings).to.have.lengthOf(1);
@@ -320,11 +309,7 @@ describe('QuizExercise Management Detail Component', () => {
 
         it('should import SA question', () => {
             const { question, shortAnswerMapping1, shortAnswerMapping2, spot1, spot2, shortAnswerSolution1, shortAnswerSolution2 } = createValidSAQuestion();
-
-            const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
-            comp.verifyAndImportQuestions([question]);
-
-            expect(comp.quizExercise.quizQuestions).to.have.lengthOf(amountQuizQuestions + 1);
+            importQuestionAndExpectOneMoreQuestionInQuestions(question, false);
             const lastAddedQuestion = comp.quizExercise.quizQuestions![comp.quizExercise.quizQuestions!.length - 1] as ShortAnswerQuestion;
             expect(lastAddedQuestion.type).to.equal(QuizQuestionType.SHORT_ANSWER);
             expect(lastAddedQuestion.correctMappings).to.have.lengthOf(2);
@@ -341,6 +326,20 @@ describe('QuizExercise Management Detail Component', () => {
 
     describe('quiz validity', () => {
         // setup
+
+        const removeQuestionTitleAndExpectInvalidQuiz = (question: QuizQuestion) => {
+            question.title = '';
+            comp.quizExercise.quizQuestions = [question];
+            comp.cacheValidation();
+            expect(comp.quizIsValid).to.equal(false);
+        }
+
+        const removeCorrectMappingsAndExpectInvalidQuiz = (question: DragAndDropQuestion | ShortAnswerQuestion) => {
+            question.correctMappings = [];
+            comp.quizExercise.quizQuestions = [question];
+            comp.cacheValidation();
+            expect(comp.quizIsValid).to.equal(false);
+        }
 
         beforeEach(() => {
             resetQuizExercise();
@@ -367,10 +366,7 @@ describe('QuizExercise Management Detail Component', () => {
 
         it('should not be valid if MC question has no title', () => {
             const { question } = createValidMCQuestion();
-            question.title = '';
-            comp.quizExercise.quizQuestions = [question];
-            comp.cacheValidation();
-            expect(comp.quizIsValid).to.equal(false);
+            removeQuestionTitleAndExpectInvalidQuiz(question);
         });
 
         it('should not be valid if MC question has no correct answer', () => {
@@ -390,18 +386,12 @@ describe('QuizExercise Management Detail Component', () => {
 
         it('should not be valid if DnD question has no title', () => {
             const { question } = createValidDnDQuestion();
-            question.title = '';
-            comp.quizExercise.quizQuestions = [question];
-            comp.cacheValidation();
-            expect(comp.quizIsValid).to.equal(false);
+            removeQuestionTitleAndExpectInvalidQuiz(question);
         });
 
         it('should not be valid if DnD question has no correct mapping', () => {
             const { question } = createValidDnDQuestion();
-            question.correctMappings = [];
-            comp.quizExercise.quizQuestions = [question];
-            comp.cacheValidation();
-            expect(comp.quizIsValid).to.equal(false);
+            removeCorrectMappingsAndExpectInvalidQuiz(question);
         });
 
         it('should be valid with valid SA question', () => {
@@ -413,24 +403,24 @@ describe('QuizExercise Management Detail Component', () => {
 
         it('should not be valid if SA question has no title', () => {
             const { question } = createValidSAQuestion();
-            question.title = '';
-            comp.quizExercise.quizQuestions = [question];
-            comp.cacheValidation();
-            expect(comp.quizIsValid).to.equal(false);
+            removeQuestionTitleAndExpectInvalidQuiz(question);
         });
 
         it('should not be valid if SA question has no correct mapping', () => {
             const { question } = createValidSAQuestion();
-            question.correctMappings = [];
-            comp.quizExercise.quizQuestions = [question];
-            comp.cacheValidation();
-            expect(comp.quizIsValid).to.equal(false);
+            removeCorrectMappingsAndExpectInvalidQuiz(question);
         });
     });
 
     describe('saving', () => {
         let quizExerciseServiceCreateStub: SinonStub;
         let quizExerciseServiceUpdateStub: SinonStub;
+
+        const saveQuizWithPendingChangesCache = () => {
+            comp.cacheValidation();
+            comp.pendingChangesCache = true;
+            comp.save();
+        }
 
         beforeEach(() => {
             resetQuizExercise();
@@ -448,27 +438,22 @@ describe('QuizExercise Management Detail Component', () => {
                 ),
             );
         });
+
         it('should call create if valid and quiz exercise no id', () => {
             comp.quizExercise.id = undefined;
-            comp.cacheValidation();
-            comp.pendingChangesCache = true;
-            comp.save();
+            saveQuizWithPendingChangesCache();
             expect(quizExerciseServiceCreateStub).to.have.been.called;
             expect(quizExerciseServiceUpdateStub).to.not.have.been.called;
         });
 
         it('should update if valid and quiz exercise has id', () => {
-            comp.cacheValidation();
-            comp.pendingChangesCache = true;
-            comp.save();
+            saveQuizWithPendingChangesCache();
             expect(quizExerciseServiceCreateStub).to.not.have.been.called;
             expect(quizExerciseServiceUpdateStub).to.have.been.called;
         });
 
         it('should not save if not valid', () => {
-            comp.cacheValidation();
-            comp.pendingChangesCache = true;
-            comp.save();
+            saveQuizWithPendingChangesCache();
             expect(quizExerciseServiceCreateStub).to.not.have.been.called;
             expect(quizExerciseServiceUpdateStub).to.have.been.called;
         });
