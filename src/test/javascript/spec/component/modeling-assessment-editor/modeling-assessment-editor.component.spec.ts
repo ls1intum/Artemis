@@ -1,4 +1,4 @@
-import { async, ComponentFixture, discardPeriodicTasks, fakeAsync, flushMicrotasks, TestBed, tick } from '@angular/core/testing';
+import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -6,7 +6,7 @@ import { By } from '@angular/platform-browser';
 import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { ActivatedRoute, convertToParamMap, ParamMap } from '@angular/router';
 import { Mutable } from '../../helpers/mutable';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
@@ -34,8 +34,9 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import moment = require('moment');
-import { flush } from '@sentry/browser';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -246,5 +247,59 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(window.confirm).to.be.calledOnce;
         expect(component.highlightMissingFeedback).to.be.true;
         // discardPeriodicTasks();
+    }));
+
+    it('should update assessment after complaint', fakeAsync(() => {
+        const complaintResponse = new ComplaintResponse();
+        complaintResponse.id = 1;
+        complaintResponse.responseText = 'response';
+
+        component.submission = ({
+            id: 1,
+            submitted: true,
+            type: 'MANUAL',
+            text: 'Test\n\nTest\n\nTest',
+        } as unknown) as ModelingSubmission;
+
+        const result = ({
+            id: 2374,
+            resultString: '1 of 12 points',
+            score: 8,
+            rated: true,
+            hasFeedback: true,
+            hasComplaint: false,
+            participation: ({
+                type: ParticipationType.SOLUTION,
+                results: [],
+            } as unknown) as Participation,
+        } as unknown) as Result;
+
+        const fake = sinon.fake.returns(of({ body: result }));
+        sinon.replace(service, 'updateAssessmentAfterComplaint', fake);
+
+        component.onUpdateAssessmentAfterComplaint(complaintResponse);
+        expect(fake).to.have.been.calledOnce;
+        expect(component.result?.participation?.results).to.deep.equal([result]);
+    }));
+
+    it('should cancel the current assessment and navigate back to the exercise dashboard', fakeAsync(() => {
+        const windowFake = sinon.fake.returns(true);
+        sinon.replace(window, 'confirm', windowFake);
+
+        component.submission = ({
+            id: 2,
+            submitted: true,
+            type: 'MANUAL',
+            text: 'Test\n\nTest\n\nTest',
+        } as unknown) as ModelingSubmission;
+
+        const fake = sinon.fake.returns(new Observable<any>()); // syntaxError in service
+        sinon.replace(service, 'cancelAssessment', fake);
+        // const fake = sinon.fake.returns(true);
+        // sinon.replace(component, 'navigateBack', fake);
+
+        component.onCancelAssessment();
+        expect(windowFake).to.have.been.calledOnce;
+        expect(fake).to.have.been.calledOnce;
     }));
 });
