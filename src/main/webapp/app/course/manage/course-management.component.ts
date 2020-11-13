@@ -57,18 +57,20 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                 this.courses = res.body!;
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, tutorAssessmentTour, true);
                 this.courseSemesters = this.courses
+                    // test courses get their own section later
+                    .filter((c) => !c.testCourse)
                     .map((c) => c.semester ?? '')
-                    .filter((value, index, self) => {
-                        // filter down to unique values
-                        return !this.courses[index].testCourse && self.indexOf(value) === index;
-                    })
+                    // filter down to unique values
+                    .filter((course, index, courses) => courses.indexOf(course) === index)
                     .sort((a, b) => {
+                        // sort last if the semester is unset
                         if (a === '') {
                             return 1;
                         }
                         if (b === '') {
                             return -1;
                         }
+                        // parse years in base 10 by extracting the two digits after the WS or SS prefix
                         const yearsCompared = parseInt(b.substr(2, 2), 10) - parseInt(a.substr(2, 2), 10);
                         if (yearsCompared !== 0) {
                             return yearsCompared;
