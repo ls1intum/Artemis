@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -168,9 +169,9 @@ public class ProgrammingExerciseTestService {
             throws Exception {
         final var projectKey = exercise.getProjectKey();
 
-        String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+        final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
+        final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
 
         var exerciseRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(exerciseRepository.originRepoFile);
         var testRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(testRepository.originRepoFile);
@@ -273,7 +274,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void importExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
+    public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans) throws Exception {
         boolean staticCodeAnalysisEnabled = programmingLanguage == ProgrammingLanguage.JAVA;
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
@@ -290,12 +291,16 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setProgrammingLanguage(programmingLanguage);
         exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         // Mock requests
-        List<Verifiable> verifiables = mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported);
+        List<Verifiable> verifiables = mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, recreateBuildPlans);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
+
+        // Create request parameters
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("recreateBuildPlans", recreateBuildPlans ? "true" : "false");
 
         // Import the exercise and load all referenced entities
         var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
-                ProgrammingExercise.class, HttpStatus.OK);
+                ProgrammingExercise.class, params, HttpStatus.OK);
         SecurityUtils.setAuthorizationObject();
         importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
@@ -349,7 +354,7 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
 
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
@@ -390,7 +395,7 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
 
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,

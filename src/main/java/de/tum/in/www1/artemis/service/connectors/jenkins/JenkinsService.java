@@ -17,6 +17,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.slf4j.Logger;
@@ -81,6 +82,9 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final FeedbackService feedbackService;
 
+    // Pattern of the DateTime that is included in the logs received from Jenkins
+    private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
+
     public JenkinsService(JenkinsBuildPlanCreatorProvider buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
             ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackService feedbackService) {
         this.buildPlanCreatorProvider = buildPlanCreatorFactory;
@@ -95,7 +99,8 @@ public class JenkinsService implements ContinuousIntegrationService {
         try {
             // TODO support sequential test runs
             final var configBuilder = buildPlanCreatorProvider.builderFor(exercise.getProgrammingLanguage());
-            Document jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL, Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
+            Document jobConfig = configBuilder.buildBasicConfig(exercise.getProgrammingLanguage(), testRepositoryURL, repositoryURL,
+                    Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
             planKey = exercise.getProjectKey() + "-" + planKey;
 
             jenkinsServer.createJob(getFolderJob(exercise.getProjectKey()), planKey, writeXmlToString(jobConfig), useCrumb);
@@ -133,24 +138,68 @@ public class JenkinsService implements ContinuousIntegrationService {
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
-        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, null /* not important */, participation.getRepositoryUrl(), Optional.empty());
+        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, null /* not important */, participation.getRepositoryUrl(),
+                participation.getProgrammingExercise().getTemplateRepositoryUrl(), Optional.empty());
         enablePlan(projectKey, planKey);
     }
 
     // TODO this was a bad design choice. We should only have one configureBuildPlan method i.m.o
     @Override
-    public void updatePlanRepository(String projectKey, String planName, String repoNameInCI, String vcsProject, String vcsRepositoryUrl, Optional<List<String>> triggeredBy) {
+    public void updatePlanRepository(String projectKey, String planName, String repoNameInCI, String vcsProject, String vcsRepositoryUrl, String templateRepositoryUrl,
+            Optional<List<String>> triggeredBy) {
 
         // remove potential username from repo URL. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URL
         final var repoUrl = vcsRepositoryUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
         final var jobXmlDocument = getJobXmlForBuildPlanWith(projectKey, planName);
+
+        try {
+            replaceScriptParameters(jobXmlDocument, repoUrl, templateRepositoryUrl);
+        }
+        catch (IllegalArgumentException e) {
+            log.info("Falling back to old Jenkins setup replacement");
+            replaceRemoteURLs(jobXmlDocument, repoUrl, repoNameInCI);
+        }
+
+        final var errorMessage = "Error trying to configure build plan in Jenkins " + planName;
+        postXml(jobXmlDocument, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planName);
+    }
+
+    private void replaceScriptParameters(Document jobXmlDocument, String repoUrl, String baseRepoUrl) throws IllegalArgumentException {
+        final var scriptNode = findScriptNode(jobXmlDocument);
+        if (scriptNode == null || scriptNode.getFirstChild() == null) {
+            log.debug("Pipeline Script not found");
+            throw new IllegalArgumentException("Pipeline Script not found");
+        }
+
+        String pipeLineScript = scriptNode.getFirstChild().getTextContent();
+        // If the script does not start with "pipeline", it is not actually a pipeline script, but a deprecated programming exercise with an old configuration
+        if (!pipeLineScript.trim().startsWith("pipeline")) {
+            log.debug("Pipeline Script not found");
+            throw new IllegalArgumentException("Pipeline Script not found");
+        }
+        // Replace repo URL
+        pipeLineScript = pipeLineScript.replace(baseRepoUrl, repoUrl);
+
+        scriptNode.getFirstChild().setTextContent(pipeLineScript);
+    }
+
+    /**
+     * Replace old XML files that are not based on pipelines.
+     * Will be removed in the future
+     * @param jobXmlDocument the Document where the remote config should replaced
+     */
+    @Deprecated
+    private void replaceRemoteURLs(Document jobXmlDocument, String repoUrl, String repoNameInCI) throws IllegalArgumentException {
         final var remoteUrlNode = findUserRemoteConfigFor(jobXmlDocument, repoNameInCI);
         if (remoteUrlNode == null || remoteUrlNode.getFirstChild() == null) {
             throw new IllegalArgumentException("Url to replace not found in job xml document");
         }
         remoteUrlNode.getFirstChild().setNodeValue(repoUrl);
-        final var errorMessage = "Error trying to configure build plan in Jenkins " + planName;
-        postXml(jobXmlDocument, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planName);
+    }
+
+    private org.w3c.dom.Node findScriptNode(Document jobXmlDocument) {
+        final var userRemoteConfigs = jobXmlDocument.getElementsByTagName("script");
+        return userRemoteConfigs.item(0);
     }
 
     private org.w3c.dom.Node findUserRemoteConfigFor(Document jobXmlDocument, String repoNameInCI) {
@@ -416,26 +465,15 @@ public class JenkinsService implements ContinuousIntegrationService {
         try {
             final var build = getJob(projectKey, buildPlanId).getLastBuild();
             final var logHtml = Jsoup.parse(build.details().getConsoleOutputHtml()).body();
-            final var buildLog = new LinkedList<BuildLogEntry>();
-            final var iterator = logHtml.childNodes().iterator();
-            while (iterator.hasNext()) {
-                final var node = iterator.next();
-                final String log;
-                // For timestamps, parse the <b> tag containing the time as hh:mm:ss
-                if (node.attributes().get("class").contains("timestamp")) {
-                    final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
-                    final var time = ZonedDateTime.parse(timeAsString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX"));
-                    log = reduceToText(iterator.next());
-                    buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log)));
-                }
-                else {
-                    // Log is from the same line as the last
-                    // Look for next text node in children
-                    log = reduceToText(node);
-                    final var lastLog = buildLog.getLast();
-                    lastLog.setLog(lastLog.getLog() + stripLogEndOfLine(log));
-                }
+
+            List<BuildLogEntry> buildLog;
+            try {
+                buildLog = parsePipelineLogs(logHtml);
             }
+            catch (IllegalArgumentException e) {
+                buildLog = parseLogsLegacy(logHtml);
+            }
+
             // Jenkins logs all steps of the build pipeline. We remove those as they are irrelevant to the students
             LinkedList<BuildLogEntry> prunedBuildLog = new LinkedList<>();
             final Iterator<BuildLogEntry> buildlogIterator = buildLog.iterator();
@@ -450,9 +488,16 @@ public class JenkinsService implements ContinuousIntegrationService {
                         || entry.getLog().startsWith("[ERROR] [Help 1]") || entry.getLog().startsWith("[ERROR] For more information about the errors and possible solutions")
                         || entry.getLog().startsWith("[ERROR] Re-run Maven using") || entry.getLog().startsWith("[ERROR] To see the full stack trace of the errors")
                         || entry.getLog().startsWith("[ERROR] -> [Help 1]") || entry.getLog().equals("[ERROR] "))) {
+
                     // Remove the path from the log entries
+                    // When using local agents, this is the path where the workspace should be located
                     String path = "/var/jenkins_home/workspace/" + projectKey + "/" + buildPlanId + "/";
                     entry.setLog(entry.getLog().replace(path, ""));
+
+                    // When using remote agents, this is the path where the workspace should be located
+                    path = "/home/jenkins/remote_agent/workspace/" + projectKey + "/" + buildPlanId + "/";
+                    entry.setLog(entry.getLog().replace(path, ""));
+
                     prunedBuildLog.add(entry);
                 }
             }
@@ -465,6 +510,72 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
     }
 
+    private List<BuildLogEntry> parsePipelineLogs(Element logHtml) throws IllegalArgumentException {
+        final var buildLog = new LinkedList<BuildLogEntry>();
+        if (logHtml.childNodes().stream().noneMatch(child -> child.attr("class").contains("pipeline"))) {
+            throw new IllegalArgumentException("Log is not pipeline log");
+        }
+        for (Element elem : logHtml.children()) {
+            // Only pipeline-node-ID elements contain actual log entries
+            if (elem.attributes().get("class").contains("pipeline-node")) {
+                // At least one child must have a timestamp class
+                if (elem.childNodes().stream().anyMatch(child -> child.attr("class").contains("timestamp"))) {
+                    Iterator<Node> nodeIterator = elem.childNodes().iterator();
+
+                    while (nodeIterator.hasNext()) {
+                        Node node = nodeIterator.next();
+                        final String log;
+                        if (node.attributes().get("class").contains("timestamp")) {
+                            final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
+                            final var time = ZonedDateTime.parse(timeAsString, logDateTimeFormatter);
+                            var contentCandidate = nodeIterator.next();
+
+                            // Skip invisible entries (they contain only the timestamp, but we already got that above)
+                            if (contentCandidate.attr("style").contains("display: none")) {
+                                contentCandidate = nodeIterator.next();
+                            }
+                            log = reduceToText(contentCandidate);
+                            buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log).trim()));
+                        }
+                        else {
+                            // Log is from the same line as the last
+                            // Look for next text node in children
+                            log = reduceToText(node);
+                            final var lastLog = buildLog.getLast();
+                            lastLog.setLog(lastLog.getLog() + stripLogEndOfLine(log).trim());
+                        }
+                    }
+                }
+            }
+        }
+        return buildLog;
+
+    }
+
+    private List<BuildLogEntry> parseLogsLegacy(Element logHtml) {
+        final var buildLog = new LinkedList<BuildLogEntry>();
+        final var iterator = logHtml.childNodes().iterator();
+        while (iterator.hasNext()) {
+            final var node = iterator.next();
+            final String log;
+            // For timestamps, parse the <b> tag containing the time as hh:mm:ss
+            if (node.attributes().get("class").contains("timestamp")) {
+                final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
+                final var time = ZonedDateTime.parse(timeAsString, logDateTimeFormatter);
+                log = reduceToText(iterator.next());
+                buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log)));
+            }
+            else {
+                // Log is from the same line as the last
+                // Look for next text node in children
+                log = reduceToText(node);
+                final var lastLog = buildLog.getLast();
+                lastLog.setLog(lastLog.getLog() + stripLogEndOfLine(log));
+            }
+        }
+        return buildLog;
+    }
+
     private String stripLogEndOfLine(String log) {
         return log.replaceAll("\\r|\\n", "");
     }
@@ -474,7 +585,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             return ((TextNode) node).getWholeText();
         }
 
-        return reduceToText(node.childNode(0));
+        return reduceToText(node.childNode(node.childNodeSize() - 1));
     }
 
     @Override
