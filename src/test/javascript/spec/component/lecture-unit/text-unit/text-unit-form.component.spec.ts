@@ -11,7 +11,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import * as moment from 'moment';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 
 chai.use(sinonChai);
