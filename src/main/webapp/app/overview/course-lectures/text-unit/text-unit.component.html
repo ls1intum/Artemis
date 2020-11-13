@@ -5,9 +5,9 @@
                 <div class="col-10 my-auto">
                     <h5 class="card-title">
                         <fa-icon class="mr-2" [icon]="'scroll'" [ngbTooltip]="'artemisApp.textUnit.tooltip' | translate"></fa-icon>
-                        {{ textUnit.name }}
+                        {{ textUnit?.name ? textUnit.name : '' }}
                         <span
-                            *ngIf="!textUnit.visibleToStudents"
+                            *ngIf="!textUnit?.visibleToStudents"
                             class="badge badge-warning"
                             placement="right"
                             ngbTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | translate }} {{ textUnit?.releaseDate | artemisDate }}"
@@ -17,7 +17,7 @@
                     </h5>
                 </div>
                 <div class="col-2 btn-group flex-btn-group-container p-2">
-                    <button type="button" class="btn btn-sm btn-primary" (click)="openPopup($event)">
+                    <button id="popupButton" type="button" class="btn btn-sm btn-primary" (click)="openPopup($event)">
                         <fa-icon [icon]="'external-link-alt'"></fa-icon>
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.textUnit.popup">View in Popup</span>
                     </button>

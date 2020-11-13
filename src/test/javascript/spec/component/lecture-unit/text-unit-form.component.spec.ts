@@ -63,6 +63,11 @@ describe('TextUnitFormComponent', () => {
         sandbox.restore();
     });
 
+    it('should initialize', () => {
+        textUnitFormComponentFixture.detectChanges();
+        expect(textUnitFormComponent).to.be.ok;
+    });
+
     it('should take markdown from cache', fakeAsync(() => {
         // Setting up the fake local storage
         const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as any);
