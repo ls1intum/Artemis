@@ -96,7 +96,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("select distinct team.students from Team team where team.exercise.course.id = :#{#courseId} and team.shortName = :#{#teamShortName}")
     Set<User> findAllInTeam(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
-
-    @Query("select user from User user left join fetch user.achievements where user.id = :#{#userId}")
-    User findOneWithEagerAchievements(@Param("userId") Long userId);
 }

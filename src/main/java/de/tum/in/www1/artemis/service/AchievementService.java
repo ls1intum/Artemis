@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -29,8 +27,6 @@ public class AchievementService {
     private final AchievementRepository achievementRepository;
 
     private final UserRepository userRepository;
-
-    private final Logger log = LoggerFactory.getLogger(AchievementService.class);
 
     public AchievementService(AchievementRepository achievementRepository, UserRepository userRepository, PointBasedAchievementService pointBasedAchievementService,
             TimeBasedAchievementService timeBasedAchievementService, ProgressBasedAchievementService progressBasedAchievementService) {
@@ -121,19 +117,14 @@ public class AchievementService {
         if (optionalUser.isEmpty()) {
             return;
         }
-        // var user = userRepository.findOneWithEagerAchievements(optionalUser.get().getId());
-        // if (user == null) {
-        // return;
-        // }
-        var achievements = achievementRepository.findAllByUserId(optionalUser.get().getId());
+        var user = optionalUser.get();
+        var achievements = achievementRepository.findAllByUserId(user.getId());
         if (achievements == null) {
             return;
         }
-        var user = optionalUser.get();
         user.setAchievements(achievements);
 
         var pointBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.POINT);
-        log.debug("point based achievements found : {}", pointBasedAchievements.size());
         var pointRank = pointBasedAchievementService.checkForAchievement(result, pointBasedAchievements);
         rewardAchievement(pointBasedAchievements, pointRank, user);
 
@@ -180,6 +171,5 @@ public class AchievementService {
 
         user.addAchievement(achievement);
         userRepository.save(user);
-        log.debug("user was rewarded with achievement : {}", achievement);
     }
 }

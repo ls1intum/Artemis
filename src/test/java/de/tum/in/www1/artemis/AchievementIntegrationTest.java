@@ -44,6 +44,9 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     ResultRepository resultRepository;
 
+    @Autowired
+    ParticipationRepository participationRepository;
+
     private User student;
 
     private User instructor;
@@ -115,10 +118,16 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testRewardAchievement() throws Exception {
         var submission = ModelFactory.generateModelingSubmission("", true);
         submission = database.addModelingSubmission(firstExercise, submission, student.getLogin());
-        var result = ModelFactory.generateResult(true, 100).participation(submission.getParticipation());
+        var participation = submission.getParticipation();
+        var result = ModelFactory.generateResult(true, 100).participation(participation);
+        result.setSubmission(submission);
+        Set<Result> results = new HashSet<>();
+        results.add(result);
+        participation.setResults(results);
+        participationRepository.save(participation);
         resultRepository.save(result);
         var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
-        assertThat(achievementsFirstCourse.size()).as("User got one achievement").isEqualTo(1);
+        assertThat(achievementsFirstCourse.size()).as("User got two achievements").isEqualTo(2);
     }
 
     private void initTest() throws Exception {
