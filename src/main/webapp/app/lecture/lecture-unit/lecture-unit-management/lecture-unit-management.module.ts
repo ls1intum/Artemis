@@ -15,6 +15,7 @@ import { EditAttachmentUnitComponent } from './edit-attachment-unit/edit-attachm
 import { CreateVideoUnitComponent } from './create-video-unit/create-video-unit.component';
 import { EditVideoUnitComponent } from './edit-video-unit/edit-video-unit.component';
 import { VideoUnitFormComponent } from './video-unit-form/video-unit-form.component';
+import { LectureUnitLayoutComponent } from './lecture-unit-layout/lecture-unit-layout.component';
 
 const ENTITY_STATES = [...lectureUnitRoute];
 
@@ -30,6 +31,7 @@ const ENTITY_STATES = [...lectureUnitRoute];
         CreateVideoUnitComponent,
         EditVideoUnitComponent,
         VideoUnitFormComponent,
+        LectureUnitLayoutComponent,
     ],
 })
 export class ArtemisLectureUnitManagementModule {}
