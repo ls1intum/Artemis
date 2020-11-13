@@ -3,7 +3,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseExerciseService, CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { isOrion } from 'app/shared/orion/orion';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
@@ -14,6 +14,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import * as moment from 'moment';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { JhiAlertService } from 'ng-jhipster';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -43,6 +44,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
         private teamService: TeamService,
         private jhiWebsocketService: JhiWebsocketService,
         private serverDateService: ArtemisServerDateService,
+        private jhiAlertService: JhiAlertService,
     ) {}
 
     async ngOnInit() {
@@ -61,12 +63,19 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
 
     loadCourse(refresh = false) {
         this.refreshingCourse = refresh;
-        this.courseService.findOneForDashboard(this.courseId).subscribe((res: HttpResponse<Course>) => {
-            this.courseCalculationService.updateCourse(res.body!);
-            this.course = this.courseCalculationService.getCourse(this.courseId);
-            this.adjustCourseDescription();
-            setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
-        });
+        this.courseService.findOneForDashboard(this.courseId).subscribe(
+            (res: HttpResponse<Course>) => {
+                this.courseCalculationService.updateCourse(res.body!);
+                this.course = this.courseCalculationService.getCourse(this.courseId);
+                this.adjustCourseDescription();
+                setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
+            },
+            (error: HttpErrorResponse) => {
+                const errorMessage = error.headers.get('X-artemisApp-message')!;
+                const jhiAlert = this.jhiAlertService.error(errorMessage);
+                jhiAlert.msg = errorMessage;
+            },
+        );
     }
 
     ngOnDestroy() {

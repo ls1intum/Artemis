@@ -112,7 +112,8 @@ public class BambooService implements ContinuousIntegrationService {
         URL repositoryUrl = participation.getRepositoryUrlAsUrl();
         String planProject = getProjectKeyFromBuildPlanId(buildPlanId);
         String planKey = participation.getBuildPlanId();
-        updatePlanRepository(planProject, planKey, ASSIGNMENT_REPO_NAME, urlService.getProjectKeyFromUrl(repositoryUrl), repositoryUrl.toString(), Optional.empty());
+        updatePlanRepository(planProject, planKey, ASSIGNMENT_REPO_NAME, urlService.getProjectKeyFromUrl(repositoryUrl), repositoryUrl.toString(),
+                participation.getProgrammingExercise().getTemplateRepositoryUrl(), Optional.empty());
         enablePlan(planProject, planKey);
     }
 
@@ -280,10 +281,10 @@ public class BambooService implements ContinuousIntegrationService {
         if (buildPlan == null) {
             return BuildStatus.INACTIVE;
         }
-        if (buildPlan.isActive() && !buildPlan.isBuilding()) {
+        if (buildPlan.getIsActive() && !buildPlan.getIsBuilding()) {
             return BuildStatus.QUEUED;
         }
-        else if (buildPlan.isActive() && buildPlan.isBuilding()) {
+        else if (buildPlan.getIsActive() && buildPlan.getIsBuilding()) {
             return BuildStatus.BUILDING;
         }
         else {
@@ -477,7 +478,7 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String bambooProject, String buildPlanKey, String bambooRepositoryName, String repoProjectName, String repoUrl,
+    public void updatePlanRepository(String bambooProject, String buildPlanKey, String bambooRepositoryName, String repoProjectName, String repoUrl, String templateRepositoryUrl,
             Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
         try {
             final var repositoryName = versionControlService.get().getRepositoryName(new URL(repoUrl));

@@ -28,6 +28,7 @@ import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service
 import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/mock-code-editor-conflict-state.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -51,7 +52,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, TreeviewModule.forRoot()],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, TreeviewModule.forRoot(), NgbModule],
             declarations: [
                 CodeEditorFileBrowserComponent,
                 MockComponent(CodeEditorStatusComponent),

@@ -99,6 +99,7 @@
                         <option value="KOTLIN" *ngIf="supportsKotlin">Kotlin</option>
                         <option value="VHDL" *ngIf="supportsVHDL">VHDL</option>
                         <option value="ASSEMBLER" *ngIf="supportsAssembler">Assembler</option>
+                        <option value="SWIFT" *ngIf="supportsSwift">Swift</option>
                     </select>
                 </div>
 
@@ -134,7 +135,7 @@
                     />
                     <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
                         <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
-                            <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key"></div>
+                            <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
                         </div>
                     </ng-container>
                 </div>
@@ -384,6 +385,15 @@
                                 checked
                             />
                             <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>
+                        </label>
+                    </div>
+                </div>
+                <div *ngIf="isImport" class="form-group-narrow">
+                    <div class="form-check">
+                        <label class="form-check-label" for="field_recreateBuildPlans">
+                            <input class="form-check-input" type="checkbox" name="recreateBuildPlans" id="field_recreateBuildPlans" [(ngModel)]="recreateBuildPlans" checked />
+                            <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title">Recreate Build Plans</span>
+                            <jhi-help-icon placement="top" text="artemisApp.programmingExercise.recreateBuildPlans.description"></jhi-help-icon>
                         </label>
                     </div>
                 </div>
