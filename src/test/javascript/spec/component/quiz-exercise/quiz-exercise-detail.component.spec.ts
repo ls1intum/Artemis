@@ -28,8 +28,6 @@ import * as sinonChai from 'sinon-chai';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
-import { advanceTo } from 'jest-date-mock';
-import { By } from '@angular/platform-browser';
 
 chai.use(sinonChai);
 const expect = chai.expect;
