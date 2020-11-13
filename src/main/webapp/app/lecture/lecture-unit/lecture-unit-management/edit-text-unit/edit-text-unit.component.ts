@@ -4,7 +4,6 @@ import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-manageme
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
-import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -35,7 +34,7 @@ export class EditTextUnitComponent implements OnInit {
                 finalize(() => (this.isLoading = false)),
             )
             .subscribe(
-                (textUnitResponse: HttpResponse<VideoUnit>) => {
+                (textUnitResponse: HttpResponse<TextUnit>) => {
                     this.textUnit = textUnitResponse.body!;
 
                     this.formData = {
