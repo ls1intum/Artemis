@@ -8,13 +8,12 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { Exercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { of } from 'rxjs/internal/observable/of';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { SERVER_API_URL } from 'app/app.constants';
+import { UMLElementType, UMLModel } from '@ls1intum/apollon';
 
 const expect = chai.expect;
 
@@ -162,6 +161,36 @@ describe('Modeling Assessment Service', () => {
                 const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/modeling-submissions/${submissionId}/assessment-after-complaint`, method: 'PUT' });
                 req.flush(returnedFromService);
                 expect(httpExpectedResult.body).to.deep.equal(expected);
+            });
+
+            it('should get names for assessment', async () => {
+                const expected = new Map();
+                elemDefault.feedbacks = [
+                    {
+                        id: 0,
+                        credits: 3,
+                        reference: 'reference',
+                        referenceId: '6',
+                        referenceType: UMLElementType.ActivityActionNode,
+                    } as Feedback,
+                    {
+                        id: 1,
+                        credits: 1,
+                        referenceId: '6',
+                        referenceType: UMLElementType.ActivityActionNode,
+                    } as Feedback,
+                ];
+                const uml = ({
+                    elements: [
+                        {
+                            id: 6,
+                            name: 'Dominik',
+                            type: 'action',
+                        },
+                    ],
+                } as unknown) as UMLModel;
+                expectedResult = service.getNamesForAssessments(elemDefault, uml);
+                expect(expectedResult).to.deep.equal(expected);
             });
         });
 
