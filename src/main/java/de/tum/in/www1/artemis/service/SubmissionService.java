@@ -44,7 +44,7 @@ public class SubmissionService {
 
     private final ExamService examService;
 
-    private final UserService userService;
+    protected final UserService userService;
 
     private final CourseService courseService;
 
@@ -163,19 +163,20 @@ public class SubmissionService {
      * No manual result means that no user has started an assessment for the corresponding submission yet.
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
-     * @param fileUploadExercise the exercise for which we want to retrieve a submission without manual result
+     * @param exercise the exercise for which we want to retrieve a submission without manual result
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */
     @Transactional(readOnly = true)
-    public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise fileUploadExercise, boolean examMode) {
+    public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise exercise, boolean examMode) {
         Random random = new Random();
         List<StudentParticipation> participations;
+
         if (examMode) {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(fileUploadExercise.getId());
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(exercise.getId());
         }
         else {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(fileUploadExercise.getId());
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId());
         }
 
         List<Submission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
@@ -185,7 +186,7 @@ public class SubmissionService {
             return Optional.empty();
         }
 
-        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, fileUploadExercise.getDueDate());
+        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, exercise.getDueDate());
 
         var submissionWithoutResult = submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
         return Optional.of(submissionWithoutResult);

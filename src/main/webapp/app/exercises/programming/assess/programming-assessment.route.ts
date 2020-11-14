@@ -18,9 +18,8 @@ export class NewStudentParticipationResolver implements Resolve<number | undefin
         const exerciseId = Number(route.paramMap.get('exerciseId'));
 
         if (exerciseId) {
-            // TODO: Make locking work
             return this.programmingSubmissionService
-                .getProgrammingSubmissionForExerciseWithoutAssessment(exerciseId, false)
+                .getProgrammingSubmissionForExerciseWithoutAssessment(exerciseId, true)
                 .map((submission) => submission.participation!.id!)
                 .catch(() => Observable.of(undefined));
         }

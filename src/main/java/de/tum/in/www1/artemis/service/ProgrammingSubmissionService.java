@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import org.apache.http.HttpException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
@@ -643,7 +644,30 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public ProgrammingSubmission getLockedProgrammingSubmissionWithoutResult(ProgrammingExercise exercise) {
         ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.hasExerciseGroup())
             .orElseThrow(() -> new EntityNotFoundException("Programming submission for exercise " + exercise.getId() + " could not be found"));
-        lockSubmission(programmingSubmission);
-        return programmingSubmission;
+        Result newManualResult = lockSubmission(programmingSubmission);
+        return (ProgrammingSubmission) newManualResult.getSubmission();
+    }
+
+    @Override
+    protected Result lockSubmission(Submission submission) {
+        Result automaticResult = submission.getResult();
+        // Create a new result (manual result) and a new submission for it and set assessor and type to manual
+        ProgrammingSubmission newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
+            SubmissionType.MANUAL);
+        Result newResult = setNewResult(newSubmission);
+
+        if (newResult.getAssessor() == null) {
+            newResult.setAssessor(userService.getUser());
+        }
+
+        newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        // TODO: Figure out why this does not work
+        // newResult.setFeedbacks(new ArrayList<>(automaticResult.getFeedbacks()));
+        // Reset ids of automatic feedback
+        // newResult.getFeedbacks().forEach(feedback -> feedback.setId(null));
+        newResult = resultRepository.save(newResult);
+        log.debug("Assessment locked with result id: " + newResult.getId() + " for assessor: " + newResult.getAssessor().getName());
+
+        return newResult;
     }
 }
