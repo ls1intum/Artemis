@@ -42,7 +42,7 @@ describe('ModelingAssessmentComponent', () => {
         // expect(comp.pageLoaded).toBe(true);
     });
 
-    it('update feedbacks after the view has been initialized', () => {
+    /*it('update feedbacks after the view has been initialized', () => {
         comp.feedbacks.push({
             id: 0,
             text: 'fine',
@@ -61,9 +61,5 @@ describe('ModelingAssessmentComponent', () => {
         comp.ngAfterViewInit();
         tick(500);
         expect(comp.apollonEditor!.destroy()).toHaveBeenCalled();
-    });
-
-    it('should destroy', () => {
-        expect(comp.ngOnDestroy()).toBeTruthy();
-    });
+    });*/
 });
