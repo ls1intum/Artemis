@@ -1,0 +1,13 @@
+package de.tum.in.www1.artemis.service.programming;
+
+import org.springframework.stereotype.Service;
+
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+
+@Service
+public abstract class DefaultRepositoryUpgradeService extends RepositoryUpgradeService {
+
+    public void upgradeRepositories(ProgrammingExercise exercise) {
+        // Does nothing yet
+    }
+}
