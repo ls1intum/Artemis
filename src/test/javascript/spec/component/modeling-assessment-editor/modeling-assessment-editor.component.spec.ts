@@ -39,6 +39,11 @@ import { Participation, ParticipationType } from 'app/entities/participation/par
 import moment = require('moment');
 import { flush } from '@sentry/browser';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { SinonStub, stub } from 'sinon';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
+import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exam } from 'app/entities/exam.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -49,10 +54,13 @@ describe('ModelingAssessmentEditorComponent', () => {
     let service: ModelingAssessmentService;
     let mockAuth: MockAccountService;
     let router: MockRouter;
+    let navigateByUrlStub: SinonStub;
+    let modelingSubmissionService: ModelingSubmissionService;
+    let modelingSubmissionStub: SinonStub;
 
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule, TranslateModule.forRoot(), ArtemisTestModule, ArtemisModelingAssessmentEditorModule],
+            imports: [ArtemisTestModule, ArtemisModelingAssessmentEditorModule],
             declarations: [],
             providers: [
                 JhiLanguageHelper,
@@ -60,6 +68,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
             ],
         })
             .compileComponents()
@@ -67,6 +76,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 fixture = TestBed.createComponent(ModelingAssessmentEditorComponent);
                 component = fixture.componentInstance;
                 service = TestBed.inject(ModelingAssessmentService);
+                modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
 
                 mockAuth = (fixture.debugElement.injector.get(AccountService) as any) as MockAccountService;
                 mockAuth.hasAnyAuthorityDirect([]);
@@ -79,9 +89,54 @@ describe('ModelingAssessmentEditorComponent', () => {
         sinon.restore();
     });
 
-    it('should create', () => {
-        expect(component.ngOnInit()).to.be.undefined; // not perfect yet, returns undefined
-    });
+    it('ngOnInit', fakeAsync(() => {
+        modelingSubmissionStub = stub(modelingSubmissionService, 'getSubmission');
+        const submission = ({
+            id: 1,
+            submitted: true,
+            type: 'MANUAL',
+            text: 'Test\n\nTest\n\nTest',
+            participation: ({
+                type: ParticipationType.SOLUTION,
+                results: [],
+                exercise: ({
+                    id: 1,
+                    problemStatement: 'problemo',
+                    gradingInstructions: 'grading',
+                    title: 'title',
+                    shortName: 'name',
+                    exerciseGroup: ({
+                        exam: ({
+                            course: new Course(),
+                        } as unknown) as Exam,
+                    } as unknown) as ExerciseGroup,
+                } as unknown) as Exercise,
+            } as unknown) as Participation,
+            result: ({
+                id: 2374,
+                resultString: '1 of 12 points',
+                score: 8,
+                rated: true,
+                hasFeedback: true,
+                hasComplaint: false,
+                feedbacks: [
+                    {
+                        id: 2,
+                        detailText: 'Feedback',
+                        credits: 1,
+                    } as Feedback,
+                ],
+            } as unknown) as Result,
+        } as unknown) as ModelingSubmission;
+
+        modelingSubmissionStub.returns(of(submission));
+
+        component.ngOnInit();
+        tick(500);
+        expect(modelingSubmissionStub).to.have.been.calledOnce;
+        expect(component.isLoading).to.be.false;
+        modelingSubmissionStub.restore();
+    }));
 
     it('should show or hide a back button', () => {
         const route = fixture.debugElement.injector.get(ActivatedRoute) as Mutable<ActivatedRoute>;
@@ -326,6 +381,40 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(component.referencedFeedback).to.have.lengthOf(1);
         expect(component.totalScore).to.be.equal(3);
     }));
+
+    /*it('should assess next optimal submission', fakeAsync(() => {
+        component.ngOnInit();
+        tick(500);
+
+        router = new MockRouter();
+        navigateByUrlStub = stub(router, 'navigateByUrl');
+        navigateByUrlStub.returns(Promise.resolve(true));
+
+        // const navigateSpy = spyOn(router, 'navigateByUrl');
+        // sinon.replace(router, 'navigateByUrl', sinon.fake.returns(Promise.resolve(true)));
+
+        let course = new Course();
+        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+        component.modelingExercise.id = 1;
+
+        const numbers : number[] = [0,1,2,3,4,5];
+        const fake = sinon.fake.returns(of(numbers));
+        sinon.replace(service, 'getOptimalSubmissions', fake);
+
+
+        component.assessNextOptimal();
+        tick(500);
+        expect(fake).to.have.been.called;
+        expect(navigateByUrlStub).to.have.been.calledOnceWithExactly('/');
+        // expect(navigateSpy).to.have.been.calledTwice;
+        // flush();
+        // fixture.detectChanges();
+        // component.ngOnInit();
+        // tick();
+        // discardPeriodicTasks();
+        // fixture.whenStable();
+        navigateByUrlStub.restore();
+    }));*/
 
     it('no submissions left', fakeAsync(() => {
         let course = new Course();
