@@ -6,7 +6,7 @@ import { By } from '@angular/platform-browser';
 import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
 import { Mutable } from '../../helpers/mutable';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
@@ -24,7 +24,7 @@ import { Result } from 'app/entities/result.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
@@ -44,6 +44,7 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exam } from 'app/entities/exam.model';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -57,6 +58,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     let navigateByUrlStub: SinonStub;
     let modelingSubmissionService: ModelingSubmissionService;
     let modelingSubmissionStub: SinonStub;
+    // const route = ({ snapshot: { paramMap: convertToParamMap( of({ submissionId: 'new', exerciseId: 1, showBackButton: 'false' /*, testRun: true*/ })) } } as any) as ActivatedRoute;
 
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
@@ -64,7 +66,8 @@ describe('ModelingAssessmentEditorComponent', () => {
             declarations: [],
             providers: [
                 JhiLanguageHelper,
-                mockedActivatedRoute({}, { showBackButton: 'false' }),
+                // { provide: ActivatedRoute, useValue: route },
+                mockedActivatedRoute({}, { showBackButton: 'false', submissionId: 'new', exerciseId: 1 }),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -137,6 +140,73 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(component.isLoading).to.be.false;
         modelingSubmissionStub.restore();
     }));
+
+    it('wrongly call ngOnInit and throw exception', fakeAsync(() => {
+        modelingSubmissionStub = stub(modelingSubmissionService, 'getSubmission');
+        const response = new HttpErrorResponse({ status: 403 });
+        modelingSubmissionStub.returns(throwError(response));
+
+        const accountStub = stub(mockAuth, 'hasAnyAuthorityDirect');
+        accountStub.returns(true);
+
+        component.ngOnInit();
+        tick(500);
+        expect(modelingSubmissionStub).to.have.been.calledOnce;
+        expect(accountStub).to.have.been.calledTwice;
+        modelingSubmissionStub.restore();
+        accountStub.restore();
+    }));
+
+    /*it('ngOnInit with optimal submission', fakeAsync(() => {
+        const submission = ({
+            id: 1,
+            submitted: true,
+            type: 'MANUAL',
+            text: 'Test\n\nTest\n\nTest',
+            participation: ({
+                type: ParticipationType.SOLUTION,
+                results: [],
+                exercise: ({
+                    id: 1,
+                    problemStatement: 'problemo',
+                    gradingInstructions: 'grading',
+                    title: 'title',
+                    shortName: 'name',
+                    exerciseGroup: ({
+                        exam: ({
+                            course: new Course(),
+                        } as unknown) as Exam,
+                    } as unknown) as ExerciseGroup,
+                } as unknown) as Exercise,
+            } as unknown) as Participation,
+            result: ({
+                id: 2374,
+                resultString: '1 of 12 points',
+                score: 8,
+                rated: true,
+                hasFeedback: true,
+                hasComplaint: false,
+                feedbacks: [
+                    {
+                        id: 2,
+                        detailText: 'Feedback',
+                        credits: 1,
+                    } as Feedback,
+                ],
+            } as unknown) as Result,
+        } as unknown) as ModelingSubmission;
+
+        modelingSubmissionStub = stub(modelingSubmissionService, 'getModelingSubmissionForExerciseWithoutAssessment');
+        // const response = new HttpErrorResponse({ status: 403 });
+        // modelingSubmissionStub.returns(throwError(response));
+        modelingSubmissionStub.returns(of(submission));
+
+        component.ngOnInit();
+        tick(500);
+        expect(modelingSubmissionStub).to.have.been.calledOnce;
+        expect(component.isLoading).to.be.false;
+        modelingSubmissionStub.restore();
+    }));*/
 
     it('should show or hide a back button', () => {
         const route = fixture.debugElement.injector.get(ActivatedRoute) as Mutable<ActivatedRoute>;
