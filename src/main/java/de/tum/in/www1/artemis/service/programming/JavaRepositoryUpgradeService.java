@@ -19,6 +19,8 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
@@ -31,7 +33,9 @@ import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
 @Service
-public abstract class JavaRepositoryUpgradeService extends RepositoryUpgradeService {
+public class JavaRepositoryUpgradeService extends RepositoryUpgradeService {
+
+    private final Logger log = LoggerFactory.getLogger(JavaRepositoryUpgradeService.class);
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -45,11 +49,16 @@ public abstract class JavaRepositoryUpgradeService extends RepositoryUpgradeServ
         this.resourceLoader = resourceLoader;
     }
 
-    public void upgradeRepositories(ProgrammingExercise exercise) throws IOException, GitAPIException, InterruptedException, XmlPullParserException {
-        updateRepository(exercise, RepositoryType.TEMPLATE.getName(), RepositoryType.TEMPLATE);
-        updateRepository(exercise, RepositoryType.SOLUTION.getName(), RepositoryType.SOLUTION);
-        // TODO: Support sequential test runs
-        updateRepository(exercise, "tests/projectTemplate", RepositoryType.TESTS);
+    public void upgradeRepositories(ProgrammingExercise exercise) {
+        try {
+            updateRepository(exercise, RepositoryType.TEMPLATE.getName(), RepositoryType.TEMPLATE);
+            updateRepository(exercise, RepositoryType.SOLUTION.getName(), RepositoryType.SOLUTION);
+            // TODO: Support sequential test runs
+            updateRepository(exercise, "tests/projectTemplate", RepositoryType.TESTS);
+        }
+        catch (IOException | GitAPIException | InterruptedException | XmlPullParserException exception) {
+            log.error("Updating of template files for exercise " + exercise.getId() + " failed with error" + exception.getMessage());
+        }
     }
 
     private void updateRepository(ProgrammingExercise exercise, String templateFolder, RepositoryType repositoryType)
