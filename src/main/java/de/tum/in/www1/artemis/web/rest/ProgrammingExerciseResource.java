@@ -460,8 +460,8 @@ public class ProgrammingExerciseResource {
      * @see ProgrammingExerciseImportService#importRepositories(ProgrammingExercise, ProgrammingExercise)
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param newExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
-     * @param recreateBuildPlans Flag determining whether the build plans should be copied or re-created from scratch
-     * @param updateTemplate Flag determining whether the template files should be updated with the most recent template version
+     * @param recreateBuildPlans Option determining whether the build plans should be copied or re-created from scratch
+     * @param updateTemplate Option determining whether the template files should be updated with the most recent template version
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
      *         (403) if the user is not at least an instructor in the target course.
      */
