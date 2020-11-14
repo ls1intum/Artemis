@@ -1,13 +1,15 @@
-import { async, ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import * as chai from 'chai';
+import * as sinonChai from 'sinon-chai';
+import * as sinon from 'sinon';
 
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
 import { Mutable } from '../../helpers/mutable';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { RouterTestingModule } from '@angular/router/testing';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -19,17 +21,9 @@ import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 import { Complaint } from 'app/entities/complaint.model';
 import { Feedback } from 'app/entities/feedback.model';
-// import {expect} from "../../helpers/jest.fix";
 import { Result } from 'app/entities/result.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { HttpTestingController } from '@angular/common/http/testing';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -37,14 +31,12 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import moment = require('moment');
-import { flush } from '@sentry/browser';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { SinonStub, stub } from 'sinon';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exam } from 'app/entities/exam.model';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -59,13 +51,10 @@ describe('ModelingAssessmentEditorComponent', () => {
     let fixture: ComponentFixture<ModelingAssessmentEditorComponent>;
     let service: ModelingAssessmentService;
     let mockAuth: MockAccountService;
-    let router: MockRouter;
-    let navigateByUrlStub: SinonStub;
     let modelingSubmissionService: ModelingSubmissionService;
     let complaintService: ComplaintService;
     let modelingSubmissionStub: SinonStub;
     let complaintStub: SinonStub;
-    // const route = ({ snapshot: { paramMap: convertToParamMap( of({ submissionId: 'new', exerciseId: 1, showBackButton: 'false' /*, testRun: true*/ })) } } as any) as ActivatedRoute;
 
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
@@ -73,7 +62,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             declarations: [],
             providers: [
                 JhiLanguageHelper,
-                // { provide: ActivatedRoute, useValue: route },
                 mockedActivatedRoute({}, { showBackButton: 'false', submissionId: 'new', exerciseId: 1 }),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -99,139 +87,88 @@ describe('ModelingAssessmentEditorComponent', () => {
     afterEach(() => {
         sinon.restore();
     });
+    describe('ngOnInit tests', () => {
+        it('ngOnInit', fakeAsync(() => {
+            modelingSubmissionStub = stub(modelingSubmissionService, 'getSubmission');
+            complaintStub = stub(complaintService, 'findByResultId');
+            const submission = ({
+                id: 1,
+                submitted: true,
+                type: 'MANUAL',
+                text: 'Test\n\nTest\n\nTest',
+                participation: ({
+                    type: ParticipationType.SOLUTION,
+                    results: [],
+                    exercise: ({
+                        id: 1,
+                        problemStatement: 'problemo',
+                        gradingInstructions: 'grading',
+                        title: 'title',
+                        shortName: 'name',
+                        exerciseGroup: ({
+                            exam: ({
+                                course: new Course(),
+                            } as unknown) as Exam,
+                        } as unknown) as ExerciseGroup,
+                    } as unknown) as Exercise,
+                } as unknown) as Participation,
+                result: ({
+                    id: 2374,
+                    resultString: '1 of 12 points',
+                    score: 8,
+                    rated: true,
+                    hasFeedback: true,
+                    hasComplaint: true,
+                    feedbacks: [
+                        {
+                            id: 2,
+                            detailText: 'Feedback',
+                            credits: 1,
+                        } as Feedback,
+                    ],
+                } as unknown) as Result,
+            } as unknown) as ModelingSubmission;
 
-    it('ngOnInit', fakeAsync(() => {
-        modelingSubmissionStub = stub(modelingSubmissionService, 'getSubmission');
-        complaintStub = stub(complaintService, 'findByResultId');
-        const submission = ({
-            id: 1,
-            submitted: true,
-            type: 'MANUAL',
-            text: 'Test\n\nTest\n\nTest',
-            participation: ({
-                type: ParticipationType.SOLUTION,
-                results: [],
-                exercise: ({
-                    id: 1,
-                    problemStatement: 'problemo',
-                    gradingInstructions: 'grading',
-                    title: 'title',
-                    shortName: 'name',
-                    exerciseGroup: ({
-                        exam: ({
-                            course: new Course(),
-                        } as unknown) as Exam,
-                    } as unknown) as ExerciseGroup,
-                } as unknown) as Exercise,
-            } as unknown) as Participation,
-            result: ({
-                id: 2374,
-                resultString: '1 of 12 points',
-                score: 8,
-                rated: true,
-                hasFeedback: true,
+            modelingSubmissionStub.returns(of(submission));
+            const user = <User>{ id: 99, groups: ['instructorGroup'] };
+            const result: Result = <any>{
+                feedbacks: [new Feedback()],
+                participation: new StudentParticipation(),
+                score: 80,
+                successful: true,
+                submission: new ProgrammingSubmission(),
+                assessor: user,
                 hasComplaint: true,
-                feedbacks: [
-                    {
-                        id: 2,
-                        detailText: 'Feedback',
-                        credits: 1,
-                    } as Feedback,
-                ],
-            } as unknown) as Result,
-        } as unknown) as ModelingSubmission;
+                assessmentType: AssessmentType.SEMI_AUTOMATIC,
+                id: 2,
+            };
+            const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
+            complaintStub.returns(of({ body: complaint } as HttpResponse<Complaint>));
 
-        modelingSubmissionStub.returns(of(submission));
-        const user = <User>{ id: 99, groups: ['instructorGroup'] };
-        const result: Result = <any>{
-            feedbacks: [new Feedback()],
-            participation: new StudentParticipation(),
-            score: 80,
-            successful: true,
-            submission: new ProgrammingSubmission(),
-            assessor: user,
-            hasComplaint: true,
-            assessmentType: AssessmentType.SEMI_AUTOMATIC,
-            id: 2,
-        };
-        const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
-        complaintStub.returns(of({ body: complaint } as HttpResponse<Complaint>));
+            component.ngOnInit();
+            tick(500);
+            expect(modelingSubmissionStub).to.have.been.calledOnce;
+            expect(component.isLoading).to.be.false;
+            expect(component.complaint).to.be.deep.equal(complaint);
+            modelingSubmissionStub.restore();
+        }));
 
-        component.ngOnInit();
-        tick(500);
-        expect(modelingSubmissionStub).to.have.been.calledOnce;
-        expect(component.isLoading).to.be.false;
-        expect(component.complaint).to.be.deep.equal(complaint);
-        modelingSubmissionStub.restore();
-    }));
+        it('wrongly call ngOnInit and throw exception', fakeAsync(() => {
+            modelingSubmissionStub = stub(modelingSubmissionService, 'getSubmission');
+            const response = new HttpErrorResponse({ status: 403 });
+            modelingSubmissionStub.returns(throwError(response));
 
-    it('wrongly call ngOnInit and throw exception', fakeAsync(() => {
-        modelingSubmissionStub = stub(modelingSubmissionService, 'getSubmission');
-        const response = new HttpErrorResponse({ status: 403 });
-        modelingSubmissionStub.returns(throwError(response));
+            const accountStub = stub(mockAuth, 'hasAnyAuthorityDirect');
+            accountStub.returns(true);
 
-        const accountStub = stub(mockAuth, 'hasAnyAuthorityDirect');
-        accountStub.returns(true);
-
-        component.ngOnInit();
-        tick(500);
-        expect(modelingSubmissionStub).to.have.been.calledOnce;
-        expect(accountStub).to.have.been.calledTwice;
-        modelingSubmissionStub.restore();
-        accountStub.restore();
-    }));
-
-    /*it('ngOnInit with optimal submission', fakeAsync(() => {
-        const submission = ({
-            id: 1,
-            submitted: true,
-            type: 'MANUAL',
-            text: 'Test\n\nTest\n\nTest',
-            participation: ({
-                type: ParticipationType.SOLUTION,
-                results: [],
-                exercise: ({
-                    id: 1,
-                    problemStatement: 'problemo',
-                    gradingInstructions: 'grading',
-                    title: 'title',
-                    shortName: 'name',
-                    exerciseGroup: ({
-                        exam: ({
-                            course: new Course(),
-                        } as unknown) as Exam,
-                    } as unknown) as ExerciseGroup,
-                } as unknown) as Exercise,
-            } as unknown) as Participation,
-            result: ({
-                id: 2374,
-                resultString: '1 of 12 points',
-                score: 8,
-                rated: true,
-                hasFeedback: true,
-                hasComplaint: false,
-                feedbacks: [
-                    {
-                        id: 2,
-                        detailText: 'Feedback',
-                        credits: 1,
-                    } as Feedback,
-                ],
-            } as unknown) as Result,
-        } as unknown) as ModelingSubmission;
-
-        modelingSubmissionStub = stub(modelingSubmissionService, 'getModelingSubmissionForExerciseWithoutAssessment');
-        // const response = new HttpErrorResponse({ status: 403 });
-        // modelingSubmissionStub.returns(throwError(response));
-        modelingSubmissionStub.returns(of(submission));
-
-        component.ngOnInit();
-        tick(500);
-        expect(modelingSubmissionStub).to.have.been.calledOnce;
-        expect(component.isLoading).to.be.false;
-        modelingSubmissionStub.restore();
-    }));*/
-
+            component.ngOnInit();
+            tick(500);
+            expect(modelingSubmissionStub).to.have.been.calledOnce;
+            expect(accountStub).to.have.been.calledTwice;
+            modelingSubmissionStub.restore();
+            accountStub.restore();
+        }));
+    });
     it('should show or hide a back button', () => {
         const route = fixture.debugElement.injector.get(ActivatedRoute) as Mutable<ActivatedRoute>;
         const queryParamMap = route.queryParamMap as BehaviorSubject<ParamMap>;
@@ -308,8 +245,6 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(component.readOnly).to.be.true;
     }));
 
-    it('calls onError', fakeAsync(() => {}));
-
     it('should save assessment', fakeAsync(() => {
         const feedback = new Feedback();
         feedback.id = 2;
@@ -346,10 +281,9 @@ describe('ModelingAssessmentEditorComponent', () => {
         tick(500);
         component.onSaveAssessment();
         expect(fake).to.have.been.calledOnce;
-        // expect(component.generalFeedback).to.be.deep.equal(component.submission.result.feedbacks[0]);
     }));
 
-    it('should submit assessment', fakeAsync(() => {
+    it('should try to submit assessment', fakeAsync(() => {
         let course = new Course();
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         component.modelingExercise.assessmentDueDate = moment().subtract(2, 'days');
@@ -390,14 +324,12 @@ describe('ModelingAssessmentEditorComponent', () => {
         sinon.replace(window, 'confirm', secondFake);
 
         component.ngOnInit();
-        tick(100);
+        tick(500);
 
         component.onSubmitAssessment();
-        // expect(fake).to.have.been.calledOnce;   // Error: 1 timer(s) still in the queue., error is in the saveAssessment()
 
         expect(window.confirm).to.be.calledOnce;
         expect(component.highlightMissingFeedback).to.be.true;
-        // discardPeriodicTasks();
     }));
 
     it('should update assessment after complaint', fakeAsync(() => {
@@ -428,12 +360,15 @@ describe('ModelingAssessmentEditorComponent', () => {
         const fake = sinon.fake.returns(of({ body: result }));
         sinon.replace(service, 'updateAssessmentAfterComplaint', fake);
 
+        component.ngOnInit();
+        tick(500);
+
         component.onUpdateAssessmentAfterComplaint(complaintResponse);
         expect(fake).to.have.been.calledOnce;
         expect(component.result?.participation?.results).to.deep.equal([result]);
     }));
 
-    it('should cancel the current assessment and navigate back to the exercise dashboard', fakeAsync(() => {
+    it('should cancel the current assessment', fakeAsync(() => {
         const windowFake = sinon.fake.returns(true);
         sinon.replace(window, 'confirm', windowFake);
 
@@ -444,10 +379,11 @@ describe('ModelingAssessmentEditorComponent', () => {
             text: 'Test\n\nTest\n\nTest',
         } as unknown) as ModelingSubmission;
 
-        const fake = sinon.fake.returns(of()); // syntaxError in service
+        const fake = sinon.fake.returns(of());
         sinon.replace(service, 'cancelAssessment', fake);
-        // const fake = sinon.fake.returns(true);
-        // sinon.replace(component, 'navigateBack', fake);
+
+        component.ngOnInit();
+        tick(500);
 
         component.onCancelAssessment();
         expect(windowFake).to.have.been.calledOnce;
@@ -466,6 +402,10 @@ describe('ModelingAssessmentEditorComponent', () => {
                 credits: 1,
             } as Feedback,
         ];
+
+        component.ngOnInit();
+        tick(500);
+
         let course = new Course();
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         component.modelingExercise.maxScore = 5;
@@ -476,67 +416,34 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(component.totalScore).to.be.equal(3);
     }));
 
-    /*it('should assess next optimal submission', fakeAsync(() => {
-        component.ngOnInit();
-        tick(500);
+    describe('test assessNextOptimal', () => {
+        it('no submissions left', fakeAsync(() => {
+            let course = new Course();
+            component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+            component.modelingExercise.id = 1;
 
-        router = new MockRouter();
-        navigateByUrlStub = stub(router, 'navigateByUrl');
-        navigateByUrlStub.returns(Promise.resolve(true));
+            const numbers: number[] = [];
+            const fake = sinon.fake.returns(of(numbers));
+            sinon.replace(service, 'getOptimalSubmissions', fake);
+            component.ngOnInit();
+            tick(500);
+            component.assessNextOptimal();
+            expect(fake).to.have.been.calledOnce;
+        }));
 
-        // const navigateSpy = spyOn(router, 'navigateByUrl');
-        // sinon.replace(router, 'navigateByUrl', sinon.fake.returns(Promise.resolve(true)));
+        it('throw error while assessNextOptimal', fakeAsync(() => {
+            let course = new Course();
+            component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+            component.modelingExercise.id = 1;
 
-        let course = new Course();
-        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-        component.modelingExercise.id = 1;
+            const response = new HttpErrorResponse({ status: 403 });
+            const fake = sinon.fake.returns(throwError(response));
+            sinon.replace(service, 'getOptimalSubmissions', fake);
 
-        const numbers : number[] = [0,1,2,3,4,5];
-        const fake = sinon.fake.returns(of(numbers));
-        sinon.replace(service, 'getOptimalSubmissions', fake);
-
-
-        component.assessNextOptimal();
-        tick(500);
-        expect(fake).to.have.been.called;
-        expect(navigateByUrlStub).to.have.been.calledOnceWithExactly('/');
-        // expect(navigateSpy).to.have.been.calledTwice;
-        // flush();
-        // fixture.detectChanges();
-        // component.ngOnInit();
-        // tick();
-        // discardPeriodicTasks();
-        // fixture.whenStable();
-        navigateByUrlStub.restore();
-    }));*/
-
-    it('no submissions left', fakeAsync(() => {
-        let course = new Course();
-        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-        component.modelingExercise.id = 1;
-
-        const numbers: number[] = [];
-        const fake = sinon.fake.returns(of(numbers));
-        sinon.replace(service, 'getOptimalSubmissions', fake);
-        component.ngOnInit();
-        tick(500);
-        component.assessNextOptimal();
-        expect(fake).to.have.been.calledOnce;
-        // maybe expect jhiAlertService
-    }));
-
-    it('throw Error', fakeAsync(() => {
-        let course = new Course();
-        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-        component.modelingExercise.id = 1;
-
-        const response = new HttpErrorResponse({ status: 403 });
-        const fake = sinon.fake.returns(throwError(response));
-        sinon.replace(service, 'getOptimalSubmissions', fake);
-
-        component.ngOnInit();
-        tick(500);
-        component.assessNextOptimal();
-        expect(fake).to.have.been.calledOnce;
-    }));
+            component.ngOnInit();
+            tick(500);
+            component.assessNextOptimal();
+            expect(fake).to.have.been.calledOnce;
+        }));
+    });
 });
