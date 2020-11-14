@@ -13,7 +13,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { SERVER_API_URL } from 'app/app.constants';
-import { UMLElementType, UMLModel } from '@ls1intum/apollon';
+import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 
 const expect = chai.expect;
 
@@ -166,29 +166,61 @@ describe('Modeling Assessment Service', () => {
             it('should get names for assessment', async () => {
                 const expected = new Map();
                 elemDefault.feedbacks = [
-                    {
-                        id: 0,
-                        credits: 3,
-                        reference: 'reference',
-                        referenceId: '6',
-                        referenceType: UMLElementType.ActivityActionNode,
-                    } as Feedback,
-                    {
-                        id: 1,
-                        credits: 1,
-                        referenceId: '6',
-                        referenceType: UMLElementType.ActivityActionNode,
-                    } as Feedback,
+                    { id: 0, credits: 3, referenceId: '6', referenceType: UMLElementType.ActivityActionNode } as Feedback,
+                    { id: 0, credits: 3, referenceId: '7', referenceType: UMLElementType.ActivityActionNode } as Feedback,
+                    { id: 0, credits: 3, referenceId: '8', referenceType: UMLElementType.ActivityActionNode } as Feedback,
+                    { id: 0, credits: 3, referenceId: '9', referenceType: UMLElementType.ActivityActionNode } as Feedback,
+                    { id: 0, credits: 3, referenceId: '10', referenceType: UMLElementType.ActivityActionNode } as Feedback,
+                    { id: 0, credits: 3, referenceId: '11', referenceType: UMLElementType.ActivityActionNode } as Feedback,
+                    { id: 0, credits: 3, referenceId: '12', referenceType: UMLElementType.ActivityActionNode } as Feedback,
+                    { id: 0, credits: 3, referenceId: '13', referenceType: UMLElementType.ActivityActionNode } as Feedback,
+                    { id: 0, credits: 3, referenceId: '14', referenceType: UMLElementType.ActivityActionNode } as Feedback,
+                    { id: 0, credits: 3, referenceId: '15', referenceType: UMLElementType.ActivityActionNode } as Feedback,
+                    { id: 0, credits: 3, referenceId: '16', referenceType: UMLElementType.ActivityActionNode } as Feedback,
+                    { id: 0, credits: 3, referenceId: '17', referenceType: UMLElementType.ActivityActionNode } as Feedback,
+                    { id: 0, credits: 3, referenceId: '18', referenceType: UMLElementType.ActivityActionNode } as Feedback,
+                    { id: 0, credits: 3, referenceId: '19', referenceType: UMLRelationshipType.ClassBidirectional } as Feedback,
+                    { id: 0, credits: 3, referenceId: '20', referenceType: UMLRelationshipType.ClassBidirectional } as Feedback,
+                    { id: 0, credits: 3, referenceId: '21', referenceType: UMLRelationshipType.ClassBidirectional } as Feedback,
+                    { id: 0, credits: 3, referenceId: '22', referenceType: UMLRelationshipType.ClassBidirectional } as Feedback,
+                    { id: 0, credits: 3, referenceId: '23', referenceType: UMLRelationshipType.ClassBidirectional } as Feedback,
+                    { id: 0, credits: 3, referenceId: '24', referenceType: UMLRelationshipType.ClassBidirectional } as Feedback,
+                    { id: 0, credits: 3, referenceId: '25', referenceType: UMLRelationshipType.ClassBidirectional } as Feedback,
                 ];
                 const uml = ({
                     elements: [
-                        {
-                            id: 6,
-                            name: 'Dominik',
-                            type: 'action',
-                        },
+                        { id: '6', name: 'Dominik', type: UMLElementType.Class },
+                        { id: '7', name: 'Dominik', type: UMLElementType.Package },
+                        { id: '8', name: 'Dominik', type: UMLElementType.Interface },
+                        { id: '9', name: 'Dominik', type: UMLElementType.AbstractClass },
+                        { id: '10', name: 'Dominik', type: UMLElementType.Enumeration },
+                        { id: '11', name: 'Dominik', type: UMLElementType.ClassAttribute },
+                        { id: '12', name: 'Dominik', type: UMLElementType.ClassMethod },
+                        { id: '13', name: 'Dominik', type: UMLElementType.ActivityInitialNode },
+                        { id: '14', name: 'Dominik', type: UMLElementType.ActivityFinalNode },
+                        { id: '15', name: 'Dominik', type: UMLElementType.ActivityObjectNode },
+                        { id: '16', name: 'Dominik', type: UMLElementType.ActivityActionNode },
+                        { id: '17', name: 'Dominik', type: UMLElementType.ActivityForkNode },
+                        { id: '18', name: 'Dominik', type: UMLElementType.ActivityMergeNode },
+                        { id: '19', name: 'Dominik', type: UMLElementType.Class },
+                        { id: '20', name: 'Dominik', type: UMLElementType.Class },
+                        { id: '21', name: 'Dominik', type: UMLElementType.Class },
+                        { id: '22', name: 'Dominik', type: UMLElementType.Class },
+                        { id: '23', name: 'Dominik', type: UMLElementType.Class },
+                        { id: '24', name: 'Dominik', type: UMLElementType.Class },
+                        { id: '25', name: 'Dominik', type: UMLElementType.Class },
+                    ],
+                    relationships: [
+                        { id: '19', type: UMLRelationshipType.ClassBidirectional, source: { element: '6' }, target: { element: '6' } },
+                        { id: '20', type: UMLRelationshipType.ClassUnidirectional, source: { element: '6' }, target: { element: '6' } },
+                        { id: '21', type: UMLRelationshipType.ClassAggregation, source: { element: '6' }, target: { element: '6' } },
+                        { id: '22', type: UMLRelationshipType.ClassInheritance, source: { element: '6' }, target: { element: '6' } },
+                        { id: '23', type: UMLRelationshipType.ClassDependency, source: { element: '6' }, target: { element: '6' } },
+                        { id: '24', type: UMLRelationshipType.ClassComposition, source: { element: '6' }, target: { element: '6' } },
+                        { id: '25', type: UMLRelationshipType.ActivityControlFlow, source: { element: '6' }, target: { element: '6' } },
                     ],
                 } as unknown) as UMLModel;
+
                 expectedResult = service.getNamesForAssessments(elemDefault, uml);
                 expect(expectedResult).to.deep.equal(expected);
             });
