@@ -45,6 +45,11 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exam } from 'app/entities/exam.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ComplaintService } from 'app/complaints/complaint.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { User } from 'app/core/user/user.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -57,7 +62,9 @@ describe('ModelingAssessmentEditorComponent', () => {
     let router: MockRouter;
     let navigateByUrlStub: SinonStub;
     let modelingSubmissionService: ModelingSubmissionService;
+    let complaintService: ComplaintService;
     let modelingSubmissionStub: SinonStub;
+    let complaintStub: SinonStub;
     // const route = ({ snapshot: { paramMap: convertToParamMap( of({ submissionId: 'new', exerciseId: 1, showBackButton: 'false' /*, testRun: true*/ })) } } as any) as ActivatedRoute;
 
     beforeEach(fakeAsync(() => {
@@ -80,6 +87,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 component = fixture.componentInstance;
                 service = TestBed.inject(ModelingAssessmentService);
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
+                complaintService = TestBed.inject(ComplaintService);
 
                 mockAuth = (fixture.debugElement.injector.get(AccountService) as any) as MockAccountService;
                 mockAuth.hasAnyAuthorityDirect([]);
@@ -94,6 +102,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
     it('ngOnInit', fakeAsync(() => {
         modelingSubmissionStub = stub(modelingSubmissionService, 'getSubmission');
+        complaintStub = stub(complaintService, 'findByResultId');
         const submission = ({
             id: 1,
             submitted: true,
@@ -121,7 +130,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 score: 8,
                 rated: true,
                 hasFeedback: true,
-                hasComplaint: false,
+                hasComplaint: true,
                 feedbacks: [
                     {
                         id: 2,
@@ -133,11 +142,26 @@ describe('ModelingAssessmentEditorComponent', () => {
         } as unknown) as ModelingSubmission;
 
         modelingSubmissionStub.returns(of(submission));
+        const user = <User>{ id: 99, groups: ['instructorGroup'] };
+        const result: Result = <any>{
+            feedbacks: [new Feedback()],
+            participation: new StudentParticipation(),
+            score: 80,
+            successful: true,
+            submission: new ProgrammingSubmission(),
+            assessor: user,
+            hasComplaint: true,
+            assessmentType: AssessmentType.SEMI_AUTOMATIC,
+            id: 2,
+        };
+        const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
+        complaintStub.returns(of({ body: complaint } as HttpResponse<Complaint>));
 
         component.ngOnInit();
         tick(500);
         expect(modelingSubmissionStub).to.have.been.calledOnce;
         expect(component.isLoading).to.be.false;
+        expect(component.complaint).to.be.deep.equal(complaint);
         modelingSubmissionStub.restore();
     }));
 
@@ -499,5 +523,20 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.assessNextOptimal();
         expect(fake).to.have.been.calledOnce;
         // maybe expect jhiAlertService
+    }));
+
+    it('throw Error', fakeAsync(() => {
+        let course = new Course();
+        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+        component.modelingExercise.id = 1;
+
+        const response = new HttpErrorResponse({ status: 403 });
+        const fake = sinon.fake.returns(throwError(response));
+        sinon.replace(service, 'getOptimalSubmissions', fake);
+
+        component.ngOnInit();
+        tick(500);
+        component.assessNextOptimal();
+        expect(fake).to.have.been.calledOnce;
     }));
 });
