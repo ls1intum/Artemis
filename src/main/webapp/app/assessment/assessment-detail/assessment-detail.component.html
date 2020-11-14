@@ -14,18 +14,27 @@
         <div class="form-group row">
             <label class="col-3 assessment-label" jhiTranslate="artemisApp.exercise.score"></label>
             <input
-                class="col"
+                class="col form-control"
                 type="number"
                 step="0.5"
                 [(ngModel)]="assessment.credits"
                 (ngModelChange)="emitChanges()"
                 [readOnly]="disabled || disableEditScore || readOnly"
                 [disabled]="disabled"
+                required
             />
         </div>
         <div class="form-group row">
             <label class="col-3 assessment-label" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
-            <textarea class="col form-control" rows="2" [(ngModel)]="assessment.detailText" (ngModelChange)="emitChanges()" [readOnly]="readOnly" [disabled]="disabled"></textarea>
+            <textarea
+                class="col form-control"
+                rows="2"
+                [(ngModel)]="assessment.detailText"
+                (ngModelChange)="emitChanges()"
+                [readOnly]="readOnly"
+                [disabled]="disabled"
+                required
+            ></textarea>
         </div>
     </div>
 </div>
