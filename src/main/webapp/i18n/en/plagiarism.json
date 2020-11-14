@@ -10,7 +10,8 @@
             "back": "Back",
             "empty": "There are no results.",
             "not-found": "No plagiarism found",
-            "not-selected": "No plagiarism selected"
+            "not-selected": "No plagiarism selected",
+            "unknown-student": "Unknown"
         }
     }
 }

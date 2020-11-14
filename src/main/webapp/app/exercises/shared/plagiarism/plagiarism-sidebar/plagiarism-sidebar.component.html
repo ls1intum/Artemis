@@ -11,11 +11,12 @@
                 ></span>
 
                 <div class="plagiarism-list-item-info">
-                    <span class="plagiarism-name">{{ 'artemisApp.plagiarism.plagiarism' | translate }} #{{ idx + 1 }} </span>
+                    <span class="plagiarism-name"> #{{ idx + 1 }} </span>
 
                     <span class="plagiarism-list-item-students">
-                        <span>{{ comparison.studentA }}, </span>
-                        <span>{{ comparison.studentB }}</span>
+                        <span>{{ comparison.studentA || ('artemisApp.plagiarism.unknown-student' | translate) }}, </span>
+
+                        <span>{{ comparison.studentB || ('artemisApp.plagiarism.unknown-student' | translate) }} </span>
                     </span>
                 </div>
             </div>
