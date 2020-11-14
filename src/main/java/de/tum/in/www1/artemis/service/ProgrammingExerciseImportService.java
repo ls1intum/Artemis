@@ -99,13 +99,10 @@ public class ProgrammingExerciseImportService {
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
-        final var projectKey = newExercise.getProjectKey();
-        final var templatePlanName = BuildPlanType.TEMPLATE.getName();
-        final var solutionPlanName = BuildPlanType.SOLUTION.getName();
 
-        programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise, projectKey, solutionPlanName);
-        programmingExerciseParticipationService.setupInitalTemplateParticipation(newExercise, projectKey, templatePlanName);
-        setupTestRepository(newExercise, projectKey);
+        programmingExerciseParticipationService.setupInitialSolutionParticipation(newExercise);
+        programmingExerciseParticipationService.setupInitalTemplateParticipation(newExercise);
+        setupTestRepository(newExercise);
         programmingExerciseService.initParticipations(newExercise);
 
         // Hints, test cases and static code analysis categories
@@ -297,11 +294,10 @@ public class ProgrammingExerciseImportService {
      * repository on the version control server!
      *
      * @param newExercise the new exercises that should be created during import
-     * @param projectKey the unique project key for the exercise
      */
-    private void setupTestRepository(ProgrammingExercise newExercise, String projectKey) {
-        final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
+    private void setupTestRepository(ProgrammingExercise newExercise) {
+        final var testRepoName = newExercise.generateRepositoryName(RepositoryType.TESTS);
+        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getProjectKey(), testRepoName).toString());
     }
 
     /**
@@ -326,9 +322,9 @@ public class ProgrammingExerciseImportService {
 
         final var user = userService.getUser();
 
-        adjustProjectName(replacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName(), user);
-        adjustProjectName(replacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName(), user);
-        adjustProjectName(replacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName(), user);
+        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TEMPLATE), user);
+        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TESTS), user);
+        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.SOLUTION), user);
     }
 
     /**

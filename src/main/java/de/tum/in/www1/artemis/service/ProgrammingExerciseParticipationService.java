@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -266,16 +267,14 @@ public class ProgrammingExerciseParticipationService {
      * the correct build plan ID and repository URL. Saves the participation after all values have been set.
      *
      * @param newExercise The new exercise for which a participation should be generated
-     * @param projectKey The key of the project of the new exercise
-     * @param solutionPlanName The name for the build plan of the participation
      */
     @NotNull
-    public void setupInitialSolutionParticipation(ProgrammingExercise newExercise, String projectKey, String solutionPlanName) {
-        final String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+    public void setupInitialSolutionParticipation(ProgrammingExercise newExercise) {
+        final String solutionRepoName = newExercise.generateRepositoryName(RepositoryType.SOLUTION);
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
         newExercise.setSolutionParticipation(solutionParticipation);
-        solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
-        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
+        solutionParticipation.setBuildPlanId(newExercise.generateBuildPlanId(BuildPlanType.SOLUTION));
+        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getProjectKey(), solutionRepoName).toString());
         solutionParticipation.setProgrammingExercise(newExercise);
         solutionParticipationRepository.save(solutionParticipation);
     }
@@ -285,15 +284,13 @@ public class ProgrammingExerciseParticipationService {
      * the correct build plan ID and repository URL. Saves the participation after all values have been set.
      *
      * @param newExercise The new exercise for which a participation should be generated
-     * @param projectKey The key of the project of the new exercise
-     * @param templatePlanName The name for the build plan of the participation
      */
     @NotNull
-    public void setupInitalTemplateParticipation(ProgrammingExercise newExercise, String projectKey, String templatePlanName) {
-        final String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
+    public void setupInitalTemplateParticipation(ProgrammingExercise newExercise) {
+        final String exerciseRepoName = newExercise.generateRepositoryName(RepositoryType.TEMPLATE);
         TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
-        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName);
-        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
+        templateParticipation.setBuildPlanId(newExercise.generateBuildPlanId(BuildPlanType.TEMPLATE));
+        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getProjectKey(), exerciseRepoName).toString());
         templateParticipation.setProgrammingExercise(newExercise);
         newExercise.setTemplateParticipation(templateParticipation);
         templateParticipationRepository.save(templateParticipation);
