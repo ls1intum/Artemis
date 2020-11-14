@@ -109,7 +109,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
-            const participationId = Number(params['participationId']);
+            const participationId = params['participationId'] ? Number(params['participationId']) : Number(this.route.snapshot.data.studentParticipationId);
             this.programmingExerciseParticipationService.getStudentParticipationWithResults(participationId).subscribe(
                 (participationWithResults: ProgrammingExerciseStudentParticipation) => {
                     // Set domain to make file editor work properly
