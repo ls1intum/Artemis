@@ -202,13 +202,6 @@ describe('Modeling Assessment Service', () => {
                         { id: '16', name: 'Dominik', type: UMLElementType.ActivityActionNode },
                         { id: '17', name: 'Dominik', type: UMLElementType.ActivityForkNode },
                         { id: '18', name: 'Dominik', type: UMLElementType.ActivityMergeNode },
-                        { id: '19', name: 'Dominik', type: UMLElementType.Class },
-                        { id: '20', name: 'Dominik', type: UMLElementType.Class },
-                        { id: '21', name: 'Dominik', type: UMLElementType.Class },
-                        { id: '22', name: 'Dominik', type: UMLElementType.Class },
-                        { id: '23', name: 'Dominik', type: UMLElementType.Class },
-                        { id: '24', name: 'Dominik', type: UMLElementType.Class },
-                        { id: '25', name: 'Dominik', type: UMLElementType.Class },
                     ],
                     relationships: [
                         { id: '19', type: UMLRelationshipType.ClassBidirectional, source: { element: '6' }, target: { element: '6' } },
