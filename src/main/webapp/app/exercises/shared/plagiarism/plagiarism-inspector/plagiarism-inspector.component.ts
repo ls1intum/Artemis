@@ -1,12 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject } from 'rxjs';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { JPlagResult } from 'app/exercises/shared/plagiarism/types/jplag/JPlagResult';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
-import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { downloadFile } from 'app/shared/util/download.util';
 
 @Component({
@@ -36,14 +34,9 @@ export class PlagiarismInspectorComponent implements OnInit {
     detectionInProgress: boolean;
 
     /**
-     * Index of the currently selected plagiarism item.
+     * Index of the currently selected comparison.
      */
-    selectedPlagiarismIndex: number;
-
-    /**
-     * Subject to be passed into PlagiarismSplitViewComponent to control the split view.
-     */
-    splitControlSubject: Subject<string> = new Subject<string>();
+    selectedComparisonIndex: number;
 
     constructor(
         private route: ActivatedRoute,
@@ -59,26 +52,6 @@ export class PlagiarismInspectorComponent implements OnInit {
         });
     }
 
-    /**
-     * Handle the 'plagiarismStatusChange' event emitted by PlagiarismHeaderComponent.
-     *
-     * @param confirmed
-     */
-    handlePlagiarismStatusChange(confirmed: boolean) {
-        if (this.plagiarismResult) {
-            this.plagiarismResult.comparisons[this.selectedPlagiarismIndex].status = confirmed ? PlagiarismStatus.CONFIRMED : PlagiarismStatus.DENIED;
-        }
-    }
-
-    /**
-     * Handle the 'splitViewChange' event emitted by PlagiarismHeaderComponent.
-     *
-     * @param pane
-     */
-    handleSplitViewChange(pane: string) {
-        this.splitControlSubject.next(pane);
-    }
-
     checkPlagiarism() {
         if (this.exerciseType === ExerciseType.MODELING) {
             this.checkPlagiarismModeling();
@@ -87,8 +60,8 @@ export class PlagiarismInspectorComponent implements OnInit {
         }
     }
 
-    selectedPlagiarismAtIndex(index: number) {
-        this.selectedPlagiarismIndex = index;
+    selectComparisonAtIndex(index: number) {
+        this.selectedComparisonIndex = index;
     }
 
     /**
@@ -104,7 +77,7 @@ export class PlagiarismInspectorComponent implements OnInit {
                 console.log(result);
 
                 this.plagiarismResult = result;
-                this.selectedPlagiarismIndex = 0;
+                this.selectedComparisonIndex = 0;
             },
             () => (this.detectionInProgress = false),
         );
@@ -123,7 +96,7 @@ export class PlagiarismInspectorComponent implements OnInit {
                 console.log(result);
 
                 this.plagiarismResult = result;
-                this.selectedPlagiarismIndex = 0;
+                this.selectedComparisonIndex = 0;
             },
             () => (this.detectionInProgress = false),
         );

@@ -20,11 +20,11 @@
     <div class="plagiarism-body" *ngIf="plagiarismResult">
         <jhi-plagiarism-sidebar
             [comparisons]="plagiarismResult?.comparisons"
-            (selectIndex)="selectedPlagiarismAtIndex($event)"
-            [activeIndex]="selectedPlagiarismIndex"
+            (selectIndex)="selectComparisonAtIndex($event)"
+            [activeIndex]="selectedComparisonIndex"
         ></jhi-plagiarism-sidebar>
 
-        <jhi-plagiarism-details></jhi-plagiarism-details>
+        <jhi-plagiarism-details [comparison]="plagiarismResult?.comparisons[selectedComparisonIndex]"> </jhi-plagiarism-details>
     </div>
 
     <div class="plagiarism-empty" *ngIf="!plagiarismResult">

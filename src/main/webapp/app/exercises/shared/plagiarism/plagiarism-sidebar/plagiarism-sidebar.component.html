@@ -1,6 +1,6 @@
 <aside class="plagiarism-sidebar">
     <ul class="plagiarism-list" *ngIf="comparisons">
-        <li class="plagiarism-list-item" [class.selected]="idx === activeIndex" *ngFor="let comparison of comparisons; let idx = index" (click)="selectIndex.emit(idx)">
+        <li class="plagiarism-list-item" [class.selected]="idx === activeIndex" (click)="selectIndex.emit(idx)" *ngFor="let comparison of comparisons; let idx = index">
             <div class="plagiarism-list-item-content">
                 <span
                     class="plagiarism-status-indicator"
@@ -16,7 +16,7 @@
                     <span class="plagiarism-list-item-students">
                         <span>{{ comparison.studentA || ('artemisApp.plagiarism.unknown-student' | translate) }}, </span>
 
-                        <span>{{ comparison.studentB || ('artemisApp.plagiarism.unknown-student' | translate) }} </span>
+                        <span>{{ comparison.studentB || ('artemisApp.plagiarism.unknown-student' | translate) }}</span>
                     </span>
                 </div>
             </div>

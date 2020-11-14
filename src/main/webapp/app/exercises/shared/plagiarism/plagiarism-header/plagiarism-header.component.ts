@@ -1,4 +1,7 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, Input } from '@angular/core';
+import { Subject } from 'rxjs';
+import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
+import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 
 @Component({
     selector: 'jhi-plagiarism-header',
@@ -6,7 +9,28 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
     templateUrl: './plagiarism-header.component.html',
 })
 export class PlagiarismHeaderComponent {
-    @Input() comparisonIdx: number;
-    @Output() splitViewChange = new EventEmitter<string>();
-    @Output() plagiarismStatusChange = new EventEmitter<boolean>();
+    @Input() comparison: PlagiarismComparison;
+    @Input() splitControlSubject: Subject<string>;
+
+    /**
+     * Update the status of the currently selected comparison.
+     */
+    confirmPlagiarism() {
+        this.comparison.status = PlagiarismStatus.CONFIRMED;
+    }
+
+    /**
+     * Update the status of the currently selected comparison.
+     */
+    denyPlagiarism() {
+        this.comparison.status = PlagiarismStatus.DENIED;
+    }
+
+    expandSplitPane(pane: 'left' | 'right') {
+        this.splitControlSubject.next(pane);
+    }
+
+    resetSplitPanes() {
+        this.splitControlSubject.next('even');
+    }
 }

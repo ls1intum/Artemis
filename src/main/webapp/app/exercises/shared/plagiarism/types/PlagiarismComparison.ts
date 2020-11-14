@@ -19,5 +19,5 @@ export interface PlagiarismComparison {
     /**
      * Status of this plagiarism.
      */
-    status?: PlagiarismStatus;
+    status: PlagiarismStatus;
 }
