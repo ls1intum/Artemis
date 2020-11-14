@@ -92,28 +92,22 @@ public class StudentScoreService {
     public void updateResult(Result updatedResult) {
         // ignore results without score or participation
         if (updatedResult.getScore() == null || updatedResult.getParticipation() == null || !Boolean.TRUE.equals(updatedResult.isRated())) {
-            log.info("Weil kein Score, keine Participation oder Unrated");
             return;
         }
 
         if (updatedResult.getParticipation().getClass() != StudentParticipation.class) {
-            log.info("Weil keine StudentParticipation");
             return;
         }
 
         var participation = (StudentParticipation) updatedResult.getParticipation();
         var student = participation.getStudent();
-        // make all tests but mine pass -> exercise not in db leads to foreign key exception in tests
         var exercise = exerciseRepository.findById(participation.getExercise().getId());
 
         if (student.isEmpty() || exercise.isEmpty()) {
-            log.info("Weil keine Student oder keine Exercise");
             return;
         }
 
         if (updatedResult.getStudentScore() != null) {
-            // log.info("Delete old StudentScore");
-            // studentScoreRepository.delete(updatedResult.getStudentScore());
 
             StudentScore studentScore = updatedResult.getStudentScore();
             studentScore.setResult(updatedResult);
@@ -125,9 +119,7 @@ public class StudentScoreService {
             StudentScore studentScore = new StudentScore(student.get(), exercise.get(), updatedResult);
             studentScore.setScore(updatedResult.getScore());
 
-            log.info("Insert StudentScore: " + studentScore + " mit Exercise: " + exercise.get() + ", Student: " + student.get() + " und Result: " + updatedResult);
             studentScore = studentScoreRepository.save(studentScore);
-            log.info("StudentScore: " + studentScore + " with Score: " + studentScore.getScore());
         }
     }
 }
