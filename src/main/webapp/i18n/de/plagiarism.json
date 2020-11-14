@@ -8,6 +8,7 @@
             "inspection": "Plagiatskontrolle",
             "plagiarism": "Plagiat",
             "back": "Zurück",
+            "empty": "Es liegen keine Ergebnisse vor.",
             "not-found": "Kein Plagiat gefunden",
             "not-selected": "Kein Plagiat ausgewählt"
         }

@@ -8,6 +8,8 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { ModelingStatistic } from 'app/entities/modeling-statistic.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
+import { ModelingComparison } from 'app/exercises/shared/plagiarism/types/modeling/ModelingComparison';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
@@ -80,9 +82,13 @@ export class ModelingExerciseService {
      * Check for plagiarism
      * @param exerciseId of the programming exercise
      */
-    checkPlagiarism(exerciseId: number): Observable<Array<ModelingSubmissionComparisonDTO>> {
+    checkPlagiarism(exerciseId: number): Observable<ModelingPlagiarismResult> {
         return this.http
-            .get<Array<ModelingSubmissionComparisonDTO>>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response' })
-            .pipe(map((response: HttpResponse<Array<ModelingSubmissionComparisonDTO>>) => response.body!));
+            .get<ModelingComparison[]>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response' })
+            .pipe(
+                map((response: HttpResponse<ModelingComparison[]>) => ({
+                    comparisons: response.body!,
+                })),
+            );
     }
 }

@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
-import { ModelingExerciseService, ModelingSubmissionComparisonDTO } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { downloadFile } from 'app/shared/util/download.util';
-import { ExportToCsv } from 'export-to-csv';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
+import { JPlagResult } from 'app/exercises/shared/plagiarism/types/jplag/JPlagResult';
+import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
+import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
+import { downloadFile } from 'app/shared/util/download.util';
 
 @Component({
     selector: 'jhi-plagiarism-inspector',
@@ -25,17 +26,17 @@ export class PlagiarismInspectorComponent implements OnInit {
     exerciseType: ExerciseType;
 
     /**
-     * Results of the plagiarism detection.
+     * Result of the automated plagiarism detection
      */
-    modelingSubmissionComparisons: Array<ModelingSubmissionComparisonDTO>;
+    plagiarismResult?: JPlagResult | ModelingPlagiarismResult;
 
     /**
-     * Flag to indicate whether the plagiarism detection is currently in progress.
+     * True, if an automated plagiarism detection is running; false otherwise.
      */
-    plagiarismDetectionInProgress: boolean;
+    detectionInProgress: boolean;
 
     /**
-     * Index of the currently selected plagiarism.
+     * Index of the currently selected plagiarism item.
      */
     selectedPlagiarismIndex: number;
 
@@ -44,17 +45,18 @@ export class PlagiarismInspectorComponent implements OnInit {
      */
     splitControlSubject: Subject<string> = new Subject<string>();
 
-    constructor(private route: ActivatedRoute, private router: Router, private modelingExerciseService: ModelingExerciseService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private router: Router,
+        private modelingExerciseService: ModelingExerciseService,
+        private textExerciseService: TextExerciseService,
+    ) {}
 
     ngOnInit() {
         this.route.data.subscribe(({ exercise }) => {
             this.exercise = exercise;
             this.exerciseType = exercise.type;
         });
-
-        // this.route.params.subscribe((params) => {
-        //     this.fetchModelingExercise(params['exerciseId']);
-        // });
     }
 
     /**
@@ -63,7 +65,9 @@ export class PlagiarismInspectorComponent implements OnInit {
      * @param confirmed
      */
     handlePlagiarismStatusChange(confirmed: boolean) {
-        this.modelingSubmissionComparisons[this.selectedPlagiarismIndex].confirmed = confirmed;
+        if (this.plagiarismResult) {
+            this.plagiarismResult.comparisons[this.selectedPlagiarismIndex].status = confirmed ? PlagiarismStatus.CONFIRMED : PlagiarismStatus.DENIED;
+        }
     }
 
     /**
@@ -75,31 +79,64 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.splitControlSubject.next(pane);
     }
 
+    checkPlagiarism() {
+        if (this.exerciseType === ExerciseType.MODELING) {
+            this.checkPlagiarismModeling();
+        } else {
+            this.checkPlagiarismJPlag();
+        }
+    }
+
+    selectedPlagiarismAtIndex(index: number) {
+        this.selectedPlagiarismIndex = index;
+    }
+
     /**
      * Trigger the server-side plagiarism detection and fetch its result.
      */
-    checkPlagiarism() {
-        this.plagiarismDetectionInProgress = true;
+    checkPlagiarismJPlag() {
+        this.detectionInProgress = true;
 
-        // TODO: Make checkPlagiarism() generic for all exercise types
-        // this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id!).subscribe(
-        //     (comparisons: Array<ModelingSubmissionComparisonDTO>) => {
-        //         this.plagiarismDetectionInProgress = false;
-        //         this.modelingSubmissionComparisons = comparisons.sort((c1, c2) => c2.similarity - c1.similarity);
-        //     },
-        //     () => (this.plagiarismDetectionInProgress = false),
-        // );
+        this.textExerciseService.checkPlagiarismJPlag(this.exercise.id!).subscribe(
+            (result: JPlagResult) => {
+                this.detectionInProgress = false;
+
+                console.log(result);
+
+                this.plagiarismResult = result;
+                this.selectedPlagiarismIndex = 0;
+            },
+            () => (this.detectionInProgress = false),
+        );
+    }
+
+    /**
+     * Trigger the server-side plagiarism detection and fetch its result.
+     */
+    checkPlagiarismModeling() {
+        this.detectionInProgress = true;
+
+        this.modelingExerciseService.checkPlagiarism(this.exercise.id!).subscribe(
+            (result: ModelingPlagiarismResult) => {
+                this.detectionInProgress = false;
+
+                console.log(result);
+
+                this.plagiarismResult = result;
+                this.selectedPlagiarismIndex = 0;
+            },
+            () => (this.detectionInProgress = false),
+        );
     }
 
     /**
      * Download plagiarism detection results as JSON document.
      */
     downloadPlagiarismResultsJson() {
-        const json = JSON.stringify(this.modelingSubmissionComparisons);
+        const json = JSON.stringify(this.plagiarismResult);
         const blob = new Blob([json], { type: 'application/json' });
 
-        // TODO
-        // downloadFile(blob, `check-plagiarism-modeling-exercise_${this.modelingExercise.id}.json`);
+        downloadFile(blob, `check-plagiarism-modeling-exercise_${this.exercise.id}.json`);
     }
 
     /**

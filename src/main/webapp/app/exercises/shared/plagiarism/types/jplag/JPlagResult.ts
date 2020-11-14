@@ -1,4 +1,7 @@
-interface JPlagResult {
+import { JPlagComparison } from 'app/exercises/shared/plagiarism/types/jplag/JPlagComparison';
+import { PlagiarismResult } from 'app/exercises/shared/plagiarism/types/PlagiarismResult';
+
+export interface JPlagResult extends PlagiarismResult<JPlagComparison> {
     /**
      * Number of detected comparisons.
      */
@@ -13,11 +16,6 @@ interface JPlagResult {
      * Duration of the plagiarism detection run in milliseconds.
      */
     duration: number;
-
-    /**
-     * List of comparisons.
-     */
-    comparisons: JPlagComparison[];
 
     /**
      * Similarity distribution

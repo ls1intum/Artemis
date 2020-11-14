@@ -109,9 +109,8 @@ public class TextPlagiarismDetectionService {
      * @param textExercise to detect plagiarism for
      * @return a zip file that can be returned to the client
      * @throws ExitException is thrown if JPlag exits unexpectedly
-     * @throws IOException   is thrown for file handling errors
      */
-    public JPlagResult checkPlagiarism(TextExercise textExercise) throws ExitException, IOException {
+    public JPlagResult checkPlagiarism(TextExercise textExercise) throws ExitException {
         // TODO: offer the following options in the client
         // 1) filter empty submissions, i.e. repositories with no student commits
         // 2) filter submissions with a result score of 0%
@@ -135,8 +134,7 @@ public class TextPlagiarismDetectionService {
             }
         });
 
-        // TODO
-        JPlagOptions options = new JPlagOptions("/path/to/rootDir", LanguageOption.JAVA_1_9);
+        JPlagOptions options = new JPlagOptions(submissionsFolderName, LanguageOption.TEXT);
 
         JPlag jplag = new JPlag(options);
         JPlagResult result = jplag.run();

@@ -1,0 +1,25 @@
+<aside class="plagiarism-sidebar">
+    <ul class="plagiarism-list" *ngIf="comparisons">
+        <li class="plagiarism-list-item" [class.selected]="idx === activeIndex" *ngFor="let comparison of comparisons; let idx = index" (click)="selectIndex.emit(idx)">
+            <div class="plagiarism-list-item-content">
+                <span
+                    class="plagiarism-status-indicator"
+                    [ngClass]="{
+                        confirmed: comparison.status === 'confirmed',
+                        denied: comparison.status === 'denied'
+                    }"
+                ></span>
+
+                <div class="plagiarism-list-item-info">
+                    <span class="plagiarism-name">{{ 'artemisApp.plagiarism.plagiarism' | translate }} #{{ idx + 1 }} </span>
+
+                    <span class="plagiarism-list-item-students">
+                        <span>{{ comparison.studentA }}, </span>
+                        <span>{{ comparison.studentB }}</span>
+                    </span>
+                </div>
+            </div>
+            <span class="plagiarism-percentage">({{ (comparison.similarity || 0) * 100 }}%)</span>
+        </li>
+    </ul>
+</aside>
