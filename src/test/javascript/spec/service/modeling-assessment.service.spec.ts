@@ -209,5 +209,28 @@ describe('Modeling Assessment Service', () => {
             req.flush(returnedFromService);
             expect(expectedResult).to.deep.equal([elem]);
         });
+
+        it('tests validFeedback check', async () => {
+            const emptyfeedback: Feedback[] = [];
+            const feedbacks = [
+                {
+                    id: 0,
+                    credits: 3,
+                    reference: 'reference',
+                    text: 'text',
+                    detailText: 'detailtext',
+                } as Feedback,
+                {
+                    id: 1,
+                    credits: 1,
+                    text: 'text',
+                    detailText: 'detailtext',
+                } as Feedback,
+            ];
+            let result = service.isFeedbackTextValid(emptyfeedback);
+            expect(result).to.be.true;
+            result = service.isFeedbackTextValid(feedbacks);
+            expect(result).to.be.true;
+        });
     });
 });
