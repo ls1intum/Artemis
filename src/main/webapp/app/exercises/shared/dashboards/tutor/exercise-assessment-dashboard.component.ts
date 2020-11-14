@@ -440,7 +440,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
         this.openingAssessmentEditorForNewSubmission = true;
         const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
-        const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment`;
+        let route;
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            const participationURLParameter: number | 'new' = submission === 'new' ? 'new' : submission.participation?.id!;
+            route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationURLParameter}/assessment`;
+        } else {
+            route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment`;
+        }
         if (this.isTestRun) {
             await this.router.navigate([route], { queryParams: { testRun: this.isTestRun } });
         } else {
@@ -464,7 +470,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     viewComplaint(complaint: Complaint) {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.openCodeEditorWithStudentSubmission(complaint.result!.participation!.id!);
+            // this.openCodeEditorWithStudentSubmission(complaint.result!.participation!.id!);
+            this.openAssessmentEditor(complaint.result!.submission!);
         } else {
             this.openAssessmentEditor(complaint.result!.submission!);
         }
