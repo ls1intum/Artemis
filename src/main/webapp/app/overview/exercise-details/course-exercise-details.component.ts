@@ -1,8 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { filter } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
@@ -75,7 +74,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public wasSubmissionSimulated = false;
 
     constructor(
-        private $location: Location,
+        private router: Router,
         private exerciseService: ExerciseService,
         private courseService: CourseManagementService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -274,7 +273,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     backToCourse() {
-        this.$location.back();
+        this.router.navigateByUrl(`courses/${this.courseId}`);
     }
 
     exerciseRatedBadge(result: Result): string {
