@@ -122,8 +122,10 @@ public class JavaRepositoryUpgradeService extends RepositoryUpgradeService {
             upgradePlugin(repoModel, templateModel, "org.apache.maven.plugins", "maven-surefire-plugin");
             upgradePlugin(repoModel, templateModel, "org.apache.maven.plugins", "maven-failsafe-plugin");
 
-            // Switch out JUnit4 for Ares (contains JUnit5)
-            replacePlugin(repoModel, "junit", "junit", templateModel, "de.tum.in.ase", "artemis-java-test-sandbox");
+            // Replace JUnit4 with Ares
+            if (pluginExists(repoModel, "junit", "junit") && !pluginExists(repoModel, "de.tum.in.ase", "artemis-java-test-sandbox")) {
+                replacePlugin(repoModel, "junit", "junit", templateModel, "de.tum.in.ase", "artemis-java-test-sandbox");
+            }
 
             return repoModel;
         }
@@ -166,6 +168,10 @@ public class JavaRepositoryUpgradeService extends RepositoryUpgradeService {
             oldModel.getBuild().removePlugin(oldPlugin.get());
             oldModel.getBuild().addPlugin(templatePlugin.get());
         }
+    }
+
+    private boolean pluginExists(Model model, String artifactId, String groupId) {
+        return findPlugin(model, artifactId, groupId).isPresent();
     }
 
     private Optional<Dependency> findDependency(Model model, String artifactId, String groupId) {
