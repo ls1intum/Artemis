@@ -113,9 +113,27 @@ The current data model is more complex and supports more features such as online
 
 ### Universities with Artemis in Use
 
-* [Technical University of Munich](https://artemis.ase.in.tum.de)
-* [University of Stuttgart](https://artemis.sqa.ddnss.org)
-* [LFU Innsbruck](https://artemis.codeability.uibk.ac.at)
-* [Uni Salzburg](https://artemis.codeability.uibk.ac.at)
-* [JKU Linz](https://artemis.codeability.uibk.ac.at)
-* [AAU Klagenfurt](https://artemis.codeability.uibk.ac.at)
+#### Technical University of Munich
+
+* https://artemis.ase.in.tum.de 
+* Main contact person: [Stephan Krusche](mailto:krusche@in.tum.de)
+
+#### LFU Innsbruck, Uni Salzburg, JKU Linz, AAU Klagenfurt
+
+* https://artemis.codeability.uibk.ac.at
+* [codeAbility project](https://codeability.uibk.ac.at)
+* Main contact person: [Michael Breu](mailto:Michael.Breu@uibk.ac.at)
+
+#### University of Stuttgart
+
+* https://artemis.sqa.ddnss.org
+* Main contact person: [Steffen Becker](mailto:steffen.becker@informatik.uni-stuttgart.de)
+
+#### Universität Bonn
+
+* http://alpro.besec.uni-bonn.de 
+* Main contact person: [Alexander Von Trostorff](mailto:s6alvont@uni-bonn.de)
+
+#### Universität Passau
+
+* Currently, evaluating Artemis

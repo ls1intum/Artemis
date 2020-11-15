@@ -95,7 +95,6 @@
     "changelogDate": "20190315161911",
     "entityTableName": "exercise",
     "dto": "no",
-    "pagination": "infinite-scroll",
     "service": "no",
     "jpaMetamodelFiltering": false,
     "fluentMethods": true,
