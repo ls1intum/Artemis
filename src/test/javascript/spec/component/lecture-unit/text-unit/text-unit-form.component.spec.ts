@@ -1,7 +1,6 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import { SinonStub } from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -29,20 +28,17 @@ describe('TextUnitFormComponent', () => {
     const sandbox = sinon.createSandbox();
     let textUnitFormComponentFixture: ComponentFixture<TextUnitFormComponent>;
     let textUnitFormComponent: TextUnitFormComponent;
-    let getItemStub: SinonStub;
-    let removeItemStub: SinonStub;
-    let setItemStub: SinonStub;
     beforeEach(() => {
         // mocking router
         // mocking the local storage for cache testing
         store = {};
-        getItemStub = sandbox.stub(localStorage, 'getItem').callsFake((key: string) => {
+        sandbox.stub(localStorage, 'getItem').callsFake((key: string) => {
             return store[key] || null;
         });
-        removeItemStub = sandbox.stub(localStorage, 'removeItem').callsFake((key: string) => {
+        sandbox.stub(localStorage, 'removeItem').callsFake((key: string) => {
             delete store[key];
         });
-        setItemStub = sandbox.stub(localStorage, 'setItem').callsFake((key: string, value: string) => {
+        sandbox.stub(localStorage, 'setItem').callsFake((key: string, value: string) => {
             return (store[key] = <string>value);
         });
 
