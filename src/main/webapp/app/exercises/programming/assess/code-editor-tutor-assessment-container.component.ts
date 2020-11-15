@@ -123,6 +123,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     this.participationForManualResult.results = this.manualResult.hasFeedback ? [this.manualResult] : [];
                     // Either submission from latest manual or automatic result
                     this.submission = this.getLatestResult(this.participation.results)?.submission as ProgrammingSubmission;
+                    this.submission.participation = this.participation;
                     this.exercise = this.participation.exercise as ProgrammingExercise;
                     this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 

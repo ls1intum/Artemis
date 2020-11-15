@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -357,7 +355,8 @@ public class ProgrammingSubmissionResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/programming-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId, @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
+    public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a programming submission without assessment");
         final ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
@@ -378,9 +377,10 @@ public class ProgrammingSubmissionResource {
         final ProgrammingSubmission programmingSubmission;
         if (lockSubmission) {
             programmingSubmission = programmingSubmissionService.getLockedProgrammingSubmissionWithoutResult(programmingExercise);
-        } else {
+        }
+        else {
             Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionService.getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise,
-                programmingExercise.hasExerciseGroup());
+                    programmingExercise.hasExerciseGroup());
             if (optionalProgrammingSubmission.isEmpty()) {
                 return notFound();
             }

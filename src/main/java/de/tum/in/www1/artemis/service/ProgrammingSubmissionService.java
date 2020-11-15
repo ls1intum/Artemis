@@ -9,8 +9,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import org.apache.http.HttpException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
@@ -20,7 +18,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -32,7 +33,6 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProgrammingSubmissionService extends SubmissionService {
@@ -643,7 +643,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     @Transactional
     public ProgrammingSubmission getLockedProgrammingSubmissionWithoutResult(ProgrammingExercise exercise) {
         ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.hasExerciseGroup())
-            .orElseThrow(() -> new EntityNotFoundException("Programming submission for exercise " + exercise.getId() + " could not be found"));
+                .orElseThrow(() -> new EntityNotFoundException("Programming submission for exercise " + exercise.getId() + " could not be found"));
         Result newManualResult = lockSubmission(programmingSubmission);
         return (ProgrammingSubmission) newManualResult.getSubmission();
     }
@@ -653,7 +653,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         Result automaticResult = submission.getResult();
         // Create a new result (manual result) and a new submission for it and set assessor and type to manual
         ProgrammingSubmission newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
-            SubmissionType.MANUAL);
+                SubmissionType.MANUAL);
+
         Result newResult = setNewResult(newSubmission);
         newResult.setAssessor(userService.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
