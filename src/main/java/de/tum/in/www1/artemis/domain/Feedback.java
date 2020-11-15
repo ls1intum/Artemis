@@ -2,10 +2,13 @@ package de.tum.in.www1.artemis.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -247,6 +250,22 @@ public class Feedback extends DomainObject {
 
     public boolean referenceEquals(Feedback otherFeedback) {
         return reference.equals(otherFeedback.reference);
+    }
+
+    /**
+     * Copies an automatic feedback to be used for the manual result of a programming exercise
+     * @return Copy of the automatic feedback without its original ID
+     */
+    public Feedback copyProgrammingAutomaticFeedbackForManualResult() {
+        var feedback = new Feedback();
+        feedback.setDetailText(getDetailText());
+        feedback.setType(getType());
+        // For manual result each feedback needs to have a credit. If no credit is set, we set it to 0.0
+        feedback.setCredits(Optional.ofNullable(getCredits()).orElse(0.0));
+        feedback.setText(getText());
+        feedback.setPositive(isPositive());
+        feedback.setReference(getReference());
+        return feedback;
     }
 
     @Override

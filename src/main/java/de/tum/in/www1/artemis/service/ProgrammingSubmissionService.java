@@ -658,10 +658,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         Result newResult = setNewResult(newSubmission);
         newResult.setAssessor(userService.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        // TODO: Figure out why this does not work
-        // newResult.setFeedbacks(new ArrayList<>(automaticResult.getFeedbacks()));
-        // Reset ids of automatic feedback
-        // newResult.getFeedbacks().forEach(feedback -> feedback.setId(null));
+        // Copy automatic feedbacks into the manual result
+        newResult.setFeedbacks(automaticResult.getFeedbacks().stream().map(Feedback::copyProgrammingAutomaticFeedbackForManualResult).collect(Collectors.toList()));
         newResult = resultRepository.save(newResult);
         log.debug("Assessment locked with result id: " + newResult.getId() + " for assessor: " + newResult.getAssessor().getName());
 
