@@ -195,7 +195,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
-        this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exercise.id!).subscribe(
+        this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exercise.id!, true).subscribe(
             (response: ProgrammingSubmission) => {
                 const unassessedSubmission = response;
                 this.router.onSameUrlNavigation = 'reload';
@@ -209,6 +209,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
                     this.onError('artemisApp.exerciseAssessmentDashboard.noSubmissions');
+                } else if (error.status === 400) {
+                    // the lock limit is reached
+                    this.onError('artemisApp.submission.lockedSubmissionsLimitReached');
                 } else {
                     this.onError(error?.message);
                 }
@@ -424,6 +427,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResult!.hasFeedback = this.manualResult!.feedbacks!.length > 0;
         this.manualResult!.resultString = `${this.automaticResult!.resultString}, ${totalScore} of ${this.exercise.maxScore} points`;
         this.manualResult!.score = Math.round((totalScore / this.exercise.maxScore!) * 100);
+        // Manual result is always rated
+        this.manualResult!.rated = true;
         // This is done to update the result string in result.component.ts
         this.manualResult = cloneDeep(this.manualResult);
     }

@@ -35,6 +35,7 @@ import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/d
 import { Exam } from 'app/entities/exam.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { Result } from 'app/entities/result.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -400,7 +401,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      * @param submission Submission which to check
      */
     calculateStatus(submission: Submission) {
-        if (submission.result && submission.result.completionDate) {
+        if (submission.result && submission.result.completionDate && Result.isManualResult(submission.result)) {
             return 'DONE';
         }
         return 'DRAFT';
