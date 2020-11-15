@@ -7,12 +7,12 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 @Service
 public class RepositoryUpgradeProvider {
 
-    private final JavaRepositoryUpgradeService javaRepositoryUpgradeService;
+    private final JavaKotlinRepositoryUpgradeService javaKotlinRepositoryUpgradeService;
 
     private final DefaultRepositoryUpgradeService defaultRepositoryUpgradeService;
 
-    public RepositoryUpgradeProvider(JavaRepositoryUpgradeService javaRepositoryUpgradeService, DefaultRepositoryUpgradeService defaultRepositoryUpgradeService) {
-        this.javaRepositoryUpgradeService = javaRepositoryUpgradeService;
+    public RepositoryUpgradeProvider(JavaKotlinRepositoryUpgradeService javaKotlinRepositoryUpgradeService, DefaultRepositoryUpgradeService defaultRepositoryUpgradeService) {
+        this.javaKotlinRepositoryUpgradeService = javaKotlinRepositoryUpgradeService;
         this.defaultRepositoryUpgradeService = defaultRepositoryUpgradeService;
     }
 
@@ -24,7 +24,7 @@ public class RepositoryUpgradeProvider {
      */
     public RepositoryUpgradeService getUpgradeService(ProgrammingLanguage programmingLanguage) {
         return switch (programmingLanguage) {
-            case JAVA, KOTLIN -> javaRepositoryUpgradeService;
+            case JAVA, KOTLIN -> javaKotlinRepositoryUpgradeService;
             case PYTHON, C, HASKELL, VHDL, ASSEMBLER, SWIFT -> defaultRepositoryUpgradeService;
         };
     }

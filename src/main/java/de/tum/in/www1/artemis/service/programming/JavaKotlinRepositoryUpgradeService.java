@@ -22,38 +22,46 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
 @Service
-public class JavaRepositoryUpgradeService extends RepositoryUpgradeService {
+public class JavaKotlinRepositoryUpgradeService extends RepositoryUpgradeService {
 
-    private final Logger log = LoggerFactory.getLogger(JavaRepositoryUpgradeService.class);
+    private final Logger log = LoggerFactory.getLogger(JavaKotlinRepositoryUpgradeService.class);
 
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final GitService gitService;
 
-    private final ResourceLoader resourceLoader;
+    private final UserService userService;
 
-    public JavaRepositoryUpgradeService(ProgrammingExerciseService programmingExerciseService, GitService gitService, ResourceLoader resourceLoader) {
+    private final ResourceLoaderService resourceLoaderService;
+
+    public JavaKotlinRepositoryUpgradeService(ProgrammingExerciseService programmingExerciseService, GitService gitService, ResourceLoaderService resourceLoaderService,
+            UserService userService) {
         this.programmingExerciseService = programmingExerciseService;
         this.gitService = gitService;
-        this.resourceLoader = resourceLoader;
+        this.userService = userService;
+        this.resourceLoaderService = resourceLoaderService;
     }
 
     public void upgradeRepositories(ProgrammingExercise exercise) {
+        // TODO: Support sequential test runs
+        if (exercise.hasSequentialTestRuns()) {
+            return;
+        }
+
         try {
             updateRepository(exercise, RepositoryType.TEMPLATE.getName(), RepositoryType.TEMPLATE);
             updateRepository(exercise, RepositoryType.SOLUTION.getName(), RepositoryType.SOLUTION);
-            // TODO: Support sequential test runs
             updateRepository(exercise, "tests/projectTemplate", RepositoryType.TESTS);
         }
         catch (IOException | GitAPIException | InterruptedException | XmlPullParserException exception) {
@@ -67,14 +75,14 @@ public class JavaRepositoryUpgradeService extends RepositoryUpgradeService {
         String programmingLanguageTemplate = programmingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage());
         String templatePomPath = programmingLanguageTemplate + "/" + templateFolder + "/**/pom.xml";
 
-        Resource[] templatePoms = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(templatePomPath);
+        Resource[] templatePoms = resourceLoaderService.getResources(templatePomPath);
 
         // Get project type specific template poms
         if (exercise.getProjectType() != null) {
             String projectTypeTemplate = programmingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType());
             String projectTypePomPath = projectTypeTemplate + "/" + templateFolder + "/**/pom.xml";
 
-            Resource[] projectTypePoms = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(projectTypePomPath);
+            Resource[] projectTypePoms = resourceLoaderService.getResources(projectTypePomPath);
 
             // Prefer project type specific poms
             templatePoms = projectTypePoms.length > 0 ? projectTypePoms : templatePoms;
@@ -89,6 +97,7 @@ public class JavaRepositoryUpgradeService extends RepositoryUpgradeService {
         if (templatePoms.length == 1 && repositoryPoms.size() == 1) {
             Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0].getFile(), repositoryPoms.get(0));
             writeProjectObjectModel(updatedRepoModel, repositoryPoms.get(0));
+            programmingExerciseService.commitAndPushRepository(repository, "Template updated by Artemis", userService.getUser());
         }
     }
 
