@@ -1,21 +1,22 @@
 import { PlagiarismStatus } from './PlagiarismStatus';
+import { PlagiarismComparisonElement } from 'app/exercises/shared/plagiarism/types/PlagiarismComparisonElement';
 
 /**
- * Pair of student submissions whose similarity is above a certain threshold.
+ * Pair of compared student submissions whose similarity is above a certain threshold.
  */
-export abstract class PlagiarismComparison {
+export class PlagiarismComparison {
     /**
-     * Login of the first student involved in this plagiarism.
+     * First element involved in this comparison.
      */
-    studentA: string;
+    elementA: PlagiarismComparisonElement;
 
     /**
-     * Login of the second student involved in this plagiarism.
+     * Second element involved in this comparison.
      */
-    studentB: string;
+    elementB: PlagiarismComparisonElement;
 
     /**
-     * Similarity of the detected submissions (between 0 and 1).
+     * Similarity of the compared submissions (between 0 and 1).
      */
     similarity: number;
 
