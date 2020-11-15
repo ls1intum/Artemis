@@ -75,16 +75,12 @@ public class ProgrammingExerciseGradingService {
      * @param requestBody   RequestBody containing the build result and its feedback items
      * @return result after compilation
      */
-    public Optional<Result> processNewProgrammingExerciseResult(@NotNull Participation participation, @NotNull Object requestBody) {
+    public Optional<Result> processNewProgrammingExerciseResult(@NotNull ProgrammingExerciseParticipation participation, @NotNull Object requestBody) {
         log.debug("Received new build result (NEW) for participation " + participation.getId());
-
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
-            throw new EntityNotFoundException("Participation with id " + participation.getId() + " is not a programming exercise participation!");
-        }
 
         Result result;
         try {
-            result = continuousIntegrationService.get().onBuildCompleted((ProgrammingExerciseParticipation) participation, requestBody);
+            result = continuousIntegrationService.get().onBuildCompleted(participation, requestBody);
         }
         catch (ContinousIntegrationException ex) {
             log.error("Result for participation " + participation.getId() + " could not be created due to the following exception: " + ex);
@@ -92,7 +88,7 @@ public class ProgrammingExerciseGradingService {
         }
 
         if (result != null) {
-            ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
+            ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
             boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
             boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
             // Find out which test cases were executed and calculate the score according to their status and weight.
