@@ -47,18 +47,17 @@ public class TextBlockService {
      * @return List of TextBlocks
      */
     public Set<TextBlock> splitSubmissionIntoBlocks(TextSubmission submission) {
-        final Set<TextBlock> blocks = new HashSet<>();
 
         // Return empty set for missing submission text.
         final String submissionText = submission.getText();
         if (submissionText == null) {
-            return blocks;
+            return Collections.emptySet();
         }
 
         // Javas Sentence BreakIterator handles sentence splitting.
         BreakIterator breakIterator = BreakIterator.getSentenceInstance();
         breakIterator.setText(submissionText);
-
+        final Set<TextBlock> blocks = new HashSet<>();
         int start = breakIterator.first();
 
         // Iterate over Sentences

@@ -84,17 +84,17 @@ public class TextBlockServiceTest {
         }
     }
 
-    private Matcher<TextBlock> textBlockWithEqualText(String expextedText) {
+    private Matcher<TextBlock> textBlockWithEqualText(String expectedText) {
         return new TypeSafeMatcher<>() {
 
             @Override
             public void describeTo(Description description) {
-                description.appendText("text block with \"text\" property set to").appendValue(expextedText);
+                description.appendText("text block with \"text\" property set to").appendValue(expectedText);
             }
 
             @Override
             protected boolean matchesSafely(TextBlock item) {
-                return Objects.equals(item.getText(), expextedText);
+                return Objects.equals(item.getText(), expectedText);
             }
         };
     }
