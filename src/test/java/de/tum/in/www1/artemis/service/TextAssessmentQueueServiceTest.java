@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +48,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
 
     @Test
     public void calculateAddedDistancesTest() {
-        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(4);
+        var textBlocks = new ArrayList<>(textExerciseUtilService.generateTextBlocks(4));
         TextCluster textCluster = addTextBlocksToRandomCluster(textBlocks, 1).get(0);
         double[][] distanceMatrix = new double[][] { { 0, 0.1, 0.2, 0.3 }, { 0.1, 0, 0.4, 0.5 }, { 0.2, 0.4, 0, 0.6 }, { 0.3, 0.5, 0.6, 0 } };
         textCluster.setDistanceMatrix(distanceMatrix);
@@ -64,7 +61,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
 
     @Test
     public void testTextBlockProbabilities() {
-        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(4);
+        var textBlocks = new ArrayList<>(textExerciseUtilService.generateTextBlocks(4));
         TextCluster textCluster = addTextBlocksToRandomCluster(textBlocks, 1).get(0);
         var probabilities = new double[] { 1.0d, 2.0d };
         textCluster.setProbabilities(probabilities);
@@ -80,10 +77,10 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
         int submissionCount = 5;
         int submissionSize = 4;
         int[] clusterSizes = new int[] { 4, 5, 10, 1 };
-        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
+        var textBlocks = new ArrayList<>(textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize));
         TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, textBlocks, submissionCount, submissionSize);
         textBlocks.forEach(TextBlock::computeId);
-        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
+        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(new HashSet<>(textBlocks), clusterSizes, textExercise);
         textClusterRepository.saveAll(clusters);
         textBlockRepository.saveAll(textBlocks);
         List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(textExercise.getId(), true, false);
