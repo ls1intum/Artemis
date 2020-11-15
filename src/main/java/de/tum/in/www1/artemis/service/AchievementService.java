@@ -133,7 +133,7 @@ public class AchievementService {
         rewardAchievement(timeBasedAchievements, timeRank, user);
 
         var progressBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.PROGRESS);
-        var progressRank = progressBasedAchievementService.checkForAchievement(course, user, progressBasedAchievements);
+        var progressRank = progressBasedAchievementService.checkForAchievement(result, course, user, progressBasedAchievements);
         rewardAchievement(progressBasedAchievements, progressRank, user);
     }
 

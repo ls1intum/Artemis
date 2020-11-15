@@ -41,16 +41,19 @@ public class ProgressBasedAchievementService {
      * @param achievements all progress based achievements within the given course
      * @return the highest rank reached, returns null if no rank was reached
      */
-    public AchievementRank checkForAchievement(Course course, User user, Set<Achievement> achievements) {
-        var participations = studentParticipationRepository.findAllByCourseIdAndUserId(course.getId(), user.getId());
-        var numberOfExercises = 0;
+    public AchievementRank checkForAchievement(Result result, Course course, User user, Set<Achievement> achievements) {
         if (!achievements.iterator().hasNext()) {
             return null;
         }
         var minScore = achievements.iterator().next().getMinScoreToQualify();
+        var participations = studentParticipationRepository.findAllByCourseIdAndUserId(course.getId(), user.getId());
+        var numberOfExercises = 0;
+        if (result.getScore() != null && result.getScore() >= minScore) {
+            numberOfExercises++;
+        }
         for (var participation : participations) {
             var latestResult = participation.findLatestResult();
-            if (latestResult == null) {
+            if (latestResult == null || result.getParticipation() == participation) {
                 continue;
             }
             var score = latestResult.getScore();
