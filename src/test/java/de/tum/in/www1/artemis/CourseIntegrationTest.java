@@ -301,11 +301,15 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             }
             for (Exercise exercise : course.getExercises()) {
                 if (exercise instanceof ProgrammingExercise) {
-                    final String projectKey = ((ProgrammingExercise) exercise).getProjectKey();
+                    final var programmingExercise = (ProgrammingExercise) exercise;
+                    final String projectKey = programmingExercise.getProjectKey();
+                    final var templateRepoName = programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
+                    final var solutionRepoName = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
+                    final var testsRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
                     bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
-                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase());
-                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.SOLUTION.getName()).toLowerCase());
-                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.TESTS.getName()).toLowerCase());
+                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, templateRepoName);
+                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, solutionRepoName);
+                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, testsRepoName);
                     bitbucketRequestMockProvider.mockDeleteProject(projectKey);
                 }
             }

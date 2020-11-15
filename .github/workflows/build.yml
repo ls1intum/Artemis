@@ -13,19 +13,21 @@ on:
     - 'CONTRIBUTING.md'
     - 'LICENSE'
     - 'SECURITY.md'
+    - 'docs/**'
     - '.github/**'
     - '!.github/workflows/build.yml'
   release:
     types:
     - created
 
-# Keep in sync with codeql-analysis.yml
+# Keep in sync with codeql-analysis.yml and test.yml
 env:
   CI: true
   node: 14.x
   java: 15
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -69,102 +71,3 @@ jobs:
         asset_path: build/libs/Artemis-${{ github.event.release.tag_name }}.war
         asset_name: Artemis.war
         asset_content_type: application/x-webarchive
-
-  server-tests:
-    if: github.event_name != 'release'
-    runs-on: ubuntu-latest
-#    services:
-#      athene-segmentation:
-#        image: ls1intum/athene-segmentation
-#        ports:
-#          - 8000:8000
-#      athene-embedding:
-#        image: ls1intum/athene-embedding
-#        ports:
-#          - 8001:8000
-#      athene-clustering:
-#        image: ls1intum/athene-clustering
-#        ports:
-#          - 8002:8000
-    steps:
-    - name: Setup Java
-      uses: actions/setup-java@v1
-      with:
-        java-version: '${{ env.java }}'
-    - uses: actions/checkout@v2
-    - name: Cache Gradle dependencies
-      uses: actions/cache@v2
-      with:
-        path: ~/.gradle/caches
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    - name: Java Tests
-      run: ./gradlew --console=plain executeTests jacocoTestReport -x yarn -x webpack jacocoTestCoverageVerification
-    - name: "Codacy: Report coverage"
-      uses: codacy/codacy-coverage-reporter-action@master
-      with:
-        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        coverage-reports: build/reports/jacoco/test/jacocoTestReport.xml
-      if: (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (success() || failure())
-    - name: Java Code Style
-      run: ./gradlew spotlessCheck
-      if: success() || failure()
-    - name: Java Documentation
-      run: ./gradlew checkstyleMain -x yarn -x webpack
-      if: success() || failure()
-    - uses: ashley-taylor/junit-report-annotations-action@1.3
-      if: always()
-      with:
-        access-token: ${{ secrets.GITHUB_TOKEN }}
-        path: build/test-results/test/*.xml
-
-  client-tests:
-    if: github.event_name != 'release'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Setup Node.js
-      uses: actions/setup-node@v1
-      with:
-        node-version: '${{ env.node }}'
-    - uses: actions/checkout@v2
-    - name: Cache node modules
-      uses: actions/cache@v2
-      with:
-        path: node_modules
-        key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-node_modules-
-    - name: Install Dependencies
-      run: yarn install
-    - name: TypeScript Tests
-      run: yarn test:coverage --ci
-    - name: "Codacy: Report coverage"
-      uses: codacy/codacy-coverage-reporter-action@master
-      with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: coverage/lcov.info
-      if: (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (success() || failure())
-    - name: TypeScript Formatting
-      run: yarn prettier:check
-      if: success() || failure()
-    - name: TypeScript Code Style
-      run: yarn lint
-      if: success() || failure()
-    - uses: ashley-taylor/junit-report-annotations-action@1.3
-      if: always()
-      with:
-        access-token: ${{ secrets.GITHUB_TOKEN }}
-        path: junit.xml
-
-  docs:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: ammaraskar/sphinx-action@master
-      with:
-        docs-folder: "docs/"
-    - uses: actions/upload-artifact@v1
-      with:
-        name: Documentation
-        path: docs/_build/html/

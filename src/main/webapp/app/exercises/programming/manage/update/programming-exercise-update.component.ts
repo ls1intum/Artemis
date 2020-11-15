@@ -55,8 +55,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
     // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
-    packageNamePattern =
+    packageNamePatternForJavaKotlin =
         '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$';
+    // Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
+    // with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
+    packageNamePatternForSwift =
+        '^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_)$)[A-Za-z][0-9A-Za-z]*$';
+    packageNamePattern = '';
+
     shortNamePattern = '^[a-zA-Z][a-zA-Z0-9]*'; // must start with a letter and cannot contain special characters
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
     exerciseCategories: ExerciseCategory[];
@@ -72,11 +78,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public supportsKotlin = false;
     public supportsVHDL = false;
     public supportsAssembler = false;
+    public supportsSwift = false;
 
     public packageNameRequired = true;
     public staticCodeAnalysisAllowed = false;
     public checkoutSolutionRepositoryAllowed = false;
     public sequentialTestRunsAllowed = false;
+
+    public recreateBuildPlans = false;
 
     public projectTypes: ProjectType[] = [];
 
@@ -210,6 +219,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.programmingExercise.id) {
             this.problemStatementLoaded = true;
         }
+        // Select the correct pattern
+        this.setPackageNamePattern(this.selectedProgrammingLanguage);
 
         // Checks if the current environment is production
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -225,6 +236,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.supportsKotlin = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.KOTLIN);
         this.supportsVHDL = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.VHDL);
         this.supportsAssembler = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.ASSEMBLER);
+        this.supportsSwift = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.SWIFT);
     }
 
     /**
@@ -292,7 +304,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.isSaving = true;
 
         if (this.isImport) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise));
+            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans));
         } else if (this.programmingExercise.id !== undefined) {
             const requestOptions = {} as any;
             if (this.notificationText) {
@@ -347,8 +359,23 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 return this.selectedProgrammingLanguage;
             }
         }
+        // Select the correct pattern
+        this.setPackageNamePattern(language);
         this.selectedProgrammingLanguage = language;
         return language;
+    }
+
+    /**
+     * Sets the regex pattern for the package name for the selected programming language.
+     *
+     * @param language to choose from
+     */
+    setPackageNamePattern(language: ProgrammingLanguage) {
+        if (language === ProgrammingLanguage.SWIFT) {
+            this.packageNamePattern = this.packageNamePatternForSwift;
+        } else {
+            this.packageNamePattern = this.packageNamePatternForJavaKotlin;
+        }
     }
 
     /**

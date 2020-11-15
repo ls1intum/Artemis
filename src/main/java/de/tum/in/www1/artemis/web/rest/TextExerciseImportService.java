@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.jetbrains.annotations.NotNull;
@@ -71,9 +69,9 @@ public class TextExerciseImportService extends ExerciseImportService {
      * @param newSubmission The submission in which we enter the new text blocks
      * @return the cloned list of text blocks
      */
-    private List<TextBlock> copyTextBlocks(List<TextBlock> originalTextBlocks, TextSubmission newSubmission) {
+    private Set<TextBlock> copyTextBlocks(Set<TextBlock> originalTextBlocks, TextSubmission newSubmission) {
         log.debug("Copying the TextBlocks to new TextSubmission: {}", newSubmission);
-        List<TextBlock> newTextBlocks = new ArrayList<>();
+        var newTextBlocks = new HashSet<TextBlock>();
         for (TextBlock originalTextBlock : originalTextBlocks) {
             TextBlock newTextBlock = new TextBlock();
             newTextBlock.setAddedDistance(originalTextBlock.getAddedDistance());
@@ -116,7 +114,7 @@ public class TextExerciseImportService extends ExerciseImportService {
     }
 
     /** This helper function does a hard copy of the {@code originalSubmission} and stores the values in {@code newSubmission}.
-     * To copy the TextBlocks and the submission results this function calls {@link #copyTextBlocks(List, TextSubmission)} and
+     * To copy the TextBlocks and the submission results this function calls {@link #copyTextBlocks(Set, TextSubmission)} and
      * {@link #copyExampleResult(Result, Submission)} respectively.
      *
      * @param originalSubmission The original submission to be copied.
