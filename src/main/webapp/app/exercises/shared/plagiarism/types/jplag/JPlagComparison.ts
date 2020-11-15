@@ -2,7 +2,7 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
 import { JPlagMatch } from 'app/exercises/shared/plagiarism/types/jplag/JPlagMatch';
 import { JPlagSubmission } from 'app/exercises/shared/plagiarism/types/jplag/JPlagSubmission';
 
-export interface JPlagComparison extends PlagiarismComparison {
+export class JPlagComparison extends PlagiarismComparison {
     matches: JPlagMatch[];
     subA: JPlagSubmission;
     subB: JPlagSubmission;

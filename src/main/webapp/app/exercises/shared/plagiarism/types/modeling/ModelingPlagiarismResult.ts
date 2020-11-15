@@ -1,4 +1,12 @@
-import { ModelingComparison } from 'app/exercises/shared/plagiarism/types/modeling/ModelingComparison';
-import { PlagiarismResult } from 'app/exercises/shared/plagiarism/types/PlagiarismResult';
+import { ModelingComparison } from './ModelingComparison';
+import { PlagiarismResult } from '../PlagiarismResult';
 
-export interface ModelingPlagiarismResult extends PlagiarismResult<ModelingComparison> {}
+/**
+ * Result of the automatic plagiarism detection for modeling exercises.
+ */
+export class ModelingPlagiarismResult extends PlagiarismResult<ModelingComparison> {
+    /**
+     * Currently, the `ModelingPlagiarismResult` does not have any meta information and only contains
+     * a list of comparisons inherited from `PlagiarismResult`.
+     */
+}

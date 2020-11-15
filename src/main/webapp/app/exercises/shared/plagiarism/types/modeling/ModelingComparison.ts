@@ -1,7 +1,10 @@
-import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { ModelingSubmissionComparisonElement } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { PlagiarismComparison } from '../PlagiarismComparison';
 
-export interface ModelingComparison extends PlagiarismComparison {
+/**
+ * Pair of two similar modeling exercise submissions.
+ */
+export class ModelingComparison extends PlagiarismComparison {
     element1: ModelingSubmissionComparisonElement;
     element2: ModelingSubmissionComparisonElement;
 }

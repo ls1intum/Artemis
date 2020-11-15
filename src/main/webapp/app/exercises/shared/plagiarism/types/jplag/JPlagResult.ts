@@ -1,7 +1,10 @@
-import { JPlagComparison } from 'app/exercises/shared/plagiarism/types/jplag/JPlagComparison';
-import { PlagiarismResult } from 'app/exercises/shared/plagiarism/types/PlagiarismResult';
+import { JPlagComparison } from './JPlagComparison';
+import { PlagiarismResult } from '../PlagiarismResult';
 
-export interface JPlagResult extends PlagiarismResult<JPlagComparison> {
+/**
+ * Result of the automatic plagiarism detection for text or programming exercises.
+ */
+export class JPlagResult extends PlagiarismResult<JPlagComparison> {
     /**
      * Number of detected comparisons.
      */

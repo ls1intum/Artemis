@@ -1,7 +1,7 @@
 /**
  * A match is a sequence of identical tokens from two submissions.
  */
-export interface JPlagMatch {
+export class JPlagMatch {
     /**
      * Index of the first token of submission A that is part of this match.
      */

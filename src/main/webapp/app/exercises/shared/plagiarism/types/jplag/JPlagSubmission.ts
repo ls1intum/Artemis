@@ -1,4 +1,4 @@
-export interface JPlagSubmission {
+export class JPlagSubmission {
     name: string;
     hasErrors: boolean;
     files: string[];

@@ -1,6 +1,9 @@
-import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
+import { PlagiarismStatus } from './PlagiarismStatus';
 
-export interface PlagiarismComparison {
+/**
+ * Pair of student submissions whose similarity is above a certain threshold.
+ */
+export abstract class PlagiarismComparison {
     /**
      * Login of the first student involved in this plagiarism.
      */
