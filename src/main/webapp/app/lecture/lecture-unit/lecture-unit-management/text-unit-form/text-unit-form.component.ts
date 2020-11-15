@@ -34,6 +34,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     form: FormGroup;
     // not included in reactive form
     content: string | undefined;
+    contentLoadedFromCache = false;
 
     private markdownChanges = new Subject<string>();
     private markdownChangesSubscription: Subscription;
@@ -65,6 +66,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
 
             if (confirm(this.translateService.instant('artemisApp.textUnit.cachedMarkdown') + ' ' + cache.date)) {
                 this.content = cache.markdown!;
+                this.contentLoadedFromCache = true;
             }
         }
         this.markdownChangesSubscription = this.markdownChanges.pipe(debounceTime(500)).subscribe((markdown) => this.writeToLocalStorage(markdown));
@@ -83,7 +85,9 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
 
     private setFormValues(formData: TextUnitFormData) {
         this.form.patchValue(formData);
-        this.content = formData.content;
+        if (!this.contentLoadedFromCache) {
+            this.content = formData.content;
+        }
     }
 
     submitForm() {
