@@ -133,7 +133,7 @@ public class JavaKotlinRepositoryUpgradeService extends RepositoryUpgradeService
 
             // Replace JUnit4 with Ares
             if (dependencyExists(repoModel, "junit", "junit") && !dependencyExists(repoModel, "de.tum.in.ase", "artemis-java-test-sandbox")) {
-                replacePlugin(repoModel, "junit", "junit", templateModel, "de.tum.in.ase", "artemis-java-test-sandbox");
+                replaceDependency(repoModel, "junit", "junit", templateModel, "de.tum.in.ase", "artemis-java-test-sandbox");
             }
 
             return repoModel;
@@ -176,6 +176,26 @@ public class JavaKotlinRepositoryUpgradeService extends RepositoryUpgradeService
         if (oldPlugin.isPresent() && templatePlugin.isPresent()) {
             oldModel.getBuild().removePlugin(oldPlugin.get());
             oldModel.getBuild().addPlugin(templatePlugin.get());
+        }
+    }
+
+    /**
+     * Replaces a dependency in the old model with a dependency of the template model. The replacement only takes place if both
+     * the dependency to be replaced and the replacement dependency exist in their respective models.
+     *
+     * @param oldModel Project object model to be updated
+     * @param oldGroupId Group id of the dependency to be replaced
+     * @param oldArtifactId Artifact id of the dependency to be replaced
+     * @param templateModel Project object model containing the replacement dependency
+     * @param templateGroupId Group id of the replacement dependency
+     * @param templateArtifactId Artifact id of the replacement dependency
+     */
+    private void replaceDependency(Model oldModel, String oldGroupId, String oldArtifactId, Model templateModel, String templateGroupId, String templateArtifactId) {
+        var oldDependency = findDependency(oldModel, oldGroupId, oldArtifactId);
+        var templateDependency = findDependency(templateModel, templateGroupId, templateArtifactId);
+        if (oldDependency.isPresent() && templateDependency.isPresent()) {
+            oldModel.removeDependency(oldDependency.get());
+            oldModel.addDependency(templateDependency.get());
         }
     }
 
