@@ -234,14 +234,40 @@
                             <fa-icon class="mr-1" [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             Online editor
                         </button>
-                        <jhi-programming-assessment-manual-result
+
+                        <button
+                            *ngIf="exercise.course"
+                            [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id, 'assessment']"
+                            class="btn btn-primary btn-sm mr-1"
+                        >
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            {{ 'artemisApp.programmingSubmission.view' | translate }}
+                        </button>
+                        <button
+                            *ngIf="exercise.exerciseGroup"
+                            [routerLink]="[
+                                '/course-management',
+                                exercise.exerciseGroup?.exam.course.id,
+                                'programming-exercises',
+                                exercise.id,
+                                'code-editor',
+                                value.participation.id,
+                                'assessment'
+                            ]"
+                            class="btn btn-primary btn-sm mr-1"
+                        >
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            {{ 'artemisApp.programmingSubmission.view' | translate }}
+                        </button>
+
+                        <!--<jhi-programming-assessment-manual-result
                             *ngIf="newManualResultAllowed"
                             [participationId]="value.participation.id"
                             [latestResult]="value"
                             [exercise]="exercise"
                             (onResultModified)="refresh()"
                             class="mr-1"
-                        ></jhi-programming-assessment-manual-result>
+                        ></jhi-programming-assessment-manual-result> -->
                     </ng-template>
                 </ngx-datatable-column>
 

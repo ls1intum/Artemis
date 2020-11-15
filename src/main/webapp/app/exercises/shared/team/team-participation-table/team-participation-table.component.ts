@@ -104,7 +104,13 @@ export class TeamParticipationTableComponent implements OnInit {
      */
     async openAssessmentEditor(exercise: Exercise, submission: Submission | 'new'): Promise<void> {
         const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
-        const route = `/course-management/${this.course.id}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionUrlParameter}/assessment`;
+        let route;
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            const participationURLParameter: number | 'new' = submission === 'new' ? 'new' : submission.result?.participation?.id!;
+            route = `/course-management/${this.course.id}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationURLParameter}/assessment`;
+        } else {
+            route = `/course-management/${this.course.id}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment`;
+        }
         await this.router.navigate([route]);
     }
 

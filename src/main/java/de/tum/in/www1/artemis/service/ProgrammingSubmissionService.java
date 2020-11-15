@@ -655,11 +655,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         ProgrammingSubmission newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
             SubmissionType.MANUAL);
         Result newResult = setNewResult(newSubmission);
-
-        if (newResult.getAssessor() == null) {
-            newResult.setAssessor(userService.getUser());
-        }
-
+        newResult.setAssessor(userService.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         // TODO: Figure out why this does not work
         // newResult.setFeedbacks(new ArrayList<>(automaticResult.getFeedbacks()));
