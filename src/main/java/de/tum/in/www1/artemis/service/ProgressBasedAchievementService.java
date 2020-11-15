@@ -36,6 +36,7 @@ public class ProgressBasedAchievementService {
 
     /**
      * Checks whether a user earned progress based achievements
+     * @param result the currently saved result
      * @param course the given course
      * @param user the given user
      * @param achievements all progress based achievements within the given course
