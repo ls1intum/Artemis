@@ -120,10 +120,10 @@ public class JavaKotlinRepositoryUpgradeService extends RepositoryUpgradeService
         try (InputStream templateInput = new FileInputStream(templatePom); InputStream repoInput = new FileInputStream(repositoryPom)) {
 
             var pomReader = new MavenXpp3Reader();
-
             Model templateModel = pomReader.read(templateInput);
             Model repoModel = pomReader.read(repoInput);
 
+            // Update all dependencies found in the repository pom with version found in the template
             updateDependencies(repoModel, templateModel);
 
             // Update Maven Compiler Plugin with JDK version, Maven Surefire Plugin and Maven Failsafe Plugin by replacing them with template plugins
@@ -131,10 +131,13 @@ public class JavaKotlinRepositoryUpgradeService extends RepositoryUpgradeService
             upgradePlugin(repoModel, templateModel, "org.apache.maven.plugins", "maven-surefire-plugin");
             upgradePlugin(repoModel, templateModel, "org.apache.maven.plugins", "maven-failsafe-plugin");
 
-            // Replace JUnit4 with Ares
-            if (dependencyExists(repoModel, "junit", "junit") && !dependencyExists(repoModel, "de.tum.in.ase", "artemis-java-test-sandbox")) {
-                replaceDependency(repoModel, "junit", "junit", templateModel, "de.tum.in.ase", "artemis-java-test-sandbox");
-            }
+            // Replace JUnit4 with AJTS
+            removeDependency(repoModel, "junit", "junit");
+            addDependency(repoModel, templateModel, "de.tum.in.ase", "artemis-java-test-sandbox");
+
+            // Remove legacy dependencies which are no longer needed or were moved to AJTS
+            removeDependency(repoModel, "org.json", "json");
+            removeDependency(repoModel, "me.xdrop", "fuzzywuzzy");
 
             return repoModel;
         }
@@ -152,6 +155,19 @@ public class JavaKotlinRepositoryUpgradeService extends RepositoryUpgradeService
             var targetDependency = findDependency(targetModel, templateDependency.getGroupId(), templateDependency.getArtifactId());
             // TODO: Only update dependency if new version is 'higher' than old version?
             targetDependency.ifPresent(dependency -> dependency.setVersion(templateDependency.getVersion()));
+        }
+    }
+
+    private void removeDependency(Model model, String groupId, String artifactId) {
+        var dependency = findDependency(model, groupId, artifactId);
+        dependency.ifPresent(model::removeDependency);
+    }
+
+    private void addDependency(Model targetModel, Model templateModel, String groupId, String artifactId) {
+        var oldDependency = findDependency(targetModel, groupId, artifactId);
+        var newDependency = findDependency(templateModel, groupId, artifactId);
+        if (oldDependency.isEmpty() && newDependency.isPresent()) {
+            targetModel.addDependency(newDependency.get());
         }
     }
 
@@ -177,30 +193,6 @@ public class JavaKotlinRepositoryUpgradeService extends RepositoryUpgradeService
             oldModel.getBuild().removePlugin(oldPlugin.get());
             oldModel.getBuild().addPlugin(templatePlugin.get());
         }
-    }
-
-    /**
-     * Replaces a dependency in the old model with a dependency of the template model. The replacement only takes place if both
-     * the dependency to be replaced and the replacement dependency exist in their respective models.
-     *
-     * @param oldModel Project object model to be updated
-     * @param oldGroupId Group id of the dependency to be replaced
-     * @param oldArtifactId Artifact id of the dependency to be replaced
-     * @param templateModel Project object model containing the replacement dependency
-     * @param templateGroupId Group id of the replacement dependency
-     * @param templateArtifactId Artifact id of the replacement dependency
-     */
-    private void replaceDependency(Model oldModel, String oldGroupId, String oldArtifactId, Model templateModel, String templateGroupId, String templateArtifactId) {
-        var oldDependency = findDependency(oldModel, oldGroupId, oldArtifactId);
-        var templateDependency = findDependency(templateModel, templateGroupId, templateArtifactId);
-        if (oldDependency.isPresent() && templateDependency.isPresent()) {
-            oldModel.removeDependency(oldDependency.get());
-            oldModel.addDependency(templateDependency.get());
-        }
-    }
-
-    private boolean dependencyExists(Model model, String artifactId, String groupId) {
-        return findDependency(model, artifactId, groupId).isPresent();
     }
 
     private Optional<Dependency> findDependency(Model model, String artifactId, String groupId) {
