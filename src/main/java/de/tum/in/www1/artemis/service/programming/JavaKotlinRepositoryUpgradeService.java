@@ -132,7 +132,7 @@ public class JavaKotlinRepositoryUpgradeService extends RepositoryUpgradeService
             upgradePlugin(repoModel, templateModel, "org.apache.maven.plugins", "maven-failsafe-plugin");
 
             // Replace JUnit4 with Ares
-            if (pluginExists(repoModel, "junit", "junit") && !pluginExists(repoModel, "de.tum.in.ase", "artemis-java-test-sandbox")) {
+            if (dependencyExists(repoModel, "junit", "junit") && !dependencyExists(repoModel, "de.tum.in.ase", "artemis-java-test-sandbox")) {
                 replacePlugin(repoModel, "junit", "junit", templateModel, "de.tum.in.ase", "artemis-java-test-sandbox");
             }
 
@@ -179,8 +179,8 @@ public class JavaKotlinRepositoryUpgradeService extends RepositoryUpgradeService
         }
     }
 
-    private boolean pluginExists(Model model, String artifactId, String groupId) {
-        return findPlugin(model, artifactId, groupId).isPresent();
+    private boolean dependencyExists(Model model, String artifactId, String groupId) {
+        return findDependency(model, artifactId, groupId).isPresent();
     }
 
     private Optional<Dependency> findDependency(Model model, String artifactId, String groupId) {
