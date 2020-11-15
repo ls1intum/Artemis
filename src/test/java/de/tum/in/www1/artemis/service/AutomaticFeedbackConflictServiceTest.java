@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -93,8 +90,8 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         final TextBlock textBlock1 = new TextBlock().startIndex(0).endIndex(21).automatic().cluster(cluster);
         final TextBlock textBlock2 = new TextBlock().startIndex(0).endIndex(22).automatic().cluster(cluster);
 
-        database.addTextBlocksToTextSubmission(List.of(textBlock1), textSubmission1);
-        database.addTextBlocksToTextSubmission(List.of(textBlock2), textSubmission2);
+        database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock1), textSubmission1);
+        database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock2), textSubmission2);
 
         cluster.blocks(List.of(textBlock1, textBlock2));
         textClusterRepository.save(cluster);
@@ -114,7 +111,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         automaticTextAssessmentConflictService = new AutomaticTextAssessmentConflictService(feedbackConflictRepository, feedbackRepository, textBlockRepository,
                 textAssessmentConflictService);
 
-        automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(List.of(textBlock1), new ArrayList<>(Collections.singletonList(feedback1)), textExercise.getId());
+        automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(Set.of(textBlock1), new ArrayList<>(Collections.singletonList(feedback1)), textExercise.getId());
 
         assertThat(feedbackConflictRepository.findAll(), hasSize(1));
         assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback(), either(is(feedback1)).or(is(feedback2)));
@@ -138,7 +135,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         textClusterRepository.save(cluster);
 
         final TextBlock textBlock = new TextBlock().startIndex(0).endIndex(15).automatic().cluster(cluster);
-        database.addTextBlocksToTextSubmission(List.of(textBlock), textSubmission);
+        database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock), textSubmission);
 
         Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
         Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
@@ -156,7 +153,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         automaticTextAssessmentConflictService = new AutomaticTextAssessmentConflictService(feedbackConflictRepository, feedbackRepository, textBlockRepository,
                 textAssessmentConflictService);
 
-        automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(List.of(textBlock), new ArrayList<>(Collections.singletonList(feedback1)), textExercise.getId());
+        automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(Set.of(textBlock), new ArrayList<>(Collections.singletonList(feedback1)), textExercise.getId());
 
         assertThat(feedbackConflictRepository.findAll(), hasSize(1));
         assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback(), is(feedback1));
@@ -181,7 +178,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         textClusterRepository.save(cluster);
 
         final TextBlock textBlock = new TextBlock().startIndex(0).endIndex(15).automatic().cluster(cluster);
-        database.addTextBlocksToTextSubmission(List.of(textBlock), textSubmission);
+        database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock), textSubmission);
 
         Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
         Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
@@ -198,7 +195,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         automaticTextAssessmentConflictService = new AutomaticTextAssessmentConflictService(feedbackConflictRepository, feedbackRepository, textBlockRepository,
                 textAssessmentConflictService);
 
-        automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(List.of(textBlock), new ArrayList<>(List.of(feedback1, feedback2)), textExercise.getId());
+        automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(Set.of(textBlock), new ArrayList<>(List.of(feedback1, feedback2)), textExercise.getId());
 
         assertThat(feedbackConflictRepository.findAll(), hasSize(1));
         assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback(), is(feedback1));

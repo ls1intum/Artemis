@@ -281,10 +281,10 @@ public class BambooService implements ContinuousIntegrationService {
         if (buildPlan == null) {
             return BuildStatus.INACTIVE;
         }
-        if (buildPlan.isActive() && !buildPlan.isBuilding()) {
+        if (buildPlan.getIsActive() && !buildPlan.getIsBuilding()) {
             return BuildStatus.QUEUED;
         }
-        else if (buildPlan.isActive() && buildPlan.isBuilding()) {
+        else if (buildPlan.getIsActive() && buildPlan.getIsBuilding()) {
             return BuildStatus.BUILDING;
         }
         else {
@@ -522,7 +522,7 @@ public class BambooService implements ContinuousIntegrationService {
         final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
         log.debug("Retrieving build result (NEW) ...");
         try {
-            // Filter the first build plan that was automatically executed when the build plan was created.
+            // Filter the first build plan in case it was automatically executed when the build plan was created.
             if (isFirstBuildForThisPlan(buildResult)) {
                 return null;
             }
