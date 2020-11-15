@@ -16,6 +16,18 @@ $footer-height: 31px;
         color: white;
         flex-shrink: 0;
         padding: 1.5rem;
+
+        .plagiarism-page-title {
+            margin-bottom: 1rem;
+        }
+
+        .plagiarism-buttons {
+            display: flex;
+
+            .check-plagiarism {
+                margin-right: 1rem;
+            }
+        }
     }
 
     .plagiarism-body {
