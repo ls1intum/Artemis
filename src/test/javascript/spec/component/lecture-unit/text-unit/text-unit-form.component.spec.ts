@@ -143,6 +143,8 @@ describe('TextUnitFormComponent', () => {
         tick();
         const markdownEditor: MarkdownEditorStubComponent = textUnitFormComponentFixture.debugElement.query(By.directive(MarkdownEditorStubComponent)).componentInstance;
         const exampleMarkdown = 'Lorem Ipsum';
+        markdownEditor.markdownChange.emit(''); // will be ignored
+        tick(500);
         markdownEditor.markdownChange.emit(exampleMarkdown);
         tick(500);
         const savedCache = JSON.parse(store[fakeUrl]);
