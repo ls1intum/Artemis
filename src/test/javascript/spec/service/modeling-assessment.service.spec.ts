@@ -148,7 +148,7 @@ describe('Modeling Assessment Service', () => {
                         credits: 1,
                     } as Feedback,
                 ];
-                let complaintResponse = new ComplaintResponse();
+                const complaintResponse = new ComplaintResponse();
                 complaintResponse.id = 1;
                 complaintResponse.responseText = 'That is true';
                 const submissionId = 1;

@@ -284,7 +284,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     }));
 
     it('should try to submit assessment', fakeAsync(() => {
-        let course = new Course();
+        const course = new Course();
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         component.modelingExercise.assessmentDueDate = moment().subtract(2, 'days');
 
@@ -391,7 +391,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     }));
 
     it('should handle changed feedback', fakeAsync(() => {
-        let feedbacks = [
+        const feedbacks = [
             {
                 id: 0,
                 credits: 3,
@@ -406,7 +406,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.ngOnInit();
         tick(500);
 
-        let course = new Course();
+        const course = new Course();
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         component.modelingExercise.maxScore = 5;
         component.modelingExercise.bonusPoints = 5;
@@ -418,7 +418,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
     describe('test assessNextOptimal', () => {
         it('no submissions left', fakeAsync(() => {
-            let course = new Course();
+            const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.id = 1;
 
@@ -432,7 +432,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         }));
 
         it('throw error while assessNextOptimal', fakeAsync(() => {
-            let course = new Course();
+            const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.id = 1;
 
