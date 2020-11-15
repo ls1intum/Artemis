@@ -9,7 +9,7 @@ import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-manageme
 import { MockProvider } from 'ng-mocks';
 import { JhiAlertService } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Observable, of } from 'rxjs';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import * as moment from 'moment';
