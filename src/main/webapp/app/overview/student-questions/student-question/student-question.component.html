@@ -10,7 +10,7 @@
         <div class="col-auto px-0">
             <fa-icon
                 class="clickable mr-1"
-                *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
+                *ngIf="isAtLeastTutorInCourse || isAuthorOfQuestion(studentQuestion)"
                 [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate"
                 container="body"
                 [icon]="'pencil-alt'"
@@ -18,7 +18,7 @@
             ></fa-icon>
             <jhi-confirm-icon
                 class="clickable mr-1"
-                *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
+                *ngIf="isAtLeastTutorInCourse || isAuthorOfQuestion(studentQuestion)"
                 (confirmEvent)="deleteQuestion()"
                 [ngClass]="'mr-1'"
                 [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate"
@@ -48,7 +48,7 @@
                 <div class="col-auto px-0">
                     <fa-icon
                         class="clickable mr-1"
-                        *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
+                        *ngIf="isAtLeastTutorInCourse || isAuthorOfQuestion(studentQuestion)"
                         [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate"
                         container="body"
                         [icon]="'pencil-alt'"
@@ -56,7 +56,7 @@
                     ></fa-icon>
                     <jhi-confirm-icon
                         class="clickable mr-1"
-                        *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
+                        *ngIf="isAtLeastTutorInCourse || isAuthorOfQuestion(studentQuestion)"
                         (confirmEvent)="deleteQuestion()"
                         [ngClass]="'mr-1'"
                         [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate"

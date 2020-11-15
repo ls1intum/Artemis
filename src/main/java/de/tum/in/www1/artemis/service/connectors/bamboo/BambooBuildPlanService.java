@@ -11,11 +11,10 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -49,6 +48,7 @@ import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
 import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
 
+import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
@@ -73,16 +73,19 @@ public class BambooBuildPlanService {
     @Value("${artemis.continuous-integration.vcs-application-link-name}")
     private String vcsApplicationLinkName;
 
-    private final ResourceLoader resourceLoader;
+    private final ResourceLoaderService resourceLoaderService;
 
     private final BambooServer bambooServer;
 
     private final Environment env;
 
-    public BambooBuildPlanService(ResourceLoader resourceLoader, BambooServer bambooServer, Environment env) {
-        this.resourceLoader = resourceLoader;
+    private final BambooService bambooService;
+
+    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, @Lazy BambooService bambooService) {
+        this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
         this.env = env;
+        this.bambooService = bambooService;
     }
 
     /**
@@ -186,6 +189,9 @@ public class BambooBuildPlanService {
             case VHDL, ASSEMBLER -> {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/result.xml");
             }
+            case SWIFT -> {
+                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/tests.xml");
+            }
             // this is needed, otherwise the compiler complaints with missing return statement
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
         }
@@ -267,11 +273,10 @@ public class BambooBuildPlanService {
     }
 
     private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns) {
-        final var directoryPattern = "classpath:templates/bamboo/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/")
-                + "*.sh";
+        final var directoryPattern = "templates/bamboo/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
         try {
             List<Task<?, ?>> tasks = new ArrayList<>();
-            final var scriptResources = Arrays.asList(ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(directoryPattern));
+            final var scriptResources = Arrays.asList(resourceLoaderService.getResources(directoryPattern));
             scriptResources.sort(Comparator.comparing(Resource::getFilename));
             for (final var resource : scriptResources) {
                 // 1_some_description.sh --> "some description"
@@ -294,15 +299,7 @@ public class BambooBuildPlanService {
     }
 
     private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage language) {
-        var dockerImage = switch (language) {
-            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-2";
-            case PYTHON -> "ls1tum/artemis-python-docker:latest";
-            case C -> "ls1tum/artemis-c-docker:latest";
-            case HASKELL -> "tumfpv/fpv-stack:8.8.4";
-            case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
-            case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
-            case SWIFT -> "swift:latest";
-        };
+        var dockerImage = bambooService.getDockerImageName(language);
         return new DockerConfiguration().image(dockerImage);
     }
 }

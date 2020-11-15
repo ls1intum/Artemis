@@ -33,11 +33,11 @@ following dependencies/tools on your machine:
    scheme will be created / updated automatically at startup time of the
    server application. Alternatively, you can run the MySQL Database
    Server inside a Docker container using
-   e.g. \ ``docker-compose -f src/main/docker/mysql.yml up``
-3. `Node.js <https://nodejs.org>`__: We use Node (>=13.12.0) to compile
+   e.g. ``docker-compose -f src/main/docker/mysql.yml up``
+3. `Node.js <https://nodejs.org>`__: We use Node (>=14.11.0) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
-4. `Yarn <https://classic.yarnpkg.com>`__: We use Yarn 1.x (>=1.22.0) to
+4. `Yarn <https://classic.yarnpkg.com>`__: We use Yarn 1.x (>=1.22.5) to
    manage client side Node dependencies. Depending on your system, you
    can install Yarn either from source or as a pre-packaged bundle. To
    do so, please follow the instructions on the `Yarn installation
@@ -139,6 +139,7 @@ information about the setup for programming exercises provided:
    Bamboo, Bitbucket and Jira <setup/bamboo-bitbucket-jira>
    Jenkins and Gitlab <setup/jenkins-gitlab>
    Multiple instances <setup/distributed>
+   Programming Exercise adjustments <setup/programming-exercises>
 
 
 .. note::

@@ -88,6 +88,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     participation.results = [result, automaticResult];
     participation.exercise = exercise;
     participation.id = 1;
+    participation.student = { login: 'student1' } as User;
+    participation.repositoryUrl = 'http://student1@bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git';
 
     const unassessedSubmission = new ProgrammingSubmission();
     const participation2 = new ProgrammingExerciseStudentParticipation();
@@ -253,5 +255,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(updateAfterComplaintStub).to.be.calledOnce;
         expect(comp.manualResult!.score).to.be.equal(100);
         flush();
+    }));
+
+    it('should create the correct repository url', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+        expect(comp.adjustedRepositoryURL).to.be.equal('http://bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git');
     }));
 });
