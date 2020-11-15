@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -23,10 +22,10 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
     Optional<Set<TextBlock>> findAllByCluster(TextCluster textCluster);
 
     @EntityGraph(type = LOAD, attributePaths = { "cluster" })
-    List<TextBlock> findAllWithEagerClusterBySubmissionId(Long id);
+    Set<TextBlock> findAllWithEagerClusterBySubmissionId(Long id);
 
-    List<TextBlock> findAllBySubmissionId(Long id);
+    Set<TextBlock> findAllBySubmissionId(Long id);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission" })
-    List<TextBlock> findAllBySubmissionIdIn(List<Long> submissionIdList);
+    Set<TextBlock> findAllBySubmissionIdIn(Set<Long> submissionIdList);
 }
