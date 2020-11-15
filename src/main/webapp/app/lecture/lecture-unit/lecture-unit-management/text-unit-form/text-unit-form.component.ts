@@ -35,6 +35,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     // not included in reactive form
     content: string | undefined;
     contentLoadedFromCache = false;
+    firstMarkdownChangeHappened = false;
 
     private markdownChanges = new Subject<string>();
     private markdownChangesSubscription: Subscription;
@@ -69,7 +70,14 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
                 this.contentLoadedFromCache = true;
             }
         }
-        this.markdownChangesSubscription = this.markdownChanges.pipe(debounceTime(500)).subscribe((markdown) => this.writeToLocalStorage(markdown));
+        this.markdownChangesSubscription = this.markdownChanges.pipe(debounceTime(500)).subscribe((markdown) => {
+            // so we do not overwrite the cache immediately we ignore the initial markdown change
+            if (this.firstMarkdownChangeHappened) {
+                this.writeToLocalStorage(markdown);
+            } else {
+                this.firstMarkdownChangeHappened = true;
+            }
+        });
         this.initializeForm();
     }
 
