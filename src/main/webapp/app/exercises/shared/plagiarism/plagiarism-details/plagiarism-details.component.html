@@ -1,8 +1,5 @@
 <div class="plagiarism-details" *ngIf="comparison">
     <jhi-plagiarism-header [splitControlSubject]="splitControlSubject" [comparison]="comparison"></jhi-plagiarism-header>
-    <!--    <jhi-plagiarism-split-view-->
-    <!--        [comparison]="modelingSubmissionComparisons ? modelingSubmissionComparisons[selectedPlagiarismIndex] : null"-->
-    <!--        [splitControl]="splitControlSubject.asObservable()"-->
-    <!--        [diagramType]="DiagramType.ClassDiagram"-->
-    <!--    ></jhi-plagiarism-split-view>-->
+
+    <jhi-plagiarism-split-view [comparison]="comparison" [splitControlSubject]="splitControlSubject"></jhi-plagiarism-split-view>
 </div>

@@ -19,9 +19,11 @@ $footer-height: 31px;
     }
 
     .plagiarism-body {
-        position: relative;
+        display: flex;
+        flex-direction: column;
         flex-grow: 1;
         padding-left: 240px;
+        position: relative;
 
         .plagiarism-content {
             display: flex;

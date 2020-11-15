@@ -1,11 +1,9 @@
 import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 // @ts-ignore
 import Split from 'split.js';
-import { Observable } from 'rxjs';
-import { ModelingSubmissionComparisonDTO } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { Subject } from 'rxjs';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
@@ -18,12 +16,8 @@ export class SplitPaneDirective {
     templateUrl: './plagiarism-split-view.component.html',
 })
 export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit {
-    @Input() diagramType: UMLDiagramType;
-    @Input() splitControl: Observable<string>;
-    @Input() comparison: ModelingSubmissionComparisonDTO;
-
-    submission1: ModelingSubmission;
-    submission2: ModelingSubmission;
+    @Input() comparison: PlagiarismComparison;
+    @Input() splitControlSubject: Subject<string>;
 
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
@@ -45,23 +39,24 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     }
 
     ngOnInit(): void {
-        this.splitControl.subscribe((pane: string) => this.handleSplitControl(pane));
+        this.splitControlSubject.subscribe((pane: string) => this.handleSplitControl(pane));
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.comparison) {
-            const comp: ModelingSubmissionComparisonDTO = changes.comparison.currentValue;
-
-            this.submissionService.getSubmission(comp.element1.submissionId).subscribe((submission: ModelingSubmission) => {
-                submission.model = JSON.parse(submission.model!);
-                this.submission1 = submission;
-            });
-
-            this.submissionService.getSubmission(comp.element2.submissionId).subscribe((submission) => {
-                submission.model = JSON.parse(submission.model!);
-                this.submission2 = submission;
-            });
-        }
+        console.log(changes);
+        // if (changes.comparison) {
+        //     const comp: ModelingSubmissionComparisonDTO = changes.comparison.currentValue;
+        //
+        //     this.submissionService.getSubmission(comp.element1.submissionId).subscribe((submission: ModelingSubmission) => {
+        //         submission.model = JSON.parse(submission.model!);
+        //         this.submission1 = submission;
+        //     });
+        //
+        //     this.submissionService.getSubmission(comp.element2.submissionId).subscribe((submission) => {
+        //         submission.model = JSON.parse(submission.model!);
+        //         this.submission2 = submission;
+        //     });
+        // }
     }
 
     handleSplitControl(pane: string) {

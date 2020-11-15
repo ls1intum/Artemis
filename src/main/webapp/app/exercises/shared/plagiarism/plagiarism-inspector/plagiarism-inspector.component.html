@@ -28,6 +28,10 @@
     </div>
 
     <div class="plagiarism-empty" *ngIf="!plagiarismResult">
+        <div class="spinner-border text-primary" role="status" *ngIf="detectionInProgress">
+            <span class="sr-only">Loading...</span>
+        </div>
+
         <span class="plagiarism-empty-label" *ngIf="!detectionInProgress">
             {{ 'artemisApp.plagiarism.empty' | translate }}
         </span>
