@@ -86,7 +86,7 @@ describe('CreateVideoUnitComponent', () => {
             name: 'Test',
             releaseDate: moment({ years: 2010, months: 3, date: 5 }),
             description: 'Lorem Ipsum',
-            source: "https://www.youtube.com/embed/8iU8LPEa4o0'",
+            source: 'https://www.youtube.com/embed/8iU8LPEa4o0',
         };
 
         const response: HttpResponse<VideoUnit> = new HttpResponse({

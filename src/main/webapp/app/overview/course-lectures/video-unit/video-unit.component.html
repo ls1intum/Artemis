@@ -17,7 +17,7 @@
                 {{ videoUnit?.description }}
             </div>
         </div>
-        <div class="row" *ngIf="!videoUnit.visibleToStudents">
+        <div class="row" *ngIf="videoUnit?.visibleToStudents">
             <div class="exercise-tags col-auto">
                 <hr />
                 <h4>
@@ -34,7 +34,7 @@
         <div class="row" *ngIf="videoUnit?.source" [ngbCollapse]="isCollapsed">
             <div class="col-12">
                 <div class="embed-responsive embed-responsive-16by9">
-                    <iframe class="embed-responsive-item" [src]="videoUrl" allowfullscreen></iframe>
+                    <iframe id="videoFrame" class="embed-responsive-item" [src]="videoUrl" allowfullscreen></iframe>
                 </div>
             </div>
         </div>
