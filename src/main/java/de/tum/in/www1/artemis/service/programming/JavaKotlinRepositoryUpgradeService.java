@@ -62,7 +62,7 @@ public class JavaKotlinRepositoryUpgradeService extends RepositoryUpgradeService
         try {
             updateRepository(exercise, RepositoryType.TEMPLATE.getName(), RepositoryType.TEMPLATE);
             updateRepository(exercise, RepositoryType.SOLUTION.getName(), RepositoryType.SOLUTION);
-            updateRepository(exercise, "tests/projectTemplate", RepositoryType.TESTS);
+            updateRepository(exercise, "test/projectTemplate", RepositoryType.TESTS);
         }
         catch (IOException | GitAPIException | InterruptedException | XmlPullParserException exception) {
             log.error("Updating of template files for exercise " + exercise.getId() + " failed with error" + exception.getMessage());
