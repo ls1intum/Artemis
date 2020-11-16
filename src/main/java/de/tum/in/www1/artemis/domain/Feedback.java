@@ -7,8 +7,6 @@ import java.util.Optional;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 

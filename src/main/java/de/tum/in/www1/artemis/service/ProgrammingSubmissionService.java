@@ -651,6 +651,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     @Override
     protected Result lockSubmission(Submission submission) {
         Result automaticResult = submission.getResult();
+        List<Feedback> automaticFeedbacks = automaticResult.getFeedbacks().stream().map(Feedback::copyProgrammingAutomaticFeedbackForManualResult).collect(Collectors.toList());
         // Create a new result (manual result) and a new submission for it and set assessor and type to manual
         ProgrammingSubmission newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);
@@ -659,7 +660,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
         newResult.setAssessor(userService.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         // Copy automatic feedbacks into the manual result
-        newResult.setFeedbacks(automaticResult.getFeedbacks().stream().map(Feedback::copyProgrammingAutomaticFeedbackForManualResult).collect(Collectors.toList()));
+        for (Feedback feedback : automaticFeedbacks) {
+            feedback.setResult(newResult);
+        }
+        newResult.setFeedbacks(automaticFeedbacks);
+        // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
         newResult = resultRepository.save(newResult);
         log.debug("Assessment locked with result id: " + newResult.getId() + " for assessor: " + newResult.getAssessor().getName());
 
