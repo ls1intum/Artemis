@@ -29,7 +29,8 @@ public class PointBasedAchievementService {
     }
 
     /**
-     * Checks whether a user earned point based achievements
+     * Checks whether a user earned point based achievements by checking if the user scored
+     * at least as many points as needed
      * @param result the result which is checked if it earned any achievements
      * @param achievements all point based achievements within the given course
      * @return the highest rank reached by the result, returns null if no rank was reached

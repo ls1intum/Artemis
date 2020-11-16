@@ -33,7 +33,8 @@ public class TimeBasedAchievementService {
     }
 
     /**
-     * Checks whether a user earned time based achievements
+     * Checks whether a user earned time based achievements by counting the days between the exercise's release date
+     * and the date of submission
      * @param result the result which is checked if it earned any achievements
      * @param achievements all time based achievements within the given course
      * @return the highest rank reached by the result, returns null if no rank was reached
@@ -53,8 +54,7 @@ public class TimeBasedAchievementService {
         Set<AchievementRank> ranks = new HashSet<>();
 
         for (Achievement achievement : achievements) {
-            if (submissionDay.minusDays(achievement.getSuccessCriteria()).isEqual(exerciseReleaseDay)
-                    || submissionDay.minusDays(achievement.getSuccessCriteria()).isBefore(exerciseReleaseDay)) {
+            if (submissionDay.minusDays(achievement.getSuccessCriteria() + 1).isBefore(exerciseReleaseDay)) {
                 ranks.add(achievement.getRank());
             }
         }

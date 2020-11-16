@@ -35,7 +35,8 @@ public class ProgressBasedAchievementService {
     }
 
     /**
-     * Checks whether a user earned progress based achievements
+     * Checks whether a user earned progress based achievements by counting all participations
+     * where the user scored at least as many points as defined in the achievement's minScoreToQualify property
      * @param result the currently saved result
      * @param course the given course
      * @param user the given user
@@ -54,7 +55,7 @@ public class ProgressBasedAchievementService {
         }
         for (var participation : participations) {
             var latestResult = participation.findLatestResult();
-            if (latestResult == null || result.getParticipation() == participation) {
+            if (latestResult == null || result.getParticipation().getId() == participation.getId()) {
                 continue;
             }
             var score = latestResult.getScore();

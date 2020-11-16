@@ -24,7 +24,7 @@ public class ResultListener {
     }
 
     /**
-     * Checks if a user has earned an achievement by looking at the saved or updated result.
+     * Checks if a user has earned an achievement by looking at the currently saved or updated result.
      * @param result
      */
     @PreUpdate
@@ -34,7 +34,7 @@ public class ResultListener {
 
         if (achievementService != null) {
             if (achievementService.getObject() != null) {
-                if (result.getScore() != null && result.isRated() != null && result.isRated()) {
+                if (result.getScore() != null && Boolean.TRUE.equals(result.isRated())) {
                     achievementService.getObject().checkForAchievements(result);
                 }
             }

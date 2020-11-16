@@ -100,6 +100,12 @@ public class AchievementService {
      * @param result
      */
     public void checkForAchievements(Result result) {
+        /**
+         * The following checks are intended to abort the check if
+         * 1. a required object is null or empty
+         * 2. the exercise is part of an exam
+         * 3. the achievements are not enabled in the corresponding course
+         */
         var participation = result.getParticipation();
         if (participation == null || participation.getId() == null || !(participation instanceof StudentParticipation)) {
             return;
@@ -124,6 +130,12 @@ public class AchievementService {
         }
         user.setAchievements(achievements);
 
+        /**
+         * Here the actual checks take place for each achievement type in three steps
+         * 1. Load all achievements of a type in a given course to be able to access the successCriteria of each rank
+         * 2. Check in the corresponding service if the user reached any rank and return it (otherwise returns null)
+         * 3. Reward the achievement of the given type and rank to the user
+         */
         var pointBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.POINT);
         var pointRank = pointBasedAchievementService.checkForAchievement(result, pointBasedAchievements);
         rewardAchievement(pointBasedAchievements, pointRank, user);
@@ -141,20 +153,24 @@ public class AchievementService {
      * Rewards or replaces an achievement
      */
     private void rewardAchievement(Set<Achievement> achievements, AchievementRank rank, User user) {
+        // do not reward achievement if no rank was reached and the given rank is therefore null
         if (rank == null) {
             return;
         }
 
+        // find the achievement of the given rank, return if not found
         var optionalAchievement = achievements.stream().filter(a -> a.getRank().equals(rank)).findAny();
         if (optionalAchievement.isEmpty()) {
             return;
         }
 
+        // do not reward achievement if user already got it
         var achievement = optionalAchievement.get();
         if (achievement.getUsers().contains(user)) {
             return;
         }
 
+        // do not reward achievement if user already has an achievement of same type and higher rank
         var optionalAchievementsOfHigherRank = achievements.stream().filter(a -> a.getRank().ordinal() > rank.ordinal()).collect(Collectors.toSet());
         for (Achievement a : optionalAchievementsOfHigherRank) {
             if (a.getUsers().contains(user)) {
@@ -162,6 +178,7 @@ public class AchievementService {
             }
         }
 
+        // if user has an achievement of lower rank replace it by removing it first
         var optionalAchievementsOfLowerRank = achievements.stream().filter(a -> a.getRank().ordinal() < rank.ordinal()).collect(Collectors.toSet());
         for (Achievement a : optionalAchievementsOfLowerRank) {
             if (a.getUsers().contains(user)) {
@@ -169,6 +186,7 @@ public class AchievementService {
             }
         }
 
+        // assign the achievement to the user
         user.addAchievement(achievement);
         userRepository.save(user);
     }
