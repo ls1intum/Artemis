@@ -39,7 +39,9 @@ describe('TextUnitFormComponent', () => {
             ],
             providers: [
                 MockProvider(ArtemisMarkdownService, {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     safeHtmlForMarkdown: (markdown: string) => exampleHTML,
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     htmlForMarkdown: (markdown: string) => exampleHTML,
                 }),
             ],
