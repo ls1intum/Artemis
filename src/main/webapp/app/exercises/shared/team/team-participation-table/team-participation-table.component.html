@@ -176,15 +176,6 @@
                                 <span [jhiTranslate]="'artemisApp.exerciseAssessmentDashboard.' + assessmentAction(value.submission) + 'Assessment'"></span>
                             </button>
                         </ng-container>
-                        <!--<ng-template #programmingAssessment>
-                            <jhi-programming-assessment-manual-result
-                                *ngIf="value.participation"
-                                [participationId]="value.participation?.id"
-                                [latestResult]="value.submission?.result"
-                                [exercise]="value"
-                                (onResultModified)="loadAll()"
-                            ></jhi-programming-assessment-manual-result>
-                        </ng-template> -->
                         <fa-icon
                             class="mx-3"
                             *ngIf="value.submission?.result?.hasComplaint"
