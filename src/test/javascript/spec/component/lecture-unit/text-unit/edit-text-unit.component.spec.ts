@@ -29,8 +29,7 @@ class TextUnitFormStubComponent {
 
 @Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content></ng-content>' })
 class LectureUnitLayoutStubComponent {
-    @Input()
-    isLoading = false;
+    @Input() isLoading = false;
 }
 
 describe('EditTextUnitComponent', () => {
