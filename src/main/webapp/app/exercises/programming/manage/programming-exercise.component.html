@@ -35,6 +35,7 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
+                    <th class="d-none d-md-table-cell"></th>
                     <th class="d-none d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th class="d-none d-md-table-cell" jhiSortBy="shortName">
@@ -62,6 +63,7 @@
 
             <tbody>
                 <tr *ngFor="let programmingExercise of programmingExercises; trackBy: trackId">
+                    <td class="d-none d-md-table-cell"><input type="checkbox" (change)="toggleProgrammingExercise(programmingExercise)" /></td>
                     <td class="d-none d-md-table-cell">
                         <a [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id]">{{ programmingExercise.id }}</a>
                     </td>
@@ -318,5 +320,15 @@
                 </tr>
             </tbody>
         </table>
+        <div *ngIf="selectedProgrammingExercises.length > 0">
+            <button type="submit" *ngIf="checkIfAllSelectedAtLeastInstructor()" (click)="openEditSelectedModal()" class="btn btn-primary btn-sm mr-1 mb-1">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="entity.action.editSelected">Edit selected</span>
+            </button>
+            <button type="submit" *ngIf="checkIfAllSelectedAtLeastInstructor()" (click)="openRepoExportModal()" class="btn btn-primary btn-sm mr-1 mb-1">
+                <fa-icon [icon]="'download'"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="entity.action.exportRepos">Download Repos</span>
+            </button>
+        </div>
     </div>
 </div>

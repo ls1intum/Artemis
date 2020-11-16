@@ -20,6 +20,8 @@ import { CourseExerciseService, CourseManagementService } from 'app/course/manag
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
+import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -31,6 +33,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     readonly isOrion = isOrion;
     FeatureToggle = FeatureToggle;
     orionState: OrionState;
+    selectedProgrammingExercises: ProgrammingExercise[];
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -50,6 +53,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     ) {
         super(courseService, translateService, route, eventManager);
         this.programmingExercises = [];
+        this.selectedProgrammingExercises = [];
     }
 
     ngOnInit(): void {
@@ -134,6 +138,29 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         } catch (e) {
             this.javaBridge.log(e);
         }
+    }
+
+    toggleProgrammingExercise(programmingExercise: ProgrammingExercise) {
+        const programmingExerciseIndex = this.selectedProgrammingExercises.indexOf(programmingExercise);
+        if (programmingExerciseIndex !== -1) {
+            this.selectedProgrammingExercises.splice(programmingExerciseIndex, 1);
+        } else {
+            this.selectedProgrammingExercises.push(programmingExercise);
+        }
+    }
+
+    openEditSelectedModal() {
+        const modalRef = this.modalService.open(ProgrammingExerciseEditSelectedComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises;
+    }
+
+    openRepoExportModal() {
+        const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises;
+    }
+
+    checkIfAllSelectedAtLeastInstructor() {
+        return this.selectedProgrammingExercises.filter((pe) => !pe.isAtLeastInstructor).length === 0;
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################

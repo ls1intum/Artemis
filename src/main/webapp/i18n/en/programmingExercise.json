@@ -160,6 +160,7 @@
                 "filterLateSubmissionsDate": "Date for filter late submissions (defaults to exercise due date if not set)",
                 "addStudentName": "Add student name to project (allows to import multiple projects into Eclipse at the same time)",
                 "addTeamName": "Add team name to project (allows to import multiple projects into Eclipse at the same time)",
+                "addTeamOrStudentName": "Add team/student name to project (allows to import multiple projects into Eclipse at the same time)",
                 "combineStudentCommits": "Combine all student changes into one commit (to simplify the review)",
                 "normalizeCodeStyle": "Normalize code style (line endings, encoding)",
                 "successMessage": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded."
@@ -221,7 +222,10 @@
             "reEvaluate": "Re-evaluate all",
             "reEvaluateTooltip": "Re-evaluate the latest automatic results of all participations. Manual results are not affected.",
             "reEvaluateSuccessful": "{{number}} automatic results were successfully updated, including the template and solution.",
-            "reEvaluateFailed": "The re-evaulation failed: {{message}}"
+            "reEvaluateFailed": "The re-evaulation failed: {{message}}",
+            "editSelectedModal": {
+                "currentlyEdited": "You are editing the following exercises:"
+            }
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists."

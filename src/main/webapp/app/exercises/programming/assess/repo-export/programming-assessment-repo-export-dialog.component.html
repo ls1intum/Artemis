@@ -1,19 +1,37 @@
-<form *ngIf="!isLoading; else loadingContainer" name="exportForm" role="form" (ngSubmit)="exportRepos(exercise.id)" #exportForm="ngForm">
+<form
+    *ngIf="!isLoading; else loadingContainer"
+    name="exportForm"
+    role="form"
+    (ngSubmit)="selectedProgrammingExercises.length <= 0 ? exportRepos(exercise.id) : bulkExportRepos()"
+    #exportForm="ngForm"
+>
     <div class="modal-header">
         <h4 class="modal-title" jhiTranslate="entity.exportRepos.title">Confirm export operation</h4>
         <button type="button" class="close" data-dismiss="modal" (click)="clear()">&times;</button>
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
+        <div *ngIf="selectedProgrammingExercises.length > 0" class="table-responsive m-2 p-1">
+            <span style="font-weight: bold" jhiTranslate="instructorDashboard.exportRepos.currentlySelected"
+                >You are about to download all teams'/students' submissions of the following exercises:</span
+            >
+            <table class="table table-striped">
+                <tbody>
+                    <tr *ngFor="let programmingExercise of selectedProgrammingExercises">
+                        <td>{{ programmingExercise.title }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
         <p
-            *ngIf="!singleParticipantMode"
+            *ngIf="!singleParticipantMode && selectedProgrammingExercises.length <= 0"
             [jhiTranslate]="'instructorDashboard.exportRepos.questions.' + (exercise.teamMode ? 'team' : 'individual')"
             [translateValues]="{ exerciseTitle: exercise.title, courseTitle: exercise.course?.title }"
         >
             Confirm export
         </p>
         <textarea
-            *ngIf="!participationIdList"
+            *ngIf="!participationIdList && selectedProgrammingExercises.length <= 0"
             name="studentIds"
             class="export-textarea"
             [(ngModel)]="participantIdentifierList"
@@ -24,7 +42,7 @@
         <!--
         Only show download all checkbox for instructors & admins.
         -->
-        <ng-container *ngIf="!singleParticipantMode">
+        <ng-container *ngIf="!singleParticipantMode && selectedProgrammingExercises.length <= 0">
             <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="checkbox">
                 <label class="control-label">
                     <input type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllParticipants" />
@@ -55,8 +73,14 @@
         <div *ngIf="!singleParticipantMode" class="checkbox">
             <label class="control-label">
                 <input type="checkbox" name="addParticipantName" [(ngModel)]="this.repositoryExportOptions.addParticipantName" />
-                <strong [jhiTranslate]="'artemisApp.programmingExercise.export.' + (exercise.teamMode ? 'addTeamName' : 'addStudentName')">
+                <strong
+                    *ngIf="selectedProgrammingExercises.length <= 0"
+                    [jhiTranslate]="'artemisApp.programmingExercise.export.' + (selectedProgrammingExercises.length <= 0 && exercise.teamMode ? 'addTeamName' : 'addStudentName')"
+                >
                     Add {{ exercise.teamMode ? 'team' : 'student' }} name to project
+                </strong>
+                <strong *ngIf="selectedProgrammingExercises.length > 0" [jhiTranslate]="'artemisApp.programmingExercise.export.addTeamOrStudentName'">
+                    Add team/student name to project
                 </strong>
             </label>
         </div>
@@ -85,6 +109,17 @@
             type="submit"
             [disabled]="!participationIdList && !participantIdentifierList && !this.repositoryExportOptions.exportAllParticipants && !exportInProgress"
             class="btn btn-default"
+            *ngIf="selectedProgrammingExercises.length <= 0"
+        >
+            <span *ngIf="this.exportInProgress" class="mr-1"><fa-icon [icon]="'circle-notch'" spin="true"></fa-icon></span>
+            <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>
+        </button>
+        <button
+            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            (click)="bulkExportRepos()"
+            [disabled]="!participationIdList && !participantIdentifierList && !this.repositoryExportOptions.exportAllParticipants && !exportInProgress"
+            class="btn btn-default"
+            *ngIf="selectedProgrammingExercises.length > 0"
         >
             <span *ngIf="this.exportInProgress" class="mr-1"><fa-icon [icon]="'circle-notch'" spin="true"></fa-icon></span>
             <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>
