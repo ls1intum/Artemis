@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
 @Service
-@Profile("automaticText")
+@Profile("athene")
 public class AutomaticTextFeedbackService {
 
     private final FeedbackService feedbackService;
@@ -44,7 +44,7 @@ public class AutomaticTextFeedbackService {
     @Transactional(readOnly = true)
     public void suggestFeedback(@NotNull Result result) {
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
-        final List<TextBlock> blocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmission.getId());
+        final var blocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmission.getId());
         textSubmission.setBlocks(blocks);
 
         final List<Feedback> suggestedFeedback = blocks.stream().map(block -> {

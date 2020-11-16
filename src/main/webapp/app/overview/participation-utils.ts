@@ -92,7 +92,7 @@ export const isParticipationInDueTime = (participation: Participation, exercise:
     }
 
     // If the participation has no submission, it cannot be in due time.
-    if (participation.submissions == null || participation.submissions.length <= 0) {
+    if (participation.submissions == undefined || participation.submissions.length <= 0) {
         return false;
     }
 

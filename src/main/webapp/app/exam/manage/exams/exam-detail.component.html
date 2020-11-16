@@ -9,7 +9,7 @@
                 <dt *ngIf="exam.course"><span jhiTranslate="artemisApp.exam.course">Course</span></dt>
                 <dd *ngIf="exam.course">
                     <div>
-                        <a [routerLink]="['/course-management', exam.course.id, 'view']">{{ exam.course.title }}</a>
+                        <a [routerLink]="['/course-management', exam.course.id]">{{ exam.course.title }}</a>
                     </div>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exam.title">Title</span></dt>

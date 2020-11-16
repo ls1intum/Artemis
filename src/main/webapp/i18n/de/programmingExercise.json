@@ -31,6 +31,7 @@
             },
             "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studenten sein.",
             "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
+            "unsavedChangesProjectTypeChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll der Projekt Typ wirklich geändert werden?",
             "templateRepositoryUrl": "Vorlage Repository Url",
             "testRepositoryUrl": "Test Repository Url",
             "solutionRepositoryUrl": "Lösung Repository Url",
@@ -61,7 +62,12 @@
                 "title": "Max Statische Code Analyse Strafe",
                 "description": "Wähle einen Wert zwischen 0 und 100 Prozent oder fülle das Feld nicht aus. Wenn für eine 10 Punkte Aufgabe die maximale Strafe 20% beträgt, werden maximal zwei Punkte durch Probleme, die von der statischen Analyse gefunden wurden, abgezogen. Wenn kein Wert angegeben wird existiert kein Limit für den Punkteabzug."
             },
+            "recreateBuildPlans": {
+                "title": "Build Pläne neu erstellen",
+                "description": "Durch Aktivierung dieser Option werden die Build Pläne neu erstellt und nicht von der importierten Aufgabe kopiert. Neu erstellte Build Pläne unterstützen standardmäßig die neuesten Features der Artemis Aufgabenvorlagen."
+            },
             "programmingLanguage": "Programmiersprache",
+            "projectType": "Projekt Typ",
             "packageName": "Package Name",
             "templateResult": "Ergebnis Vorlage",
             "solutionResult": "Ergebnis Lösung",

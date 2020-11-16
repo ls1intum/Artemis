@@ -31,6 +31,7 @@
             },
             "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it would be published immediately and visible to the students.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
+            "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
             "templateRepositoryUrl": "Template Repository Url",
             "testRepositoryUrl": "Test Repository Url",
             "solutionRepositoryUrl": "Solution Repository Url",
@@ -61,7 +62,12 @@
                 "title": "Max Static Code Analysis Penalty",
                 "description": "You can choose a value between 0 and 100 percent or leave the field empty. If the maximum penalty is 20% for a 10 point exercise, a maximum of two points can be deducted because of issues found by static code analysis. If the field is left empty, no penalty limit will be enforced."
             },
+            "recreateBuildPlans": {
+                "title": "Recreate Build Plans",
+                "description": "Activate this option to create new build plans instead of copying them from the imported exercise. Newly created build plans support the latest features of the Artemis exercise templates by default."
+            },
             "programmingLanguage": "Programming Language",
+            "projectType": "Project Type",
             "packageName": "Package Name",
             "templateResult": "Template Result",
             "solutionResult": "Solution Result",

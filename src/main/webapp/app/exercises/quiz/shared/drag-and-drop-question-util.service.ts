@@ -208,7 +208,7 @@ export class DragAndDropQuestionUtil {
      * @return {boolean}
      */
     isSameDropLocation(a?: DropLocation, b?: DropLocation): boolean {
-        return a === b || (a !== undefined && b !== undefined && ((a.id && b.id && a.id === b.id) || (a.tempID != null && b.tempID != null && a.tempID === b.tempID)));
+        return a === b || (a !== undefined && b !== undefined && ((a.id && b.id && a.id === b.id) || (a.tempID != undefined && b.tempID != undefined && a.tempID === b.tempID)));
     }
 
     /**
@@ -219,6 +219,6 @@ export class DragAndDropQuestionUtil {
      * @return {boolean}
      */
     isSameDragItem(a?: DragItem, b?: DragItem): boolean {
-        return a === b || (a !== undefined && b !== undefined && ((a.id && b.id && a.id === b.id) || (a.tempID != null && b.tempID != null && a.tempID === b.tempID)));
+        return a === b || (a !== undefined && b !== undefined && ((a.id && b.id && a.id === b.id) || (a.tempID != undefined && b.tempID != undefined && a.tempID === b.tempID)));
     }
 }

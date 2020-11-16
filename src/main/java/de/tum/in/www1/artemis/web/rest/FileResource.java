@@ -19,8 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -28,10 +26,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -50,9 +52,11 @@ public class FileResource {
 
     private final FileService fileService;
 
-    private final ResourceLoader resourceLoader;
+    private final ResourceLoaderService resourceLoaderService;
 
     private final LectureRepository lectureRepository;
+
+    private final AttachmentUnitRepository attachmentUnitRepository;
 
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
@@ -71,14 +75,16 @@ public class FileResource {
         this.allowedFileExtensions.remove(fileExtension);
     }
 
-    public FileResource(FileService fileService, ResourceLoader resourceLoader, LectureRepository lectureRepository, TokenProvider tokenProvider,
-            FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository) {
+    public FileResource(FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, TokenProvider tokenProvider,
+            FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
+            AttachmentUnitRepository attachmentUnitRepository) {
         this.fileService = fileService;
-        this.resourceLoader = resourceLoader;
+        this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
         this.tokenProvider = tokenProvider;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
+        this.attachmentUnitRepository = attachmentUnitRepository;
     }
 
     /**
@@ -144,15 +150,24 @@ public class FileResource {
      *
      * @param filename The filename of the file to get
      * @param language The programming language for which the template file should be returned
+     * @param projectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping({ "files/templates/{language}/{filename}", "/files/templates/{filename:.+}" })
+    @GetMapping({ "files/templates/{language}/{projectType}/{filename}", "files/templates/{language}/{filename}", "/files/templates/{filename:.+}" })
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<byte[]> getTemplateFile(@PathVariable Optional<ProgrammingLanguage> language, @PathVariable String filename) {
-        log.debug("REST request to get file '{}' for programming language {}", filename, language);
+    public ResponseEntity<byte[]> getTemplateFile(@PathVariable Optional<ProgrammingLanguage> language, @PathVariable Optional<ProjectType> projectType,
+            @PathVariable String filename) {
+        log.debug("REST request to get file '{}' for programming language {} and project type {}", filename, language, projectType);
         try {
-            String languagePrefix = language.map(programmingLanguage -> File.separator + programmingLanguage.name().toLowerCase()).orElse("");
-            Resource fileResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:templates" + languagePrefix + File.separator + filename);
+            String languagePrefix = language.map(programmingLanguage -> programmingLanguage.name().toLowerCase()).orElse("");
+            String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
+
+            Resource fileResource = resourceLoaderService.getResource("templates", languagePrefix, projectTypePrefix, filename);
+            if (!fileResource.exists()) {
+                // Load without project type if not found with project type
+                fileResource = resourceLoaderService.getResource("templates", languagePrefix, filename);
+            }
+
             var fileContent = IOUtils.toByteArray(fileResource.getInputStream());
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.TEXT_PLAIN);
@@ -276,9 +291,35 @@ public class FileResource {
     }
 
     /**
+     * GET files/attachments/attachment-unit/:attachmentUnitId/:filename : Get the lecture unit attachment
+     *
+     * @param attachmentUnitId     ID of the attachment unit, the attachment belongs to
+     * @param filename             the filename of the file
+     * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
+     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/{filename:.+}")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId, @PathVariable String filename,
+            @RequestParam("access_token") String temporaryAccessToken) {
+        log.debug("REST request to get file : {}", filename);
+        Optional<AttachmentUnit> optionalAttachmentUnit = attachmentUnitRepository.findById(attachmentUnitId);
+        if (optionalAttachmentUnit.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (!validateTemporaryAccessToken(temporaryAccessToken, filename)) {
+            // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
+            String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding attachmentUnit";
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
+        }
+        return buildFileResponse(FilePathService.getAttachmentUnitFilePath() + optionalAttachmentUnit.get().getId(), filename);
+    }
+
+    /**
      * Validates temporary access token
+     *
      * @param temporaryAccessToken token to be validated
-     * @param filename the name of the file
+     * @param filename             the name of the file
      * @return true if temporaryAccessToken is valid for this file, false otherwise
      */
     private boolean validateTemporaryAccessToken(String temporaryAccessToken, String filename) {

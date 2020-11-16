@@ -356,8 +356,8 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     public void deleteTextSubmissionWithTextBlocks() throws Exception {
         textSubmission.setText("Lorem Ipsum dolor sit amet");
         textSubmission = database.saveTextSubmission(releasedTextExercise, textSubmission, "student1");
-        final List<TextBlock> blocks = List.of(ModelFactory.generateTextBlock(0, 11), ModelFactory.generateTextBlock(12, 21), ModelFactory.generateTextBlock(22, 26));
-        database.addTextBlocksToTextSubmission(blocks, textSubmission);
+        final var blocks = Set.of(ModelFactory.generateTextBlock(0, 11), ModelFactory.generateTextBlock(12, 21), ModelFactory.generateTextBlock(22, 26));
+        database.addAndSaveTextBlocksToTextSubmission(blocks, textSubmission);
 
         request.delete("/api/submissions/" + textSubmission.getId(), HttpStatus.OK);
     }

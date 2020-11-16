@@ -29,11 +29,11 @@ export class TextResultBlock {
     }
 
     get feedbackType(): FeedbackType {
-        if (!this.feedback || !this.feedback.credits) {
+        if (!this.feedback || Feedback.isEmpty(this.feedback)) {
             return FeedbackType.BLANK;
-        } else if (this.feedback.credits > 0) {
+        } else if (this.feedback.credits! > 0) {
             return FeedbackType.POSITIVE;
-        } else if (this.feedback.credits < 0) {
+        } else if (this.feedback.credits! < 0) {
             return FeedbackType.NEGATIVE;
         }
         return FeedbackType.NEUTRAL;

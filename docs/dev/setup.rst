@@ -33,11 +33,11 @@ following dependencies/tools on your machine:
    scheme will be created / updated automatically at startup time of the
    server application. Alternatively, you can run the MySQL Database
    Server inside a Docker container using
-   e.g. \ ``docker-compose -f src/main/docker/mysql.yml up``
-3. `Node.js <https://nodejs.org>`__: We use Node (>=13.12.0) to compile
+   e.g. ``docker-compose -f src/main/docker/mysql.yml up``
+3. `Node.js <https://nodejs.org>`__: We use Node (>=14.11.0) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
-4. `Yarn <https://classic.yarnpkg.com>`__: We use Yarn 1.x (>=1.22.0) to
+4. `Yarn <https://classic.yarnpkg.com>`__: We use Yarn 1.x (>=1.22.5) to
    manage client side Node dependencies. Depending on your system, you
    can install Yarn either from source or as a pre-packaged bundle. To
    do so, please follow the instructions on the `Yarn installation
@@ -119,14 +119,11 @@ have to configure the file ``application-artemis.yml`` in the folder
        git:
            name: Artemis
            email: artemis@in.tum.de
-       automatic-text:
-           segmentation-url: http://localhost:8000/segment
+       athene:
+           submit-url: http://localhost/submit
            feedback-consistency-url: http://localhost:8001/feedback_consistency
-           material-upload-url: http://localhost:8001/upload
-           embedding-url: http://localhost:8001/embed
-           embedding-chunk-size: 50
-           clustering-url: http://localhost:8002/cluster
-           secret: null
+           base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
+           token-validity-in-seconds: 10800
 
 Change all entries with ``<...>`` with proper values, e.g. your TUM
 Online account credentials to connect to the given instances of JIRA,
@@ -142,6 +139,7 @@ information about the setup for programming exercises provided:
    Bamboo, Bitbucket and Jira <setup/bamboo-bitbucket-jira>
    Jenkins and Gitlab <setup/jenkins-gitlab>
    Multiple instances <setup/distributed>
+   Programming Exercise adjustments <setup/programming-exercises>
 
 
 .. note::
@@ -342,18 +340,18 @@ Other useful commands:
 -  Stop the client: ``docker-compose stop artemis-client`` (restart via
    ``docker-compose start artemis-client``)
 
-Text Assessment Clustering Service
-----------------------------------
+Athene Service
+--------------
 
 The semi-automatic text assessment relies on the Athene_ service.
 To enable automatic text assessments, special configuration is required:
 
-Enable the ``automaticText`` Spring profile:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Enable the ``athene`` Spring profile:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,automaticText
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,athene
 
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -366,12 +364,10 @@ HTTP. We need to extend the configuration in the file
 
    artemis:
      # ...
-     automatic-text:
-       segmentation-url: http://localhost:8000/segment
-       material-upload-url: http://localhost:8001/upload
-       embedding-url: http://localhost:8001/embed
-       embedding-chunk-size: 50
-       clustering-url: http://localhost:8002/cluster
-       secret: null
+     athene:
+       submit-url: http://localhost/submit
+       feedback-consistency-url: http://localhost:8001/feedback_consistency
+       base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
+       token-validity-in-seconds: 10800
 
 .. _Athene: https://github.com/ls1intum/Athene

@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -110,7 +112,8 @@ public class BambooService implements ContinuousIntegrationService {
         URL repositoryUrl = participation.getRepositoryUrlAsUrl();
         String planProject = getProjectKeyFromBuildPlanId(buildPlanId);
         String planKey = participation.getBuildPlanId();
-        updatePlanRepository(planProject, planKey, ASSIGNMENT_REPO_NAME, urlService.getProjectKeyFromUrl(repositoryUrl), repositoryUrl.toString(), Optional.empty());
+        updatePlanRepository(planProject, planKey, ASSIGNMENT_REPO_NAME, urlService.getProjectKeyFromUrl(repositoryUrl), repositoryUrl.toString(),
+                participation.getProgrammingExercise().getTemplateRepositoryUrl(), Optional.empty());
         enablePlan(planProject, planKey);
     }
 
@@ -278,10 +281,10 @@ public class BambooService implements ContinuousIntegrationService {
         if (buildPlan == null) {
             return BuildStatus.INACTIVE;
         }
-        if (buildPlan.isActive() && !buildPlan.isBuilding()) {
+        if (buildPlan.getIsActive() && !buildPlan.getIsBuilding()) {
             return BuildStatus.QUEUED;
         }
-        else if (buildPlan.isActive() && buildPlan.isBuilding()) {
+        else if (buildPlan.getIsActive() && buildPlan.getIsBuilding()) {
             return BuildStatus.BUILDING;
         }
         else {
@@ -475,7 +478,7 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String bambooProject, String buildPlanKey, String bambooRepositoryName, String repoProjectName, String repoUrl,
+    public void updatePlanRepository(String bambooProject, String buildPlanKey, String bambooRepositoryName, String repoProjectName, String repoUrl, String templateRepositoryUrl,
             Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
         try {
             final var repositoryName = versionControlService.get().getRepositoryName(new URL(repoUrl));
@@ -496,11 +499,9 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public String getPlanKey(Object requestBody) throws BambooException {
-        // TODO: convert into a proper DTO object to avoid unchecked Map casts
         try {
-            Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
-            Map<String, Object> planMap = (Map<String, Object>) requestBodyMap.get("plan");
-            return (String) planMap.get("key");
+            final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
+            return buildResult.getPlan().getKey();
         }
         catch (Exception e) {
             // TODO: Not sure when this is triggered, the method would return null if the planMap does not have a 'key'.
@@ -521,7 +522,7 @@ public class BambooService implements ContinuousIntegrationService {
         final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
         log.debug("Retrieving build result (NEW) ...");
         try {
-            // Filter the first build plan that was automatically executed when the build plan was created.
+            // Filter the first build plan in case it was automatically executed when the build plan was created.
             if (isFirstBuildForThisPlan(buildResult)) {
                 return null;
             }

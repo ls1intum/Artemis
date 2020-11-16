@@ -194,7 +194,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         for (var programmingExercise : programmingExercises) {
             for (var user : users) {
-                mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user));
+                mockCopyRepositoryForParticipation(programmingExercise, user.getParticipantIdentifier(), HttpStatus.CREATED);
+                mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true);
             }
         }
 
@@ -1125,9 +1126,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             bambooRequestMockProvider.mockDeleteBambooBuildPlan(projectKey + "-" + planName.toUpperCase());
         }
         List<String> repoNames = new ArrayList<>(studentLogins);
-        repoNames.add(RepositoryType.TEMPLATE.getName());
-        repoNames.add(RepositoryType.SOLUTION.getName());
-        repoNames.add(RepositoryType.TESTS.getName());
+
+        for (final var repoType : RepositoryType.values()) {
+            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, programmingExercise.generateRepositoryName(repoType));
+        }
 
         for (final var repoName : repoNames) {
             bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());

@@ -97,7 +97,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     }
 
     get isApollonEditorMounted(): boolean {
-        return this.apollonEditor != null;
+        return this.apollonEditor != undefined;
     }
 
     /**

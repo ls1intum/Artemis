@@ -138,7 +138,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.modelingExercise = this.participation.exercise as ModelingExercise;
         this.modelingExercise.studentParticipations = [this.participation];
         this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
-        if (this.modelingExercise.diagramType == null) {
+        if (this.modelingExercise.diagramType == undefined) {
             this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
         }
         // checks if the student started the exercise after the due date
@@ -423,7 +423,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private filterGeneralFeedback(): void {
         if (this.assessmentResult && this.assessmentResult.feedbacks && this.submission && this.submission.model) {
             const feedback = this.assessmentResult.feedbacks;
-            const generalFeedbackIndex = feedback.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
+            const generalFeedbackIndex = feedback.findIndex(
+                (feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED,
+            );
             if (generalFeedbackIndex >= 0) {
                 this.generalFeedbackText = feedback[generalFeedbackIndex].detailText!;
                 feedback.splice(generalFeedbackIndex, 1);
