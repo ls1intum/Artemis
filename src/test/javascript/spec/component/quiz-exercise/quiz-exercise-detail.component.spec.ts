@@ -1,14 +1,15 @@
 import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
-import { ChangeDetectorRef, SimpleChange } from '@angular/core';
+import { ChangeDetectorRef, EventEmitter, SimpleChange } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { expect as jestExpect } from '@jest/globals';
-import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
@@ -26,6 +27,7 @@ import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exer
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import * as chai from 'chai';
 import { advanceTo } from 'jest-date-mock';
@@ -48,6 +50,7 @@ describe('QuizExercise Management Detail Component', () => {
     let exerciseGroupService: ExerciseGroupService;
     let courseManagementService: CourseManagementService;
     let quizExerciseService: QuizExerciseService;
+    let exerciseService: ExerciseService;
     let fileUploaderService: FileUploaderService;
     let fixture: ComponentFixture<QuizExerciseDetailComponent>;
     let router: Router;
@@ -56,6 +59,7 @@ describe('QuizExercise Management Detail Component', () => {
     let dragAndDropQuestionUtil: DragAndDropQuestionUtil;
     let shortAnswerQuestionUtil: ShortAnswerQuestionUtil;
     let changeDetector: ChangeDetectorRef;
+    let modalService: NgbModal;
 
     const course: Course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
@@ -143,6 +147,7 @@ describe('QuizExercise Management Detail Component', () => {
             imports: [ArtemisTestModule],
             declarations: [QuizExerciseDetailComponent],
             providers: [
+                NgbModal,
                 ChangeDetectorRef,
                 { provide: ActivatedRoute, useValue: testRoute || route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -168,6 +173,8 @@ describe('QuizExercise Management Detail Component', () => {
         shortAnswerQuestionUtil = fixture.debugElement.injector.get(ShortAnswerQuestionUtil);
         changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
         exerciseGroupService = fixture.debugElement.injector.get(ExerciseGroupService);
+        exerciseService = fixture.debugElement.injector.get(ExerciseService);
+        modalService = fixture.debugElement.injector.get(NgbModal);
     };
 
     describe('OnInit', () => {
@@ -281,6 +288,74 @@ describe('QuizExercise Management Detail Component', () => {
     describe('without routeChange', () => {
         beforeEach(waitForAsync(configureTestBed));
         beforeEach(configureFixtureAndServices);
+
+        describe('init', () => {
+            let exerciseServiceCategoriesStub: SinonStub;
+            let exerciseServiceCategoriesAsStringStub: SinonStub;
+            let courseServiceStub: SinonStub;
+            const testExerciseCategories = [
+                { exerciseId: 1, category: 'category1', color: 'color1' },
+                { exerciseId: 2, category: 'category2', color: 'color2' },
+            ];
+            const testExistingCategories = [
+                { exerciseId: 1, category: 'eCategory1', color: 'eColor1' },
+                { exerciseId: 2, category: 'eCategory2', color: 'eColor2' },
+            ];
+            let prepareEntitySpy: SinonSpy;
+            let alertServiceStub: SinonStub;
+            beforeEach(() => {
+                comp.course = course;
+                exerciseServiceCategoriesStub = stub(exerciseService, 'convertExerciseCategoriesFromServer');
+                exerciseServiceCategoriesStub.returns(testExerciseCategories);
+                courseServiceStub = stub(courseManagementService, 'findAllCategoriesOfCourse');
+                courseServiceStub.returns(
+                    of(
+                        new HttpResponse<string[]>({ body: ['category1', 'category2'] }),
+                    ),
+                );
+                exerciseServiceCategoriesAsStringStub = stub(exerciseService, 'convertExerciseCategoriesAsStringFromServer');
+                exerciseServiceCategoriesAsStringStub.returns(testExistingCategories);
+                prepareEntitySpy = spy(comp, 'prepareEntity');
+                alertServiceStub = stub(alertService, 'error');
+            });
+
+            it('should set quizExercise to entity if quiz exercise not defined', () => {
+                expect(comp.quizExercise).to.equal(undefined);
+                comp.init();
+                expect(comp.quizExercise).to.not.equal(undefined);
+                expect(prepareEntitySpy).to.have.been.calledWith(comp.quizExercise);
+                expect(comp.savedEntity).to.deep.equal(new QuizExercise(undefined, undefined));
+                expect(comp.quizExercise.course).to.deep.equal(course);
+                expect(exerciseServiceCategoriesStub).to.have.been.calledWith(comp.quizExercise);
+                expect(comp.exerciseCategories).to.deep.equal(testExerciseCategories);
+                expect(courseServiceStub).to.have.been.calledWith(course.id);
+            });
+            it('should set entity to quiz exercise if quiz exercise defined', () => {
+                resetQuizExercise();
+                comp.quizExercise = quizExercise;
+                comp.quizExercise.course = course;
+                expect(comp.entity).to.equal(undefined);
+                comp.init();
+                expect(comp.entity).to.equal(quizExercise);
+                expect(prepareEntitySpy).to.have.been.calledWith(comp.quizExercise);
+                expect(comp.savedEntity).to.deep.equal(quizExercise);
+            });
+
+            it('should set quizExercise exercise group if exam and it does not have one', () => {
+                comp.isExamMode = true;
+                resetQuizExercise();
+                comp.quizExercise = quizExercise;
+                expect(comp.quizExercise.exerciseGroup).to.equal(undefined);
+                comp.exerciseGroup = new ExerciseGroup();
+                comp.init();
+                expect(comp.quizExercise.exerciseGroup).to.deep.equal(comp.exerciseGroup);
+            });
+            it('should call on error if course service fails', () => {
+                courseServiceStub.returns(throwError({ status: 404 }));
+                comp.init();
+                expect(alertServiceStub).to.have.been.called;
+            });
+        });
         describe('onDurationChange', () => {
             // setup
             beforeEach(() => {
@@ -517,7 +592,6 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.existingQuestions = [exportedQuestion, notExportedQuestion];
                 const verifyAndImportQuestionsStub = stub(comp, 'verifyAndImportQuestions');
                 const cacheValidationStub = stub(comp, 'cacheValidation');
-                // console.log(verifyAndImportQuestionsStub.lastCall.firstArg);
                 comp.addExistingQuestions();
                 expect(verifyAndImportQuestionsStub).to.have.been.calledWithExactly([exportedQuestion]);
                 expect(cacheValidationStub).to.have.been.called;
@@ -852,7 +926,7 @@ describe('QuizExercise Management Detail Component', () => {
         describe('saving', () => {
             let quizExerciseServiceCreateStub: SinonStub;
             let quizExerciseServiceUpdateStub: SinonStub;
-
+            let exerciseStub: SinonStub;
             const saveQuizWithPendingChangesCache = () => {
                 comp.cacheValidation();
                 comp.pendingChangesCache = true;
@@ -884,26 +958,38 @@ describe('QuizExercise Management Detail Component', () => {
                         new HttpResponse<QuizExercise>({ body: quizExercise }),
                     ),
                 );
+                exerciseStub = stub(Exercise, 'sanitize');
+            });
+
+            afterEach(() => {
+                quizExerciseServiceCreateStub.restore();
+                quizExerciseServiceUpdateStub.restore();
+                exerciseStub.restore();
             });
 
             it('should call create if valid and quiz exercise no id', () => {
                 comp.quizExercise.id = undefined;
                 saveQuizWithPendingChangesCache();
+                expect(exerciseStub).to.have.been.calledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).to.have.been.called;
                 expect(quizExerciseServiceUpdateStub).to.not.have.been.called;
             });
 
             it('should update if valid and quiz exercise has id', () => {
                 saveQuizWithPendingChangesCache();
+                expect(exerciseStub).to.have.been.calledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).to.not.have.been.called;
                 expect(quizExerciseServiceUpdateStub).to.have.been.called;
                 expect(quizExerciseServiceUpdateStub).to.have.been.calledWith(comp.quizExercise, {});
             });
 
             it('should not save if not valid', () => {
-                saveQuizWithPendingChangesCache();
+                comp.quizIsValid = false;
+                comp.pendingChangesCache = true;
+                comp.save();
+                expect(exerciseStub).to.not.have.been.called;
                 expect(quizExerciseServiceCreateStub).to.not.have.been.called;
-                expect(quizExerciseServiceUpdateStub).to.have.been.called;
+                expect(quizExerciseServiceUpdateStub).to.not.have.been.called;
             });
 
             it('should call update with notification text if there is one', () => {
@@ -1028,16 +1114,23 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(comp.showExistingQuestions).to.equal(false);
             });
             it('should set showExistingQuestionsFromCourse to given value', () => {
+                const element = document.createElement('input');
+                const control = { ...element, value: 'test' };
+                const getElementStub = stub(document, 'getElementById').returns(control);
                 comp.setExistingQuestionSourceToCourse(true);
                 expect(comp.showExistingQuestionsFromCourse).to.equal(true);
                 comp.setExistingQuestionSourceToCourse(false);
                 expect(comp.showExistingQuestionsFromCourse).to.equal(false);
+                expect(getElementStub).to.have.been.called;
+                expect(control.value).to.equal('');
+                getElementStub.restore();
             });
         });
 
         describe('importing quiz', () => {
             let generateFileReaderStub: SinonStub;
             let verifyStub: SinonStub;
+            let getElementStub: SinonStub;
             let readAsText: jest.Mock;
             let reader: FileReader;
             const jsonContent = `[{
@@ -1069,6 +1162,8 @@ describe('QuizExercise Management Detail Component', () => {
           }]`;
             const fakeFile = new File([jsonContent], 'file.txt', { type: 'text/plain' });
             const questions = JSON.parse(jsonContent) as QuizQuestion[];
+            const element = document.createElement('input');
+            const control = { ...element, value: 'test' };
             beforeEach(() => {
                 comp.importFile = fakeFile;
                 verifyStub = stub(comp, 'verifyAndImportQuestions');
@@ -1076,14 +1171,21 @@ describe('QuizExercise Management Detail Component', () => {
                 reader = new FileReader();
                 reader = { ...reader, result: jsonContent };
                 generateFileReaderStub = stub(comp, 'generateFileReader').returns({ ...reader, onload: null, readAsText });
+                getElementStub = stub(document, 'getElementById').returns(control);
+            });
+            afterEach(() => {
+                getElementStub.restore();
             });
             it('should call verify and import questions with right json', async () => {
+                expect(control.value).to.equal('test');
                 await comp.importQuiz();
                 jestExpect(readAsText).toHaveBeenCalledWith(fakeFile);
                 expect(generateFileReaderStub).to.have.been.called;
                 comp.onFileLoadImport(reader);
                 expect(verifyStub).to.have.been.calledWithExactly(questions);
                 expect(comp.importFile).to.equal(undefined);
+                expect(getElementStub).to.have.been.called;
+                expect(control.value).to.equal('');
             });
 
             it('should not call any functions without import file', async () => {
@@ -1104,6 +1206,34 @@ describe('QuizExercise Management Detail Component', () => {
                 jestExpect(alertFunction).toHaveBeenCalled();
                 window.alert = alert;
                 verifyStub.reset();
+            });
+        });
+
+        describe('verify and import questions', () => {
+            const { question: multiQuestion, answerOption1 } = createValidMCQuestion();
+            let modalServiceStub: SinonStub;
+            let componentInstance: any;
+            let shouldImportEmitter: EventEmitter<void>;
+            beforeEach(() => {
+                shouldImportEmitter = new EventEmitter<void>();
+                resetQuizExercise();
+                comp.quizExercise = quizExercise;
+                componentInstance = { questions: [], shouldImport: shouldImportEmitter };
+                modalServiceStub = stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance });
+            });
+            it('should call addQuestions', () => {
+                const addQuestionsSpy = spy(comp, 'addQuestions');
+                comp.verifyAndImportQuestions([multiQuestion]);
+                expect(addQuestionsSpy).to.have.been.calledWith([multiQuestion]);
+            });
+            it('should open modal service when there are invalid questions', () => {
+                const addQuestionsSpy = spy(comp, 'addQuestions');
+                answerOption1.invalid = true;
+                comp.verifyAndImportQuestions([multiQuestion]);
+                expect(addQuestionsSpy).to.not.have.been.called;
+                expect(modalServiceStub).to.have.been.called;
+                shouldImportEmitter.emit();
+                expect(addQuestionsSpy).to.have.been.called;
             });
         });
 
