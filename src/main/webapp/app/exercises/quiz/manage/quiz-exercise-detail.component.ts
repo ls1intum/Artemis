@@ -941,10 +941,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         return new FileReader();
     }
 
-    onFileLoadImport(e: any) {
+    onFileLoadImport(fileReader: FileReader) {
         try {
             // Read the file and get list of questions from the file
-            const questions = JSON.parse(e.target.result as string) as QuizQuestion[];
+            const questions = JSON.parse(fileReader.result as string) as QuizQuestion[];
             this.verifyAndImportQuestions(questions);
             // Clearing html elements,
             this.importFile = undefined;
@@ -966,7 +966,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             return;
         }
         const fileReader = this.generateFileReader();
-        fileReader.onload = this.onFileLoadImport;
+        fileReader.onload = () => this.onFileLoadImport(fileReader);
         fileReader.readAsText(this.importFile);
         this.cacheValidation();
     }

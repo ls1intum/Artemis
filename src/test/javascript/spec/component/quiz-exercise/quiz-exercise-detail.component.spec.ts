@@ -1,5 +1,5 @@
 import { Location } from '@angular/common';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
@@ -296,11 +296,11 @@ describe('QuizExercise Management Detail Component', () => {
             cacheValidationStub.restore();
         });
         describe('applyFilter', () => {
-            const { question: mcQuestion } = createValidMCQuestion();
+            const { question: multiChoiceQuestion } = createValidMCQuestion();
             const { question: dndQuestion } = createValidDnDQuestion();
             const { question: shortQuestion } = createValidSAQuestion();
             beforeEach(() => {
-                comp.allExistingQuestions = [mcQuestion, dndQuestion, shortQuestion];
+                comp.allExistingQuestions = [multiChoiceQuestion, dndQuestion, shortQuestion];
                 comp.mcqFilterEnabled = false;
                 comp.dndFilterEnabled = false;
                 comp.shortAnswerFilterEnabled = false;
@@ -309,7 +309,7 @@ describe('QuizExercise Management Detail Component', () => {
             it('should put mc question when mc filter selected', () => {
                 comp.mcqFilterEnabled = true;
                 comp.applyFilter();
-                expect(comp.existingQuestions).to.deep.equal([mcQuestion]);
+                expect(comp.existingQuestions).to.deep.equal([multiChoiceQuestion]);
             });
             it('should put mc question when dnd filter selected', () => {
                 comp.dndFilterEnabled = true;
@@ -534,8 +534,8 @@ describe('QuizExercise Management Detail Component', () => {
         describe('unknown question type', () => {
             let question: MultipleChoiceQuestion;
             beforeEach(() => {
-                const mcQuestion = createValidMCQuestion();
-                question = mcQuestion.question;
+                const multiChoiceQuestion = createValidMCQuestion();
+                question = multiChoiceQuestion.question;
                 question.type = undefined;
                 comp.quizExercise.quizQuestions = [question];
             });
@@ -802,14 +802,15 @@ describe('QuizExercise Management Detail Component', () => {
             verifyStub = stub(comp, 'verifyAndImportQuestions');
             readAsText = jest.fn();
             reader = new FileReader();
+            reader = { ...reader, result: jsonContent };
             generateFileReaderStub = stub(comp, 'generateFileReader').returns({ ...reader, onload: null, readAsText });
         });
         it('should call verify and import questions with right json', async () => {
             await comp.importQuiz();
             jestExpect(readAsText).toHaveBeenCalledWith(fakeFile);
             expect(generateFileReaderStub).to.have.been.called;
-            comp.onFileLoadImport({ target: { result: jsonContent } });
-            expect(verifyStub).to.have.been.calledWith(questions);
+            comp.onFileLoadImport(reader);
+            expect(verifyStub).to.have.been.calledWithExactly(questions);
             expect(comp.importFile).to.equal(undefined);
         });
 
@@ -827,7 +828,7 @@ describe('QuizExercise Management Detail Component', () => {
             window.alert = alertFunction;
             verifyStub.throws('');
             await comp.importQuiz();
-            comp.onFileLoadImport({ target: { result: jsonContent } });
+            comp.onFileLoadImport(reader);
             jestExpect(alertFunction).toHaveBeenCalled();
             window.alert = alert;
             verifyStub.reset();
@@ -841,7 +842,6 @@ describe('QuizExercise Management Detail Component', () => {
     });
 
     describe('invalid reasons', () => {
-        let question;
         const filterReasonAndExpectMoreThanOneInArray = (translateKey: string) => {
             const invalidReasons = comp.computeInvalidReasons().filter((reason) => reason.translateKey === translateKey);
             expect(invalidReasons.length).to.be.greaterThan(0);
@@ -903,10 +903,10 @@ describe('QuizExercise Management Detail Component', () => {
             beforeEach(() => {
                 resetQuizExercise();
                 comp.quizExercise = quizExercise;
-                const mcQuestion = createValidMCQuestion();
-                question = mcQuestion.question;
-                answerOption1 = mcQuestion.answerOption1;
-                answerOption2 = mcQuestion.answerOption2;
+                const multiChoiceQuestion = createValidMCQuestion();
+                question = multiChoiceQuestion.question;
+                answerOption1 = multiChoiceQuestion.answerOption1;
+                answerOption2 = multiChoiceQuestion.answerOption2;
                 comp.quizExercise.quizQuestions = [question];
             });
             it('should put reason for negative score ', () => {
@@ -942,7 +942,6 @@ describe('QuizExercise Management Detail Component', () => {
         describe('should include right reasons in reasons array for DnD', () => {
             let question: DragAndDropQuestion;
             let dragItem1: DragItem;
-            let dragItem2: DragItem;
             let dropLocation: DropLocation;
             let correctDragAndDropMapping: DragAndDropMapping;
 
@@ -952,7 +951,6 @@ describe('QuizExercise Management Detail Component', () => {
                 const dndQuestion = createValidDnDQuestion();
                 question = dndQuestion.question;
                 dragItem1 = dndQuestion.dragItem1;
-                dragItem2 = dndQuestion.dragItem2;
                 correctDragAndDropMapping = dndQuestion.correctDragAndDropMapping;
                 dropLocation = dndQuestion.dropLocation;
                 comp.quizExercise.quizQuestions = [question];
