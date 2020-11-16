@@ -107,6 +107,7 @@ public class LectureUnitResource {
             return notFound();
         }
         LectureUnit lectureUnit = lectureUnitOptional.get();
+
         if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
             return conflict();
         }
