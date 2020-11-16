@@ -1,15 +1,11 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
     selector: 'jhi-lecture-unit-layout',
     templateUrl: './lecture-unit-layout.component.html',
     styles: [],
 })
-export class LectureUnitLayoutComponent implements OnInit {
+export class LectureUnitLayoutComponent {
     @Input()
     isLoading = false;
-
-    constructor() {}
-
-    ngOnInit(): void {}
 }
