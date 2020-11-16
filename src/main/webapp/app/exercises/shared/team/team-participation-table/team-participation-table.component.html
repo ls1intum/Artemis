@@ -165,7 +165,6 @@
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="row">
                     <div class="d-flex justify-content-start align-items-center">
-                        <!-- *ngIf="value.type !== ExerciseType.PROGRAMMING; else programmingAssessment" -->
                         <ng-container>
                             <button
                                 [disabled]="assessmentButtonDisabled(value, value.submission)"

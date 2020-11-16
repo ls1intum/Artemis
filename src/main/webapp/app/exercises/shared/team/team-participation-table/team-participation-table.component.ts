@@ -107,6 +107,11 @@ export class TeamParticipationTableComponent implements OnInit {
         const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
         let route;
         if (exercise.type === ExerciseType.PROGRAMMING) {
+            // Ensure that submission has the value 'new' for the first assessment
+            const isFirstAssessment = this.assessmentAction(submission === 'new' ? undefined : submission) === AssessmentAction.START;
+            if (isFirstAssessment) {
+                submission = 'new';
+            }
             const participationURLParameter: number | 'new' = submission === 'new' ? 'new' : submission.result?.participation?.id!;
             route = `/course-management/${this.course.id}/${exercise.type}-exercises/${exercise.id}/code-editor/${participationURLParameter}/assessment`;
         } else {
