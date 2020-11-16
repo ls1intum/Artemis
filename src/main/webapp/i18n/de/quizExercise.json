@@ -218,8 +218,8 @@
             "submissionWarning": "Bist du sicher, dass du einreichen willst? Du hast nicht alle Fragen beantwortet und hast noch etwas Zeit übrig!",
             "placeholder": {
                 "title": "Kurzer Quiz Titel",
-                "questionTitle": "Frage Titel",
-                "shortQuestionTitle": "Kurzer Frage Title"
+                "questionTitle": "Fragen Titel",
+                "shortQuestionTitle": "Kurzer Fragen Title"
             }
         },
         "quizLiveModal": {
