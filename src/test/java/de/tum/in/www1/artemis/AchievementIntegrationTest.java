@@ -14,12 +14,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AchievementService;
-import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -34,13 +33,13 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     AchievementService achievementService;
 
     @Autowired
-    CourseService courseService;
-
-    @Autowired
     UserRepository userRepository;
 
     @Autowired
     CourseRepository courseRepository;
+
+    @Autowired
+    ResultRepository resultRepository;
 
     @Autowired
     ParticipationRepository participationRepository;
@@ -53,7 +52,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private Course secondCourse;
 
-    private Exercise firstExercise;
+    private ModelingExercise firstExercise;
 
     @BeforeEach
     public void initTestCase() {
@@ -65,7 +64,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         firstCourse.setAchievementsEnabled(true);
         courseRepository.save(firstCourse);
         secondCourse = database.addCourseWithModelingAndTextAndFileUploadExercise();
-        firstExercise = firstCourse.getExercises().stream().findFirst().get();
+        firstExercise = (ModelingExercise) firstCourse.getExercises().stream().findFirst().get();
 
         achievementService.generateForCourse(firstCourse);
         achievementService.generateForCourse(secondCourse);
@@ -109,6 +108,18 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(achievementsFirstCourse.size()).as("Number of achievements for user should be 12 in course " + firstCourse.getId()).isEqualTo(12);
         var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
         assertThat(achievementsSecondCourse.size()).as("Number of achievements for user should be 12 in course " + secondCourse.getId()).isEqualTo(12);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testRewardAchievement() throws Exception {
+        var submission = ModelFactory.generateModelingSubmission("", true);
+        submission = database.addModelingSubmission(firstExercise, submission, student.getLogin());
+        var result = ModelFactory.generateResult(true, 100).participation(submission.getParticipation());
+        result.setSubmission(submission);
+        resultRepository.save(result);
+        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
+        assertThat(achievementsFirstCourse.size()).as("User got three achievements").isEqualTo(3);
     }
 
     private void initTest() throws Exception {

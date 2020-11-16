@@ -406,6 +406,11 @@ public class Course extends DomainObject {
         return achievementsEnabled;
     }
 
+    /**
+     * Setter for achievementsEnabled
+     * Additionally sets the active achievements according to whether achievements are enabled or not
+     * @param achievementsEnabled
+     */
     public void setAchievementsEnabled(Boolean achievementsEnabled) {
         if (achievementsEnabled) {
             setActiveAchievements(EnumSet.allOf(AchievementType.class));
