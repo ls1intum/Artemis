@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -33,13 +34,13 @@ public class PointBasedAchievementService {
      * at least as many points as needed
      * @param result the result which is checked if it earned any achievements
      * @param achievements all point based achievements within the given course
-     * @return the highest rank reached by the result, returns null if no rank was reached
+     * @return the highest rank reached by the result, returns empty optional if no rank was reached
      */
-    public AchievementRank checkForAchievement(Result result, Set<Achievement> achievements) {
+    public Optional<AchievementRank> getAchievementRank(Result result, Set<Achievement> achievements) {
         var score = result.getScore();
 
         if (score == null) {
-            return null;
+            return Optional.empty();
         }
 
         Set<AchievementRank> ranks = new HashSet<>();
@@ -50,9 +51,7 @@ public class PointBasedAchievementService {
             }
         }
 
-        var maxRank = ranks.stream().max(Comparator.comparing(AchievementRank::ordinal));
-
-        return maxRank.isPresent() ? maxRank.get() : null;
+        return ranks.stream().max(Comparator.comparing(AchievementRank::ordinal));
     }
 
     /**

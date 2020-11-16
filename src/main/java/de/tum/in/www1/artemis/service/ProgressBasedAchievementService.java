@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -41,11 +42,11 @@ public class ProgressBasedAchievementService {
      * @param course the given course
      * @param user the given user
      * @param achievements all progress based achievements within the given course
-     * @return the highest rank reached, returns null if no rank was reached
+     * @return the highest rank reached, returns empty optional if no rank was reached
      */
-    public AchievementRank checkForAchievement(Result result, Course course, User user, Set<Achievement> achievements) {
+    public Optional<AchievementRank> getAchievementRank(Result result, Course course, User user, Set<Achievement> achievements) {
         if (!achievements.iterator().hasNext()) {
-            return null;
+            return Optional.empty();
         }
         var minScore = achievements.iterator().next().getMinScoreToQualify();
         var participations = studentParticipationRepository.findAllByCourseIdAndUserId(course.getId(), user.getId());
@@ -72,9 +73,7 @@ public class ProgressBasedAchievementService {
             }
         }
 
-        var maxRank = ranks.stream().max(Comparator.comparing(AchievementRank::ordinal));
-
-        return maxRank.isPresent() ? maxRank.get() : null;
+        return ranks.stream().max(Comparator.comparing(AchievementRank::ordinal));
     }
 
     /**

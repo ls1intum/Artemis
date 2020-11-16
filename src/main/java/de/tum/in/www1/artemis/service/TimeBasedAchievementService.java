@@ -4,6 +4,7 @@ import static java.time.temporal.ChronoUnit.DAYS;
 
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -37,15 +38,15 @@ public class TimeBasedAchievementService {
      * and the date of submission
      * @param result the result which is checked if it earned any achievements
      * @param achievements all time based achievements within the given course
-     * @return the highest rank reached by the result, returns null if no rank was reached
+     * @return the highest rank reached by the result, returns empty optional if no rank was reached
      */
-    public AchievementRank checkForAchievement(Result result, Set<Achievement> achievements) {
+    public Optional<AchievementRank> getAchievementRank(Result result, Set<Achievement> achievements) {
         if (result.getScore() == null || !achievements.iterator().hasNext() || result.getScore() < achievements.iterator().next().getMinScoreToQualify()) {
-            return null;
+            return Optional.empty();
         }
         var submission = result.getSubmission();
         if (submission == null) {
-            return null;
+            return Optional.empty();
         }
 
         var submissionDay = submission.getSubmissionDate().truncatedTo(DAYS);
@@ -59,9 +60,7 @@ public class TimeBasedAchievementService {
             }
         }
 
-        var maxRank = ranks.stream().max(Comparator.comparing(AchievementRank::ordinal));
-
-        return maxRank.isPresent() ? maxRank.get() : null;
+        return ranks.stream().max(Comparator.comparing(AchievementRank::ordinal));
     }
 
     /**

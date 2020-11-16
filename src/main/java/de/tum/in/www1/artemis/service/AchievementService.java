@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -133,33 +134,33 @@ public class AchievementService {
         /**
          * Here the actual checks take place for each achievement type in three steps
          * 1. Load all achievements of a type in a given course to be able to access the successCriteria of each rank
-         * 2. Check in the corresponding service if the user reached any rank and return it (otherwise returns null)
-         * 3. Reward the achievement of the given type and rank to the user
+         * 2. Check in the corresponding service if the user reached any rank and return it (otherwise returns empty optional)
+         * 3. Reward the achievement of the given type and rank to the user if rank is present
          */
         var pointBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.POINT);
-        var pointRank = pointBasedAchievementService.checkForAchievement(result, pointBasedAchievements);
+        var pointRank = pointBasedAchievementService.getAchievementRank(result, pointBasedAchievements);
         rewardAchievement(pointBasedAchievements, pointRank, user);
 
         var timeBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.TIME);
-        var timeRank = timeBasedAchievementService.checkForAchievement(result, timeBasedAchievements);
+        var timeRank = timeBasedAchievementService.getAchievementRank(result, timeBasedAchievements);
         rewardAchievement(timeBasedAchievements, timeRank, user);
 
         var progressBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.PROGRESS);
-        var progressRank = progressBasedAchievementService.checkForAchievement(result, course, user, progressBasedAchievements);
+        var progressRank = progressBasedAchievementService.getAchievementRank(result, course, user, progressBasedAchievements);
         rewardAchievement(progressBasedAchievements, progressRank, user);
     }
 
     /**
      * Rewards or replaces an achievement
      */
-    private void rewardAchievement(Set<Achievement> achievements, AchievementRank rank, User user) {
-        // do not reward achievement if no rank was reached and the given rank is therefore null
-        if (rank == null) {
+    private void rewardAchievement(Set<Achievement> achievements, Optional<AchievementRank> rank, User user) {
+        // do not reward achievement if no rank was reached and the given rank is therefore empty
+        if (rank.isEmpty()) {
             return;
         }
 
         // find the achievement of the given rank, return if not found
-        var optionalAchievement = achievements.stream().filter(a -> a.getRank().equals(rank)).findAny();
+        var optionalAchievement = achievements.stream().filter(a -> a.getRank().equals(rank.get())).findAny();
         if (optionalAchievement.isEmpty()) {
             return;
         }
@@ -171,7 +172,7 @@ public class AchievementService {
         }
 
         // do not reward achievement if user already has an achievement of same type and higher rank
-        var optionalAchievementsOfHigherRank = achievements.stream().filter(a -> a.getRank().ordinal() > rank.ordinal()).collect(Collectors.toSet());
+        var optionalAchievementsOfHigherRank = achievements.stream().filter(a -> a.getRank().ordinal() > rank.get().ordinal()).collect(Collectors.toSet());
         for (Achievement a : optionalAchievementsOfHigherRank) {
             if (a.getUsers().contains(user)) {
                 return;
@@ -179,7 +180,7 @@ public class AchievementService {
         }
 
         // if user has an achievement of lower rank replace it by removing it first
-        var optionalAchievementsOfLowerRank = achievements.stream().filter(a -> a.getRank().ordinal() < rank.ordinal()).collect(Collectors.toSet());
+        var optionalAchievementsOfLowerRank = achievements.stream().filter(a -> a.getRank().ordinal() < rank.get().ordinal()).collect(Collectors.toSet());
         for (Achievement a : optionalAchievementsOfLowerRank) {
             if (a.getUsers().contains(user)) {
                 user.removeAchievement(a);
