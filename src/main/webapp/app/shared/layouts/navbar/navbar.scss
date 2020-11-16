@@ -52,10 +52,12 @@ Navbar
         margin-left: 1rem;
         margin-bottom: 0;
         padding: 10px 16px 10px 16px;
+
         .breadcrumb-link {
             font-weight: lighter;
         }
     }
+
     .breadcrumb-item::before {
         content: '>';
     }
