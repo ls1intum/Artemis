@@ -42,7 +42,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     paramSub: Subscription;
     participation: ProgrammingExerciseStudentParticipation;
-    participationForManualResult: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
     submission?: ProgrammingSubmission;
     manualResult?: Result;
@@ -110,19 +109,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
             const participationId = params['participationId'] ? Number(params['participationId']) : Number(this.route.snapshot.data.studentParticipationId);
-            this.programmingExerciseParticipationService.getStudentParticipationWithResults(participationId).subscribe(
+            this.programmingExerciseParticipationService.getStudentParticipationWithLatestManualResult(participationId).subscribe(
                 (participationWithResults: ProgrammingExerciseStudentParticipation) => {
                     // Set domain to make file editor work properly
                     this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
                     this.participation = participationWithResults;
-                    this.automaticResult = this.getLatestAutomaticResult(this.participation.results);
-                    this.manualResult = this.getLatestManualResult(this.participation.results);
+                    this.manualResult = this.participation.results![0];
 
-                    // Add participation with manual results to display manual result
-                    this.participationForManualResult = cloneDeep(this.participation);
-                    this.participationForManualResult.results = this.manualResult.hasFeedback ? [this.manualResult] : [];
                     // Either submission from latest manual or automatic result
-                    this.submission = this.getLatestResult(this.participation.results)?.submission as ProgrammingSubmission;
+                    this.submission = this.manualResult.submission as ProgrammingSubmission;
                     this.submission.participation = this.participation;
                     this.exercise = this.participation.exercise as ProgrammingExercise;
                     this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
@@ -186,9 +181,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         this.cancelBusy = true;
         if (confirmCancel && this.exercise && this.submission) {
-            // TODO: Implement lock for programming submissions, otherwise cancel will only work when saving before.
-            // this.manualResultService.cancelAssessment(this.submission.id).subscribe(() => this.navigateBack());
-            this.navigateBack();
+            this.manualResultService.cancelAssessment(this.submission.id!).subscribe(() => this.navigateBack());
         }
     }
 
@@ -230,7 +223,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.setFeedbacksForManualResult();
         this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, complaintResponse, this.manualResult!.submission!.id!).subscribe(
             (result: Result) => {
-                this.participationForManualResult.results![0] = this.manualResult = result;
+                this.participation.results![0] = this.manualResult = result;
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
@@ -328,34 +321,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
-        this.participationForManualResult.results![0] = this.manualResult = response.body!;
+        this.participation.results![0] = this.manualResult = response.body!;
         this.jhiAlertService.clear();
         this.jhiAlertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
-    }
-
-    private getLatestResult(results?: Result[]) {
-        const sortedResults = this.sortResults(results);
-        return sortedResults.length > 0 ? sortedResults[0] : undefined;
-    }
-
-    private sortResults(results?: Result[]) {
-        return _orderBy(results || [], 'id', 'desc');
-    }
-
-    private getLatestAutomaticResult(results?: Result[]) {
-        const automaticResults = (results || []).filter((result) => result.assessmentType === AssessmentType.AUTOMATIC);
-        const sortedResults = this.sortResults(automaticResults);
-        return sortedResults.length > 0 ? sortedResults[0] : undefined;
-    }
-
-    private getLatestManualResult(results?: Result[]): Result {
-        const manualResults = (results || []).filter((result) => Result.isManualResult(result));
-        const sortedResults = this.sortResults(manualResults);
-        const initialManualResult = new Result();
-        // Manual results are always rated
-        initialManualResult.rated = true;
-        return sortedResults.length > 0 ? sortedResults[0] : initialManualResult;
     }
 
     /**
@@ -389,19 +358,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleFeedback(): void {
-        // Setup automatic feedback
-        this.automaticFeedback = this.automaticResult?.feedbacks ?? [];
-        this.automaticFeedback.forEach((feedback) => {
-            feedback.id = undefined;
-            if (!feedback.credits) {
-                feedback.credits = 0;
-            }
-        });
-
-        // Setup not automatically generated feedbacks
         const feedbacks = this.manualResult?.feedbacks || [];
+        this.automaticFeedback = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC);
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
-
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         const generalFeedbackIndex = feedbacks.findIndex(
             (feedbackElement) =>
@@ -425,11 +384,17 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private setAttributesForManualResult(totalScore: number) {
         this.setFeedbacksForManualResult();
-        this.manualResult!.hasFeedback = this.manualResult!.feedbacks!.length > 0;
-        this.manualResult!.resultString = `${this.automaticResult!.resultString}, ${totalScore} of ${this.exercise.maxScore} points`;
-        this.manualResult!.score = Math.round((totalScore / this.exercise.maxScore!) * 100);
-        // Manual result is always rated
+        // Manual result is always rated and has feedback
         this.manualResult!.rated = true;
+        this.manualResult!.hasFeedback = true;
+        /* Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated,
+         * as the points the student has achieved have changed
+         */
+        const resultStringParts: string[] = this.manualResult!.resultString!.split(', ');
+        // When no maxScore is set, then show only the achieved points
+        resultStringParts[resultStringParts.length - 1] = this.exercise.maxScore ? `${totalScore} of ${this.exercise.maxScore} points` : `${totalScore} points`;
+        this.manualResult!.resultString = resultStringParts.join(', ');
+        this.manualResult!.score = this.exercise.maxScore ? Math.round((totalScore / this.exercise.maxScore!) * 100) : 100;
         // This is done to update the result string in result.component.ts
         this.manualResult = cloneDeep(this.manualResult);
     }
@@ -437,6 +402,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private avoidCircularStructure() {
         if (this.manualResult?.participation?.results) {
             this.manualResult.participation.results = [];
+        }
+        if (this.manualResult?.submission?.participation?.results) {
+            this.manualResult.submission.participation.results = [];
         }
     }
 

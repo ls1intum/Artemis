@@ -35,7 +35,7 @@
     <jhi-code-editor-container
         *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
         [editable]="false"
-        [participation]="participationForManualResult"
+        [participation]="participation"
         [showEditorInstructions]="showEditorInstructions"
         [isTutorAssessment]="true"
         [readOnlyManualFeedback]="readOnly()"
@@ -57,13 +57,13 @@
                 >Go to repository</a
             >
             <jhi-result
-                *ngIf="participationForManualResult"
+                *ngIf="participation"
                 [result]="manualResult"
                 [showUngradedResults]="true"
                 [showGradedBadge]="false"
                 [showTestDetails]="true"
                 [isBuilding]="false"
-                [participation]="participationForManualResult"
+                [participation]="participation"
                 [short]="true"
                 class="mr-1"
             ></jhi-result>
