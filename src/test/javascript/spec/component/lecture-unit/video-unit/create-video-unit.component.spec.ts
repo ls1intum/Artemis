@@ -114,6 +114,8 @@ describe('CreateVideoUnitComponent', () => {
 
             expect(createStub).to.have.been.calledOnce;
             expect(navigateSpy).to.have.been.calledOnce;
+
+            navigateSpy.restore();
         });
     }));
 });
