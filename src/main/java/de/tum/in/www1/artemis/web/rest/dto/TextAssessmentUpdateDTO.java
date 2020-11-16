@@ -1,19 +1,19 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import java.util.List;
+import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.AssessmentUpdate;
 import de.tum.in.www1.artemis.domain.TextBlock;
 
 public class TextAssessmentUpdateDTO extends AssessmentUpdate {
 
-    private List<TextBlock> textBlocks;
+    private Set<TextBlock> textBlocks;
 
-    public List<TextBlock> getTextBlocks() {
+    public Set<TextBlock> getTextBlocks() {
         return textBlocks;
     }
 
-    public void setTextBlocks(List<TextBlock> textBlocks) {
+    public void setTextBlocks(Set<TextBlock> textBlocks) {
         this.textBlocks = textBlocks;
     }
 }
