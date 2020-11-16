@@ -934,27 +934,39 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
+     * Move file reader creation to separate function to be able to mock
+     * https://fromanegg.com/post/2015/04/22/easy-testing-of-code-involving-native-methods-in-javascript/
+     */
+    generateFileReader() {
+        return new FileReader();
+    }
+
+    onFileLoadImport(e: any) {
+        try {
+            // Read the file and get list of questions from the file
+            const questions = JSON.parse(e.target.result as string) as QuizQuestion[];
+            this.verifyAndImportQuestions(questions);
+            // Clearing html elements,
+            this.importFile = undefined;
+            this.importFileName = '';
+            const control = document.getElementById('importFileInput') as HTMLInputElement;
+            if (control) {
+                control.value = '';
+            }
+        } catch (e) {
+            alert('Import Quiz Failed! Invalid quiz file.');
+        }
+    }
+
+    /**
      * Imports a json quiz file and adds questions to current quiz exercise.
      */
     async importQuiz() {
         if (!this.importFile) {
             return;
         }
-        const fileReader = new FileReader();
-        fileReader.onload = () => {
-            try {
-                // Read the file and get list of questions from the file
-                const questions = JSON.parse(fileReader.result as string) as QuizQuestion[];
-                this.verifyAndImportQuestions(questions);
-                // Clearing html elements,
-                this.importFile = undefined;
-                this.importFileName = '';
-                const control = document.getElementById('importFileInput') as HTMLInputElement;
-                control.value = '';
-            } catch (e) {
-                alert('Import Quiz Failed! Invalid quiz file.');
-            }
-        };
+        const fileReader = this.generateFileReader();
+        fileReader.onload = this.onFileLoadImport;
         fileReader.readAsText(this.importFile);
         this.cacheValidation();
     }
@@ -1219,7 +1231,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.importFile = undefined;
         this.importFileName = '';
         const control = document.getElementById('importFileInput') as HTMLInputElement;
-        control.value = '';
+        if (control) {
+            control.value = '';
+        }
         this.changeDetector.detectChanges();
     }
 
