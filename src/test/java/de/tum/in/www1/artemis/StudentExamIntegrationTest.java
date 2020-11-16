@@ -1126,9 +1126,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             bambooRequestMockProvider.mockDeleteBambooBuildPlan(projectKey + "-" + planName.toUpperCase());
         }
         List<String> repoNames = new ArrayList<>(studentLogins);
-        repoNames.add(RepositoryType.TEMPLATE.getName());
-        repoNames.add(RepositoryType.SOLUTION.getName());
-        repoNames.add(RepositoryType.TESTS.getName());
+
+        for (final var repoType : RepositoryType.values()) {
+            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, programmingExercise.generateRepositoryName(repoType));
+        }
 
         for (final var repoName : repoNames) {
             bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());

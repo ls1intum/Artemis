@@ -3,12 +3,16 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static de.tum.in.www1.artemis.util.ProgrammingExerciseTestService.studentLogin;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -55,8 +59,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     @ParameterizedTest
-    // TODO René Lalla: incldue Swift again as soon as it is fully supported
-    @EnumSource(value = ProgrammingLanguage.class, names = { "SWIFT" }, mode = EnumSource.Mode.EXCLUDE)
+    @EnumSource(ProgrammingLanguage.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language) throws Exception {
         programmingExerciseTestService.createProgrammingExercise_programmingLanguage_validExercise_created(language,
@@ -81,12 +84,15 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         programmingExerciseTestService.createProgrammingExerciseForExam_validExercise_created();
     }
 
+    private static Stream<Arguments> generateArgumentsForImportExercise() {
+        return Arrays.stream(ProgrammingLanguage.values()).flatMap(language -> Stream.of(Arguments.of(language, true), Arguments.of(language, false)));
+    }
+
     @ParameterizedTest
-    // TODO René Lalla: incldue Swift again as soon as it is fully supported
-    @EnumSource(value = ProgrammingLanguage.class, names = { "SWIFT" }, mode = EnumSource.Mode.EXCLUDE)
+    @MethodSource("generateArgumentsForImportExercise")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
-        programmingExerciseTestService.importExercise_created(programmingLanguage);
+    public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans) throws Exception {
+        programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans);
     }
 
     @Test

@@ -566,7 +566,5 @@ relationship ManyToMany {
 	TutorParticipation{trainedExampleSubmissions} to ExampleSubmission{tutorParticipations},
 }
 
-paginate Exercise with infinite-scroll
-
 service Course with serviceClass
 service Participation with serviceClass
