@@ -199,7 +199,6 @@
         "build": "yarn run webpack:prod",
         "test": "jest --logHeapUsage -w=4 --config=src/test/javascript/jest.config.js --env=jsdom",
         "test:coverage": "jest --coverage --logHeapUsage -w=4 --config=src/test/javascript/jest.config.js --env=jsdom",
-        "test:e2e": "protractor src/test/javascript/protractor.conf.js",
         "test:server-api-tests": "`pwd`/src/test/k6/api_tests.sh",
         "update": "yarn upgrade-interactive --latest",
         "webpack:dev": "yarn run webpack-dev-server --config webpack/webpack.dev.js --inline --hot --port=9060 --watch-content-base --env.stats=minimal",

@@ -67,10 +67,10 @@ Some general aspects:
 ========
 
 1. Use arrow functions over anonymous function expressions.
-2. Only surround arrow function parameters when necessary.
-    For example, ``(x) => x + x`` is wrong but the following are correct:
+2. Always surround arrow function parameters.
+    For example, ``x => x + x`` is wrong but the following are correct:
 
-    1. ``x => x + x``
+    1. ``(x) => x + x``
     2. ``(x,y) => x + y``
     3. ``<T>(x: T, y: T) => x === y``
 
