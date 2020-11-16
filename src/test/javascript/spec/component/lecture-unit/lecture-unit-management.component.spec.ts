@@ -19,7 +19,7 @@ import * as sinonChai from 'sinon-chai';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import sinon = require('sinon');
+import * as sinon from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
