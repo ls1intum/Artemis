@@ -47,7 +47,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     automaticResult?: Result;
     userId: number;
     // for assessment-layout
-    isLoading = false;
     isTestRun = false;
     saveBusy = false;
     submitBusy = false;
@@ -75,6 +74,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     automaticFeedback: Feedback[] = [];
 
     isFirstAssessment = false;
+    lockLimitReached = false;
 
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
@@ -109,12 +109,30 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
-            const participationId = params['participationId'] ? Number(params['participationId']) : Number(this.route.snapshot.data.studentParticipationId);
+
+            let participationId;
+            if (!params['participationId']) {
+                // Check if error is thrown and show info about error
+                if (this.route.snapshot.data.studentParticipationId.error && this.route.snapshot.data.studentParticipationId.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    this.lockLimitReached = true;
+                    return;
+                } else if (this.route.snapshot.data.studentParticipationId.error) {
+                    this.onError(this.route.snapshot.data.studentParticipationId.error);
+                    return;
+                }
+                participationId = Number(this.route.snapshot.data.studentParticipationId);
+                // Update the url with the new id, without reloading the page, to make the history consistent
+                const newUrl = window.location.hash.replace('#', '').replace('new', `${participationId}`);
+                this.location.go(newUrl);
+            } else {
+                participationId = Number(params['participationId']);
+            }
+
             this.programmingExerciseParticipationService.getStudentParticipationWithLatestManualResult(participationId).subscribe(
-                (participationWithResults: ProgrammingExerciseStudentParticipation) => {
+                (participationWithResult: ProgrammingExerciseStudentParticipation) => {
                     // Set domain to make file editor work properly
-                    this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
-                    this.participation = participationWithResults;
+                    this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResult]);
+                    this.participation = participationWithResult;
                     this.manualResult = this.participation.results![0];
 
                     // Either submission from latest manual or automatic result
@@ -131,9 +149,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     }
                     this.createAdjustedRepositoryUrl();
                 },
-                () => {
+                (error: HttpErrorResponse) => {
                     this.participationCouldNotBeFetched = true;
-                    this.loadingParticipation = false;
+                    if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                        this.lockLimitReached = true;
+                    }
                 },
                 () => {
                     this.loadingParticipation = false;
@@ -204,7 +224,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
                     this.onError('artemisApp.exerciseAssessmentDashboard.noSubmissions');
-                } else if (error.status === 400) {
+                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     // the lock limit is reached
                     this.onError('artemisApp.submission.lockedSubmissionsLimitReached');
                 } else {

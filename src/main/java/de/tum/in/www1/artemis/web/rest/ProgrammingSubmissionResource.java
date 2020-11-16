@@ -369,8 +369,7 @@ public class ProgrammingSubmissionResource {
         if (!startAssessingSubmissions) {
             return forbidden();
         }
-
-        // TODO: Handle lock limit.
+        
         // Check if the limit of simultaneously locked submissions has been reached
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 

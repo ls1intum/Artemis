@@ -1,10 +1,15 @@
-<nav *ngIf="participationCouldNotBeFetched" class="card">
+<nav *ngIf="participationCouldNotBeFetched || lockLimitReached" class="card">
     <div class="card-body">
         <span *ngIf="participationCouldNotBeFetched">
             <fa-icon [icon]="'times-circle'" class="text-danger"></fa-icon>
             <span jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</span>
         </span>
-        <p *ngIf="lockLimitReached" jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached">You have reached the maximum number of unfinished assessments in this course. Please finish your open assessments before being able to start a new one.</p>
+        <div *ngIf="lockLimitReached">
+            <fa-icon [icon]="'times-circle'" class="text-danger"></fa-icon>
+            <span jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"
+                >You have reached the maximum number of unfinished assessments in this course. Please finish your open assessments before being able to start a new one.</span
+            >
+        </div>
     </div>
 </nav>
 <jhi-assessment-layout
