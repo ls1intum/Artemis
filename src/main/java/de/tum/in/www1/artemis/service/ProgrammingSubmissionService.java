@@ -664,6 +664,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             feedback.setResult(newResult);
         }
         newResult.setFeedbacks(automaticFeedbacks);
+        newResult.setResultString(automaticResult.getResultString());
         // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
         newResult = resultRepository.save(newResult);
         log.debug("Assessment locked with result id: " + newResult.getId() + " for assessor: " + newResult.getAssessor().getName());

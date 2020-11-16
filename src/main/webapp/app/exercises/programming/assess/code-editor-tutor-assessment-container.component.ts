@@ -13,8 +13,7 @@ import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { cloneDeep, orderBy as _orderBy } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -74,6 +73,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
     automaticFeedback: Feedback[] = [];
+
+    isFirstAssessment = false;
 
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
@@ -360,6 +361,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private handleFeedback(): void {
         const feedbacks = this.manualResult?.feedbacks || [];
         this.automaticFeedback = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC);
+        // When manual result only contains automatic feedback elements (when assessing for the first time), no manual assessment was yet saved or submitted.
+        if (this.manualResult?.feedbacks && this.manualResult.feedbacks.length === this.automaticFeedback.length) {
+            this.isFirstAssessment = true;
+        }
+
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         const generalFeedbackIndex = feedbacks.findIndex(
@@ -387,13 +393,20 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         // Manual result is always rated and has feedback
         this.manualResult!.rated = true;
         this.manualResult!.hasFeedback = true;
-        /* Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated,
-         * as the points the student has achieved have changed
-         */
-        const resultStringParts: string[] = this.manualResult!.resultString!.split(', ');
-        // When no maxScore is set, then show only the achieved points
-        resultStringParts[resultStringParts.length - 1] = this.exercise.maxScore ? `${totalScore} of ${this.exercise.maxScore} points` : `${totalScore} points`;
-        this.manualResult!.resultString = resultStringParts.join(', ');
+        // Append the automatic result string which the manual result holds with the score part, to create the manual result string
+        if (this.isFirstAssessment) {
+            this.manualResult!.resultString += this.exercise.maxScore ? `, ${totalScore} of ${this.exercise.maxScore} points` : `, ${totalScore} points`;
+            this.isFirstAssessment = false;
+        } else {
+            /* Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated,
+             * as the points the student has achieved have changed
+             */
+            const resultStringParts: string[] = this.manualResult!.resultString!.split(', ');
+            // When no maxScore is set, then show only the achieved points
+            resultStringParts[resultStringParts.length - 1] = this.exercise.maxScore ? `${totalScore} of ${this.exercise.maxScore} points` : `${totalScore} points`;
+            this.manualResult!.resultString = resultStringParts.join(', ');
+        }
+
         this.manualResult!.score = this.exercise.maxScore ? Math.round((totalScore / this.exercise.maxScore!) * 100) : 100;
         // This is done to update the result string in result.component.ts
         this.manualResult = cloneDeep(this.manualResult);
