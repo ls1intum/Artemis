@@ -91,33 +91,6 @@ public class TutorScoreService {
     }
 
     /**
-     * Add empty Complaint or FeedbackRequest to TutorScore.
-     *
-     * @param tutorScore tutor score
-     * @param complaint complaint
-     * @param exercise exercise
-     */
-    public void addUnansweredComplaintOrFeedbackRequest(TutorScore tutorScore, Complaint complaint, Exercise exercise) {
-        if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
-            tutorScore.setAllComplaints(tutorScore.getAllComplaints() + 1);
-
-            if (exercise.getMaxScore() != null) {
-                tutorScore.setComplaintsPoints(tutorScore.getComplaintsPoints() + exercise.getMaxScore());
-            }
-        }
-        else if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
-            tutorScore.setAllFeedbackRequests(tutorScore.getAllFeedbackRequests() + 1);
-            tutorScore.setNotAnsweredFeedbackRequests(tutorScore.getNotAnsweredFeedbackRequests() + 1);
-
-            if (exercise.getMaxScore() != null) {
-                tutorScore.setFeedbackRequestsPoints(tutorScore.getFeedbackRequestsPoints() + exercise.getMaxScore());
-            }
-        }
-
-        tutorScoreRepository.save(tutorScore);
-    }
-
-    /**
      * Deletes all TutorScores for result deletedResult.
      *
      * @param deletedResult result to be deleted
@@ -200,6 +173,9 @@ public class TutorScoreService {
         }
     }
 
+    /**
+     * Helper method for find the correct TutorScore for User and Exercise.
+     */
     private Optional<TutorScore> findTutorScoreFromExercise(Exercise exercise, User assessor) {
         var tutorScores = exercise.getTutorScores();
 
@@ -217,7 +193,9 @@ public class TutorScoreService {
     }
 
     /**
-     * Helper method for updating complaints and feedback requests in tutor scores.
+     * Add Complaint or FeedbackRequest to TutorScores.
+     *
+     * @param complaint Complaint
      */
     public void addComplaintOrFeedbackRequest(Complaint complaint) {
         var exercise = complaint.getResult().getParticipation().getExercise();
@@ -248,9 +226,9 @@ public class TutorScoreService {
     }
 
     /**
-     * Add ComplaintResponse or AnsweredFeedbackRequest to TutorScore.
+     * Add ComplaintResponse or AnsweredFeedbackRequest to TutorScores.
      *
-     * @param complaintResponse complaintResponse
+     * @param complaintResponse ComplaintResponse
      */
     public void addComplaintResponseOrAnsweredFeedbackRequest(ComplaintResponse complaintResponse) {
         var exercise = complaintResponse.getComplaint().getResult().getParticipation().getExercise();
