@@ -62,7 +62,7 @@ public class GroupNotificationService {
      * @param quizExercise that has been started
      */
     public void notifyStudentGroupAboutQuizExerciseStart(QuizExercise quizExercise) {
-        groupNotificationRepository.save(createNotification(quizExercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.QUIZ_EXERCISE_STARTED, null));
+        groupNotificationRepository.save(createNotification(quizExercise, null, GroupNotificationType.STUDENT, NotificationType.QUIZ_EXERCISE_STARTED, null));
     }
 
     /**
