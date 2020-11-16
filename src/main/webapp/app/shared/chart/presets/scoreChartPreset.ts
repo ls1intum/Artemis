@@ -9,9 +9,13 @@ export class ScoreChartPreset implements ChartPreset {
     private readonly redGreenPattern: CanvasPattern;
     private readonly redTransparentPattern: CanvasPattern;
     private readonly labels: string[];
+    private valueLabels: string[];
+    private showValues: boolean;
 
-    constructor(labels: string[]) {
+    constructor(labels: string[], showValues = true) {
         this.labels = labels;
+        this.valueLabels = ['', ''];
+        this.showValues = showValues;
         this.redGreenPattern = this.createPattern('#28a745');
         this.redTransparentPattern = this.createPattern('transparent');
     }
@@ -27,13 +31,13 @@ export class ScoreChartPreset implements ChartPreset {
                 generateLabels: () =>
                     [
                         {
-                            text: this.labels[0],
+                            text: this.labels[0] + (this.showValues ? `: ${this.valueLabels[0]}` : ''),
                             fillStyle: '#28a745',
                             strokeStyle: '#28a745',
                             lineWidth: 1,
                         },
                         {
-                            text: this.labels[1],
+                            text: this.labels[1] + (this.showValues ? `: ${this.valueLabels[1]}` : ''),
                             fillStyle: this.redTransparentPattern,
                             strokeStyle: '#dc3545',
                             lineWidth: 1,
@@ -46,33 +50,39 @@ export class ScoreChartPreset implements ChartPreset {
 
     /**
      * Updates the datasets of the charts with the correct values and colors.
-     * @param positive Sum of positive credits of the score
-     * @param negative Sum of negative credits of the score
+     * @param receivedPositive Sum of positive credits of the score
+     * @param appliedNegative Sum of applied negative credits
+     * @param receivedNegative Sum of received negative credits
      * @param exercise The active exercise
      */
-    setValues(positive: number, negative: number, exercise: Exercise) {
+    setValues(receivedPositive: number, appliedNegative: number, receivedNegative: number, exercise: Exercise) {
         const maxScoreWithBonus = exercise.maxScore! + (exercise.bonusPoints || 0) || 100;
         const maxScore = exercise.maxScore! + (exercise.bonusPoints || 0) === 0 ? 100 : exercise.maxScore!;
 
+        let appliedPositive = receivedPositive;
+
         // cap to min and max values while maintaining correct negative points
-        if (positive - negative > maxScoreWithBonus) {
-            positive = maxScoreWithBonus;
-            negative = 0;
-        } else if (positive > maxScoreWithBonus) {
-            negative -= positive - maxScoreWithBonus;
-            positive = maxScoreWithBonus;
-        } else if (positive - negative < 0) {
-            negative = positive;
+        if (appliedPositive - appliedNegative > maxScoreWithBonus) {
+            appliedPositive = maxScoreWithBonus;
+            appliedNegative = 0;
+        } else if (appliedPositive > maxScoreWithBonus) {
+            appliedNegative -= appliedPositive - maxScoreWithBonus;
+            appliedPositive = maxScoreWithBonus;
+        } else if (appliedPositive - appliedNegative < 0) {
+            appliedNegative = appliedPositive;
         }
+
+        this.valueLabels[0] = this.roundToDecimals(appliedPositive, 1) + (appliedPositive !== receivedPositive ? ` of ${this.roundToDecimals(receivedPositive, 1)}` : '');
+        this.valueLabels[1] = this.roundToDecimals(appliedNegative, 1) + (appliedNegative !== receivedNegative ? ` of ${this.roundToDecimals(receivedNegative, 1)}` : '');
 
         this.datasets = [
             {
-                data: [((positive - negative) / maxScore) * 100],
+                data: [((appliedPositive - appliedNegative) / maxScore) * 100],
                 backgroundColor: '#28a745',
                 hoverBackgroundColor: '#28a745',
             },
             {
-                data: [(negative / maxScore) * 100],
+                data: [(appliedNegative / maxScore) * 100],
                 backgroundColor: this.redGreenPattern,
                 hoverBackgroundColor: this.redGreenPattern,
             },
@@ -80,6 +90,11 @@ export class ScoreChartPreset implements ChartPreset {
         if (this.chart) {
             this.chart.chartDatasets = this.datasets;
         }
+    }
+
+    private roundToDecimals(i: number, n: number) {
+        const f = 10 ** n;
+        return (Math.round(i * f) / f).toString();
     }
 
     /**
