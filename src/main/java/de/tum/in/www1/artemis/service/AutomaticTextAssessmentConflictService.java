@@ -5,11 +5,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -61,7 +57,7 @@ public class AutomaticTextAssessmentConflictService {
      * @param exerciseId - exercise id of the assessed text exercise
      */
     @Async
-    public void asyncCheckFeedbackConsistency(List<TextBlock> textBlocks, List<Feedback> feedbackList, long exerciseId) {
+    public void asyncCheckFeedbackConsistency(Set<TextBlock> textBlocks, List<Feedback> feedbackList, long exerciseId) {
         // Null blocks are passed in some test cases
         if (textBlocks == null || feedbackList == null || textBlocks.isEmpty()) {
             return;
@@ -149,9 +145,9 @@ public class AutomaticTextAssessmentConflictService {
                 return (TextSubmission) conflict.getFirstFeedback().getResult().getSubmission();
             }
         }).collect(toSet());
-        final Map<Long, List<TextBlock>> textBlocks = textBlockRepository.findAllBySubmissionIdIn(textSubmissionSet.stream().map(TextSubmission::getId).collect(toList())).stream()
-                .collect(groupingBy(b -> b.getSubmission().getId()));
-        textSubmissionSet.forEach(textSubmission -> textSubmission.setBlocks(textBlocks.get(textSubmission.getId())));
+        final var allTextBlocks = textBlockRepository.findAllBySubmissionIdIn(textSubmissionSet.stream().map(TextSubmission::getId).collect(toSet()));
+        final var textBlockGroupedBySubmissionId = allTextBlocks.stream().collect(groupingBy(block -> block.getSubmission().getId(), toSet()));
+        textSubmissionSet.forEach(textSubmission -> textSubmission.setBlocks(textBlockGroupedBySubmissionId.get(textSubmission.getId())));
         return textSubmissionSet;
     }
 

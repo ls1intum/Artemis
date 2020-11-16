@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -91,11 +90,11 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         textSubmission = database.saveTextSubmission(textExercise, textSubmission, "student1");
         int submissionCount = 5;
         int submissionSize = 4;
-        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
+        var textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
         int[] clusterSizes = { 4, 5, 10, 1 };
         List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
         textClusterRepository.saveAll(clusters);
-        database.addTextBlocksToTextSubmission(textBlocks, textSubmission);
+        database.addAndSaveTextBlocksToTextSubmission(textBlocks, textSubmission);
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(textExercise.getId())).as("text exercise was deleted").isEmpty();
