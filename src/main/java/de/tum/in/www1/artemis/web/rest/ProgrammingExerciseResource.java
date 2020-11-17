@@ -260,6 +260,13 @@ public class ProgrammingExerciseResource {
                     .headers(HeaderUtil.createAlert(applicationName, "The static code analysis flag must be set to true or false", "staticCodeAnalysisFlagNotSet")).body(null));
         }
 
+        // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && programmingExercise.hasSequentialTestRuns()) {
+            return Optional.of(ResponseEntity.badRequest().headers(
+                    HeaderUtil.createAlert(applicationName, "The static code analysis with sequential test runs is not supported at the moment", "staticCodeAnalysisAndSequential"))
+                    .body(null));
+        }
+
         // Static code analysis is only supported for Java at the moment
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.isStaticCodeAnalysis()) {
             return Optional.of(ResponseEntity.badRequest()
