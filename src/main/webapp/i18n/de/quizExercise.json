@@ -219,7 +219,7 @@
             "placeholder": {
                 "title": "Kurzer Quiz Titel",
                 "questionTitle": "Fragen Titel",
-                "shortQuestionTitle": "Kurzer Fragen Title"
+                "shortQuestionTitle": "Kurzer Fragen Titel"
             }
         },
         "quizLiveModal": {
