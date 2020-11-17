@@ -35,6 +35,7 @@ export class ProgrammingExercise extends Exercise {
     public packageName?: string;
     public problemStatement?: string;
     public sequentialTestRuns?: boolean;
+    public showTestNamesToStudents?: boolean;
     public checkoutSolutionRepository?: boolean;
 
     public buildAndTestStudentSubmissionsAfterDueDate?: Moment;
@@ -65,5 +66,6 @@ export class ProgrammingExercise extends Exercise {
         this.noVersionControlAndContinuousIntegrationAvailable = false; // default value
         this.checkoutSolutionRepository = false; // default value
         this.projectType = ProjectType.ECLIPSE; // default value
+        this.showTestNamesToStudents = false; // default value
     }
 }
