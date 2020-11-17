@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -56,15 +57,16 @@ public abstract class Submission extends DomainObject {
     @JsonIgnore
     @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    // TODO use Set here instead of List
     private List<SubmissionVersion> versions = new ArrayList<>();
 
     /**
      * A submission can have a result and therefore, results are persisted and removed with a submission.
      */
-    @OneToOne(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties({ "submission", "participation" })
-    @JoinColumn(unique = true)
-    private Result result;
+    @OrderColumn
+    private List<Result> results = new ArrayList<>();
 
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
@@ -94,12 +96,30 @@ public abstract class Submission extends DomainObject {
         return Duration.between(initilizationDate, submissionDate).toMinutes();
     }
 
+    // TODO: double check Jackson and client compatibility, maybe refactoring to getLatestResult
+    @Nullable
     public Result getResult() {
-        return result;
+        // in all cases (except 2nd, 3rd correction, etc.) we would like to have the latest result
+        // getLatestResult
+        if (!results.isEmpty()) {
+            return results.get(results.size() - 1);
+        }
+        return null;
+    }
+
+    // TODO: refactoring addResult
+    @Nullable
+    public Result getFirstResult() {
+        // getLatestResult
+        if (!results.isEmpty()) {
+            return results.get(0);
+        }
+        return null;
     }
 
     public void setResult(Result result) {
-        this.result = result;
+        // addResult
+        this.results.add(result);
     }
 
     public Participation getParticipation() {
