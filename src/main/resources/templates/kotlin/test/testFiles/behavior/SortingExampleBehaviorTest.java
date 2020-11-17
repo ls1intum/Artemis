@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import static org.junit.jupiter.api.Assertions.*;
 
 import de.tum.in.test.api.BlacklistPath;
+import de.tum.in.test.api.AddTrustedPackage;
 import de.tum.in.test.api.PathType;
 import de.tum.in.test.api.StrictTimeout;
 import de.tum.in.test.api.WhitelistPath;
@@ -20,6 +21,8 @@ import de.tum.in.test.api.jupiter.Public;
 @WhitelistPath("target")
 @BlacklistPath(value = "**Test*.{java,class}", type = PathType.GLOB)
 @Public
+// This disables security but allows all Kotlin libraries to work (AJTS Security Error)
+@AddTrustedPackage("**")
 public class SortingExampleBehaviorTest extends BehaviorTest {
 
     private Context context;

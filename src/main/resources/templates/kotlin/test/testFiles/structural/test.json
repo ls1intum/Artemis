@@ -44,6 +44,13 @@
                 "returnType": "void"
             }
         ],
+        "attributes": [
+            {
+                "name": "context",
+                "modifiers": [ "private", "final" ],
+                "type": "Context"
+            }
+        ],
         "constructors": [
             {
                 "modifiers": [ "public" ],
