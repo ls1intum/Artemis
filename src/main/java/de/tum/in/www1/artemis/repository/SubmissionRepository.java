@@ -20,14 +20,14 @@ import de.tum.in.www1.artemis.domain.User;
 @Repository
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "result", "result.assessor" })
-    Optional<Submission> findWithEagerResultById(Long submissionId);
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor" })
+    Optional<Submission> findWithEagerResultsById(Long submissionId);
 
-    @Query("select distinct submission from Submission submission left join fetch submission.result r left join fetch r.feedbacks where submission.exampleSubmission = true and submission.id = :#{#submissionId}")
+    @Query("select distinct submission from Submission submission left join fetch submission.results r left join fetch r.feedbacks where submission.exampleSubmission = true and submission.id = :#{#submissionId}")
     Optional<Submission> findExampleSubmissionByIdWithEagerResult(long submissionId);
 
-    /* Get all submissions from a participation_id and load result at the same time */
-    @EntityGraph(type = LOAD, attributePaths = { "result" })
+    /* Get all submissions from a participation_id and load results at the same time */
+    @EntityGraph(type = LOAD, attributePaths = { "results" })
     List<Submission> findAllByParticipationId(Long participationId);
 
     /**
@@ -38,7 +38,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @param courseId the id of the course
      * @return the number of currently locked submissions for a specific user in the given course
      */
-    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE submission.result.assessor.id = :#{#userId} AND submission.result.completionDate is null AND submission.participation.exercise.course.id = :#{#courseId}")
+    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE EXISTS (select r1.assessor.id from submission.results r1 where r1.assessor.id = :#{#userId}) AND NOT EXISTS (select r2.completionDate from submission.results r2 where r2.completionDate is not null) AND submission.participation.exercise.course.id = :#{#courseId}")
     long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
@@ -49,7 +49,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @param courseId the id of the course
      * @return currently locked submissions for a specific user in the given course
      */
-    @Query("SELECT DISTINCT submission FROM Submission submission WHERE submission.result.assessor.id = :#{#userId} AND submission.result.completionDate is null AND submission.participation.exercise.course.id = :#{#courseId}")
+    @Query("SELECT DISTINCT submission FROM Submission submission WHERE EXISTS (select r1.assessor.id from submission.results r1 where r1.assessor.id = :#{#userId}) AND NOT EXISTS (select r2.completionDate from submission.results r2 where r2.completionDate is not null) AND submission.participation.exercise.course.id = :#{#courseId}")
     List<Submission> getLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
@@ -108,5 +108,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @param assessor the assessor we are interested in
      * @return the submissions belonging to the exercise id, which have been assessed by the given assessor
      */
+    @Query("SELECT DISTINCT submission FROM Submission submission WHERE submission.participation.exercise.id = :#{#exerciseId} AND :#{#assessor} IN (select r.assessor from submission.results r join r.assessor)")
     List<Submission> findAllByParticipationExerciseIdAndResultAssessor(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 }

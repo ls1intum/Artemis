@@ -162,6 +162,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/time").permitAll()
         .and()
             .apply(securityConfigurerAdapter());
+//        http.csrf().disable(); //todo remove
     }
 
     private JWTConfigurer securityConfigurerAdapter() {

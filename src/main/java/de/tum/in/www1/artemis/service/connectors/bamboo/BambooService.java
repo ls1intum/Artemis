@@ -527,7 +527,7 @@ public class BambooService implements ContinuousIntegrationService {
                 return null;
             }
 
-            List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(participation.getId());
+            List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findByParticipationIdAndResultsIsNullOrderBySubmissionDateDesc(participation.getId());
             Optional<ProgrammingSubmission> latestMatchingPendingSubmission = submissions.stream().filter(submission -> {
                 String matchingCommitHashInBuildMap = getCommitHash(buildResult, submission.getType());
                 return matchingCommitHashInBuildMap != null && matchingCommitHashInBuildMap.equals(submission.getCommitHash());

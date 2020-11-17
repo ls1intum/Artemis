@@ -101,7 +101,7 @@ public class TextAssessmentResource extends AssessmentResource {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkTextExerciseForRequest(textExercise, user);
 
-        final Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findByResult_Id(resultId);
+        final Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findByResultId(resultId);
         if (optionalTextSubmission.isEmpty()) {
             throw new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound");
         }
@@ -139,7 +139,7 @@ public class TextAssessmentResource extends AssessmentResource {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkTextExerciseForRequest(textExercise, user);
 
-        final Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findByResult_Id(resultId);
+        final Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findByResultId(resultId);
         if (optionalTextSubmission.isEmpty()) {
             throw new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound");
         }
