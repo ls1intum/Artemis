@@ -39,7 +39,7 @@ public class BitbucketAuthorizationInterceptor implements ClientHttpRequestInter
             request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
         }
         // prefer bitbucket token if it is available
-        if (bitbucketToken.isPresent() && !isCreateProjectRequest(request)) {
+        if (bitbucketToken.isPresent() && !needsBasicAuth(request)) {
             request.getHeaders().setBearerAuth(bitbucketToken.get());
         }
         else {
@@ -49,7 +49,19 @@ public class BitbucketAuthorizationInterceptor implements ClientHttpRequestInter
         return execution.execute(request, body);
     }
 
-    private boolean isCreateProjectRequest(HttpRequest request) {
-        return request.getURI().toString().endsWith("projects") && HttpMethod.POST.equals(request.getMethod());
+    private static boolean needsBasicAuth(HttpRequest request) {
+        return isCreateProjectRequest(request) || isCreateUserRequest(request) || isAddUserToGroupsRequest(request);
+    }
+
+    private static boolean isCreateProjectRequest(HttpRequest request) {
+        return request.getURI().toString().endsWith("latest/projects") && HttpMethod.POST.equals(request.getMethod());
+    }
+
+    private static boolean isCreateUserRequest(HttpRequest request) {
+        return request.getURI().toString().contains("latest/admin/users") && HttpMethod.POST.equals(request.getMethod());
+    }
+
+    private static boolean isAddUserToGroupsRequest(HttpRequest request) {
+        return request.getURI().toString().endsWith("latest/admin/users/add-groups") && HttpMethod.POST.equals(request.getMethod());
     }
 }
