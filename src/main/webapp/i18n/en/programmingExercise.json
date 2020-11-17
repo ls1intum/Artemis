@@ -44,6 +44,8 @@
             "onlineEditor": "Online Editor",
             "allowOfflineIde": "Allow Offline IDE",
             "offlineIde": "Offline IDE",
+            "showTestNamesToStudents": "Show Test Names to Students",
+            "showTestNamesToStudentsTooltip": "Activate this option to show the names of the automated test cases to the students. Leave the option disabled to make no visual distinction between manual and automated feedback for the students.",
             "participationMode": "Participation Mode",
             "noVersionControlAndContinuousIntegrationAvailable": "Setup without connection to the VCS and CI",
             "sequentialTestRuns": {

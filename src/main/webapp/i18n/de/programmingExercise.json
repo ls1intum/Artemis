@@ -44,6 +44,8 @@
             "onlineEditor": "Online Editor",
             "allowOfflineIde": "Offline IDE erlauben",
             "offlineIde": "Offline IDE",
+            "showTestNamesToStudents": "Zeige die Test Namen den Studierenden",
+            "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studenten angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studenten vorzunehmen.",
             "participationMode": "Teilnahme Modus",
             "noVersionControlAndContinuousIntegrationAvailable": "Setup ohne Verbindung zur VCS und CI",
             "sequentialTestRuns": {

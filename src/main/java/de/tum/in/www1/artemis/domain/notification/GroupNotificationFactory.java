@@ -69,9 +69,9 @@ public class GroupNotificationFactory {
                 title = "Exercise open for practice";
                 text = "Exercise \"" + exercise.getTitle() + "\" is now open for practice.";
             }
-            case EXERCISE_STARTED -> {
-                title = "Exercise started";
-                text = "Exercise \"" + exercise.getTitle() + "\" just started.";
+            case QUIZ_EXERCISE_STARTED -> {
+                title = "Quiz started";
+                text = "Quiz \"" + exercise.getTitle() + "\" just started.";
             }
             case EXERCISE_UPDATED -> {
                 title = "Exercise updated";

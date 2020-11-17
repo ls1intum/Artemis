@@ -41,6 +41,7 @@ import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -287,9 +288,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             completionDate: moment('2019-06-06T22:15:29.203+02:00'),
             feedbacks: [{ text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true }],
         } as any;
-        const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
+        const exercise = { id: 3, course: { id: 4 }, problemStatement, showTestNamesToStudents: true } as ProgrammingExercise;
 
-        openModalStub.returns({ componentInstance: {} });
         comp.problemStatement = exercise.problemStatement!;
         comp.exercise = exercise;
         comp.latestResult = result;
@@ -325,10 +325,17 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const mergeSortStep = debugElement.query(By.css('.stepwizard-step--success'));
         expect(bubbleSortStep).to.exist;
         expect(mergeSortStep).to.exist;
+
+        const modalRef = { componentInstance: {} };
+        openModalStub.returns(modalRef);
+
         bubbleSortStep.nativeElement.click();
         mergeSortStep.nativeElement.click();
 
         expect(openModalStub).to.have.been.calledOnceWithExactly(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(modalRef).to.deep.equal({
+            componentInstance: { exerciseType: ExerciseType.PROGRAMMING, feedbackFilter: ['testBubbleSort'], result, showTestDetails: true },
+        });
     }));
 
     it('should create the steps task icons for the tasks in problem statement markdown (legacy case)', fakeAsync(() => {
@@ -338,7 +345,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
         } as any;
         const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
-        openModalStub.returns({ componentInstance: {} });
+
         comp.problemStatement = exercise.problemStatement!;
         comp.exercise = exercise;
         comp.latestResult = result;
@@ -374,10 +381,16 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const mergeSortStep = debugElement.query(By.css('.stepwizard-step--success'));
         expect(bubbleSortStep).to.exist;
         expect(mergeSortStep).to.exist;
+
+        const modalRef = { componentInstance: {} };
+        openModalStub.returns(modalRef);
+
         bubbleSortStep.nativeElement.click();
         mergeSortStep.nativeElement.click();
 
-        expect(openModalStub).to.have.been.calledOnce;
         expect(openModalStub).to.have.been.calledOnceWithExactly(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(modalRef).to.deep.equal({
+            componentInstance: { exerciseType: ExerciseType.PROGRAMMING, feedbackFilter: ['testBubbleSort'], result, showTestDetails: false },
+        });
     }));
 });
