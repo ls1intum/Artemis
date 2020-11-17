@@ -20,10 +20,11 @@ import { DragAndDropQuestionStatistic } from 'app/entities/quiz/drag-and-drop-qu
 import { DropLocationCounter } from 'app/entities/quiz/drop-location-counter.model';
 
 const route = { params: of({ courseId: 2, exerciseId: 42, questionId: 1 }) };
-const dropLocation = { posX: 5, invalid: false, tempID: 1 } as DropLocation;
-const dropLocationCounter = { dropLocation: dropLocation, ratedCounter: 0, unRatedCounter: 0 } as DropLocationCounter;
-const questionStatistic = { dropLocation: dropLocation, dropLocationCounters: [dropLocationCounter] } as DragAndDropQuestionStatistic;
-const question = { id: 1, dropLocations: [dropLocation, { posX: 0, invalid: false, tempID: 2 } as DropLocation], quizQuestionStatistic: questionStatistic } as DragAndDropQuestion;
+const dropLocation1 = { posX: 5, invalid: false, tempID: 1 } as DropLocation;
+const dropLocation2 = { posX: 0, invalid: false, tempID: 2 } as DropLocation;
+const dropLocationCounter = { dropLocation: dropLocation1, ratedCounter: 0, unRatedCounter: 0 } as DropLocationCounter;
+const questionStatistic = { dropLocation: dropLocation1, dropLocationCounters: [dropLocationCounter] } as DragAndDropQuestionStatistic;
+const question = { id: 1, dropLocations: [dropLocation1, dropLocation2], quizQuestionStatistic: questionStatistic } as DragAndDropQuestion;
 const course = { id: 2 } as Course;
 let quizExercise = { id: 42, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
 
@@ -33,8 +34,6 @@ describe('QuizExercise Question Statistic Component', () => {
     let quizService: QuizExerciseService;
     let accountService: AccountService;
     let accountSpy: jasmine.Spy;
-    let router: Router;
-    let translateService: TranslateService;
     let quizServiceFindSpy: jasmine.Spy;
 
     beforeEach(() => {
@@ -46,7 +45,6 @@ describe('QuizExercise Question Statistic Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
             ],
         })
@@ -57,8 +55,6 @@ describe('QuizExercise Question Statistic Component', () => {
                 comp = fixture.componentInstance;
                 quizService = fixture.debugElement.injector.get(QuizExerciseService);
                 accountService = fixture.debugElement.injector.get(AccountService);
-                router = fixture.debugElement.injector.get(Router);
-                translateService = fixture.debugElement.injector.get(TranslateService);
                 quizServiceFindSpy = spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });
