@@ -1050,6 +1050,10 @@ public class DatabaseUtilService {
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
     }
 
+    public StudentParticipation saveStudentParticipation(StudentParticipation participation) {
+        return studentParticipationRepo.save(participation);
+    }
+
     /**
      * Stores test run participation of the user with the given login for the given modeling exercise
      *
@@ -1178,6 +1182,13 @@ public class DatabaseUtilService {
     public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
         Result result = new Result().participation(participation).resultString("x of y passed").successful(false).rated(true).score(100L).assessmentType(assessmentType)
                 .completionDate(completionDate);
+        return resultRepo.save(result);
+    }
+
+    public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation, String resultString, String assessorLogin,
+            List<Feedback> feedbacks) {
+        Result result = new Result().participation(participation).resultString(resultString).assessmentType(assessmentType).completionDate(completionDate).feedbacks(feedbacks);
+        result.setAssessor(getUserByLogin(assessorLogin));
         return resultRepo.save(result);
     }
 
@@ -1848,6 +1859,17 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
+    }
+
+    public ProgrammingSubmission addProgrammingSubmissionToResultAndParticipation(Result result, StudentParticipation participation, String commitHash) {
+        ProgrammingSubmission submission = createProgrammingSubmission(participation, false);
+        submission.setResult(result);
+        submission.setCommitHash(commitHash);
+        result.setSubmission(submission);
+        participation.addSubmissions(submission);
+        resultRepo.save(result);
+        studentParticipationRepo.save(participation);
+        return submissionRepository.save(submission);
     }
 
     public Submission addSubmission(Exercise exercise, Submission submission, String login) {

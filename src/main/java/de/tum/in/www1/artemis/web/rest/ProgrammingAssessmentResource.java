@@ -167,8 +167,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         // make sure that the submission cannot be manipulated on the client side
         ProgrammingSubmission submission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(latestExistingResult.getSubmission().getId());
         newResult.setSubmission(submission);
-        ;
-
         Result result = programmingAssessmentService.saveManualAssessment(newResult);
 
         if (submit) {
