@@ -132,6 +132,16 @@ public class CourseService {
     }
 
     /**
+     * Get all courses for the given user
+     * @param user the user entity
+     * @return the list of all courses for the user
+     */
+    public List<Course> findAllActiveForUser(User user) {
+        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()))
+                .filter(course -> isActiveCourseVisibleForUser(user, course)).collect(Collectors.toList());
+    }
+
+    /**
      * Get all courses with exercises and lectures (filtered for given user)
      *
      * @param user      the user entity
