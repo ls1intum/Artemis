@@ -272,8 +272,8 @@ export class ResultComponent implements OnInit, OnChanges {
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         const componentInstance: ResultDetailComponent = modalRef.componentInstance;
         componentInstance.result = result;
-        componentInstance.showTestDetails = this.showTestDetails;
         const exercise = getExercise(this.participation);
+        componentInstance.showTestDetails = (exercise?.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).showTestNamesToStudents) || this.showTestDetails;
         if (exercise) {
             componentInstance.exerciseType = exercise.type!;
             componentInstance.showScoreChart = true;

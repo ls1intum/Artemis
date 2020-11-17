@@ -16,6 +16,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
 
     @Input() latestResult?: Result;
     @Input() tasks: TaskArray;
+    @Input() showTestDetails?: boolean;
 
     steps: Array<{ done: TestCaseState; title: string; tests: string[] }>;
 
@@ -50,8 +51,10 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
             return;
         }
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.result = this.latestResult;
-        modalRef.componentInstance.feedbackFilter = tests;
-        modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
+        const componentInstance = modalRef.componentInstance as ResultDetailComponent;
+        componentInstance.result = this.latestResult;
+        componentInstance.feedbackFilter = tests;
+        componentInstance.exerciseType = ExerciseType.PROGRAMMING;
+        componentInstance.showTestDetails = this.showTestDetails || false;
     }
 }
