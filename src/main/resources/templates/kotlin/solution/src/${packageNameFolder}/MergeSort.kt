@@ -1,14 +1,13 @@
 package ${packageName}
 
-//TODO: add the missing inheritance
-class MergeSort /*<remove>*/ : SortStrategy /*</remove>*/{
+class MergeSort : SortStrategy {
 
     /***********************************************************************
      * Sort the array a using mergesort
      */
-    /*<remove>*/override /*</remove>*/fun performSort(a: Array<Int>) {
+    override fun performSort(a: Array<Int>) {
         val n = a.size
-        val aux = Array<Int>(n) { 0 }
+        val aux = Array(n) { 0 }
         sort(a, aux, 0, n)
     }
 
