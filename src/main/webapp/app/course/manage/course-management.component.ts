@@ -16,6 +16,7 @@ import { SortService } from 'app/shared/service/sort.service';
     selector: 'jhi-course',
     templateUrl: './course-management.component.html',
     styles: ['.course-table {padding-bottom: 5rem}'],
+    styleUrls: ['./course-management.component.scss'],
 })
 export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewInit {
     predicate: string;
@@ -24,6 +25,8 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     showExamButton = true;
 
     courses: Course[];
+    courseSemesters: string[];
+    semesterCollapsed: { [key: string]: boolean };
     eventSubscriber: Subscription;
 
     private dialogErrorSource = new Subject<string>();
@@ -53,6 +56,39 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, tutorAssessmentTour, true);
+                this.courseSemesters = this.courses
+                    // test courses get their own section later
+                    .filter((c) => !c.testCourse)
+                    .map((c) => c.semester ?? '')
+                    // filter down to unique values
+                    .filter((course, index, courses) => courses.indexOf(course) === index)
+                    .sort((a, b) => {
+                        // sort last if the semester is unset
+                        if (a === '') {
+                            return 1;
+                        }
+                        if (b === '') {
+                            return -1;
+                        }
+                        // parse years in base 10 by extracting the two digits after the WS or SS prefix
+                        const yearsCompared = parseInt(b.substr(2, 2), 10) - parseInt(a.substr(2, 2), 10);
+                        if (yearsCompared !== 0) {
+                            return yearsCompared;
+                        }
+                        // if years are the same, sort WS over SS
+                        return a.substr(0, 2) === 'WS' ? -1 : 1;
+                    });
+                this.semesterCollapsed = {};
+                let firstUncollapsed = false;
+                for (const semester of this.courseSemesters) {
+                    this.semesterCollapsed[semester] = firstUncollapsed;
+                    firstUncollapsed = true;
+                }
+                // add an extra category for test courses
+                if (this.courses.find((c) => c.testCourse) !== null) {
+                    this.courseSemesters[this.courseSemesters.length] = 'test';
+                    this.semesterCollapsed['test'] = false;
+                }
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );

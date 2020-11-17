@@ -124,6 +124,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.router.navigate(['video-units', 'create'], { relativeTo: this.activatedRoute });
     }
 
+    createTextUnit() {
+        this.router.navigate(['text-units', 'create'], { relativeTo: this.activatedRoute });
+    }
+
     identify(index: number, lectureUnit: LectureUnit) {
         return `${index}-${lectureUnit.id}`;
     }
@@ -190,6 +194,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 break;
             case LectureUnitType.VIDEO: {
                 this.router.navigate(['video-units', lectureUnit.id, 'edit'], { relativeTo: this.activatedRoute });
+                break;
+            }
+            case LectureUnitType.TEXT: {
+                this.router.navigate(['text-units', lectureUnit.id, 'edit'], { relativeTo: this.activatedRoute });
                 break;
             }
             default:

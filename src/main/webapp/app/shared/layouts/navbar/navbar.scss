@@ -40,16 +40,30 @@ Navbar
             color: #fff;
         }
     }
+}
 
+.breadcrumb-container {
+    background-color: #e4e5e6;
+    overflow: auto;
+    margin-left: -15px;
     .breadcrumb {
         color: #0065bd;
-        background-color: #353d47;
+        background-color: #e4e5e6;
         margin-left: 1rem;
         margin-bottom: 0;
+        padding: 10px 16px 10px 16px;
+
+        .breadcrumb-link {
+            font-weight: lighter;
+        }
     }
 
-    .breadcrumb-item {
-        font-size: medium;
+    .breadcrumb-item::before {
+        content: '>';
+    }
+    // Hide the first divider
+    .breadcrumb-item:first-of-type::before {
+        content: '';
     }
 }
 
