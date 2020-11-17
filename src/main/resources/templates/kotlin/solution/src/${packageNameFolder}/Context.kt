@@ -2,9 +2,6 @@ package ${packageName}
 
 class Context {
 
-    //TODO: add the missing attributes
-    //TODO: add the missing methods
-    /*<remove>*/
     var sortAlgorithm: SortStrategy? = null
     var array: Array<Int>? = null
 
@@ -13,5 +10,4 @@ class Context {
         val sortAlgorithm = this.sortAlgorithm ?: error("No sort algorithm specified!")
         sortAlgorithm.performSort(arr)
     }
-    /*</remove>*/
 }

@@ -150,6 +150,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
     @Test
     @WithMockUser(username = "ab12cde")
     public void registerForCourse_internalAuth_success() throws Exception {
+        gitlabRequestMockProvider.enableMockingOfRequests();
         final var student = ModelFactory.generateActivatedUser("ab12cde");
         userRepository.save(student);
 
@@ -157,7 +158,6 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         final var futureTimestamp = ZonedDateTime.now().plusDays(5);
         var course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "instructor");
         course1.setRegistrationEnabled(true);
-
         course1 = courseRepository.save(course1);
 
         final var updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/register", null, User.class, HttpStatus.OK);
