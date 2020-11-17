@@ -70,7 +70,7 @@
                     </div>
                     <!--color picker command -->
                     <div class="btn-group col-xs-6" *ngIf="colorCommands.length > 0">
-                        <div class="color-preview btn btn-sm" (click)="openColorSelector($event)">Color</div>
+                        <div class="color-preview btn btn-sm" (click)="openColorSelector($event)">{{ 'artemisApp.markdownEditor.color' | translate }}</div>
                         <jhi-color-selector [tagColors]="markdownColors" (selectedColor)="onSelectedColor($event)"></jhi-color-selector>
                     </div>
                     <!-- domain commands -->
