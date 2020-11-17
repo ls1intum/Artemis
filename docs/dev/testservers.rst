@@ -18,10 +18,11 @@ Test Server 5
 Pull requests on GitHub can be deployed to TS5_, including forks.
 To invoke a deployment, you need to be part of the `ls1intum` GitHub organization.
 
-The deployment can be started using the `Test Server Deployment Workflow`_.
+Start the deployment using the `Test Server Deployment Workflow`_.
 (Refer to the `GitHub documentation "Manually running a workflow"`_.)
 Supply the pull request number to initiate the deployment (e.g. ``42`` for PR #42).
-TS5 is locked to a pull request using the `lock:artemistest5`_ label, which is automatically applied on deployment.
+TS5 is locked to a pull request using the `lock:artemistest5`_ label.
+The workflow applies the lock label automatically on deployment.
 Remove the label from the PR once the test server is free to use by other developers.
 
 
