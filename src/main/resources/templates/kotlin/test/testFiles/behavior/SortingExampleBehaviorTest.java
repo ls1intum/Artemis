@@ -5,13 +5,13 @@ import org.junit.jupiter.api.*;
 import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static de.tum.in.test.api.util.ReflectionTestUtils.*;
 
 import de.tum.in.test.api.BlacklistPath;
 import de.tum.in.test.api.AddTrustedPackage;
 import de.tum.in.test.api.PathType;
 import de.tum.in.test.api.StrictTimeout;
 import de.tum.in.test.api.WhitelistPath;
-import de.tum.in.test.api.behavior.BehaviorTest;
 import de.tum.in.test.api.jupiter.Public;
 
 /**
@@ -23,7 +23,7 @@ import de.tum.in.test.api.jupiter.Public;
 @Public
 // This disables security but allows all Kotlin libraries to work (AJTS Security Error)
 @AddTrustedPackage("**")
-public class SortingExampleBehaviorTest extends BehaviorTest {
+public class SortingExampleBehaviorTest {
 
     private Context context;
     private Policy policy;

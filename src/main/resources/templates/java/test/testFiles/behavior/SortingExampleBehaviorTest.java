@@ -7,11 +7,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.text.*;
 import java.util.*;
 
+import static de.tum.in.test.api.util.ReflectionTestUtils.*;
+
 import de.tum.in.test.api.BlacklistPath;
 import de.tum.in.test.api.PathType;
 import de.tum.in.test.api.StrictTimeout;
 import de.tum.in.test.api.WhitelistPath;
-import de.tum.in.test.api.behavior.BehaviorTest;
 import de.tum.in.test.api.jupiter.Public;
 
 /**
@@ -21,7 +22,7 @@ import de.tum.in.test.api.jupiter.Public;
 @WhitelistPath("target")
 @BlacklistPath(value = "**Test*.{java,class}", type = PathType.GLOB)
 @Public
-public class SortingExampleBehaviorTest extends BehaviorTest {
+public class SortingExampleBehaviorTest {
 
     private List<Date> dates;
     private List<Date> datesWithCorrectOrder;
