@@ -876,7 +876,7 @@ public class BambooService implements ContinuousIntegrationService {
             }
 
             // Replace some unnecessary information and hide complex details to make it easier to read the important information
-            logString = logString.replaceAll("/opt/bamboo-agent-home/xml-data/build-dir/", "");
+            logString = logString.replaceAll("/opt/bambooagent/bamboo-agent-home/xml-data/build-dir/", "");
 
             filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), logString, unfilteredBuildLog.getProgrammingSubmission()));
         }
