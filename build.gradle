@@ -29,7 +29,7 @@ plugins {
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
-    id "com.diffplug.spotless" version "5.8.1"
+    id "com.diffplug.spotless" version "5.8.2"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -279,7 +279,7 @@ dependencies {
     testImplementation "org.apache.maven.surefire:surefire-report-parser:2.22.2"
 
     // Java's lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation "org.json:json:20200518"
+    testImplementation "org.json:json:20201115"
 }
 
 task cleanResources(type: Delete) {
@@ -327,7 +327,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.7"
+    gradleVersion = "6.7.1"
 }
 
 task stage(dependsOn: "bootWar") {
