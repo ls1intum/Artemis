@@ -52,7 +52,10 @@ It is extended by a ``Jenkinsfile`` that is dependent on the used programming la
 The builds steps (including used docker images, the checkout process, the actual build steps, and the reporting of the results to Artemis) is included in the ``Jenkinsfile``.
 
 A sample ``Jenkinsfile`` can be found at ``src/main/resources/templates/jenkins/java/Jenkinsfile``.
-Note that the ``Jenkinsfile`` **must** start with `pipeline` (there must not be a comment before pipeline, but there can be one at any other position, if the Jenkinsfile-syntax allows it).
+Note that the ``Jenkinsfile`` **must** start either
+
+- with `pipeline` (there must not be a comment before pipeline, but there can be one at any other position, if the Jenkinsfile-syntax allows it)
+- or the special comment ``// ARTEMIS: JenkinsPipeline`` in the first line.
 
 The variables `#dockerImage`, `#testRepository`, `#assignmentRepository`, `#jenkinsNotificationToken` and `#notificationsUrl` will automatically be replaced (for the normal Jenkinsfile, within the Jenkinsfile-staticCodeAnalysis, #staticCodeAnalysisScript is also replaced).
 
