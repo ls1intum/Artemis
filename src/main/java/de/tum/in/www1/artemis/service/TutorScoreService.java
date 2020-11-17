@@ -31,8 +31,7 @@ public class TutorScoreService {
 
     private final ExerciseRepository exerciseRepository;
 
-    public TutorScoreService(TutorScoreRepository tutorScoreRepository, ComplaintResponseRepository complaintResponseRepository,
-            ExerciseRepository exerciseRepository) {
+    public TutorScoreService(TutorScoreRepository tutorScoreRepository, ComplaintResponseRepository complaintResponseRepository, ExerciseRepository exerciseRepository) {
         this.tutorScoreRepository = tutorScoreRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.exerciseRepository = exerciseRepository;
