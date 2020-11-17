@@ -1836,7 +1836,7 @@ public class DatabaseUtilService {
     }
 
     public ProgrammingSubmission addProgrammingSubmissionWithResultAndAssessor(ProgrammingExercise exercise, ProgrammingSubmission submission, String login, String assessorLogin,
-            AssessmentType assessmentType) {
+            AssessmentType assessmentType, boolean hasCompletionDate) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
 
         participation.addSubmissions(submission);
@@ -1844,7 +1844,11 @@ public class DatabaseUtilService {
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setAssessmentType(assessmentType);
         result.setScore(50L);
-        result.setCompletionDate(ZonedDateTime.now());
+
+        if (hasCompletionDate) {
+            result.setCompletionDate(ZonedDateTime.now());
+        }
+
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setParticipation(participation);
@@ -2080,6 +2084,9 @@ public class DatabaseUtilService {
     public void updateExerciseDueDate(long exerciseId, ZonedDateTime newDueDate) {
         Exercise exercise = exerciseRepo.findById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
         exercise.setDueDate(newDueDate);
+        if (exercise instanceof ProgrammingExercise) {
+            ((ProgrammingExercise) exercise).setBuildAndTestStudentSubmissionsAfterDueDate(newDueDate);
+        }
         exerciseRepo.save(exercise);
     }
 

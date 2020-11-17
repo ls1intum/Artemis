@@ -67,7 +67,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1",
-                AssessmentType.SEMI_AUTOMATIC);
+                AssessmentType.SEMI_AUTOMATIC, true);
 
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
         // A new manual result and submission are created during the locking of submission for manual assessment
@@ -104,7 +104,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     public void updateAssessmentAfterComplaint_studentHidden() throws Exception {
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1",
-                AssessmentType.SEMI_AUTOMATIC);
+                AssessmentType.SEMI_AUTOMATIC, true);
         Result programmingAssessment = programmingSubmission.getResult();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
@@ -517,7 +517,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
         ProgrammingSubmission submission = database.createProgrammingSubmission(null, false);
-        submission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submission, "student1", "tutor1", AssessmentType.AUTOMATIC);
+        submission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submission, "student1", "tutor1", AssessmentType.AUTOMATIC, true);
         request.put("/api/programming-submissions/" + submission.getId() + "/cancel-assessment", null, expectedStatus);
     }
 }
