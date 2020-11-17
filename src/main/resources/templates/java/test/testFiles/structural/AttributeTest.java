@@ -4,7 +4,6 @@ import java.net.URISyntaxException;
 
 import org.junit.jupiter.api.DynamicContainer;
 import org.junit.jupiter.api.TestFactory;
-import org.junit.jupiter.api.Timeout;
 
 import de.tum.in.test.api.BlacklistPath;
 import de.tum.in.test.api.PathType;
