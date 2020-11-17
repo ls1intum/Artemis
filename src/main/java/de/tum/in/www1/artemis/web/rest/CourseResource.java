@@ -516,6 +516,20 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/for-notifications
+     *
+     * @return the list of courses (the user has access to)
+     */
+    @GetMapping("/courses/for-notifications")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public List<Course> getAllCoursesForNotifications() {
+        log.debug("REST request to get all Courses the user has access to");
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        return courseService.findAllActiveForUser(user);
+    }
+
+    /**
      * GET /courses/:courseId/for-tutor-dashboard
      *
      * @param courseId the id of the course to retrieve
