@@ -151,6 +151,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam = studentExam;
                         this.exam = studentExam.exam!;
                         this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
+                        // only show the summary if the student was able to submit on time.
                         if (this.isOver() && this.studentExam.submitted) {
                             this.examParticipationService
                                 .loadStudentExamWithExercisesForSummary(this.exam.course!.id!, this.exam.id!)
