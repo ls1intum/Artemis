@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,6 +26,9 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("select e from Exercise e where e.course.id = :#{#courseId} and e.mode = 'TEAM'")
     Set<Exercise> findAllTeamExercisesByCourseId(@Param("courseId") Long courseId);
+
+    @Query("select e from Exercise e where e.dueDate >= :#{#now} order by e.dueDate asc")
+    Set<Exercise> findAllExercisesWithUpcomingDueDate(@Param("now") ZonedDateTime now);
 
     /**
      * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)
