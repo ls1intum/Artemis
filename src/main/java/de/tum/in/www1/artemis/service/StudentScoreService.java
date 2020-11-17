@@ -113,13 +113,15 @@ public class StudentScoreService {
             studentScore.setResult(updatedResult);
             studentScore.setScore(updatedResult.getScore());
 
-            studentScoreRepository.save(studentScore);
+            studentScore = studentScoreRepository.save(studentScore);
+            log.info("Updated StudentScore: " + studentScore);
         }
         else {
             StudentScore studentScore = new StudentScore(student.get(), exercise.get(), updatedResult);
             studentScore.setScore(updatedResult.getScore());
 
-            studentScore = studentScoreRepository.save(studentScore);
+            studentScoreRepository.save(studentScore);
+            log.info("Created StudentScore: " + studentScore);
         }
     }
 }

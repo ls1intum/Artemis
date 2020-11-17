@@ -33,6 +33,8 @@ public class ComplaintResponseListener {
      */
     @PostPersist
     public void postPersist(ComplaintResponse newComplaintResponse) {
+        log.info("ComplaintResponse " + newComplaintResponse + " was persisted");
+
         // update tutor scores
         tutorScoreService.getObject().addComplaintResponseOrAnsweredFeedbackRequest(newComplaintResponse);
     }

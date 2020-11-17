@@ -16,10 +16,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.TutorScore;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TutorScoreRepository;
 
 @Service
@@ -29,20 +27,14 @@ public class TutorScoreService {
 
     private final TutorScoreRepository tutorScoreRepository;
 
-    private final ComplaintRepository complaintRepository;
-
     private final ComplaintResponseRepository complaintResponseRepository;
-
-    private final ResultRepository resultRepository;
 
     private final ExerciseRepository exerciseRepository;
 
-    public TutorScoreService(TutorScoreRepository tutorScoreRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            ResultRepository resultRepository, ExerciseRepository exerciseRepository) {
+    public TutorScoreService(TutorScoreRepository tutorScoreRepository, ComplaintResponseRepository complaintResponseRepository,
+            ExerciseRepository exerciseRepository) {
         this.tutorScoreRepository = tutorScoreRepository;
-        this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
-        this.resultRepository = resultRepository;
         this.exerciseRepository = exerciseRepository;
     }
 
@@ -125,7 +117,7 @@ public class TutorScoreService {
             tutorScore = removeComplaintsAndFeedbackRequests(tutorScore, deletedResult, exercise.get());
 
             tutorScoreRepository.save(tutorScore);
-            log.info("Updated existing TutorScore: " + tutorScore);
+            log.info("Updated TutorScore: " + tutorScore);
         }
     }
 
@@ -163,13 +155,13 @@ public class TutorScoreService {
             tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() + maxScore);
 
             tutorScoreRepository.save(tutorScore);
-            log.info("Updated existing TutorScore: " + tutorScore);
+            log.info("Updated TutorScore: " + tutorScore);
         }
         else {
             TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise.get(), 1, maxScore);
 
             tutorScoreRepository.save(newScore);
-            log.info("Added new TutorScore: " + newScore);
+            log.info("Created TutorScore: " + newScore);
         }
     }
 

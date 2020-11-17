@@ -34,15 +34,12 @@ public class ComplaintResponseService {
 
     private AuthorizationCheckService authorizationCheckService;
 
-    private TutorScoreService tutorScoreService;
-
     public ComplaintResponseService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserService userService,
-            AuthorizationCheckService authorizationCheckService, TutorScoreService tutorScoreService) {
+            AuthorizationCheckService authorizationCheckService) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.userService = userService;
         this.authorizationCheckService = authorizationCheckService;
-        this.tutorScoreService = tutorScoreService;
     }
 
     /**

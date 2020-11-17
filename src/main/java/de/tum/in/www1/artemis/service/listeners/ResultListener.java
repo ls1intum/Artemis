@@ -44,6 +44,8 @@ public class ResultListener {
      */
     @PreRemove
     public void postRemove(Result deletedResult) {
+        log.info("Result " + deletedResult + " was removed");
+
         // remove from Student Scores and Tutor Scores
         studentScoreService.getObject().removeResult(deletedResult);
         tutorScoreService.getObject().removeResult(deletedResult);
@@ -56,6 +58,8 @@ public class ResultListener {
      */
     @PreUpdate
     public void preUpdate(Result updatedResult) {
+        log.info("Result " + updatedResult + " will be persisted");
+
         // update scores
         studentScoreService.getObject().updateResult(updatedResult);
 

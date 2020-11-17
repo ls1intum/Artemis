@@ -41,17 +41,14 @@ public class ComplaintService {
 
     private ExamService examService;
 
-    private TutorScoreService tutorScoreService;
-
     public ComplaintService(ComplaintRepository complaintRepository, ResultRepository resultRepository, ResultService resultService, CourseService courseService,
-            ExamService examService, UserService userService, TutorScoreService tutorScoreService) {
+            ExamService examService, UserService userService) {
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
         this.resultService = resultService;
         this.courseService = courseService;
         this.examService = examService;
         this.userService = userService;
-        this.tutorScoreService = tutorScoreService;
     }
 
     /**
