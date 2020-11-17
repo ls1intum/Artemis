@@ -26,7 +26,7 @@ public interface ExampleSubmissionRepository extends JpaRepository<ExampleSubmis
     @Query("select distinct exampleSubmission from ExampleSubmission exampleSubmission left join fetch exampleSubmission.tutorParticipations where exampleSubmission.id = :#{#exampleSubmissionId}")
     Optional<ExampleSubmission> findByIdWithEagerTutorParticipations(@Param("exampleSubmissionId") Long exampleSubmissionId);
 
-    @Query("select distinct exampleSubmission from ExampleSubmission exampleSubmission left join fetch exampleSubmission.submission s left join fetch s.result r left join fetch r.feedbacks where exampleSubmission.id = :#{#exampleSubmissionId}")
+    @Query("select distinct exampleSubmission from ExampleSubmission exampleSubmission left join fetch exampleSubmission.submission s left join fetch s.results r left join fetch r.feedbacks where exampleSubmission.id = :#{#exampleSubmissionId}")
     Optional<ExampleSubmission> findByIdWithEagerResultAndFeedback(@Param("exampleSubmissionId") Long exampleSubmissionId);
 
     Optional<ExampleSubmission> findBySubmissionId(@Param("submissionId") Long submissionId);
