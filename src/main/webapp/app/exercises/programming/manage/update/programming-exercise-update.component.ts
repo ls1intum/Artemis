@@ -85,6 +85,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public checkoutSolutionRepositoryAllowed = false;
     public sequentialTestRunsAllowed = false;
 
+    public recreateBuildPlans = false;
+
     public projectTypes: ProjectType[] = [];
 
     constructor(
@@ -302,7 +304,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.isSaving = true;
 
         if (this.isImport) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise));
+            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans));
         } else if (this.programmingExercise.id !== undefined) {
             const requestOptions = {} as any;
             if (this.notificationText) {

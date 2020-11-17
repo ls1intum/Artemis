@@ -157,7 +157,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         // Setup
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
-        database.addTextBlocksToTextSubmission(asList(new TextBlock().startIndex(0).endIndex(15).automatic(), new TextBlock().startIndex(16).endIndex(35).automatic(),
+        database.addAndSaveTextBlocksToTextSubmission(Set.of(new TextBlock().startIndex(0).endIndex(15).automatic(), new TextBlock().startIndex(16).endIndex(35).automatic(),
                 new TextBlock().startIndex(36).endIndex(57).automatic()), textSubmission);
 
         Result textAssessment = textSubmission.getResult();
@@ -172,7 +172,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         TextAssessmentUpdateDTO assessmentUpdate = new TextAssessmentUpdateDTO();
         assessmentUpdate.feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
-        assessmentUpdate.setTextBlocks(new ArrayList<>());
+        assessmentUpdate.setTextBlocks(new HashSet<>());
 
         Result updatedResult = request.putWithResponseBody("/api/text-assessments/text-submissions/" + textSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
@@ -232,8 +232,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         int submissionCount = 5;
         int submissionSize = 4;
         int[] clusterSizes = new int[] { 4, 5, 10, 1 };
-        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
-        TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, textBlocks, submissionCount, submissionSize);
+        var textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
+        TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
         textBlocks.forEach(TextBlock::computeId);
         List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
         textClusterRepository.saveAll(clusters);
@@ -292,9 +292,9 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "student1", roles = "USER")
     public void getDataForTextEditor_hasTextBlocks() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(1);
+        var textBlocks = textExerciseUtilService.generateTextBlocks(1);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
-        database.addTextBlocksToTextSubmission(textBlocks, textSubmission);
+        database.addAndSaveTextBlocksToTextSubmission(textBlocks, textSubmission);
 
         Participation participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
 
@@ -589,9 +589,9 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         database.saveTextSubmission(textExercise, textSubmission, "student1");
         exerciseDueDatePassed();
 
-        var blocks = asList(new TextBlock().startIndex(0).endIndex(15).automatic(), new TextBlock().startIndex(16).endIndex(35).automatic(),
+        var blocks = Set.of(new TextBlock().startIndex(0).endIndex(15).automatic(), new TextBlock().startIndex(16).endIndex(35).automatic(),
                 new TextBlock().startIndex(36).endIndex(57).automatic());
-        database.addTextBlocksToTextSubmission(blocks, textSubmission);
+        database.addAndSaveTextBlocksToTextSubmission(blocks, textSubmission);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
@@ -603,8 +603,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(blocksFrom1stRequest.toArray()).containsExactlyInAnyOrder(blocks.toArray());
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
-        textAssessmentDTO
-                .setFeedbacks(Collections.singletonList(new Feedback().detailText("Test").credits(1d).reference(blocksFrom1stRequest.get(0).getId()).type(FeedbackType.MANUAL)));
+        textAssessmentDTO.setFeedbacks(
+                Collections.singletonList(new Feedback().detailText("Test").credits(1d).reference(blocksFrom1stRequest.iterator().next().getId()).type(FeedbackType.MANUAL)));
         textAssessmentDTO.setTextBlocks(blocksFrom1stRequest);
         request.putWithResponseBody("/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submission1stRequest.getResult().getId() + "/submit", textAssessmentDTO,
                 Result.class, HttpStatus.OK);
@@ -658,10 +658,10 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         cluster.blocks(asList(textBlockSubmission1, textBlockSubmission2)).distanceMatrix(new double[][] { { 0.1, 0.1 }, { 0.1, 0.1 } });
 
-        textSubmission1 = database.addTextBlocksToTextSubmission(
-                asList(textBlockSubmission1, new TextBlock().startIndex(16).endIndex(35).automatic(), new TextBlock().startIndex(36).endIndex(57).automatic()), textSubmission1);
+        textSubmission1 = database.addAndSaveTextBlocksToTextSubmission(
+                Set.of(textBlockSubmission1, new TextBlock().startIndex(16).endIndex(35).automatic(), new TextBlock().startIndex(36).endIndex(57).automatic()), textSubmission1);
 
-        textSubmission2 = database.addTextBlocksToTextSubmission(Collections.singletonList(textBlockSubmission2), textSubmission2);
+        textSubmission2 = database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlockSubmission2), textSubmission2);
 
         textClusterRepository.save(cluster);
 
@@ -691,14 +691,14 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId())
                 .forEach(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
 
-        final List<TextBlock> newTextBlocksToSimulateAngularSerialization = textSubmissionWithoutAssessment.getBlocks().stream().map(oldBlock -> {
+        final var newTextBlocksToSimulateAngularSerialization = textSubmissionWithoutAssessment.getBlocks().stream().map(oldBlock -> {
             var newBlock = new TextBlock();
             newBlock.setText(oldBlock.getText());
             newBlock.setStartIndex(oldBlock.getStartIndex());
             newBlock.setEndIndex(oldBlock.getEndIndex());
             newBlock.setId(oldBlock.getId());
             return newBlock;
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toSet());
 
         final TextAssessmentDTO dto = new TextAssessmentDTO();
         dto.setTextBlocks(newTextBlocksToSimulateAngularSerialization);
@@ -814,8 +814,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         final TextBlock textBlock1 = new TextBlock().startIndex(0).endIndex(42).automatic();
         final TextBlock textBlock2 = new TextBlock().startIndex(0).endIndex(43).automatic();
-        database.addTextBlocksToTextSubmission(List.of(textBlock1), textSubmission1);
-        database.addTextBlocksToTextSubmission(List.of(textBlock2), textSubmission2);
+        database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock1), textSubmission1);
+        database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock2), textSubmission2);
 
         final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock1.getId());
         final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D).reference(textBlock2.getId());
