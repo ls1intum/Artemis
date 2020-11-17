@@ -4,7 +4,7 @@ import { TextPlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/
 /**
  * Pair of two similar text or source code submissions.
  */
-export class TextComparison extends PlagiarismComparison {
+export class TextPlagiarismComparison extends PlagiarismComparison {
     submissionA: TextPlagiarismSubmission;
     submissionB: TextPlagiarismSubmission;
 }

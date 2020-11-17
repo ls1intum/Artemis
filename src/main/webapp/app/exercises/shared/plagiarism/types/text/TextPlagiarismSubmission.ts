@@ -1,8 +1,8 @@
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
-import { TextElement } from 'app/exercises/shared/plagiarism/types/text/TextElement';
+import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 
 export class TextPlagiarismSubmission extends PlagiarismSubmission {
-    elements: TextElement[];
+    elements: TextSubmissionElement[];
 
     /**
      * List of files the related submission consists of.

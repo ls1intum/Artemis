@@ -4,7 +4,7 @@ import { ModelingPlagiarismSubmission } from 'app/exercises/shared/plagiarism/ty
 /**
  * Pair of two similar modeling exercise submissions.
  */
-export class ModelingComparison extends PlagiarismComparison {
+export class ModelingPlagiarismComparison extends PlagiarismComparison {
     submissionA: ModelingPlagiarismSubmission;
     submissionB: ModelingPlagiarismSubmission;
 }
