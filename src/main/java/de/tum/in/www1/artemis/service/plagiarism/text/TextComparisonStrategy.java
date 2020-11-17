@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.plagiarism.text;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import info.debatty.java.stringsimilarity.Cosine;

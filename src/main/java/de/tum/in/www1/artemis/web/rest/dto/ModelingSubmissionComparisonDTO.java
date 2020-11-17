@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
 
 public class ModelingSubmissionComparisonDTO implements Comparable<ModelingSubmissionComparisonDTO> {
 

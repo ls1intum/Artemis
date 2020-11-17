@@ -11,7 +11,8 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -1536,6 +1537,7 @@ public class DatabaseUtilService {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setGradingInstructions("Lorem Ipsum");
         programmingExercise.setTitle(title);
+        programmingExercise.setProjectType(ProjectType.ECLIPSE);
         programmingExercise.setAllowOnlineEditor(true);
         programmingExercise.setStaticCodeAnalysisEnabled(enableStaticCodeAnalysis);
         if (enableStaticCodeAnalysis) {
