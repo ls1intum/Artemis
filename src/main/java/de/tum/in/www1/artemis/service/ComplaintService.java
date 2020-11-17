@@ -110,11 +110,7 @@ public class ComplaintService {
             throw new InternalServerErrorException("Failed to store original result");
         }
 
-        complaint = complaintRepository.save(complaint);
-
-        originalResult.setComplaint(complaint);
-
-        return complaint;
+        return complaintRepository.save(complaint);
     }
 
     @Transactional(readOnly = true)

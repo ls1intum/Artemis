@@ -41,7 +41,9 @@ public class ProgrammingAssessmentService extends AssessmentService {
     @Transactional
     public Result saveManualAssessment(Result result) {
         // remove result from TutorScore because the assessor changes here
-        tutorScoreService.removeResult(result);
+        if (result.getScore() != null) {
+            tutorScoreService.removeResult(result);
+        }
 
         result.setHasFeedback(!result.getFeedbacks().isEmpty());
 

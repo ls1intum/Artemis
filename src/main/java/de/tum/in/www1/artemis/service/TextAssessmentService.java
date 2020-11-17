@@ -85,7 +85,9 @@ public class TextAssessmentService extends AssessmentService {
         Result result = desiredResult.orElseGet(Result::new);
 
         // remove result from TutorScore because the assessor changes here
-        tutorScoreService.removeResult(result);
+        if (result.getScore() != null) {
+            tutorScoreService.removeResult(result);
+        }
 
         User user = userService.getUser();
         result.setAssessor(user);

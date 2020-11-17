@@ -10,8 +10,6 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -159,8 +157,8 @@ public abstract class Exercise extends DomainObject {
     @JsonIgnore
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL)
-    @LazyCollection(LazyCollectionOption.FALSE)
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnore
     private Set<TutorScore> tutorScores = new HashSet<>();
 

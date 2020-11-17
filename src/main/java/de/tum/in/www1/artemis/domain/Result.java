@@ -111,25 +111,11 @@ public class Result extends DomainObject {
     @Column(name = "example_result")
     private Boolean exampleResult;
 
-    @OneToOne(mappedBy = "result", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToOne(mappedBy = "result", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     @Nullable
     private StudentScore studentScore = null;
-
-    @OneToOne(mappedBy = "result", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
-    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-    @JsonIgnoreProperties(value = "result", allowSetters = true)
-    @Nullable
-    private Complaint complaint = null;
-
-    public Complaint getComplaint() {
-        return this.complaint;
-    }
-
-    public void setComplaint(Complaint complaint) {
-        this.complaint = complaint;
-    }
 
     public String getResultString() {
         return resultString;

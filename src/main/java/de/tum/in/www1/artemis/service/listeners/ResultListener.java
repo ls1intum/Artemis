@@ -38,7 +38,7 @@ public class ResultListener {
     }
 
     /**
-     * Before result gets deleted, delete all StudentScores/TutorScores with this result.
+     * After result gets deleted, delete all StudentScores/TutorScores with this result.
      *
      * @param deletedResult deleted result
      */

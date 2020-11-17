@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.listeners;
 
 import javax.persistence.PostPersist;
+import javax.persistence.PostRemove;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,19 @@ public class ComplaintListener {
     public void setTutorScoreService(ObjectFactory<TutorScoreService> tutorScoreService) {
         Assert.notNull(tutorScoreService, "TutorScoreService must not be null!");
         this.tutorScoreService = tutorScoreService;
+    }
+
+    /**
+     * After a complaint gets removed, delete complaint from TutorScores.
+     *
+     * @param deletedComplaint deleted complaint
+     */
+    @PostRemove
+    public void postRemove(Complaint deletedComplaint) {
+        log.info("Complaint " + deletedComplaint + " was removed");
+
+        // update tutor scores
+        tutorScoreService.getObject().removeComplaintOrFeedbackRequest(deletedComplaint);
     }
 
     /**

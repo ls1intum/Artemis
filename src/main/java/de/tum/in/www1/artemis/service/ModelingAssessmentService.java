@@ -87,7 +87,9 @@ public class ModelingAssessmentService extends AssessmentService {
         }
 
         // remove result from TutorScore because the assessor changes here
-        tutorScoreService.removeResult(result);
+        if (result.getScore() != null) {
+            tutorScoreService.removeResult(result);
+        }
 
         result.setHasComplaint(false);
         result.setExampleResult(modelingSubmission.isExampleSubmission());
