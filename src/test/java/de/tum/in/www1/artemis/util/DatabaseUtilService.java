@@ -1536,6 +1536,7 @@ public class DatabaseUtilService {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setGradingInstructions("Lorem Ipsum");
         programmingExercise.setTitle(title);
+        programmingExercise.setProjectType(ProjectType.ECLIPSE);
         programmingExercise.setAllowOnlineEditor(true);
         programmingExercise.setStaticCodeAnalysisEnabled(enableStaticCodeAnalysis);
         if (enableStaticCodeAnalysis) {

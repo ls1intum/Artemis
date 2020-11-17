@@ -203,7 +203,7 @@
                             class="form-check-input custom-control-input"
                             id="field_staticCodeAnalysisEnabled"
                             name="staticCodeAnalysisEnabled"
-                            [disabled]="!!programmingExercise.id"
+                            [disabled]="!!programmingExercise.id || programmingExercise.sequentialTestRuns"
                             [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
                             (change)="onStaticCodeAnalysisChanged()"
                         />
@@ -300,7 +300,7 @@
                                 type="checkbox"
                                 name="sequentialTestRuns"
                                 id="field_sequentialTestRuns"
-                                [disabled]="!!programmingExercise.id"
+                                [disabled]="!!programmingExercise.id || programmingExercise.staticCodeAnalysisEnabled"
                                 [(ngModel)]="programmingExercise.sequentialTestRuns"
                                 checked
                             />
