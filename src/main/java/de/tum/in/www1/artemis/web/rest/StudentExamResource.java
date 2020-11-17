@@ -305,7 +305,7 @@ public class StudentExamResource {
         }
 
         // check that the studentExam has been submitted, otherwise /studentExams/conduction should be used
-        if (!studentExam.isSubmitted()) {
+        if (!studentExam.isSubmitted() && studentExam.getIndividualEndDateWithGracePeriod().isBefore(studentExam.getExam().getEndDate())) {
             return forbidden();
         }
 
