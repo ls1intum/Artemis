@@ -56,7 +56,8 @@
             "semester": "Semester",
             "testCourse": {
                 "title": "Testkurs",
-                "description": "Aktiviere diese Checkbox für Kurse die für Testzwecke sind."
+                "description": "Aktiviere diese Checkbox für Kurse die für Testzwecke sind.",
+                "plural": "Testkurse"
             },
             "accessGroups": "Zugriffsrechte",
             "onlineCourse": {
