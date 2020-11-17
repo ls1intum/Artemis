@@ -244,9 +244,10 @@ public class ProgrammingExerciseResource {
     /**
      * Validates static code analysis settings
      * 1. The flag staticCodeAnalysisEnabled must not be null
-     * 2. Static code analysis can only be enabled for supported programming languages
-     * 3. Static code analysis max penalty must only be set if static code analysis is enabled
-     * 4. Static code analysis max penalty must be positive
+     * 2. Static code analysis and sequential test runs can't be active at the same time
+     * 3. Static code analysis can only be enabled for supported programming languages
+     * 4. Static code analysis max penalty must only be set if static code analysis is enabled
+     * 5. Static code analysis max penalty must be positive
      *
      * @param programmingExercise exercise to validate
      * @return Optional validation error response
