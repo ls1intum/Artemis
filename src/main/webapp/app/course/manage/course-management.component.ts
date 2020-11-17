@@ -26,7 +26,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
 
     courses: Course[];
     courseSemesters: string[];
-    semesterCollapsed: object;
+    semesterCollapsed: { [key: string]: boolean };
     eventSubscriber: Subscription;
 
     private dialogErrorSource = new Subject<string>();
