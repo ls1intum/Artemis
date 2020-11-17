@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AchievementRank;
 import de.tum.in.www1.artemis.domain.enumeration.AchievementType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.AchievementRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
 @Service
@@ -29,13 +30,16 @@ public class AchievementService {
 
     private final UserRepository userRepository;
 
+    private final CourseRepository courseRepository;
+
     public AchievementService(AchievementRepository achievementRepository, UserRepository userRepository, PointBasedAchievementService pointBasedAchievementService,
-            TimeBasedAchievementService timeBasedAchievementService, ProgressBasedAchievementService progressBasedAchievementService) {
+            TimeBasedAchievementService timeBasedAchievementService, ProgressBasedAchievementService progressBasedAchievementService, CourseRepository courseRepository) {
         this.achievementRepository = achievementRepository;
         this.pointBasedAchievementService = pointBasedAchievementService;
         this.timeBasedAchievementService = timeBasedAchievementService;
         this.progressBasedAchievementService = progressBasedAchievementService;
         this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -129,6 +133,11 @@ public class AchievementService {
         if (course == null || !course.getAchievementsEnabled()) {
             return;
         }
+        var courseWithAchievementTypes = courseRepository.findOneWithEagerAchievementTypesById(course.getId());
+        if (courseWithAchievementTypes.isEmpty()) {
+            return;
+        }
+        course = courseWithAchievementTypes.get();
         var optionalUser = studentParticipation.getStudent();
         if (optionalUser.isEmpty()) {
             return;
@@ -141,22 +150,26 @@ public class AchievementService {
         user.setAchievements(achievements);
 
         /**
-         * Here the actual checks take place for each achievement type in three steps
+         * Here the actual checks take place for each achievement type (if activated in course) in three steps
          * 1. Load all achievements of a type in a given course to be able to access the successCriteria of each rank
          * 2. Check in the corresponding service if the user reached any rank and return it (otherwise returns empty optional)
          * 3. Reward the achievement of the given type and rank to the user if rank is present
          */
-        var pointBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.POINT);
-        var pointRank = pointBasedAchievementService.getAchievementRank(result, pointBasedAchievements);
-        rewardAchievement(pointBasedAchievements, pointRank, user);
-
-        var timeBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.TIME);
-        var timeRank = timeBasedAchievementService.getAchievementRank(result, timeBasedAchievements);
-        rewardAchievement(timeBasedAchievements, timeRank, user);
-
-        var progressBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.PROGRESS);
-        var progressRank = progressBasedAchievementService.getAchievementRank(result, course, user, progressBasedAchievements);
-        rewardAchievement(progressBasedAchievements, progressRank, user);
+        if (course.getActiveAchievements().contains(AchievementType.POINT)) {
+            var pointBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.POINT);
+            var pointRank = pointBasedAchievementService.getAchievementRank(result, pointBasedAchievements);
+            rewardAchievement(pointBasedAchievements, pointRank, user);
+        }
+        if (course.getActiveAchievements().contains(AchievementType.TIME)) {
+            var timeBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.TIME);
+            var timeRank = timeBasedAchievementService.getAchievementRank(result, timeBasedAchievements);
+            rewardAchievement(timeBasedAchievements, timeRank, user);
+        }
+        if (course.getActiveAchievements().contains(AchievementType.PROGRESS)) {
+            var progressBasedAchievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), AchievementType.PROGRESS);
+            var progressRank = progressBasedAchievementService.getAchievementRank(result, course, user, progressBasedAchievements);
+            rewardAchievement(progressBasedAchievements, progressRank, user);
+        }
     }
 
     /**

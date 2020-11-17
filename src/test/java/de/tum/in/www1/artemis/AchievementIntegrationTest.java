@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AchievementType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AchievementService;
@@ -62,6 +63,11 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         instructor.setGroups(new HashSet<>(Arrays.asList("instructor")));
         firstCourse = database.addCourseWithModelingAndTextAndFileUploadExercise();
         firstCourse.setAchievementsEnabled(true);
+        var activeAchievements = new HashSet<AchievementType>();
+        activeAchievements.add(AchievementType.POINT);
+        activeAchievements.add(AchievementType.TIME);
+        activeAchievements.add(AchievementType.PROGRESS);
+        firstCourse.setActiveAchievements(activeAchievements);
         courseRepository.save(firstCourse);
         secondCourse = database.addCourseWithModelingAndTextAndFileUploadExercise();
         firstExercise = (ModelingExercise) firstCourse.getExercises().stream().findFirst().get();
@@ -80,9 +86,9 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testDeleteUser() throws Exception {
         initTest();
         request.delete("/api/users/" + student.getLogin(), HttpStatus.OK);
-        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.NOT_FOUND, Set.class);
+        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/earned-achievements", HttpStatus.NOT_FOUND, Set.class);
         assertThat(achievementsFirstCourse).as("Achievements for user should be null in course " + firstCourse.getId()).isNullOrEmpty();
-        var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/achievements", HttpStatus.NOT_FOUND, Set.class);
+        var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/earned-achievements", HttpStatus.NOT_FOUND, Set.class);
         assertThat(achievementsSecondCourse).as("Achievements for user should be null in course " + secondCourse.getId()).isNullOrEmpty();
     }
 
@@ -92,9 +98,9 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         initTest();
         var courseId = firstCourse.getId();
         request.delete("/api/courses/" + courseId, HttpStatus.OK);
-        var achievementsFirstCourse = request.get("/api/courses/" + courseId + "/achievements", HttpStatus.OK, Set.class);
+        var achievementsFirstCourse = request.get("/api/courses/" + courseId + "/earned-achievements", HttpStatus.OK, Set.class);
         assertThat(achievementsFirstCourse.size()).as("Achievements in course " + courseId + " get deleted if course " + courseId + " is deleted").isEqualTo(0);
-        var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
+        var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/earned-achievements", HttpStatus.OK, Set.class);
         assertThat(achievementsSecondCourse.size()).as("Achievements in course " + secondCourse.getId() + " do not get deleted if course " + courseId + " is deleted")
                 .isEqualTo(12);
     }
@@ -104,9 +110,9 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testDeleteExercise() throws Exception {
         initTest();
         request.delete("/api/modeling-exercises/" + firstExercise.getId(), HttpStatus.OK);
-        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
+        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/earned-achievements", HttpStatus.OK, Set.class);
         assertThat(achievementsFirstCourse.size()).as("Number of achievements for user should be 12 in course " + firstCourse.getId()).isEqualTo(12);
-        var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
+        var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/earned-achievements", HttpStatus.OK, Set.class);
         assertThat(achievementsSecondCourse.size()).as("Number of achievements for user should be 12 in course " + secondCourse.getId()).isEqualTo(12);
     }
 
@@ -118,7 +124,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         var result = ModelFactory.generateResult(true, 100).participation(submission.getParticipation());
         result.setSubmission(submission);
         resultRepository.save(result);
-        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
+        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/earned-achievements", HttpStatus.OK, Set.class);
         assertThat(achievementsFirstCourse.size()).as("User got three achievements").isEqualTo(3);
     }
 
@@ -133,9 +139,9 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         student = userRepository.save(student);
         instructor = userRepository.save(instructor);
 
-        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
+        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/earned-achievements", HttpStatus.OK, Set.class);
         assertThat(achievementsFirstCourse.size()).as("Number of achievements for user should be 12 in course " + firstCourse.getId()).isEqualTo(12);
-        var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
+        var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/earned-achievements", HttpStatus.OK, Set.class);
         assertThat(achievementsSecondCourse.size()).as("Number of achievements for user should be 12 in course " + secondCourse.getId()).isEqualTo(12);
     }
 }
