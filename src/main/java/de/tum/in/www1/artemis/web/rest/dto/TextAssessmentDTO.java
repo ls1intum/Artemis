@@ -1,13 +1,14 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
 import java.util.List;
+import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.TextBlock;
 
 public class TextAssessmentDTO {
 
-    private List<TextBlock> textBlocks;
+    private Set<TextBlock> textBlocks;
 
     private List<Feedback> feedbacks;
 
@@ -18,11 +19,11 @@ public class TextAssessmentDTO {
         this.feedbacks = feedbacks;
     }
 
-    public List<TextBlock> getTextBlocks() {
+    public Set<TextBlock> getTextBlocks() {
         return textBlocks;
     }
 
-    public void setTextBlocks(List<TextBlock> textBlocks) {
+    public void setTextBlocks(Set<TextBlock> textBlocks) {
         this.textBlocks = textBlocks;
     }
 

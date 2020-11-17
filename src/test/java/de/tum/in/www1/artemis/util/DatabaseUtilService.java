@@ -1998,7 +1998,7 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    public TextSubmission addTextBlocksToTextSubmission(List<TextBlock> blocks, TextSubmission submission) {
+    public TextSubmission addAndSaveTextBlocksToTextSubmission(Set<TextBlock> blocks, TextSubmission submission) {
         blocks.forEach(block -> {
             block.setSubmission(submission);
             block.setTextFromSubmission();

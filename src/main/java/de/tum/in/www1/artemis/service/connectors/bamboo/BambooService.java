@@ -522,7 +522,7 @@ public class BambooService implements ContinuousIntegrationService {
         final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
         log.debug("Retrieving build result (NEW) ...");
         try {
-            // Filter the first build plan that was automatically executed when the build plan was created.
+            // Filter the first build plan in case it was automatically executed when the build plan was created.
             if (isFirstBuildForThisPlan(buildResult)) {
                 return null;
             }
