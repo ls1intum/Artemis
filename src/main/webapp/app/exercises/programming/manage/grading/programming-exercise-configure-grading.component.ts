@@ -250,13 +250,16 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param editedTestCase    the edited test case;
      * @param field             the edited field;
      */
-    updateEditedField(newValue: any, editedTestCase: ProgrammingExerciseTestCase, field: EditableField) {
-        newValue = this.checkFieldValue(newValue, editedTestCase[field], field);
-        // Only mark the testcase as changed, if the field has changed.
-        if (newValue !== editedTestCase[field]) {
-            this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id!) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id!];
-        }
-        this.testCases = this.testCases.map((testCase) => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue }));
+    updateEditedField(editedTestCase: ProgrammingExerciseTestCase, field: EditableField) {
+        return (newValue: any) => {
+            newValue = this.checkFieldValue(newValue, editedTestCase[field], field);
+            // Only mark the testcase as changed, if the field has changed.
+            if (newValue !== editedTestCase[field]) {
+                this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id!) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id!];
+                this.testCases = this.testCases.map((testCase) => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue }));
+            }
+            return newValue;
+        };
     }
 
     /**
@@ -267,15 +270,18 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param editedCategory    the edited category;
      * @param field             the edited field;
      */
-    updateEditedCategoryField(newValue: any, editedCategory: StaticCodeAnalysisCategory, field: EditableField) {
-        newValue = this.checkFieldValue(newValue, editedCategory[field], field);
-        // Only mark the category as changed, if the field has changed.
-        if (newValue !== editedCategory[field]) {
-            this.changedCategoryIds = this.changedCategoryIds.includes(editedCategory.id) ? this.changedCategoryIds : [...this.changedCategoryIds, editedCategory.id];
-        }
-        this.staticCodeAnalysisCategories = this.staticCodeAnalysisCategories.map((category) =>
-            category.id !== editedCategory.id ? category : { ...category, [field]: newValue },
-        );
+    updateEditedCategoryField(editedCategory: StaticCodeAnalysisCategory, field: EditableField) {
+        return (newValue: any) => {
+            newValue = this.checkFieldValue(newValue, editedCategory[field], field);
+            // Only mark the category as changed, if the field has changed.
+            if (newValue !== editedCategory[field]) {
+                this.changedCategoryIds = this.changedCategoryIds.includes(editedCategory.id) ? this.changedCategoryIds : [...this.changedCategoryIds, editedCategory.id];
+                this.staticCodeAnalysisCategories = this.staticCodeAnalysisCategories.map((category) =>
+                    category.id !== editedCategory.id ? category : { ...category, [field]: newValue },
+                );
+            }
+            return newValue;
+        };
     }
 
     /**

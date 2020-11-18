@@ -463,14 +463,14 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        comp.updateEditedField(3, testCases1[0], EditableField.WEIGHT);
-        comp.updateEditedField(4, testCases1[1], EditableField.WEIGHT);
+        comp.updateEditedField(testCases1[0], EditableField.WEIGHT)(3);
+        comp.updateEditedField(testCases1[1], EditableField.WEIGHT)(4);
 
-        comp.updateEditedField(2, testCases1[1], EditableField.BONUS_MULTIPLIER);
-        comp.updateEditedField(3, testCases1[2], EditableField.BONUS_MULTIPLIER);
+        comp.updateEditedField(testCases1[1], EditableField.BONUS_MULTIPLIER)(2);
+        comp.updateEditedField(testCases1[2], EditableField.BONUS_MULTIPLIER)(3);
 
-        comp.updateEditedField(4, testCases1[0], EditableField.BONUS_POINTS);
-        comp.updateEditedField(10, testCases1[2], EditableField.BONUS_POINTS);
+        comp.updateEditedField(testCases1[0], EditableField.BONUS_POINTS)(4);
+        comp.updateEditedField(testCases1[2], EditableField.BONUS_POINTS)(10);
 
         const updatedTestCases: ProgrammingExerciseTestCase[] = [
             { ...testCases1[0], weight: 3, bonusPoints: 4 },

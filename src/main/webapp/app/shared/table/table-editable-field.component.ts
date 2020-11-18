@@ -13,7 +13,7 @@ import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@
                 class="table-editable-field__input form-control mr-2"
                 (blur)="sendValueUpdate($event)"
                 (keyup.enter)="sendValueUpdate($event)"
-                [value]="value"
+                [(ngModel)]="inputValue"
                 type="text"
             />
         </div>
@@ -22,8 +22,12 @@ import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@
 export class TableEditableFieldComponent<T> {
     @ViewChild('editingInput', { static: false }) editingInput: ElementRef;
 
-    @Input() value: T;
-    @Output() onValueUpdate = new EventEmitter<T>();
+    @Input() set value(value: any) {
+        this.inputValue = value;
+    }
+    @Input() onValueUpdate: (value: any) => any;
+
+    private inputValue: any;
 
     /**
      * Triggers a value update signal and delegates the task to method specified in the Output decorator,
@@ -31,6 +35,6 @@ export class TableEditableFieldComponent<T> {
      * @param event The event that occurred.
      */
     sendValueUpdate(event: any) {
-        this.onValueUpdate.emit(event.target.value);
+        this.inputValue = this.onValueUpdate(event.target.value);
     }
 }
