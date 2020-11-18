@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { logsRoute } from 'app/admin/logs/logs.route';
-import { trackerRoute } from 'app/admin/tracker/tracker.route';
+import { statisticsRoute } from 'app/admin/statistics/statistics.route';
 import { auditsRoute } from 'app/admin/audits/audits.route';
 import { configurationRoute } from 'app/admin/configuration/configuration.route';
 import { featureRoute } from 'app/admin/features/features.route';
@@ -16,7 +16,7 @@ const ADMIN_ROUTES = [
     configurationRoute,
     healthRoute,
     logsRoute,
-    trackerRoute,
+    statisticsRoute,
     userMgmtRoute1,
     userMgmtRoute2,
     userMgmtRoute3,
