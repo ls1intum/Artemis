@@ -316,7 +316,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getProgrammingSubmissionWithoutAssessment() throws Exception {
+    public void testGetProgrammingSubmissionWithoutAssessment() throws Exception {
         ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
         submission = database.addProgrammingSubmission(exercise, submission, "student1");
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -333,7 +333,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getProgrammingSubmissionWithoutAssessment_lockSubmission() throws Exception {
+    public void testGetProgrammingSubmissionWithoutAssessment_lockSubmission() throws Exception {
         User user = database.getUserByLogin("tutor1");
         var automaticFeedback = new Feedback().credits(null).detailText("asdfasdf").type(FeedbackType.AUTOMATIC).text("asdf");
         var automaticFeedbacks = new ArrayList<Feedback>();
@@ -358,7 +358,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getModelSubmissionWithoutAssessment_testLockLimit() throws Exception {
+    public void testGetModelSubmissionWithoutAssessment_testLockLimit() throws Exception {
         createTenLockedSubmissionsForExercise("tutor1");
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 
