@@ -8,6 +8,23 @@ import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/ex
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { TextHintExplanationInterface } from 'app/entities/quiz/quiz-question.model';
 
+/**
+ * showdown will add the classes to the converted html
+ * see: https://github.com/showdownjs/showdown/wiki/Add-default-classes-for-each-HTML-element
+ */
+const classMap = {
+    table: 'table',
+};
+/**
+ * extension to add add css classes to html tags
+ * see: https://github.com/showdownjs/showdown/wiki/Add-default-classes-for-each-HTML-element
+ */
+const addCSSClass = Object.keys(classMap).map((key) => ({
+    type: 'output',
+    regex: new RegExp(`<${key}(.*)>`, 'g'),
+    replace: `<${key} class="${classMap[key]}" $1>`,
+}));
+
 @Injectable({ providedIn: 'root' })
 export class ArtemisMarkdownService {
     static hintOrExpRegex = new RegExp(escapeStringForUseInRegex(`${ExplanationCommand.identifier}`) + '|' + escapeStringForUseInRegex(`${HintCommand.identifier}`), 'g');
@@ -81,7 +98,7 @@ export class ArtemisMarkdownService {
         if (!markdownText || markdownText === '') {
             return '';
         }
-        const convertedString = this.htmlForMarkdown(markdownText, extensions);
+        const convertedString = this.htmlForMarkdown(markdownText, [...extensions, ...addCSSClass]);
         return this.sanitizer.bypassSecurityTrustHtml(convertedString);
     }
 
@@ -106,7 +123,7 @@ export class ArtemisMarkdownService {
             tables: true,
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
-            extensions: [...extensions, showdownKatex()],
+            extensions: [...extensions, showdownKatex(), ...addCSSClass],
         });
         const html = converter.makeHtml(markdownText);
         return DOMPurify.sanitize(html);

@@ -66,6 +66,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "sequential_test_runs")
     private Boolean sequentialTestRuns;
 
+    @Column(name = "show_test_names_to_students", table = "programming_exercise_details")
+    private boolean showTestNamesToStudents;
+
     @Nullable
     @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
     private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
@@ -477,6 +480,14 @@ public class ProgrammingExercise extends Exercise {
 
     public void setSequentialTestRuns(Boolean sequentialTestRuns) {
         this.sequentialTestRuns = sequentialTestRuns;
+    }
+
+    public Boolean getShowTestNamesToStudents() {
+        return showTestNamesToStudents;
+    }
+
+    public void setShowTestNamesToStudents(Boolean showTestNamesToStudents) {
+        this.showTestNamesToStudents = showTestNamesToStudents;
     }
 
     @Nullable

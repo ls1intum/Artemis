@@ -154,7 +154,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.DUE);
         }
         // For exercises with buildAndTestAfterDueDate
-        if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
+        if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
             log.debug("Scheduled build and test for student submissions after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
                     + exercise.getBuildAndTestStudentSubmissionsAfterDueDate() + ".");

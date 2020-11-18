@@ -14,7 +14,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -378,7 +379,7 @@ public class CourseResource {
                     HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationDisabled", "The course does not allow registration. Cannot register user"))
                     .body(null);
         }
-        artemisAuthenticationProvider.registerUserForCourse(user, course);
+        courseService.registerUserForCourse(user, course);
         return ResponseEntity.ok(user);
     }
 
@@ -512,6 +513,20 @@ public class CourseResource {
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
         fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
         return courses;
+    }
+
+    /**
+     * GET /courses/for-notifications
+     *
+     * @return the list of courses (the user has access to)
+     */
+    @GetMapping("/courses/for-notifications")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public List<Course> getAllCoursesForNotifications() {
+        log.debug("REST request to get all Courses the user has access to");
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        return courseService.findAllActiveForUser(user);
     }
 
     /**
