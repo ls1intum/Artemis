@@ -383,7 +383,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         const feedbacks = this.manualResult?.feedbacks || [];
         this.automaticFeedback = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC);
         // When manual result only contains automatic feedback elements (when assessing for the first time), no manual assessment was yet saved or submitted.
-        if (this.manualResult?.feedbacks && this.manualResult.feedbacks.length === this.automaticFeedback.length) {
+        if (feedbacks.length === this.automaticFeedback.length) {
             this.isFirstAssessment = true;
         }
 
