@@ -107,6 +107,8 @@ public class CacheConfiguration {
         Config config = new Config();
         config.setInstanceName(instanceName);
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+        config.getAdvancedNetworkConfig().getJoin().getAutoDetectionConfig().setEnabled(false);
+        config.getAdvancedNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
         // Allows using @SpringAware and therefore Spring Services in distributed tasks
         config.setManagedContext(new SpringManagedContext(applicationContext));
         config.setClassLoader(applicationContext.getClassLoader());
