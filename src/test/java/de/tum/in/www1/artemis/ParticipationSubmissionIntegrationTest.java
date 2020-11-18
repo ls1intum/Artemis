@@ -11,10 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -48,9 +45,7 @@ public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteSubmissionOfParticipation() throws Exception {
         Submission submissionWithResult = database.addSubmission(textExercise, new TextSubmission(), "student1");
-        var result = database.addResultToSubmission(submissionWithResult, null);
-        submissionWithResult.setResult(result);
-        submissionRepository.save(submissionWithResult);
+        submissionWithResult = database.addResultToSubmission(submissionWithResult, null);
         Long participationId = submissionWithResult.getParticipation().getId();
         Long submissionId = submissionWithResult.getId();
 
@@ -65,7 +60,7 @@ public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegr
         // Make sure that also the submission was deleted.
         assertThat(submissionRepository.findByParticipationId(participationId)).hasSize(0);
         // Result is deleted.
-        assertThat(resultRepository.findById(result.getId()).isPresent()).isFalse();
+        assertThat(resultRepository.findById(submissionWithResult.getResult().getId()).isPresent()).isFalse();
     }
 
     @Test

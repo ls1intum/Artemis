@@ -1212,11 +1212,29 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
-    public Result addResultToSubmission(Submission submission, AssessmentType assessmentType) {
-        Result result = new Result().participation(submission.getParticipation()).submission(submission).resultString("x of y passed").rated(true).score(100L)
-                .assessmentType(assessmentType);
-        resultRepo.save(result);
-        return result;
+    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
+        Result result = new Result().participation(submission.getParticipation()).resultString("x of y passed").rated(true).score(100L).assessmentType(assessmentType);
+        result.setSubmission(submission);
+        result = resultRepo.save(result);
+        submission.setResult(result);
+        submission = submissionRepository.save(submission);
+        return submissionRepository.findWithEagerResultsById(submission.getId()).orElseThrow();
+    }
+
+    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user) {
+        submission = addResultToSubmission(submission, assessmentType);
+        submission.getResult().completionDate(ZonedDateTime.now());
+        submission.getResult().setAssessor(user);
+        submission.setResult(resultRepo.save(submission.getResult()));
+        return submission;
+    }
+
+    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Long score, boolean rated) {
+        addResultToSubmission(submission, assessmentType, user);
+        submission.getResult().setRated(rated);
+        submission.getResult().setScore(score);
+        submission.setResult(resultRepo.save(submission.getResult()));
+        return submission;
     }
 
     public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
@@ -2089,21 +2107,6 @@ public class DatabaseUtilService {
             Complaint complaint = new Complaint().participant(team).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
         }
-    }
-
-    public Result addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Long score, boolean rated) {
-        Result result = addResultToSubmission(submission, assessmentType, user);
-        result.setRated(rated);
-        result.setScore(score);
-        return resultRepo.save(result);
-    }
-
-    public Result addResultToSubmission(Submission submission, AssessmentType assessmentType, User user) {
-        Result result = addResultToSubmission(submission, null);
-        result.setAssessmentType(assessmentType);
-        result.completionDate(ZonedDateTime.now());
-        result.setAssessor(user);
-        return resultRepo.save(result);
     }
 
     public Set<ExerciseHint> addHintsToExercise(Exercise exercise) {

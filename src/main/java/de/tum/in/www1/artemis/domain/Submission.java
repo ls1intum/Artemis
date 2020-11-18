@@ -64,8 +64,8 @@ public abstract class Submission extends DomainObject {
      * A submission can have a result and therefore, results are persisted and removed with a submission.
      */
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-    @JsonIgnoreProperties({ "submission", "participation" })
     @OrderColumn
+    @JsonIgnoreProperties({ "submission", "participation" })
     private List<Result> results = new ArrayList<>();
 
     @Column(name = "submission_date")
@@ -109,6 +109,7 @@ public abstract class Submission extends DomainObject {
 
     // TODO: refactoring addResult
     @Nullable
+    @JsonIgnore
     public Result getFirstResult() {
         // getLatestResult
         if (!results.isEmpty()) {
