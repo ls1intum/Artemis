@@ -1,5 +1,5 @@
 import { PlagiarismSubmissionElement } from '../PlagiarismSubmissionElement';
 
-export class ModelSubmissionElement extends PlagiarismSubmissionElement {
+export class ModelingSubmissionElement extends PlagiarismSubmissionElement {
     modelElementId: string;
 }

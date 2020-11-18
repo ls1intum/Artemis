@@ -1,9 +1,7 @@
-import { TextPlagiarismComparison } from './TextPlagiarismComparison';
+import { TextSubmissionElement } from './TextSubmissionElement';
 import { PlagiarismResult } from '../PlagiarismResult';
 
 /**
  * Result of the automatic plagiarism detection for text or programming exercises.
  */
-export class TextPlagiarismResult extends PlagiarismResult {
-    comparisons: TextPlagiarismComparison[];
-}
+export class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement> {}

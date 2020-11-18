@@ -1,13 +1,14 @@
 import { PlagiarismComparison } from './PlagiarismComparison';
+import { PlagiarismSubmissionElement } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmissionElement';
 
 /**
  * Base result of any automatic plagiarism detection.
  */
-export class PlagiarismResult {
+export abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> {
     /**
      * List of detected comparisons whose similarity is above the specified threshold.
      */
-    comparisons: PlagiarismComparison[];
+    comparisons: PlagiarismComparison<E>[];
 
     /**
      * Duration of the plagiarism detection run in milliseconds.
