@@ -351,6 +351,7 @@ public class ProgrammingSubmissionResource {
      * GET /programming-submission-without-assessment : get one Programming Submission without assessment.
      *
      * @param exerciseId the id of the exercise
+     * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/programming-submission-without-assessment")
@@ -386,8 +387,6 @@ public class ProgrammingSubmissionResource {
             programmingSubmission = optionalProgrammingSubmission.get();
 
         }
-
-        // final ProgrammingSubmission programmingSubmission = optionalProgrammingSubmission.get();
 
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) programmingSubmission.getParticipation();

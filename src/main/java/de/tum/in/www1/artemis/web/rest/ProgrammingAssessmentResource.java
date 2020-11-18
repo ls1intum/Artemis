@@ -118,11 +118,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        Result latestExistingResult = participation.getResults().stream().filter(result -> result.isManualResult()).findFirst().get();
+        Result manualResult = participation.getResults().stream().filter(result -> result.isManualResult()).findFirst().get();
         // prevent that tutors create multiple manual results
-        newResult.setId(latestExistingResult.getId());
+        newResult.setId(manualResult.getId());
         // load assessor
-        latestExistingResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(latestExistingResult.getId()).get();
+        manualResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(manualResult.getId()).get();
 
         // make sure that the participation cannot be manipulated on the client side
         newResult.setParticipation(participation);
@@ -131,7 +131,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         checkAuthorization(exercise, user);
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(latestExistingResult, exercise, participation, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(manualResult, exercise, participation, user, isAtLeastInstructor)) {
             log.debug("The user " + user.getLogin() + " is not allowed to override the assessment for the participation " + participation.getId() + " for User " + user.getLogin());
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
@@ -165,7 +165,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
 
         // make sure that the submission cannot be manipulated on the client side
-        ProgrammingSubmission submission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(latestExistingResult.getSubmission().getId());
+        ProgrammingSubmission submission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(manualResult.getSubmission().getId());
         newResult.setSubmission(submission);
         Result result = programmingAssessmentService.saveManualAssessment(newResult);
 

@@ -635,10 +635,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Get a file upload submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
+     * Get a programming submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
      *
      * @param exercise the exercise the submission should belong to
-     * @return a locked file upload submission that needs an assessment
+     * @return a locked programming submission that needs an assessment
      */
     @Transactional
     public ProgrammingSubmission getLockedProgrammingSubmissionWithoutResult(ProgrammingExercise exercise) {
