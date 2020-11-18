@@ -20,10 +20,10 @@ public class ProgrammingAssessmentService extends AssessmentService {
     private final UserService userService;
 
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
-            ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
+            ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, ExamService examService, UserService userService, GradingCriterionService gradingCriterionService) {
-        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository, examService,
-                gradingCriterionService);
+        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
+                submissionRepository, examService, gradingCriterionService, userService);
         this.userService = userService;
     }
 

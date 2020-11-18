@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -31,9 +30,9 @@ public class TextAssessmentService extends AssessmentService {
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
             StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionRepository submissionRepository,
             TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ExamService examService,
-            FeedbackConflictRepository feedbackConflictRepository, GradingCriterionService gradingCriterionService) {
-        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository, examService,
-                gradingCriterionService);
+            FeedbackConflictRepository feedbackConflictRepository, GradingCriterionService gradingCriterionService, SubmissionService submissionService) {
+        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
+                submissionRepository, examService, gradingCriterionService, userService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
         this.textBlockService = textBlockService;
@@ -42,43 +41,24 @@ public class TextAssessmentService extends AssessmentService {
     }
 
     /**
-     * This function is used for manually assessed results. It updates the completion date, sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it
-     * saves the assessment in the file system the total score is calculated and set in the result.
-     *
-     * @param resultId       the resultId the assessment belongs to
-     * @param textExercise   the text exercise the assessment belongs to
-     * @param textAssessment the assessments as a list
-     * @return the ResponseEntity with result as body
-     * @throws BadRequestAlertException on invalid feedback input
-     */
-    @Transactional
-    // TODO: remove transactional here
-    public Result submitAssessment(Long resultId, TextExercise textExercise, List<Feedback> textAssessment) throws BadRequestAlertException {
-        Result result = saveAssessment(resultId, textAssessment);
-        Double calculatedScore = calculateTotalScore(textAssessment);
-        return submitResult(result, textExercise, calculatedScore);
-    }
-
-    /**
      * This function is used for manually assessed results. It updates the completion date and sets the assessor attribute. Furthermore, it
      * saves the assessment in the file system the total score is calculated and set in the result.
      *
      * @param resultId       the resultId the assessment belongs to
-     * @param textAssessment the assessments as string
+     * @param feedbackList the assessments as string
      * @return the ResponseEntity with result as body
      * @throws BadRequestAlertException on invalid feedback input
      */
-    @Transactional
-    public Result saveAssessment(Long resultId, List<Feedback> textAssessment) throws BadRequestAlertException {
+    public Result saveManualAssessment(Long resultId, List<Feedback> feedbackList) throws BadRequestAlertException {
 
-        final boolean hasAssessmentWithTooLongReference = textAssessment.stream().filter(Feedback::hasReference)
+        final boolean hasAssessmentWithTooLongReference = feedbackList.stream().filter(Feedback::hasReference)
                 .anyMatch(f -> f.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
         if (hasAssessmentWithTooLongReference) {
-            throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "textAssessment",
+            throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
 
-        Optional<Result> desiredResult = resultRepository.findById(resultId);
+        Optional<Result> desiredResult = resultRepository.findByIdWithEagerSubmissionAndFeedbacks(resultId);
         Result result = desiredResult.orElseGet(Result::new);
 
         User user = userService.getUser();
@@ -93,10 +73,13 @@ public class TextAssessmentService extends AssessmentService {
             textSubmissionRepository.save(textSubmission);
         }
 
+        // first save the feedback without being connected to result to prevent null index exception
+        feedbackList = feedbackRepository.saveAll(feedbackList);
+
         // Note: If there is old feedback that gets removed here and not added again in the for-loop, it will also be
         // deleted in the database because of the 'orphanRemoval = true' flag.
         result.getFeedbacks().clear();
-        for (Feedback feedback : textAssessment) {
+        for (Feedback feedback : feedbackList) {
             if (feedback.getCredits() == null) {
                 feedback.setCredits(0.0);
             }

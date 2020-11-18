@@ -119,7 +119,7 @@ import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.service.ModelingAssessmentService;
+import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
@@ -237,7 +237,7 @@ public class DatabaseUtilService {
     ModelingSubmissionService modelSubmissionService;
 
     @Autowired
-    ModelingAssessmentService modelingAssessmentService;
+    AssessmentService assessmentService;
 
     @Autowired
     ProgrammingExerciseTestRepository programmingExerciseTestRepository;
@@ -2039,13 +2039,13 @@ public class DatabaseUtilService {
     }
 
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login, boolean submit) throws Exception {
-        List<Feedback> assessment = loadAssessmentFomResources(path);
-        Result result = modelingAssessmentService.saveManualAssessment(submission, assessment, exercise);
+        List<Feedback> feedbackList = loadAssessmentFomResources(path);
+        Result result = assessmentService.saveManualAssessment(submission, feedbackList);
         result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(getUserByLogin(login));
         resultRepo.save(result);
         if (submit) {
-            modelingAssessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
+            assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
         return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
     }

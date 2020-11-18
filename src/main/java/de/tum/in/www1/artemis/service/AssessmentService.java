@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,22 +38,30 @@ public class AssessmentService {
 
     private final ExamService examService;
 
-    private final SubmissionRepository submissionRepository;
+    protected final SubmissionRepository submissionRepository;
 
     protected final GradingCriterionService gradingCriterionService;
 
+    private final UserService userService;
+
+    private final SubmissionService submissionService;
+
+    private final Logger log = LoggerFactory.getLogger(AssessmentService.class);
+
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
-            ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            SubmissionRepository submissionRepository, ExamService examService, GradingCriterionService gradingCriterionService) {
+            ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
+            SubmissionRepository submissionRepository, ExamService examService, GradingCriterionService gradingCriterionService, UserService userService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultService = resultService;
+        this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.examService = examService;
         this.gradingCriterionService = gradingCriterionService;
+        this.userService = userService;
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
@@ -174,7 +181,7 @@ public class AssessmentService {
         }
 
         // If the result was already submitted, the tutor can only override before a potentially existing assessment due date
-        final boolean isBeforeAssessmentDueDate = assessmentDueDate != null ? ZonedDateTime.now().isBefore(assessmentDueDate) : true;
+        final boolean isBeforeAssessmentDueDate = assessmentDueDate == null || ZonedDateTime.now().isBefore(assessmentDueDate);
         return (isAllowedToBeAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
     }
 
@@ -265,5 +272,88 @@ public class AssessmentService {
             }
         }
         return totalScore;
+    }
+
+    /**
+     * Gets an example modeling submission with the given submissionId and returns the result of the submission.
+     *
+     * @param submissionId the id of the example modeling submission
+     * @return the result of the submission
+     * @throws EntityNotFoundException when no submission can be found for the given id
+     */
+    public Result getExampleAssessment(long submissionId) {
+        Optional<Submission> optionalModelingSubmission = submissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId);
+        Submission modelingSubmission = optionalModelingSubmission
+                .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
+        return modelingSubmission.getResult();
+    }
+
+    /**
+     * This function is used for submitting a manual assessment/result. It gets the result that belongs to the given resultId, updates the completion date, sets the assessment type
+     * to MANUAL and sets the assessor attribute. Afterwards, it saves the update result in the database again.
+     *
+     * @param resultId the id of the result that should be submitted
+     * @param exercise the exercise the assessment belongs to
+     * @param submissionDate the date manual assessment was submitted
+     * @return the ResponseEntity with result as body
+     */
+    public Result submitManualAssessment(long resultId, Exercise exercise, ZonedDateTime submissionDate) {
+        Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
+                .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
+        result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
+        result.setCompletionDate(ZonedDateTime.now());
+        Double calculatedScore = calculateTotalScore(result.getFeedbacks());
+        return submitResult(result, exercise, calculatedScore);
+    }
+
+    /**
+     * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
+     * database.
+     *
+     * @param submission the file upload submission to which the feedback belongs to
+     * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
+     * @return result that was saved in the database
+     */
+    public Result saveManualAssessment(Submission submission, List<Feedback> feedbackList) {
+        Result result = submission.getResult();
+        if (result == null) {
+            result = submissionService.setNewResult(submission);
+        }
+
+        result.setHasComplaint(false);
+        result.setExampleResult(submission.isExampleSubmission());
+        result.setAssessmentType(AssessmentType.MANUAL);
+        User user = userService.getUser();
+        result.setAssessor(user);
+        // first save the feedback (that is not yet in the database) to prevent null index exception
+        feedbackList = saveUnreferencedFeedback(feedbackList);
+        result.updateAllFeedbackItems(feedbackList, false);
+        // Note: this boolean flag is only used for programming exercises
+        result.setHasFeedback(false);
+
+        if (result.getSubmission() == null) {
+            result.setSubmission(submission);
+            submission.setResult(result);
+            submissionRepository.save(submission);
+        }
+        return resultRepository.save(result);
+    }
+
+    private List<Feedback> saveUnreferencedFeedback(List<Feedback> feedbackList) {
+        log.debug("Save new feedback: " + feedbackList);
+        List<Feedback> updatedFeedbackList = new ArrayList<>();
+        for (var feedback : feedbackList) {
+            if (feedback.getResult() == null) {
+                // only save feedback not yet connected to a result
+                updatedFeedbackList.add(feedbackRepository.save(feedback));
+                log.debug("        Do save " + feedback);
+            }
+            else {
+                updatedFeedbackList.add(feedback);
+                log.debug("        Do NOTE save " + feedback);
+            }
+        }
+        log.debug("Updated feedback: " + updatedFeedbackList);
+        return updatedFeedbackList;
     }
 }

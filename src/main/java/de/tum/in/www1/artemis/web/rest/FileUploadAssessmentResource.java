@@ -29,7 +29,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
     private static final String ENTITY_NAME = "fileUploadAssessment";
 
-    private final FileUploadAssessmentService fileUploadAssessmentService;
+    private final AssessmentService assessmentService;
 
     private final FileUploadExerciseService fileUploadExerciseService;
 
@@ -37,11 +37,11 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
     private final WebsocketMessagingService messagingService;
 
-    public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, FileUploadAssessmentService fileUploadAssessmentService, UserService userService,
+    public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserService userService,
             FileUploadExerciseService fileUploadExerciseService, FileUploadSubmissionService fileUploadSubmissionService, WebsocketMessagingService messagingService,
             ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService) {
-        super(authCheckService, userService, exerciseService, fileUploadSubmissionService, fileUploadAssessmentService, resultRepository, examService);
-        this.fileUploadAssessmentService = fileUploadAssessmentService;
+        super(authCheckService, userService, exerciseService, fileUploadSubmissionService, assessmentService, resultRepository, examService);
+        this.assessmentService = assessmentService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.messagingService = messagingService;
@@ -107,9 +107,9 @@ public class FileUploadAssessmentResource extends AssessmentResource {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
-        Result result = fileUploadAssessmentService.saveAssessment(fileUploadSubmission, feedbacks);
+        Result result = assessmentService.saveManualAssessment(fileUploadSubmission, feedbacks);
         if (submit) {
-            result = fileUploadAssessmentService.submitAssessment(result.getId(), fileUploadExercise, fileUploadSubmission.getSubmissionDate());
+            result = assessmentService.submitManualAssessment(result.getId(), fileUploadExercise, fileUploadSubmission.getSubmissionDate());
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
@@ -141,7 +141,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
         checkAuthorization(fileUploadExercise, user);
 
-        Result result = fileUploadAssessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getResult(), fileUploadExercise, assessmentUpdate);
+        Result result = assessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getResult(), fileUploadExercise, assessmentUpdate);
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {

@@ -114,7 +114,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         saveTextBlocks(textAssessment.getTextBlocks(), optionalTextSubmission.get());
-        Result result = textAssessmentService.saveAssessment(resultId, textAssessment.getFeedbacks());
+        Result result = textAssessmentService.saveManualAssessment(resultId, textAssessment.getFeedbacks());
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
@@ -152,7 +152,8 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         saveTextBlocks(textAssessment.getTextBlocks(), optionalTextSubmission.get());
-        Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessment.getFeedbacks());
+        Result result = assessmentService.saveManualAssessment(optionalTextSubmission.get(), textAssessment.getFeedbacks());
+        result = assessmentService.submitManualAssessment(result.getId(), textExercise, optionalTextSubmission.get().getSubmissionDate());
         studentParticipation = (StudentParticipation) result.getParticipation();
         if (studentParticipation.getExercise().getAssessmentDueDate() == null || studentParticipation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
             // TODO: we should send a result object here that includes the feedback (this might already be the case)

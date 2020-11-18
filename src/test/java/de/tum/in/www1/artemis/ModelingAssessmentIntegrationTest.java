@@ -145,6 +145,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
                 HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
         assertThat(exampleSubmissionService.findById(storedExampleSubmission.getId())).isPresent();
+        // NOTE: for some reason this test failes in IntelliJ but works fine on the command line
         request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
                 Result.class);
     }

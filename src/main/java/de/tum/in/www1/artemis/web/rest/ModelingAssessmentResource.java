@@ -44,7 +44,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ModelingAssessmentService modelingAssessmentService;
+    private final AssessmentService assessmentService;
 
     private final ModelingSubmissionService modelingSubmissionService;
 
@@ -53,14 +53,14 @@ public class ModelingAssessmentResource extends AssessmentResource {
     private final WebsocketMessagingService messagingService;
 
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
-            ModelingExerciseService modelingExerciseService, ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService,
+            ModelingExerciseService modelingExerciseService, AssessmentService assessmentService, ModelingSubmissionService modelingSubmissionService,
             ExampleSubmissionService exampleSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository,
             ExamService examService) {
-        super(authCheckService, userService, exerciseService, modelingSubmissionService, modelingAssessmentService, resultRepository, examService);
+        super(authCheckService, userService, exerciseService, modelingSubmissionService, assessmentService, resultRepository, examService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
         this.authCheckService = authCheckService;
-        this.modelingAssessmentService = modelingAssessmentService;
+        this.assessmentService = assessmentService;
         this.modelingSubmissionService = modelingSubmissionService;
         this.messagingService = messagingService;
         this.exampleSubmissionService = exampleSubmissionService;
@@ -122,7 +122,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             forbidden();
         }
 
-        return ResponseEntity.ok(modelingAssessmentService.getExampleAssessment(submissionId));
+        return ResponseEntity.ok(assessmentService.getExampleAssessment(submissionId));
     }
 
     /**
@@ -152,10 +152,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
-        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
+        Result result = assessmentService.saveManualAssessment(modelingSubmission, feedbacks);
 
         if (submit) {
-            result = modelingAssessmentService.submitManualAssessment(result.getId(), modelingExercise, modelingSubmission.getSubmissionDate());
+            result = assessmentService.submitManualAssessment(result.getId(), modelingExercise, modelingSubmission.getSubmissionDate());
             if (compassService.isSupported(modelingExercise)) {
                 compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
             }
@@ -190,7 +190,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingSubmission modelingSubmission = (ModelingSubmission) exampleSubmission.getSubmission();
         ModelingExercise modelingExercise = (ModelingExercise) exampleSubmission.getExercise();
         checkAuthorization(modelingExercise, user);
-        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
+        Result result = assessmentService.saveManualAssessment(modelingSubmission, feedbacks);
         return ResponseEntity.ok(result);
     }
 
@@ -216,7 +216,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise, user);
 
-        Result result = modelingAssessmentService.updateAssessmentAfterComplaint(modelingSubmission.getResult(), modelingExercise, assessmentUpdate);
+        Result result = assessmentService.updateAssessmentAfterComplaint(modelingSubmission.getResult(), modelingExercise, assessmentUpdate);
 
         if (compassService.isSupported(modelingExercise)) {
             compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
