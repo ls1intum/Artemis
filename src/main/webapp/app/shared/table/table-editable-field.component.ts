@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 
 /**
  * An inline editing field to use for tables.
@@ -27,7 +27,7 @@ export class TableEditableFieldComponent<T> {
     }
     @Input() onValueUpdate: (value: any) => any;
 
-    private inputValue: any;
+    inputValue: any;
 
     /**
      * Triggers a value update signal and delegates the task to method specified in the Output decorator,
