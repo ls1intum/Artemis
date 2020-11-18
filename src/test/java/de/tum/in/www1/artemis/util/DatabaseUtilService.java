@@ -11,7 +11,8 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -1536,6 +1537,7 @@ public class DatabaseUtilService {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setGradingInstructions("Lorem Ipsum");
         programmingExercise.setTitle(title);
+        programmingExercise.setProjectType(ProjectType.ECLIPSE);
         programmingExercise.setAllowOnlineEditor(true);
         programmingExercise.setStaticCodeAnalysisEnabled(enableStaticCodeAnalysis);
         if (enableStaticCodeAnalysis) {
@@ -1988,11 +1990,17 @@ public class DatabaseUtilService {
         submission = saveTextSubmissionWithResultAndAssessor(exercise, submission, studentLogin, null, assessorLogin);
         Result result = submission.getResult();
         for (Feedback feedback : feedbacks) {
+            // Important note to prevent 'JpaSystemException: null index column for collection':
+            // 1) save the child entity (without connection to the parent entity) and make sure to re-assign the return value
+            feedback = feedbackRepo.save(feedback);
             // this also invokes feedback.setResult(result)
+            // Important note to prevent 'JpaSystemException: null index column for collection':
+            // 2) connect child and parent entity
             result.addFeedback(feedback);
-            feedbackRepo.save(feedback);
         }
         // this automatically saves the feedback because of the CascadeType.All annotation
+        // Important note to prevent 'JpaSystemException: null index column for collection':
+        // 3) save the parent entity and make sure to re-assign the return value
         result = resultRepo.save(result);
         // re-assign so that the saved feedback items are contained in the returned object
         submission.setResult(result);
