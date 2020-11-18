@@ -20,7 +20,6 @@ import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
@@ -40,8 +39,6 @@ public class CacheConfiguration {
     private GitProperties gitProperties;
 
     private BuildProperties buildProperties;
-
-    private final Environment env;
 
     private final ServerProperties serverProperties;
 
@@ -63,8 +60,7 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
 
-    public CacheConfiguration(Environment env, ServerProperties serverProperties, DiscoveryClient discoveryClient) {
-        this.env = env;
+    public CacheConfiguration(ServerProperties serverProperties, DiscoveryClient discoveryClient) {
         this.serverProperties = serverProperties;
         this.discoveryClient = discoveryClient;
     }
