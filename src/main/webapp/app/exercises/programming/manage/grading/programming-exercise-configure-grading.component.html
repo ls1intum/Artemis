@@ -76,18 +76,12 @@
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Bonus Multiplier" prop="bonusMultiplier">
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <jhi-table-editable-field
-                                        [value]="value"
-                                        [onValueUpdate]="updateEditedField(row, EditableField.BONUS_MULTIPLIER)"
-                                    ></jhi-table-editable-field>
+                                    <jhi-table-editable-field [value]="value" [onValueUpdate]="updateEditedField(row, EditableField.BONUS_MULTIPLIER)"></jhi-table-editable-field>
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Bonus Points" prop="bonusPoints">
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <jhi-table-editable-field
-                                        [value]="value"
-                                        [onValueUpdate]="updateEditedField(row, EditableField.BONUS_POINTS)"
-                                    ></jhi-table-editable-field>
+                                    <jhi-table-editable-field [value]="value" [onValueUpdate]="updateEditedField(row, EditableField.BONUS_POINTS)"></jhi-table-editable-field>
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="After Due Date" prop="afterDueDate">
