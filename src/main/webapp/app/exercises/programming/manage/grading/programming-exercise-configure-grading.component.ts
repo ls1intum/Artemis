@@ -31,6 +31,14 @@ export enum EditableField {
     STATE = 'state',
 }
 
+const DefaltFieldValues = {
+    [EditableField.WEIGHT]: 1,
+    [EditableField.BONUS_MULTIPLIER]: 1,
+    [EditableField.BONUS_POINTS]: 0,
+    [EditableField.PENALTY]: 0,
+    [EditableField.MAX_PENALTY]: 0,
+};
+
 @Component({
     selector: 'jhi-programming-exercise-configure-grading',
     templateUrl: './programming-exercise-configure-grading.component.html',
@@ -243,18 +251,11 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param field             the edited field;
      */
     updateEditedField(newValue: any, editedTestCase: ProgrammingExerciseTestCase, field: EditableField) {
-        // Don't allow an empty string as a value!
-        if (!newValue) {
-            return;
+        newValue = this.checkFieldValue(newValue, editedTestCase[field], field);
+        // Only mark the testcase as changed, if the field has changed.
+        if (newValue !== editedTestCase[field]) {
+            this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id!) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id!];
         }
-        if (typeof editedTestCase[field] === 'number') {
-            newValue = Number(newValue);
-        }
-        // If the weight has not changed, don't do anything besides closing the input.
-        if (newValue === editedTestCase[field]) {
-            return;
-        }
-        this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id!) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id!];
         this.testCases = this.testCases.map((testCase) => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue }));
     }
 
@@ -267,21 +268,34 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param field             the edited field;
      */
     updateEditedCategoryField(newValue: any, editedCategory: StaticCodeAnalysisCategory, field: EditableField) {
-        // Don't allow an empty string as a value!
-        if (!newValue) {
-            return;
+        newValue = this.checkFieldValue(newValue, editedCategory[field], field);
+        // Only mark the category as changed, if the field has changed.
+        if (newValue !== editedCategory[field]) {
+            this.changedCategoryIds = this.changedCategoryIds.includes(editedCategory.id) ? this.changedCategoryIds : [...this.changedCategoryIds, editedCategory.id];
         }
-        if (typeof editedCategory[field] === 'number') {
-            newValue = Number(newValue);
-        }
-        // If the field has not changed, don't do anything
-        if (newValue === editedCategory[field]) {
-            return;
-        }
-        this.changedCategoryIds = this.changedCategoryIds.includes(editedCategory.id) ? this.changedCategoryIds : [...this.changedCategoryIds, editedCategory.id];
         this.staticCodeAnalysisCategories = this.staticCodeAnalysisCategories.map((category) =>
             category.id !== editedCategory.id ? category : { ...category, [field]: newValue },
         );
+    }
+
+    /**
+     * Check and validate the new value for an editable field. Optionally applies the default value for the field.
+     * @param newValue  The new edited value
+     * @param oldValue  The previous value
+     * @param field     The edited field
+     */
+    checkFieldValue(newValue: any, oldValue: any, field: EditableField) {
+        // Don't allow an empty string as a value!
+        if (newValue === '') {
+            newValue = DefaltFieldValues[field] || oldValue;
+        }
+        if (typeof oldValue === 'number') {
+            newValue = Number(newValue);
+        }
+        if (isNaN(newValue)) {
+            newValue = oldValue;
+        }
+        return newValue;
     }
 
     /**
