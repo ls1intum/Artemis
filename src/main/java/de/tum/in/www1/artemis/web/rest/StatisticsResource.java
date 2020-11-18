@@ -7,10 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
 import de.tum.in.www1.artemis.domain.User;
@@ -43,21 +40,28 @@ public class StatisticsResource {
      * @param span the period of which amount should be calculated
      * @return the ResponseEntity with status 200 (OK) and the amount of users in body, or status 404 (Not Found)
      */
-    @GetMapping
+    @GetMapping("/management/statistics")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Integer> getloggedUsers(@PathVariable long span) {
+    public ResponseEntity<Integer> getloggedUsers(@RequestParam long span) {
         log.debug("REST request to get user login count in the last {} days", span);
         List<User> loggedUsers = new ArrayList<>();
         Date spanDate = DateUtils.addDays(new Date(), -((int) span));
         List<PersistentAuditEvent> auditEvents = persistentAuditEventRepository.findAll();
+        // List<PersistentAuditEvent> auditEvents = new ArrayList<>();
+        System.out.println("auditEvents");
+        System.out.println(auditEvents);
         List<User> users = userRepository.findAll();
+        System.out.println("users");
+        System.out.println(users.size());
         for (User user : users) {
             for (PersistentAuditEvent auditEvent : auditEvents) {
                 if (auditEvent.getPrincipal().equals(user.getLogin())) {
                     if (auditEvent.getAuditEventType().equals("AUTHENTICATION_SUCCESS")) {
                         if (auditEvent.getAuditEventDate().compareTo(spanDate.toInstant()) == 0) {
                             if (!(user.getLogin().contains("test"))) {
-                                loggedUsers.add(user);
+                                if (!loggedUsers.contains(user)) {
+                                    loggedUsers.add(user);
+                                }
                             }
                         }
                     }

@@ -10,7 +10,7 @@ import { HttpResponse } from '@angular/common/http';
 })
 export class JhiStatisticsComponent implements OnInit, OnDestroy {
     activities: any[] = [];
-    loggedInUsers: number = 1;
+    loggedInUsers = 1;
 
     constructor(private service: StatisticsService) {}
 
@@ -37,9 +37,12 @@ export class JhiStatisticsComponent implements OnInit, OnDestroy {
         //    this.showActivity(activity);
         // });
         const span = 7;
-        this.service.getloggedUsers(span).subscribe((res: HttpResponse<number>) => {
-            this.loggedInUsers = res.body!;
+        this.service.getloggedUsers(span).subscribe((res: number) => {
+            console.log('res: ');
+            console.log(res);
+            this.loggedInUsers = res;
         });
+        console.log('component: ');
         console.log(this.loggedInUsers);
     }
 
