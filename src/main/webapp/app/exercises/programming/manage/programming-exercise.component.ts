@@ -152,6 +152,9 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     openEditSelectedModal() {
         const modalRef = this.modalService.open(ProgrammingExerciseEditSelectedComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises;
+        modalRef.closed.subscribe(() => {
+            location.reload();
+        });
     }
 
     openRepoExportModal() {
