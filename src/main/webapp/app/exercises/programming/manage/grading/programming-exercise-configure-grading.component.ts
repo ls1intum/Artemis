@@ -287,7 +287,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     checkFieldValue(newValue: any, oldValue: any, field: EditableField) {
         // Don't allow an empty string as a value!
         if (newValue === '') {
-            newValue = DefaltFieldValues[field] || oldValue;
+            newValue = DefaltFieldValues[field];
         }
         if (typeof oldValue === 'number') {
             newValue = Number(newValue);

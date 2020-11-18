@@ -304,16 +304,48 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
+        let testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
         expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
             new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 2, testThatWasUpdated.afterDueDate),
         ]);
         expect(testThatWasUpdated.weight).to.equal(20);
+        expect(testThatWasUpdated.bonusMultiplier).to.equal(2);
+        expect(testThatWasUpdated.bonusPoints).to.equal(1);
         expect(comp.changedTestCaseIds).to.have.lengthOf(0);
 
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
         expect(comp.hasUpdatedGradingConfig).to.be.true;
+
+        fixture.detectChanges();
+
+        multiplierInput.focus();
+        multiplierInput.value = ''; // test default value
+        multiplierInput.dispatchEvent(new Event('blur'));
+
+        bonusInput.focus();
+        bonusInput.value = 'a'; // test NaN value
+        bonusInput.dispatchEvent(new Event('blur'));
+
+        fixture.detectChanges();
+
+        expect(comp.changedTestCaseIds).to.deep.equal([orderedTests[0].id]);
+
+        // Save weight.
+        updateTestCasesStub.reset();
+        updateTestCasesStub.returns(of([{ ...orderedTests[0], weight: 20, bonusMultiplier: 1, bonusPoints: 1 }]));
+        saveButton.click();
+
+        fixture.detectChanges();
+
+        testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
+        expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
+            new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 1, testThatWasUpdated.afterDueDate),
+        ]);
+        expect(testThatWasUpdated.weight).to.equal(20);
+        expect(testThatWasUpdated.bonusMultiplier).to.equal(1);
+        expect(testThatWasUpdated.bonusPoints).to.equal(1);
+        expect(comp.changedTestCaseIds).to.have.lengthOf(0);
 
         fixture.detectChanges();
 
