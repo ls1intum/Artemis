@@ -116,6 +116,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 if (this.route.snapshot.data.studentParticipationId.error && this.route.snapshot.data.studentParticipationId.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.lockLimitReached = true;
                     return;
+                } else if (this.route.snapshot.data.studentParticipationId.error.status === 404) {
+                    // there are no unassessed submission, nothing we have to worry about
+                    this.onError('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                 } else if (this.route.snapshot.data.studentParticipationId.error) {
                     this.onError(this.route.snapshot.data.studentParticipationId.error);
                     return;
