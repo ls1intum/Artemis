@@ -80,7 +80,7 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
 
     ngOnChanges(): void {
         this.initializeForm();
-        if (this.isEditMode) {
+        if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);
         }
     }

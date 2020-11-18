@@ -1,0 +1,26 @@
+@import '../../overview/_overview-vars.scss';
+
+.course-table {
+    padding: 5px 0;
+    background-color: $light-background-color;
+    border-radius: 3px;
+    transition: box-shadow 0.1s linear;
+}
+
+.course-table-container {
+    .control-label {
+        cursor: pointer;
+        margin-bottom: 16px;
+    }
+
+    .collapsed {
+        margin-top: 16px;
+        margin-left: -12px;
+        margin-right: -12px;
+        border-bottom: 1px solid $light-border-color;
+    }
+}
+
+.table-responsive {
+    overflow-x: hidden;
+}
