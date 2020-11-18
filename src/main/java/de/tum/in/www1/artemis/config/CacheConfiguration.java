@@ -107,8 +107,8 @@ public class CacheConfiguration {
         Config config = new Config();
         config.setInstanceName(instanceName);
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-        config.getAdvancedNetworkConfig().getJoin().getAutoDetectionConfig().setEnabled(false);
-        config.getAdvancedNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+        // Always enable TcpIp config: There has to be at least one join-config and we can not use multicast as this creates unwanted clusters
+        // If registration == null -> this will never connect to any instance as no other ip addresses are added
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
 
         // Allows using @SpringAware and therefore Spring Services in distributed tasks
@@ -150,7 +150,6 @@ public class CacheConfiguration {
 
                 // In the local configuration, the hazelcast port is the http-port + the hazelcastPort as offset
                 config.getNetworkConfig().setPort(serverProperties.getPort() + hazelcastPort); // Own port
-                config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
                     String clusterMember = instance.getHost() + ":" + (instance.getPort() + hazelcastPort); // Address where the other instance is expected
                     log.info("Adding Hazelcast (dev) cluster member {}", clusterMember);
@@ -161,7 +160,6 @@ public class CacheConfiguration {
                 config.setClusterName("prod");
                 config.setInstanceName(instanceName);
                 config.getNetworkConfig().setPort(hazelcastPort); // Own port
-                config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
                     String clusterMember = instance.getHost() + ":" + hazelcastPort; // Address where the other instance is expected
                     log.info("Adding Hazelcast (prod) cluster member {}", clusterMember);
