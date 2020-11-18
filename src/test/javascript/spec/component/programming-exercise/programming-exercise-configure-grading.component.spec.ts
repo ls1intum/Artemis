@@ -321,15 +321,23 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         multiplierInput.focus();
         multiplierInput.value = ''; // test default value
-        multiplierInput.dispatchEvent(new Event('blur'));
+        bonusInput.dispatchEvent(new Event('input'));
 
         bonusInput.focus();
         bonusInput.value = 'a'; // test NaN value
+        bonusInput.dispatchEvent(new Event('input'));
+
+        fixture.detectChanges();
+
+        multiplierInput.dispatchEvent(new Event('blur'));
         bonusInput.dispatchEvent(new Event('blur'));
 
         fixture.detectChanges();
 
         expect(comp.changedTestCaseIds).to.deep.equal([orderedTests[0].id]);
+
+        expect(multiplierInput.value).to.equal('1');
+        expect(bonusInput.value).to.equal('1');
 
         // Save weight.
         updateTestCasesStub.reset();

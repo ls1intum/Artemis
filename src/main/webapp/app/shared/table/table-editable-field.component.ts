@@ -13,13 +13,14 @@ import { Component, ElementRef, Input, ViewChild } from '@angular/core';
                 class="table-editable-field__input form-control mr-2"
                 (blur)="sendValueUpdate($event)"
                 (keyup.enter)="sendValueUpdate($event)"
-                [(ngModel)]="inputValue"
+                [value]="inputValue"
+                (input)="inputValue = $event.target.value"
                 type="text"
             />
         </div>
     `,
 })
-export class TableEditableFieldComponent<T> {
+export class TableEditableFieldComponent {
     @ViewChild('editingInput', { static: false }) editingInput: ElementRef;
 
     @Input() set value(value: any) {
