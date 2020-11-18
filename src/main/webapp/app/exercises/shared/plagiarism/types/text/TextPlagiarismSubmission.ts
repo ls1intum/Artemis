@@ -3,9 +3,4 @@ import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/tex
 
 export class TextPlagiarismSubmission extends PlagiarismSubmission {
     elements: TextSubmissionElement[];
-
-    /**
-     * List of files the related submission consists of.
-     */
-    files: string[];
 }
