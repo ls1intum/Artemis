@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.config;
 
 import java.util.ArrayList;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

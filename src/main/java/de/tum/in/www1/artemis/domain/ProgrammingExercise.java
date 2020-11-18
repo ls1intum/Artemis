@@ -66,6 +66,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "sequential_test_runs")
     private Boolean sequentialTestRuns;
 
+    @Column(name = "show_test_names_to_students", table = "programming_exercise_details")
+    private boolean showTestNamesToStudents;
+
     @Nullable
     @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
     private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
@@ -271,6 +274,28 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
+     * Generates the repository name for a given repository type.
+     *
+     * @param repositoryType The repository type
+     * @return The repository name
+     */
+    public String generateRepositoryName(RepositoryType repositoryType) {
+        generateAndSetProjectKey();
+        return this.projectKey.toLowerCase() + "-" + repositoryType.getName();
+    }
+
+    /**
+     * Generates the build plan id for a given build plan type.
+     *
+     * @param buildPlanType The build plan type
+     * @return The build plan id
+     */
+    public String generateBuildPlanId(BuildPlanType buildPlanType) {
+        generateAndSetProjectKey();
+        return this.projectKey + "-" + buildPlanType.getName();
+    }
+
+    /**
      * Generates a unique project key based on the course short name and the exercise short name. This should only be used
      * for instantiating a new exercise
      *
@@ -455,6 +480,14 @@ public class ProgrammingExercise extends Exercise {
 
     public void setSequentialTestRuns(Boolean sequentialTestRuns) {
         this.sequentialTestRuns = sequentialTestRuns;
+    }
+
+    public Boolean getShowTestNamesToStudents() {
+        return showTestNamesToStudents;
+    }
+
+    public void setShowTestNamesToStudents(Boolean showTestNamesToStudents) {
+        this.showTestNamesToStudents = showTestNamesToStudents;
     }
 
     @Nullable

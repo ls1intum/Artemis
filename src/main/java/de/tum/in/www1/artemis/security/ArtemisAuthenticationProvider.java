@@ -1,13 +1,11 @@
 package de.tum.in.www1.artemis.security;
 
 import java.util.Optional;
-import java.util.Set;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 
@@ -42,16 +40,6 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
     void createUserInExternalUserManagement(User user);
 
     /**
-     * Adds a user to the specified set of groups.
-     * NOTE: this method should only be invoked for newly created users!
-     * If you want to update an existing user, please use addUserToGroup(username, group)
-     *
-     * @param user the user who should be added to the given groups
-     * @param groups the groups in which the user should be added
-     */
-    void addUserToGroups(User user, @Nullable Set<String> groups);
-
-    /**
      * Removes a user from the specified group
      *
      * @param user the user
@@ -77,15 +65,6 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
      * @return True, if the group is available for usage, false otherwise
      */
     boolean isGroupAvailable(String group);
-
-    /**
-     * Registers a user in a course by adding him to the student group of the course
-     *
-     * @param user The user that should get added to the course
-     * @param course The course to which the user should get added to
-     */
-    // TODO why is this in the authentication provider? I think we should move this to the course service.
-    void registerUserForCourse(User user, Course course);
 
     /**
      * Checks if the underlying user management server is up and running and gives some additional information about the running

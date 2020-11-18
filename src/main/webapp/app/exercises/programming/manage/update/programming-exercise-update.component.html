@@ -99,6 +99,7 @@
                         <option value="KOTLIN" *ngIf="supportsKotlin">Kotlin</option>
                         <option value="VHDL" *ngIf="supportsVHDL">VHDL</option>
                         <option value="ASSEMBLER" *ngIf="supportsAssembler">Assembler</option>
+                        <option value="SWIFT" *ngIf="supportsSwift">Swift</option>
                     </select>
                 </div>
 
@@ -134,7 +135,7 @@
                     />
                     <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
                         <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
-                            <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key"></div>
+                            <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
                         </div>
                     </ng-container>
                 </div>
@@ -202,7 +203,7 @@
                             class="form-check-input custom-control-input"
                             id="field_staticCodeAnalysisEnabled"
                             name="staticCodeAnalysisEnabled"
-                            [disabled]="!!programmingExercise.id"
+                            [disabled]="!!programmingExercise.id || programmingExercise.sequentialTestRuns"
                             [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
                             (change)="onStaticCodeAnalysisChanged()"
                         />
@@ -299,7 +300,7 @@
                                 type="checkbox"
                                 name="sequentialTestRuns"
                                 id="field_sequentialTestRuns"
-                                [disabled]="!!programmingExercise.id"
+                                [disabled]="!!programmingExercise.id || programmingExercise.staticCodeAnalysisEnabled"
                                 [(ngModel)]="programmingExercise.sequentialTestRuns"
                                 checked
                             />
@@ -354,6 +355,27 @@
                         </label>
                     </div>
                 </div>
+                <div class="form-group-narrow">
+                    <div class="form-check">
+                        <label class="form-check-label" for="field_showTestNamesToStudents">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                name="showTestNamesToStudents"
+                                id="field_showTestNamesToStudents"
+                                [(ngModel)]="programmingExercise.showTestNamesToStudents"
+                                checked
+                            />
+                            <span jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents">Show Test Names to Students</span>
+                            <fa-icon
+                                icon="question-circle"
+                                class="text-secondary"
+                                placement="top"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.showTestNamesToStudentsTooltip' | translate }}"
+                            ></fa-icon>
+                        </label>
+                    </div>
+                </div>
                 <!--This checkbox is only visible in the dev environment. If the checkbox is checked and the user clicks on the generate button
                 a programming exercise without a connection to the VCS and CI will be generated
                 This functionality is only for testing purposes-->
@@ -384,6 +406,15 @@
                                 checked
                             />
                             <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>
+                        </label>
+                    </div>
+                </div>
+                <div *ngIf="isImport" class="form-group-narrow">
+                    <div class="form-check">
+                        <label class="form-check-label" for="field_recreateBuildPlans">
+                            <input class="form-check-input" type="checkbox" name="recreateBuildPlans" id="field_recreateBuildPlans" [(ngModel)]="recreateBuildPlans" checked />
+                            <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title">Recreate Build Plans</span>
+                            <jhi-help-icon placement="top" text="artemisApp.programmingExercise.recreateBuildPlans.description"></jhi-help-icon>
                         </label>
                     </div>
                 </div>

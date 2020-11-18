@@ -1,0 +1,93 @@
+pipeline {
+        agent {
+            docker {
+                image '#dockerImage'
+                label 'docker'
+            }
+        }
+        stages {
+            stage('Checkout') {
+                steps {
+                    dir('#testCheckoutPath') {
+                        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'tests', url: '#testRepository']]])
+                    }
+                    dir('#assignmentCheckoutPath') {
+                        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'assignment', url: '#assignmentRepository']]])
+                    }
+                }
+            }
+            stage('Build') {
+                steps {
+                    timestamps {
+                        sh '''
+                            cd $WORKSPACE
+                            echo &quot;--------------------info--------------------&quot;
+                            python3 --version
+                            pip3 --version
+                            # Generic debug infos:
+                            # whoami
+                            # tree
+
+                            echo &quot;--------------------tests--------------------&quot;
+                            ls -la tests
+                            echo &quot;--------------------tests--------------------&quot;
+                            echo &quot;--------------------assignment--------------------&quot;
+                            ls -la assignment
+                            echo &quot;--------------------assignment--------------------&quot;
+
+                            cd tests
+                            REQ_FILE=requirements.txt
+                            if [ -f &quot;$REQ_FILE&quot; ]; then
+                                pip3 install --user -r requirements.txt
+                            else
+                                echo &quot;$REQ_FILE does not exist&quot;
+                            fi
+                            exit 0
+                           '''
+                        sh '''
+                            #!/usr/bin/env bash
+
+                            shadowFilePath=&quot;../tests/testUtils/c/shadow_exec.c&quot;
+
+                            foundIncludeDirs=`grep -m 1 &apos;INCLUDEDIRS\s*=&apos; assignment/Makefile`
+                            echo &quot;Include: $foundIncludeDirs&quot;
+
+                            foundSource=`grep -m 1 &apos;SOURCE\s*=&apos; assignment/Makefile`
+                            foundSource=&quot;$foundSource $shadowFilePath&quot;
+                            echo &quot;Source: $foundSource&quot;
+
+                            rm -f assignment/GNUmakefile
+                            rm -f assignment/Makefile
+
+                            cp -f tests/Makefile assignment/Makefile || exit 2
+                            sed -i &quot;s~INCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~SOURCE\s*=.*~${foundSource}~&quot; assignment/Makefile
+                           '''
+                        sh '''
+                            #!/bin/bash
+
+                            # Actual build process:
+                            cd tests
+
+                            python3 Tests.py s
+                            rm Tests.py
+                            rm -rf ./tests
+
+                            exit 0
+                           '''
+                    }
+                }
+            }
+        }
+        post {
+            cleanup {
+                sh '''
+                   sed -i &apos;s/&#x1b;//g&apos; test-reports/tests-results.xml&#xd;
+                   sed -i &apos;s/&lt;skipped/&lt;error/g&apos; test-reports/tests-results.xml&#xd;
+                   sed -i &apos;s/&lt;\/skipped&gt;/&lt;\/error&gt;/g&apos; test-reports/tests-results.xml&#xd;
+                   mv test-reports results
+                   '''
+                sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
+                cleanWs()
+            }
+        }
+}

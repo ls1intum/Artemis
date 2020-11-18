@@ -119,7 +119,7 @@ public class ResultResource {
             return forbidden(); // Only allow endpoint when using correct token
         }
 
-        // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+        // No 'user' is properly logged into Artemis, this leads to an issue when accessing custom repository methods.
         // Therefore a mock auth object has to be created.
         SecurityUtils.setAuthorizationObject();
 
@@ -142,10 +142,9 @@ public class ResultResource {
             return notFound();
         }
 
-        ProgrammingExerciseParticipation participation = optionalParticipation.get();
-        Optional<Result> result;
+        var participation = optionalParticipation.get();
         // Process the new result from the build result.
-        result = programmingExerciseGradingService.processNewProgrammingExerciseResult((Participation) participation, requestBody);
+        Optional<Result> result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, requestBody);
 
         // Only notify the user about the new result if the result was created successfully.
         if (result.isPresent()) {
@@ -154,10 +153,6 @@ public class ResultResource {
             // notify user via websocket
             messagingService.broadcastNewResult((Participation) participation, result.get());
 
-            // TODO: can we avoid to invoke this code for non LTI students? (to improve performance)
-            // if (participation.isLti()) {
-            // }
-            // handles new results and sends them to LTI consumers
             if (participation instanceof ProgrammingExerciseStudentParticipation) {
                 ltiService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
             }

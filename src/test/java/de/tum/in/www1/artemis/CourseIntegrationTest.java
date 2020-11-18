@@ -301,11 +301,15 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             }
             for (Exercise exercise : course.getExercises()) {
                 if (exercise instanceof ProgrammingExercise) {
-                    final String projectKey = ((ProgrammingExercise) exercise).getProjectKey();
+                    final var programmingExercise = (ProgrammingExercise) exercise;
+                    final String projectKey = programmingExercise.getProjectKey();
+                    final var templateRepoName = programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
+                    final var solutionRepoName = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
+                    final var testsRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
                     bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
-                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase());
-                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.SOLUTION.getName()).toLowerCase());
-                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.TESTS.getName()).toLowerCase());
+                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, templateRepoName);
+                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, solutionRepoName);
+                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, testsRepoName);
                     bitbucketRequestMockProvider.mockDeleteProject(projectKey);
                 }
             }
@@ -525,13 +529,15 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 "instructor");
         Course courseNotActiveFuture = ModelFactory.generateCourse(3L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "tumuser", "tutor",
                 "instructor");
-        courseRepo.save(courseActive);
+        courseActive = courseRepo.save(courseActive);
         courseRepo.save(courseNotActivePast);
         courseRepo.save(courseNotActiveFuture);
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
         assertThat(courses.size()).as("Exactly one course is returned").isEqualTo(1);
-        courses.get(0).setId(courseActive.getId());
         assertThat(courses.get(0)).as("Active course is returned").isEqualTo(courseActive);
+        List<Course> coursesForNotifications = request.getList("/api/courses/for-notifications", HttpStatus.OK, Course.class);
+        assertThat(coursesForNotifications.size()).as("Exactly one course is returned").isEqualTo(1);
+        assertThat(coursesForNotifications.get(0)).as("Active course is returned").isEqualTo(courseActive);
     }
 
     @Test

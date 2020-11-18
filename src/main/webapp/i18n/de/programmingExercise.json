@@ -44,11 +44,13 @@
             "onlineEditor": "Online Editor",
             "allowOfflineIde": "Offline IDE erlauben",
             "offlineIde": "Offline IDE",
+            "showTestNamesToStudents": "Zeige die Test Namen den Studierenden",
+            "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studenten angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studenten vorzunehmen.",
             "participationMode": "Teilnahme Modus",
             "noVersionControlAndContinuousIntegrationAvailable": "Setup ohne Verbindung zur VCS und CI",
             "sequentialTestRuns": {
                 "title": "Sequentielle Testläufe",
-                "description": "Aktiviere diese Checkbox um zuerst Struktur- und erst im Anschluss Verhaltenstests duchzuführen. Dieses Feature hilft Studenten dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"
+                "description": "Aktiviere diese Checkbox um zuerst Struktur- und erst im Anschluss Verhaltenstests duchzuführen. Statische Code Analyse wird nicht unterstützt. Dieses Feature hilft Studenten dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"
             },
             "checkoutSolutionRepository": {
                 "title": "Checke Repository der Lösung aus",
@@ -56,11 +58,15 @@
             },
             "enableStaticCodeAnalysis": {
                 "title": "Aktiviere Statische Code Analyse",
-                "description": "Durch Aktivierung dieser Option werden Abgaben einer Statischen Code Analyse unterzogen. Zusätzliche Optionen stehen in der Bewertungssicht zur Verfügung. Diese Option kann nach der Erstellung der Aufgabe nicht mehr geändert werden."
+                "description": "Durch Aktivierung dieser Option werden Abgaben einer Statischen Code Analyse unterzogen. Sequentielle Testläufe werden nicht unterstützt. Zusätzliche Optionen stehen in der Bewertungssicht zur Verfügung. Diese Option kann nach der Erstellung der Aufgabe nicht mehr geändert werden."
             },
             "maxStaticCodeAnalysisPenalty": {
                 "title": "Max Statische Code Analyse Strafe",
                 "description": "Wähle einen Wert zwischen 0 und 100 Prozent oder fülle das Feld nicht aus. Wenn für eine 10 Punkte Aufgabe die maximale Strafe 20% beträgt, werden maximal zwei Punkte durch Probleme, die von der statischen Analyse gefunden wurden, abgezogen. Wenn kein Wert angegeben wird existiert kein Limit für den Punkteabzug."
+            },
+            "recreateBuildPlans": {
+                "title": "Build Pläne neu erstellen",
+                "description": "Durch Aktivierung dieser Option werden die Build Pläne neu erstellt und nicht von der importierten Aufgabe kopiert. Neu erstellte Build Pläne unterstützen standardmäßig die neuesten Features der Artemis Aufgabenvorlagen."
             },
             "programmingLanguage": "Programmiersprache",
             "projectType": "Projekt Typ",

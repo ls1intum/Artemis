@@ -27,7 +27,6 @@ export class StudentQuestionComponent implements OnInit {
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactQuestion = new EventEmitter<StudentQuestionAction>();
-    isQuestionAuthor = false;
     editText?: string;
     isEditMode: boolean;
     EditorMode = EditorMode;
@@ -41,9 +40,6 @@ export class StudentQuestionComponent implements OnInit {
      */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        if (this.user) {
-            this.isQuestionAuthor = this.studentQuestion.author!.id === this.user.id;
-        }
         this.editText = this.studentQuestion.questionText;
     }
 
@@ -100,5 +96,14 @@ export class StudentQuestionComponent implements OnInit {
                 studentQuestion: this.studentQuestion,
             });
         });
+    }
+
+    /**
+     * Takes a studentQuestion and determines if the user is the author of it
+     * @param {StudentQuestion} studentQuestion
+     * @returns {boolean}
+     */
+    isAuthorOfQuestion(studentQuestion: StudentQuestion): boolean {
+        return this.user ? studentQuestion.author!.id === this.user.id : false;
     }
 }

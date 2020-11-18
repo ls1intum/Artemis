@@ -12,15 +12,13 @@ import java.time.ZonedDateTime;
 import java.util.*;
 
 import javax.activation.MimetypesFileTypeMap;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -28,6 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -53,7 +52,7 @@ public class FileResource {
 
     private final FileService fileService;
 
-    private final ResourceLoader resourceLoader;
+    private final ResourceLoaderService resourceLoaderService;
 
     private final LectureRepository lectureRepository;
 
@@ -76,11 +75,11 @@ public class FileResource {
         this.allowedFileExtensions.remove(fileExtension);
     }
 
-    public FileResource(FileService fileService, ResourceLoader resourceLoader, LectureRepository lectureRepository, TokenProvider tokenProvider,
+    public FileResource(FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, TokenProvider tokenProvider,
             FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
             AttachmentUnitRepository attachmentUnitRepository) {
         this.fileService = fileService;
-        this.resourceLoader = resourceLoader;
+        this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
         this.tokenProvider = tokenProvider;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
@@ -160,14 +159,13 @@ public class FileResource {
             @PathVariable String filename) {
         log.debug("REST request to get file '{}' for programming language {} and project type {}", filename, language, projectType);
         try {
-            String languagePrefix = language.map(programmingLanguage -> File.separator + programmingLanguage.name().toLowerCase()).orElse("");
-            String projectTypePrefix = projectType.map(type -> File.separator + type.name().toLowerCase()).orElse("");
+            String languagePrefix = language.map(programmingLanguage -> programmingLanguage.name().toLowerCase()).orElse("");
+            String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
-            Resource fileResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader)
-                    .getResource("classpath:templates" + languagePrefix + projectTypePrefix + File.separator + filename);
+            Resource fileResource = resourceLoaderService.getResource("templates", languagePrefix, projectTypePrefix, filename);
             if (!fileResource.exists()) {
                 // Load without project type if not found with project type
-                fileResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:templates" + languagePrefix + File.separator + filename);
+                fileResource = resourceLoaderService.getResource("templates", languagePrefix, filename);
             }
 
             var fileContent = IOUtils.toByteArray(fileResource.getInputStream());

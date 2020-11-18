@@ -11,7 +11,8 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -1152,10 +1153,10 @@ public class DatabaseUtilService {
     }
 
     public ProgrammingExercise addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
-        final var repoName = (exercise.getProjectKey() + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase();
+        final var repoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
-        participation.setBuildPlanId(exercise.getProjectKey() + "-" + BuildPlanType.TEMPLATE.getName());
+        participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.TEMPLATE));
         participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         templateProgrammingExerciseParticipationRepo.save(participation);
@@ -1164,10 +1165,10 @@ public class DatabaseUtilService {
     }
 
     public ProgrammingExercise addSolutionParticipationForProgrammingExercise(ProgrammingExercise exercise) {
-        final var repoName = (exercise.getProjectKey() + "-" + RepositoryType.SOLUTION.getName()).toLowerCase();
+        final var repoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
         SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
-        participation.setBuildPlanId(exercise.getProjectKey() + "-" + BuildPlanType.SOLUTION.getName());
+        participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.SOLUTION));
         participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         solutionProgrammingExerciseParticipationRepo.save(participation);
@@ -1536,16 +1537,19 @@ public class DatabaseUtilService {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setGradingInstructions("Lorem Ipsum");
         programmingExercise.setTitle(title);
+        programmingExercise.setProjectType(ProjectType.ECLIPSE);
         programmingExercise.setAllowOnlineEditor(true);
         programmingExercise.setStaticCodeAnalysisEnabled(enableStaticCodeAnalysis);
         if (enableStaticCodeAnalysis) {
             programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
         }
+        // Note: package name not allowed for Swift, no separators are allowed
         programmingExercise.setPackageName("de.test");
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
         programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
+        programmingExercise.setShowTestNamesToStudents(false);
     }
 
     /**
@@ -1986,18 +1990,24 @@ public class DatabaseUtilService {
         submission = saveTextSubmissionWithResultAndAssessor(exercise, submission, studentLogin, null, assessorLogin);
         Result result = submission.getResult();
         for (Feedback feedback : feedbacks) {
+            // Important note to prevent 'JpaSystemException: null index column for collection':
+            // 1) save the child entity (without connection to the parent entity) and make sure to re-assign the return value
+            feedback = feedbackRepo.save(feedback);
             // this also invokes feedback.setResult(result)
+            // Important note to prevent 'JpaSystemException: null index column for collection':
+            // 2) connect child and parent entity
             result.addFeedback(feedback);
-            feedbackRepo.save(feedback);
         }
         // this automatically saves the feedback because of the CascadeType.All annotation
+        // Important note to prevent 'JpaSystemException: null index column for collection':
+        // 3) save the parent entity and make sure to re-assign the return value
         result = resultRepo.save(result);
         // re-assign so that the saved feedback items are contained in the returned object
         submission.setResult(result);
         return submission;
     }
 
-    public TextSubmission addTextBlocksToTextSubmission(List<TextBlock> blocks, TextSubmission submission) {
+    public TextSubmission addAndSaveTextBlocksToTextSubmission(Set<TextBlock> blocks, TextSubmission submission) {
         blocks.forEach(block -> {
             block.setSubmission(submission);
             block.setTextFromSubmission();
