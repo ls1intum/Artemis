@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -167,7 +166,6 @@ public class SubmissionService {
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    @Transactional(readOnly = true)
     public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise exercise, boolean examMode) {
         Random random = new Random();
         List<StudentParticipation> participations;

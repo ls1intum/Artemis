@@ -260,7 +260,7 @@ public class FileUploadSubmissionResource {
 
         final FileUploadSubmission fileUploadSubmission;
         if (lockSubmission) {
-            fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise,
+            fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise,
                     fileUploadExercise.hasExerciseGroup());
         }
         else {

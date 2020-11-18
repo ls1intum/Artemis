@@ -18,7 +18,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -640,8 +639,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param exercise the exercise the submission should belong to
      * @return a locked programming submission that needs an assessment
      */
-    @Transactional
-    public ProgrammingSubmission getLockedProgrammingSubmissionWithoutResult(ProgrammingExercise exercise) {
+    public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise) {
         ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.hasExerciseGroup())
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission for exercise " + exercise.getId() + " could not be found"));
         Result newManualResult = lockSubmission(programmingSubmission);
@@ -668,7 +666,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
         newResult = resultRepository.save(newResult);
         log.debug("Assessment locked with result id: " + newResult.getId() + " for assessor: " + newResult.getAssessor().getName());
-
+        // Make sure that submission is set back after saving
+        newResult.setSubmission(newSubmission);
         return newResult;
     }
 }
