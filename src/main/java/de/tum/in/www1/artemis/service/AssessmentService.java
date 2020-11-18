@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -197,20 +195,19 @@ public class AssessmentService {
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
         Result result = submission.getResult();
 
-        // For programming exercise the first result is always automatic and must not be deleted
+        /** For programming exercises we need to delete the submission of the manual result as well, as for each new manual result a new submission will be generated.
+        *  The CascadeType.REMOVE of {@link Submission#result} will delete also the result and the corresponding feedbacks {@link Result#feedbacks}.
+         */
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
-            // Get manual result, as it has a higher id than the automatic result
-            List<Result> results = participation.getResults().stream().sorted(Comparator.comparing(Result::getId).reversed()).collect(Collectors.toList());
-            result = results.get(0);
-
-            if (result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
-                return;
-            }
+            participation.removeSubmissions(submission);
+            participation.removeResult(result);
+            submissionRepository.deleteById(submission.getId());
         }
-
-        participation.removeResult(result);
-        feedbackRepository.deleteByResult_Id(result.getId());
-        resultRepository.deleteById(result.getId());
+        else {
+            participation.removeResult(result);
+            feedbackRepository.deleteByResult_Id(result.getId());
+            resultRepository.deleteById(result.getId());
+        }
     }
 
     /**

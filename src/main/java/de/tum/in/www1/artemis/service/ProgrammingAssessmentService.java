@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -44,10 +45,15 @@ public class ProgrammingAssessmentService extends AssessmentService {
         result.setAssessor(user);
         result.setCompletionDate(null);
 
+        // Avoid hibernate exception
+        List<Feedback> savedFeedbacks = new ArrayList<>();
         result.getFeedbacks().forEach(feedback -> {
+            feedback.setResult(null);
+            feedback = feedbackRepository.save(feedback);
             feedback.setResult(result);
+            savedFeedbacks.add(feedback);
         });
-
+        result.setFeedbacks(savedFeedbacks);
         // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
         return resultRepository.save(result);
     }
