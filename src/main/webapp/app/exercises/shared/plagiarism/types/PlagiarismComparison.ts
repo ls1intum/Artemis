@@ -1,19 +1,26 @@
 import { PlagiarismStatus } from './PlagiarismStatus';
-import { PlagiarismComparisonElement } from 'app/exercises/shared/plagiarism/types/PlagiarismComparisonElement';
+import { PlagiarismSubmission } from './PlagiarismSubmission';
+import { PlagiarismMatch } from './PlagiarismMatch';
+import { PlagiarismSubmissionElement } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmissionElement';
 
 /**
  * Pair of compared student submissions whose similarity is above a certain threshold.
  */
-export class PlagiarismComparison {
+export class PlagiarismComparison<E extends PlagiarismSubmissionElement> {
     /**
-     * First element involved in this comparison.
+     * First submission involved in this comparison.
      */
-    elementA: PlagiarismComparisonElement;
+    submissionA: PlagiarismSubmission<E>;
 
     /**
-     * Second element involved in this comparison.
+     * Second submission involved in this comparison.
      */
-    elementB: PlagiarismComparisonElement;
+    submissionB: PlagiarismSubmission<E>;
+
+    /**
+     * List of matches between both submissions involved in this comparison.
+     */
+    matches: PlagiarismMatch[];
 
     /**
      * Similarity of the compared submissions (between 0 and 1).
@@ -21,7 +28,7 @@ export class PlagiarismComparison {
     similarity: number;
 
     /**
-     * Status of this plagiarism.
+     * Status of this submission comparison.
      */
     status: PlagiarismStatus;
 }
