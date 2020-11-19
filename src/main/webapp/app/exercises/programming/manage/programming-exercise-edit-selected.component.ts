@@ -17,6 +17,8 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     selectedProgrammingExercises: ProgrammingExercise[];
 
     isSaving = false;
+    savedExercises = 0;
+    failedExercises: string[] = [];
     private translationBasePath = 'artemisApp.programmingExercise.';
     notificationText: string | null;
 
@@ -48,16 +50,14 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
                 if (this.notificationText) {
                     requestOptions.notificationText = this.notificationText;
                 }
-                this.subscribeToSaveResponse(this.programmingExerciseService.update(programmingExercise, requestOptions));
+                this.subscribeToSaveResponse(programmingExercise.title, this.programmingExerciseService.update(programmingExercise, requestOptions));
             } else if (programmingExercise.noVersionControlAndContinuousIntegrationAvailable) {
                 // only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
-                this.subscribeToSaveResponse(this.programmingExerciseSimulationService.automaticSetupWithoutConnectionToVCSandCI(programmingExercise));
+                this.subscribeToSaveResponse(programmingExercise.title, this.programmingExerciseSimulationService.automaticSetupWithoutConnectionToVCSandCI(programmingExercise));
             } else {
-                this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(programmingExercise));
+                this.subscribeToSaveResponse(programmingExercise.title, this.programmingExerciseService.automaticSetup(programmingExercise));
             }
         });
-        this.isSaving = false;
-        this.activeModal.close();
     }
 
     /**
@@ -73,24 +73,35 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
         return programmingExercise;
     }
 
-    private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
+    private subscribeToSaveResponse(exerciseTitle: string | undefined, result: Observable<HttpResponse<ProgrammingExercise>>) {
         result.subscribe(
             () => this.onSaveSuccess(),
-            (res: HttpErrorResponse) => this.onSaveError(res),
+            (res: HttpErrorResponse) => this.onSaveError(res, exerciseTitle),
         );
     }
 
     private onSaveSuccess() {
-        this.isSaving = false;
+        this.savedExercises++;
+        if (this.savedExercises === this.selectedProgrammingExercises.length) {
+            this.isSaving = false;
+            if (this.failedExercises.length <= 0) {
+                this.activeModal.close();
+            }
+        }
     }
 
-    private onSaveError(error: HttpErrorResponse) {
-        const errorMessage = error.headers.get('X-artemisApp-alert')!;
-        // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-        const jhiAlert = this.jhiAlertService.error(errorMessage);
-        jhiAlert.msg = errorMessage;
-        this.isSaving = false;
+    private onSaveError(error: HttpErrorResponse, exerciseTitle?: string | undefined) {
+        exerciseTitle = exerciseTitle == undefined ? 'undefined exercise' : exerciseTitle;
+        this.failedExercises.push(exerciseTitle);
+        this.savedExercises++;
+        if (this.savedExercises === this.selectedProgrammingExercises.length) {
+            this.isSaving = false;
+        }
         window.scrollTo(0, 0);
+    }
+
+    closeModal() {
+        this.activeModal.close();
     }
 
     /**
