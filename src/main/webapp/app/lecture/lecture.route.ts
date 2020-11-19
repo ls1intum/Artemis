@@ -6,6 +6,7 @@ import { Observable, of } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { LectureService } from './lecture.service';
 import { LectureComponent } from './lecture.component';
+import { LectureDetailComponent } from './lecture-detail.component';
 import { LectureUpdateComponent } from './lecture-update.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
@@ -40,6 +41,18 @@ export const lectureRoute: Routes = [
     {
         path: ':courseId/lectures/new',
         component: LectureUpdateComponent,
+        resolve: {
+            lecture: LectureResolve,
+        },
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.lecture.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/lectures/:id',
+        component: LectureDetailComponent,
         resolve: {
             lecture: LectureResolve,
         },

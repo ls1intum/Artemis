@@ -7,6 +7,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { LectureUpdateComponent } from 'app/lecture/lecture-update.component';
 import { LectureComponent } from 'app/lecture/lecture.component';
+import { LectureDetailComponent } from 'app/lecture/lecture-detail.component';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { lectureRoute } from 'app/lecture/lecture.route';
 import { ArtemisLectureUnitManagementModule } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.module';
@@ -22,6 +23,6 @@ const ENTITY_STATES = [...lectureRoute];
         ArtemisSharedComponentModule,
         ArtemisMarkdownEditorModule,
     ],
-    declarations: [LectureComponent, LectureUpdateComponent, LectureAttachmentsComponent],
+    declarations: [LectureComponent, LectureDetailComponent, LectureUpdateComponent, LectureAttachmentsComponent],
 })
 export class ArtemisLectureModule {}
