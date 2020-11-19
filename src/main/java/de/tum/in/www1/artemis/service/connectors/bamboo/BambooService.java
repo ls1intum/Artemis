@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
