@@ -229,7 +229,7 @@ public class ModelingSubmissionResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user)) {
             return forbidden();
         }
-        modelingSubmission = modelingSubmissionService.getLockedModelingSubmission(submissionId, modelingExercise);
+        modelingSubmission = modelingSubmissionService.lockAndGetModelingSubmission(submissionId, modelingExercise);
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(modelingExercise);
         modelingSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);

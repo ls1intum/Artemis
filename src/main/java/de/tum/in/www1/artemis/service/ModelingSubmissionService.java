@@ -94,8 +94,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param modelingExercise the corresponding exercise
      * @return the locked modeling submission
      */
-    @Transactional
-    public ModelingSubmission getLockedModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
+    public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
         if (modelingSubmission.getResult() == null || modelingSubmission.getResult().getAssessor() == null) {
