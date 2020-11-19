@@ -51,6 +51,8 @@ public class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooB
 
     TextUnit textUnit2;
 
+    TextUnit textUnit3;
+
     // needed for correct jackson subtype serialization: see https://github.com/FasterXML/jackson-databind/issues/336#issuecomment-27228643
     class TextUnitList extends ArrayList<TextUnit> {
 
@@ -92,6 +94,8 @@ public class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooB
 
         this.textUnit = textUnitRepository.save(new TextUnit());
         this.textUnit2 = textUnitRepository.save(new TextUnit());
+        // textUnit3 is not one of the lecture units connected to the lecture
+        this.textUnit3 = textUnitRepository.save(new TextUnit());
 
         List<LectureUnit> lectureUnits = List.of(this.textUnit, this.textUnit2);
 
@@ -121,6 +125,31 @@ public class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooB
                 HttpStatus.OK);
         assertThat(returnedList.get(0).getId()).isEqualTo(idOfOriginalSecondPosition);
         assertThat(returnedList.get(1).getId()).isEqualTo(idOfOriginalFirstPosition);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateLectureUnitOrder_asInstructorNewTextUnitInOrderedList_shouldReturnConflict() throws Exception {
+        TextUnitList newlyOrderedList = new TextUnitList();
+        newlyOrderedList.add(textUnit);
+        newlyOrderedList.add(textUnit2);
+        newlyOrderedList.add(textUnit3);
+        for (TextUnit textUnit : newlyOrderedList) {
+            textUnit.setLecture(null);
+        }
+        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateLectureUnitOrder_asInstructorWithWrongLectureInd_shouldReturnNotFound() throws Exception {
+        request.put("/api/lectures/" + 0L + "/lecture-units-order", List.of(), HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
+    public void updateLectureUnitOrder_notInstructorInCourse_shouldReturnForbidden() throws Exception {
+        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
     }
 
 }
