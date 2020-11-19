@@ -260,7 +260,7 @@
                             </td>
                             <td>
                                 <ng-container *ngIf="(isTestRun && complaints.length === 0) || !isTestRun">
-                                    <ng-container *ngIf="exercise.type !== ExerciseType.PROGRAMMING; else programmingAssessment">
+                                    <ng-container>
                                         <button
                                             *ngIf="submission !== null && calculateStatus(submission) === 'DRAFT'; else continueButton"
                                             (click)="openAssessmentEditor(submission)"
@@ -282,15 +282,6 @@
                                             </button>
                                         </ng-template>
                                     </ng-container>
-                                    <ng-template #programmingAssessment>
-                                        <jhi-programming-assessment-manual-result
-                                            [participationId]="submission.participation.id"
-                                            [latestResult]="submission.result"
-                                            [exercise]="exercise"
-                                            [isTestRun]="isTestRun"
-                                            (onResultModified)="loadAll()"
-                                        ></jhi-programming-assessment-manual-result>
-                                    </ng-template>
                                 </ng-container>
                             </td>
                         </tr>
@@ -305,7 +296,6 @@
                             </td>
                             <td>
                                 <button
-                                    *ngIf="exercise.type !== ExerciseType.PROGRAMMING; else programmingAssessment"
                                     class="btn btn-success btn-sm"
                                     (click)="openAssessmentEditor('new')"
                                     [disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
@@ -316,15 +306,6 @@
                                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                     {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | translate }}
                                 </button>
-                                <ng-template #programmingAssessment>
-                                    <jhi-programming-assessment-manual-result
-                                        [participationId]="unassessedSubmission.participation!.id"
-                                        [latestResult]="unassessedSubmission.result"
-                                        [exercise]="exercise"
-                                        [isTestRun]="isTestRun"
-                                        (onResultModified)="loadAll()"
-                                    ></jhi-programming-assessment-manual-result>
-                                </ng-template>
                             </td>
                         </tr>
                     </tbody>

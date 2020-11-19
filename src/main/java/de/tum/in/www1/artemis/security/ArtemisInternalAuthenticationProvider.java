@@ -1,13 +1,10 @@
 package de.tum.in.www1.artemis.security;
 
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -17,7 +14,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -28,11 +24,8 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
 
     private final Logger log = LoggerFactory.getLogger(ArtemisInternalAuthenticationProvider.class);
 
-    private final AuditEventRepository auditEventRepository;
-
-    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, AuditEventRepository auditEventRepository) {
+    public ArtemisInternalAuthenticationProvider(UserRepository userRepository) {
         super(userRepository);
-        this.auditEventRepository = auditEventRepository;
     }
 
     @Override
@@ -75,22 +68,13 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
     }
 
     @Override
-    public void addUserToGroups(User user, Set<String> groups) {
-        if (groups == null) {
-            return;
-        }
-        boolean userChanged = false;
-        for (String group : groups) {
-            if (!user.getGroups().contains(group)) {
-                userChanged = true;
-                user.getGroups().add(group);
-            }
-        }
+    public void addUserToGroup(User user, String group) {
+        // nothing to do, this was already done by the UserService, this method is only needed when external management is active
+    }
 
-        if (userChanged) {
-            // we only save if this is needed
-            userRepository.save(user);
-        }
+    @Override
+    public void removeUserFromGroup(User user, String group) {
+        // nothing to do, this was already done by the UserService, this method is only needed when external management is active
     }
 
     @Override
@@ -119,14 +103,6 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
     @Override
     public void deleteGroup(String groupName) {
         userService.removeGroupFromUsers(groupName);
-    }
-
-    @Override
-    public void registerUserForCourse(User user, Course course) {
-        addUserToGroup(user, course.getStudentGroupName());
-        final var auditEvent = new AuditEvent(user.getLogin(), "REGISTER_FOR_COURSE", "course=" + course.getTitle());
-        auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
     }
 
     @Override

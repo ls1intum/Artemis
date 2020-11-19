@@ -70,31 +70,26 @@ describe('Notification Sidebar Component', () => {
     });
 
     describe('Initialization', () => {
-        it('should set last notification read', fakeAsync(() => {
+        it('should set last notification read', () => {
             const lastNotificationRead = moment();
             const fake = sinon.fake.returns(of({ lastNotificationRead } as User));
             sinon.replace(accountService, 'getAuthenticationState', fake);
             notificationSidebarComponent.ngOnInit();
-            tick(500);
             expect(accountService.getAuthenticationState).to.have.been.calledOnce;
             expect(notificationSidebarComponent.lastNotificationRead).to.equal(lastNotificationRead);
-        }));
+        });
 
-        it('should query notifications', fakeAsync(() => {
+        it('should query notifications', () => {
             sinon.spy(notificationService, 'query');
             notificationSidebarComponent.ngOnInit();
-            tick(500);
             expect(notificationService.query).to.have.been.calledOnce;
-        }));
+        });
 
-        it('should subscribe to notification updates for user', fakeAsync(() => {
-            sinon.spy(notificationService, 'subscribeUserNotifications');
-            sinon.spy(notificationService, 'subscribeToSocketMessages');
+        it('should subscribe to notification updates for user', () => {
+            sinon.spy(notificationService, 'subscribeToNotificationUpdates');
             notificationSidebarComponent.ngOnInit();
-            tick(500);
-            expect(notificationService.subscribeUserNotifications).to.have.been.calledOnce;
-            expect(notificationService.subscribeToSocketMessages).to.have.been.calledOnce;
-        }));
+            expect(notificationService.subscribeToNotificationUpdates).to.have.been.calledOnce;
+        });
     });
 
     describe('Sidebar visibility', () => {
@@ -167,79 +162,70 @@ describe('Notification Sidebar Component', () => {
     });
 
     describe('Load notifications', () => {
-        const replaceSubscribeToSocketMessages = () => {
+        const replaceSubscribeToNotificationUpdates = () => {
             const fake = sinon.fake.returns(new BehaviorSubject(notificationNow));
-            sinon.replace(notificationService, 'subscribeToSocketMessages', fake);
+            sinon.replace(notificationService, 'subscribeToNotificationUpdates', fake);
         };
 
-        it('should not add already existing notifications', fakeAsync(() => {
+        it('should not add already existing notifications', () => {
             notificationSidebarComponent.notifications = [notificationNow];
             const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
             sinon.replace(notificationService, 'query', fake);
             notificationSidebarComponent.ngOnInit();
-            tick(500);
             expect(notificationSidebarComponent.notifications.length).to.be.equal(notifications.length);
-        }));
+        });
 
-        it('should update sorted notifications array after new notifications were loaded', fakeAsync(() => {
+        it('should update sorted notifications array after new notifications were loaded', () => {
             const fake = sinon.fake.returns(of(generateQueryResponse([notificationPast, notificationNow])));
             sinon.replace(notificationService, 'query', fake);
             notificationSidebarComponent.ngOnInit();
-            tick(500);
             expect(notificationService.query).to.have.been.calledOnce;
             expect(notificationSidebarComponent.sortedNotifications[0]).to.be.equal(notificationNow);
             expect(notificationSidebarComponent.sortedNotifications[1]).to.be.equal(notificationPast);
-        }));
+        });
 
-        it('should set total notification count to received X-Total-Count header', fakeAsync(() => {
+        it('should set total notification count to received X-Total-Count header', () => {
             const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
             sinon.replace(notificationService, 'query', fake);
             notificationSidebarComponent.ngOnInit();
-            tick(500);
             expect(notificationService.query).to.have.been.calledOnce;
             expect(notificationSidebarComponent.totalNotifications).to.be.equal(notifications.length);
-        }));
+        });
 
-        it('should increase total notification count if a new notification is received via websocket', fakeAsync(() => {
-            replaceSubscribeToSocketMessages();
+        it('should increase total notification count if a new notification is received via websocket', () => {
+            replaceSubscribeToNotificationUpdates();
             notificationSidebarComponent.ngOnInit();
-            tick(500);
-            notificationService.subscribeToSocketMessages();
             expect(notificationSidebarComponent.notifications.length).to.be.equal(1);
             expect(notificationSidebarComponent.totalNotifications).to.be.equal(1);
-        }));
+        });
 
-        it('should not add already existing notification received via websocket', fakeAsync(() => {
+        it('should not add already existing notification received via websocket', () => {
             notificationSidebarComponent.notifications = [notificationNow];
             notificationSidebarComponent.totalNotifications = 1;
-            replaceSubscribeToSocketMessages();
+            replaceSubscribeToNotificationUpdates();
             notificationSidebarComponent.ngOnInit();
-            tick(500);
-            notificationService.subscribeToSocketMessages();
             expect(notificationSidebarComponent.notifications.length).to.be.equal(1);
             expect(notificationSidebarComponent.totalNotifications).to.be.equal(1);
-        }));
+        });
 
-        it('should load more notifications only if not all are already loaded', fakeAsync(() => {
+        it('should load more notifications only if not all are already loaded', () => {
             notificationSidebarComponent.notifications = notifications;
             notificationSidebarComponent.totalNotifications = 2;
             sinon.spy(notificationService, 'query');
             notificationSidebarComponent.ngOnInit();
-            tick(500);
             expect(notificationService.query).not.to.be.called;
-        }));
+        });
     });
 
     describe('Recent notifications', () => {
-        it('should evaluate recent notifications correctly', fakeAsync(() => {
+        it('should evaluate recent notifications correctly', () => {
             notificationSidebarComponent.lastNotificationRead = moment().subtract(1, 'day');
             const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
             sinon.replace(notificationService, 'query', fake);
             notificationSidebarComponent.ngOnInit();
-            tick(500);
             expect(notificationService.query).to.be.called;
             expect(notificationSidebarComponent.recentNotificationCount).to.be.equal(1);
-        }));
+        });
 
         it('should show plus sign in recent notification count badge if all loaded notifications are recent notifications', () => {
             notificationSidebarComponent.notifications = notifications;
