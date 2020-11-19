@@ -3,14 +3,13 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { MockRouter } from '../../helpers/mocks/mock-router';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
