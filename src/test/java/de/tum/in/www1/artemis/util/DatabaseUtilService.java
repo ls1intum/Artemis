@@ -1212,8 +1212,11 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
-    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
-        Result result = new Result().participation(submission.getParticipation()).resultString("x of y passed").rated(true).score(100L).assessmentType(assessmentType);
+    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, String resultString, Long score, boolean rated,
+            ZonedDateTime completionDate) {
+        Result result = new Result().participation(submission.getParticipation()).assessmentType(assessmentType).resultString(resultString).score(score).rated(rated)
+                .completionDate(completionDate);
+        result.setAssessor(user);
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setResult(result);
@@ -1221,20 +1224,16 @@ public class DatabaseUtilService {
         return submissionRepository.findWithEagerResultsById(submission.getId()).orElseThrow();
     }
 
+    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
+        return addResultToSubmission(submission, assessmentType, null, "x of y passed", 100L, true, null);
+    }
+
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user) {
-        submission = addResultToSubmission(submission, assessmentType);
-        submission.getResult().completionDate(ZonedDateTime.now());
-        submission.getResult().setAssessor(user);
-        submission.setResult(resultRepo.save(submission.getResult()));
-        return submission;
+        return addResultToSubmission(submission, assessmentType, user, "x of y passed", 100L, true, ZonedDateTime.now());
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Long score, boolean rated) {
-        addResultToSubmission(submission, assessmentType, user);
-        submission.getResult().setRated(rated);
-        submission.getResult().setScore(score);
-        submission.setResult(resultRepo.save(submission.getResult()));
-        return submission;
+        return addResultToSubmission(submission, assessmentType, user, "x of y passed", score, rated, ZonedDateTime.now());
     }
 
     public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
