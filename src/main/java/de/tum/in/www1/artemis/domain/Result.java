@@ -112,7 +112,7 @@ public class Result extends DomainObject {
     private Boolean exampleResult;
 
     @OneToOne(mappedBy = "result", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     @Nullable
     private StudentScore studentScore = null;
