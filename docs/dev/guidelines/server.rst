@@ -153,11 +153,11 @@ Additional notes on the controller methods:
 
 Some parts of these guidelines are adapted from https://medium.com/@madhupathy/ultimate-clean-code-guide-for-java-spring-based-applications-4d4c9095cc2a
 
-15. Solution for known issues
+15. Solutions for known issues
 ==============================
 * ``JpaSystemException: null index column for collection`` caused by ``@OrderColumn`` annotation
     #. Save the child entity (e.g. `Feedback <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/in/www1/artemis/domain/Feedback.java>`_) without connection to the parent entity (e.g. `Result <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/in/www1/artemis/domain/Result.java>`_)
-    #. Add back then connection of the child entity to the parent entity
+    #. Add back the connection of the child entity to the parent entity
     #. Save the parent entity
     #. Always use the returned value after saving the entity e.g. ``result = resultRepo.save(result)``
     #. You can see an example of this `here <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/in/www1/artemis/service/ProgrammingAssessmentService.java#L48>`_
