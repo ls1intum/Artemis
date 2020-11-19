@@ -61,9 +61,9 @@ public abstract class Submission extends DomainObject {
     private List<SubmissionVersion> versions = new ArrayList<>();
 
     /**
-     * A submission can have a result and therefore, results are persisted and removed with a submission.
+     * A submission can have multiple results, therefore, results are persisted and removed with a submission.
      */
-    @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
     @JsonIgnoreProperties({ "submission", "participation" })
     private List<Result> results = new ArrayList<>();
