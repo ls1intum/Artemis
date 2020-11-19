@@ -26,7 +26,9 @@
                     <td>
                         <a [routerLink]="[lecture.id]">{{ lecture.id }}</a>
                     </td>
-                    <td>{{ lecture.title }}</td>
+                    <td>
+                        <a [routerLink]="[lecture.id]">{{ lecture.title }}</a>
+                    </td>
                     <td [innerHTML]="lecture.description | htmlForMarkdown"></td>
                     <td>{{ lecture.startDate | artemisDate }}</td>
                     <td>{{ lecture.endDate | artemisDate }}</td>
