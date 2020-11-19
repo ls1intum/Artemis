@@ -111,29 +111,44 @@ The current data model is more complex and supports more features such as online
 
 ![Data Model](docs/dev/system-design/DataModel.svg "Data Model")
 
-### Universities with Artemis in Use
+### Artemis Community
 
-#### Technical University of Munich
+There is a growing community of university instructors who are using Artemis.
+
+#### Communication
+
+We communicate using Github issues and pull requests. Additionally, you can join us on Slack to ask questions and get support. If you are interested, please send an email to [Stephan Krusche](mailto:krusche@in.tum.de).
+
+#### Universities with Artemis in Use
+
+The following universities are activly using Artemis or are currently evaluating Artemis.
+
+##### Technical University of Munich
 
 * https://artemis.ase.in.tum.de 
 * Main contact person: [Stephan Krusche](mailto:krusche@in.tum.de)
 
-#### LFU Innsbruck, Uni Salzburg, JKU Linz, AAU Klagenfurt
+##### LFU Innsbruck, Uni Salzburg, JKU Linz, AAU Klagenfurt
 
 * https://artemis.codeability.uibk.ac.at
 * [codeAbility project](https://codeability.uibk.ac.at)
 * Main contact person: [Michael Breu](mailto:Michael.Breu@uibk.ac.at)
 
-#### University of Stuttgart
+##### University of Stuttgart
 
 * https://artemis.sqa.ddnss.org
 * Main contact person: [Steffen Becker](mailto:steffen.becker@informatik.uni-stuttgart.de)
 
-#### Universität Bonn
+##### Universität Bonn
 
 * http://alpro.besec.uni-bonn.de 
 * Main contact person: [Alexander Von Trostorff](mailto:s6alvont@uni-bonn.de)
 
-#### Universität Passau
+##### Universität Passau
 
-* Currently, evaluating Artemis
+* Evaluating Artemis
+
+##### Karlsruhe Institute of Technology
+
+* Evaluating Artemis
+

@@ -548,8 +548,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * Returns next programming submission without assessment from the server
      * @param exerciseId the id of the exercise
      */
-    getProgrammingSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<ProgrammingSubmission> {
-        const url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
+    getProgrammingSubmissionForExerciseWithoutAssessment(exerciseId: number, lock = false): Observable<ProgrammingSubmission> {
+        let url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
+        if (lock) {
+            url += '?lock=true';
+        }
         return this.http.get<ProgrammingSubmission>(url);
     }
 
