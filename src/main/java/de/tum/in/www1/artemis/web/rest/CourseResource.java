@@ -157,7 +157,7 @@ public class CourseResource {
         }
 
         validateRegistrationConfirmationMessage(course);
-        validateComplaintsConfig(course);
+        validateComplaintsAndRequestMoreFeedbackConfig(course);
         validateOnlineCourseAndRegistrationEnabled(course);
 
         try {
@@ -270,7 +270,7 @@ public class CourseResource {
         }
 
         validateRegistrationConfirmationMessage(updatedCourse);
-        validateComplaintsConfig(updatedCourse);
+        validateComplaintsAndRequestMoreFeedbackConfig(updatedCourse);
         validateOnlineCourseAndRegistrationEnabled(updatedCourse);
         validateShortName(updatedCourse);
 
@@ -301,7 +301,7 @@ public class CourseResource {
         }
     }
 
-    private void validateComplaintsConfig(Course course) {
+    private void validateComplaintsAndRequestMoreFeedbackConfig(Course course) {
         if (course.getMaxComplaints() == null) {
             // set the default value to prevent null pointer exceptions
             course.setMaxComplaints(3);
@@ -309,10 +309,6 @@ public class CourseResource {
         if (course.getMaxTeamComplaints() == null) {
             // set the default value to prevent null pointer exceptions
             course.setMaxTeamComplaints(3);
-        }
-        if (course.getMaxComplaintTimeDays() == null) {
-            // set the default value to prevent null pointer exceptions
-            course.setMaxComplaintTimeDays(7);
         }
         if (course.getMaxComplaints() < 0) {
             throw new BadRequestAlertException("Max Complaints cannot be negative", ENTITY_NAME, "maxComplaintsInvalid", true);
@@ -323,11 +319,14 @@ public class CourseResource {
         if (course.getMaxComplaintTimeDays() < 0) {
             throw new BadRequestAlertException("Max Complaint Days cannot be negative", ENTITY_NAME, "maxComplaintDaysInvalid", true);
         }
-        if (course.getMaxComplaintTimeDays() == 0 && (course.getMaxComplaints() != 0 || course.getMaxTeamComplaints() != 0 || course.getRequestMoreFeedbackEnabled())) {
+        if (course.getMaxRequestMoreFeedbackTimeDays() < 0) {
+            throw new BadRequestAlertException("Max Request More Feedback Days cannot be negative", ENTITY_NAME, "maxRequestMoreFeedbackDaysInvalid", true);
+        }
+        if (course.getMaxComplaintTimeDays() == 0 && (course.getMaxComplaints() != 0 || course.getMaxTeamComplaints() != 0)) {
             throw new BadRequestAlertException("If complaints or more feedback requests are allowed, the complaint time in days must be positive.", ENTITY_NAME,
                     "complaintsConfigInvalid", true);
         }
-        if (course.getMaxComplaintTimeDays() != 0 && course.getMaxComplaints() == 0 && course.getMaxTeamComplaints() == 0 && !course.getRequestMoreFeedbackEnabled()) {
+        if (course.getMaxComplaintTimeDays() != 0 && course.getMaxComplaints() == 0 && course.getMaxTeamComplaints() == 0) {
             throw new BadRequestAlertException("If no complaints or more feedback requests are allowed, the complaint time in days should be set to zero.", ENTITY_NAME,
                     "complaintsConfigInvalid", true);
         }

@@ -106,6 +106,10 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private boolean studentQuestionsEnabled;
 
+    @Column(name = "max_request_more_feedback_time_days")
+    @JsonView(QuizView.Before.class)
+    private int maxRequestMoreFeedbackTimeDays;
+
     @Column(name = "color")
     private String color;
 
@@ -120,9 +124,6 @@ public class Course extends DomainObject {
 
     @Column(name = "presentation_score")
     private Integer presentationScore;
-
-    @Column(name = "request_more_feedback_enabled")
-    private boolean requestMoreFeedbackEnabled;
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -284,17 +285,17 @@ public class Course extends DomainObject {
         this.maxTeamComplaints = maxTeamComplaints;
     }
 
-    public Integer getMaxComplaintTimeDays() {
+    public int getMaxComplaintTimeDays() {
         return maxComplaintTimeDays;
     }
 
-    public void setMaxComplaintTimeDays(Integer maxComplaintTimeDays) {
+    public void setMaxComplaintTimeDays(int maxComplaintTimeDays) {
         this.maxComplaintTimeDays = maxComplaintTimeDays;
     }
 
     public boolean getComplaintsEnabled() {
         // maxComplaintTimeDays must be larger than zero,
-        // and then either maxComplaints, maxTeamComplaints is larger than zero or requestMoreFeedbackEnabled is active
+        // and then either maxComplaints, maxTeamComplaints is larger than zero
         // See CourseResource for more details on the validation
         return this.maxComplaintTimeDays > 0;
     }
@@ -308,11 +309,15 @@ public class Course extends DomainObject {
     }
 
     public boolean getRequestMoreFeedbackEnabled() {
-        return requestMoreFeedbackEnabled;
+        return maxRequestMoreFeedbackTimeDays > 0;
     }
 
-    public void setRequestMoreFeedbackEnabled(boolean requestMoreFeedbackEnabled) {
-        this.requestMoreFeedbackEnabled = requestMoreFeedbackEnabled;
+    public int getMaxRequestMoreFeedbackTimeDays() {
+        return maxRequestMoreFeedbackTimeDays;
+    }
+
+    public void setMaxRequestMoreFeedbackTimeDays(int maxRequestMoreFeedbackTimeDays) {
+        this.maxRequestMoreFeedbackTimeDays = maxRequestMoreFeedbackTimeDays;
     }
 
     public String getColor() {

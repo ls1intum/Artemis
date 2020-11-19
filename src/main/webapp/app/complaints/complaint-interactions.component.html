@@ -1,4 +1,4 @@
-<div *ngIf="(isExamMode && !noValidFeedbackRequestOrComplaintWasSubmittedWithinTheStudentReviewPeriod) || course?.complaintsEnabled">
+<div *ngIf="(isExamMode && !noValidComplaintWasSubmittedWithinTheStudentReviewPeriod) || course?.complaintsEnabled || course?.requestMoreFeedbackEnabled">
     <div class="mt-4" *ngIf="result && result.completionDate && !hasComplaint && isCurrentUserSubmissionAuthor && !hasRequestMoreFeedback">
         <button
             *ngIf="isExamMode || course?.maxComplaints > 0"
@@ -14,10 +14,10 @@
         <button
             *ngIf="!isExamMode && course?.requestMoreFeedbackEnabled"
             class="btn btn-primary ml-1"
-            [class.not-allowed]="!isTimeOfComplaintValid"
+            [class.not-allowed]="!isTimeOfFeedbackRequestValid"
             (click)="toggleRequestMoreFeedbackForm()"
-            [disabled]="!isTimeOfComplaintValid"
-            title="{{ !isTimeOfComplaintValid ? ('artemisApp.moreFeedback.notAllowedTooltip' | translate) : '' }}"
+            [disabled]="!isTimeOfFeedbackRequestValid"
+            title="{{ !isTimeOfFeedbackRequestValid ? ('artemisApp.moreFeedback.notAllowedTooltip' | translate) : '' }}"
         >
             {{ 'artemisApp.moreFeedback.button' | translate }}
         </button>

@@ -50,6 +50,7 @@ describe('Course Management Update Component', () => {
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
                 studentQuestionsEnabled: new FormControl(entity.studentQuestionsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
+                maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
                 isAtLeastInstructor: new FormControl(entity.isAtLeastInstructor),
             });
@@ -77,6 +78,7 @@ describe('Course Management Update Component', () => {
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
                 studentQuestionsEnabled: new FormControl(entity.studentQuestionsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
+                maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
                 isAtLeastInstructor: new FormControl(entity.isAtLeastInstructor),
             }); // mocking reactive form

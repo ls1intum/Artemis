@@ -23,11 +23,7 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.ErrorOrFailureDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestsuiteDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.*;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class ModelFactory {
@@ -343,12 +339,12 @@ public class ModelFactory {
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String instructorGroupName) {
-        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, instructorGroupName, 3, 3, 7, true, true);
+        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, instructorGroupName, 3, 3, 7, true, 7);
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
-            boolean studentQuestionsEnabled, boolean requestMoreFeedbackEnabled) {
+            boolean studentQuestionsEnabled, int requestMoreFeedbackTimeDays) {
         Course course = new Course();
         course.setId(id);
         course.setTitle("Course title " + UUID.randomUUID().toString());
@@ -359,7 +355,7 @@ public class ModelFactory {
         course.setMaxTeamComplaints(maxTeamComplaints);
         course.setMaxComplaintTimeDays(maxComplaintTimeDays);
         course.setStudentQuestionsEnabled(studentQuestionsEnabled);
-        course.setRequestMoreFeedbackEnabled(requestMoreFeedbackEnabled);
+        course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
         course.setStudentGroupName(studentGroupName);
         course.setTeachingAssistantGroupName(teachingAssistantGroupName);
         course.setInstructorGroupName(instructorGroupName);

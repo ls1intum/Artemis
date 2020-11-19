@@ -37,6 +37,7 @@ export class CourseUpdateComponent implements OnInit {
     showCropper = false;
     presentationScoreEnabled = false;
     complaintsEnabled = true; // default value
+    requestMoreFeedbackEnabled = true; // default value
     customizeGroupNames = false; // default value
 
     shortNamePattern = /^[a-zA-Z][a-zA-Z0-9]{2,}$/; // must start with a letter and cannot contain special characters, at least 3 characters
@@ -55,8 +56,8 @@ export class CourseUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ course }) => {
             this.course = course;
             // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
-            this.complaintsEnabled =
-                (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0 || this.course.requestMoreFeedbackEnabled!) && this.course.maxComplaintTimeDays! > 0;
+            this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;
+            this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -101,7 +102,7 @@ export class CourseUpdateComponent implements OnInit {
                 testCourse: new FormControl(this.course.testCourse),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
-                requestMoreFeedbackEnabled: new FormControl(this.course.requestMoreFeedbackEnabled),
+                requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
                 maxComplaints: new FormControl(this.course.maxComplaints, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
@@ -109,6 +110,9 @@ export class CourseUpdateComponent implements OnInit {
                     validators: [Validators.required, Validators.min(0)],
                 }),
                 maxComplaintTimeDays: new FormControl(this.course.maxComplaintTimeDays, {
+                    validators: [Validators.required, Validators.min(0)],
+                }),
+                maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
                 studentQuestionsEnabled: new FormControl(this.course.studentQuestionsEnabled),
@@ -288,16 +292,27 @@ export class CourseUpdateComponent implements OnInit {
     changeComplaintsEnabled() {
         if (!this.complaintsEnabled) {
             this.complaintsEnabled = true;
-            this.courseForm.controls['requestMoreFeedbackEnabled'].setValue(true);
             this.courseForm.controls['maxComplaints'].setValue(3);
             this.courseForm.controls['maxTeamComplaints'].setValue(3);
             this.courseForm.controls['maxComplaintTimeDays'].setValue(7);
         } else {
             this.complaintsEnabled = false;
-            this.courseForm.controls['requestMoreFeedbackEnabled'].setValue(false);
             this.courseForm.controls['maxComplaints'].setValue(0);
             this.courseForm.controls['maxTeamComplaints'].setValue(0);
             this.courseForm.controls['maxComplaintTimeDays'].setValue(0);
+        }
+    }
+
+    /**
+     * Enable or disable complaints
+     */
+    changeRequestMoreFeedbackEnabled() {
+        if (!this.requestMoreFeedbackEnabled) {
+            this.requestMoreFeedbackEnabled = true;
+            this.courseForm.controls['maxRequestMoreFeedbackTimeDays'].setValue(7);
+        } else {
+            this.requestMoreFeedbackEnabled = false;
+            this.courseForm.controls['maxRequestMoreFeedbackTimeDays'].setValue(0);
         }
     }
 
