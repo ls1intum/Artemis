@@ -53,7 +53,7 @@ export class AlertErrorComponent implements OnDestroy {
                     if (errorHeader) {
                         const entityName = translateService.instant('global.menu.entities.' + entityKey);
                         this.addErrorAlert(errorHeader, errorHeader, { entityName });
-                    } else if (httpErrorResponse.error !== '' && httpErrorResponse.error.fieldErrors) {
+                    } else if (httpErrorResponse.error && httpErrorResponse.error.fieldErrors) {
                         const fieldErrors = httpErrorResponse.error.fieldErrors;
                         for (const fieldError of fieldErrors) {
                             if (['Min', 'Max', 'DecimalMin', 'DecimalMax'].includes(fieldError.message)) {
@@ -64,7 +64,7 @@ export class AlertErrorComponent implements OnDestroy {
                             const fieldName = translateService.instant('artemisApp.' + fieldError.objectName + '.' + convertedField);
                             this.addErrorAlert('Error on field "' + fieldName + '"', 'error.' + fieldError.message, { fieldName });
                         }
-                    } else if (httpErrorResponse.error !== '' && httpErrorResponse.error.message) {
+                    } else if (httpErrorResponse.error && httpErrorResponse.error.message) {
                         this.addErrorAlert(httpErrorResponse.error.message, httpErrorResponse.error.message, httpErrorResponse.error.params);
                     } else {
                         this.addErrorAlert(httpErrorResponse.error);

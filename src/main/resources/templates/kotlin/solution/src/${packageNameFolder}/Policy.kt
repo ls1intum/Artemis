@@ -1,10 +1,7 @@
 package ${packageName}
 
-//TODO: add the missing constructor and members
-class Policy/*<remove>*/(private val context: Context)/*</remove>*/ {
+class Policy(private val context: Context) {
 
-    //TODO: add `configure` method which accepts two boolean parameters
-    /*<remove>*/
     fun configure(timeIsImportant: Boolean, spaceIsImportant: Boolean) {
         if (timeIsImportant && !spaceIsImportant) {
             println("Time is important –> Merge Sort!")
@@ -14,6 +11,4 @@ class Policy/*<remove>*/(private val context: Context)/*</remove>*/ {
             context.sortAlgorithm = QuickSort()
         }
     }
-    /*</remove>*/
-
 }

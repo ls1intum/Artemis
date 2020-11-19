@@ -23,6 +23,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     }
     @Input() exerciseHints: ExerciseHint[] = [];
     @Input() latestResult?: Result;
+    @Input() showTestDetails: boolean;
 
     ngbModalRef?: NgbModalRef;
 
@@ -60,9 +61,11 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
             return;
         }
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.result = this.latestResult;
-        modalRef.componentInstance.feedbackFilter = this.tests;
-        modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
+        const componentInstance = modalRef.componentInstance as ResultDetailComponent;
+        componentInstance.result = this.latestResult;
+        componentInstance.feedbackFilter = this.tests;
+        componentInstance.exerciseType = ExerciseType.PROGRAMMING;
+        componentInstance.showTestDetails = this.showTestDetails;
     }
 
     /**

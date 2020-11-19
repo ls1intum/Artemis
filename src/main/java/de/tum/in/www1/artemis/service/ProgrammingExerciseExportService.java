@@ -321,7 +321,7 @@ public class ProgrammingExerciseExportService {
         }
 
         log.debug("Create temporary zip file for repository " + repository.getLocalPath().toString());
-        Path zippedRepoFile = gitService.zipRepository(repository, REPO_DOWNLOAD_CLONE_PATH);
+        Path zippedRepoFile = gitService.zipRepository(repository, REPO_DOWNLOAD_CLONE_PATH, repositoryExportOptions.isHideStudentNameInZippedFolder());
         pathsToZippedRepos.add(zippedRepoFile);
 
         // if repository is not closed, it causes weird IO issues when trying to delete the repository again

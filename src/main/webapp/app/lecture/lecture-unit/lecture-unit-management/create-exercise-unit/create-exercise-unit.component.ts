@@ -10,7 +10,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { forkJoin, Observable } from 'rxjs';
 import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
-import { LectureService } from 'app/lecture/lecture.service';
 
 @Component({
     selector: 'jhi-create-exercise-unit',
@@ -31,7 +30,6 @@ export class CreateExerciseUnitComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private courseManagementService: CourseManagementService,
-        private lectureService: LectureService,
         private alertService: JhiAlertService,
         private sortService: SortService,
         private exerciseUnitService: ExerciseUnitService,

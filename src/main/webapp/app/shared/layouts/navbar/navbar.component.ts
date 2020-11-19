@@ -109,6 +109,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         let index = 0;
         const parts = fullURI.split('/');
         for (const part of parts) {
+            if (part === '') {
+                continue;
+            }
             const crumb = new Breadcrumb();
             crumb.label = part;
             path += part + '/';

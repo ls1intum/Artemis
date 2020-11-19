@@ -25,10 +25,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.StoredConfig;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -680,6 +681,17 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setStaticCodeAnalysisEnabled(null);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_staticCodeAnalysisAndSequential_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.setSequentialTestRuns(true);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
