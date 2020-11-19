@@ -116,7 +116,7 @@
         </button>
         <button
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            (click)="bulkExportRepos()"
+            type="submit"
             [disabled]="!participationIdList && !participantIdentifierList && !this.repositoryExportOptions.exportAllParticipants && !exportInProgress"
             class="btn btn-default"
             *ngIf="selectedProgrammingExercises.length > 0"
