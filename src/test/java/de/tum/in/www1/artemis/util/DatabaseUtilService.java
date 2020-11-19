@@ -1214,8 +1214,8 @@ public class DatabaseUtilService {
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
         Result result = new Result().participation(submission.getParticipation()).resultString("x of y passed").rated(true).score(100L).assessmentType(assessmentType);
-        result.setSubmission(submission);
         result = resultRepo.save(result);
+        result.setSubmission(submission);
         submission.setResult(result);
         submission = submissionRepository.save(submission);
         return submissionRepository.findWithEagerResultsById(submission.getId()).orElseThrow();
