@@ -22,11 +22,6 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    // needed for correct jackson subtype serialization: see https://github.com/FasterXML/jackson-databind/issues/336#issuecomment-27228643
-    class TextUnitList extends ArrayList<TextUnit> {
-
-    }
-
     @Autowired
     CourseRepository courseRepository;
 
@@ -55,6 +50,11 @@ public class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooB
     TextUnit textUnit;
 
     TextUnit textUnit2;
+
+    // needed for correct jackson subtype serialization: see https://github.com/FasterXML/jackson-databind/issues/336#issuecomment-27228643
+    class TextUnitList extends ArrayList<TextUnit> {
+
+    }
 
     @AfterEach
     public void resetDatabase() {
