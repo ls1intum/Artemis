@@ -285,16 +285,17 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     public void testGetParticipationWithResultsForStudentParticipation_success() throws Exception {
         database.addGradingInstructionsToExercise(programmingExercise);
         programmingExerciseRepository.save(programmingExercise);
-        addStudentParticipationWithResult(AssessmentType.AUTOMATIC, ZonedDateTime.now());
+        addStudentParticipationWithResult(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now());
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
 
-        ProgrammingExerciseStudentParticipation response = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-results-and-feedbacks",
-                HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
+        ProgrammingExerciseStudentParticipation response = request.get(
+                participationsBaseUrl + participation.getId() + "/student-participation-with-latest-manual-result-and-feedbacks", HttpStatus.OK,
+                ProgrammingExerciseStudentParticipation.class);
         ProgrammingExercise exercise = (ProgrammingExercise) response.getExercise();
 
         assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
         assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(1);
-        assertThat(response.getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+        assertThat(response.getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         assertThat(response.getResults().iterator().next().getResultString()).isEqualTo("x of y passed");
     }
 
@@ -302,7 +303,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetParticipationWithResultsForStudentParticipation_notFound() throws Exception {
         StudentParticipation participation = database.createAndSaveParticipationForExercise(programmingExercise, "student1");
-        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-results-and-feedbacks", HttpStatus.NOT_FOUND,
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-manual-result-and-feedbacks", HttpStatus.NOT_FOUND,
                 ProgrammingExerciseStudentParticipation.class);
     }
 
