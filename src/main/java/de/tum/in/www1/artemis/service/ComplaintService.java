@@ -244,9 +244,10 @@ public class ComplaintService {
         else {
             isTimeValid = exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now().minusDays(maxDays));
         }
+
         if (!isTimeValid) {
             StringBuilder message = new StringBuilder("You cannot ");
-            message.append(type == ComplaintType.COMPLAINT ? "submit a complaint" : " request more feedback");
+            message.append(type == ComplaintType.COMPLAINT ? "submit a complaint" : "request more feedback");
             message.append(" for a result that is older than ");
             message.append(switch (maxDays) {
                 case 1 -> "one day";
