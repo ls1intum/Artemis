@@ -98,7 +98,13 @@ entity ProgrammingExercise {        //extends Exercise
 
 enum ProgrammingLanguage {
     JAVA,
-    PYTHON
+    PYTHON,
+    C,
+    HASKELL,
+    KOTLIN,
+    VHDL,
+    ASSEMBLER,
+    SWIFT
 }
 
 entity ModelingExercise {           //extends Exercise
@@ -559,8 +565,6 @@ relationship ManyToMany {
 	MultipleChoiceSubmittedAnswer{selectedOptions} to AnswerOption,
 	TutorParticipation{trainedExampleSubmissions} to ExampleSubmission{tutorParticipations},
 }
-
-paginate Exercise with infinite-scroll
 
 service Course with serviceClass
 service Participation with serviceClass

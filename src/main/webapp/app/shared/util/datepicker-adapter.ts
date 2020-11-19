@@ -13,7 +13,7 @@ export class NgbDateMomentAdapter extends NgbDateAdapter<Moment> {
      * @param date The date as a Moment object
      */
     fromModel(date: Moment): NgbDateStruct {
-        if (date != null && moment.isMoment(date) && date.isValid()) {
+        if (date != undefined && moment.isMoment(date) && date.isValid()) {
             return { year: date.year(), month: date.month() + 1, day: date.date() };
         }
         return { year: moment().year(), month: moment().month() + 1, day: moment().date() };

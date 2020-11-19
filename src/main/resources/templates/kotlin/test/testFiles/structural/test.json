@@ -1,0 +1,83 @@
+[
+    {
+        "class": {
+            "name": "MergeSort",
+            "package": "${packageName}",
+            "interfaces": [ "SortStrategy" ]
+        }
+    },
+    {
+        "class": {
+            "name": "Context",
+            "package": "${packageName}"
+        },
+        "methods": [
+            {
+                "name": "sort",
+                "modifiers": [ "public", "final" ],
+                "returnType": "void"
+            }
+        ],
+        "attributes": [
+            {
+                "name": "sortAlgorithm",
+                "modifiers": [ "private" ],
+                "type": "SortStrategy"
+            },
+            {
+                "name": "array",
+                "modifiers": [ "private" ],
+                "type": "Integer[]"
+            }
+        ]
+    },
+    {
+        "class": {
+            "name": "Policy",
+            "package": "${packageName}"
+        },
+        "methods": [
+            {
+                "name": "configure",
+                "modifiers": [ "public", "final" ],
+                "parameters": [ "boolean", "boolean" ],
+                "returnType": "void"
+            }
+        ],
+        "attributes": [
+            {
+                "name": "context",
+                "modifiers": [ "private", "final" ],
+                "type": "Context"
+            }
+        ],
+        "constructors": [
+            {
+                "modifiers": [ "public" ],
+                "parameters": [ "Context" ]
+            }
+        ]
+    },
+    {
+        "class": {
+            "name": "SortStrategy",
+            "package": "${packageName}",
+            "isInterface": true
+        },
+        "methods": [
+            {
+                "name": "performSort",
+                "modifiers": [ "public", "abstract" ],
+                "parameters": [ "Integer[]" ],
+                "returnType": "void"
+            }
+        ]
+    },
+    {
+        "class": {
+            "name": "QuickSort",
+            "package": "${packageName}",
+            "interfaces": [ "SortStrategy" ]
+        }
+    }
+]

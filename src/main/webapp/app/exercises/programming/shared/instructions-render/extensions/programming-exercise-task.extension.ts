@@ -9,7 +9,8 @@ import { ProgrammingExerciseInstructionService } from 'app/exercises/programming
 import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
@@ -76,6 +77,8 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                 componentRef.instance.taskName = taskName;
                 componentRef.instance.latestResult = this.latestResult;
                 componentRef.instance.tests = tests;
+                componentRef.instance.showTestDetails =
+                    (this.exercise.type === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise).showTestNamesToStudents) || false;
 
                 this.appRef.attachView(componentRef.hostView);
                 const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
@@ -114,7 +117,8 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                             id: nextIndex,
                             completeString: testMatch[0],
                             taskName: testMatch[1],
-                            tests: testMatch[2].split(',').map((s) => s.trim()),
+                            // split the names by "," only when there is not a closing bracket without a previous opening bracket
+                            tests: testMatch[2].split(/,(?![^(]*?\))/).map((s) => s.trim()),
                             hints: testMatch[4] ? testMatch[4].split(',').map((s) => s.trim()) : [],
                         };
                     });

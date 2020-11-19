@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
@@ -41,15 +43,18 @@ public class ProgrammingExerciseParticipationResource {
 
     private AuthorizationCheckService authCheckService;
 
+    private GradingCriterionService gradingCriterionService;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
             ResultService resultService, ProgrammingSubmissionService submissionService, ProgrammingExerciseService programmingExerciseService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, GradingCriterionService gradingCriterionService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationService = participationService;
         this.resultService = resultService;
         this.submissionService = submissionService;
         this.programmingExerciseService = programmingExerciseService;
         this.authCheckService = authCheckService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -77,26 +82,34 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * Get the given student participation with its results and feedbacks.
+     * Get the given student participation with its latest manual result and feedbacks.
      *
-     * @param participationId for which to retrieve the student participation with results and feedbacks.
-     * @return the ResponseEntity with status 200 (OK) and the participation with its results in the body.
+     * @param participationId for which to retrieve the student participation with result and feedbacks.
+     * @return the ResponseEntity with status 200 (OK) and the participation with its result in the body.
      */
-    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-results-and-feedbacks")
+    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-latest-manual-result-and-feedbacks")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> getParticipationWithResultsForStudentParticipation(@PathVariable Long participationId) {
+    public ResponseEntity<Participation> getParticipationWithLatestManualResultForStudentParticipation(@PathVariable Long participationId) {
         Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
-                .findStudentParticipationWithResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(participationId);
+                .findStudentParticipationWithLatestManualResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(participationId);
         if (participation.isEmpty()) {
             return notFound();
         }
         if (!programmingExerciseParticipationService.canAccessParticipation(participation.get())) {
             return forbidden();
         }
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.get().getExercise())) {
-            // hide details that should not be shown to the students
-            participation.get().getExercise().filterSensitiveInformation();
-        }
+
+        // Fetch template and solution participation into exercise of participation
+        ProgrammingExercise exercise = (ProgrammingExercise) participation.get().getExercise();
+        exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
+
+        // Fetch grading criterion into exercise of participation
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+        exercise.setGradingCriteria(gradingCriteria);
+
+        // Set exercise back to participation
+        participation.get().setExercise(exercise);
+
         return ResponseEntity.ok(participation.get());
     }
 

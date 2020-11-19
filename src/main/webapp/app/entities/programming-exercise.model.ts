@@ -10,6 +10,15 @@ export enum ProgrammingLanguage {
     PYTHON = 'PYTHON',
     C = 'C',
     HASKELL = 'HASKELL',
+    KOTLIN = 'KOTLIN',
+    VHDL = 'VHDL',
+    ASSEMBLER = 'ASSEMBLER',
+    SWIFT = 'SWIFT',
+}
+
+export enum ProjectType {
+    MAVEN = 'MAVEN',
+    ECLIPSE = 'ECLIPSE',
 }
 
 export class ProgrammingExercise extends Exercise {
@@ -26,9 +35,13 @@ export class ProgrammingExercise extends Exercise {
     public packageName?: string;
     public problemStatement?: string;
     public sequentialTestRuns?: boolean;
+    public showTestNamesToStudents?: boolean;
+    public checkoutSolutionRepository?: boolean;
 
     public buildAndTestStudentSubmissionsAfterDueDate?: Moment;
     public testCasesChanged?: boolean;
+
+    public projectType?: ProjectType;
 
     // helper attributes
 
@@ -51,5 +64,8 @@ export class ProgrammingExercise extends Exercise {
         this.allowOfflineIde = true; // default value
         this.programmingLanguage = ProgrammingLanguage.JAVA; // default value
         this.noVersionControlAndContinuousIntegrationAvailable = false; // default value
+        this.checkoutSolutionRepository = false; // default value
+        this.projectType = ProjectType.ECLIPSE; // default value
+        this.showTestNamesToStudents = false; // default value
     }
 }

@@ -8,6 +8,7 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,11 +16,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -46,10 +49,12 @@ public class ProgrammingExerciseParticipationService {
 
     private final UserService userService;
 
+    private final GitService gitService;
+
     public ProgrammingExerciseParticipationService(ParticipationService participationService, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ParticipationRepository participationRepository, TeamRepository teamRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, Optional<VersionControlService> versionControlService, UserService userService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, GitService gitService) {
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
@@ -59,6 +64,7 @@ public class ProgrammingExerciseParticipationService {
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
         this.userService = userService;
+        this.gitService = gitService;
     }
 
     public Participation findParticipation(Long participationId) throws EntityNotFoundException {
@@ -150,8 +156,8 @@ public class ProgrammingExerciseParticipationService {
         return studentParticipationRepository.findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
     }
 
-    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(Long participationId) {
-        return studentParticipationRepository.findByIdWithResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(participationId);
+    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestManualResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(Long participationId) {
+        return studentParticipationRepository.findByIdWithLatestManualResultAndFeedbacksAndRelatedSubmissionsAndAssessor(participationId);
     }
 
     /**
@@ -242,16 +248,16 @@ public class ProgrammingExerciseParticipationService {
         return false;
     }
 
-    public boolean canAccessParticipation(ProgrammingExerciseStudentParticipation participation, Principal principal) {
+    private boolean canAccessParticipation(ProgrammingExerciseStudentParticipation participation, Principal principal) {
         return participation.isOwnedBy(principal.getName());
     }
 
-    public boolean canAccessParticipation(SolutionProgrammingExerciseParticipation participation, Principal principal) {
+    private boolean canAccessParticipation(SolutionProgrammingExerciseParticipation participation, Principal principal) {
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
         return authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user);
     }
 
-    public boolean canAccessParticipation(TemplateProgrammingExerciseParticipation participation, Principal principal) {
+    private boolean canAccessParticipation(TemplateProgrammingExerciseParticipation participation, Principal principal) {
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
         return authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user);
     }
@@ -261,16 +267,14 @@ public class ProgrammingExerciseParticipationService {
      * the correct build plan ID and repository URL. Saves the participation after all values have been set.
      *
      * @param newExercise The new exercise for which a participation should be generated
-     * @param projectKey The key of the project of the new exercise
-     * @param solutionPlanName The name for the build plan of the participation
      */
     @NotNull
-    public void setupInitialSolutionParticipation(ProgrammingExercise newExercise, String projectKey, String solutionPlanName) {
-        final String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+    public void setupInitialSolutionParticipation(ProgrammingExercise newExercise) {
+        final String solutionRepoName = newExercise.generateRepositoryName(RepositoryType.SOLUTION);
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
         newExercise.setSolutionParticipation(solutionParticipation);
-        solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
-        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
+        solutionParticipation.setBuildPlanId(newExercise.generateBuildPlanId(BuildPlanType.SOLUTION));
+        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getProjectKey(), solutionRepoName).toString());
         solutionParticipation.setProgrammingExercise(newExercise);
         solutionParticipationRepository.save(solutionParticipation);
     }
@@ -280,15 +284,13 @@ public class ProgrammingExerciseParticipationService {
      * the correct build plan ID and repository URL. Saves the participation after all values have been set.
      *
      * @param newExercise The new exercise for which a participation should be generated
-     * @param projectKey The key of the project of the new exercise
-     * @param templatePlanName The name for the build plan of the participation
      */
     @NotNull
-    public void setupInitalTemplateParticipation(ProgrammingExercise newExercise, String projectKey, String templatePlanName) {
-        final String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
+    public void setupInitalTemplateParticipation(ProgrammingExercise newExercise) {
+        final String exerciseRepoName = newExercise.generateRepositoryName(RepositoryType.TEMPLATE);
         TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
-        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName);
-        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
+        templateParticipation.setBuildPlanId(newExercise.generateBuildPlanId(BuildPlanType.TEMPLATE));
+        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getProjectKey(), exerciseRepoName).toString());
         templateParticipation.setProgrammingExercise(newExercise);
         newExercise.setTemplateParticipation(templateParticipation);
         templateParticipationRepository.save(templateParticipation);
@@ -323,6 +325,34 @@ public class ProgrammingExerciseParticipationService {
         }
         else {
             log.warn("Cannot unlock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+        }
+    }
+
+    /**
+     * Stashes all changes, which were not submitted/committed before the due date, of a programming participation
+     *
+     * @param programmingExercise exercise with information about the due date
+     * @param participation student participation whose not submitted changes will be stashed
+     */
+    public void stashChangesInStudentRepositoryAfterDueDateHasPassed(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
+        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
+            try {
+                if (programmingExercise.getDueDate().isBefore(ZonedDateTime.now())) {
+                    Repository repo = gitService.getOrCheckoutRepository(participation);
+                    gitService.stashChanges(repo);
+                }
+                else {
+                    log.warn("Cannot stash student repository for participation " + participation.getId() + " because the due date has not passed yet!");
+                }
+
+            }
+            catch (InterruptedException | GitAPIException e) {
+                log.error("Stashing student repository for participation" + participation.getId() + " in exercise '" + programmingExercise.getTitle()
+                        + "' did not work as expected: " + e.getMessage());
+            }
+        }
+        else {
+            log.warn("Cannot stash student repository for participation " + participation.getId() + " because the repository was not copied yet!");
         }
     }
 }

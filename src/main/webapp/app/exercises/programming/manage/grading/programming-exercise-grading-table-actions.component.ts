@@ -11,16 +11,16 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
     template: `
         <button
             id="save-table-button"
-            class="btn btn-primary ml-3"
+            class="btn btn-primary ml-3 my-1"
             jhiTranslate="artemisApp.programmingExercise.configureGrading.save"
             (click)="onSave.emit()"
             [disabled]="isSaving || !hasUnsavedChanges"
         ></button>
         <button
             id="reset-table-button"
-            class="btn btn-secondary ml-3"
+            class="btn btn-secondary ml-3 my-1"
             (click)="onReset.emit()"
-            [disabled]="isSaving"
+            [disabled]="isSaving || !hasUpdatedGrading"
             jhiTranslate="artemisApp.programmingExercise.configureGrading.reset"
         ></button>
     `,
@@ -28,6 +28,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 export class ProgrammingExerciseGradingTableActionsComponent {
     @Input() exercise: ProgrammingExercise;
     @Input() hasUnsavedChanges: boolean;
+    @Input() hasUpdatedGrading: boolean;
     @Input() isSaving: boolean;
 
     @Output() onSave = new EventEmitter();

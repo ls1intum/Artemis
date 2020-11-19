@@ -26,8 +26,8 @@ All these exercises are supposed to be run either live in the lecture with insta
    :includehidden:
    :maxdepth: 3
 
-   user/introduction
    user/exercises
+   user/exam_mode
 
 
 .. toctree::
@@ -35,10 +35,12 @@ All these exercises are supposed to be run either live in the lecture with insta
    :includehidden:
    :maxdepth: 3
 
-   dev/system-design
    dev/setup
+   dev/guidelines
+   dev/system-design
    dev/use-local-user-management
    Guided Tour <dev/guided-tour>
+   dev/testservers
 
 
 .. toctree::

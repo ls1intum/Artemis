@@ -312,11 +312,15 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             }
             for (Exercise exercise : course.getExercises()) {
                 if (exercise instanceof ProgrammingExercise) {
-                    final String projectKey = ((ProgrammingExercise) exercise).getProjectKey();
+                    final var programmingExercise = (ProgrammingExercise) exercise;
+                    final String projectKey = programmingExercise.getProjectKey();
+                    final var templateRepoName = programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
+                    final var solutionRepoName = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
+                    final var testsRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
                     bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
-                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase());
-                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.SOLUTION.getName()).toLowerCase());
-                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.TESTS.getName()).toLowerCase());
+                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, templateRepoName);
+                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, solutionRepoName);
+                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, testsRepoName);
                     bitbucketRequestMockProvider.mockDeleteProject(projectKey);
                 }
             }
@@ -536,13 +540,15 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 "instructor");
         Course courseNotActiveFuture = ModelFactory.generateCourse(3L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "tumuser", "tutor",
                 "instructor");
-        courseRepo.save(courseActive);
+        courseActive = courseRepo.save(courseActive);
         courseRepo.save(courseNotActivePast);
         courseRepo.save(courseNotActiveFuture);
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
         assertThat(courses.size()).as("Exactly one course is returned").isEqualTo(1);
-        courses.get(0).setId(courseActive.getId());
         assertThat(courses.get(0)).as("Active course is returned").isEqualTo(courseActive);
+        List<Course> coursesForNotifications = request.getList("/api/courses/for-notifications", HttpStatus.OK, Course.class);
+        assertThat(coursesForNotifications.size()).as("Exactly one course is returned").isEqualTo(1);
+        assertThat(coursesForNotifications.get(0)).as("Active course is returned").isEqualTo(courseActive);
     }
 
     @Test
@@ -635,7 +641,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetCourseForTutorDashboardWithStats() throws Exception {
+    public void testGetCourseForAssessmentDashboardWithStats() throws Exception {
         getCourseForDashboardWithStats(false);
     }
 
@@ -655,7 +661,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "tutor6", roles = "TA")
-    public void testGetCourseForTutorDashboardWithStats_tutorNotInCourse() throws Exception {
+    public void testGetCourseForAssessmentDashboardWithStats_tutorNotInCourse() throws Exception {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/for-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-tutor-dashboard", HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
@@ -663,17 +669,17 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetTutorDashboardStats_withComplaints() throws Exception {
-        getTutorDashboardsStatsWithComplaints(true);
+    public void testGetAssessmentDashboardStats_withComplaints() throws Exception {
+        getAssessmentDashboardsStatsWithComplaints(true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetTutorDashboardStats_withComplaints_withoutPoints() throws Exception {
-        getTutorDashboardsStatsWithComplaints(false);
+    public void testGetAssessmentDashboardStats_withComplaints_withoutPoints() throws Exception {
+        getAssessmentDashboardsStatsWithComplaints(false);
     }
 
-    private void getTutorDashboardsStatsWithComplaints(boolean withPoints) throws Exception {
+    private void getAssessmentDashboardsStatsWithComplaints(boolean withPoints) throws Exception {
         Course testCourse = database.addCourseWithOneReleasedTextExercise();
         var points = withPoints ? 15L : null;
         var leaderboardId = new LeaderboardId(database.getUserByLogin("tutor1").getId(), testCourse.getExercises().iterator().next().getId());

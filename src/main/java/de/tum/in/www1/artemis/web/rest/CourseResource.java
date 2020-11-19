@@ -14,7 +14,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -96,7 +97,7 @@ public class CourseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final TutorDashboardService tutorDashboardService;
+    private final AssessmentDashboardService assessmentDashboardService;
 
     private final AuditEventRepository auditEventRepository;
 
@@ -109,7 +110,7 @@ public class CourseResource {
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
             ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
-            TutorDashboardService tutorDashboardService) {
+            AssessmentDashboardService assessmentDashboardService) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
@@ -128,7 +129,7 @@ public class CourseResource {
         this.vcsUserManagementService = vcsUserManagementService;
         this.auditEventRepository = auditEventRepository;
         this.env = env;
-        this.tutorDashboardService = tutorDashboardService;
+        this.assessmentDashboardService = assessmentDashboardService;
     }
 
     /**
@@ -294,8 +295,8 @@ public class CourseResource {
     }
 
     private void validateRegistrationConfirmationMessage(Course course) {
-        if (course.getRegistrationConfirmationMessage() != null && course.getRegistrationConfirmationMessage().length() > 255) {
-            throw new BadRequestAlertException("Confirmation registration message must be shorter than 255 characters", ENTITY_NAME, "confirmationRegistrationMessageInvalid",
+        if (course.getRegistrationConfirmationMessage() != null && course.getRegistrationConfirmationMessage().length() > 2000) {
+            throw new BadRequestAlertException("Confirmation registration message must be shorter than 2000 characters", ENTITY_NAME, "confirmationRegistrationMessageInvalid",
                     true);
         }
     }
@@ -380,7 +381,7 @@ public class CourseResource {
                     HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationDisabled", "The course does not allow registration. Cannot register user"))
                     .body(null);
         }
-        artemisAuthenticationProvider.registerUserForCourse(user, course);
+        courseService.registerUserForCourse(user, course);
         return ResponseEntity.ok(user);
     }
 
@@ -517,6 +518,20 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/for-notifications
+     *
+     * @return the list of courses (the user has access to)
+     */
+    @GetMapping("/courses/for-notifications")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public List<Course> getAllCoursesForNotifications() {
+        log.debug("REST request to get all Courses the user has access to");
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        return courseService.findAllActiveForUser(user);
+    }
+
+    /**
      * GET /courses/:courseId/for-tutor-dashboard
      *
      * @param courseId the id of the course to retrieve
@@ -524,7 +539,7 @@ public class CourseResource {
      */
     @GetMapping("/courses/{courseId}/for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Course> getCourseForTutorDashboard(@PathVariable long courseId) {
+    public ResponseEntity<Course> getCourseForAssessmentDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
         Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -537,7 +552,7 @@ public class CourseResource {
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
-        tutorDashboardService.prepareExercisesForTutorDashboard(course.getExercises(), tutorParticipations, false);
+        assessmentDashboardService.prepareExercisesForAssessmentDashboard(course.getExercises(), tutorParticipations, false);
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
@@ -551,7 +566,7 @@ public class CourseResource {
      */
     @GetMapping("/courses/{courseId}/stats-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForTutorDashboard(@PathVariable long courseId) {
+    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/stats-for-tutor-dashboard");
 
         Course course = courseService.findOne(courseId);

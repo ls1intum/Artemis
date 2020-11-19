@@ -64,11 +64,13 @@ public class ExerciseService {
 
     private final TeamService teamService;
 
-    public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, QuizScheduleService quizScheduleService,
-            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamRepository studentExamRepository,
-            ExamRepository exampRepository) {
+    private final ExerciseUnitRepository exerciseUnitRepository;
+
+    public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
+            AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
+            QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
+            AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService,
+            StudentExamRepository studentExamRepository, ExamRepository exampRepository) {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = exampRepository;
         this.participationService = participationService;
@@ -83,6 +85,7 @@ public class ExerciseService {
         this.quizExerciseService = quizExerciseService;
         this.quizScheduleService = quizScheduleService;
         this.studentExamRepository = studentExamRepository;
+        this.exerciseUnitRepository = exerciseUnitRepository;
     }
 
     /**
@@ -277,6 +280,9 @@ public class ExerciseService {
         // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
         final var exercise = findOne(exerciseId);
 
+        // delete all exercise units linking to the exercise
+        this.exerciseUnitRepository.removeAllByExerciseId(exerciseId);
+
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
         // clean up the many to many relationship to avoid problems when deleting the entities but not the relationship table
@@ -346,7 +352,7 @@ public class ExerciseService {
     }
 
     /**
-     * Calculates the number of unevaluated complaints and feedback requests for tutor dashboard participation graph
+     * Calculates the number of unevaluated complaints and feedback requests for assessment dashboard participation graph
      *
      * @param examMode should be set to ignore the test run submissions
      * @param exercise the exercise for which the number of unevaluated complaints should be calculated

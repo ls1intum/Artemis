@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import * as moment from 'moment';
+import { now } from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
@@ -12,8 +13,7 @@ import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { cloneDeep, orderBy as _orderBy } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -28,7 +28,7 @@ import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util'
 import { Course } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { now } from 'moment';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -41,14 +41,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     paramSub: Subscription;
     participation: ProgrammingExerciseStudentParticipation;
-    participationForManualResult: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
     submission?: ProgrammingSubmission;
     manualResult?: Result;
     automaticResult?: Result;
     userId: number;
     // for assessment-layout
-    isLoading = false;
     isTestRun = false;
     saveBusy = false;
     submitBusy = false;
@@ -64,6 +62,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     participationCouldNotBeFetched = false;
     showEditorInstructions = true;
     hasAssessmentDueDatePassed: boolean;
+    adjustedRepositoryURL: string;
 
     private get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
@@ -72,7 +71,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     generalFeedback = new Feedback();
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
-    totalScore = 0;
+    automaticFeedback: Feedback[] = [];
+
+    isFirstAssessment = false;
+    lockLimitReached = false;
+
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
         private router: Router,
@@ -85,6 +88,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private translateService: TranslateService,
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
+        private structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -105,20 +109,38 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
-            const participationId = Number(params['participationId']);
-            this.programmingExerciseParticipationService.getStudentParticipationWithResults(participationId).subscribe(
-                (participationWithResults: ProgrammingExerciseStudentParticipation) => {
-                    // Set domain to make file editor work properly
-                    this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
-                    this.participation = participationWithResults;
-                    this.automaticResult = this.getLatestAutomaticResult(this.participation.results);
-                    this.manualResult = this.getLatestManualResult(this.participation.results);
 
-                    // Add participation with manual results to display manual result
-                    this.participationForManualResult = cloneDeep(this.participation);
-                    this.participationForManualResult.results = this.manualResult.hasFeedback ? [this.manualResult] : [];
+            let participationId;
+            if (!params['participationId']) {
+                // Check if error is thrown and show info about error
+                if (this.route.snapshot.data.studentParticipationId.error && this.route.snapshot.data.studentParticipationId.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    this.lockLimitReached = true;
+                    return;
+                } else if (this.route.snapshot.data.studentParticipationId.error.status === 404) {
+                    // there are no unassessed submission, nothing we have to worry about
+                    this.onError('artemisApp.exerciseAssessmentDashboard.noSubmissions');
+                } else if (this.route.snapshot.data.studentParticipationId.error) {
+                    this.onError(this.route.snapshot.data.studentParticipationId.error);
+                    return;
+                }
+                participationId = Number(this.route.snapshot.data.studentParticipationId);
+                // Update the url with the new id, without reloading the page, to make the history consistent
+                const newUrl = window.location.hash.replace('#', '').replace('new', `${participationId}`);
+                this.location.go(newUrl);
+            } else {
+                participationId = Number(params['participationId']);
+            }
+
+            this.programmingExerciseParticipationService.getStudentParticipationWithLatestManualResult(participationId).subscribe(
+                (participationWithResult: ProgrammingExerciseStudentParticipation) => {
+                    // Set domain to make file editor work properly
+                    this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResult]);
+                    this.participation = participationWithResult;
+                    this.manualResult = this.participation.results![0];
+
                     // Either submission from latest manual or automatic result
-                    this.submission = this.getLatestResult(this.participation.results)?.submission as ProgrammingSubmission;
+                    this.submission = this.manualResult.submission as ProgrammingSubmission;
+                    this.submission.participation = this.participation;
                     this.exercise = this.participation.exercise as ProgrammingExercise;
                     this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 
@@ -128,10 +150,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     if (this.manualResult && this.manualResult.hasComplaint) {
                         this.getComplaint();
                     }
+                    this.createAdjustedRepositoryUrl();
                 },
-                () => {
+                (error: HttpErrorResponse) => {
                     this.participationCouldNotBeFetched = true;
-                    this.loadingParticipation = false;
+                    if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                        this.lockLimitReached = true;
+                    }
                 },
                 () => {
                     this.loadingParticipation = false;
@@ -154,7 +179,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     save(): void {
         this.saveBusy = true;
-        this.setFeedbacksForManualResult();
         this.avoidCircularStructure();
         this.manualResultService.save(this.participation.id!, this.manualResult!).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
@@ -167,7 +191,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     submit(): void {
         this.submitBusy = true;
-        this.setFeedbacksForManualResult();
         this.avoidCircularStructure();
         this.manualResultService.save(this.participation.id!, this.manualResult!, true).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
@@ -182,9 +205,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         this.cancelBusy = true;
         if (confirmCancel && this.exercise && this.submission) {
-            // TODO: Implement lock for programming submissions, otherwise cancel will only work when saving before.
-            // this.manualResultService.cancelAssessment(this.submission.id).subscribe(() => this.navigateBack());
-            this.navigateBack();
+            this.manualResultService.cancelAssessment(this.submission.id!).subscribe(() => this.navigateBack());
         }
     }
 
@@ -192,7 +213,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
-        this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exercise.id!).subscribe(
+        this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exercise.id!, true).subscribe(
             (response: ProgrammingSubmission) => {
                 const unassessedSubmission = response;
                 this.router.onSameUrlNavigation = 'reload';
@@ -205,7 +226,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    this.onError('artemisApp.tutorExerciseDashboard.noSubmissions');
+                    this.onError('artemisApp.exerciseAssessmentDashboard.noSubmissions');
+                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    // the lock limit is reached
+                    this.onError('artemisApp.submission.lockedSubmissionsLimitReached');
                 } else {
                     this.onError(error?.message);
                 }
@@ -223,7 +247,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.setFeedbacksForManualResult();
         this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, complaintResponse, this.manualResult!.submission!.id!).subscribe(
             (result: Result) => {
-                this.participationForManualResult.results![0] = this.manualResult = result;
+                this.participation.results![0] = this.manualResult = result;
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
@@ -271,11 +295,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     /**
      * Updates the referenced feedbacks, which are the inline feedbacks added directly in the code.
-     * @param feedbacks Inline feedbacks from th ecode
+     * @param feedbacks Inline feedbacks directly in the code
      */
     onUpdateFeedback(feedbacks: Feedback[]) {
         // Filter out other feedback than manual feedback
-        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != null && feedbackElement.type === FeedbackType.MANUAL);
+        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         this.validateFeedback();
     }
 
@@ -294,10 +318,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     validateFeedback(): void {
         this.calculateTotalScore();
-        const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
-        const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isPresent).length > 0;
+        const hasReferencedFeedback = Feedback.areValid(this.referencedFeedback);
+        const hasUnreferencedFeedback = Feedback.areValid(this.unreferencedFeedback);
         const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
-        this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback || hasUnreferencedFeedback;
+        // When unreferenced feedback is set, it has to be valid (score + detailed text)
+        this.assessmentsAreValid = ((hasReferencedFeedback || hasGeneralFeedback) && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
     }
 
     /**
@@ -307,33 +332,24 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
+    /**
+     * Removes the login from the repositoryURL
+     */
+    private createAdjustedRepositoryUrl() {
+        this.adjustedRepositoryURL = this.participation.repositoryUrl || '';
+        if (this.participation.student && this.participation.repositoryUrl) {
+            const userName = this.participation.student.login + '@';
+            if (this.participation.repositoryUrl.includes(userName)) {
+                this.adjustedRepositoryURL = this.participation.repositoryUrl.replace(userName, '');
+            }
+        }
+    }
+
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
-        this.participationForManualResult.results![0] = this.manualResult = response.body!;
+        this.participation.results![0] = this.manualResult = response.body!;
         this.jhiAlertService.clear();
         this.jhiAlertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
-    }
-
-    private getLatestResult(results?: Result[]) {
-        const sortedResults = this.sortResults(results);
-        return sortedResults.length > 0 ? sortedResults[0] : undefined;
-    }
-
-    private sortResults(results?: Result[]) {
-        return _orderBy(results || [], 'id', 'desc');
-    }
-
-    private getLatestAutomaticResult(results?: Result[]) {
-        const automaticResults = (results || []).filter((result) => result.assessmentType === AssessmentType.AUTOMATIC);
-        const sortedResults = this.sortResults(automaticResults);
-        return sortedResults.length > 0 ? sortedResults[0] : undefined;
-    }
-
-    private getLatestManualResult(results?: Result[]): Result {
-        const manualResults = (results || []).filter((result) => result.assessmentType === AssessmentType.MANUAL);
-        const sortedResults = this.sortResults(manualResults);
-        const initialManualResult = new Result();
-        return sortedResults.length > 0 ? sortedResults[0] : initialManualResult;
     }
 
     /**
@@ -367,12 +383,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleFeedback(): void {
-        // Setup feedbacks
         const feedbacks = this.manualResult?.feedbacks || [];
-        this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+        this.automaticFeedback = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC);
+        // When manual result only contains automatic feedback elements (when assessing for the first time), no manual assessment was yet saved or submitted.
+        if (feedbacks.length === this.automaticFeedback.length) {
+            this.isFirstAssessment = true;
+        }
 
-        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != null && feedbackElement.type === FeedbackType.MANUAL);
-        const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
+        this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
+        const generalFeedbackIndex = feedbacks.findIndex(
+            (feedbackElement) =>
+                feedbackElement.reference == undefined && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED && feedbackElement.type !== FeedbackType.AUTOMATIC,
+        );
         if (generalFeedbackIndex !== -1) {
             this.generalFeedback = feedbacks[generalFeedbackIndex];
         } else {
@@ -383,20 +406,82 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private setFeedbacksForManualResult() {
         if (Feedback.hasDetailText(this.generalFeedback)) {
-            this.manualResult!.feedbacks = [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback];
+            this.manualResult!.feedbacks = [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
         } else {
-            this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback];
+            this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
         }
+    }
+
+    private setAttributesForManualResult(totalScore: number) {
+        this.setFeedbacksForManualResult();
+        // Manual result is always rated and has feedback
+        this.manualResult!.rated = true;
+        this.manualResult!.hasFeedback = true;
+        // Append the automatic result string which the manual result holds with the score part, to create the manual result string
+        if (this.isFirstAssessment) {
+            this.manualResult!.resultString += this.exercise.maxScore ? `, ${totalScore} of ${this.exercise.maxScore} points` : `, ${totalScore} points`;
+            this.isFirstAssessment = false;
+        } else {
+            /* Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated,
+             * as the points the student has achieved have changed
+             */
+            const resultStringParts: string[] = this.manualResult!.resultString!.split(', ');
+            // When no maxScore is set, then show only the achieved points
+            resultStringParts[resultStringParts.length - 1] = this.exercise.maxScore ? `${totalScore} of ${this.exercise.maxScore} points` : `${totalScore} points`;
+            this.manualResult!.resultString = resultStringParts.join(', ');
+        }
+
+        this.manualResult!.score = this.exercise.maxScore ? Math.round((totalScore / this.exercise.maxScore!) * 100) : 100;
+        // This is done to update the result string in result.component.ts
+        this.manualResult = cloneDeep(this.manualResult);
     }
 
     private avoidCircularStructure() {
         if (this.manualResult?.participation?.results) {
             this.manualResult.participation.results = [];
         }
+        if (this.manualResult?.submission?.participation?.results) {
+            this.manualResult.submission.participation.results = [];
+        }
     }
 
     private calculateTotalScore() {
-        const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback];
-        this.totalScore = (feedbacks || []).reduce((totalScore, feedback) => totalScore + feedback.credits!, 0);
+        const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
+        const maxPoints = this.exercise.maxScore! + (this.exercise.bonusPoints! ?? 0.0);
+        let totalScore = 0.0;
+        let scoreAutomaticTests = 0.0;
+        const gradingInstructions = {}; // { instructionId: noOfEncounters }
+
+        feedbacks.forEach((feedback) => {
+            // Check for feedback from automatic tests and store them separately
+            if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isStaticCodeAnalysisFeedback(feedback)) {
+                scoreAutomaticTests += feedback.credits!;
+            } else {
+                if (feedback.gradingInstruction) {
+                    totalScore = this.structuredGradingCriterionService.calculateScoreForGradingInstructions(feedback, totalScore, gradingInstructions);
+                } else {
+                    totalScore += feedback.credits!;
+                }
+            }
+        });
+
+        // Cap automatic test feedback to maxScore + bonus points of exercise
+        if (scoreAutomaticTests > maxPoints) {
+            scoreAutomaticTests = maxPoints;
+        }
+        totalScore += scoreAutomaticTests;
+        // Do not allow negative score
+        if (totalScore < 0) {
+            totalScore = 0;
+        }
+        // Cap totalScore to maxPoints
+        if (totalScore > maxPoints) {
+            totalScore = maxPoints;
+        }
+
+        totalScore = +totalScore.toFixed(2);
+
+        // Set attributes of manual result
+        this.setAttributesForManualResult(totalScore);
     }
 }

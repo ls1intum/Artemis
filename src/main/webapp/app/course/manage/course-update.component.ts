@@ -14,6 +14,7 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-course-update',
@@ -96,6 +97,8 @@ export class CourseUpdateComponent implements OnInit {
                 description: new FormControl(this.course.description),
                 startDate: new FormControl(this.course.startDate),
                 endDate: new FormControl(this.course.endDate),
+                semester: new FormControl(this.course.semester),
+                testCourse: new FormControl(this.course.testCourse),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(this.course.requestMoreFeedbackEnabled),
@@ -111,7 +114,7 @@ export class CourseUpdateComponent implements OnInit {
                 studentQuestionsEnabled: new FormControl(this.course.studentQuestionsEnabled),
                 registrationEnabled: new FormControl(this.course.registrationEnabled),
                 registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
-                    validators: [Validators.maxLength(255)],
+                    validators: [Validators.maxLength(2000)],
                 }),
                 presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
                     Validators.min(1),
@@ -314,11 +317,33 @@ export class CourseUpdateComponent implements OnInit {
             this.courseForm.controls['instructorGroupName'].setValue(undefined);
         }
     }
+
+    /**
+     * Enable or disable test course
+     */
+    changeTestCourseEnabled() {
+        this.course.testCourse = !this.course.testCourse;
+    }
+
+    /**
+     * Returns a string array of possible semester values
+     */
+    getSemesters() {
+        // 2018 is the first year we offer semesters for and go one year into the future
+        const years = moment().year() - 2018 + 1;
+        // Add an empty semester as default value
+        const semesters: string[] = [''];
+        for (let i = 0; i <= years; i++) {
+            semesters[2 * i + 1] = 'SS' + (18 + i);
+            semesters[2 * i + 2] = 'WS' + (18 + i) + '/' + (19 + i);
+        }
+        return semesters;
+    }
 }
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {
     const onlineCourse = formGroup.controls['onlineCourse'].value;
     const registrationEnabled = formGroup.controls['registrationEnabled'].value;
     // it cannot be the case that both values are true
-    return onlineCourse != null && registrationEnabled != null && !(onlineCourse && registrationEnabled) ? null : { range: true };
+    return onlineCourse != undefined && registrationEnabled != undefined && !(onlineCourse && registrationEnabled) ? null : { range: true };
 };

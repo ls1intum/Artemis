@@ -1,4 +1,4 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/textblock-feedback-editor/textblock-feedback-editor.component';
@@ -9,6 +9,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { FeedbackConflict } from 'app/entities/feedback-conflict';
 
 describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;
@@ -87,5 +88,55 @@ describe('TextblockFeedbackEditorComponent', () => {
         confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeTruthy();
         expect(confirm).toBeFalsy();
+    });
+
+    it('should put the badge and the text correctly for feedback conflicts', () => {
+        component.feedback.conflictingTextAssessments = [new FeedbackConflict()];
+        fixture.detectChanges();
+        const badge = compiled.querySelector('.badge-warning fa-icon[ng-reflect-icon="balance-scale-right"]');
+        expect(badge).toBeTruthy();
+        const text = compiled.querySelector('[jhiTranslate$=conflictingAssessments]');
+        expect(text).toBeTruthy();
+    });
+
+    it('should focus to the text area if it is left conflicting feedback', () => {
+        component.feedback.credits = 0;
+        component.feedback.detailText = 'Lorem Ipsum';
+        component.conflictMode = true;
+        component.isConflictingFeedback = true;
+        component.isLeftConflictingFeedback = true;
+        fixture.detectChanges();
+
+        spyOn(component['textareaElement'], 'focus');
+        component.focus();
+
+        expect(component['textareaElement'].focus).toHaveBeenCalled();
+    });
+
+    it('should not focus to the text area if it is right conflicting feedback', () => {
+        component.feedback.credits = 0;
+        component.feedback.detailText = 'Lorem Ipsum';
+        component.conflictMode = true;
+        component.isConflictingFeedback = true;
+        component.isLeftConflictingFeedback = false;
+        fixture.detectChanges();
+
+        spyOn(component['textareaElement'], 'focus');
+        component.focus();
+
+        expect(component['textareaElement'].focus).toHaveBeenCalledTimes(0);
+    });
+
+    it('should call escKeyup when keyEvent', () => {
+        component.feedback.credits = 0;
+        component.feedback.detailText = '';
+        spyOn(component, 'escKeyup');
+        const event = new KeyboardEvent('keydown', {
+            key: 'Esc',
+        });
+        const textarea = fixture.nativeElement.querySelector('textarea');
+        textarea.dispatchEvent(event);
+        fixture.detectChanges();
+        expect(component.escKeyup).toHaveBeenCalled();
     });
 });

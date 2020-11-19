@@ -10,15 +10,15 @@ import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
  */
 public class StaticCodeAnalysisDefaultCategory {
 
-    private String name;
+    private final String name;
 
-    private Double penalty;
+    private final Double penalty;
 
-    private Double maxPenalty;
+    private final Double maxPenalty;
 
-    private CategoryState state;
+    private final CategoryState state;
 
-    private List<CategoryMapping> categoryMappings;
+    private final List<CategoryMapping> categoryMappings;
 
     public StaticCodeAnalysisDefaultCategory(String name, Double penalty, Double maxPenalty, CategoryState state, List<CategoryMapping> categoryMappings) {
         this.name = name;
@@ -50,9 +50,9 @@ public class StaticCodeAnalysisDefaultCategory {
 
     public static class CategoryMapping {
 
-        private StaticCodeAnalysisTool tool;
+        private final StaticCodeAnalysisTool tool;
 
-        private String category;
+        private final String category;
 
         public CategoryMapping(StaticCodeAnalysisTool tool, String category) {
             this.tool = tool;

@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 
 /**
- * A ApollonDiagram.
+ * An ApollonDiagram.
  */
 @Entity
 @Table(name = "apollon_diagram")

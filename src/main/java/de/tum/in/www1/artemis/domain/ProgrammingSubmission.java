@@ -9,12 +9,14 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A ProgrammingSubmission.
  */
 @Entity
 @DiscriminatorValue(value = "P")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingSubmission extends Submission {
 
     @Column(name = "commit_hash")

@@ -1,24 +1,33 @@
 package ${packageName};
 
-import static org.junit.Assert.fail;
+import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.List;
 import java.lang.reflect.InvocationTargetException;
 import java.text.*;
 import java.util.*;
 
-import org.junit.*;
+import static de.tum.in.test.api.util.ReflectionTestUtils.*;
+
+import de.tum.in.test.api.BlacklistPath;
+import de.tum.in.test.api.PathType;
+import de.tum.in.test.api.StrictTimeout;
+import de.tum.in.test.api.WhitelistPath;
+import de.tum.in.test.api.jupiter.Public;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 3.0 (25.09.2019)
+ * @version 5.0 (11.11.2020)
  */
-public class SortingExampleBehaviorTest extends BehaviorTest {
+@WhitelistPath("target")
+@BlacklistPath(value = "**Test*.{java,class}", type = PathType.GLOB)
+@Public
+public class SortingExampleBehaviorTest {
 
     private List<Date> dates;
     private List<Date> datesWithCorrectOrder;
 
-    @Before
+    @BeforeEach
     public void setup() throws ParseException {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         Date date1 = dateFormat.parse("08.11.2018");
@@ -30,7 +39,8 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
         this.datesWithCorrectOrder = Arrays.asList(date3, date2, date4, date1);
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @StrictTimeout(1)
     public void testBubbleSort() {
         BubbleSort bubbleSort = new BubbleSort();
         bubbleSort.performSort(dates);
@@ -39,7 +49,8 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
         }
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @StrictTimeout(1)
     public void testMergeSort() {
         MergeSort mergeSort = new MergeSort();
         mergeSort.performSort(dates);
@@ -48,7 +59,8 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
         }
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @StrictTimeout(1)
     public void testUseMergeSortForBigList() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException, ClassNotFoundException {
         List<Date> bigList = new ArrayList<Date>();
         for (int i = 0; i < 11; i++) {
@@ -60,7 +72,8 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
         }
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @StrictTimeout(1)
     public void testUseBubbleSortForSmallList()  throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException, ClassNotFoundException {
         List<Date> smallList = new ArrayList<Date>();
         for (int i = 0; i < 3; i++) {

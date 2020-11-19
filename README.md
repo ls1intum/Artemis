@@ -19,37 +19,37 @@ Artemis supports the following exercises:
 4. **[Text exercises](docs/user/exercises/textual.rst)** with manual (and experimental semi-automatic) assessment
 5. **[File upload exercises](docs/user/exercises/file-upload.rst)** with manual assessment
 
-All these exercises are supposed to be run either live in the lecture with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
+Artemis supports all these exercises to run either live in the lecture with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
 
-## Development setup
+Artemis also supports an exam mode now. You can find more information on [Exam mode student features](https://artemis.ase.in.tum.de/#/features/students) and on [Exam mode instructor features](https://artemis.ase.in.tum.de/#/features/instructors).
 
-Find here a guide on [how to set up your local development environment](docs/dev/setup.rst).
+## Setup, guides and contributing
 
-## Server Setup for Programming Exercises
+### Development setup, coding and design guidelines
 
-You can find the guide for setting up Artemis in conjunction with Jenkins and GitLab [here](docs/dev/setup/jenkins-gitlab.rst) and Bamboo/Bitbucket/Jira [here](docs/dev/setup/bamboo-bitbucket-jira.rst)
+* [How to set up your local development environment](docs/dev/setup.rst)
+* [Server coding and design guidelines](docs/dev/guidelines/server.rst)
+* [Client coding and design guidelines](docs/dev/guidelines/client.rst)
 
-## Administration setup
+### Documentation
 
-You can find information on how to setup user registration [here](docs/admin/registration.rst)
+[Read the Docs](https://readthedocs.org) hosts the [Artemis documentation](https://artemis-platform.readthedocs.io).
+You can find a guide on [how to write documentation](docs/README.md).
 
-## Contributing 
+### Server setup
 
-Find here a guide on [how to contribute](/CONTRIBUTING.md) to Artemis.
+You can find the guide for setting up Artemis in conjunction with either `GitLab and Jenkins` [here](docs/dev/setup/jenkins-gitlab.rst) or with `Jira, Bitbucket and Bamboo` [here](docs/dev/setup/bamboo-bitbucket-jira.rst).
+Artemis uses these external tools for user management and the configuration of programming exercises.
 
-## Top-Level Design
+### Administration setup
 
-The following diagram shows the top-level design of Artemis which is decomposed into an application client (running as Angular web app in the browser) and an application server (based on Spring Boot). For programming exercises, the application server connects to a version control system (VCS) and a continuous integration system (CIS). Authentication is handled by an external user management system (UMS).
+You can find information on how to set up user registration [here](docs/admin/registration.rst)
 
-![Top-Level Design](docs/dev/system-design/TopLevelDesign.png "Top-Level Design")
+### Contributing 
 
-While Artemis includes generic adapters to these three external systems with a defined protocol that can be instantiated to connect to any VCS, CIS or UMS, it also provides 3 concrete implementations for these adapters to connect to:
+Please read the guid on [how to contribute](/CONTRIBUTING.md) to Artemis.
 
-1. **VCS:** Atlassian Bitbucket Server
-2. **CIS:** Atlassian Bamboo Server
-3. **UMS:** Atlassian JIRA Server (more specifically Atlassian Crowd on the JIRA Server)
-
-## Building for production
+### Building for production
 
 To build and optimize the Artemis application for production, run:
 
@@ -75,7 +75,25 @@ The following command can automate the deployment to a server. The example shows
 ./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-4.4.5.war
 ```
 
-## Deployment
+## Architecture
+
+The following diagram shows the top level design of Artemis which is decomposed into an application client (running as Angular web app in the browser) and an application server (based on Spring Boot). For programming exercises, the application server connects to a version control system (VCS) and a continuous integration system (CIS). Authentication is handled by an external user management system (UMS).
+
+![Top-Level Design](docs/dev/system-design/TopLevelDesign.png "Top-Level Design")
+
+While Artemis includes generic adapters to these three external systems with a defined protocol that can be instantiated to connect to any VCS, CIS or UMS, it also provides 3 concrete implementations for these adapters to connect to:
+
+1. **VCS:** Atlassian Bitbucket Server
+2. **CIS:** Atlassian Bamboo Server
+3. **UMS:** Atlassian JIRA Server (more specifically Atlassian Crowd on the JIRA Server)
+
+### Server architecture
+
+The following UML component diagram shows more details of the Artemis application server architecture and its REST interfaces to the application client.
+
+![Server Architecture](docs/dev/system-design/ServerArchitecture.png "Server Architecture")
+
+### Deployment
 
 The following UML deployment diagram shows a typical deployment of Artemis application server and application client. Student, Instructor and Teaching Assistant (TA) computers are all equipped equally with the Artemis application client being displayed in the browser.
 
@@ -83,21 +101,54 @@ The Continuous Integration Server typically delegates the build jobs to local bu
 
 ![Deployment Overview](docs/dev/system-design/DeploymentOverview.svg "Deployment Overview")
 
+### Data model
 
-## Data Model
-
-The Artemis application server used the following data model in the MySQL database. It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. 
-Then a repository and a build plan for the student (User) will be created and configured. The initialization state variable (Enum) helps to track the progress of this complex operation and allows to recover from errors. 
-A student can submit multiple solutions by committing and pushing the source code changes to a given example code into the version control system or using the user interface. Each submission is automatically tested by the continuous integration server, which notifies the Artemis application server, when a new result exists. 
+The Artemis application server uses the following (simplified) data model in the MySQL database (note that the figure does not include all entities, attributes and relationships). It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. 
+Then a repository and a build plan for the student (User) will be created and configured. The initialization state variable (Enum) helps to track the progress of this complex operation and allows recovering from errors. 
+A student can submit multiple solutions by committing and pushing the source code changes to a given example code into the version control system or using the user interface. The continuous integration server automatically tests each submission, and notifies the Artemis application server, when a new result exists. 
 In addition, teaching assistants can assess student solutions and "manually" create results.
-The current data model is more complex and supports different types of exercises such as programming exercises, modeling exercises, quiz, and text exercises.
+The current data model is more complex and supports more features such as online exams, lectures, student questions and static code analysis.
 
 ![Data Model](docs/dev/system-design/DataModel.svg "Data Model")
 
+### Artemis Community
 
-## Server Architecture
+There is a growing community of university instructors who are using Artemis.
 
-The following UML component diagram shows more details of the Artemis application server architecture and its REST interfaces to the application client.
+#### Communication
 
-![Server Architecture](docs/dev/system-design/ServerArchitecture.png "Server Architecture")
+We communicate using Github issues and pull requests. Additionally, you can join us on Slack to ask questions and get support. If you are interested, please send an email to [Stephan Krusche](mailto:krusche@in.tum.de).
+
+#### Universities with Artemis in Use
+
+The following universities are activly using Artemis or are currently evaluating Artemis.
+
+##### Technical University of Munich
+
+* https://artemis.ase.in.tum.de 
+* Main contact person: [Stephan Krusche](mailto:krusche@in.tum.de)
+
+##### LFU Innsbruck, Uni Salzburg, JKU Linz, AAU Klagenfurt
+
+* https://artemis.codeability.uibk.ac.at
+* [codeAbility project](https://codeability.uibk.ac.at)
+* Main contact person: [Michael Breu](mailto:Michael.Breu@uibk.ac.at)
+
+##### University of Stuttgart
+
+* https://artemis.sqa.ddnss.org
+* Main contact person: [Steffen Becker](mailto:steffen.becker@informatik.uni-stuttgart.de)
+
+##### Universität Bonn
+
+* http://alpro.besec.uni-bonn.de 
+* Main contact person: [Alexander Von Trostorff](mailto:s6alvont@uni-bonn.de)
+
+##### Universität Passau
+
+* Evaluating Artemis
+
+##### Karlsruhe Institute of Technology
+
+* Evaluating Artemis
 

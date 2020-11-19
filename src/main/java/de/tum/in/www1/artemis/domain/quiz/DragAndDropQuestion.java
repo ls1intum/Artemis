@@ -10,6 +10,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -24,6 +25,7 @@ import de.tum.in.www1.artemis.service.FileService;
 @Entity
 @DiscriminatorValue(value = "DD")
 @JsonTypeName("drag-and-drop")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragAndDropQuestion extends QuizQuestion {
 
     @Transient
@@ -154,8 +156,8 @@ public class DragAndDropQuestion extends QuizQuestion {
     @PostLoad
     public void onLoad() {
         // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
-        if (backgroundFilePath != null && backgroundFilePath.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
-            backgroundFilePath = backgroundFilePath.replace(Constants.FILEPATH_ID_PLACHEOLDER, getId().toString());
+        if (backgroundFilePath != null && backgroundFilePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
+            backgroundFilePath = backgroundFilePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
         }
         // save current path as old path (needed to know old path in onUpdate() and onDelete())
         prevBackgroundFilePath = backgroundFilePath;
@@ -170,8 +172,8 @@ public class DragAndDropQuestion extends QuizQuestion {
     @PostPersist
     public void afterCreate() {
         // replace placeholder with actual id if necessary (id is no longer null at this point)
-        if (backgroundFilePath != null && backgroundFilePath.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
-            backgroundFilePath = backgroundFilePath.replace(Constants.FILEPATH_ID_PLACHEOLDER, getId().toString());
+        if (backgroundFilePath != null && backgroundFilePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
+            backgroundFilePath = backgroundFilePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
         }
     }
 

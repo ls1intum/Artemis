@@ -109,6 +109,7 @@
             },
             "lectureDetails": {
                 "description": "Beschreibung",
+                "lectureUnits": "Vorlesungseinheiten",
                 "attachments": "Anhänge",
                 "noAttachments": "Für diese Vorlesung sind keine Anhänge verfügbar.",
                 "date": "Datum",
@@ -119,10 +120,11 @@
             "exerciseDetails": {
                 "dueDate": "Einreichungsfrist:",
                 "categories": "Kategorien:",
-                "exerciseType": "Aufgaben-Typ:",
+                "type": "Typ:",
                 "difficulty": "Schwierigkeit:",
                 "exerciseStatus": "Aufgaben Status:",
-                "maxPoints": "Max. Punkte:",
+                "points": "Punkte:",
+                "bonus": "Bonus:",
                 "problemStatement": "Problemstellung:",
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {

@@ -13,6 +13,7 @@
         "resultStringNull": "Fehler! Ein Ergebnis Text ist erforderlich.",
         "resultStringTooLong": "Fehler! Der Ergebnis Text ist zu lange (max. 255 Zeichen)",
         "scoreNull": "Fehler! Eine Bewertung is erforderlich.",
+        "resultNotRated": "Fehler! Ein Ergebnis muss bewertet sein.",
         "submissionMissing": "Fehler! Die Abgabe ist nicht mehr mit dem Ergebnis verknüpft. Deine Änderungen wurden abgelehnt.",
         "resultAlreadyExists": "Es existiert bereits ein Ergebnis für diesen Studenten für diese Übung.",
         "scoreAndSuccessfulNotMatching": "Fehler! Nur ein Ergebnise mit 100% kann erfolgreich sein.",

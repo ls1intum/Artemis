@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { StudentQuestion } from 'app/entities/student-question.model';
 import { StudentQuestionService } from 'app/overview/student-questions/student-question/student-question.service';
@@ -26,23 +27,19 @@ export class StudentQuestionComponent implements OnInit {
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactQuestion = new EventEmitter<StudentQuestionAction>();
-    isQuestionAuthor = false;
     editText?: string;
     isEditMode: boolean;
     EditorMode = EditorMode;
     courseId: number;
 
-    constructor(private studentQuestionService: StudentQuestionService) {}
+    constructor(private studentQuestionService: StudentQuestionService, private route: ActivatedRoute) {}
 
     /**
      * checks if the user is the author of the question
      * sets the question text as the editor text
      */
     ngOnInit(): void {
-        if (this.user) {
-            this.isQuestionAuthor = this.studentQuestion.author!.id === this.user.id;
-            this.courseId = this.studentQuestion.exercise ? this.studentQuestion.exercise.course!.id! : this.studentQuestion.lecture!.course!.id!;
-        }
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.editText = this.studentQuestion.questionText;
     }
 
@@ -99,5 +96,14 @@ export class StudentQuestionComponent implements OnInit {
                 studentQuestion: this.studentQuestion,
             });
         });
+    }
+
+    /**
+     * Takes a studentQuestion and determines if the user is the author of it
+     * @param {StudentQuestion} studentQuestion
+     * @returns {boolean}
+     */
+    isAuthorOfQuestion(studentQuestion: StudentQuestion): boolean {
+        return this.user ? studentQuestion.author!.id === this.user.id : false;
     }
 }

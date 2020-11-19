@@ -11,18 +11,11 @@ public class JenkinsBuildPlanCreatorProvider {
 
     private final JavaJenkinsBuildPlanCreator javaJenkinsBuildPlanCreator;
 
-    private final PythonJenkinsBuildPlanCreator pythonJenkinsBuildPlanCreator;
+    private final DefaultJenkinsBuildPlanCreator defaultJenkinsBuildPlanCreator;
 
-    private final CJenkinsBuildPlanCreator cJenkinsBuildPlanCreator;
-
-    private final HaskellJenkinsBuildPlanCreator haskellJenkinsBuildPlanCreator;
-
-    public JenkinsBuildPlanCreatorProvider(JavaJenkinsBuildPlanCreator javaJenkinsBuildPlanCreator, PythonJenkinsBuildPlanCreator pythonJenkinsBuildPlanCreator,
-            CJenkinsBuildPlanCreator cJenkinsBuildPlanCreator, HaskellJenkinsBuildPlanCreator haskellJenkinsBuildPlanCreator) {
+    public JenkinsBuildPlanCreatorProvider(JavaJenkinsBuildPlanCreator javaJenkinsBuildPlanCreator, DefaultJenkinsBuildPlanCreator defaultJenkinsBuildPlanCreator) {
         this.javaJenkinsBuildPlanCreator = javaJenkinsBuildPlanCreator;
-        this.pythonJenkinsBuildPlanCreator = pythonJenkinsBuildPlanCreator;
-        this.cJenkinsBuildPlanCreator = cJenkinsBuildPlanCreator;
-        this.haskellJenkinsBuildPlanCreator = haskellJenkinsBuildPlanCreator;
+        this.defaultJenkinsBuildPlanCreator = defaultJenkinsBuildPlanCreator;
     }
 
     /**
@@ -34,11 +27,11 @@ public class JenkinsBuildPlanCreatorProvider {
      */
     public JenkinsXmlConfigBuilder builderFor(ProgrammingLanguage programmingLanguage) {
         return switch (programmingLanguage) {
-            case JAVA -> javaJenkinsBuildPlanCreator;
-            case PYTHON -> pythonJenkinsBuildPlanCreator;
-            case C -> cJenkinsBuildPlanCreator;
-            case HASKELL -> haskellJenkinsBuildPlanCreator;
-            default -> throw new IllegalArgumentException("Unsupported programming language for new Jenkins job!");
+            case JAVA, KOTLIN -> javaJenkinsBuildPlanCreator;
+            case PYTHON, C, HASKELL -> defaultJenkinsBuildPlanCreator;
+            case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
+            case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
+            case SWIFT -> throw new UnsupportedOperationException("Swift templates are not available for Jenkins.");
         };
     }
 }

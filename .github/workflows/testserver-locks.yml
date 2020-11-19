@@ -1,0 +1,19 @@
+name: Testserver Locks
+
+on:
+  pull_request_target:
+    types: [labeled]
+  issues:
+    types: [labeled]
+    
+jobs:
+  noManualSetOfLockLabel:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions-ecosystem/action-remove-labels@v1
+      if: startsWith(github.event.label.name, 'lock:artemistest') || startsWith(join(github.event.pull_request.labels.*.name), 'lock:artemisteste')
+      with:
+        github_token: ${{ secrets.github_token }}
+        labels: |
+          lock:artemistest5

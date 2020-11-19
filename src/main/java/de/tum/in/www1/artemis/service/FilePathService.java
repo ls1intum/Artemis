@@ -16,9 +16,6 @@ public class FilePathService {
     private static String FILE_UPLOAD_PATH;
 
     @Value("${artemis.file-upload-path}")
-    private String fileUploadPath;
-
-    @Value("${artemis.file-upload-path}")
     public void setFileUploadPathStatic(String fileUploadPath) {
         FilePathService.FILE_UPLOAD_PATH = fileUploadPath;
     }
@@ -41,6 +38,10 @@ public class FilePathService {
 
     public static String getLectureAttachmentFilepath() {
         return FILE_UPLOAD_PATH + File.separator + "attachments" + File.separator + "lecture" + File.separator;
+    }
+
+    public static String getAttachmentUnitFilePath() {
+        return FILE_UPLOAD_PATH + File.separator + "attachments" + File.separator + "attachment-unit" + File.separator;
     }
 
     public static String getFileUploadExercisesFilepath() {

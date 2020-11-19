@@ -11,9 +11,18 @@
     <p class="markdown-preview" [innerHTML]="problemStatement" *ngSwitchDefault></p>
 </jhi-expandable-section>
 
-<jhi-expandable-section headerKey="assessmentInstructions.sampleSolution">
-    <jhi-modeling-editor *ngIf="sampleSolutionModel" [readOnly]="true" [diagramType]="sampleSolutionDiagramType!" [umlModel]="sampleSolutionModel!"> </jhi-modeling-editor>
-    <p class="markdown-preview" *ngIf="sampleSolutionExplanation" [innerHTML]="sampleSolutionExplanation!"></p>
+<jhi-expandable-section headerKey="assessmentInstructions.sampleSolution" [ngSwitch]="exercise.type">
+    <ng-container *ngSwitchCase="ExerciseType.PROGRAMMING">
+        <div class="mb-3">
+            <a jhiSecureLink [href]="programmingExercise?.solutionParticipation?.repositoryUrl">
+                <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution">Example solution repository</jhi-button>
+            </a>
+        </div>
+    </ng-container>
+    <ng-container *ngSwitchDefault>
+        <jhi-modeling-editor *ngIf="sampleSolutionModel" [readOnly]="true" [diagramType]="sampleSolutionDiagramType!" [umlModel]="sampleSolutionModel!"> </jhi-modeling-editor>
+        <p class="markdown-preview" *ngIf="sampleSolutionExplanation" [innerHTML]="sampleSolutionExplanation!"></p>
+    </ng-container>
 </jhi-expandable-section>
 
 <jhi-expandable-section headerKey="assessmentInstructions.gradingCriteria">

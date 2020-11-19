@@ -4,7 +4,7 @@
             "overview": {
                 "start": "Start: {{start}}",
                 "duration": "Duration: {{duration}} min",
-                "maxPoints": "max. Points: {{points}}"
+                "maxPoints": "Points: {{points}}"
             },
             "examSummary": {
                 "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
@@ -19,7 +19,8 @@
                     "exercise": "Exercise",
                     "overview": "Overview",
                     "yourPoints": "Your points",
-                    "maxPoints": "Max. points",
+                    "maxPoints": "Points",
+                    "bonus": "Bonus points",
                     "sum": "Sum"
                 }
             },
@@ -59,6 +60,8 @@
             }
         },
         "examScores": {
+            "xAxes": "Score in %",
+            "yAxes": "Number of Participants",
             "maxPoints": "Maximum Points",
             "title": "Exam Scores",
             "examStatisticsTitle": "Exam Statistics",
@@ -114,6 +117,7 @@
             "generateParticipationFailed": "The preparation of the exercise failed.",
             "generateParticipationRetry": "Retry",
             "points": "points",
+            "bonus": "bonus points",
             "synced": "Exercise saved",
             "notSynced": "Exercise not saved",
             "submitted": "You have submitted a solution for this exercise. You can still work on it and submit again.",
@@ -259,7 +263,7 @@
                 "update": "Edit Exercise Group",
                 "type": "Type",
                 "title": "Title",
-                "maxPoints": "Max Points",
+                "points": "Points",
                 "mandatory": "Mandatory",
                 "optional": "Optional",
                 "noExercises": "No exercises have been added yet.",
@@ -277,8 +281,7 @@
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the Exam to confirm."
-            },
-            "tutorDashboard": "Tutor Exam Dashboard"
+            }
         },
         "studentExamDetail": {
             "studentExam": "Student exam ({{ examTitle }})",

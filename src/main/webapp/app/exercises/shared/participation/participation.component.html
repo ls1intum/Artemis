@@ -125,7 +125,8 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ value.format('MMMM Do YYYY, h:mm:ss a') }}
+                        <!-- TODO: Had to Remove Date Pipe as UI did not update when sorting. Investigate the reason -->
+                        {{ formatDate(value) }}
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -156,7 +157,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a routerLink="/admin/user-management/{{ value?.login }}/view">{{ value?.name }}</a>
+                        <a routerLink="/admin/user-management/{{ value?.login }}">{{ value?.name }}</a>
                     </ng-template>
                 </ngx-datatable-column>
 

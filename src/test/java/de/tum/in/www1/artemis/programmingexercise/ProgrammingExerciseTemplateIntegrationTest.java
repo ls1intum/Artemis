@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.maven.plugin.surefire.log.api.PrintStreamLogger;
 import org.apache.maven.plugins.surefire.report.ReportTestCase;
@@ -29,7 +30,10 @@ import org.apache.maven.shared.utils.Os;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -37,14 +41,19 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.*;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    private RequestUtilService request;
+    private ProgrammingExerciseTestService programmingExerciseTestService;
 
-    private Course course;
+    @Autowired
+    private ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
     private ProgrammingExercise exercise;
 
@@ -89,8 +98,8 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
     @BeforeEach
     @SuppressWarnings("resource")
     public void setup() throws Exception {
-        database.addUsers(1, 1, 1);
-        course = database.addEmptyCourse();
+        programmingExerciseTestService.setupTestUsers(1, 1, 1);
+        Course course = database.addEmptyCourse();
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
@@ -99,7 +108,8 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
 
-        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo);
+        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo);
     }
 
     @AfterEach
@@ -114,32 +124,59 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         solutionRepo.resetLocalRepo();
     }
 
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void runTemplateTests_java_exercise() throws Exception {
-        mockConnectorRequestsForSetup(exercise);
-        request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-
-        moveAssignmentSourcesOf(exerciseRepo);
-        int exitCode = invokeMaven();
-        assertThat(exitCode).isNotEqualTo(0);
-
-        var testResults = readTestReports();
-        assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(TestResult.FAILED, 13));
+    /**
+     * Build a combination of valid programming languages and project types.
+     * Programming languages without project type only have one template, set null to use this one.
+     * Programming languages with project type should be executed once per project type.
+     * @return valid combinations of programming languages and project types.
+     */
+    private Stream<Arguments> languageTypeBuilder() {
+        Stream.Builder<Arguments> argumentBuilder = Stream.builder();
+        // Add programming exercises that should be tested with Maven here
+        List<ProgrammingLanguage> programmingLanguages = List.of(ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN);
+        for (ProgrammingLanguage language : programmingLanguages) {
+            List<ProjectType> projectTypes = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language).getProjectTypes();
+            if (projectTypes.isEmpty()) {
+                argumentBuilder.add(Arguments.of(language, null));
+            }
+            for (ProjectType projectType : projectTypes) {
+                argumentBuilder.add(Arguments.of(language, projectType));
+            }
+        }
+        return argumentBuilder.build();
     }
 
-    @Test
+    @ParameterizedTest
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void runTemplateTests_java_solution() throws Exception {
+    @MethodSource("languageTypeBuilder")
+    public void test_template_exercise(ProgrammingLanguage language, ProjectType projectType) throws Exception {
+        runTests(language, projectType, exerciseRepo, TestResult.FAILED);
+    }
+
+    @ParameterizedTest
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @MethodSource("languageTypeBuilder")
+    public void test_template_solution(ProgrammingLanguage language, ProjectType projectType) throws Exception {
+        runTests(language, projectType, solutionRepo, TestResult.SUCCESSFUL);
+    }
+
+    private void runTests(ProgrammingLanguage language, ProjectType projectType, LocalRepository repository, TestResult testResult) throws Exception {
+        exercise.setProgrammingLanguage(language);
+        exercise.setProjectType(projectType);
         mockConnectorRequestsForSetup(exercise);
         request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
-        moveAssignmentSourcesOf(solutionRepo);
+        moveAssignmentSourcesOf(repository);
         int exitCode = invokeMaven();
-        assertThat(exitCode).isEqualTo(0);
+        if (TestResult.SUCCESSFUL.equals(testResult)) {
+            assertThat(exitCode).isEqualTo(0);
+        }
+        else {
+            assertThat(exitCode).isNotEqualTo(0);
+        }
 
         var testResults = readTestReports();
-        assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(TestResult.SUCCESSFUL, 13));
+        assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(testResult, 12 + (ProgrammingLanguage.JAVA.equals(language) ? 1 : 0)));
     }
 
     private int invokeMaven() throws MavenInvocationException {

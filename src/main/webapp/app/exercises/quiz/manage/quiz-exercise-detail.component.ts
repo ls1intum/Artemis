@@ -9,12 +9,11 @@ import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { Duration, Option } from './quiz-exercise-interfaces';
-import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { Exercise, ExerciseCategory } from 'app/entities/exercise.model';
@@ -87,6 +86,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
+    showExistingQuestionsFromCourse = true;
     courses: Course[] = [];
     selectedCourseId?: number;
     quizExercises: QuizExercise[];
@@ -146,6 +146,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     ngOnInit(): void {
         /** Initialize local constants **/
         this.showExistingQuestions = false;
+        this.showExistingQuestionsFromCourse = true;
         this.courses = [];
         this.quizExercises = [];
         this.allExistingQuestions = [];
@@ -301,7 +302,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * Add an empty multiple choice question to the quiz
      */
     addMultipleChoiceQuestion() {
-        if (typeof this.quizExercise === 'undefined') {
+        if (this.quizExercise == undefined) {
             this.quizExercise = this.entity;
         }
 
@@ -332,7 +333,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * Add an empty drag and drop question to the quiz
      */
     addDragAndDropQuestion(): void {
-        if (typeof this.quizExercise === 'undefined') {
+        if (this.quizExercise == undefined) {
             this.quizExercise = this.entity;
         }
 
@@ -354,7 +355,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * Add an empty short answer question to the quiz
      */
     addShortAnswerQuestion(): void {
-        if (typeof this.quizExercise === 'undefined') {
+        if (this.quizExercise == undefined) {
             this.quizExercise = this.entity;
         }
 
@@ -402,9 +403,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             });
         }
         this.showExistingQuestions = !this.showExistingQuestions;
-        this.selectedCourseId = undefined;
-        this.allExistingQuestions = this.existingQuestions = [];
-        this.changeDetector.detectChanges();
+        this.setExistingQuestionSourceToCourse(true);
     }
 
     /**
@@ -499,6 +498,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         }
         this.verifyAndImportQuestions(questions);
         this.showExistingQuestions = !this.showExistingQuestions;
+        this.showExistingQuestionsFromCourse = true;
         this.selectedCourseId = undefined;
         this.allExistingQuestions = this.existingQuestions = [];
         this.cacheValidation();
@@ -934,27 +934,39 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
+     * Move file reader creation to separate function to be able to mock
+     * https://fromanegg.com/post/2015/04/22/easy-testing-of-code-involving-native-methods-in-javascript/
+     */
+    generateFileReader() {
+        return new FileReader();
+    }
+
+    onFileLoadImport(fileReader: FileReader) {
+        try {
+            // Read the file and get list of questions from the file
+            const questions = JSON.parse(fileReader.result as string) as QuizQuestion[];
+            this.verifyAndImportQuestions(questions);
+            // Clearing html elements,
+            this.importFile = undefined;
+            this.importFileName = '';
+            const control = document.getElementById('importFileInput') as HTMLInputElement;
+            if (control) {
+                control.value = '';
+            }
+        } catch (e) {
+            alert('Import Quiz Failed! Invalid quiz file.');
+        }
+    }
+
+    /**
      * Imports a json quiz file and adds questions to current quiz exercise.
      */
     async importQuiz() {
         if (!this.importFile) {
             return;
         }
-        const fileReader = new FileReader();
-        fileReader.onload = () => {
-            try {
-                // Read the file and get list of questions from the file
-                const questions = JSON.parse(fileReader.result as string) as QuizQuestion[];
-                this.verifyAndImportQuestions(questions);
-                // Clearing html elements,
-                this.importFile = undefined;
-                this.importFileName = '';
-                const control = document.getElementById('importFileInput') as HTMLInputElement;
-                control.value = '';
-            } catch (e) {
-                alert('Import Quiz Failed! Invalid quiz file.');
-            }
-        };
+        const fileReader = this.generateFileReader();
+        fileReader.onload = () => this.onFileLoadImport(fileReader);
         fileReader.readAsText(this.importFile);
         this.cacheValidation();
     }
@@ -1207,6 +1219,22 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (this.duration.seconds !== undefined) {
             this.duration.seconds = duration.seconds();
         }
+    }
+
+    /**
+     * Update adding existing questions from a file or course
+     */
+    setExistingQuestionSourceToCourse(setToCourse: boolean): void {
+        this.showExistingQuestionsFromCourse = setToCourse;
+        this.selectedCourseId = undefined;
+        this.allExistingQuestions = this.existingQuestions = [];
+        this.importFile = undefined;
+        this.importFileName = '';
+        const control = document.getElementById('importFileInput') as HTMLInputElement;
+        if (control) {
+            control.value = '';
+        }
+        this.changeDetector.detectChanges();
     }
 
     /**

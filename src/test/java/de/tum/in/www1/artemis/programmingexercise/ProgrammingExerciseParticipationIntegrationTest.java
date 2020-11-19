@@ -78,12 +78,12 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
                 Arguments.of(AssessmentType.AUTOMATIC, someDate, futureDate, true), Arguments.of(AssessmentType.AUTOMATIC, someDate, pastDate, true),
                 Arguments.of(AssessmentType.AUTOMATIC, null, futureDate, true), Arguments.of(AssessmentType.AUTOMATIC, null, pastDate, true),
                 // Manual result without completion date (assessment was only saved but no submitted) is not returned
-                Arguments.of(AssessmentType.MANUAL, null, null, false), Arguments.of(AssessmentType.MANUAL, null, futureDate, false),
-                Arguments.of(AssessmentType.MANUAL, null, pastDate, false),
+                Arguments.of(AssessmentType.SEMI_AUTOMATIC, null, null, false), Arguments.of(AssessmentType.SEMI_AUTOMATIC, null, futureDate, false),
+                Arguments.of(AssessmentType.SEMI_AUTOMATIC, null, pastDate, false),
                 // Manual result is not returned if completed and assessment due date has not passed
-                Arguments.of(AssessmentType.MANUAL, someDate, futureDate, false),
+                Arguments.of(AssessmentType.SEMI_AUTOMATIC, someDate, futureDate, false),
                 // Manual result is returned if completed and assessmentDue date has passed
-                Arguments.of(AssessmentType.MANUAL, someDate, pastDate, true));
+                Arguments.of(AssessmentType.SEMI_AUTOMATIC, someDate, pastDate, true));
     }
 
     @ParameterizedTest
@@ -131,7 +131,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getParticipationWithLatestResultAsAnInstructor_noCompletionDate_notFound() throws Exception {
-        addStudentParticipationWithResult(AssessmentType.MANUAL, null);
+        addStudentParticipationWithResult(AssessmentType.SEMI_AUTOMATIC, null);
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.NOT_FOUND,
                 ProgrammingExerciseStudentParticipation.class);
@@ -276,7 +276,40 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getLatestSubmissionsForExercise_studentForbidden() throws Exception {
+    public void testGetLatestSubmissionsForExercise_studentForbidden() throws Exception {
+        request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetParticipationWithResultsForStudentParticipation_success() throws Exception {
+        database.addGradingInstructionsToExercise(programmingExercise);
+        programmingExerciseRepository.save(programmingExercise);
+        addStudentParticipationWithResult(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now());
+        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
+
+        ProgrammingExerciseStudentParticipation response = request.get(
+                participationsBaseUrl + participation.getId() + "/student-participation-with-latest-manual-result-and-feedbacks", HttpStatus.OK,
+                ProgrammingExerciseStudentParticipation.class);
+        ProgrammingExercise exercise = (ProgrammingExercise) response.getExercise();
+
+        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
+        assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(1);
+        assertThat(response.getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        assertThat(response.getResults().iterator().next().getResultString()).isEqualTo("x of y passed");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetParticipationWithResultsForStudentParticipation_notFound() throws Exception {
+        StudentParticipation participation = database.createAndSaveParticipationForExercise(programmingExercise, "student1");
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-manual-result-and-feedbacks", HttpStatus.NOT_FOUND,
+                ProgrammingExerciseStudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = "stidemt1", roles = "USER")
+    public void testGetParticipationWithResultsForStudentParticipation_forbidden() throws Exception {
         request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);
     }
 

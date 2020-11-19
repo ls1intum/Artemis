@@ -2,6 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { FeedbackConflict } from 'app/entities/feedback-conflict';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -30,6 +31,7 @@ export class Feedback implements BaseEntity {
     public type?: FeedbackType;
     public result?: Result;
     public positive?: boolean;
+    public conflictingTextAssessments?: FeedbackConflict[];
 
     // helper attributes for modeling exercise assessments stored in Feedback
     public referenceType?: string; // this string needs to follow UMLModelElementType in Apollon in typings.d.ts
@@ -47,15 +49,19 @@ export class Feedback implements BaseEntity {
     }
 
     public static hasDetailText(that: Feedback): boolean {
-        return that.detailText != null && that.detailText.length > 0;
+        return that.detailText != undefined && that.detailText.length > 0;
     }
 
     public static isEmpty(that: Feedback): boolean {
-        return that.credits === 0 && !Feedback.hasDetailText(that);
+        return that.credits == undefined || !Feedback.hasDetailText(that);
     }
 
-    public static isPresent(that: Feedback): boolean {
+    public static isValid(that: Feedback): boolean {
         return !Feedback.isEmpty(that);
+    }
+
+    public static areValid(that: Feedback[]): boolean {
+        return that.filter(Feedback.isValid).length > 0 && that.filter(Feedback.isValid).length === that.length;
     }
 
     public static forModeling(credits: number, text?: string, referenceId?: string, referenceType?: string): Feedback {

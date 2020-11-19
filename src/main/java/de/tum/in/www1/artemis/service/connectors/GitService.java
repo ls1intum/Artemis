@@ -657,7 +657,7 @@ public class GitService {
      * @return path to zip file.
      */
     public Path zipRepository(Repository repo) throws IOException {
-        return zipRepository(repo, REPO_CLONE_PATH);
+        return zipRepository(repo, REPO_CLONE_PATH, false);
     }
 
     /**
@@ -665,15 +665,27 @@ public class GitService {
      *
      * @param repo Local Repository Object.
      * @param targetPath path where the repo is located on disk
+     * @param hideStudentName option to hide the student name for the zip file
      * @throws IOException if the zipping process failed.
      * @return path to zip file.
      */
-    public Path zipRepository(Repository repo, String targetPath) throws IOException {
+    public Path zipRepository(Repository repo, String targetPath, boolean hideStudentName) throws IOException {
+        /*
+         * This will split the repositoryUrl e.g. http://artemis-admin@localhost:7990/scm/TC1SCHEDULER1/tc1scheduler1-artemis-admin.git into a string array e.g. ["http", "",
+         * "artemis-admin@localhost:7990", "scm", "TC1SCHEDULER1", "tc1scheduler1-artemis-admin.git"]
+         */
         String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split(File.separator);
         ProgrammingExercise exercise = repo.getParticipation().getProgrammingExercise();
         String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName().replaceAll("\\s", "");
-        // take the last component
-        String zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";
+        String zipRepoName;
+        if (hideStudentName) {
+            // Take the last but one component, which does not contain the students name
+            zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 2].toLowerCase() + "-student-submission.git" + ".zip";
+        }
+        else {
+            // Take the last component, which contains the students name
+            zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";
+        }
 
         Path repoPath = repo.getLocalPath();
         Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipRepoName);
@@ -704,5 +716,17 @@ public class GitService {
     public boolean repositoryAlreadyExists(URL repoUrl) {
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
         return Files.exists(localPath);
+    }
+
+    /**
+     * Stashes not submitted/committed changes of the repo.
+     *
+     * @param repo student repo of a participation in a programming exercise
+     * @throws GitAPIException
+     */
+    public void stashChanges(Repository repo) throws GitAPIException {
+        Git git = new Git(repo);
+        git.stashCreate().call();
+        git.close();
     }
 }

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -45,6 +46,9 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
     @Value("${artemis.version-control.url}")
     private URL bitbucketServerUrl;
 
+    @Value("${artemis.continuous-integration.vcs-application-link-name}")
+    private String vcsApplicationLinkName;
+
     private static final String OLD_ASSIGNMENT_REPO_NAME = "Assignment";
 
     private final Logger log = LoggerFactory.getLogger(BitbucketBambooUpdateService.class);
@@ -53,7 +57,8 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
 
     private final RestTemplate bitbucketRestTemplate;
 
-    private List<ApplicationLinksDTO.ApplicationLinkDTO> cachedApplicationLinks = new ArrayList<>();
+    // application link name --> Link
+    private final Map<String, ApplicationLinksDTO.ApplicationLinkDTO> cachedApplicationLinks = new ConcurrentHashMap<>();
 
     public BitbucketBambooUpdateService(@Qualifier("bambooRestTemplate") RestTemplate bambooRestTemplate, @Qualifier("bitbucketRestTemplate") RestTemplate bitbucketRestTemplate) {
         this.bambooRestTemplate = bambooRestTemplate;
@@ -117,7 +122,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         parameters.add("repository.stash.projectKey", bitbucketRepository.getProject().getKey());
         parameters.add("repository.stash.repositoryUrl", bitbucketRepository.getCloneSshUrl());
 
-        Optional<ApplicationLinksDTO.ApplicationLinkDTO> applicationLink = getApplicationLink(bitbucketServerUrl.toString());
+        Optional<ApplicationLinksDTO.ApplicationLinkDTO> applicationLink = getApplicationLink(vcsApplicationLinkName);
         applicationLink.ifPresent(link -> parameters.add("repository.stash.server", link.getId()));
 
         try {
@@ -133,30 +138,31 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         }
     }
 
-    private Optional<ApplicationLinksDTO.ApplicationLinkDTO> getApplicationLink(String applicationLinkUrl) {
+    private Optional<ApplicationLinksDTO.ApplicationLinkDTO> getApplicationLink(String applicationLinkName) {
         // first try to find the application link from the local cache
-        var cachedLink = findCachedLinkForUrl(applicationLinkUrl);
+        var cachedLink = findCachedLinkForName(applicationLinkName);
         if (cachedLink.isPresent()) {
             return cachedLink;
         }
-        // if there is no local application link available, load them Bamboo server
-        cachedApplicationLinks = loadApplicationLinkList();
-        return findCachedLinkForUrl(applicationLinkUrl);
+        // if there is no local application link available, load them from the Bamboo server
+        loadApplicationLinkList();
+        return findCachedLinkForName(applicationLinkName);
     }
 
-    public Optional<ApplicationLinksDTO.ApplicationLinkDTO> findCachedLinkForUrl(String url) {
-        return cachedApplicationLinks.stream().filter(link -> url.equalsIgnoreCase(link.getRpcUrl())).findFirst();
+    private Optional<ApplicationLinksDTO.ApplicationLinkDTO> findCachedLinkForName(String name) {
+        return Optional.ofNullable(cachedApplicationLinks.get(name));
     }
 
-    private List<ApplicationLinksDTO.ApplicationLinkDTO> loadApplicationLinkList() {
+    private void loadApplicationLinkList() {
         String requestUrl = bambooServerUrl + "/rest/applinks/latest/applicationlink";
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "");
         ApplicationLinksDTO links = bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, ApplicationLinksDTO.class).getBody();
-        if (links != null) {
-            return links.getApplicationLinks();
-        }
-        else {
-            return List.of();
+        if (links != null && links.getApplicationLinks() != null && links.getApplicationLinks().size() > 0) {
+            for (var link : links.getApplicationLinks()) {
+                if (link.getName() != null) {
+                    cachedApplicationLinks.put(link.getName(), link);
+                }
+            }
         }
     }
 
@@ -281,17 +287,19 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
         String response = bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.GET, entity, String.class).getBody();
 
-        Document document = Jsoup.parse(response);
+        if (response != null) {
+            Document document = Jsoup.parse(response);
 
-        for (Element element : document.getElementsByClass("item")) {
-            Long id = NumberUtils.isCreatable(element.attr("data-item-id")) ? Long.parseLong(element.attr("data-item-id")) : 0L;
-            String name = getText(element.getElementsByClass("item-title").first());
-            String description = getText(element.getElementsByClass("item-description").first());
-            BambooTriggerDTO entry = new BambooTriggerDTO(id, name, description);
-            if ("Disabled".equalsIgnoreCase(getText(element.getElementsByClass("lozenge").first()))) {
-                entry.setEnabled(false);
+            for (Element element : document.getElementsByClass("item")) {
+                Long id = NumberUtils.isCreatable(element.attr("data-item-id")) ? Long.parseLong(element.attr("data-item-id")) : 0L;
+                String name = getText(element.getElementsByClass("item-title").first());
+                String description = getText(element.getElementsByClass("item-description").first());
+                BambooTriggerDTO entry = new BambooTriggerDTO(id, name, description);
+                if ("Disabled".equalsIgnoreCase(getText(element.getElementsByClass("lozenge").first()))) {
+                    entry.setEnabled(false);
+                }
+                list.add(entry);
             }
-            list.add(entry);
         }
 
         return list;

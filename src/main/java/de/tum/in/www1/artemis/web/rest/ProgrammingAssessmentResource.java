@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -14,8 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -120,13 +118,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        Optional<Result> latestExistingResult = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.MANUAL).findFirst();
-        if (latestExistingResult.isPresent()) {
-            // prevent that tutors create multiple manual results
-            newResult.setId(latestExistingResult.get().getId());
-            // load assessor
-            latestExistingResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(latestExistingResult.get().getId());
-        }
+        Result manualResult = participation.getResults().stream().filter(result -> result.isManualResult()).findFirst().get();
+        // prevent that tutors create multiple manual results
+        newResult.setId(manualResult.getId());
+        // load assessor
+        manualResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(manualResult.getId()).get();
 
         // make sure that the participation cannot be manipulated on the client side
         newResult.setParticipation(participation);
@@ -135,7 +131,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         checkAuthorization(exercise, user);
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(latestExistingResult.orElse(null), exercise, participation, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(manualResult, exercise, participation, user, isAtLeastInstructor)) {
             log.debug("The user " + user.getLogin() + " is not allowed to override the assessment for the participation " + participation.getId() + " for User " + user.getLogin());
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
@@ -144,27 +140,33 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             return forbidden();
         }
 
-        if (newResult.getScore() != null && newResult.getScore() < 100 && newResult.isSuccessful()) {
+        if (Boolean.FALSE.equals(newResult.isRated())) {
+            throw new BadRequestAlertException("Result is not rated", ENTITY_NAME, "resultNotRated");
+        }
+        if (newResult.getResultString() == null) {
+            throw new BadRequestAlertException("Result string is required.", ENTITY_NAME, "resultStringNull");
+        }
+        else if (newResult.getResultString().length() > 255) {
+            throw new BadRequestAlertException("Result string is too long.", ENTITY_NAME, "resultStringNull");
+        }
+        else if (newResult.getScore() == null) {
+            throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
+        }
+        else if (newResult.getScore() < 100 && newResult.isSuccessful()) {
             throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         }
-        else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getDetailText() == null)) {
-            throw new BadRequestAlertException("In case feedback is present, feedback detail text is mandatory.", ENTITY_NAME, "feedbackDetailTextNull");
+        // All not automatically generated result must have a detail text
+        else if (!newResult.getFeedbacks().isEmpty()
+                && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getType() != FeedbackType.AUTOMATIC && feedback.getDetailText() == null)) {
+            throw new BadRequestAlertException("In case tutor feedback is present, a feedback detail text is mandatory.", ENTITY_NAME, "feedbackDetailTextNull");
         }
         else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getCredits() == null)) {
             throw new BadRequestAlertException("In case feedback is present, a feedback must contain points.", ENTITY_NAME, "feedbackCreditsNull");
         }
 
-        ProgrammingSubmission submission;
-        if (latestExistingResult.isEmpty()) {
-            // Create manual submission with last commit hash and current time stamp.
-            submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
-                    SubmissionType.MANUAL);
-            newResult.setSubmission(submission);
-        }
-        else {
-            submission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(latestExistingResult.get().getSubmission().getId());
-            newResult.setSubmission(submission);
-        }
+        // make sure that the submission cannot be manipulated on the client side
+        ProgrammingSubmission submission = (ProgrammingSubmission) manualResult.getSubmission();
+        newResult.setSubmission(submission);
 
         Result result = programmingAssessmentService.saveManualAssessment(newResult);
 

@@ -76,7 +76,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             this.exampleSubmissionId = +exampleSubmissionId!;
         }
 
-        // if one of the flags is set, we navigated here from the tutor dashboard which means that we are not
+        // if one of the flags is set, we navigated here from the assessment dashboard which means that we are not
         // interested in the modeling editor, i.e. we only wanna use the assessment mode
         if (this.readOnly || this.toComplete) {
             this.assessmentMode = true;
@@ -87,7 +87,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
             this.exercise = exerciseResponse.body!;
-            this.isExamMode = this.exercise.exerciseGroup != null;
+            this.isExamMode = this.exercise.exerciseGroup != undefined;
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
         });
 

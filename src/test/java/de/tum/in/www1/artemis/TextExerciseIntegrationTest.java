@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,6 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -23,7 +25,9 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -47,6 +51,9 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     ExampleSubmissionRepository exampleSubmissionRepo;
+
+    @Autowired
+    TeamService teamService;
 
     @BeforeEach
     public void initTestCase() {
@@ -80,14 +87,14 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
-        textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
+        textSubmission = database.saveTextSubmission(textExercise, textSubmission, "student1");
         int submissionCount = 5;
         int submissionSize = 4;
-        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
+        var textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
         int[] clusterSizes = { 4, 5, 10, 1 };
         List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
         textClusterRepository.saveAll(clusters);
-        database.addTextBlocksToTextSubmission(textBlocks, textSubmission);
+        database.addAndSaveTextBlocksToTextSubmission(textBlocks, textSubmission);
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(textExercise.getId())).as("text exercise was deleted").isEmpty();
@@ -451,5 +458,76 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         final var search = database.configureSearch("Text");
         final var result = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
         assertThat(result.getResultsOnPage().size()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testImportTextExercise_team_modeChange() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+        TextExercise sourceExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        sourceExercise = textExerciseRepository.save(sourceExercise);
+
+        var exerciseToBeImported = new TextExercise();
+        exerciseToBeImported.setMode(ExerciseMode.TEAM);
+
+        var teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setExercise(exerciseToBeImported);
+        teamAssignmentConfig.setMinTeamSize(1);
+        teamAssignmentConfig.setMaxTeamSize(10);
+        exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
+        exerciseToBeImported.setCourse(course2);
+
+        exerciseToBeImported = request.postWithResponseBody("/api/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class, HttpStatus.CREATED);
+
+        SecurityUtils.setAuthorizationObject();
+        assertEquals(course2.getId(), exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
+        assertEquals(ExerciseMode.TEAM, exerciseToBeImported.getMode());
+        assertEquals(teamAssignmentConfig.getMinTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize());
+        assertEquals(teamAssignmentConfig.getMaxTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize());
+        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+
+        sourceExercise = textExerciseRepository.findById(sourceExercise.getId()).get();
+        assertEquals(course1.getId(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        assertEquals(ExerciseMode.INDIVIDUAL, sourceExercise.getMode());
+        assertNull(sourceExercise.getTeamAssignmentConfig());
+        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testImportTextExercise_individual_modeChange() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+        TextExercise sourceExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        sourceExercise.setMode(ExerciseMode.TEAM);
+        var teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setExercise(sourceExercise);
+        teamAssignmentConfig.setMinTeamSize(1);
+        teamAssignmentConfig.setMaxTeamSize(10);
+        sourceExercise.setTeamAssignmentConfig(teamAssignmentConfig);
+        sourceExercise.setCourse(course1);
+
+        sourceExercise = textExerciseRepository.save(sourceExercise);
+        teamService.save(sourceExercise, new Team());
+
+        var exerciseToBeImported = new TextExercise();
+        exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
+        exerciseToBeImported.setCourse(course2);
+
+        exerciseToBeImported = request.postWithResponseBody("/api/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class, HttpStatus.CREATED);
+
+        SecurityUtils.setAuthorizationObject();
+        assertEquals(course2.getId(), exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
+        assertEquals(ExerciseMode.INDIVIDUAL, exerciseToBeImported.getMode());
+        assertNull(exerciseToBeImported.getTeamAssignmentConfig());
+        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+
+        sourceExercise = textExerciseRepository.findById(sourceExercise.getId()).get();
+        assertEquals(course1.getId(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        assertEquals(ExerciseMode.TEAM, sourceExercise.getMode());
+        assertEquals(1, teamService.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
     }
 }

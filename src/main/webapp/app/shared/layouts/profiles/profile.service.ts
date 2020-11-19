@@ -54,6 +54,7 @@ export class ProfileService {
                         profileInfo.allowedCourseRegistrationUsernamePattern = data.allowedCourseRegistrationUsernamePattern;
                         profileInfo.accountName = data.accountName;
                         profileInfo.versionControlUrl = data.versionControlUrl;
+                        profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
 
                         return profileInfo;
                     }),

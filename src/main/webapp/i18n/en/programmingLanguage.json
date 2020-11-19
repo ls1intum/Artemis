@@ -6,7 +6,11 @@
             "JAVA": "Java",
             "PYTHON": "Python",
             "C": "C",
-            "HASKELL": "Haskell"
+            "HASKELL": "Haskell",
+            "KOTLIN": "Kotlin",
+            "VHDL": "VHDL",
+            "Assembler": "Assembler",
+            "SWIFT": "Swift"
         }
     }
 }

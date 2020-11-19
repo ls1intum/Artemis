@@ -57,6 +57,12 @@
             "description": "Kurs Beschreibung",
             "startDate": "Start",
             "endDate": "Ende",
+            "semester": "Semester",
+            "testCourse": {
+                "title": "Testkurs",
+                "description": "Aktiviere diese Checkbox für Kurse die für Testzwecke sind.",
+                "plural": "Testkurse"
+            },
             "accessGroups": "Zugriffsrechte",
             "onlineCourse": {
                 "title": "Online Kurs",
@@ -81,8 +87,6 @@
             "student": "Student",
             "tutor": "Tutor",
             "instructor": "Dozent",
-            "onlineCourseFalse": "Nein",
-            "onlineCourseTrue": "Ja",
             "form": {
                 "shortname": {
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",

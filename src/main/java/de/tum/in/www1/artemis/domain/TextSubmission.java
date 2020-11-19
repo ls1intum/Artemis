@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 
 /**
@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
  */
 @Entity
 @DiscriminatorValue(value = "T")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextSubmission extends Submission {
 
     private static final int MAX_EXCERPT_LENGTH = 100;
@@ -28,7 +29,7 @@ public class TextSubmission extends Submission {
 
     @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties("submission")
-    private List<TextBlock> blocks = new ArrayList<>();
+    private Set<TextBlock> blocks = new HashSet<>();
 
     public TextSubmission() {
     }
@@ -75,7 +76,7 @@ public class TextSubmission extends Submission {
         this.text = text;
     }
 
-    public List<TextBlock> getBlocks() {
+    public Set<TextBlock> getBlocks() {
         return blocks;
     }
 
@@ -85,7 +86,7 @@ public class TextSubmission extends Submission {
         return this;
     }
 
-    public void setBlocks(List<TextBlock> textBlocks) {
+    public void setBlocks(Set<TextBlock> textBlocks) {
         this.blocks = textBlocks;
     }
 

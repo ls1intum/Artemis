@@ -5,16 +5,16 @@ import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationSer
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +37,7 @@ import com.atlassian.bamboo.specs.api.builders.plan.branches.PlanBranchManagemen
 import com.atlassian.bamboo.specs.api.builders.plan.configuration.ConcurrentBuilds;
 import com.atlassian.bamboo.specs.api.builders.project.Project;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsChangeDetection;
+import com.atlassian.bamboo.specs.api.builders.repository.VcsRepository;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifier;
 import com.atlassian.bamboo.specs.api.builders.task.Task;
 import com.atlassian.bamboo.specs.builders.notification.PlanCompletedNotification;
@@ -47,6 +48,7 @@ import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
 import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
 
+import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
@@ -71,32 +73,39 @@ public class BambooBuildPlanService {
     @Value("${artemis.continuous-integration.vcs-application-link-name}")
     private String vcsApplicationLinkName;
 
-    private final ResourceLoader resourceLoader;
+    private final ResourceLoaderService resourceLoaderService;
 
     private final BambooServer bambooServer;
 
     private final Environment env;
 
-    public BambooBuildPlanService(ResourceLoader resourceLoader, BambooServer bambooServer, Environment env) {
-        this.resourceLoader = resourceLoader;
+    private final BambooService bambooService;
+
+    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, @Lazy BambooService bambooService) {
+        this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
         this.env = env;
+        this.bambooService = bambooService;
     }
 
     /**
      * Creates a Build Plan for a Programming Exercise
      * @param programmingExercise  programming exercise with the required information to create the base build plan
-     * @param planKey the key of the plan
+     * @param planKey the key of the build plan
      * @param repositoryName the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
      * @param testRepositoryName the slug of the test repository, i.e. the unique identifier
+     * @param solutionRepositoryName the slug of the solution repository, i.e. the unique identifier
      */
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName) {
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName,
+            String solutionRepositoryName) {
         final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitle();
         final String projectKey = programmingExercise.getProjectKey();
         final String projectName = programmingExercise.getProjectName();
 
-        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName).stages(
-                createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled()));
+        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName,
+                programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryName)
+                        .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns(),
+                                programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository()));
 
         bambooServer.publish(plan);
 
@@ -123,10 +132,18 @@ public class BambooBuildPlanService {
         return new Project().key(key).name(name);
     }
 
-    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns, Boolean staticCodeAnalysisEnabled) {
+    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns, Boolean staticCodeAnalysisEnabled,
+            boolean checkoutSolutionRepository) {
         final var assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         final var testPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
-        VcsCheckoutTask checkoutTask = createCheckoutTask(assignmentPath, testPath);
+        VcsCheckoutTask checkoutTask;
+        if (checkoutSolutionRepository) {
+            final var solutionPath = RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
+            checkoutTask = createCheckoutTask(assignmentPath, testPath, Optional.of(solutionPath));
+        }
+        else {
+            checkoutTask = createCheckoutTask(assignmentPath, testPath);
+        }
         Stage defaultStage = new Stage("Default Stage");
         Job defaultJob = new Job("Default Job", new BambooKey("JOB1")).cleanWorkingDirectory(true);
 
@@ -136,10 +153,10 @@ public class BambooBuildPlanService {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
         switch (programmingLanguage) {
-            case JAVA -> {
+            case JAVA, KOTLIN -> {
                 // Do not run the builds in extra docker containers if the dev-profile is active
                 if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                    defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template:java15-2"));
+                    defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage));
                 }
 
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
@@ -164,30 +181,36 @@ public class BambooBuildPlanService {
                 }
             }
             case PYTHON, C -> {
-                // Do not run the builds in extra docker containers if the dev-profile is active
-                if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                    defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-python-docker:latest"));
-                }
-                final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns);
-                tasks.add(0, checkoutTask);
-                return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
+                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "test-reports/*results.xml");
             }
             case HASKELL -> {
-                // Do not run the builds in extra docker containers if the dev-profile is active
-                if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                    defaultJob.dockerConfiguration(new DockerConfiguration().image("tumfpv/fpv-stack:8.4.4"));
-                }
-                final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-reports/*.xml");
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns);
-                tasks.add(0, checkoutTask);
-                return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
+                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/test-reports/*.xml");
             }
+            case VHDL, ASSEMBLER -> {
+                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/result.xml");
+            }
+            case SWIFT -> {
+                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/tests.xml");
+            }
+            // this is needed, otherwise the compiler complaints with missing return statement
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
         }
     }
 
-    private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug) {
+    private Stage createDefaultStage(ProgrammingLanguage programmingLanguage, boolean sequentialBuildRuns, VcsCheckoutTask checkoutTask, Stage defaultStage, Job defaultJob,
+            Collection<String> activeProfiles, String resultDirectories) {
+        // Do not run the builds in extra docker containers if the dev-profile is active
+        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+            defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage));
+        }
+        final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories(resultDirectories);
+        var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns);
+        tasks.add(0, checkoutTask);
+        return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
+    }
+
+    private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug,
+            boolean checkoutSolutionRepository, String vcsSolutionRepositorySlug) {
         List<VcsRepositoryIdentifier> vcsTriggerRepositories = new LinkedList<>();
         // Trigger the build when a commit is pushed to the ASSIGNMENT_REPO.
         vcsTriggerRepositories.add(new VcsRepositoryIdentifier(ASSIGNMENT_REPO_NAME));
@@ -196,19 +219,29 @@ public class BambooBuildPlanService {
             vcsTriggerRepositories.add(new VcsRepositoryIdentifier(TEST_REPO_NAME));
         }
 
+        List<VcsRepository<?, ?>> planRepositories = new ArrayList<>();
+        planRepositories.add(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName));
+        planRepositories.add(createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug));
+        if (checkoutSolutionRepository) {
+            planRepositories.add(createBuildPlanRepository(SOLUTION_REPO_NAME, projectKey, vcsSolutionRepositorySlug));
+        }
+
         return new Plan(createBuildProject(projectName, projectKey), planKey, planKey).description(planDescription)
-                .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
-                .planRepositories(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName),
-                        createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug))
+                .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true)).planRepositories(planRepositories.toArray(VcsRepository[]::new))
                 .triggers(new BitbucketServerTrigger().selectedTriggeringRepositories(vcsTriggerRepositories.toArray(new VcsRepositoryIdentifier[0])))
                 .planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
     }
 
     private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath) {
-        return new VcsCheckoutTask().description("Checkout Default Repository").checkoutItems(
-                new CheckoutItem().repository(new VcsRepositoryIdentifier().name(TEST_REPO_NAME)).path(testPath),
-                // NOTE: this path needs to be specified in the Maven pom.xml in the Tests Repo for Java programming exercises
-                new CheckoutItem().repository(new VcsRepositoryIdentifier().name(ASSIGNMENT_REPO_NAME)).path(assignmentPath));
+        return createCheckoutTask(assignmentPath, testPath, Optional.empty());
+    }
+
+    private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath, Optional<String> solutionPath) {
+        List<CheckoutItem> checkoutItems = new ArrayList<>();
+        checkoutItems.add(new CheckoutItem().repository(new VcsRepositoryIdentifier().name(TEST_REPO_NAME)).path(testPath));
+        checkoutItems.add(new CheckoutItem().repository(new VcsRepositoryIdentifier().name(ASSIGNMENT_REPO_NAME)).path(assignmentPath));
+        solutionPath.ifPresent(s -> checkoutItems.add(new CheckoutItem().repository(new VcsRepositoryIdentifier().name(SOLUTION_REPO_NAME)).path(s)));
+        return new VcsCheckoutTask().description("Checkout Default Repository").checkoutItems(checkoutItems.toArray(CheckoutItem[]::new));
     }
 
     private PlanBranchManagement createPlanBranchManagement() {
@@ -240,20 +273,21 @@ public class BambooBuildPlanService {
     }
 
     private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns) {
-        final var directoryPattern = "classpath:templates/bamboo/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/")
-                + "*.sh";
+        final var directoryPattern = "templates/bamboo/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
         try {
             List<Task<?, ?>> tasks = new ArrayList<>();
-            final var scriptResources = Arrays.asList(ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(directoryPattern));
+            final var scriptResources = Arrays.asList(resourceLoaderService.getResources(directoryPattern));
             scriptResources.sort(Comparator.comparing(Resource::getFilename));
             for (final var resource : scriptResources) {
                 // 1_some_description.sh --> "some description"
-                final var descriptionElements = Arrays.stream((resource.getFilename().split("\\.")[0] // cut .sh suffix
-                        .split("_"))).collect(Collectors.toList());
-                descriptionElements.remove(0);  // Remove the index prefix: 1 some description --> some description
-                final var scriptDescription = String.join(" ", descriptionElements);
-                try (final var inputStream = resource.getInputStream()) {
-                    tasks.add(new ScriptTask().description(scriptDescription).inlineBody(IOUtils.toString(inputStream)));
+                if (resource.getFilename() != null) {
+                    final var descriptionElements = Arrays.stream((resource.getFilename().split("\\.")[0] // cut .sh suffix
+                            .split("_"))).collect(Collectors.toList());
+                    descriptionElements.remove(0);  // Remove the index prefix: 1 some description --> some description
+                    final var scriptDescription = String.join(" ", descriptionElements);
+                    try (final var inputStream = resource.getInputStream()) {
+                        tasks.add(new ScriptTask().description(scriptDescription).inlineBody(IOUtils.toString(inputStream, Charset.defaultCharset())));
+                    }
                 }
             }
 
@@ -262,5 +296,10 @@ public class BambooBuildPlanService {
         catch (IOException e) {
             throw new ContinuousIntegrationBuildPlanException("Unable to load template build plans", e);
         }
+    }
+
+    private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage language) {
+        var dockerImage = bambooService.getDockerImageName(language);
+        return new DockerConfiguration().image(dockerImage);
     }
 }

@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BA
 import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -186,9 +187,11 @@ public class ProgrammingSubmissionResource {
             programmingSubmissionService.notifyUserAboutSubmission(submission.get());
             return ResponseEntity.ok().build();
         }
-        if (lastGraded) {
-            // If the submission is not the latest but the last graded, there is no point in triggering the build again as this would build the most recent VCS commit (=different
-            // commit hash than submission).
+        if (lastGraded && submission.get().getType() != SubmissionType.INSTRUCTOR && submission.get().getType() != SubmissionType.TEST
+                && submission.get().getParticipation().getExercise().getDueDate() != null
+                && submission.get().getParticipation().getExercise().getDueDate().isBefore(ZonedDateTime.now())) {
+            // If the submission is not the latest but the last graded, there is no point in triggering the build again as this would build the most recent VCS commit.
+            // This applies only to students submissions after the exercise due date.
             return notFound();
         }
         // If there is no result on the CIS, we trigger a new build and hope it will arrive in Artemis this time.
@@ -348,11 +351,13 @@ public class ProgrammingSubmissionResource {
      * GET /programming-submission-without-assessment : get one Programming Submission without assessment.
      *
      * @param exerciseId the id of the exercise
+     * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/programming-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+    public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a programming submission without assessment");
         final ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
@@ -366,14 +371,22 @@ public class ProgrammingSubmissionResource {
             return forbidden();
         }
 
-        // TODO: Handle lock limit.
+        // Check if the limit of simultaneously locked submissions has been reached
+        programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
-        Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionService.getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise,
-                programmingExercise.hasExerciseGroup());
-        if (optionalProgrammingSubmission.isEmpty()) {
-            return notFound();
+        final ProgrammingSubmission programmingSubmission;
+        if (lockSubmission) {
+            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmissionWithoutResult(programmingExercise);
         }
-        final ProgrammingSubmission programmingSubmission = optionalProgrammingSubmission.get();
+        else {
+            Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionService.getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise,
+                    programmingExercise.hasExerciseGroup());
+            if (optionalProgrammingSubmission.isEmpty()) {
+                return notFound();
+            }
+            programmingSubmission = optionalProgrammingSubmission.get();
+
+        }
 
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) programmingSubmission.getParticipation();

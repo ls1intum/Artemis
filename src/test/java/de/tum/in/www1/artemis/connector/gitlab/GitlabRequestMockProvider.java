@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.connector.gitlab;
 
+import static org.gitlab4j.api.models.AccessLevel.GUEST;
+import static org.gitlab4j.api.models.AccessLevel.MAINTAINER;
 import static org.mockito.Mockito.*;
 
 import java.net.URL;
@@ -64,34 +66,37 @@ public class GitlabRequestMockProvider {
         final Group group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
         doReturn(group).when(groupApi).addGroup(group);
         mockGetUserID();
-        mockAddUserToGroup(exercise);
+        mockAddUserToGroup(exercise.getProjectKey(), MAINTAINER, "instructor1", 2);
+        mockAddUserToGroup(exercise.getProjectKey(), GUEST, "tutor1", 3);
     }
 
-    private void mockGetUserID() throws GitLabApiException {
-        org.gitlab4j.api.models.User instructor = new org.gitlab4j.api.models.User();
-        org.gitlab4j.api.models.User tutor = new org.gitlab4j.api.models.User();
+    /**
+     * Method to mock the getUser method to return mocked users with their id's
+     * @throws GitLabApiException
+     */
+    public void mockGetUserID() throws GitLabApiException {
+        User instructor = new User();
+        User tutor = new User();
+        User user = new User();
         instructor.setId(2);
         tutor.setId(3);
+        user.setId(4);
 
         doReturn(instructor).when(userApi).getUser("instructor1");
         doReturn(tutor).when(userApi).getUser("tutor1");
+        doReturn(user).when(userApi).getUser("user1");
     }
 
     public void mockUpdateUser() throws GitLabApiException {
         doReturn(new org.gitlab4j.api.models.User()).when(userApi).updateUser(any(), any());
     }
 
-    private void mockAddUserToGroup(ProgrammingExercise exercise) throws GitLabApiException {
-        final Member instructor = new Member();
-        instructor.setAccessLevel(AccessLevel.MAINTAINER);
-        instructor.setId(2);
-        instructor.setName("instructor1");
-        final Member tutor = new Member();
-        tutor.setAccessLevel(AccessLevel.GUEST);
-        tutor.setId(3);
-        tutor.setName("tutor1");
-        doReturn(instructor).when(groupApi).addMember(exercise.getProjectKey(), 2, 40);
-        doReturn(tutor).when(groupApi).addMember(exercise.getProjectKey(), 3, 10);
+    public void mockAddUserToGroup(String group, AccessLevel accessLevel, String userName, Integer userId) throws GitLabApiException {
+        final Member member = new Member();
+        member.setAccessLevel(accessLevel);
+        member.setId(userId);
+        member.setName(userName);
+        doReturn(member).when(groupApi).addMember(group, userId, accessLevel);
     }
 
     public void mockCreateRepository(ProgrammingExercise exercise, String repositoryName) throws GitLabApiException {
@@ -117,5 +122,27 @@ public class GitlabRequestMockProvider {
     public void mockAddAuthenticatedWebHook() throws GitLabApiException {
         final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false);
         doReturn(hook).when(projectApi).addHook(any(), anyString(), any(ProjectHook.class), anyBoolean(), anyString());
+    }
+
+    public void mockFailOnGetUserById(String login) throws GitLabApiException {
+        UserApi userApi = mock(UserApi.class);
+        doReturn(userApi).when(gitLabApi).getUserApi();
+        doReturn(null).when(userApi).getUser(eq(login));
+    }
+
+    /**
+     * Mocks that given user is not found in GitLab and is hence created.
+     * @param login Login of the user who's creation is mocked
+     * @throws GitLabApiException Never
+     */
+    public void mockCreationOfUser(String login) throws GitLabApiException {
+        UserApi userApi = mock(UserApi.class);
+        doReturn(userApi).when(gitLabApi).getUserApi();
+        doReturn(null).when(userApi).getUser(eq(login));
+        doAnswer(invocation -> {
+            User user = (User) invocation.getArguments()[0];
+            user.setId(1234);
+            return user;
+        }).when(userApi).createUser(any(), any(), anyBoolean());
     }
 }

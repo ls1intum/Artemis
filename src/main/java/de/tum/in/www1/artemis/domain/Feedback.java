@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
@@ -188,6 +189,11 @@ public class Feedback extends DomainObject {
         return this;
     }
 
+    /**
+     * be careful when using this method as it might result in org.hibernate.HibernateException: null index column for collection: de.tum.in.www1.artemis.domain.Result.feedbacks
+     * when saving the result. The result object is the container that owns the feedback and uses CascadeType.ALL and orphanRemoval
+     * @param result the result container object that owns the feedback
+     */
     public void setResult(Result result) {
         this.result = result;
     }
@@ -226,8 +232,38 @@ public class Feedback extends DomainObject {
         return this.text != null && this.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
     }
 
+    /**
+     * Returns the Artemis static code analysis category to which this feedback belongs. The method returns an empty
+     * String, if the feedback is not static code analysis feedback.
+     *
+     * @return The Artemis static code analysis category to which this feedback belongs
+     */
+    @JsonIgnore
+    public String getStaticCodeAnalysisCategory() {
+        if (isStaticCodeAnalysisFeedback()) {
+            return this.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
+        }
+        return "";
+    }
+
     public boolean referenceEquals(Feedback otherFeedback) {
         return reference.equals(otherFeedback.reference);
+    }
+
+    /**
+     * Copies an automatic feedback to be used for the manual result of a programming exercise
+     * @return Copy of the automatic feedback without its original ID
+     */
+    public Feedback copyProgrammingAutomaticFeedbackForManualResult() {
+        var feedback = new Feedback();
+        feedback.setDetailText(getDetailText());
+        feedback.setType(getType());
+        // For manual result each feedback needs to have a credit. If no credit is set, we set it to 0.0
+        feedback.setCredits(Optional.ofNullable(getCredits()).orElse(0.0));
+        feedback.setText(getText());
+        feedback.setPositive(isPositive());
+        feedback.setReference(getReference());
+        return feedback;
     }
 
     @Override

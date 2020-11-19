@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -65,14 +66,17 @@ public class GitLabService extends AbstractVersionControlService {
 
     private final GitLabUserManagementService gitLabUserManagementService;
 
-    private GitLabApi gitlab;
+    private final GitLabApi gitlab;
+
+    private final UrlService urlService;
 
     public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, GitLabApi gitlab,
-            GitLabUserManagementService gitLabUserManagementService) throws MalformedURLException {
+            GitLabUserManagementService gitLabUserManagementService, UrlService urlService) {
         this.userService = userService;
         this.restTemplate = restTemplate;
         this.gitlab = gitlab;
         this.gitLabUserManagementService = gitLabUserManagementService;
+        this.urlService = urlService;
     }
 
     @PostConstruct
@@ -102,7 +106,7 @@ public class GitLabService extends AbstractVersionControlService {
             protectBranch("master", repositoryUrl);
         }
         catch (GitLabException ex) {
-            log.warn("Could not protect branch (but will still continue) due to the following reason: " + ex.getMessage());
+            log.warn("Could not protect branch (but will still continue) due to the following reason: ", ex);
         }
     }
 
@@ -145,7 +149,7 @@ public class GitLabService extends AbstractVersionControlService {
             unprotectBranch(repositoryId, branch);
         }
         catch (GitLabException ex) {
-            log.warn("Could not unprotectBranch branch (but will try to protect it) due to the following reason: " + ex.getMessage());
+            log.warn("Could not unprotectBranch branch (but will try to protect it) due to the following reason: ", ex);
         }
 
         try {
@@ -224,7 +228,7 @@ public class GitLabService extends AbstractVersionControlService {
     @Override
     public void deleteRepository(URL repositoryUrl) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
-        final var repositoryName = getRepositorySlugFromUrl(repositoryUrl);
+        final var repositoryName = urlService.getRepositorySlugFromUrl(repositoryUrl);
         try {
             gitlab.getProjectApi().deleteProject(repositoryId);
         }
@@ -317,7 +321,7 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public String getRepositoryName(URL repositoryUrl) {
-        return getRepositorySlugFromUrl(repositoryUrl);
+        return urlService.getRepositorySlugFromUrl(repositoryUrl);
     }
 
     @Override
@@ -367,16 +371,6 @@ public class GitLabService extends AbstractVersionControlService {
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to set permissions for user " + username + ". Trying to set permission " + accessLevel, e);
         }
-    }
-
-    @Override
-    public String getRepositorySlugFromUrl(URL repositoryUrl) throws VersionControlException {
-        final var splittedUrl = repositoryUrl.toString().split("/");
-        if (splittedUrl[splittedUrl.length - 1].matches(".*\\.git")) {
-            return splittedUrl[splittedUrl.length - 1].replace(".git", "");
-        }
-
-        throw new GitLabException("Repository URL is not a git URL! Can't get slug for " + repositoryUrl.toString());
     }
 
     @Override

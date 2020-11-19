@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 
 @Service
-@Profile("automaticText")
+@Profile("athene")
 public class TextAssessmentQueueService {
 
     private final TextClusterRepository textClusterRepository;
@@ -71,7 +71,7 @@ public class TextAssessmentQueueService {
      * @return information gain for the TextSubmission
      */
     private double calculateInformationGain(TextSubmission textSubmission, Map<TextBlock, Double> smallerClusterMap) {
-        List<TextBlock> textBlocks = textSubmission.getBlocks();
+        var textBlocks = textSubmission.getBlocks();
         double totalScore = 0.0;
         for (TextBlock textBlock : textBlocks) {
             if (textBlock.isAssessable() || textBlock.getCluster() == null || textBlock.getAddedDistance() == null) {
@@ -91,7 +91,7 @@ public class TextAssessmentQueueService {
      * @param textBlock textBlock for which the distance should be added
      * @param cluster in which the textBlock distance should be added up
      * @throws IllegalArgumentException if textBlock isn't an element of cluster
-     * @return added Distance to all other textblocks in the cluster
+     * @return added Distance to all other text blocks in the cluster
      */
     private double calculateAddedDistance(TextBlock textBlock, TextCluster cluster) {
         if (!cluster.getBlocks().contains(textBlock)) {
