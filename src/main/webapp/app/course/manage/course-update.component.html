@@ -220,7 +220,9 @@
                         (change)="changeRequestMoreFeedbackEnabled()"
                         formControlName="requestMoreFeedbackEnabled"
                     />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.requestMoreFeedbackEnabled.title" for="field_maxRequestMoreFeedbackSettingEnabled">Enable More Feedback Requests</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.requestMoreFeedbackEnabled.title" for="field_maxRequestMoreFeedbackSettingEnabled"
+                        >Enable More Feedback Requests</label
+                    >
                     <fa-icon
                         [icon]="'question-circle'"
                         class="text-secondary"
@@ -238,7 +240,14 @@
                         placement="top"
                         ngbTooltip="{{ 'artemisApp.course.maxRequestMoreFeedbackTimeDays.description' | translate }}"
                     ></fa-icon>
-                    <input required type="number" class="form-control" name="maxRequestMoreFeedbackTimeDays" id="field_maxRequestMoreFeedbackTimeDays" formControlName="maxRequestMoreFeedbackTimeDays" />
+                    <input
+                        required
+                        type="number"
+                        class="form-control"
+                        name="maxRequestMoreFeedbackTimeDays"
+                        id="field_maxRequestMoreFeedbackTimeDays"
+                        formControlName="maxRequestMoreFeedbackTimeDays"
+                    />
                 </div>
                 <div class="form-check">
                     <input type="checkbox" class="form-check-input" name="studentQuestionsEnabled" id="field_studentQuestionsEnabled" formControlName="studentQuestionsEnabled" />
