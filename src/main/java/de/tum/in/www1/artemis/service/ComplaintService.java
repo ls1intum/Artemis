@@ -231,10 +231,10 @@ public class ComplaintService {
      * If the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked.
      * If the result was submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
      */
-    private void validateTimeOfComplaintOrRequestMoreFeedback(Result result, Exercise exercise, Course course, ComplaintType type) {
+    private static void validateTimeOfComplaintOrRequestMoreFeedback(Result result, Exercise exercise, Course course, ComplaintType type) {
         int maxDays = switch (type) {
             case COMPLAINT -> course.getMaxComplaintTimeDays();
-            case MORE_FEEDBACK -> course.getMaxComplaintTimeDays();
+            case MORE_FEEDBACK -> course.getMaxRequestMoreFeedbackTimeDays();
         };
 
         boolean isTimeValid;
@@ -262,7 +262,7 @@ public class ComplaintService {
      * This function checks whether the student is allowed to submit a complaint or not for Exams. Submitting a complaint is allowed within the student exam review period.
      * This period is defined by {@link Exam#getExamStudentReviewStart()} and {@link Exam#getExamStudentReviewEnd()}
      */
-    private boolean isTimeOfComplaintValid(Exam exam) {
+    private static boolean isTimeOfComplaintValid(Exam exam) {
         if (exam.getExamStudentReviewStart() != null && exam.getExamStudentReviewEnd() != null) {
             return exam.getExamStudentReviewStart().isBefore(ZonedDateTime.now()) && exam.getExamStudentReviewEnd().isAfter(ZonedDateTime.now());
         }
