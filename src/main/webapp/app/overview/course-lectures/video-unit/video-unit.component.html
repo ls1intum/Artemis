@@ -17,7 +17,7 @@
                 {{ videoUnit?.description }}
             </div>
         </div>
-        <div class="row" *ngIf="videoUnit?.visibleToStudents">
+        <div class="row" *ngIf="!videoUnit?.visibleToStudents">
             <div class="exercise-tags col-auto">
                 <hr />
                 <h4>
