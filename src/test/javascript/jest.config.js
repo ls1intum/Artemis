@@ -4,7 +4,6 @@ module.exports = {
         'ts-jest': {
             tsconfig: '<rootDir>/tsconfig.spec.json',
             stringifyContentPathRegex: '\\.html$',
-            isolatedModules: true,
             astTransformers: {
                 before: [require.resolve('./InlineHtmlStripStylesTransformer')],
             },
