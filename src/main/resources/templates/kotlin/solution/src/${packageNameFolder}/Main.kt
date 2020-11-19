@@ -1,9 +1,6 @@
 package ${packageName}
 
-
-//TODO: you can uncomment the following code for testing
 fun main() {
-    /*<comment>*/
     val sortingContext = Context()
     val policy = Policy(sortingContext)
 
@@ -19,5 +16,4 @@ fun main() {
         print("Sorted Array a = ")
         Client.printIntegerArray(array)
     }
-    /*</comment>*/
 }

@@ -433,7 +433,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
         for (const feedback of this.referencedFeedback) {
-            if (!feedback.credits || isNaN(feedback.credits)) {
+            if (feedback.credits == undefined || isNaN(feedback.credits)) {
                 this.assessmentsAreValid = false;
                 return;
             }

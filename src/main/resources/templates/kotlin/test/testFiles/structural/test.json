@@ -3,9 +3,7 @@
         "class": {
             "name": "MergeSort",
             "package": "${packageName}",
-            "interfaces": [
-                "SortStrategy"
-            ]
+            "interfaces": [ "SortStrategy" ]
         }
     },
     {
@@ -15,53 +13,20 @@
         },
         "methods": [
             {
-                "name": "getSortAlgorithm",
-                "modifiers": [
-                    "public"
-                ],
-                "returnType": "SortStrategy"
-            },
-            {
-                "name": "setSortAlgorithm",
-                "modifiers": [
-                    "public"
-                ],
-                "parameters": [
-                    "SortStrategy"
-                ],
-                "returnType": "void"
-            },
-            {
-                "name": "setArray",
-                "modifiers": [
-                    "public"
-                ],
-                "parameters": [
-                    "Integer[]"
-                ],
-                "returnType": "void"
-            },
-            {
                 "name": "sort",
-                "modifiers": [
-                    "public"
-                ],
+                "modifiers": [ "public", "final" ],
                 "returnType": "void"
             }
         ],
         "attributes": [
             {
                 "name": "sortAlgorithm",
-                "modifiers": [
-                    "private"
-                ],
+                "modifiers": [ "private" ],
                 "type": "SortStrategy"
             },
             {
                 "name": "array",
-                "modifiers": [
-                    "private"
-                ],
+                "modifiers": [ "private" ],
                 "type": "Integer[]"
             }
         ]
@@ -74,33 +39,22 @@
         "methods": [
             {
                 "name": "configure",
-                "modifiers": [
-                    "public"
-                ],
-                "parameters": [
-                    "boolean",
-                    "boolean"
-                ],
+                "modifiers": [ "public", "final" ],
+                "parameters": [ "boolean", "boolean" ],
                 "returnType": "void"
             }
         ],
         "attributes": [
             {
                 "name": "context",
-                "modifiers": [
-                    "private"
-                ],
+                "modifiers": [ "private", "final" ],
                 "type": "Context"
             }
         ],
         "constructors": [
             {
-                "modifiers": [
-                    "public"
-                ],
-                "parameters": [
-                    "Context"
-                ]
+                "modifiers": [ "public" ],
+                "parameters": [ "Context" ]
             }
         ]
     },
@@ -113,13 +67,8 @@
         "methods": [
             {
                 "name": "performSort",
-                "modifiers": [
-                    "public",
-                    "abstract"
-                ],
-                "parameters": [
-                    "Integer[]"
-                ],
+                "modifiers": [ "public", "abstract" ],
+                "parameters": [ "Integer[]" ],
                 "returnType": "void"
             }
         ]
@@ -128,9 +77,7 @@
         "class": {
             "name": "QuickSort",
             "package": "${packageName}",
-            "interfaces": [
-                "SortStrategy"
-            ]
+            "interfaces": [ "SortStrategy" ]
         }
     }
 ]
