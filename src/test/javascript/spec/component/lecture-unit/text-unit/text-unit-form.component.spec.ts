@@ -160,10 +160,9 @@ describe('TextUnitFormComponent', () => {
             content: 'Lorem Ipsum',
         };
 
-        textUnitFormComponent.isEditMode = true;
-
         // init
         textUnitFormComponentFixture.detectChanges(); // ngOnInit
+        textUnitFormComponent.isEditMode = true;
         tick();
 
         // setting the form data
