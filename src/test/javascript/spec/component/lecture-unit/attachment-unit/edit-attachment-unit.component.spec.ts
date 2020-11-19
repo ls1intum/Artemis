@@ -48,7 +48,6 @@ describe('EditAttachmentUnitComponent', () => {
     let attachmentService;
     let attachmentUnitService;
     let router: Router;
-    let findByIdStub: sinon.SinonStub;
     let uploadFileStub: sinon.SinonStub;
     let updateAttachmentStub: sinon.SinonStub;
     let updateAttachmentUnitStub: sinon.SinonStub;
@@ -105,7 +104,7 @@ describe('EditAttachmentUnitComponent', () => {
                 attachmentUnit.id = 1;
                 attachmentUnit.description = 'lorem ipsum';
                 attachmentUnit.attachment = attachment;
-                findByIdStub = sandbox.stub(attachmentUnitService, 'findById').returns(
+                sandbox.stub(attachmentUnitService, 'findById').returns(
                     of(
                         new HttpResponse({
                             body: attachmentUnit,
@@ -264,51 +263,4 @@ describe('EditAttachmentUnitComponent', () => {
             navigateSpy.restore();
         });
     }));
-
-    //
-    // it('should send PUT request upon form submission and navigate', () => {
-    //     const router: Router = TestBed.inject(Router);
-    //     const videoUnitService = TestBed.inject(VideoUnitService);
-    //
-    //     const videoUnitInDatabase: VideoUnit = new VideoUnit();
-    //     videoUnitInDatabase.id = 1;
-    //     videoUnitInDatabase.name = 'test';
-    //     videoUnitInDatabase.releaseDate = moment({ years: 2010, months: 3, date: 5 });
-    //     videoUnitInDatabase.description = 'lorem ipsum';
-    //     videoUnitInDatabase.source = 'https://www.youtube.com/embed/M7lc1UVf-VE';
-    //
-    //     const findByIdResponse: HttpResponse<VideoUnit> = new HttpResponse({
-    //         body: videoUnitInDatabase,
-    //         status: 200,
-    //     });
-    //     const findByIdStub = sandbox.stub(videoUnitService, 'findById').returns(of(findByIdResponse));
-    //
-    //     editAttachmentUnitComponentFixture.detectChanges(); // onInit
-    //     expect(findByIdStub).to.have.been.calledOnce;
-    //     expect(editAttachmentUnitComponent.videoUnit).to.equal(videoUnitInDatabase);
-    //
-    //     const changedUnit: VideoUnit = {
-    //         ...videoUnitInDatabase,
-    //         name: 'Changed',
-    //     };
-    //
-    //     const updateResponse: HttpResponse<VideoUnit> = new HttpResponse({
-    //         body: changedUnit,
-    //         status: 200,
-    //     });
-    //     const updatedStub = sandbox.stub(videoUnitService, 'update').returns(of(updateResponse));
-    //     const navigateSpy = sinon.spy(router, 'navigate');
-    //
-    //     const textUnitForm: AttachmentUnitFormStubComponent = editAttachmentUnitComponentFixture.debugElement.query(By.directive(AttachmentUnitFormStubComponent)).componentInstance;
-    //     textUnitForm.formSubmitted.emit({
-    //         name: changedUnit.name,
-    //         description: changedUnit.description,
-    //         releaseDate: changedUnit.releaseDate,
-    //         source: changedUnit.source,
-    //     });
-    //
-    //     expect(updatedStub).to.have.been.calledOnce;
-    //     expect(navigateSpy).to.have.been.calledOnce;
-    //     navigateSpy.restore();
-    // });
 });
