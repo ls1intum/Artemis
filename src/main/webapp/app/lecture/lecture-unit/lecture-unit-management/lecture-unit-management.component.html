@@ -42,7 +42,7 @@
             >
                 <fa-icon [icon]="'times'"></fa-icon>
             </button>
-            <button *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary" (click)="editButtonClicked(lectureUnit)">
+            <button *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary edit" (click)="editButtonClicked(lectureUnit)">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                 <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
             </button>
