@@ -10,17 +10,17 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> {
     /**
      * List of detected comparisons whose similarity is above the specified threshold.
      */
-    private List<PlagiarismComparison<E>> comparisons;
+    protected List<PlagiarismComparison<E>> comparisons;
 
     /**
      * Duration of the plagiarism detection run in milliseconds.
      */
-    private int duration;
+    protected long duration;
 
     /**
      * ID of the exercise for which plagiarism was detected.
      */
-    private long exerciseId;
+    protected long exerciseId;
 
     /**
      * 10-element array representing the similarity distribution of the detected comparisons.
@@ -30,7 +30,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> {
      * <p>
      * Intervals: 0: [0% - 10%), 1: [10% - 20%), 2: [20% - 30%), ..., 9: [90% - 100%]
      */
-    private int[] similarityDistribution;
+    protected int[] similarityDistribution;
 
     public List<PlagiarismComparison<E>> getComparisons() {
         return comparisons;
@@ -40,11 +40,11 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> {
         this.comparisons = comparisons;
     }
 
-    public int getDuration() {
+    public long getDuration() {
         return duration;
     }
 
-    public void setDuration(int duration) {
+    public void setDuration(long duration) {
         this.duration = duration;
     }
 

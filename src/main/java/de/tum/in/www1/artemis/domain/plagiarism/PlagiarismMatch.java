@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
+import jplag.Match;
+
 /**
  * A `PlagiarismMatch` is a sequence of identical elements of both submissions.
  */
@@ -19,6 +21,16 @@ public class PlagiarismMatch {
      * Length of the sequence of identical elements, beginning at startA and startB, respectively.
      */
     private int length;
+
+    public static PlagiarismMatch fromJPlagMatch(Match jplagMatch) {
+        PlagiarismMatch match = new PlagiarismMatch();
+
+        match.setStartA(jplagMatch.startA);
+        match.setStartB(jplagMatch.startB);
+        match.setLength(jplagMatch.length);
+
+        return match;
+    }
 
     public int getStartA() {
         return startA;

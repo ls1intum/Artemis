@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
+import jplag.JPlagComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 
 /**
  * Pair of compared student submissions whose similarity is above a certain threshold.
@@ -25,12 +29,30 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> {
     /**
      * Similarity of the compared submissions (between 0 and 1).
      */
-    private int similarity;
+    private float similarity;
 
     /**
      * Status of this submission comparison.
      */
     private PlagiarismStatus status;
+
+    /**
+     * Create a new PlagiarismComparison instance from an existing JPlagComparison object.
+     *
+     * @param jplagComparison JPlag comparison to map to the new PlagiarismComparison instance
+     * @return a new instance with the content of the JPlagComparison
+     */
+    public static PlagiarismComparison<TextSubmissionElement> fromJPlagComparison(JPlagComparison jplagComparison) {
+        PlagiarismComparison<TextSubmissionElement> comparison = new PlagiarismComparison<>();
+
+        comparison.setSubmissionA(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.subA));
+        comparison.setSubmissionB(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.subB));
+        comparison.setMatches(jplagComparison.matches.stream().map(PlagiarismMatch::fromJPlagMatch).collect(Collectors.toList()));
+        comparison.setSimilarity(jplagComparison.percent());
+        comparison.setStatus(PlagiarismStatus.NONE);
+
+        return comparison;
+    }
 
     public PlagiarismSubmission<E> getSubmissionA() {
         return submissionA;
@@ -56,11 +78,11 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> {
         this.matches = matches;
     }
 
-    public int getSimilarity() {
+    public float getSimilarity() {
         return similarity;
     }
 
-    public void setSimilarity(int similarity) {
+    public void setSimilarity(float similarity) {
         this.similarity = similarity;
     }
 

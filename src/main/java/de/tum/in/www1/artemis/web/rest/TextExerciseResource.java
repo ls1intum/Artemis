@@ -16,7 +16,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import jplag.ExitException;
-import jplag.JPlagResult;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
@@ -618,7 +618,7 @@ public class TextExerciseResource {
      */
     @GetMapping(value = "/text-exercises/{exerciseId}/check-plagiarism", params = { "strategy=JPlag" })
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<JPlagResult> checkPlagiarismJPlag(@PathVariable long exerciseId) throws ExitException {
+    public ResponseEntity<TextPlagiarismResult> checkPlagiarismJPlag(@PathVariable long exerciseId) throws ExitException {
         Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissions(exerciseId);
 
         if (optionalTextExercise.isEmpty()) {
@@ -631,7 +631,7 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        JPlagResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise);
+        TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise);
 
         return ResponseEntity.ok(result);
     }

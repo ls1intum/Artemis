@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.plagiarism.text;
 
+import jplag.Token;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmissionElement;
 
 public class TextSubmissionElement extends PlagiarismSubmissionElement {
@@ -10,7 +11,21 @@ public class TextSubmissionElement extends PlagiarismSubmissionElement {
 
     private String file;
 
+    private int type;
+
     private int length;
+
+    public static TextSubmissionElement fromJPlagToken(Token token) {
+        TextSubmissionElement textSubmissionElement = new TextSubmissionElement();
+
+        textSubmissionElement.setColumn(token.getColumn());
+        textSubmissionElement.setLine(token.getLine());
+        textSubmissionElement.setFile(token.file);
+        textSubmissionElement.setType(token.type);
+        textSubmissionElement.setLength(token.getLength());
+
+        return textSubmissionElement;
+    }
 
     public int getColumn() {
         return column;
@@ -34,6 +49,14 @@ public class TextSubmissionElement extends PlagiarismSubmissionElement {
 
     public void setFile(String file) {
         this.file = file;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
     }
 
     public int getLength() {

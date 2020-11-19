@@ -21,6 +21,7 @@ import org.springframework.util.FileSystemUtils;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.TextSubmissionExportService;
 import de.tum.in.www1.artemis.service.ZipFileService;
@@ -110,7 +111,7 @@ public class TextPlagiarismDetectionService {
      * @return a zip file that can be returned to the client
      * @throws ExitException is thrown if JPlag exits unexpectedly
      */
-    public JPlagResult checkPlagiarism(TextExercise textExercise) throws ExitException {
+    public TextPlagiarismResult checkPlagiarism(TextExercise textExercise) throws ExitException {
         // TODO: offer the following options in the client
         // 1) filter empty submissions, i.e. repositories with no student commits
         // 2) filter submissions with a result score of 0%
@@ -137,13 +138,16 @@ public class TextPlagiarismDetectionService {
         JPlagOptions options = new JPlagOptions(submissionsFolderName, LanguageOption.TEXT);
 
         JPlag jplag = new JPlag(options);
-        JPlagResult result = jplag.run();
+        JPlagResult jPlagResult = jplag.run();
 
         if (submissionFolderFile.exists()) {
             FileSystemUtils.deleteRecursively(submissionFolderFile);
         }
 
-        return result;
+        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(jPlagResult);
+        textPlagiarismResult.setExerciseId(textExercise.getId());
+
+        return textPlagiarismResult;
     }
 
 }
