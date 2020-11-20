@@ -33,12 +33,12 @@ import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
 /**
- * Service for upgrading of Java and Kotlin template files
+ * Service for upgrading of Java template files
  */
 @Service
-public class JavaKotlinTemplateUpgradeService extends TemplateUpgradeService {
+public class JavaTemplateUpgradeService extends TemplateUpgradeService {
 
-    private final Logger log = LoggerFactory.getLogger(JavaKotlinTemplateUpgradeService.class);
+    private final Logger log = LoggerFactory.getLogger(JavaTemplateUpgradeService.class);
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -48,7 +48,7 @@ public class JavaKotlinTemplateUpgradeService extends TemplateUpgradeService {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    public JavaKotlinTemplateUpgradeService(ProgrammingExerciseService programmingExerciseService, GitService gitService, ResourceLoaderService resourceLoaderService,
+    public JavaTemplateUpgradeService(ProgrammingExerciseService programmingExerciseService, GitService gitService, ResourceLoaderService resourceLoaderService,
             UserService userService) {
         this.programmingExerciseService = programmingExerciseService;
         this.gitService = gitService;

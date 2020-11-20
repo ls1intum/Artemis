@@ -10,12 +10,12 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 @Service
 public class TemplateUpgradePolicy {
 
-    private final JavaKotlinTemplateUpgradeService javaKotlinRepositoryUpgradeService;
+    private final JavaTemplateUpgradeService javaRepositoryUpgradeService;
 
     private final DefaultTemplateUpgradeService defaultRepositoryUpgradeService;
 
-    public TemplateUpgradePolicy(JavaKotlinTemplateUpgradeService javaKotlinRepositoryUpgradeService, DefaultTemplateUpgradeService defaultRepositoryUpgradeService) {
-        this.javaKotlinRepositoryUpgradeService = javaKotlinRepositoryUpgradeService;
+    public TemplateUpgradePolicy(JavaTemplateUpgradeService javaRepositoryUpgradeService, DefaultTemplateUpgradeService defaultRepositoryUpgradeService) {
+        this.javaRepositoryUpgradeService = javaRepositoryUpgradeService;
         this.defaultRepositoryUpgradeService = defaultRepositoryUpgradeService;
     }
 
@@ -27,8 +27,8 @@ public class TemplateUpgradePolicy {
      */
     public TemplateUpgradeService getUpgradeService(ProgrammingLanguage programmingLanguage) {
         return switch (programmingLanguage) {
-            case JAVA, KOTLIN -> javaKotlinRepositoryUpgradeService;
-            case PYTHON, C, HASKELL, VHDL, ASSEMBLER, SWIFT -> defaultRepositoryUpgradeService;
+            case JAVA -> javaRepositoryUpgradeService;
+            case KOTLIN, PYTHON, C, HASKELL, VHDL, ASSEMBLER, SWIFT -> defaultRepositoryUpgradeService;
         };
     }
 }
