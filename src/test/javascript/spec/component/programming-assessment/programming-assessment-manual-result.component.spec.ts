@@ -244,8 +244,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.cancel();
 
         expect(confirmSpy).to.be.calledOnce;
-        expect(comp.cancelBusy).to.be.true;
         tick(100);
+        expect(comp.cancelBusy).to.be.false;
         expect(navigateBackStub).to.be.calledOnce;
         expect(cancelBackStub).to.be.calledOnce;
     }));
