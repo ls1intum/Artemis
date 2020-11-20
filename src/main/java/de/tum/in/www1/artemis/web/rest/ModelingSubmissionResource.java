@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -38,7 +39,7 @@ import io.swagger.annotations.ApiResponses;
  */
 @RestController
 @RequestMapping("/api")
-public class ModelingSubmissionResource {
+public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);
 
@@ -53,39 +54,25 @@ public class ModelingSubmissionResource {
 
     private final ModelingExerciseService modelingExerciseService;
 
-    private final ParticipationService participationService;
-
-    private final CourseService courseService;
-
-    private final AuthorizationCheckService authCheckService;
-
     private final CompassService compassService;
-
-    private final ExerciseService exerciseService;
-
-    private final UserService userService;
 
     private final GradingCriterionService gradingCriterionService;
 
     private final ExamSubmissionService examSubmissionService;
 
-    public ModelingSubmissionResource(ModelingSubmissionService modelingSubmissionService, ModelingExerciseService modelingExerciseService,
-            ParticipationService participationService, CourseService courseService, AuthorizationCheckService authCheckService, CompassService compassService,
+    public ModelingSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ModelingSubmissionService modelingSubmissionService,
+            ModelingExerciseService modelingExerciseService, ParticipationService participationService, AuthorizationCheckService authCheckService, CompassService compassService,
             ExerciseService exerciseService, UserService userService, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
+        super(submissionRepository, resultService, participationService, authCheckService, userService, exerciseService, modelingSubmissionService);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
-        this.participationService = participationService;
-        this.courseService = courseService;
-        this.authCheckService = authCheckService;
         this.compassService = compassService;
-        this.exerciseService = exerciseService;
-        this.userService = userService;
         this.gradingCriterionService = gradingCriterionService;
         this.examSubmissionService = examSubmissionService;
     }
 
     /**
-     * POST /courses/{courseId}/exercises/{exerciseId}/modeling-submissions : Create a new modelingSubmission. This is called when a student saves his model the first time after
+     * POST /exercises/{exerciseId}/modeling-submissions : Create a new modelingSubmission. This is called when a student saves his model the first time after
      * starting the exercise or starting a retry.
      *
      * @param exerciseId         the id of the exercise for which to init a participation
@@ -169,42 +156,10 @@ public class ModelingSubmissionResource {
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
-    public ResponseEntity<List<ModelingSubmission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+    public ResponseEntity<List<Submission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
-        log.debug("REST request to get all ModelingSubmissions");
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Exercise exercise = modelingExerciseService.findOne(exerciseId);
-        if (assessedByTutor) {
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                throw new AccessForbiddenException("You are not allowed to access this resource");
-            }
-        }
-        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
-
-        final boolean examMode = exercise.hasExerciseGroup();
-        List<ModelingSubmission> modelingSubmissions;
-        if (assessedByTutor) {
-            modelingSubmissions = modelingSubmissionService.getAllModelingSubmissionsAssessedByTutorForExercise(exerciseId, user, examMode);
-        }
-        else {
-            modelingSubmissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly, examMode);
-        }
-
-        // tutors should not see information about the student of a submission
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            modelingSubmissions.forEach(submission -> modelingSubmissionService.hideDetails(submission, user));
-        }
-
-        // remove unnecessary data from the REST response
-        modelingSubmissions.forEach(submission -> {
-            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-                submission.getParticipation().setExercise(null);
-            }
-        });
-
-        return ResponseEntity.ok().body(modelingSubmissions);
+        log.debug("REST request to get all modeling upload submissions");
+        return super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor);
     }
 
     /**
@@ -220,10 +175,10 @@ public class ModelingSubmissionResource {
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
-        ModelingSubmission modelingSubmission = modelingSubmissionService.findOne(submissionId);
-        final StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
-        final ModelingExercise modelingExercise = (ModelingExercise) studentParticipation.getExercise();
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
+        var modelingSubmission = modelingSubmissionService.findOne(submissionId);
+        var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
+        var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
         modelingExercise.setGradingCriteria(gradingCriteria);
         final User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user)) {
@@ -423,8 +378,7 @@ public class ModelingSubmissionResource {
     }
 
     private void checkAuthorization(ModelingExercise exercise, User user) throws AccessForbiddenException {
-        final Course course = courseService.findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
+        if (!authCheckService.isAtLeastStudentForExercise(exercise, user)) {
             throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
         }
     }
