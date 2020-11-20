@@ -1,8 +1,9 @@
 {
     "artemisApp": {
         "lectureUnit": {
+            "deleted": "Lecture unit deleted",
             "home": {
-                "title": "Lecture Modules"
+                "title": "Lecture Units"
             },
             "unitCreationCard": {
                 "title": "Add a new Lecture Unit",
@@ -12,6 +13,31 @@
                 "file": "File"
             },
             "releaseDate": "Release Date"
+        },
+        "textUnit": {
+            "created": "A new text unit created",
+            "updated": "Text unit updated",
+            "tooltip": "This is a text unit.",
+            "popup": "View in Popup",
+            "notReleasedTooltip": "Text only visible to teaching assistants and instructors. Release date:",
+            "markdownHelp": "You can enter Markdown here. More information: ",
+            "cachedMarkdown": "Artemis found some unsaved markdown in the local storage. Do you want to load it? Save Date:",
+            "createTextUnit": {
+                "title": "Create Text Unit",
+                "name": "Name",
+                "content": "Content",
+                "namePlaceHolder": "Give the text unit a name",
+                "nameRequiredValidationError": "Name is required.",
+                "nameMaxLengthValidationError": "Name can be max 255 characters long."
+            },
+            "editTextUnit": {
+                "title": "Edit Text Unit"
+            },
+            "delete": {
+                "question": "Do you really want to delete the text unit <strong>{{ title }}</strong>? You can not undo this action!",
+                "typeNameToConfirm": "Please enter the name of the text unit for confirmation.",
+                "buttonText": "Delete"
+            }
         },
         "videoUnit": {
             "created": "A new video unit created",

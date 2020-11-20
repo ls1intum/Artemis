@@ -47,6 +47,7 @@ import { Course } from 'app/entities/course.model';
 import { delay } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -79,18 +80,20 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         hasComplaint: true,
         assessmentType: AssessmentType.SEMI_AUTOMATIC,
         id: 2,
+        resultString: '1 of 13 passed',
     };
     result.submission!.id = 1;
+
     const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
     const exercise = <ProgrammingExercise>{ id: 1, maxScore: 100, gradingInstructions: 'Grading Instructions', course: <Course>{ instructorGroupName: 'instructorGroup' } };
-    const automaticResult: Result = { feedbacks: [new Feedback()], assessmentType: AssessmentType.AUTOMATIC, id: 1, resultString: '1 of 13 passed' };
+    // const automaticResult: Result = { feedbacks: [new Feedback()], assessmentType: AssessmentType.AUTOMATIC, id: 1, resultString: '1 of 13 passed' };
     const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
-    participation.results = [result, automaticResult];
+    participation.results = [result];
     participation.exercise = exercise;
     participation.id = 1;
     participation.student = { login: 'student1' } as User;
     participation.repositoryUrl = 'http://student1@bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git';
-
+    result.submission!.participation = participation;
     const unassessedSubmission = new ProgrammingSubmission();
     const participation2 = new ProgrammingExerciseStudentParticipation();
     participation2.id = 12;
@@ -98,6 +101,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     const afterComplaintResult = new Result();
     afterComplaintResult.score = 100;
+
+    const route = ({ params: of({ participationId: 1 }), queryParamMap: of(convertToParamMap({ testRun: false })) } as any) as ActivatedRoute;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -117,6 +122,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: ActivatedRoute, useValue: route },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -136,7 +142,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 accountService = debugElement.injector.get(AccountService);
 
                 updateAfterComplaintStub = stub(programmingAssessmentManualResultService, 'updateAfterComplaint').returns(of(afterComplaintResult));
-                getStudentParticipationWithResultsStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithResults').returns(
+                getStudentParticipationWithResultsStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithLatestManualResult').returns(
                     of(participation).pipe(delay(100)),
                 );
                 findByResultIdStub = stub(complaintService, 'findByResultId').returns(of({ body: complaint } as HttpResponse<Complaint>));
@@ -232,13 +238,16 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         tick(100);
         const navigateBackStub = stub(comp, 'navigateBack');
+        const cancelBackStub = stub(programmingAssessmentManualResultService, 'cancelAssessment').returns(of(undefined).pipe(delay(100)));
         global.confirm = () => true;
         const confirmSpy = spy(window, 'confirm');
         comp.cancel();
 
         expect(confirmSpy).to.be.calledOnce;
-        expect(comp.cancelBusy).to.be.true;
+        tick(100);
+        expect(comp.cancelBusy).to.be.false;
         expect(navigateBackStub).to.be.calledOnce;
+        expect(cancelBackStub).to.be.calledOnce;
     }));
 
     it('should go to next submission', fakeAsync(() => {
@@ -246,6 +255,12 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         tick(100);
         comp.nextSubmission();
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
+    }));
+    it('should create the correct repository url', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+        expect(comp.adjustedRepositoryURL).to.be.equal('http://bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git');
+        flush();
     }));
 
     it('should update assessment after complaint', fakeAsync(() => {
@@ -255,11 +270,5 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(updateAfterComplaintStub).to.be.calledOnce;
         expect(comp.manualResult!.score).to.be.equal(100);
         flush();
-    }));
-
-    it('should create the correct repository url', fakeAsync(() => {
-        comp.ngOnInit();
-        tick(100);
-        expect(comp.adjustedRepositoryURL).to.be.equal('http://bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git');
     }));
 });

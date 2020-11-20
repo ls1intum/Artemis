@@ -312,7 +312,7 @@ public class BitbucketService extends AbstractVersionControlService {
         }
         catch (HttpClientErrorException e) {
             log.error("Could not create Bitbucket user " + username, e);
-            throw new BitbucketException("Error while creating user");
+            throw new BitbucketException("Error while creating user", e);
         }
     }
 

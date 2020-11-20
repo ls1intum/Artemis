@@ -403,23 +403,15 @@ public class ProgrammingExerciseService {
             String templatePath = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()) + "/test";
 
             String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
-            String testUtilsPath = templatePath + "/testutils/**/*.*";
-
-            Resource[] testUtils = resourceLoaderService.getResources(testUtilsPath);
             Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
-
             fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
 
             // These resources might override the programming language dependent resources as they are project type dependent.
-            Resource[] projectTypeTestUtils = null;
             ProjectType projectType = programmingExercise.getProjectType();
             if (projectType != null) {
                 String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
 
                 String projectTypeProjectTemplatePath = projectTypeTemplatePath + "/projectTemplate/**/*.*";
-                String projectTypeTestUtilsPath = projectTypeTemplatePath + "/testutils/**/*.*";
-
-                projectTypeTestUtils = resourceLoaderService.getResources(projectTypeTestUtilsPath);
 
                 try {
                     Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(projectTypeProjectTemplatePath);
@@ -435,7 +427,7 @@ public class ProgrammingExerciseService {
             sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
 
             if (!programmingExercise.hasSequentialTestRuns()) {
-                String testFilePath = templatePath + "/testFiles" + "/**/*.*";
+                String testFilePath = templatePath + "/testFiles/**/*.*";
                 Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
                 String packagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
@@ -444,15 +436,11 @@ public class ProgrammingExerciseService {
 
                 fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
 
-                fileService.copyResources(testUtils, prefix, packagePath, true);
                 fileService.copyResources(testFileResources, prefix, packagePath, false);
 
                 // Possibly overwrite files if the project type is defined
                 if (projectType != null) {
                     String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
-                    if (projectTypeTestUtils != null) {
-                        fileService.copyResources(projectTypeTestUtils, prefix, packagePath, true);
-                    }
 
                     try {
                         Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
@@ -500,14 +488,10 @@ public class ProgrammingExerciseService {
                     String packagePath = Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
                     Files.copy(stagePomXml.getInputStream(), Paths.get(buildStagePath.toAbsolutePath().toString(), "pom.xml"));
-                    fileService.copyResources(testUtils, prefix, packagePath, true);
                     fileService.copyResources(buildStageResources, prefix, packagePath, false);
 
                     // Possibly overwrite files if the project type is defined
                     if (projectType != null) {
-                        if (projectTypeTestUtils != null) {
-                            fileService.copyResources(projectTypeTestUtils, prefix, packagePath, true);
-                        }
                         buildStageResourcesPath = projectTemplatePath + "/testFiles/" + buildStage + "/**/*.*";
                         try {
                             buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);

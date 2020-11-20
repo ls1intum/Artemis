@@ -10,8 +10,8 @@ import { TableEditableFieldComponent } from 'app/shared/table/table-editable-fie
 const expect = chai.expect;
 
 describe('TableEditableFieldComponent', () => {
-    let comp: TableEditableFieldComponent<any>;
-    let fixture: ComponentFixture<TableEditableFieldComponent<any>>;
+    let comp: TableEditableFieldComponent;
+    let fixture: ComponentFixture<TableEditableFieldComponent>;
     let debugElement: DebugElement;
 
     const tableInputValue = '.table-editable-field__input';
@@ -42,7 +42,7 @@ describe('TableEditableFieldComponent', () => {
 
     it('should show input and fire update event on enter', fakeAsync(() => {
         const value = 'test';
-        const fakeUpdateValue = { emit: jest.fn(() => {}) } as any;
+        const fakeUpdateValue = jest.fn(() => {});
 
         comp.value = value;
         comp.onValueUpdate = fakeUpdateValue;
@@ -53,6 +53,6 @@ describe('TableEditableFieldComponent', () => {
         expect(tableInput.nativeElement.value).to.equal(value);
 
         tableInput.nativeElement.dispatchEvent(new Event('blur'));
-        expect(fakeUpdateValue.emit.mock.calls.length).to.equal(1);
+        expect(fakeUpdateValue.mock.calls.length).to.equal(1);
     }));
 });

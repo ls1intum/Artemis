@@ -249,9 +249,10 @@ public class ProgrammingExerciseResource {
     /**
      * Validates static code analysis settings
      * 1. The flag staticCodeAnalysisEnabled must not be null
-     * 2. Static code analysis can only be enabled for supported programming languages
-     * 3. Static code analysis max penalty must only be set if static code analysis is enabled
-     * 4. Static code analysis max penalty must be positive
+     * 2. Static code analysis and sequential test runs can't be active at the same time
+     * 3. Static code analysis can only be enabled for supported programming languages
+     * 4. Static code analysis max penalty must only be set if static code analysis is enabled
+     * 5. Static code analysis max penalty must be positive
      *
      * @param programmingExercise exercise to validate
      * @return Optional validation error response
@@ -263,6 +264,13 @@ public class ProgrammingExerciseResource {
         if (programmingExercise.isStaticCodeAnalysisEnabled() == null) {
             return Optional.of(ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "The static code analysis flag must be set to true or false", "staticCodeAnalysisFlagNotSet")).body(null));
+        }
+
+        // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && programmingExercise.hasSequentialTestRuns()) {
+            return Optional.of(ResponseEntity.badRequest().headers(
+                    HeaderUtil.createAlert(applicationName, "The static code analysis with sequential test runs is not supported at the moment", "staticCodeAnalysisAndSequential"))
+                    .body(null));
         }
 
         // Static code analysis is only supported for Java at the moment

@@ -413,17 +413,17 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testQuizSubmitScheduledAndDeleted() throws Exception {
+        log.debug("// Start testQuizSubmitScheduledAndDeleted");
         /*
          * The time we wait in between needs to be relatively high to make sure the concurrent tasks are finished in time, especially sending out the exercise can easily take up to
          * 100 ms, so we should leave about 200 ms for that, similar for the completion of all saving/updating/scheduling operations.
          */
-        int timeFactor = 30;
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         String publishQuizPath = "/topic/courses/" + course.getId() + "/quizExercises";
-        long time = System.currentTimeMillis();
-        log.debug("// Creating the quiz exercise");
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plus(60 * timeFactor, ChronoUnit.MILLIS), null);
+        log.debug("// Creating the quiz exercise 2s in the future");
+        var releaseDate = ZonedDateTime.now().plus(2, ChronoUnit.SECONDS);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plus(2000, ChronoUnit.MILLIS), null);
         quizExercise.duration(60);
         quizExercise.setIsPlannedToStart(true);
         quizExercise.setIsVisibleBeforeStart(true);
@@ -432,25 +432,23 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         log.debug("// Saving the quiz initially");
         quizExercise = quizExerciseService.save(quizExercise);
 
-        // check that quiz has not started now
-        verify(messagingTemplate, never()).send(eq(publishQuizPath), any());
+        checkQuizNotStarted(publishQuizPath);
 
         // wait a bit
-        TimeUnit.MILLISECONDS.sleep(30 * timeFactor - (System.currentTimeMillis() - time));
-        time = System.currentTimeMillis();
+        sleep(1000);
+        checkQuizNotStarted(publishQuizPath);
 
         // reschedule
-        log.debug("// Rescheduling the quiz");
-        quizExercise.releaseDate(ZonedDateTime.now().plus(70 * timeFactor, ChronoUnit.MILLIS));
+        log.debug("// Rescheduling the quiz for another 2s into the future");
+        releaseDate = releaseDate.plus(2000, ChronoUnit.MILLIS);
+        quizExercise.releaseDate(releaseDate);
         quizExercise = quizExerciseService.save(quizExercise);
 
         // wait for the old release date to pass
-        TimeUnit.MILLISECONDS.sleep(40 * timeFactor - (System.currentTimeMillis() - time));
-        time = System.currentTimeMillis();
+        sleep(1500);
 
         // check that quiz has still not started now
-        log.debug("// Check that the quiz has not started and submissions are not allowed");
-        verify(messagingTemplate, never()).send(eq(publishQuizPath), any());
+        checkQuizNotStarted(publishQuizPath);
 
         // check that submission fails
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
@@ -460,7 +458,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(quizSubmissionRepository.count()).isZero();
 
         // wait for the new release date to pass
-        TimeUnit.MILLISECONDS.sleep(60 * timeFactor - (System.currentTimeMillis() - time));
+        sleep(2500);
 
         // check that quiz has started
         log.debug("// Check that the quiz has started");
@@ -494,8 +492,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // ... directly delete the quiz
         exerciseRepository.delete(quizExercise);
 
-        // wait a little bit
-        TimeUnit.MILLISECONDS.sleep(100);
+        sleep(1000);
 
         // the deleted quiz should get removed, no submissions should be saved
         quizScheduleService.processCachedQuizSubmissions();
@@ -504,5 +501,16 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(quizScheduleService.getQuizExercise(quizExercise.getId())).isNull();
         // no submissions were marked as submitted and saved
         assertThat(quizSubmissionRepository.count()).isZero();
+    }
+
+    private void checkQuizNotStarted(String path) {
+        // check that quiz has not started now
+        log.debug("// Check that the quiz has not started and submissions are not allowed");
+        verify(messagingTemplate, never()).send(eq(path), any());
+    }
+
+    private void sleep(long millis) throws InterruptedException {
+        log.debug("zzzzzzzzzzzzz Sleep " + millis + "ms");
+        TimeUnit.MILLISECONDS.sleep(millis);
     }
 }
