@@ -4,15 +4,26 @@ Database Relationship
 
 WORK IN PROGRESS
 
-1. Relationships
-=================
+1. Retrieving and Building Objects
+==================================
 
-In this section, we depict common entity relationships we use in Artemis and show some code snippets. Entities can be loaded **eagerly** ``FetchType.EAGER`` or **lazy** ``FetchType.LAZY`` We **always** use ``FetchType.LAZY``, unless there is a very strong case to be made for ``FetchType.EAGER``. 
+The cost of retrieving and building an object's relationships far exceeds the cost of selecting the object. This is especially true for relationships where it would trigger the loading of every child through the relationship hierarchy. The solution to this issue is **lazy fetching** (lazy loading). Lazy fetching allows the fetching of a relationship to be deferred until it is accessed. This is important not only to avoid the database access, but also to avoid the cost of building the objects if they are not needed. |br|
+
+In JPA lazy fetching can be set on any relationship using the fetch attribute. The fetch can be set to either ``LAZY`` or ``EAGER`` as defined in the ``FetchType`` enum. The default fetch type is ``LAZY`` for all relationships except for **OneToOne** and **ManyToOne**, but in general it is a good idea to make every relationship ``LAZY``. The ``EAGER`` default for **OneToOne** and **ManyToOne** is for implementation reasons (more difficult to implement), not because it is a good idea. |br|
+
+We **always** use ``FetchType.LAZY``, unless there is a very strong case to be made for ``FetchType.EAGER``.
 
        .. note::
         Additional effort to use ``FetchType.LAZY`` does count as a strong argument.
 
-* **OneToOne** example: one ``Complaint`` is connected to one ``Result``.
+2. Relationships
+================
+
+A relationship is a reference from one object to another. In a relational database relationships are defined through foreign keys. The source row contains the primary key of the target row to define the relationship (and sometimes the inverse). A query must be performed to read the target objects of the relationship using the foreign key and primary key information. In Java, if a relationship is to a collection of other objects, a ``Collection`` or ``array`` type is used in Java to hold the contents of the relationship. In a relational database, collection relations are either defined by the target objects having a foreign key back to the source object's primary key, or by having an intermediate join table to store the relationship (both objects' primary keys). |br|
+
+In this section, we depict common entity relationships we use in Artemis and show some code snippets. 
+
+* **OneToOne** A unique reference from one object to another. It is also inverse of itself. Example: one ``Complaint`` has a reference to one ``Result``.
 
  .. code:: java
 
@@ -21,7 +32,7 @@ In this section, we depict common entity relationships we use in Artemis and sho
     @JoinColumn(unique = true)
     private Submission submission;
 
-* **OneToMany** example: one ``Result`` is connected to many ``Feedback`` elements -> One ``Result`` has a list of ``Feedback``.
+* **OneToMany** A ``Collection`` or ``Map`` of objects. It is the inverse of a **ManyToOne** relationship. Example: one ``Result`` has a list of ``Feedback`` elements. For ordered OneToMany relations see :ref:`ordered collections <ordered>`.
 
  .. code:: java
 
@@ -34,7 +45,17 @@ In this section, we depict common entity relationships we use in Artemis and sho
     private List<Feedback> feedbacks = new ArrayList<>();
 
 
-* **ManyToMany** example: many ``Exercise`` elements are connected to many ``LearningGoal`` elements -> One ``Exercise`` has a list of ``LearningGoal`` elements, one ``LearningGoal`` has list of ``Exercise`` elements.
+* **ManyToOne** A reference from one object to another. It is the inverse of a **OneToMany** relationship. Example: one ``Feedback`` has a reference to one ``Result``. 
+
+ .. code:: java
+
+    // Feedback.java
+    @ManyToOne
+    @JsonIgnoreProperties("feedbacks")
+    private Result result;
+
+
+* **ManyToMany** ``A Collection`` or ``Map`` of objects. It is the inverse of a itself. Example: many ``Exercise`` elements are connected to many ``LearningGoal`` elements -> One ``Exercise`` has a list of ``LearningGoal`` elements, one ``LearningGoal`` has list of ``Exercise`` elements.
 
  .. code:: java
 
@@ -47,6 +68,10 @@ In this section, we depict common entity relationships we use in Artemis and sho
     @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"))
     @JsonIgnoreProperties("learningGoals")
     private Set<Exercise> exercises = new HashSet<>();
+
+
+ .. warning::
+        For **OneToMany**, **ManyToOne**, and **ManyToMany** relationships you must not forget to mark the associated elements with ``@JsonIgnoreProperties()``. Without this, the object serialization process with be stuck in an endless loop and throw an error. For more information check out the examples listed above and see: `Jackson and JsonIgnoreType <https://www.concretepage.com/jackson-api/jackson-jsonignore-jsonignoreproperties-and-jsonignoretype>`_. 
 
 
 2. Cascade Types
@@ -116,6 +141,8 @@ Best Practices
         @JsonIgnoreProperties("course")
         private Set<Exercise> exercises = new HashSet<>();
 
+
+.. _ordered:
 
   * **Ordered Collection**: When you want to order the collection of objects of the relationship, then always use a ``List``. It is important to note here that there is no inherent order in a database table. One could argue that you can use the ``id`` field for the ordering, but there are edge cases where this can lead to problems. Therefore, for ordered collection, **always** annotate it with ``@OrderColumn``. An order column indicates to hibernate that we want to order our collection based on a specific column of our data table. By default, the column name it expects is *tablenameS\_order*. For ordered collections, we also recommend that you annotate it with ``CascadeType.ALL`` and ``orphanRemoval = true``. E.g.:
 
@@ -201,3 +228,8 @@ Solutions for known issues
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
     private List<Feedback> feedbacks = new ArrayList<>();
+
+
+.. |br| raw:: html
+    
+    <br />
