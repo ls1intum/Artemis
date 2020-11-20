@@ -5,9 +5,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 @Service
-public class DefaultRepositoryUpgradeService extends RepositoryUpgradeService {
+public class DefaultTemplateUpgradeService extends TemplateUpgradeService {
 
-    public void upgradeRepositories(ProgrammingExercise exercise) {
+    public void upgradeTemplate(ProgrammingExercise exercise) {
         // Does nothing yet
     }
 }

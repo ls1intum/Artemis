@@ -51,8 +51,8 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
-import de.tum.in.www1.artemis.service.programming.RepositoryUpgradeProvider;
-import de.tum.in.www1.artemis.service.programming.RepositoryUpgradeService;
+import de.tum.in.www1.artemis.service.programming.TemplateUpgradePolicy;
+import de.tum.in.www1.artemis.service.programming.TemplateUpgradeService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -103,7 +103,7 @@ public class ProgrammingExerciseResource {
 
     private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
-    private final RepositoryUpgradeProvider repositoryUpgradeProvider;
+    private final TemplateUpgradePolicy templateUpgradePolicy;
 
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
@@ -126,7 +126,7 @@ public class ProgrammingExerciseResource {
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
             ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionService gradingCriterionService,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService, RepositoryUpgradeProvider repositoryUpgradeProvider) {
+            ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -142,7 +142,7 @@ public class ProgrammingExerciseResource {
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.gradingCriterionService = gradingCriterionService;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
-        this.repositoryUpgradeProvider = repositoryUpgradeProvider;
+        this.templateUpgradePolicy = templateUpgradePolicy;
     }
 
     /**
@@ -564,8 +564,8 @@ public class ProgrammingExerciseResource {
 
         // Update the template files
         if (updateTemplate) {
-            RepositoryUpgradeService upgradeService = repositoryUpgradeProvider.getUpgradeService(importedProgrammingExercise.getProgrammingLanguage());
-            upgradeService.upgradeRepositories(importedProgrammingExercise);
+            TemplateUpgradeService upgradeService = templateUpgradePolicy.getUpgradeService(importedProgrammingExercise.getProgrammingLanguage());
+            upgradeService.upgradeTemplate(importedProgrammingExercise);
         }
 
         // Copy or recreate the build plans

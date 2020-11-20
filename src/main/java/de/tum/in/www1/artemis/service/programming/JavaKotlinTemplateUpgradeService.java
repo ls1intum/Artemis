@@ -33,9 +33,9 @@ import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
 @Service
-public class JavaKotlinRepositoryUpgradeService extends RepositoryUpgradeService {
+public class JavaKotlinTemplateUpgradeService extends TemplateUpgradeService {
 
-    private final Logger log = LoggerFactory.getLogger(JavaKotlinRepositoryUpgradeService.class);
+    private final Logger log = LoggerFactory.getLogger(JavaKotlinTemplateUpgradeService.class);
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -45,7 +45,7 @@ public class JavaKotlinRepositoryUpgradeService extends RepositoryUpgradeService
 
     private final ResourceLoaderService resourceLoaderService;
 
-    public JavaKotlinRepositoryUpgradeService(ProgrammingExerciseService programmingExerciseService, GitService gitService, ResourceLoaderService resourceLoaderService,
+    public JavaKotlinTemplateUpgradeService(ProgrammingExerciseService programmingExerciseService, GitService gitService, ResourceLoaderService resourceLoaderService,
             UserService userService) {
         this.programmingExerciseService = programmingExerciseService;
         this.gitService = gitService;
@@ -53,7 +53,7 @@ public class JavaKotlinRepositoryUpgradeService extends RepositoryUpgradeService
         this.resourceLoaderService = resourceLoaderService;
     }
 
-    public void upgradeRepositories(ProgrammingExercise exercise) {
+    public void upgradeTemplate(ProgrammingExercise exercise) {
         // TODO: Support sequential test runs
         if (exercise.hasSequentialTestRuns()) {
             return;
