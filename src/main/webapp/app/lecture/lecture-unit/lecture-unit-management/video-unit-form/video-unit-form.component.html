@@ -51,7 +51,7 @@
                     </div>
                 </div>
                 <div class="col-1 mx-auto mb-2 text-center align-self-center">
-                    <button type="button" class="btn btn-sm btn-primary" [disabled]="!isTransformable" (click)="createEmbeddableVideoUrl($event)">
+                    <button id="transformButton" type="button" class="btn btn-sm btn-primary" [disabled]="!isTransformable" (click)="setEmbeddedVideoUrl($event)">
                         <fa-icon [icon]="'arrow-left'"></fa-icon>
                     </button>
                 </div>
@@ -68,7 +68,7 @@
             </div>
             <div class="row">
                 <div class="col-12">
-                    <button class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
                         <span>{{ 'entity.action.submit' | translate }}</span>
                     </button>
                 </div>

@@ -113,17 +113,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             let participationId;
             if (!params['participationId']) {
                 // Check if error is thrown and show info about error
-                if (this.route.snapshot.data.studentParticipationId.error && this.route.snapshot.data.studentParticipationId.error.errorKey === 'lockedSubmissionsLimitReached') {
+                const response = this.route.snapshot.data.studentParticipationId;
+                if (response?.error?.errorKey === 'lockedSubmissionsLimitReached') {
                     this.lockLimitReached = true;
                     return;
-                } else if (this.route.snapshot.data.studentParticipationId.error.status === 404) {
+                } else if (response?.error?.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
                     this.onError('artemisApp.exerciseAssessmentDashboard.noSubmissions');
-                } else if (this.route.snapshot.data.studentParticipationId.error) {
-                    this.onError(this.route.snapshot.data.studentParticipationId.error);
+                    return;
+                } else if (response?.error) {
+                    this.onError(response?.error);
                     return;
                 }
-                participationId = Number(this.route.snapshot.data.studentParticipationId);
+                participationId = Number(response);
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${participationId}`);
                 this.location.go(newUrl);
@@ -202,11 +204,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Cancel the assessment
      */
     cancel(): void {
-        const confirmCancel = window.confirm(this.cancelConfirmationText);
         this.cancelBusy = true;
+        const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel && this.exercise && this.submission) {
             this.manualResultService.cancelAssessment(this.submission.id!).subscribe(() => this.navigateBack());
         }
+        this.cancelBusy = false;
     }
 
     /**
