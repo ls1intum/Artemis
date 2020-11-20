@@ -252,7 +252,7 @@ public class ComplaintService {
             message.append(switch (maxDays) {
                 case 1 -> "one day";
                 case 7 -> "one week";
-                default -> (maxDays % 7 == 0 ? (maxDays / 7) + " weeks" : maxDays + " days");
+                default -> maxDays % 7 == 0 ? (maxDays / 7) + " weeks" : maxDays + " days";
             });
             message.append(".");
             throw new BadRequestAlertException(message.toString(), ENTITY_NAME, "complaintOrRequestMoreFeedbackTimeInvalid");
