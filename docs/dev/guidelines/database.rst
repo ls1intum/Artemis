@@ -55,7 +55,7 @@ In this section, we depict common entity relationships we use in Artemis and sho
     private Result result;
 
 
-* **ManyToMany** ``A Collection`` or ``Map`` of objects. It is the inverse of a itself. Example: many ``Exercise`` elements are connected to many ``LearningGoal`` elements -> One ``Exercise`` has a list of ``LearningGoal`` elements, one ``LearningGoal`` has list of ``Exercise`` elements.
+* **ManyToMany** ``A Collection`` or ``Map`` of objects. It is the inverse of a itself. Example: one ``Exercise`` has a list of ``LearningGoal`` elements, one ``LearningGoal`` has list of ``Exercise`` elements. In other words: many exercises are connected to many learning goals and vice-versa.
 
  .. code:: java
 
@@ -111,7 +111,7 @@ Entity relationships often depend on the existence of another entity — for exa
     private User assessor;
 
 
-* ``CascadeType.REMOVE`` If the source entity is removed, the target of the association is also removed. Example below: propagates **remove** operation from Parent ``Submission`` to Child ``Result``. When a ``Submission`` is deleted, also the ``Result`` is deleted.
+* ``CascadeType.REMOVE`` If the source entity is removed, the target of the association is also removed. Example below: propagates **remove** operation from parent ``Submission`` to child ``Result``. When a ``Submission`` is deleted, also the ``Result`` is deleted.
 
  .. code-block:: java
 
