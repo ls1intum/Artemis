@@ -96,7 +96,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
             }
 
             Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURL(repositoryType), true);
-            List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> file.getName().equals("pom.xml")).collect(Collectors.toList());
+            List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> "pom.xml".equals(file.getName())).collect(Collectors.toList());
 
             // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place
             // TODO: Improve matching of repository and template poms, support sequential test runs

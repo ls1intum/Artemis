@@ -11,7 +11,6 @@ import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,8 +49,6 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final ResourceLoader resourceLoader;
-
     private final GitService gitService;
 
     private final FileService fileService;
@@ -62,7 +59,7 @@ public class ProgrammingExerciseImportService {
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService,
-            UserService userService, ResourceLoader resourceLoader) {
+            UserService userService) {
         this.exerciseHintService = exerciseHintService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -74,7 +71,6 @@ public class ProgrammingExerciseImportService {
         this.gitService = gitService;
         this.fileService = fileService;
         this.userService = userService;
-        this.resourceLoader = resourceLoader;
     }
 
     /**
