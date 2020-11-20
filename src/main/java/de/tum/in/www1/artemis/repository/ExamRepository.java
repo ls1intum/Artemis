@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +21,9 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     List<Exam> findByCourseId(Long courseId);
+
+    @Query("select exam from Exam exam where exam.startDate >= :#{#date} order by exam.startDate asc")
+    List<Exam> findAllByStartDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups" })
     Optional<Exam> findWithExerciseGroupsById(Long examId);
