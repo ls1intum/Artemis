@@ -55,6 +55,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         this.resourceLoaderService = resourceLoaderService;
     }
 
+    @Override
     public void upgradeTemplate(ProgrammingExercise exercise) {
         // TODO: Support sequential test runs
         if (exercise.hasSequentialTestRuns()) {
