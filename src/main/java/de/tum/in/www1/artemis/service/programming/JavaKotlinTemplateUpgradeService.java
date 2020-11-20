@@ -32,6 +32,9 @@ import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
+/**
+ * Service for upgrading of Java and Kotlin template files
+ */
 @Service
 public class JavaKotlinTemplateUpgradeService extends TemplateUpgradeService {
 
@@ -58,19 +61,22 @@ public class JavaKotlinTemplateUpgradeService extends TemplateUpgradeService {
         if (exercise.hasSequentialTestRuns()) {
             return;
         }
-
-        try {
-            updateRepository(exercise, RepositoryType.TEMPLATE.getName(), RepositoryType.TEMPLATE);
-            updateRepository(exercise, RepositoryType.SOLUTION.getName(), RepositoryType.SOLUTION);
-            updateRepository(exercise, "test/projectTemplate", RepositoryType.TESTS);
-        }
-        catch (IOException | GitAPIException | InterruptedException | XmlPullParserException exception) {
-            log.error("Updating of template files for exercise " + exercise.getId() + " failed with error" + exception.getMessage());
-        }
+        // Template and solution repository can also contain a project object model for some project types
+        updateRepository(exercise, RepositoryType.TEMPLATE.getName(), RepositoryType.TEMPLATE);
+        updateRepository(exercise, RepositoryType.SOLUTION.getName(), RepositoryType.SOLUTION);
+        updateRepository(exercise, "test/projectTemplate", RepositoryType.TESTS);
     }
 
-    private void updateRepository(ProgrammingExercise exercise, String templateFolder, RepositoryType repositoryType)
-            throws IOException, GitAPIException, InterruptedException, XmlPullParserException {
+    /**
+     * Upgrades the template files of a specific Java or Kotlin repository. Prefers project type specific templates as the
+     * reference. The method updates the project object models (pom) in the target repository with the pom of the latest
+     * Artemis template.
+     *
+     * @param exercise The exercise for the the template files should be updated
+     * @param templateFolder The folder containing the latest reference template
+     * @param repositoryType The type of repository to be updated
+     */
+    private void updateRepository(ProgrammingExercise exercise, String templateFolder, RepositoryType repositoryType) {
         // Get general template poms
         String programmingLanguageTemplate = programmingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage());
         String templatePomPath = programmingLanguageTemplate + "/" + templateFolder + "/**/pom.xml";
@@ -89,24 +95,29 @@ public class JavaKotlinTemplateUpgradeService extends TemplateUpgradeService {
         }
 
         // Checkout repository
-        Repository repository = gitService.getOrCheckoutRepository(getRepositoryURL(exercise, repositoryType), true);
-        List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> file.getName().equals("pom.xml")).collect(Collectors.toList());
-
-        // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place
-        // TODO: Improve matching of repository and template poms, support sequential test runs
-        if (templatePoms.length == 1 && repositoryPoms.size() == 1) {
-            Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0].getFile(), repositoryPoms.get(0));
-            writeProjectObjectModel(updatedRepoModel, repositoryPoms.get(0));
-            programmingExerciseService.commitAndPushRepository(repository, "Template updated by Artemis", userService.getUser());
-        }
-    }
-
-    private URL getRepositoryURL(ProgrammingExercise exercise, RepositoryType repositoryType) {
-        return switch (repositoryType) {
+        URL repositoryURL = switch (repositoryType) {
             case TEMPLATE -> exercise.getTemplateRepositoryUrlAsUrl();
             case SOLUTION -> exercise.getSolutionRepositoryUrlAsUrl();
             case TESTS -> exercise.getTestRepositoryUrlAsUrl();
         };
+
+        try {
+            Repository repository = gitService.getOrCheckoutRepository(repositoryURL, true);
+            List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> file.getName().equals("pom.xml")).collect(Collectors.toList());
+
+            // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place
+            // TODO: Improve matching of repository and template poms, support sequential test runs
+            if (templatePoms.length == 1 && repositoryPoms.size() == 1) {
+                Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0].getFile(), repositoryPoms.get(0));
+                writeProjectObjectModel(updatedRepoModel, repositoryPoms.get(0));
+                programmingExerciseService.commitAndPushRepository(repository, "Template upgraded by Artemis", userService.getUser());
+            }
+        }
+        catch (IOException | GitAPIException | InterruptedException | XmlPullParserException exception) {
+            log.error("Updating of template files of repository " + repositoryType.name() + " for exercise " + exercise.getId() + " failed with error" + exception.getMessage());
+            // Rollback local changes in case of errors
+            gitService.deleteLocalRepository(repositoryURL);
+        }
     }
 
     private void writeProjectObjectModel(Model repositoryModel, File repositoryPom) throws IOException {
