@@ -19,7 +19,9 @@ export class VideoUnitComponent implements OnInit {
     constructor(private safeResourceUrlPipe: SafeResourceUrlPipe) {}
 
     ngOnInit() {
-        this.videoUrl = this.safeResourceUrlPipe.transform(this.videoUnit.source);
+        if (this.videoUnit?.source) {
+            this.videoUrl = this.safeResourceUrlPipe.transform(this.videoUnit.source);
+        }
     }
 
     handleUnitClick($event: any) {

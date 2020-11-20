@@ -1,0 +1,42 @@
+.notification-popup-container {
+    position: fixed;
+    bottom: 20px;
+    right: 0;
+    z-index: 998;
+}
+
+.notification-popup-container > div {
+    cursor: pointer;
+    position: relative;
+    color: #aaa;
+    display: flex;
+    max-width: 360px;
+    margin-bottom: 10px;
+    background-color: #292929;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    box-shadow: 0 3px 5px 0 rgba(0, 0, 0, 0.5);
+}
+
+.notification-popup-container > div.hide {
+    display: none;
+}
+
+.icon-container {
+    font-size: 1.75rem;
+    color: #3e8acc;
+}
+
+h5 {
+    color: #eaeaea;
+}
+
+button {
+    font-size: 1.15rem;
+    color: #aaa;
+    position: absolute;
+    top: 14px;
+    right: 24px;
+    border: 0;
+    background-color: transparent;
+}

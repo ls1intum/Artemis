@@ -67,14 +67,25 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1",
-                AssessmentType.SEMI_AUTOMATIC);
+                AssessmentType.SEMI_AUTOMATIC, true);
 
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        // A new manual result and submission are created during the locking of submission for manual assessment
+        // The new result has a result string, assessment type, automatic feedbacks and assessor
+        var automaticFeedback = new Feedback().credits(0.0).detailText("asdfasdf").type(FeedbackType.AUTOMATIC).text("asdf");
+        var automaticFeedbacks = new ArrayList<Feedback>();
+        automaticFeedbacks.add(automaticFeedback);
+        var newResult = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation, "2 of 3 passed", "tutor1",
+                automaticFeedbacks);
+        programmingExerciseStudentParticipation.addResult(newResult);
+        // Set submission of newResult
+        database.addProgrammingSubmissionToResultAndParticipation(newResult, programmingExerciseStudentParticipation, "123");
 
         result = ModelFactory.generateResult(true, 90).participation(programmingExerciseStudentParticipation);
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        result.rated(true);
 
         double points = programmingAssessmentService.calculateTotalScore(result);
         result.resultString("3 of 3 passed, 1 issue, " + result.createResultString(points, programmingExercise.getMaxScore()));
@@ -93,7 +104,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     public void updateAssessmentAfterComplaint_studentHidden() throws Exception {
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1",
-                AssessmentType.SEMI_AUTOMATIC);
+                AssessmentType.SEMI_AUTOMATIC, true);
         Result programmingAssessment = programmingSubmission.getResult();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
@@ -230,16 +241,19 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void programmingExerciseManualResult_noManualReviewsWithoutSubmission() throws Exception {
-        // When it is the first manual result, a new submission is created with latest commit hash
-        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
-                HttpStatus.OK);
-        String commitHash = ((ProgrammingSubmission) response.getSubmission()).getCommitHash();
-        assertThat(dummyHash.equalsIgnoreCase(commitHash));
+    public void programmingExerciseManualResult_submissionNotModified() throws Exception {
+        ProgrammingSubmission newSubmission = new ProgrammingSubmission().commitHash("asdf");
+        result.setSubmission(newSubmission);
 
-        // Check when a manual result already exists that submission is fetched
-        result.setSubmission(null);
         request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.OK);
+
+        ProgrammingSubmission submission = programmingSubmissionService
+                .findByIdWithEagerResultAndFeedback(programmingExerciseStudentParticipation.getSubmissions().iterator().next().getId());
+        String commitHash = submission.getCommitHash();
+
+        assertThat("123".equalsIgnoreCase(commitHash));
+        assertThat(submission.getResult().getResultString()).isEqualTo(result.getResultString());
+        assertThat(submission.getResult().getScore()).isEqualTo(result.getScore());
     }
 
     @Test
@@ -249,7 +263,6 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
                 HttpStatus.OK);
 
         assertThat(response.getResultString()).isEqualTo("3 of 3 passed, 1 issue, 2 of 100 points");
-        assertThat(response.getSubmission()).isNotNull();
         assertThat(response.getParticipation()).isEqualTo(result.getParticipation());
         assertThat(response.getFeedbacks().size()).isEqualTo(result.getFeedbacks().size());
     }
@@ -280,6 +293,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         result.resultString("3 of 3 passed, 1 issue, " + result.createResultString(points, programmingExercise.getMaxScore()));
         // As maxScore is 100 points, 1 point is 1%
         result.score((long) points);
+        result.rated(true);
 
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", result,
                 Result.class, HttpStatus.OK);
@@ -329,13 +343,17 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         var participation = setParticipationForProgrammingExercise(AssessmentType.AUTOMATIC);
         result.setParticipation(participation);
 
-        request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_resultExists() throws Exception {
-        // Save result in order to generate a new id
+        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
+                HttpStatus.OK);
+        Long id = response.getId();
+
+        // Save result in order to force generation a new id
         result = resultRepository.save(result);
         // Create submission for result and save
         ProgrammingSubmission submission = new ProgrammingSubmission();
@@ -345,12 +363,12 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         // Set submission and save again
         result.setSubmission(submission);
         result = resultRepository.save(result);
-        Long id = result.getId();
 
-        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
+        Result newResponse = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
                 HttpStatus.OK);
-        // Make sure that no new id was generated and the result is updated
-        assertThat(id.equals(response.getId())).isTrue();
+
+        // Make sure that the first generated manual result is always used
+        assertThat(id.equals(newResponse.getId())).isTrue();
     }
 
     @Test
@@ -432,17 +450,18 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     public void updateManualProgrammingExerciseResult_newResult() throws Exception {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
         database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
-        var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
 
-        result.setParticipation(participation);
+        result.setParticipation(programmingExerciseStudentParticipation);
         result.setSubmission(programmingSubmission);
 
         // Remove feedbacks, change text and score.
         result.setFeedbacks(result.getFeedbacks().subList(0, 1));
         result.setScore(77L);
         result.resultString("2 of 3 passed, 77 of 100 points");
+        result.rated(true);
 
-        Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK);
+        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
+                HttpStatus.OK);
         assertThat(response.getResultString()).isEqualTo("2 of 3 passed, 77 of 100 points");
         assertThat(response.getParticipation()).isEqualTo(result.getParticipation());
         assertThat(response.getFeedbacks().size()).isEqualTo(result.getFeedbacks().size());
@@ -498,7 +517,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
         ProgrammingSubmission submission = database.createProgrammingSubmission(null, false);
-        submission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submission, "student1", "tutor1", AssessmentType.AUTOMATIC);
+        submission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submission, "student1", "tutor1", AssessmentType.AUTOMATIC, true);
         request.put("/api/programming-submissions/" + submission.getId() + "/cancel-assessment", null, expectedStatus);
     }
 }

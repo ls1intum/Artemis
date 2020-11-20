@@ -19,10 +19,8 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.BuildRunState;
-import de.tum.in.www1.artemis.domain.Commit;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -52,6 +50,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ResultRepository resultRepository;
 
+    private final FeedbackRepository feedbackRepository;
+
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final GroupNotificationService groupNotificationService;
@@ -71,7 +71,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
-            CourseService courseService, ExamService examService) {
+            CourseService courseService, ExamService examService, FeedbackRepository feedbackRepository) {
         super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -84,6 +84,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.gitService = gitService;
         this.resultRepository = resultRepository;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -633,5 +634,44 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public ProgrammingSubmission findByIdWithEagerResultAndFeedback(long submissionId) {
         return programmingSubmissionRepository.findWithEagerResultAssessorFeedbackById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
+    }
+
+    /**
+     * Get a programming submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
+     *
+     * @param exercise the exercise the submission should belong to
+     * @return a locked programming submission that needs an assessment
+     */
+    public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise) {
+        ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.hasExerciseGroup())
+                .orElseThrow(() -> new EntityNotFoundException("Programming submission for exercise " + exercise.getId() + " could not be found"));
+        Result newManualResult = lockSubmission(programmingSubmission);
+        return (ProgrammingSubmission) newManualResult.getSubmission();
+    }
+
+    @Override
+    protected Result lockSubmission(Submission submission) {
+        Result automaticResult = submission.getResult();
+        List<Feedback> automaticFeedbacks = automaticResult.getFeedbacks().stream().map(Feedback::copyProgrammingAutomaticFeedbackForManualResult).collect(Collectors.toList());
+        // Create a new result (manual result) and a new submission for it and set assessor and type to manual
+        ProgrammingSubmission newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
+                SubmissionType.MANUAL);
+
+        Result newResult = setNewResult(newSubmission);
+        newResult.setAssessor(userService.getUser());
+        newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        // Copy automatic feedbacks into the manual result
+        for (Feedback feedback : automaticFeedbacks) {
+            feedback = feedbackRepository.save(feedback);
+            feedback.setResult(newResult);
+        }
+        newResult.setFeedbacks(automaticFeedbacks);
+        newResult.setResultString(automaticResult.getResultString());
+        // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
+        newResult = resultRepository.save(newResult);
+        log.debug("Assessment locked with result id: " + newResult.getId() + " for assessor: " + newResult.getAssessor().getName());
+        // Make sure that submission is set back after saving
+        newResult.setSubmission(newSubmission);
+        return newResult;
     }
 }
