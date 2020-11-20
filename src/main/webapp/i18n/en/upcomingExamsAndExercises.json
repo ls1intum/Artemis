@@ -1,0 +1,16 @@
+{
+    "artemisApp": {
+        "upcomingExamsAndExercises": {
+            "upcomingExamsAndExercises": "Upcoming Exams & Exercises",
+            "upcomingExercises": "Upcoming Exercises",
+            "exercise": "Exercise",
+            "course": "Course",
+            "dueDate": "Due Date",
+            "upcomingExams": "Upcoming Exams",
+            "exam": "Exam",
+            "startDate": "Start Date",
+            "endDate": "End Date",
+            "releaseDate": "Release Date"
+        }
+    }
+}
