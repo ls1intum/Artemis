@@ -15,7 +15,8 @@
             "detail": {
                 "title": "Programming Submission"
             },
-            "commitHash": "Commit Hash"
+            "commitHash": "Commit Hash",
+            "view": "View assessment"
         }
     }
 }

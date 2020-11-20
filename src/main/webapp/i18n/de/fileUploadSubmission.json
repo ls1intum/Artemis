@@ -15,7 +15,7 @@
             "detail": {
                 "title": "Einreichung"
             },
-            "view": "Einreichung ansehen",
+            "view": "Bewertung ansehen",
             "filePath": "Dateipfad",
             "feedbackResult": "Du hast {{ credits }} Punkt(e)",
             "feedbackResultDetail": "mit folgendem Feedback: {{ detailText }}",

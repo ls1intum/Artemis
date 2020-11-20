@@ -94,13 +94,13 @@ export class ComplaintInteractionsComponent implements OnInit {
     }
 
     /**
-     * We disable the component, if no complaint or feedback request has been made by the user during the Student Review period, for exam exercises.
+     * We disable the component, if no complaint has been made by the user during the Student Review period, for exam exercises.
      */
-    get noValidFeedbackRequestOrComplaintWasSubmittedWithinTheStudentReviewPeriod() {
+    get noValidComplaintWasSubmittedWithinTheStudentReviewPeriod() {
         if (this.testRun) {
             return false;
         }
-        return !this.isTimeOfComplaintValid && !this.hasComplaint && !this.hasRequestMoreFeedback;
+        return !this.isTimeOfComplaintValid && !this.hasComplaint;
     }
 
     /**
@@ -123,6 +123,23 @@ export class ComplaintInteractionsComponent implements OnInit {
                 return resultCompletionDate.isAfter(moment().subtract(this.course?.maxComplaintTimeDays, 'day'));
             }
             return moment(this.exercise.assessmentDueDate).isAfter(moment().subtract(this.course?.maxComplaintTimeDays, 'day'));
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Analogous to isTimeOfComplaintValid but exams cannot have more feedback requests.
+     */
+    get isTimeOfFeedbackRequestValid(): boolean {
+        if (this.isExamMode) {
+            return false;
+        } else if (this.result && this.result.completionDate) {
+            const resultCompletionDate = moment(this.result.completionDate!);
+            if (!this.exercise.assessmentDueDate || resultCompletionDate.isAfter(this.exercise.assessmentDueDate)) {
+                return resultCompletionDate.isAfter(moment().subtract(this.course?.maxRequestMoreFeedbackTimeDays, 'day'));
+            }
+            return moment(this.exercise.assessmentDueDate).isAfter(moment().subtract(this.course?.maxRequestMoreFeedbackTimeDays, 'day'));
         } else {
             return false;
         }
