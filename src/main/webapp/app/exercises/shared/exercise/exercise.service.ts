@@ -44,6 +44,7 @@ export class ExerciseService {
             .put<Exercise>(this.resourceUrl, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
+
     /**
      * Validates if the date is correct
      */
@@ -115,6 +116,12 @@ export class ExerciseService {
                 return res;
             })
             .map((res: EntityResponseType) => this.checkPermission(res));
+    }
+
+    getUpcomingExercises(): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Exercise[]>(`${this.resourceUrl}/upcoming`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
     /**

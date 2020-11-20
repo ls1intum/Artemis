@@ -92,6 +92,15 @@ export class ExamManagementService {
     }
 
     /**
+     * Find all exams that are held today and in the future.
+     */
+    findAllCurrentAndUpcomingExams(): Observable<HttpResponse<Exam[]>> {
+        return this.http
+            .get<Exam[]>(`${this.resourceUrl}/upcoming-exams`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
+    }
+
+    /**
      * Returns the exam with the provided unique identifier for the assessment dashboard
      * @param courseId - the id of the course
      * @param examId - the id of the exam
@@ -160,7 +169,10 @@ export class ExamManagementService {
      */
     removeStudentFromExam(courseId: number, examId: number, studentLogin: string, withParticipationsAndSubmission = false): Observable<HttpResponse<any>> {
         const options = createRequestOption({ withParticipationsAndSubmission });
-        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, { params: options, observe: 'response' });
+        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, {
+            params: options,
+            observe: 'response',
+        });
     }
 
     /**
