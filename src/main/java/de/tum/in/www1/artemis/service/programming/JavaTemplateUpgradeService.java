@@ -101,7 +101,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
             // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place
             // TODO: Improve matching of repository and template poms, support sequential test runs
             if (templatePoms.length == 1 && repositoryPoms.size() == 1) {
-                Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0].getFile(), repositoryPoms.get(0));
+                Model updatedRepoModel = upgradeProjectObjectModel(templatePoms[0], repositoryPoms.get(0));
                 writeProjectObjectModel(updatedRepoModel, repositoryPoms.get(0));
                 programmingExerciseService.commitAndPushRepository(repository, "Template upgraded by Artemis", userService.getUser());
             }
@@ -120,8 +120,8 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         }
     }
 
-    private Model upgradeProjectObjectModel(File templatePom, File repositoryPom) throws IOException, XmlPullParserException {
-        try (InputStream templateInput = new FileInputStream(templatePom); InputStream repoInput = new FileInputStream(repositoryPom)) {
+    private Model upgradeProjectObjectModel(Resource templatePom, File repositoryPom) throws IOException, XmlPullParserException {
+        try (InputStream templateInput = templatePom.getInputStream(); InputStream repoInput = new FileInputStream(repositoryPom)) {
 
             var pomReader = new MavenXpp3Reader();
             Model templateModel = pomReader.read(templateInput);
