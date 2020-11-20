@@ -1,21 +1,19 @@
 {
     "statistics": {
         "title": "User statistics",
+        "days": "days",
         "loggedInUsers": {
-            "title": "Amount of logins of distinct users in the last ",
-            "span": "span"
+            "title": "Amount of logins of distinct users in the last "
+        },
+        "activeUsers": {
+            "title": "Amount of logins of active users in the last "
         },
         "totalSubmissions": {
-            "title": "Total amount of submissions in the last ",
-            "span": "span"
+            "title": "Total amount of submissions in the last "
         },
-        "days": "days",
-        "table": {
-            "userlogin": "User",
-            "ipaddress": "IP Address",
-            "userAgent": "User agent",
-            "page": "Current page",
-            "time": "Time"
+        "exercises": {
+            "released": "Total amount of released exercises in the last ",
+            "due": "Total amount of exercise deadlines in the last "
         }
     }
 }

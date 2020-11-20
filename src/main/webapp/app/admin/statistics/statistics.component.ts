@@ -1,24 +1,24 @@
-import { Component, OnDestroy, OnInit, OnChanges } from '@angular/core';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Component, OnInit, OnChanges } from '@angular/core';
 import { StatisticsService } from 'app/admin/statistics/statistics.service';
-import { ModelingStatistic } from 'app/entities/modeling-statistic.model';
-import { HttpResponse } from '@angular/common/http';
 import { SPAN_PATTERN } from 'app/app.constants';
-import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-statistics',
     templateUrl: './statistics.component.html',
 })
-export class JhiStatisticsComponent implements OnInit, OnDestroy, OnChanges {
+export class JhiStatisticsComponent implements OnInit, OnChanges {
     activities: any[] = [];
     spanPattern = SPAN_PATTERN;
-    userSpan = 11;
-    activeUserSpan = 11;
-    submissionSpan = 11;
+    userSpan = 7;
+    activeUserSpan = 7;
+    submissionSpan = 7;
+    releasedExerciseSpan = 7;
+    exerciseDeadlineSpan = 7;
     loggedInUsers = 0;
     activeUsers = 0;
     totalSubmissions = 0;
+    releasedExercises = 0;
+    exerciseDeadlines = 0;
 
     constructor(private service: StatisticsService) {}
 
@@ -40,15 +40,11 @@ export class JhiStatisticsComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     ngOnInit() {
-        // this.trackerService.subscribe('/topic/tracker');
-        // this.trackerService.receive('/topic/tracker').subscribe((activity: any) => {
-        //    this.showActivity(activity);
-        // });
         this.onChangedUserSpan();
         this.onChangedActiveUserSpan();
         this.onChangedSubmissionSpan();
-        console.log('component:');
-        console.log(this.loggedInUsers);
+        this.onChangedReleasedExerciseSpan();
+        this.onChangedExerciseDeadlineSpan();
     }
 
     ngOnChanges(): void {
@@ -73,7 +69,15 @@ export class JhiStatisticsComponent implements OnInit, OnDestroy, OnChanges {
         });
     }
 
-    ngOnDestroy() {
-        // this.trackerService.unsubscribe('/topic/tracker');
+    onChangedReleasedExerciseSpan(): void {
+        this.service.getReleasedExercises(this.releasedExerciseSpan).subscribe((res: number) => {
+            this.releasedExercises = res;
+        });
+    }
+
+    onChangedExerciseDeadlineSpan(): void {
+        this.service.getExerciseDeadlines(this.exerciseDeadlineSpan).subscribe((res: number) => {
+            this.exerciseDeadlines = res;
+        });
     }
 }

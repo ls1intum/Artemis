@@ -1,15 +1,20 @@
 {
     "statistics": {
         "title": "Benutzer Statistiken",
+        "days": "Tagen",
         "loggedInUsers": {
-            "title": "Anzahl an Anmeldungen unterschiedlicher Benutzer in den letzten ",
-            "span": "Spanne"
+            "title": "Anzahl an Anmeldungen unterschiedlicher Benutzer in den letzten "
+        },
+        "activeUsers": {
+            "title": "Anzahl an Anmeldungen aktiver Benutzer in den letzten "
         },
         "totalSubmissions": {
-            "title": "Anzahl an Abgaben in den letzten ",
-            "span": "Spanne"
+            "title": "Anzahl an Abgaben in den letzten "
         },
-        "days": "Tagen",
+        "exercises": {
+            "released": "Anzahl an veröffentlichten Aufgaben in den letzten ",
+            "due": "Anzahl an Aufgaben mit einer Deadline in den letzten "
+        },
         "table": {
             "userlogin": "Benutzer",
             "ipaddress": "IP Adresse",

@@ -22,7 +22,7 @@
     <h2>{{ loggedInUsers }}</h2>
 
     <div class="row">
-        <h4 jhiTranslate="statistics.loggedInUsers.title">Amount of active users in the last</h4>
+        <h4 jhiTranslate="statistics.activeUsers.title">Amount of active users in the last</h4>
         <div class="form-group-narrow">
             <input
                 type="number"
@@ -61,25 +61,43 @@
     </div>
     <h2>{{ totalSubmissions }}</h2>
 
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th jhiTranslate="tracker.table.userlogin">User</th>
-                    <th jhiTranslate="tracker.table.ipaddress">IP Address</th>
-                    <th jhiTranslate="tracker.table.page">Current page</th>
-                    <th jhiTranslate="tracker.table.time">Time</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let activity of activities">
-                    <td>{{ activity.userLogin }}</td>
-                    <td>{{ activity.ipAddress }}</td>
-                    <td>{{ activity.page }}</td>
-                    <td>{{ activity.time | artemisDate: 'long':true }}</td>
-                </tr>
-            </tbody>
-        </table>
+    <div class="row">
+        <h4 jhiTranslate="statistics.exercises.released">Total amount of released exercises in the last</h4>
+        <div class="form-group-narrow">
+            <input
+                type="number"
+                required
+                class="form-control"
+                [pattern]="spanPattern"
+                min="0"
+                max="9999"
+                name="span"
+                id="field_releasedExercises"
+                [(ngModel)]="releasedExerciseSpan"
+                (ngModelChange)="onChangedReleasedExerciseSpan()"
+            />
+        </div>
+        <h4 jhiTranslate="statistics.days">days</h4>
     </div>
+    <h2>{{ releasedExercises }}</h2>
+
+    <div class="row">
+        <h4 jhiTranslate="statistics.exercises.due">Total amount of exercise deadlines in the last</h4>
+        <div class="form-group-narrow">
+            <input
+                type="number"
+                required
+                class="form-control"
+                [pattern]="spanPattern"
+                min="0"
+                max="9999"
+                name="span"
+                id="field_dueExercises"
+                [(ngModel)]="exerciseDeadlineSpan"
+                (ngModelChange)="onChangedExerciseDeadlineSpan()"
+            />
+        </div>
+        <h4 jhiTranslate="statistics.days">days</h4>
+    </div>
+    <h2>{{ exerciseDeadlines }}</h2>
 </div>

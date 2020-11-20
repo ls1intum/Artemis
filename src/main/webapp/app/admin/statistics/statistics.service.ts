@@ -32,4 +32,20 @@ export class StatisticsService {
         const params = new HttpParams().set('span', '' + span);
         return this.http.get<number>(`${this.resourceUrl}management/statistics/submissions`, { params });
     }
+
+    /**
+     * Sends a GET request to retrieve the amount of released exercises in the last *span* days
+     */
+    getReleasedExercises(span: number): Observable<number> {
+        const params = new HttpParams().set('span', '' + span);
+        return this.http.get<number>(`${this.resourceUrl}management/statistics/releasedExercises`, { params });
+    }
+
+    /**
+     * Sends a GET request to retrieve the amount of exercises with due date in the last *span* days
+     */
+    getExerciseDeadlines(span: number): Observable<number> {
+        const params = new HttpParams().set('span', '' + span);
+        return this.http.get<number>(`${this.resourceUrl}management/statistics/exerciseDeadlines`, { params });
+    }
 }

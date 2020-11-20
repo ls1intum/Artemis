@@ -1,24 +1,16 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import org.apache.commons.lang.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 
 /**
- * REST controller for managing Course.
+ * REST controller for managing user statistics.
  */
 @RestController
 @RequestMapping("/api")
@@ -27,22 +19,26 @@ public class StatisticsResource {
 
     private final Logger log = LoggerFactory.getLogger(StatisticsResource.class);
 
+    private final StatisticsService service;
+
     private final UserRepository userRepository;
 
     private final PersistenceAuditEventRepository persistentAuditEventRepository;
 
     private final SubmissionRepository submissionRepository;
 
-    private final ParticipationRepository participationRepository;
-
     private final StudentParticipationRepository studentParticipationRepository;
 
-    public StatisticsResource(UserRepository userRepository, PersistenceAuditEventRepository persistentAuditEventRepository, SubmissionRepository submissionRepository,
-            ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository) {
+    private final ExerciseRepository exerciseRepository;
+
+    public StatisticsResource(StatisticsService service, UserRepository userRepository, PersistenceAuditEventRepository persistentAuditEventRepository,
+            SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository, StudentParticipationRepository studentParticipationRepository) {
+
+        this.service = service;
         this.userRepository = userRepository;
         this.persistentAuditEventRepository = persistentAuditEventRepository;
         this.submissionRepository = submissionRepository;
-        this.participationRepository = participationRepository;
+        this.exerciseRepository = exerciseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
     }
 
@@ -56,21 +52,7 @@ public class StatisticsResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Integer> getloggedUsers(@RequestParam long span) {
         log.debug("REST request to get user login count in the last {} days", span);
-        List<User> loggedUsers = new ArrayList<>();
-        Date spanDate = DateUtils.addDays(new Date(), -((int) span));
-        List<PersistentAuditEvent> auditEvents = persistentAuditEventRepository.findAll();
-        List<User> users = userRepository.findAll();
-        for (User user : users) {
-            List<PersistentAuditEvent> ownAudits = auditEvents.stream().filter(audit -> audit.getPrincipal().equals(user.getLogin())).collect(Collectors.toList());
-            for (PersistentAuditEvent auditEvent : ownAudits) {
-                if (auditEvent.getAuditEventType().equals("AUTHENTICATION_SUCCESS") && auditEvent.getAuditEventDate().compareTo(spanDate.toInstant()) >= 0
-                        && !(user.getLogin().contains("test")) && !loggedUsers.contains(user)) {
-                    loggedUsers.add(user);
-                }
-            }
-        }
-        // System.out.println(loggedUsers);
-        return ResponseEntity.ok(loggedUsers.size());
+        return ResponseEntity.ok(this.service.getLoggedInUsers(span));
     }
 
     /**
@@ -83,26 +65,7 @@ public class StatisticsResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Integer> getActiveUsers(@RequestParam long span) {
         log.debug("REST request to get total amount of active users in the last {} days", span);
-        List<User> users = new ArrayList<>();
-        Date spanDate = DateUtils.addDays(new Date(), -((int) span));
-
-        List<StudentParticipation> participations = studentParticipationRepository.findAll();
-        for (StudentParticipation participation : participations) {
-            final User[] user = { null };
-            participation.getStudent().ifPresent(resp -> user[0] = resp);
-            if (user[0] != null && !(user[0].getLogin().contains("test"))) {
-                List<Submission> submissionsOfParticipation = submissionRepository.findAllByParticipationId(participation.getId());
-                // submissions.addAll(submissionsOfParticipation.stream().filter(sub -> sub.getSubmissionDate().toInstant().compareTo(spanDate.toInstant()) >=
-                // 0).collect(Collectors.toList()));
-                for (Submission submission : submissionsOfParticipation) {
-                    if (submission.getSubmissionDate().toInstant().compareTo(spanDate.toInstant()) >= 0 && !users.contains(user[0])) {
-                        users.add(user[0]);
-                    }
-                }
-            }
-        }
-        // System.out.println(submissions);
-        return ResponseEntity.ok(users.size());
+        return ResponseEntity.ok(this.service.getActiveUsers(span));
     }
 
     /**
@@ -114,12 +77,34 @@ public class StatisticsResource {
     @GetMapping("management/statistics/submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Integer> getTotalSubmissions(@RequestParam long span) {
-        Date spanDate = DateUtils.addDays(new Date(), -((int) span));
-        List<Submission> submissions = submissionRepository.findAll();
-        List<Submission> recentSubmission = submissions.stream()
-                .filter(submission -> submission.getSubmissionDate() != null && submission.getSubmissionDate().toInstant().compareTo(spanDate.toInstant()) >= 0)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(recentSubmission.size());
+        log.debug("REST request to get amount of submission in the last {} days", span);
+        return ResponseEntity.ok(this.service.getTotalSubmissions(span));
+    }
+
+    /**
+     * GET management/statistics/releasedExercises : get the amount of released exercises in the last "span" days.
+     *
+     * @param span the period of which the amount should be calculated
+     * @return the ResponseEntity with status 200 (OK) and the amount of exercises in body, or status 404 (Not Found)
+     */
+    @GetMapping("management/statistics/releasedExercises")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Integer> getReleasedExercises(@RequestParam long span) {
+        log.debug("REST request to get amount of released exercises in the last {} days", span);
+        return ResponseEntity.ok(this.service.getReleasedExercises(span));
+    }
+
+    /**
+     * GET management/statistics/releasedExercises : get the amount of exercises with due date in the last "span" days.
+     *
+     * @param span the period of which the amount should be calculated
+     * @return the ResponseEntity with status 200 (OK) and the amount of exercises in body, or status 404 (Not Found)
+     */
+    @GetMapping("management/statistics/exerciseDeadlines")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Integer> getExercisesDeadlines(@RequestParam long span) {
+        log.debug("REST request to get amount of exercises with a due date in the last {} days", span);
+        return ResponseEntity.ok(this.service.getExerciseDeadlines(span));
     }
 
 }
