@@ -14,6 +14,22 @@ export class StatisticsService {
      */
     getloggedUsers(span: number): Observable<number> {
         const params = new HttpParams().set('span', '' + span);
-        return this.http.get<number>(`${this.resourceUrl}management/statistics`, { params });
+        return this.http.get<number>(`${this.resourceUrl}management/statistics/users`, { params });
+    }
+
+    /**
+     * Sends a GET request to retrieve the amount of users with an submission in the last *span* days
+     */
+    getActiveUsers(span: number): Observable<number> {
+        const params = new HttpParams().set('span', '' + span);
+        return this.http.get<number>(`${this.resourceUrl}management/statistics/activeUsers`, { params });
+    }
+
+    /**
+     * Sends a GET request to retrieve the amount of submissions made in the last *span* days
+     */
+    getTotalSubmissions(span: number): Observable<number> {
+        const params = new HttpParams().set('span', '' + span);
+        return this.http.get<number>(`${this.resourceUrl}management/statistics/submissions`, { params });
     }
 }

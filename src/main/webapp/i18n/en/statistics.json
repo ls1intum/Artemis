@@ -1,6 +1,15 @@
 {
     "statistics": {
         "title": "User statistics",
+        "loggedInUsers": {
+            "title": "Amount of logins of distinct users in the last ",
+            "span": "span"
+        },
+        "totalSubmissions": {
+            "title": "Total amount of submissions in the last ",
+            "span": "span"
+        },
+        "days": "days",
         "table": {
             "userlogin": "User",
             "ipaddress": "IP Address",

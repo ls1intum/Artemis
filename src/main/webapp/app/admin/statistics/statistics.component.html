@@ -1,7 +1,65 @@
 <div>
     <h2 id="statistics-page-heading" jhiTranslate="statistics.title">User statistics</h2>
 
-    <div>loggedInUsers</div>
+    <div class="row">
+        <h4 jhiTranslate="statistics.loggedInUsers.title">Amount of logins of distinct users in the last</h4>
+        <div class="form-group-narrow">
+            <input
+                type="number"
+                required
+                class="form-control"
+                [pattern]="spanPattern"
+                min="0"
+                max="9999"
+                name="span"
+                id="field_users"
+                [(ngModel)]="userSpan"
+                (ngModelChange)="onChangedUserSpan()"
+            />
+        </div>
+        <h4 jhiTranslate="statistics.days">days</h4>
+    </div>
+    <h2>{{ loggedInUsers }}</h2>
+
+    <div class="row">
+        <h4 jhiTranslate="statistics.loggedInUsers.title">Amount of active users in the last</h4>
+        <div class="form-group-narrow">
+            <input
+                type="number"
+                required
+                class="form-control"
+                [pattern]="spanPattern"
+                min="0"
+                max="9999"
+                name="span"
+                id="field_active-users"
+                [(ngModel)]="activeUserSpan"
+                (ngModelChange)="onChangedActiveUserSpan()"
+            />
+        </div>
+        <h4 jhiTranslate="statistics.days">days</h4>
+    </div>
+    <h2>{{ activeUsers }}</h2>
+
+    <div class="row">
+        <h4 jhiTranslate="statistics.totalSubmissions.title">Total amount of submissions in the last</h4>
+        <div class="form-group-narrow">
+            <input
+                type="number"
+                required
+                class="form-control"
+                [pattern]="spanPattern"
+                min="0"
+                max="9999"
+                name="span"
+                id="field_submissions"
+                [(ngModel)]="submissionSpan"
+                (ngModelChange)="onChangedSubmissionSpan()"
+            />
+        </div>
+        <h4 jhiTranslate="statistics.days">days</h4>
+    </div>
+    <h2>{{ totalSubmissions }}</h2>
 
     <div class="table-responsive">
         <table class="table table-striped">

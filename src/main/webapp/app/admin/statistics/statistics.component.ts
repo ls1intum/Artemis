@@ -1,16 +1,24 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, OnChanges } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StatisticsService } from 'app/admin/statistics/statistics.service';
 import { ModelingStatistic } from 'app/entities/modeling-statistic.model';
 import { HttpResponse } from '@angular/common/http';
+import { SPAN_PATTERN } from 'app/app.constants';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-statistics',
     templateUrl: './statistics.component.html',
 })
-export class JhiStatisticsComponent implements OnInit, OnDestroy {
+export class JhiStatisticsComponent implements OnInit, OnDestroy, OnChanges {
     activities: any[] = [];
-    loggedInUsers = 1;
+    spanPattern = SPAN_PATTERN;
+    userSpan = 11;
+    activeUserSpan = 11;
+    submissionSpan = 11;
+    loggedInUsers = 0;
+    activeUsers = 0;
+    totalSubmissions = 0;
 
     constructor(private service: StatisticsService) {}
 
@@ -36,14 +44,33 @@ export class JhiStatisticsComponent implements OnInit, OnDestroy {
         // this.trackerService.receive('/topic/tracker').subscribe((activity: any) => {
         //    this.showActivity(activity);
         // });
-        const span = 7;
-        this.service.getloggedUsers(span).subscribe((res: number) => {
-            console.log('res: ');
-            console.log(res);
+        this.onChangedUserSpan();
+        this.onChangedActiveUserSpan();
+        this.onChangedSubmissionSpan();
+        console.log('component:');
+        console.log(this.loggedInUsers);
+    }
+
+    ngOnChanges(): void {
+        this.service.getloggedUsers(this.userSpan).subscribe((res: number) => {
             this.loggedInUsers = res;
         });
-        console.log('component: ');
-        console.log(this.loggedInUsers);
+    }
+
+    onChangedUserSpan(): void {
+        this.service.getloggedUsers(this.userSpan).subscribe((res: number) => {
+            this.loggedInUsers = res;
+        });
+    }
+    onChangedActiveUserSpan(): void {
+        this.service.getActiveUsers(this.activeUserSpan).subscribe((res: number) => {
+            this.activeUsers = res;
+        });
+    }
+    onChangedSubmissionSpan(): void {
+        this.service.getTotalSubmissions(this.submissionSpan).subscribe((res: number) => {
+            this.totalSubmissions = res;
+        });
     }
 
     ngOnDestroy() {

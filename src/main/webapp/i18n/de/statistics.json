@@ -1,0 +1,21 @@
+{
+    "statistics": {
+        "title": "Benutzer Statistiken",
+        "loggedInUsers": {
+            "title": "Anzahl an Anmeldungen unterschiedlicher Benutzer in den letzten ",
+            "span": "Spanne"
+        },
+        "totalSubmissions": {
+            "title": "Anzahl an Abgaben in den letzten ",
+            "span": "Spanne"
+        },
+        "days": "Tagen",
+        "table": {
+            "userlogin": "Benutzer",
+            "ipaddress": "IP Adresse",
+            "userAgent": "User-Agent",
+            "page": "Aktuelle Seite",
+            "time": "Zeit"
+        }
+    }
+}
