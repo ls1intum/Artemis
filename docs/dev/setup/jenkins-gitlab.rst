@@ -440,23 +440,6 @@ recommended ones that got installed during the setup process):
 1.  `GitLab <https://plugins.jenkins.io/gitlab-plugin/>`__ for enabling
     webhooks to and from GitLab
 
-2.  `Multiple SCMs <https://plugins.jenkins.io/multiple-scms/>`__ for combining the
-    exercise test and assignment repositories in one build
-
-3.  `Post Build Task <https://plugins.jenkins.io/postbuild-task/>`__ for preparing build
-    results to be exported to Artemis
-
-4.  `Xvfb <https://plugins.jenkins.io/xvfb/>`__ for exercises based on GUI
-    libraries, for which tests have to have some virtual display
-
-5.  `Timestamper <https://plugins.jenkins.io/timestamper/>`__ for adding the
-    time to every line of the build output (Timestamper might already be installed)
-
-Plugins required for the new Pipeline-Setup:
-
-1.  `GitLab <https://plugins.jenkins.io/gitlab-plugin/>`__ for enabling
-    webhooks to and from GitLab
-
 2.  `Timestamper <https://plugins.jenkins.io/timestamper/>`__ for adding the
     time to every line of the build output (Timestamper might already be installed)
 
@@ -466,6 +449,22 @@ Plugins required for the new Pipeline-Setup:
     **Note:** This is a suite of plugins that will install multiple plugins
 
 4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines.
+
+
+The plugins above (and the pipeline-setup associated with it) got introduced in Artemis 4.7.3.
+If you are using exercises that were created before 4.7.3, you also have to install these plugins:
+
+Please note that this setup is **deprecated** and will be removed in the future.
+Please migrate to the new pipeline-setup if possible.
+
+1.  `Multiple SCMs <https://plugins.jenkins.io/multiple-scms/>`__ for combining the
+    exercise test and assignment repositories in one build
+
+2.  `Post Build Task <https://plugins.jenkins.io/postbuild-task/>`__ for preparing build
+    results to be exported to Artemis
+
+3.  `Xvfb <https://plugins.jenkins.io/xvfb/>`__ for exercises based on GUI
+    libraries, for which tests have to have some virtual display
 
 Choose “Download now and install after restart” and checking the
 “Restart Jenkins when installation is complete and no jobs are running” box
@@ -672,15 +671,15 @@ This guide explains setting up a remote agent on an Ubuntu virtual machine that 
 Prerequisites:
 1. Install Docker on the remote machine: https://docs.docker.com/engine/install/ubuntu/
 
-2. Add a new user to the remote machine that Jenkins will use: ```sudo adduser --disabled-password --gecos "" jenkins```
+2. Add a new user to the remote machine that Jenkins will use: ``sudo adduser --disabled-password --gecos "" jenkins``
 
-3. Add the jenkins user to the docker group (This allows the jenkins user to interact with docker): ```sudo usermod -a -G docker jenkins```
+3. Add the jenkins user to the docker group (This allows the jenkins user to interact with docker): ``sudo usermod -a -G docker jenkins``
 
-4. Generate a new SSH key locally (e.g. using ```ssh-keygen```) and add the public key to the ```.ssh/authorized_keys``` file of the jenkins user on the agent VM.
+4. Generate a new SSH key locally (e.g. using ``ssh-keygen``) and add the public key to the ``.ssh/authorized_keys`` file of the jenkins user on the agent VM.
 
 5. Validate that you can connect to the build agent machine using SSH and the generated private key and validate that you can use docker (`docker ps` should not show an error)
 
-6. Log in with your normal account on the build agent machine and install Java: ```sudo apt install default-jre```
+6. Log in with your normal account on the build agent machine and install Java: ``sudo apt install default-jre``
 
 7. Add a new secret in Jenkins, enter private key you just generated and add the passphrase, if set:
 
@@ -692,11 +691,11 @@ Prerequisites:
 8. Add a new node (select a name and select `Permanent Agent`):
     Set the number of executors so that it matches your machine's specs: This is the number of concurrent builds this agent can handle. It is recommended to match the number of cores of the machine, but you might want to adjust this later if needed.
 
-    Set the remote root directory to ```/home/jenkins/remote_agent```.
+    Set the remote root directory to ``/home/jenkins/remote_agent``.
 
     Set the usage to `Only build jobs with label expressions matching this node`. This ensures that only docker-jobs will be built on this agent, and not other jobs.
 
-    Add a label ```docker``` to the agent.
+    Add a label ``docker`` to the agent.
 
     Set the launch method to `Launch via SSH` and add the host of the machine. Select the credentials you just created and select `Manually trusted key Verification Strategy` as Host key verification Strategy.
     Save it.
