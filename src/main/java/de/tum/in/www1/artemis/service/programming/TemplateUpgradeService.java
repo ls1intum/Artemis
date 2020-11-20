@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.programming;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
-public abstract class TemplateUpgradeService {
+public interface TemplateUpgradeService {
 
     /**
      * Upgrades the template files provided by Artemis for the given exercise.
@@ -12,5 +12,5 @@ public abstract class TemplateUpgradeService {
      *
      * @param exercise Exercise for which the template files should be upgraded
      */
-    public abstract void upgradeTemplate(ProgrammingExercise exercise);
+    void upgradeTemplate(ProgrammingExercise exercise);
 }

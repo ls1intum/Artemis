@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
  * Service for upgrading of Java template files
  */
 @Service
-public class JavaTemplateUpgradeService extends TemplateUpgradeService {
+public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
     private final Logger log = LoggerFactory.getLogger(JavaTemplateUpgradeService.class);
 
