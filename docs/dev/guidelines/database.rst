@@ -30,7 +30,7 @@ In this section, we depict common entity relationships we use in Artemis and sho
     // Complaint.java
     @OneToOne
     @JoinColumn(unique = true)
-    private Submission submission;
+    private Result result;
 
 * **OneToMany** A ``Collection`` or ``Map`` of objects. It is the inverse of a **ManyToOne** relationship. Example: one ``Result`` has a list of ``Feedback`` elements. For ordered OneToMany relations see :ref:`ordered collections <ordered>`.
 
