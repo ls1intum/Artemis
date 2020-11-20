@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -77,32 +76,25 @@ public class JavaTemplateUpgradeService extends TemplateUpgradeService {
      * @param repositoryType The type of repository to be updated
      */
     private void updateRepository(ProgrammingExercise exercise, String templateFolder, RepositoryType repositoryType) {
-        // Get general template poms
-        String programmingLanguageTemplate = programmingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage());
-        String templatePomPath = programmingLanguageTemplate + "/" + templateFolder + "/**/pom.xml";
-
-        Resource[] templatePoms = resourceLoaderService.getResources(templatePomPath);
-
-        // Get project type specific template poms
-        if (exercise.getProjectType() != null) {
-            String projectTypeTemplate = programmingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType());
-            String projectTypePomPath = projectTypeTemplate + "/" + templateFolder + "/**/pom.xml";
-
-            Resource[] projectTypePoms = resourceLoaderService.getResources(projectTypePomPath);
-
-            // Prefer project type specific poms
-            templatePoms = projectTypePoms.length > 0 ? projectTypePoms : templatePoms;
-        }
-
-        // Checkout repository
-        URL repositoryURL = switch (repositoryType) {
-            case TEMPLATE -> exercise.getTemplateRepositoryUrlAsUrl();
-            case SOLUTION -> exercise.getSolutionRepositoryUrlAsUrl();
-            case TESTS -> exercise.getTestRepositoryUrlAsUrl();
-        };
-
         try {
-            Repository repository = gitService.getOrCheckoutRepository(repositoryURL, true);
+            // Get general template poms
+            String programmingLanguageTemplate = programmingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage());
+            String templatePomPath = programmingLanguageTemplate + "/" + templateFolder + "/**/pom.xml";
+
+            Resource[] templatePoms = resourceLoaderService.getResources(templatePomPath);
+
+            // Get project type specific template poms
+            if (exercise.getProjectType() != null) {
+                String projectTypeTemplate = programmingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType());
+                String projectTypePomPath = projectTypeTemplate + "/" + templateFolder + "/**/pom.xml";
+
+                Resource[] projectTypePoms = resourceLoaderService.getResources(projectTypePomPath);
+
+                // Prefer project type specific poms
+                templatePoms = projectTypePoms.length > 0 ? projectTypePoms : templatePoms;
+            }
+
+            Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURL(repositoryType), true);
             List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> file.getName().equals("pom.xml")).collect(Collectors.toList());
 
             // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place
@@ -116,7 +108,7 @@ public class JavaTemplateUpgradeService extends TemplateUpgradeService {
         catch (IOException | GitAPIException | InterruptedException | XmlPullParserException exception) {
             log.error("Updating of template files of repository " + repositoryType.name() + " for exercise " + exercise.getId() + " failed with error" + exception.getMessage());
             // Rollback local changes in case of errors
-            gitService.deleteLocalRepository(repositoryURL);
+            gitService.deleteLocalRepository(exercise.getRepositoryURL(repositoryType));
         }
     }
 
