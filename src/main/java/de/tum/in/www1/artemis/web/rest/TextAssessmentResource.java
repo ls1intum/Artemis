@@ -101,7 +101,7 @@ public class TextAssessmentResource extends AssessmentResource {
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks());
 
         if (response.getStatusCode().is2xxSuccessful()) {
-            final var textBlocks = saveTextBlocks(textAssessment.getTextBlocks(), textSubmission);
+            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission);
         }
 
         return response;
@@ -129,7 +129,7 @@ public class TextAssessmentResource extends AssessmentResource {
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, textAssessment.getFeedbacks());
 
         if (response.getStatusCode().is2xxSuccessful()) {
-            final var textBlocks = saveTextBlocks(textAssessment.getTextBlocks(), textSubmission);
+            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission);
 
             // call feedback conflict service
             if (exercise.isAutomaticAssessmentEnabled() && automaticTextAssessmentConflictService.isPresent()) {
@@ -384,9 +384,8 @@ public class TextAssessmentResource extends AssessmentResource {
     private Set<TextBlock> saveTextBlocks(Set<TextBlock> textBlocks, final TextSubmission textSubmission) {
         if (textBlocks != null) {
             final Set<String> existingTextBlockIds = textSubmission.getBlocks().stream().map(TextBlock::getId).collect(toSet());
-            final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> {
-                tb.setSubmission(textSubmission);
-            }).collect(toSet());
+            final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> tb.setSubmission(textSubmission))
+                    .collect(toSet());
             textBlocks = new HashSet<>(textBlockRepository.saveAll(updatedTextBlocks));
         }
         return textBlocks;

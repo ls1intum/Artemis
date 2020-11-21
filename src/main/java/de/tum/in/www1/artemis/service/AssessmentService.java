@@ -311,7 +311,7 @@ public class AssessmentService {
      * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
      * @return result that was saved in the database
      */
-    public Result saveManualAssessment(Submission submission, List<Feedback> feedbackList) {
+    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList) {
         Result result = submission.getResult();
         if (result == null) {
             result = submissionService.setNewResult(submission);
@@ -323,8 +323,8 @@ public class AssessmentService {
         User user = userService.getUser();
         result.setAssessor(user);
         // first save the feedback (that is not yet in the database) to prevent null index exception
-        feedbackList = saveUnreferencedFeedback(feedbackList);
-        result.updateAllFeedbackItems(feedbackList, false);
+        var savedFeedbackList = saveUnreferencedFeedback(feedbackList);
+        result.updateAllFeedbackItems(savedFeedbackList, false);
         // Note: this boolean flag is only used for programming exercises
         result.setHasFeedback(false);
         result.determineAssessmentType();
