@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -35,7 +34,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * @param result the new result of a programming exercise
      * @return result that was saved in the database
      */
-    @Transactional
     public Result saveManualAssessment(Result result) {
         result.setHasFeedback(!result.getFeedbacks().isEmpty());
 
@@ -65,7 +63,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * @param resultId the id of the result that should be submitted
      * @return the ResponseEntity with result as body
      */
-    @Transactional
     public Result submitManualAssessment(long resultId) {
         Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
