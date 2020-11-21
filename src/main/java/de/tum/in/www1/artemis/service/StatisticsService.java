@@ -55,4 +55,9 @@ public class StatisticsService {
     public Integer getCreatedResults(Long span) {
         return this.statisticsRepository.getCreatedResults(ZonedDateTime.now().minusDays(span));
     }
+
+    public Integer getResultFeedbacks(Long span) {
+        Integer result = this.statisticsRepository.getResultFeedbacks(ZonedDateTime.now().minusDays(span));
+        return (result != null ? result : 0);
+    }
 }

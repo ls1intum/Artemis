@@ -172,4 +172,17 @@ public class StatisticsResource {
         return ResponseEntity.ok(this.service.getCreatedResults(span));
     }
 
+    /**
+     * GET management/statistics/resultFeedbacks : get the amount of feedback created for the results in the last "span" days.
+     *
+     * @param span the period of which the amount should be calculated
+     * @return the ResponseEntity with status 200 (OK) and the amount of feedbacks in body, or status 404 (Not Found)
+     */
+    @GetMapping("management/statistics/resultFeedbacks")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Integer> getResultFeedbacks(@RequestParam long span) {
+        log.debug("REST request to get amount of feedbacks for the results in the last {} days", span);
+        return ResponseEntity.ok(this.service.getResultFeedbacks(span));
+    }
+
 }

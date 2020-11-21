@@ -13,6 +13,7 @@
         "examParticipation": " -> und Anzahl Studenten, die daran teilgenommen haben: ",
         "examRegistrations": " -> Die Anzahl an Studenten mit einer Registrierung für die Klausur: ",
         "activeTutors": "Anzahl der Tutoren, die eine Bewertung erstellt haben in den letzten ",
-        "results": "Anzahl erstellter Resultate in den letzten "
+        "results": "Anzahl erstellter Resultate in den letzten ",
+        "resultFeedbacks": "-> mit der absoluten Feedbackanzahl: "
     }
 }

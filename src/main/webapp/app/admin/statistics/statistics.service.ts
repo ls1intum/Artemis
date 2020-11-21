@@ -88,4 +88,12 @@ export class StatisticsService {
         const params = new HttpParams().set('span', '' + span);
         return this.http.get<number>(`${this.resourceUrl}management/statistics/createdResults`, { params });
     }
+
+    /**
+     * Sends a GET request to retrieve the amount of feedback created for the results in the last *span* days
+     */
+    getResultFeedbacks(span: number): Observable<number> {
+        const params = new HttpParams().set('span', '' + span);
+        return this.http.get<number>(`${this.resourceUrl}management/statistics/resultFeedbacks`, { params });
+    }
 }

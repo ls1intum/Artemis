@@ -27,6 +27,7 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
     createdResults = 0;
     examParticipations = 0;
     examRegistrations = 0;
+    resultFeedbacks = 0;
 
     constructor(private service: StatisticsService) {}
 
@@ -115,6 +116,10 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
     onChangedCreatedResultsSpan(): void {
         this.service.getCreatedResults(this.createdResultsSpan).subscribe((res: number) => {
             this.createdResults = res;
+        });
+
+        this.service.getResultFeedbacks(this.createdResultsSpan).subscribe((res: number) => {
+            this.resultFeedbacks = res;
         });
     }
 }

@@ -37,13 +37,16 @@ public interface StatisticsRepository extends JpaRepository<User, Long> { // Cha
     @Query("select count(distinct se.id) from StudentExam se, Exam e where se.submitted = true and se.exam = e and e.endDate >= :#{#span}")
     Integer getExamParticipations(@Param("span") ZonedDateTime span);
 
-    @Query("select sum(0 + e.registeredUsers.size) from Exam e where e.endDate >= :#{#span}")
+    @Query("select sum(e.registeredUsers.size) from Exam e where e.endDate >= :#{#span}")
     Integer getExamRegistrations(@Param("span") ZonedDateTime span);
 
-    @Query("select count(distinct r.assessor.id) from Result r where r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI-AUTOMATIC' and r.completionDate >= :#{#span}")
+    @Query("select count(distinct r.assessor.id) from Result r where ( r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI-AUTOMATIC' ) and r.completionDate >= :#{#span}")
     Integer getActiveTutors(@Param("span") ZonedDateTime span);
 
     @Query("select count(distinct r.id) from Result r where r.completionDate >= :#{#span}")
     Integer getCreatedResults(@Param("span") ZonedDateTime span);
+
+    @Query("select sum(r.feedbacks.size) from Result r where r.completionDate >= :#{#span}")
+    Integer getResultFeedbacks(@Param("span") ZonedDateTime span);
 
 }
