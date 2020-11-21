@@ -207,6 +207,7 @@ public abstract class Participation extends DomainObject implements Participatio
      * by submission date and return the first. WARNING: The submissions of the participation might not be loaded because of Hibernate and therefore, the function might return
      * null, although the participation has submissions. This might not be high-performance, so use it at your own risk.
      *
+     * @param <T> submission type
      * @return the latest submission or null
      */
     public <T extends Submission> Optional<T> findLatestSubmission() {

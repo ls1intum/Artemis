@@ -138,6 +138,7 @@ public class SubmissionService {
      * @param exerciseId - the id of the exercise we are looking for
      * @param tutor - the tutor we are interested in
      * @param examMode - flag should be set to ignore the test run submissions
+     * @param <T> the submission type
      * @return a list of Submissions
      */
     public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor, boolean examMode) {
@@ -397,6 +398,7 @@ public class SubmissionService {
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
      * @param examMode - set flag to ignore exam test run submissions
+     * @param <T> the submission type
      * @return a list of modeling submissions for the given exercise id
      */
     public <T extends Submission> List<T> getAllSubmissionsForExercise(Long exerciseId, boolean submittedOnly, boolean examMode) {
