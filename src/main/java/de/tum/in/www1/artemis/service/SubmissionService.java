@@ -277,10 +277,10 @@ public class SubmissionService {
      */
     public Result setNewResult(Submission submission) {
         Result result = new Result();
-        result.setSubmission(submission);
-        submission.setResult(result);
         result.setParticipation(submission.getParticipation());
         result = resultRepository.save(result);
+        result.setSubmission(submission);
+        submission.setResult(result);
         submissionRepository.save(submission);
         return result;
     }
