@@ -118,7 +118,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        Result manualResult = participation.getResults().stream().filter(result -> result.isManualResult()).findFirst().get();
+        Result manualResult = participation.getResults().stream().filter(Result::isManualResult).findFirst().get();
         // prevent that tutors create multiple manual results
         newResult.setId(manualResult.getId());
         // load assessor

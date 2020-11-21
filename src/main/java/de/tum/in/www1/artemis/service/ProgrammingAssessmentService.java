@@ -67,7 +67,8 @@ public class ProgrammingAssessmentService extends AssessmentService {
         Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
         result.setCompletionDate(ZonedDateTime.now());
-        return resultRepository.save(result);
+        resultRepository.save(result);
+        return result;
     }
 
     /**
