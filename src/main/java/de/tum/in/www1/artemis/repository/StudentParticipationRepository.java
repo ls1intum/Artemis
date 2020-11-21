@@ -36,8 +36,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select distinct participation from StudentParticipation participation where participation.exercise.course.id = :#{#courseId} and participation.team.shortName = :#{#teamShortName}")
     List<StudentParticipation> findAllByCourseIdAndTeamShortName(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
+    @EntityGraph(type = LOAD, attributePaths = "submissions")
     Optional<StudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
+    @EntityGraph(type = LOAD, attributePaths = "submissions")
     Optional<StudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
     List<StudentParticipation> findByTeamId(Long teamId);

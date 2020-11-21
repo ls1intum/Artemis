@@ -128,7 +128,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         fileUploadSubmission.setFilePath(fileService.publicPathForActualPath(localPath, fileUploadSubmission.getId()));
-        fileUploadSubmissionRepository.save(fileUploadSubmission);
+        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
 
         participation.addSubmissions(fileUploadSubmission);
         participation.setInitializationState(InitializationState.FINISHED);
