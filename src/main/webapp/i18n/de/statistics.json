@@ -1,7 +1,7 @@
 {
     "statistics": {
         "title": "Benutzer Statistiken",
-        "days": "Tagen",
+        "days": " Tagen",
         "loggedInUsers": "Anzahl an Anmeldungen unterschiedlicher Benutzer in den letzten ",
         "activeUsers": "Anzahl an Anmeldungen aktiver Benutzer in den letzten ",
         "totalSubmissions": "Anzahl an Abgaben in den letzten ",

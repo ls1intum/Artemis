@@ -1,7 +1,7 @@
 {
     "statistics": {
         "title": "User statistics",
-        "days": "days",
+        "days": " days",
         "loggedInUsers": "Amount of logins of distinct users in the last ",
         "activeUsers": "Amount of logins of active users in the last ",
         "totalSubmissions": "Total amount of submissions in the last ",
