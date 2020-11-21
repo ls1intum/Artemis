@@ -28,15 +28,15 @@ public class StatisticsService {
     }
 
     public Integer getReleasedExercises(Long span) {
-        return this.statisticsRepository.getReleasedExercises(ZonedDateTime.now().minusDays(span));
+        return this.statisticsRepository.getReleasedExercises(ZonedDateTime.now().minusDays(span), ZonedDateTime.now());
     }
 
     public Integer getExerciseDeadlines(Long span) {
-        return this.statisticsRepository.getExerciseDeadlines(ZonedDateTime.now().minusDays(span));
+        return this.statisticsRepository.getExerciseDeadlines(ZonedDateTime.now().minusDays(span), ZonedDateTime.now());
     }
 
     public Integer getConductedExams(Long span) {
-        return this.statisticsRepository.getConductedExams(ZonedDateTime.now().minusDays(span));
+        return this.statisticsRepository.getConductedExams(ZonedDateTime.now().minusDays(span), ZonedDateTime.now());
     }
 
     public Integer getExamParticipations(Long span) {
@@ -44,7 +44,7 @@ public class StatisticsService {
     }
 
     public Integer getExamRegistrations(Long span) {
-        Integer result = this.statisticsRepository.getExamRegistrations(ZonedDateTime.now().minusDays(span));
+        Integer result = this.statisticsRepository.getExamRegistrations(ZonedDateTime.now().minusDays(span), ZonedDateTime.now());
         return (result != null ? result : 0);
     }
 

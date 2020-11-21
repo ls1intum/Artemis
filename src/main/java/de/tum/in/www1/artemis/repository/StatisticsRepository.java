@@ -25,22 +25,22 @@ public interface StatisticsRepository extends JpaRepository<User, Long> { // Cha
     @Query("select count(distinct sub.id) from Submission sub where sub.submissionDate >= :#{#span}")
     Integer getTotalsubmissions(@Param("span") ZonedDateTime span);
 
-    @Query("select count(distinct e.id) from Exercise e where e.releaseDate >= :#{#span}")
-    Integer getReleasedExercises(@Param("span") ZonedDateTime span);
+    @Query("select count(distinct e.id) from Exercise e where e.releaseDate >= :#{#span} and e.releaseDate <= :#{#now}")
+    Integer getReleasedExercises(@Param("span") ZonedDateTime span, @Param("now") ZonedDateTime now);
 
-    @Query("select count(distinct e.id) from Exercise e where e.dueDate >= :#{#span}")
-    Integer getExerciseDeadlines(@Param("span") ZonedDateTime span);
+    @Query("select count(distinct e.id) from Exercise e where e.dueDate >= :#{#span} and e.dueDate <= :#{#now}")
+    Integer getExerciseDeadlines(@Param("span") ZonedDateTime span, @Param("now") ZonedDateTime now);
 
-    @Query("select count(distinct e.id) from Exam e where e.endDate >= :#{#span}")
-    Integer getConductedExams(@Param("span") ZonedDateTime span);
+    @Query("select count(distinct e.id) from Exam e where e.endDate >= :#{#span} and e.endDate <= :#{#now}")
+    Integer getConductedExams(@Param("span") ZonedDateTime span, @Param("now") ZonedDateTime now);
 
     @Query("select count(distinct se.id) from StudentExam se, Exam e where se.submitted = true and se.exam = e and e.endDate >= :#{#span}")
     Integer getExamParticipations(@Param("span") ZonedDateTime span);
 
-    @Query("select sum(e.registeredUsers.size) from Exam e where e.endDate >= :#{#span}")
-    Integer getExamRegistrations(@Param("span") ZonedDateTime span);
+    @Query("select sum(e.registeredUsers.size) from Exam e where e.endDate >= :#{#span} and e.endDate <= :#{#now}")
+    Integer getExamRegistrations(@Param("span") ZonedDateTime span, @Param("now") ZonedDateTime now);
 
-    @Query("select count(distinct r.assessor.id) from Result r where ( r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI-AUTOMATIC' ) and r.completionDate >= :#{#span}")
+    @Query("select count(distinct r.assessor.id) from Result r where (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI-AUTOMATIC') and r.completionDate >= :#{#span}")
     Integer getActiveTutors(@Param("span") ZonedDateTime span);
 
     @Query("select count(distinct r.id) from Result r where r.completionDate >= :#{#span}")

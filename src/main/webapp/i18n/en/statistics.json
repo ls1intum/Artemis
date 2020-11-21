@@ -12,7 +12,7 @@
         "conductedExams": "Total amount of conducted exams in the last ",
         "examParticipation": " -> amount of student who participated: ",
         "examRegistrations": " -> with the amount of students being registered in these exam: ",
-        "activeTutors": "Total amount of tutors which have created a assessment in the last ",
+        "activeTutors": "Total amount of tutors which have created an assessment in the last ",
         "results": "Total amount of results created in the last ",
         "resultFeedbacks": "-> feedback count: "
     }
