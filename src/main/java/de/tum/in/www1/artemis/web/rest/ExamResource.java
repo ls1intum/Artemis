@@ -344,6 +344,24 @@ public class ExamResource {
     }
 
     /**
+     * GET /exams/upcoming : Find all current and upcoming exams.
+     *
+     * @return the ResponseEntity with status 200 (OK) and a list of exams.
+     */
+    @GetMapping("/courses/upcoming-exams")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Exam>> getCurrentAndUpcomingExams() {
+        log.debug("REST request to get all upcoming exams");
+
+        if (!authCheckService.isAdmin()) {
+            return forbidden();
+        }
+
+        List<Exam> upcomingExams = examService.findAllCurrentAndUpcomingExams();
+        return ResponseEntity.ok(upcomingExams);
+    }
+
+    /**
      * DELETE /courses/{courseId}/exams/{examId} : Delete the exam with the given id.
      * The delete operation cascades to all student exams, exercise group, exercises and their participations.
      *

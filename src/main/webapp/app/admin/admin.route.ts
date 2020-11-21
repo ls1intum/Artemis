@@ -10,6 +10,7 @@ import { systemNotificationManagementRoute } from 'app/admin/system-notification
 import { healthRoute } from 'app/admin/health/health.route';
 import { metricsRoute } from 'app/admin/metrics/metrics.route';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { upcomingExamsAndExercisesRoute } from 'app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.route';
 
 const ADMIN_ROUTES = [
     auditsRoute,
@@ -23,6 +24,7 @@ const ADMIN_ROUTES = [
     userMgmtRoute4,
     metricsRoute,
     featureRoute,
+    upcomingExamsAndExercisesRoute,
     ...systemNotificationManagementRoute,
 ];
 
