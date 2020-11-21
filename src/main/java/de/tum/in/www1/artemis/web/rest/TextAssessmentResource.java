@@ -102,8 +102,6 @@ public class TextAssessmentResource extends AssessmentResource {
 
         if (response.getStatusCode().is2xxSuccessful()) {
             final var textBlocks = saveTextBlocks(textAssessment.getTextBlocks(), textSubmission);
-            var submission = (TextSubmission) response.getBody().getSubmission();
-            submission.setBlocks(textBlocks);
         }
 
         return response;
@@ -128,16 +126,15 @@ public class TextAssessmentResource extends AssessmentResource {
         }
         final TextExercise exercise = textExerciseService.findOne(exerciseId);
         final TextSubmission textSubmission = textSubmissionService.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(resultId);
-        ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks());
+        ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, textAssessment.getFeedbacks());
 
         if (response.getStatusCode().is2xxSuccessful()) {
             final var textBlocks = saveTextBlocks(textAssessment.getTextBlocks(), textSubmission);
-            var submission = (TextSubmission) response.getBody().getSubmission();
-            submission.setBlocks(textBlocks);
 
             // call feedback conflict service
             if (exercise.isAutomaticAssessmentEnabled() && automaticTextAssessmentConflictService.isPresent()) {
-                this.automaticTextAssessmentConflictService.get().asyncCheckFeedbackConsistency(textAssessment.getTextBlocks(), submission.getResult().getFeedbacks(), exerciseId);
+                this.automaticTextAssessmentConflictService.get().asyncCheckFeedbackConsistency(textAssessment.getTextBlocks(), textSubmission.getResult().getFeedbacks(),
+                        exerciseId);
             }
         }
 
