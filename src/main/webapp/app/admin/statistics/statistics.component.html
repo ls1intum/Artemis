@@ -2,7 +2,7 @@
     <h2 id="statistics-page-heading" jhiTranslate="statistics.title">User statistics</h2>
 
     <div class="row">
-        <h4 jhiTranslate="statistics.loggedInUsers.title">Amount of logins of distinct users in the last</h4>
+        <h4 jhiTranslate="statistics.loggedInUsers">Amount of logins of distinct users in the last</h4>
         <div class="form-group-narrow">
             <input
                 type="number"
@@ -22,7 +22,7 @@
     <h2>{{ loggedInUsers }}</h2>
 
     <div class="row">
-        <h4 jhiTranslate="statistics.activeUsers.title">Amount of active users in the last</h4>
+        <h4 jhiTranslate="statistics.activeUsers">Amount of active users in the last</h4>
         <div class="form-group-narrow">
             <input
                 type="number"
@@ -42,7 +42,7 @@
     <h2>{{ activeUsers }}</h2>
 
     <div class="row">
-        <h4 jhiTranslate="statistics.totalSubmissions.title">Total amount of submissions in the last</h4>
+        <h4 jhiTranslate="statistics.totalSubmissions">Total amount of submissions in the last</h4>
         <div class="form-group-narrow">
             <input
                 type="number"
@@ -100,4 +100,68 @@
         <h4 jhiTranslate="statistics.days">days</h4>
     </div>
     <h2>{{ exerciseDeadlines }}</h2>
+
+    <div class="row">
+        <h4 jhiTranslate="statistics.conductedExams">Total amount of conducted exams in the last</h4>
+        <div class="form-group-narrow">
+            <input
+                type="number"
+                required
+                class="form-control"
+                [pattern]="spanPattern"
+                min="0"
+                max="9999"
+                name="span"
+                id="field_conductedExams"
+                [(ngModel)]="conductedExamsSpan"
+                (ngModelChange)="onChangedConductedExamsSpan()"
+            />
+        </div>
+        <h4 jhiTranslate="statistics.days">days</h4>
+        <h4 jhiTranslate="statistics.examRegistrations">-> with the amount of students being registered in these exam:</h4>
+        <h4>{{ examRegistrations }}</h4>
+        <h4 jhiTranslate="statistics.examParticipation">-> amount of student who actually participated:</h4>
+        <h4>{{ examParticipations }}</h4>
+    </div>
+    <h2>{{ conductedExams }}</h2>
+
+    <div class="row">
+        <h4 jhiTranslate="statistics.activeTutors">Total amount of tutors which have created an assessment in the last</h4>
+        <div class="form-group-narrow">
+            <input
+                type="number"
+                required
+                class="form-control"
+                [pattern]="spanPattern"
+                min="0"
+                max="9999"
+                name="span"
+                id="field_activeTutors"
+                [(ngModel)]="activeTutorsSpan"
+                (ngModelChange)="onChangedActiveTutorsSpan()"
+            />
+        </div>
+        <h4 jhiTranslate="statistics.days">days</h4>
+    </div>
+    <h2>{{ activeTutors }}</h2>
+
+    <div class="row">
+        <h4 jhiTranslate="statistics.results">Total amount of results created in the last</h4>
+        <div class="form-group-narrow">
+            <input
+                type="number"
+                required
+                class="form-control"
+                [pattern]="spanPattern"
+                min="0"
+                max="9999"
+                name="span"
+                id="field_createdResults"
+                [(ngModel)]="createdResultsSpan"
+                (ngModelChange)="onChangedCreatedResultsSpan()"
+            />
+        </div>
+        <h4 jhiTranslate="statistics.days">days</h4>
+    </div>
+    <h2>{{ createdResults }}</h2>
 </div>

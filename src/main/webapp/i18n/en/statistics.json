@@ -2,18 +2,17 @@
     "statistics": {
         "title": "User statistics",
         "days": "days",
-        "loggedInUsers": {
-            "title": "Amount of logins of distinct users in the last "
-        },
-        "activeUsers": {
-            "title": "Amount of logins of active users in the last "
-        },
-        "totalSubmissions": {
-            "title": "Total amount of submissions in the last "
-        },
+        "loggedInUsers": "Amount of logins of distinct users in the last ",
+        "activeUsers": "Amount of logins of active users in the last ",
+        "totalSubmissions": "Total amount of submissions in the last ",
         "exercises": {
             "released": "Total amount of released exercises in the last ",
             "due": "Total amount of exercise deadlines in the last "
-        }
+        },
+        "conductedExams": "Total amount of conducted exams in the last ",
+        "examParticipation": " -> amount of student who participated: ",
+        "examRegistrations": " -> with the amount of students being registered in these exam: ",
+        "activeTutors": "Total amount of tutors which have created a assessment in the last ",
+        "results": "Total amount of results created in the last "
     }
 }

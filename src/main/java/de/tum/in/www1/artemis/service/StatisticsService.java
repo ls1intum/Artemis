@@ -34,4 +34,25 @@ public class StatisticsService {
     public Integer getExerciseDeadlines(Long span) {
         return this.statisticsRepository.getExerciseDeadlines(ZonedDateTime.now().minusDays(span));
     }
+
+    public Integer getConductedExams(Long span) {
+        return this.statisticsRepository.getConductedExams(ZonedDateTime.now().minusDays(span));
+    }
+
+    public Integer getExamParticipations(Long span) {
+        return this.statisticsRepository.getExamParticipations(ZonedDateTime.now().minusDays(span));
+    }
+
+    public Integer getExamRegistrations(Long span) {
+        Integer result = this.statisticsRepository.getExamRegistrations(ZonedDateTime.now().minusDays(span));
+        return (result != null ? result : 0);
+    }
+
+    public Integer getActiveTutors(Long span) {
+        return this.statisticsRepository.getActiveTutors(ZonedDateTime.now().minusDays(span));
+    }
+
+    public Integer getCreatedResults(Long span) {
+        return this.statisticsRepository.getCreatedResults(ZonedDateTime.now().minusDays(span));
+    }
 }

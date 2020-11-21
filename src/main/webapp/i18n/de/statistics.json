@@ -2,25 +2,17 @@
     "statistics": {
         "title": "Benutzer Statistiken",
         "days": "Tagen",
-        "loggedInUsers": {
-            "title": "Anzahl an Anmeldungen unterschiedlicher Benutzer in den letzten "
-        },
-        "activeUsers": {
-            "title": "Anzahl an Anmeldungen aktiver Benutzer in den letzten "
-        },
-        "totalSubmissions": {
-            "title": "Anzahl an Abgaben in den letzten "
-        },
+        "loggedInUsers": "Anzahl an Anmeldungen unterschiedlicher Benutzer in den letzten ",
+        "activeUsers": "Anzahl an Anmeldungen aktiver Benutzer in den letzten ",
+        "totalSubmissions": "Anzahl an Abgaben in den letzten ",
         "exercises": {
             "released": "Anzahl an veröffentlichten Aufgaben in den letzten ",
             "due": "Anzahl an Aufgaben mit einer Deadline in den letzten "
         },
-        "table": {
-            "userlogin": "Benutzer",
-            "ipaddress": "IP Adresse",
-            "userAgent": "User-Agent",
-            "page": "Aktuelle Seite",
-            "time": "Zeit"
-        }
+        "conductedExams": "Anzahl an abgehaltenen Klausuen in den letzten ",
+        "examParticipation": " -> und Anzahl Studenten, die daran teilgenommen haben: ",
+        "examRegistrations": " -> Die Anzahl an Studenten mit einer Registrierung für die Klausur: ",
+        "activeTutors": "Anzahl der Tutoren, die eine Bewertung erstellt haben in den letzten ",
+        "results": "Anzahl erstellter Resultate in den letzten "
     }
 }

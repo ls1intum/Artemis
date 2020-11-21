@@ -107,4 +107,69 @@ public class StatisticsResource {
         return ResponseEntity.ok(this.service.getExerciseDeadlines(span));
     }
 
+    /**
+     * GET management/statistics/conductedExams : get the amount of conducted exams in the last "span" days.
+     *
+     * @param span the period of which the amount should be calculated
+     * @return the ResponseEntity with status 200 (OK) and the amount of exams in body, or status 404 (Not Found)
+     */
+    @GetMapping("management/statistics/conductedExams")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Integer> getConductedExams(@RequestParam long span) {
+        log.debug("REST request to get amount of conducted exams in the last {} days", span);
+        return ResponseEntity.ok(this.service.getConductedExams(span));
+    }
+
+    /**
+     * GET management/statistics/examParticipations : get the amount of exam participations in the last "span" days.
+     *
+     * @param span the period of which the amount should be calculated
+     * @return the ResponseEntity with status 200 (OK) and the amount of participations in body, or status 404 (Not Found)
+     */
+    @GetMapping("management/statistics/examParticipations")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Integer> getExamParticipations(@RequestParam long span) {
+        log.debug("REST request to get amount of exam participations in the last {} days", span);
+        return ResponseEntity.ok(this.service.getExamParticipations(span));
+    }
+
+    /**
+     * GET management/statistics/examRegistrations : get the amount of exam registrations in the last "span" days.
+     *
+     * @param span the period of which the amount should be calculated
+     * @return the ResponseEntity with status 200 (OK) and the amount of registrations in body, or status 404 (Not Found)
+     */
+    @GetMapping("management/statistics/examRegistrations")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Integer> getExamRegistrations(@RequestParam long span) {
+        log.debug("REST request to get amount of exam registrations in the last {} days", span);
+        return ResponseEntity.ok(this.service.getExamRegistrations(span));
+    }
+
+    /**
+     * GET management/statistics/activeTutors : get the amount of tutors who created an assessment in the last *span* days
+     *
+     * @param span the period of which the amount should be calculated
+     * @return the ResponseEntity with status 200 (OK) and the amount of tutors in body, or status 404 (Not Found)
+     */
+    @GetMapping("management/statistics/activeTutors")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Integer> getActiveTutors(@RequestParam long span) {
+        log.debug("REST request to get amount of tutors who created an assessment in the last {} days", span);
+        return ResponseEntity.ok(this.service.getActiveTutors(span));
+    }
+
+    /**
+     * GET management/statistics/createdResults : get the amount of created results in the last "span" days.
+     *
+     * @param span the period of which the amount should be calculated
+     * @return the ResponseEntity with status 200 (OK) and the amount of results in body, or status 404 (Not Found)
+     */
+    @GetMapping("management/statistics/createdResults")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Integer> getCreatedResults(@RequestParam long span) {
+        log.debug("REST request to get amount of created results in the last {} days", span);
+        return ResponseEntity.ok(this.service.getCreatedResults(span));
+    }
+
 }

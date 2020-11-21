@@ -48,4 +48,44 @@ export class StatisticsService {
         const params = new HttpParams().set('span', '' + span);
         return this.http.get<number>(`${this.resourceUrl}management/statistics/exerciseDeadlines`, { params });
     }
+
+    /**
+     * Sends a GET request to retrieve the amount of conducted exams in the last *span* days
+     */
+    getConductedExams(span: number): Observable<number> {
+        const params = new HttpParams().set('span', '' + span);
+        return this.http.get<number>(`${this.resourceUrl}management/statistics/conductedExams`, { params });
+    }
+
+    /**
+     * Sends a GET request to retrieve the amount of exam participations in the last *span* days
+     */
+    getExamParticipations(span: number): Observable<number> {
+        const params = new HttpParams().set('span', '' + span);
+        return this.http.get<number>(`${this.resourceUrl}management/statistics/examParticipations`, { params });
+    }
+
+    /**
+     * Sends a GET request to retrieve the amount of exam registrations in the last *span* days
+     */
+    getExamRegistrations(span: number): Observable<number> {
+        const params = new HttpParams().set('span', '' + span);
+        return this.http.get<number>(`${this.resourceUrl}management/statistics/examRegistrations`, { params });
+    }
+
+    /**
+     * Sends a GET request to retrieve the amount of tutors who created an assessment in the last *span* days
+     */
+    getActiveTutors(span: number): Observable<number> {
+        const params = new HttpParams().set('span', '' + span);
+        return this.http.get<number>(`${this.resourceUrl}management/statistics/activeTutors`, { params });
+    }
+
+    /**
+     * Sends a GET request to retrieve the amount of created results in the last *span* days
+     */
+    getCreatedResults(span: number): Observable<number> {
+        const params = new HttpParams().set('span', '' + span);
+        return this.http.get<number>(`${this.resourceUrl}management/statistics/createdResults`, { params });
+    }
 }

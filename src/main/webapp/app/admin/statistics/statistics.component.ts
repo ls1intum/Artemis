@@ -14,11 +14,19 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
     submissionSpan = 7;
     releasedExerciseSpan = 7;
     exerciseDeadlineSpan = 7;
+    conductedExamsSpan = 7;
+    activeTutorsSpan = 7;
+    createdResultsSpan = 7;
     loggedInUsers = 0;
     activeUsers = 0;
     totalSubmissions = 0;
     releasedExercises = 0;
     exerciseDeadlines = 0;
+    conductedExams = 0;
+    activeTutors = 0;
+    createdResults = 0;
+    examParticipations = 0;
+    examRegistrations = 0;
 
     constructor(private service: StatisticsService) {}
 
@@ -45,6 +53,9 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
         this.onChangedSubmissionSpan();
         this.onChangedReleasedExerciseSpan();
         this.onChangedExerciseDeadlineSpan();
+        this.onChangedConductedExamsSpan();
+        this.onChangedActiveTutorsSpan();
+        this.onChangedCreatedResultsSpan();
     }
 
     ngOnChanges(): void {
@@ -78,6 +89,32 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
     onChangedExerciseDeadlineSpan(): void {
         this.service.getExerciseDeadlines(this.exerciseDeadlineSpan).subscribe((res: number) => {
             this.exerciseDeadlines = res;
+        });
+    }
+
+    onChangedConductedExamsSpan(): void {
+        this.service.getConductedExams(this.conductedExamsSpan).subscribe((res: number) => {
+            this.conductedExams = res;
+        });
+
+        this.service.getExamParticipations(this.conductedExamsSpan).subscribe((res: number) => {
+            this.examParticipations = res;
+        });
+
+        this.service.getExamRegistrations(this.conductedExamsSpan).subscribe((res: number) => {
+            this.examRegistrations = res;
+        });
+    }
+
+    onChangedActiveTutorsSpan(): void {
+        this.service.getActiveTutors(this.activeTutorsSpan).subscribe((res: number) => {
+            this.activeTutors = res;
+        });
+    }
+
+    onChangedCreatedResultsSpan(): void {
+        this.service.getCreatedResults(this.createdResultsSpan).subscribe((res: number) => {
+            this.createdResults = res;
         });
     }
 }
