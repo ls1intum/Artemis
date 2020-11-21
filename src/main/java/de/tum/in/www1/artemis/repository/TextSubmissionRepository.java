@@ -39,7 +39,7 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
     List<TextSubmission> findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "result", "result.assessor", "blocks", "result.feedbacks" })
-    Optional<TextSubmission> findByResult_Id(Long resultId);
+    Optional<TextSubmission> findWithEagerResultAndTextBlocksAndFeedbackByResult_Id(Long resultId);
 
     /**
      * Gets all TextSubmissions which are submitted and loads all blocks

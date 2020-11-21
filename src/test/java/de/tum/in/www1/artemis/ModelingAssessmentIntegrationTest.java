@@ -618,7 +618,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
                 case AUTOMATIC_ADAPTED -> adaptedFeedback.add(storedFeedback);
             }
         });
-        assertThat(storedResult.getAssessmentType()).as("type of result is MANUAL").isEqualTo(AssessmentType.MANUAL);
+        assertThat(storedResult.getAssessmentType()).as("type of result is SEMI_AUTOMATIC").isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         assertThat(manualFeedback.size()).as("number of manual feedback elements is correct").isEqualTo(newFeedback.size());
         assertThat(automaticFeedback.size()).as("number of automatic feedback elements is correct").isEqualTo(existingFeedback.size() - 2);
         assertThat(adaptedFeedback.size()).as("number of adapted feedback elements is correct").isEqualTo(2);

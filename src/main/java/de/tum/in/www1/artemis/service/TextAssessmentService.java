@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class TextAssessmentService extends AssessmentService {
@@ -38,58 +37,6 @@ public class TextAssessmentService extends AssessmentService {
         this.textBlockService = textBlockService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
         this.feedbackConflictRepository = feedbackConflictRepository;
-    }
-
-    /**
-     * This function is used for manually assessed results. It updates the completion date and sets the assessor attribute. Furthermore, it
-     * saves the assessment in the file system the total score is calculated and set in the result.
-     *
-     * @param resultId       the resultId the assessment belongs to
-     * @param feedbackList the assessments as string
-     * @return the ResponseEntity with result as body
-     * @throws BadRequestAlertException on invalid feedback input
-     */
-    public Result saveManualAssessment(Long resultId, List<Feedback> feedbackList) throws BadRequestAlertException {
-
-        final boolean hasAssessmentWithTooLongReference = feedbackList.stream().filter(Feedback::hasReference)
-                .anyMatch(f -> f.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
-        if (hasAssessmentWithTooLongReference) {
-            throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
-                    "feedbackReferenceTooLong");
-        }
-
-        Optional<Result> desiredResult = resultRepository.findByIdWithEagerSubmissionAndFeedbacks(resultId);
-        Result result = desiredResult.orElseGet(Result::new);
-
-        User user = userService.getUser();
-        result.setAssessor(user);
-
-        // TODO: how can the result be connected with the submission, if the result is newly created?
-        // TODO: where is the relationship between result and participation established?
-
-        if (result.getSubmission() instanceof TextSubmission && result.getSubmission().getResult() == null) {
-            TextSubmission textSubmission = (TextSubmission) result.getSubmission();
-            textSubmission.setResult(result);
-            textSubmissionRepository.save(textSubmission);
-        }
-
-        // first save the feedback without being connected to result to prevent null index exception
-        feedbackList = feedbackRepository.saveAll(feedbackList);
-
-        // Note: If there is old feedback that gets removed here and not added again in the for-loop, it will also be
-        // deleted in the database because of the 'orphanRemoval = true' flag.
-        result.getFeedbacks().clear();
-        for (Feedback feedback : feedbackList) {
-            if (feedback.getCredits() == null) {
-                feedback.setCredits(0.0);
-            }
-            feedback.setPositive(feedback.getCredits() >= 0);
-            result.addFeedback(feedback);
-        }
-        result.setHasFeedback(false);
-        result.determineAssessmentType();
-
-        return resultRepository.save(result);
     }
 
     public List<Feedback> getAssessmentsForResult(Result result) {

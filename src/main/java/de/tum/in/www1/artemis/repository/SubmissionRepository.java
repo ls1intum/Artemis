@@ -109,4 +109,11 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the submissions belonging to the exercise id, which have been assessed by the given assessor
      */
     <T extends Submission> List<T> findAllByParticipationExerciseIdAndResultAssessor(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
+
+    /**
+     * @param submissionId the submission id we are interested in
+     * @return the submission with its feedback and assessor
+     */
+    @Query("select distinct submission from Submission submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
+    Optional<Submission> findWithEagerResultAndFeedbackById(long submissionId);
 }

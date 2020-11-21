@@ -273,17 +273,16 @@ public class AssessmentService {
     }
 
     /**
-     * Gets an example modeling submission with the given submissionId and returns the result of the submission.
+     * Gets an example submission with the given submissionId and returns the result of the submission.
      *
      * @param submissionId the id of the example modeling submission
      * @return the result of the submission
      * @throws EntityNotFoundException when no submission can be found for the given id
      */
     public Result getExampleAssessment(long submissionId) {
-        Optional<Submission> optionalModelingSubmission = submissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId);
-        Submission modelingSubmission = optionalModelingSubmission
-                .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
-        return modelingSubmission.getResult();
+        Optional<Submission> optionalSubmission = submissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId);
+        Submission submission = optionalSubmission.orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
+        return submission.getResult();
     }
 
     /**
@@ -328,6 +327,7 @@ public class AssessmentService {
         result.updateAllFeedbackItems(feedbackList, false);
         // Note: this boolean flag is only used for programming exercises
         result.setHasFeedback(false);
+        result.determineAssessmentType();
 
         if (result.getSubmission() == null) {
             result.setSubmission(submission);
@@ -348,7 +348,7 @@ public class AssessmentService {
             }
             else {
                 updatedFeedbackList.add(feedback);
-                log.debug("        Do NOTE save " + feedback);
+                log.debug("        Do NOT save " + feedback);
             }
         }
         log.debug("Updated feedback: " + updatedFeedbackList);

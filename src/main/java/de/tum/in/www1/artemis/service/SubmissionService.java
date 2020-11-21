@@ -201,6 +201,18 @@ public class SubmissionService {
     }
 
     /**
+     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
+     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the submission with the given id
+     */
+    public Submission findOneWithEagerResultAndFeedback(long submissionId) {
+        return submissionRepository.findWithEagerResultAndFeedbackById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+    }
+
+    /**
      * Count number of in-time submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
      * @param courseId the course id we are interested in
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise

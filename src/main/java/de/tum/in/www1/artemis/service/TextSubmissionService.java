@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -252,6 +253,11 @@ public class TextSubmissionService extends SubmissionService {
 
     public List<TextSubmission> getTextSubmissionsWithTextBlocksByExerciseId(Long exerciseId) {
         return textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exerciseId);
+    }
+
+    public TextSubmission getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(Long resultId) {
+        return textSubmissionRepository.findWithEagerResultAndTextBlocksAndFeedbackByResult_Id(resultId)
+                .orElseThrow(() -> new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound"));
     }
 
     public List<TextSubmission> getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(Long exerciseId, Language language) {
