@@ -129,9 +129,9 @@ Not used in Artemis yet
 
 Best Practices
 ===============
-* If you want to create a ``@OneToMany`` relationship or ``@ManyToMany`` relationship, first think about if it is important for the association to be ordered. If you do not need to association to be ordered, then always go for a ``Set`` instead of ``List``. If you are unsure, start with a ``Set``. 
+* If you want to create a ``@OneToMany`` relationship or ``@ManyToMany`` relationship, first think about if it is important for the association to be ordered. If you do not need the association to be ordered, then always go for a ``Set`` instead of ``List``. If you are unsure, start with a ``Set``. 
 
-  * **Unordered Collection**: A ``Set`` comes with certain advantages such as ensuring that there are no duplicates and null values in your collection. There are also performance arguments to be made to use a ``Set``, especially for ``@ManyToMany`` relationships. For more information see this `stackoverflow thread <https://stackoverflow.com/questions/4655392/which-java-type-do-you-use-for-jpa-collections-and-why>`_. E.g.:
+  * **Unordered Collection**: A ``Set`` comes with certain advantages such as ensuring that there are no duplicates and null values in your collection. There are also performance arguments to use a ``Set``, especially for ``@ManyToMany`` relationships. For more information see this `stackoverflow thread <https://stackoverflow.com/questions/4655392/which-java-type-do-you-use-for-jpa-collections-and-why>`_. E.g.:
 
        .. code-block:: java
 
