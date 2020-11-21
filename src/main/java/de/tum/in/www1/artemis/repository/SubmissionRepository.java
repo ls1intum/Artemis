@@ -106,6 +106,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      *
      * @param exerciseId the exercise id we are interested in
      * @param assessor the assessor we are interested in
+     * @param <T> the type of the submission
      * @return the submissions belonging to the exercise id, which have been assessed by the given assessor
      */
     <T extends Submission> List<T> findAllByParticipationExerciseIdAndResultAssessor(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
