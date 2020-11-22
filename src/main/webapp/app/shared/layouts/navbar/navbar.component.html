@@ -61,6 +61,12 @@
                 </a>
                 <ul class="dropdown-menu" ngbDropdownMenu>
                     <li>
+                        <a class="dropdown-item" routerLink="admin/upcoming-exams-and-exercises" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="'book-open'" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.upcomingExamsAndExercises">Upcoming Exams & Exercises</span>
+                        </a>
+                    </li>
+                    <li>
                         <a class="dropdown-item" routerLink="admin/user-management" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="'user'" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.userManagement">User management</span>

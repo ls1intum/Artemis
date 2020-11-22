@@ -85,9 +85,11 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateVideoUnit_asInstructor_shouldUpdateVideoUnit() throws Exception {
+        this.videoUnit = videoUnitRepository.save(this.videoUnit);
         lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
         lecture1.addLectureUnit(this.videoUnit);
-        lectureRepository.save(lecture1);
+        lecture1 = lectureRepository.save(lecture1);
+
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
         this.videoUnit.setDescription("Changed");
         this.videoUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.OK);
@@ -97,9 +99,11 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
     public void updateVideoUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
+        this.videoUnit = videoUnitRepository.save(this.videoUnit);
         lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
         lecture1.addLectureUnit(this.videoUnit);
-        lectureRepository.save(lecture1);
+        lecture1 = lectureRepository.save(lecture1);
+
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
         this.videoUnit.setDescription("Changed");
         this.videoUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.FORBIDDEN);
@@ -108,9 +112,10 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateVideoUnit_noId_shouldReturnBadRequest() throws Exception {
+        this.videoUnit = videoUnitRepository.save(this.videoUnit);
         lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
         lecture1.addLectureUnit(this.videoUnit);
-        lectureRepository.save(lecture1);
+        lecture1 = lectureRepository.save(lecture1);
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
         this.videoUnit.setId(null);
         this.videoUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.BAD_REQUEST);
@@ -119,9 +124,10 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getVideoUnit_correctId_shouldReturnVideoUnit() throws Exception {
+        this.videoUnit = videoUnitRepository.save(this.videoUnit);
         lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
         lecture1.addLectureUnit(this.videoUnit);
-        lectureRepository.save(lecture1);
+        lecture1 = lectureRepository.save(lecture1);
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
         VideoUnit videoUnitFromRequest = request.get("/api/lectures/" + lecture1.getId() + "/video-units/" + this.videoUnit.getId(), HttpStatus.OK, VideoUnit.class);
         assertThat(this.videoUnit.getId()).isEqualTo(videoUnitFromRequest.getId());
@@ -130,10 +136,14 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteVideoUnit_correctId_shouldDeleteVideoUnit() throws Exception {
-        var persistedVideoUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.CREATED);
-        assertThat(persistedVideoUnit.getId()).isNotNull();
-        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedVideoUnit.getId(), HttpStatus.OK);
-        request.get("/api/lectures/" + lecture1.getId() + "/video-units/" + persistedVideoUnit.getId(), HttpStatus.NOT_FOUND, VideoUnit.class);
+        this.videoUnit = videoUnitRepository.save(this.videoUnit);
+        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
+        lecture1.addLectureUnit(this.videoUnit);
+        lecture1 = lectureRepository.save(lecture1);
+        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        assertThat(this.videoUnit.getId()).isNotNull();
+        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.videoUnit.getId(), HttpStatus.OK);
+        request.get("/api/lectures/" + lecture1.getId() + "/video-units/" + this.videoUnit.getId(), HttpStatus.NOT_FOUND, VideoUnit.class);
     }
 
 }
