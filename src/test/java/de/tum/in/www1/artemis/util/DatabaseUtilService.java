@@ -1863,19 +1863,20 @@ public class DatabaseUtilService {
         result.setAssessmentType(assessmentType);
         result.setScore(50L);
         result.setCompletionDate(ZonedDateTime.now());
+        studentParticipationRepo.save(participation);
+        submission = programmingSubmissionRepo.save(submission);
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setParticipation(participation);
         submission.setResult(result);
         submission.getParticipation().addResult(result);
-        submission = programmingSubmissionRepo.save(submission);
         // Manual results are always rated and have a resultString which is defined in the client
         if (assessmentType.equals(AssessmentType.SEMI_AUTOMATIC)) {
             result.rated(true);
             result.resultString("1 of 13 passed, 1 issue, 5 of 10 points");
         }
         result = resultRepo.save(result);
-        studentParticipationRepo.save(participation);
+        submission = programmingSubmissionRepo.save(submission);
         return submission;
     }
 
