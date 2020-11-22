@@ -490,6 +490,27 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createResultForExternalProgrammingSubmission() throws Exception {
+        Result result = new Result().rated(false);
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
+                HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createResultForExternalProgrammingSubmissionManualAssessment() throws Exception {
+        Result result = new Result().rated(false);
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExercise.setAssessmentType(AssessmentType.MANUAL);
+        programmingExerciseRepository.save(programmingExercise);
+        request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
+                HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createResultForExternalSubmission_quizExercise() throws Exception {
         var now = ZonedDateTime.now();
         var quizExercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), course);
