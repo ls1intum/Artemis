@@ -50,6 +50,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ResultRepository resultRepository;
 
+    private final FeedbackRepository feedbackRepository;
+
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final GroupNotificationService groupNotificationService;
@@ -69,7 +71,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
-            CourseService courseService, ExamService examService) {
+            CourseService courseService, ExamService examService, FeedbackRepository feedbackRepository) {
         super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -82,6 +84,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.gitService = gitService;
         this.resultRepository = resultRepository;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -659,6 +662,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         // Copy automatic feedbacks into the manual result
         for (Feedback feedback : automaticFeedbacks) {
+            feedback = feedbackRepository.save(feedback);
             feedback.setResult(newResult);
         }
         newResult.setFeedbacks(automaticFeedbacks);
