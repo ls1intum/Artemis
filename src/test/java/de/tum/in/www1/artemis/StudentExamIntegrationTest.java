@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -329,6 +330,24 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         List<StudentExam> response = request.getList("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs/", HttpStatus.OK, StudentExam.class);
         assertThat(response.size()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllTestRunSubmissionsForExercise() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        course2 = database.addEmptyCourse();
+        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
+        var examStartDate = ZonedDateTime.now().plusMinutes(4);
+        var examEndDate = ZonedDateTime.now().plusMinutes(3);
+        exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false);
+        var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        List<Submission> response = request.getList("/api/exercises/" + testRun.getExercises().get(0).getId() + "/test-run-submissions", HttpStatus.OK, Submission.class);
+        response.get(0).getParticipation().setSubmissions(new HashSet<>(response));
+        assertThat(((StudentParticipation) response.get(0).getParticipation()).isTestRunParticipation()).isTrue();
+        assertThat(response.get(0).getResult().getAssessor()).isEqualTo(instructor);
+        assertThat(response.get(0).getResult().getAssessor()).isEqualTo(((StudentParticipation) response.get(0).getParticipation()).getStudent().get());
     }
 
     @Test

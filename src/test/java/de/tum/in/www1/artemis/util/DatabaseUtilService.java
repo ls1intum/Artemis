@@ -1078,7 +1078,6 @@ public class DatabaseUtilService {
      */
     public TextSubmission markTextExerciseParticipationForTestRun(TextExercise exercise, String login) {
         var textSubmission = saveTextSubmissionWithResultAndAssessor(exercise, ModelFactory.generateTextSubmission("", null, false), login, login);
-        textSubmission.getResult().setScore(null);
         textSubmission.getResult().setCompletionDate(null);
         resultRepo.save(textSubmission.getResult());
         return textSubmission;
