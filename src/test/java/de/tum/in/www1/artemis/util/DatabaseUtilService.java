@@ -1885,18 +1885,23 @@ public class DatabaseUtilService {
     }
 
     public ModelingSubmission addModelingSubmissionWithResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
+
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         Result result = new Result();
+
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setAssessmentType(AssessmentType.MANUAL);
         result = resultRepo.save(result);
+        submission = modelingSubmissionRepo.save(submission);
+        studentParticipationRepo.save(participation);
+        result = resultRepo.save(result);
+
         result.setSubmission(submission);
         submission.setParticipation(participation);
         submission.setResult(result);
         submission.getParticipation().addResult(result);
         submission = modelingSubmissionRepo.save(submission);
-        result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
     }
