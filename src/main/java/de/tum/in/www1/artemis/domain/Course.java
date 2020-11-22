@@ -136,6 +136,7 @@ public class Course extends DomainObject {
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
+    @OrderBy("title")
     private List<LearningGoal> learningGoals = new ArrayList<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
