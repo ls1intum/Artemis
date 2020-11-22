@@ -511,21 +511,33 @@ public class DatabaseUtilService {
             Result result2 = ModelFactory.generateResult(true, 12);
             Result result3 = ModelFactory.generateResult(false, 0);
 
-            result1 = resultRepo.save(result1);
-            result2 = resultRepo.save(result2);
-            result3 = resultRepo.save(result3);
-
-            modelingSubmission1.setResult(result1);
-            modelingSubmission2.setResult(result2);
-            textSubmission.setResult(result3);
-
             participation1 = studentParticipationRepo.save(participation1);
             participation2 = studentParticipationRepo.save(participation2);
             participation3 = studentParticipationRepo.save(participation3);
 
+            submissionRepository.save(modelingSubmission1);
+            submissionRepository.save(modelingSubmission2);
+            submissionRepository.save(textSubmission);
+
             modelingSubmission1.setParticipation(participation1);
             textSubmission.setParticipation(participation2);
             modelingSubmission2.setParticipation(participation3);
+
+            result1.setParticipation(participation1);
+            result2.setParticipation(participation3);
+            result3.setParticipation(participation2);
+
+            result1 = resultRepo.save(result1);
+            result2 = resultRepo.save(result2);
+            result3 = resultRepo.save(result3);
+
+            result1.setSubmission(modelingSubmission1);
+            result2.setSubmission(modelingSubmission2);
+            result3.setSubmission(textSubmission);
+
+            modelingSubmission1.setResult(result1);
+            modelingSubmission2.setResult(result2);
+            textSubmission.setResult(result3);
 
             submissionRepository.save(modelingSubmission1);
             submissionRepository.save(modelingSubmission2);
@@ -1888,6 +1900,8 @@ public class DatabaseUtilService {
 
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
+        submission = modelingSubmissionRepo.save(submission);
+
         Result result = new Result();
 
         result.setAssessor(getUserByLogin(assessorLogin));
