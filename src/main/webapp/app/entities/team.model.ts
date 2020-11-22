@@ -2,7 +2,8 @@ import { Moment } from 'moment';
 import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-
+import { StudentWithTeam } from 'app/entities/student-with-team.model';
+// import { TutorWithTeam } from 'app/entities/tutor-with-team.model';
 export enum TeamImportStrategyType {
     PURGE_EXISTING = 'PURGE_EXISTING',
     CREATE_ONLY = 'CREATE_ONLY',
@@ -36,4 +37,9 @@ export class Team implements BaseEntity {
     constructor() {
         this.students = []; // default value
     }
+}
+
+export class TeamList {
+    public students?: StudentWithTeam[];
+    // public tutors?: TutorWithTeam[];
 }

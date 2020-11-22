@@ -39,4 +39,25 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
         List<Team> sourceTeams = teamRepository.findAllByExerciseId(sourceExercise.getId());
         cloneTeamsIntoDestinationExercise(sourceTeams, destinationExercise);
     }
+
+    /**
+     * Imports all teams of the source exercise into the destination exercise
+     *
+     * Conflicts are prevented trivially by first deleting all teams of the destination exercise.
+     *
+     * @param exercise Exercise from which to take the teams for the import
+     * @param teams Teams which to add to the exercise
+     */
+    @Override
+    public void importTeams(Exercise exercise, List<Team> teams) {
+        // Delete participations of existing teams in destination exercise (must happen before deleting teams themselves)
+        participationService.deleteAllByExerciseId(exercise.getId(), false, false);
+
+        // Purge existing teams in destination exercise
+        List<Team> destinationTeams = teamRepository.findAllByExerciseId(exercise.getId());
+        teamRepository.deleteAll(destinationTeams);
+
+        // Get all source teams and clone them into the destination exercise
+        cloneTeamsIntoDestinationExercise(teams, exercise);
+    }
 }

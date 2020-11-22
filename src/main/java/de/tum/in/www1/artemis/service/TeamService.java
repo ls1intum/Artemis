@@ -193,6 +193,21 @@ public class TeamService {
     /**
      * Imports the teams from the source exercise into destination exercise using the given strategy
      *
+     * @param exercise Exercise from which to copy the existing teams
+     * @param teams Exercise in which to copy the teams from source exercise
+     * @param importStrategyType Type of strategy used to import teams (relevant for conflicts)
+     * @return list of all teams that are now in the destination exercise
+     */
+    public List<Team> importTeamsFromTeamListIntoExerciseUsingStrategy(Exercise exercise,List<Team> teams,
+                                                                                        TeamImportStrategyType importStrategyType) {
+        TeamImportStrategy teamImportStrategy = getTeamImportStrategy(importStrategyType);
+        teamImportStrategy.importTeams(exercise, teams);
+        return teamRepository.findAllByExerciseId(exercise.getId());
+    }
+
+    /**
+     * Imports the teams from the source exercise into destination exercise using the given strategy
+     *
      * @param sourceExercise Exercise from which to copy the existing teams
      * @param destinationExercise Exercise in which to copy the teams from source exercise
      * @param importStrategyType Type of strategy used to import teams (relevant for conflicts)

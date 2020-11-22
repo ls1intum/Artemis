@@ -20,6 +20,8 @@ import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-impo
 import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exercise-search/team-exercise-search.component';
 import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-participation-table/team-participation-table.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
+import { TeamsImportFromFileFormComponent } from './teams-import-dialog/teams-import-from-file-form.component';
+import { TeamsImportTeamsListComponent } from './teams-import-dialog/teams-import-teams-list.component';
 
 const ENTITY_STATES = [...teamRoute];
 
@@ -40,8 +42,10 @@ const ENTITY_STATES = [...teamRoute];
         TeamParticipateInfoBoxComponent,
         TeamParticipationTableComponent,
         TeamComponent,
+        TeamsImportFromFileFormComponent,
+        TeamsImportTeamsListComponent,
     ],
-    exports: [TeamUpdateButtonComponent, TeamsImportButtonComponent, TeamStudentsListComponent, TeamParticipateInfoBoxComponent],
+    exports: [TeamUpdateButtonComponent, TeamsImportButtonComponent, TeamStudentsListComponent, TeamParticipateInfoBoxComponent, TeamsImportTeamsListComponent],
     entryComponents: [TeamUpdateDialogComponent, TeamsImportDialogComponent],
 })
 export class ArtemisTeamModule {}

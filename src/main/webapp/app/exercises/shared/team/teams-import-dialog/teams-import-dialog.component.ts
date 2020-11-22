@@ -33,6 +33,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     searchingExercisesNoResultsForQuery?: string;
 
     sourceTeams?: Team[];
+    sourceTeamsFromFile?: Team[];
     loadingSourceTeams = false;
     loadingSourceTeamsFailed = false;
 
@@ -134,6 +135,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * @param sourceTeam Team which is checked for conflicts
      */
     isSourceTeamFreeOfAnyConflicts(sourceTeam: Team): boolean {
+        console.log('here fu', this.teamShortNamesAlreadyExistingInExercise);
         // Short name of source team already exists among teams of destination exercise
         if (this.teamShortNamesAlreadyExistingInExercise.includes(sourceTeam.shortName!)) {
             return false;
@@ -244,6 +246,22 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
             (res) => this.onSaveSuccess(res),
             () => this.onSaveError(),
         );
+    }
+
+    onTeamsChanged(fileTeams: Team[]) {
+        this.initImportStrategy();
+        this.sourceTeamsFromFile = fileTeams;
+        console.log('teams', this.sourceTeamsFromFile);
+    }
+
+    /** */
+    importFile() {
+        if (this.sourceTeamsFromFile) {
+            this.teamService.importTeamsFromFile(this.exercise, this.sourceTeamsFromFile, this.importStrategy!).subscribe(
+                (res) => this.onSaveSuccess(res),
+                () => this.onSaveError(),
+            );
+        }
     }
 
     /**

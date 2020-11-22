@@ -66,8 +66,8 @@ public class TeamResource {
     private final AuditEventRepository auditEventRepository;
 
     public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseService courseService,
-            ExerciseService exerciseService, UserService userService, AuthorizationCheckService authCheckService, ParticipationService participationService,
-            SubmissionService submissionService, AuditEventRepository auditEventRepository) {
+                        ExerciseService exerciseService, UserService userService, AuthorizationCheckService authCheckService, ParticipationService participationService,
+                        SubmissionService submissionService, AuditEventRepository auditEventRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.teamWebsocketService = teamWebsocketService;
@@ -114,7 +114,7 @@ public class TeamResource {
         savedTeam.filterSensitiveInformation();
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam);
         return ResponseEntity.created(new URI("/api/teams/" + savedTeam.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedTeam.getId().toString())).body(savedTeam);
+            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedTeam.getId().toString())).body(savedTeam);
     }
 
     /**
@@ -122,7 +122,7 @@ public class TeamResource {
      *
      * @param team       the team to update
      * @param exerciseId the id of the exercise that the team belongs to
-     * @param id the id of the team which to update
+     * @param id         the id of the team which to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated team, or with status 400 (Bad Request) if the team is not valid, or with status 500 (Internal
      * Server Error) if the team couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -153,7 +153,7 @@ public class TeamResource {
         Exercise exercise = exerciseService.findOne(exerciseId);
         final boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         final boolean isAtLeastTeachingAssistantAndOwner = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)
-                && authCheckService.isOwnerOfTeam(existingTeam.get(), user);
+            && authCheckService.isOwnerOfTeam(existingTeam.get(), user);
 
         // User must be (1) at least instructor or (2) TA but the owner of the team
         if (!isAtLeastInstructor && !isAtLeastTeachingAssistantAndOwner) {
@@ -218,7 +218,7 @@ public class TeamResource {
     /**
      * GET /exercises/:exerciseId/teams : get all the teams of an exercise for the exercise administration page
      *
-     * @param exerciseId the exerciseId of the exercise for which all teams should be returned
+     * @param exerciseId  the exerciseId of the exercise for which all teams should be returned
      * @param teamOwnerId the user id of the team owner for which to filter the teams by (optional)
      * @return the ResponseEntity with status 200 (OK) and the list of teams in body
      */
@@ -275,7 +275,7 @@ public class TeamResource {
     /**
      * GET /courses/{courseId}/teams/exists?shortName={shortName} : get boolean flag whether team with shortName exists for course
      *
-     * @param courseId the id of the course for which to check teams
+     * @param courseId  the id of the course for which to check teams
      * @param shortName the shortName of the team to check for existence
      * @return Response with status 200 (OK) and boolean flag in the body
      */
@@ -302,7 +302,7 @@ public class TeamResource {
     @GetMapping("/courses/{courseId}/exercises/{exerciseId}/team-search-users")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<TeamSearchUserDTO>> searchUsersInCourse(@PathVariable long courseId, @PathVariable long exerciseId,
-            @RequestParam("loginOrName") String loginOrName) {
+                                                                       @RequestParam("loginOrName") String loginOrName) {
         log.debug("REST request to search Users for {} in course with id : {}", loginOrName, courseId);
         // restrict result size by only allowing reasonable searches
         if (loginOrName.length() < 3) {
@@ -320,15 +320,78 @@ public class TeamResource {
     /**
      * PUT /exercises/:destinationExerciseId/teams/import-from-exercise/:sourceExerciseId : copy teams from source exercise into destination exercise
      *
+     * @param exerciseId the exercise id of the exercise for which to import teams (= destination exercise)
+     * @param teams      the exercise id of the exercise from which to copy the teams (= source exercise)
+     * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
+     */
+    @PutMapping("/exercises/{exerciseId}/teams/import-from-file")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Team>> importTeamsFromFile(@PathVariable long exerciseId,
+                                                          @RequestBody List<Team> teams,@RequestParam TeamImportStrategyType importStrategyType) {
+        log.debug("REST request import all teams from source exercise with id {} into destination exercise with id {}", exerciseId);
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Exercise exercise = exerciseService.findOne(exerciseId);
+
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            return forbidden();
+        }
+
+        if (!exercise.isTeamMode()) {
+            throw new BadRequestAlertException("The destination exercise must be a team-based exercise.", ENTITY_NAME, "destinationExerciseNotTeamBased");
+        }
+
+        List<String> notFoundRegistrationNumbers = new ArrayList<>();
+        List<Team> filledTeams = new ArrayList<>();
+        teams.forEach(team -> {
+            Set<User> newStudents = new HashSet<>();
+            team.getStudents().forEach(student -> {
+                Optional<User> userWithRegistrationNumber = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(student.getVisibleRegistrationNumber());
+                userWithRegistrationNumber.ifPresentOrElse((value) -> {
+                    newStudents.add(value);
+                }, () -> {
+                    notFoundRegistrationNumbers.add(student.getVisibleRegistrationNumber());
+                });
+            });
+            team.students(newStudents);
+            filledTeams.add(team);
+        });
+
+        if(!notFoundRegistrationNumbers.isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+
+        // Create audit event for team import action
+        var logMessage = "Import teams from file into exercise '"
+            + exercise.getTitle() + "' (id: " + exercise.getId() + ") ";
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.IMPORT_TEAMS, logMessage);
+        auditEventRepository.add(auditEvent);
+
+        // Import teams and return the teams that now belong to the destination exercise
+        List<Team> destinationTeams = teamService.importTeamsFromTeamListIntoExerciseUsingStrategy(exercise, filledTeams, importStrategyType);
+        destinationTeams.forEach(Team::filterSensitiveInformation);
+//
+//        // Send out team assignment update via websockets
+//        Map<String, List<StudentParticipation>> participationsMap = participationService.findByExerciseIdWithEagerSubmissionsResult(destinationExercise.getId()).stream()
+//            .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).collect(Collectors.toList())));
+//        destinationTeams.forEach(
+//            team -> teamWebsocketService.sendTeamAssignmentUpdate(destinationExercise, null, team, participationsMap.getOrDefault(team.getParticipantIdentifier(), List.of())));
+
+        return ResponseEntity.ok().body(destinationTeams);
+    }
+
+    /**
+     * PUT /exercises/:destinationExerciseId/teams/import-from-exercise/:sourceExerciseId : copy teams from source exercise into destination exercise
+     *
      * @param destinationExerciseId the exercise id of the exercise for which to import teams (= destination exercise)
-     * @param sourceExerciseId the exercise id of the exercise from which to copy the teams (= source exercise)
-     * @param importStrategyType the import strategy to use when importing the teams
+     * @param sourceExerciseId      the exercise id of the exercise from which to copy the teams (= source exercise)
+     * @param importStrategyType    the import strategy to use when importing the teams
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
     @PutMapping("/exercises/{destinationExerciseId}/teams/import-from-exercise/{sourceExerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Team>> importTeamsFromSourceExercise(@PathVariable long destinationExerciseId, @PathVariable long sourceExerciseId,
-            @RequestParam TeamImportStrategyType importStrategyType) {
+                                                                    @RequestParam TeamImportStrategyType importStrategyType) {
         log.debug("REST request import all teams from source exercise with id {} into destination exercise with id {}", sourceExerciseId, destinationExerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -350,7 +413,7 @@ public class TeamResource {
 
         // Create audit event for team import action
         var logMessage = "Import teams from source exercise '" + sourceExercise.getTitle() + "' (id: " + sourceExercise.getId() + ") into destination exercise '"
-                + destinationExercise.getTitle() + "' (id: " + destinationExercise.getId() + ") using strategy " + importStrategyType;
+            + destinationExercise.getTitle() + "' (id: " + destinationExercise.getId() + ") using strategy " + importStrategyType;
         var auditEvent = new AuditEvent(user.getLogin(), Constants.IMPORT_TEAMS, logMessage);
         auditEventRepository.add(auditEvent);
 
@@ -360,9 +423,9 @@ public class TeamResource {
 
         // Send out team assignment update via websockets
         Map<String, List<StudentParticipation>> participationsMap = participationService.findByExerciseIdWithEagerSubmissionsResult(destinationExercise.getId()).stream()
-                .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).collect(Collectors.toList())));
+            .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).collect(Collectors.toList())));
         destinationTeams.forEach(
-                team -> teamWebsocketService.sendTeamAssignmentUpdate(destinationExercise, null, team, participationsMap.getOrDefault(team.getParticipantIdentifier(), List.of())));
+            team -> teamWebsocketService.sendTeamAssignmentUpdate(destinationExercise, null, team, participationsMap.getOrDefault(team.getParticipantIdentifier(), List.of())));
 
         return ResponseEntity.ok().body(destinationTeams);
     }
@@ -371,7 +434,7 @@ public class TeamResource {
      * GET /courses/:courseId/teams/:teamShortName/with-exercises-and-participations : get course "id" with all released exercises in which the team "teamShortName" exists
      * together with its participations for those exercises (and the latest submission for those if the user is an instructor or the team tutor)
      *
-     * @param courseId id of the course
+     * @param courseId      id of the course
      * @param teamShortName short name of the team (all teams with the short name in the course are seen as the same team)
      * @return Course with exercises and participations (and latest submissions) for the team
      */
@@ -407,8 +470,7 @@ public class TeamResource {
             // fetch including submissions and results for team tutor and instructors
             participations = participationService.findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(course.getId(), teamShortName);
             submissionService.reduceParticipationSubmissionsToLatest(participations, false);
-        }
-        else {
+        } else {
             // for other tutors and for students: submissions not needed, hide results
             participations = participationService.findAllByCourseIdAndTeamShortName(course.getId(), teamShortName);
             participations.forEach(participation -> participation.setResults(null));
