@@ -313,8 +313,8 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAssessmentsPoints()).as("assessment points are as expected").isEqualTo(exercise.getMaxScore());
 
-        exercise.getTutorScores().add(response);
-        exerciseRepo.save(exercise);
+        // exercise.getTutorScores().add(response);
+        // exerciseRepo.save(exercise);
 
         result = resultRepo.findAll().get(0);
         resultRepo.delete(result);

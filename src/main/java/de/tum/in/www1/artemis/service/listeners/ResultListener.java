@@ -38,12 +38,12 @@ public class ResultListener {
     }
 
     /**
-     * After result gets deleted, delete all StudentScores/TutorScores with this result.
+     * Before result gets deleted, delete all StudentScores/TutorScores with this result.
      *
      * @param deletedResult deleted result
      */
     @PreRemove
-    public void postRemove(Result deletedResult) {
+    public void preRemove(Result deletedResult) {
         log.info("Result " + deletedResult + " was removed");
 
         // remove from Student Scores and Tutor Scores

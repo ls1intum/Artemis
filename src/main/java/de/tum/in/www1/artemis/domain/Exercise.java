@@ -157,8 +157,8 @@ public abstract class Exercise extends DomainObject {
     @JsonIgnore
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnore
     private Set<TutorScore> tutorScores = new HashSet<>();
 
