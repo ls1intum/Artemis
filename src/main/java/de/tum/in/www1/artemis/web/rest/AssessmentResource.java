@@ -112,8 +112,8 @@ public abstract class AssessmentResource {
         if (!isAtLeastInstructor) {
             ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
         }
-        if (submit && (result.getParticipation()).getExercise().getAssessmentDueDate() == null
-                || (result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
+        if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
+                || (result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             messagingService.broadcastNewResult(result.getParticipation(), result);
         }
         return ResponseEntity.ok(result);
