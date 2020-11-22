@@ -1,0 +1,14 @@
+{
+    "artemisApp": {
+        "learningGoal": {
+            "title": "Title",
+            "description": "Description",
+            "createLearningGoal": {
+                "title": "Create a new learning goal",
+                "titlePlaceholder": "Give the learning goal a title",
+                "titleRequiredValidationError": "A learning goal needs to have a title",
+                "titleMaxLengthValidationError": "A learning goal title is limited to 255 characters"
+            }
+        }
+    }
+}
