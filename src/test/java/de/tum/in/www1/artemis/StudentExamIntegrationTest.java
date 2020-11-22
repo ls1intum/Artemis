@@ -352,6 +352,43 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllTestRunSubmissionsForExercise_notExamExercise() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        course2 = database.addEmptyCourse();
+        var exercise = database.addProgrammingExerciseToCourse(course2, false);
+        request.getList("/api/exercises/" + exercise.getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllTestRunSubmissionsForExercise_notInstructor() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        course2 = database.addEmptyCourse();
+        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
+        var examStartDate = ZonedDateTime.now().plusMinutes(4);
+        var examEndDate = ZonedDateTime.now().plusMinutes(3);
+        exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false);
+        var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        database.changeUser("student2");
+        request.getList("/api/exercises/" + testRun.getExercises().get(0).getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllTestRunSubmissionsForExercise_notFound() throws Exception {
+        course2 = database.addEmptyCourse();
+        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
+        var examStartDate = ZonedDateTime.now().plusMinutes(4);
+        var examEndDate = ZonedDateTime.now().plusMinutes(3);
+        exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false);
+        request.getList("/api/exercises/" + exam.getExerciseGroups().get(0).getExercises().iterator().next().getId() + "/test-run-submissions", HttpStatus.NOT_FOUND,
+                Submission.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetWorkingTimesNoStudentExams() {
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(5);

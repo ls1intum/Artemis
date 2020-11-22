@@ -1265,7 +1265,7 @@ public class ParticipationService {
      * @param participationId id of the participation
      * @return participation with eager course
      */
-    public StudentParticipation findOneWithEagerCourse(Long participationId) {
+    public StudentParticipation findOneWithEagerCourseAndExercise(Long participationId) {
         return studentParticipationRepository.findOneByIdWithEagerExerciseAndEagerCourse(participationId);
     }
 
