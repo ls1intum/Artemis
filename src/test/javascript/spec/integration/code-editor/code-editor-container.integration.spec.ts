@@ -8,7 +8,6 @@ import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SinonStub, stub } from 'sinon';
 import { BehaviorSubject, of, Subject } from 'rxjs';
-import * as ace from 'brace';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
@@ -57,8 +56,6 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('CodeEditorContainerIntegration', () => {
-    // needed to make sure ace is defined
-    ace.acequire('ace/ext/modelist');
     let container: CodeEditorContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorContainerComponent>;
     let containerDebugElement: DebugElement;
