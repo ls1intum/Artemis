@@ -67,21 +67,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
         );
     }
 
-    async back() {
-        if (this.exercise.course) {
-            await this.router.navigate(['/course-management', this.exercise.course?.id, 'modeling-exercises', this.exerciseId, 'edit']);
-        } else {
-            await this.router.navigate([
-                '/course-management',
-                this.exercise.exerciseGroup?.exam?.course?.id,
-                'exams',
-                this.exercise.exerciseGroup?.exam?.id,
-                'exercise-groups',
-                this.exercise.exerciseGroup?.id,
-                'modeling-exercises',
-                this.exerciseId,
-                'edit',
-            ]);
-        }
+    back(): void {
+        window.history.back();
     }
 }

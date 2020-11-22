@@ -288,25 +288,8 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         this.invalidError = undefined;
     }
 
-    async back() {
-        const courseId = this.exercise.course?.id || this.exercise.exerciseGroup?.exam?.course?.id;
-        if (this.readOnly || this.toComplete) {
-            await this.router.navigate(['/course-management', courseId, 'exercises', this.exerciseId, 'tutor-dashboard']);
-        } else if (this.isExamMode) {
-            await this.router.navigate([
-                '/course-management',
-                courseId,
-                'exams',
-                this.exercise.exerciseGroup?.exam?.id,
-                'exercise-groups',
-                this.exercise.exerciseGroup?.id,
-                'modeling-exercises',
-                this.exerciseId,
-                'edit',
-            ]);
-        } else {
-            await this.router.navigate(['/course-management', courseId, 'modeling-exercises', this.exerciseId, 'edit']);
-        }
+    back(): void {
+        window.history.back();
     }
 
     checkAssessment() {
