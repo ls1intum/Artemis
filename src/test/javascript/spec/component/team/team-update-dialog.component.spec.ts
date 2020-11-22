@@ -54,14 +54,13 @@ describe('TeamUpdateDialogComponent', () => {
     it('Team Update Dialog can be closed and canceled', fakeAsync(() => {
         const closeButton = debugElement.query(By.css('button.close'));
         expect(closeButton).to.exist;
-        const modalDismissSpy = sinon.spy(ngbActiveModal, 'dismiss');
         closeButton.nativeElement.click();
-        expect(modalDismissSpy.callCount).to.equal(1);
+        expect(ngbActiveModal.dismiss).to.have.been.called;
 
         const cancelButton = debugElement.query(By.css('button.cancel'));
         expect(cancelButton).to.exist;
         cancelButton.nativeElement.click();
-        expect(modalDismissSpy.callCount).to.equal(2);
+        expect(ngbActiveModal.dismiss).to.have.been.calledTwice;
 
         fixture.destroy();
         flush();
@@ -122,14 +121,13 @@ describe('TeamUpdateDialogComponent', () => {
         expect(submitButton.nativeElement.disabled).to.be.false;
 
         // Click on save
-        const modalCloseSpy = sinon.spy(ngbActiveModal, 'close');
         debugElement.query(By.css('#teamUpdateDialogForm')).nativeElement.submit();
         fixture.detectChanges();
 
         // Check that saving worked and that modal was closed
         expect(comp.team).to.deep.equal(comp.pendingTeam);
         expect(comp.isSaving).to.be.false;
-        expect(modalCloseSpy.callCount).to.equal(1);
+        expect(ngbActiveModal.close).to.have.been.called;
 
         fixture.destroy();
         flush();
@@ -183,14 +181,13 @@ describe('TeamUpdateDialogComponent', () => {
         expect(comp.pendingTeam.students).to.deep.equal(comp.team.students?.slice(1).concat(mockNonTeamStudents));
 
         // Click on save
-        const modalCloseSpy = sinon.spy(ngbActiveModal, 'close');
         debugElement.query(By.css('#teamUpdateDialogForm')).nativeElement.submit();
         fixture.detectChanges();
 
         // Check that saving worked and that modal was closed
         expect(comp.team).to.deep.equal(comp.pendingTeam);
         expect(comp.isSaving).to.be.false;
-        expect(modalCloseSpy.callCount).to.equal(1);
+        expect(ngbActiveModal.close).to.have.been.called;
 
         fixture.destroy();
         flush();

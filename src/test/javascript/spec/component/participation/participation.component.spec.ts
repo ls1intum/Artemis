@@ -13,6 +13,7 @@ import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { of } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { SinonStub, stub } from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -42,10 +43,10 @@ describe('ParticipationComponent', () => {
     });
 
     describe('Presentation Score', () => {
-        let updateSpy: jasmine.Spy;
+        let updateSpy: SinonStub;
 
         beforeEach(() => {
-            updateSpy = spyOn(service, 'update').and.returnValue(of());
+            updateSpy = stub(service, 'update').returns(of());
         });
 
         const courseWithPresentationScore = {
@@ -85,26 +86,26 @@ describe('ParticipationComponent', () => {
             component.exercise = exercise1;
             component.presentationScoreEnabled = component.checkPresentationScoreConfig();
             component.addPresentation(participation);
-            expect(updateSpy.calls.count()).to.equal(1);
-            updateSpy.calls.reset();
+            expect(updateSpy.callCount).to.equal(1);
+            updateSpy.resetHistory();
 
             component.exercise = exercise2;
             component.presentationScoreEnabled = component.checkPresentationScoreConfig();
             component.addPresentation(participation);
-            expect(updateSpy.calls.count()).to.equal(0);
+            expect(updateSpy.callCount).to.equal(0);
         });
 
         it('should remove a presentation score if the feature is enabled', () => {
             component.exercise = exercise1;
             component.presentationScoreEnabled = component.checkPresentationScoreConfig();
             component.removePresentation(participation);
-            expect(updateSpy.calls.count()).to.equal(1);
-            updateSpy.calls.reset();
+            expect(updateSpy.callCount).to.equal(1);
+            updateSpy.resetHistory();
 
             component.exercise = exercise2;
             component.presentationScoreEnabled = component.checkPresentationScoreConfig();
             component.removePresentation(participation);
-            expect(updateSpy.calls.count()).to.equal(0);
+            expect(updateSpy.callCount).to.equal(0);
         });
 
         it('should check if the presentation score actions should be displayed', () => {

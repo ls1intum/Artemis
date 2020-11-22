@@ -53,14 +53,13 @@ describe('DeleteDialogComponent', () => {
 
         const closeButton = fixture.debugElement.query(By.css('.close'));
         expect(closeButton).to.exist;
-        const modalDismissSpy = sinon.spy(ngbActiveModal, 'dismiss');
         closeButton.nativeElement.click();
-        expect(modalDismissSpy.callCount).to.equal(1);
+        expect(ngbActiveModal.dismiss).to.be.calledOnce;
 
         const cancelButton = fixture.debugElement.query(By.css('.btn.btn-secondary'));
         expect(cancelButton).to.exist;
         cancelButton.nativeElement.click();
-        expect(modalDismissSpy.callCount).to.equal(2);
+        expect(ngbActiveModal.dismiss).to.be.calledTwice;
 
         inputFormGroup = debugElement.query(By.css('.form-group'));
         expect(inputFormGroup).to.exist;
