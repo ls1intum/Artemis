@@ -1,8 +1,8 @@
 <div class="plagiarism-header">
     <div class="plagiarism-header-left">
         <h5>
-            {{ comparison.studentA || ('artemisApp.plagiarism.unknown-student' | translate) }},
-            {{ comparison.studentB || ('artemisApp.plagiarism.unknown-student' | translate) }}
+            {{ comparison.submissionA.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }},
+            {{ comparison.submissionB.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}
         </h5>
     </div>
 

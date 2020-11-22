@@ -1,6 +1,8 @@
 import { Component, Input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
+import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 
 @Component({
     selector: 'jhi-plagiarism-details',
@@ -8,7 +10,7 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
     templateUrl: './plagiarism-details.component.html',
 })
 export class PlagiarismDetailsComponent {
-    @Input() comparison?: PlagiarismComparison;
+    @Input() comparison?: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
 
     /**
      * Subject to be passed into PlagiarismSplitViewComponent to control the split view.

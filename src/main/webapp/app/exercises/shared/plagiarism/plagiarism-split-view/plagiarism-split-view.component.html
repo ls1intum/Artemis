@@ -1,7 +1,7 @@
 <div class="plagiarism-split-view">
     <div class="plagiarism-split-pane" jhiPane>
         <div class="plagiarism-split-pane-header">
-            {{ comparison.studentA || ('artemisApp.plagiarism.unknown-student' | translate) }}
+            {{ comparison.submissionA.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}
         </div>
 
         <!--        <jhi-modeling-editor *ngIf="submission1" [umlModel]="submission1?.model"-->
@@ -10,7 +10,7 @@
 
     <div class="plagiarism-split-pane" jhiPane>
         <div class="plagiarism-split-pane-header">
-            {{ comparison.studentB || ('artemisApp.plagiarism.unknown-student' | translate) }}
+            {{ comparison.submissionB.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}
         </div>
 
         <!--        <jhi-modeling-editor *ngIf="submission2" [umlModel]="submission2?.model"-->

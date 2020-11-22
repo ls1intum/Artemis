@@ -3,9 +3,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { JPlagResult } from 'app/exercises/shared/plagiarism/types/jplag/JPlagResult';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { downloadFile } from 'app/shared/util/download.util';
+import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 
 @Component({
     selector: 'jhi-plagiarism-inspector',
@@ -26,7 +26,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     /**
      * Result of the automated plagiarism detection
      */
-    plagiarismResult?: JPlagResult | ModelingPlagiarismResult;
+    plagiarismResult?: TextPlagiarismResult | ModelingPlagiarismResult;
 
     /**
      * True, if an automated plagiarism detection is running; false otherwise.
@@ -71,7 +71,7 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.detectionInProgress = true;
 
         this.textExerciseService.checkPlagiarismJPlag(this.exercise.id!).subscribe(
-            (result: JPlagResult) => {
+            (result: TextPlagiarismResult) => {
                 this.detectionInProgress = false;
 
                 console.log(result);

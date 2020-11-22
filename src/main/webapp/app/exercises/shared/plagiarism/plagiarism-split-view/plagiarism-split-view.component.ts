@@ -1,9 +1,11 @@
-import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnInit, QueryList, ViewChildren } from '@angular/core';
 // @ts-ignore
 import Split from 'split.js';
 import { Subject } from 'rxjs';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
+import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
@@ -16,7 +18,7 @@ export class SplitPaneDirective {
     templateUrl: './plagiarism-split-view.component.html',
 })
 export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit {
-    @Input() comparison: PlagiarismComparison;
+    @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() splitControlSubject: Subject<string>;
 
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
@@ -42,8 +44,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
         this.splitControlSubject.subscribe((pane: string) => this.handleSplitControl(pane));
     }
 
-    ngOnChanges(changes: SimpleChanges): void {
-        console.log(changes);
+    ngOnChanges(/*changes: SimpleChanges*/): void {
         // if (changes.comparison) {
         //     const comp: ModelingSubmissionComparisonDTO = changes.comparison.currentValue;
         //

@@ -2,6 +2,8 @@ import { Component, Input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
+import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 
 @Component({
     selector: 'jhi-plagiarism-header',
@@ -9,7 +11,7 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
     templateUrl: './plagiarism-header.component.html',
 })
 export class PlagiarismHeaderComponent {
-    @Input() comparison: PlagiarismComparison;
+    @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() splitControlSubject: Subject<string>;
 
     /**

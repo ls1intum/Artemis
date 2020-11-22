@@ -14,13 +14,13 @@
                     <span class="plagiarism-name"> #{{ idx + 1 }} </span>
 
                     <span class="plagiarism-list-item-students">
-                        <span>{{ comparison.studentA || ('artemisApp.plagiarism.unknown-student' | translate) }}, </span>
+                        <span>{{ comparison.submissionA.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}, </span>
 
-                        <span>{{ comparison.studentB || ('artemisApp.plagiarism.unknown-student' | translate) }}</span>
+                        <span>{{ comparison.submissionB.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}</span>
                     </span>
                 </div>
             </div>
-            <span class="plagiarism-percentage">({{ (comparison.similarity || 0) * 100 }}%)</span>
+            <span class="plagiarism-percentage">({{ comparison.similarity || 0 | number: '1.2-2' }} %)</span>
         </li>
     </ul>
 </aside>

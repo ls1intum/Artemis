@@ -9,7 +9,6 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { ModelingStatistic } from 'app/entities/modeling-statistic.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
-import { ModelingComparison } from 'app/exercises/shared/plagiarism/types/modeling/ModelingComparison';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
@@ -84,11 +83,7 @@ export class ModelingExerciseService {
      */
     checkPlagiarism(exerciseId: number): Observable<ModelingPlagiarismResult> {
         return this.http
-            .get<ModelingComparison[]>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response' })
-            .pipe(
-                map((response: HttpResponse<ModelingComparison[]>) => ({
-                    comparisons: response.body!,
-                })),
-            );
+            .get<ModelingPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response' })
+            .pipe(map((response: HttpResponse<ModelingPlagiarismResult>) => response.body!));
     }
 }

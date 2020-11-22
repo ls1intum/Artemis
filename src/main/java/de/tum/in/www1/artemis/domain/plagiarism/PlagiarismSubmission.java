@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain.plagiarism;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import jplag.Submission;
@@ -41,12 +42,12 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
         PlagiarismSubmission<TextSubmissionElement> submission = new PlagiarismSubmission<>();
 
         // TODO: Check length of returned String[]
-        String[] submissionIdAndStudentLogin = jplagSubmission.name.split("-");
+        String[] submissionIdAndStudentLogin = jplagSubmission.name.split("[-.]");
         long submissionId = Long.parseLong(submissionIdAndStudentLogin[0]);
         String studentLogin = submissionIdAndStudentLogin[1];
 
         submission.setStudentLogin(studentLogin);
-        submission.setElements(Arrays.stream(jplagSubmission.tokenList.tokens).map(TextSubmissionElement::fromJPlagToken).collect(Collectors.toList()));
+        submission.setElements(Arrays.stream(jplagSubmission.tokenList.tokens).filter(Objects::nonNull).map(TextSubmissionElement::fromJPlagToken).collect(Collectors.toList()));
         submission.setSubmissionId(submissionId);
         submission.setSize(jplagSubmission.tokenList.tokens.length);
         submission.setScore(0); // TODO

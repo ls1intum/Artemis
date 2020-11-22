@@ -20,7 +20,9 @@ import org.springframework.util.FileSystemUtils;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.TextSubmissionExportService;
@@ -123,12 +125,16 @@ public class TextPlagiarismDetectionService {
         final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise);
 
         textSubmissions.forEach(submission -> {
-            submission.getParticipation().setExercise(null);
             submission.setResult(null);
-            submission.getParticipation().setSubmissions(null);
+
+            StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+            participation.setExercise(null);
+            participation.setSubmissions(null);
+
+            String studentLogin = participation.getStudent().map(User::getLogin).orElse("unknown");
 
             try {
-                textSubmissionExportService.saveSubmissionToFile(textExercise, submission, submissionsFolderName);
+                textSubmissionExportService.saveSubmissionToFile(submission, studentLogin, submissionsFolderName);
             }
             catch (IOException e) {
                 log.error(e.getMessage());
