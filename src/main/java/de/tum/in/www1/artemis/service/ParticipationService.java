@@ -452,18 +452,6 @@ public class ParticipationService {
         // get submission from HashMap
         QuizSubmission quizSubmission = quizScheduleService.getQuizSubmission(quizExercise.getId(), username);
 
-        // TODO: SK I guess we can delete this code, because it is unreachable as we return above in case the quiz has ended
-        if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
-            if (quizSubmission.isSubmitted()) {
-                quizSubmission.setType(SubmissionType.MANUAL);
-            }
-            else {
-                quizSubmission.setSubmitted(true);
-                quizSubmission.setType(SubmissionType.TIMEOUT);
-                quizSubmission.setSubmissionDate(ZonedDateTime.now());
-            }
-        }
-
         // construct result
         Result result = new Result().submission(quizSubmission);
 
@@ -472,19 +460,6 @@ public class ParticipationService {
         participation.setInitializationState(INITIALIZED);
         participation.setExercise(quizExercise);
         participation.addResult(result);
-
-        // TODO: SK I guess we can delete this code, because it is unreachable as we return above in case the quiz has ended
-        if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
-            // update result and participation state
-            result.setRated(true);
-            result.setAssessmentType(AssessmentType.AUTOMATIC);
-            result.setCompletionDate(ZonedDateTime.now());
-            participation.setInitializationState(InitializationState.FINISHED);
-
-            // calculate scores and update result and submission accordingly
-            quizSubmission.calculateAndUpdateScores(quizExercise);
-            result.evaluateSubmission();
-        }
 
         return participation;
     }
