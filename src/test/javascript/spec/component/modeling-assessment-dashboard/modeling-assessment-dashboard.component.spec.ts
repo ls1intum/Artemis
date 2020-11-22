@@ -148,7 +148,6 @@ describe('ModelingAssessmentDashboardComponent', () => {
             // setup
             const applyFilter = spyOn(component, 'applyFilter');
             const getOptimalSubmissionsSpy = spyOn(modelingAssessmentService, 'getOptimalSubmissions').and.returnValue(of([1]));
-            // component.ngOnInit();
             component.modelingExercise = modelingExercise;
             component.nextOptimalSubmissionIds = [];
 
@@ -165,7 +164,6 @@ describe('ModelingAssessmentDashboardComponent', () => {
             // setup
             const applyFilter = spyOn(component, 'applyFilter');
             const getOptimalSubmissionsSpy = spyOn(modelingAssessmentService, 'getOptimalSubmissions').and.returnValue(of([1]));
-            // component.ngOnInit();
 
             component.modelingExercise = modelingExercise;
             component.modelingExercise.assessmentType = AssessmentType.AUTOMATIC;
