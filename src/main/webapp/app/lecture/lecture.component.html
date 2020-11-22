@@ -26,7 +26,9 @@
                     <td>
                         <a [routerLink]="[lecture.id]">{{ lecture.id }}</a>
                     </td>
-                    <td>{{ lecture.title }}</td>
+                    <td>
+                        <a [routerLink]="[lecture.id]">{{ lecture.title }}</a>
+                    </td>
                     <td [innerHTML]="lecture.description | htmlForMarkdown"></td>
                     <td>{{ lecture.startDate | artemisDate }}</td>
                     <td>{{ lecture.endDate | artemisDate }}</td>
@@ -37,21 +39,14 @@
                     </td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
-                            <div class="btn-group-vertical mr-1 mb-1 mt-1">
-                                <button type="submit" *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary mb-1 btn-sm">
-                                    <fa-icon [icon]="'puzzle-piece'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.units">Units</span>
-                                </button>
-                            </div>
-
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button type="submit" *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'attachments']" class="btn btn-primary mb-1 btn-sm">
                                     <fa-icon [icon]="'file'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.attachments">Attachment</span>
                                 </button>
-                                <button type="submit" *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id]" class="btn btn-info btn-sm">
-                                    <fa-icon [icon]="'eye'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                                <button type="submit" *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm">
+                                    <fa-icon [icon]="'puzzle-piece'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.units">Units</span>
                                 </button>
                             </div>
 
