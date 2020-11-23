@@ -22,7 +22,6 @@ describe('Lecture Service', () => {
     let service: LectureService;
     const resourceUrl = SERVER_API_URL + 'api/lectures';
     let expectedResult: any;
-    // const httpExpectedResult: any;
     let elemDefault: Lecture;
 
     beforeEach(() => {
@@ -131,7 +130,6 @@ describe('Lecture Service', () => {
 
         it('should delete a lecture in the database', async () => {
             const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService };
             const lectureId = elemDefault.id!;
             service
                 .delete(lectureId)
@@ -143,6 +141,11 @@ describe('Lecture Service', () => {
             });
             req.flush(returnedFromService);
             expect(req.request.method).to.equal('DELETE');
+        });
+
+        it('should convert Dates from server', async () => {
+            const results = service.convertDatesForLecturesFromServer([elemDefault, elemDefault]);
+            expect(results).to.deep.equal([elemDefault, elemDefault]);
         });
     });
 });
