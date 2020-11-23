@@ -1,3 +1,5 @@
+// ARTEMIS: JenkinsPipeline
+
 pipeline {
         agent {
             docker {

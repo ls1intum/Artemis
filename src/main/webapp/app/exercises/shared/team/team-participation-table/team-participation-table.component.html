@@ -165,7 +165,7 @@
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="row">
                     <div class="d-flex justify-content-start align-items-center">
-                        <ng-container *ngIf="value.type !== ExerciseType.PROGRAMMING; else programmingAssessment">
+                        <ng-container>
                             <button
                                 [disabled]="assessmentButtonDisabled(value, value.submission)"
                                 (click)="openAssessmentEditor(value, value.submission)"
@@ -175,15 +175,6 @@
                                 <span [jhiTranslate]="'artemisApp.exerciseAssessmentDashboard.' + assessmentAction(value.submission) + 'Assessment'"></span>
                             </button>
                         </ng-container>
-                        <ng-template #programmingAssessment>
-                            <jhi-programming-assessment-manual-result
-                                *ngIf="value.participation"
-                                [participationId]="value.participation?.id"
-                                [latestResult]="value.submission?.result"
-                                [exercise]="value"
-                                (onResultModified)="loadAll()"
-                            ></jhi-programming-assessment-manual-result>
-                        </ng-template>
                         <fa-icon
                             class="mx-3"
                             *ngIf="value.submission?.result?.hasComplaint"

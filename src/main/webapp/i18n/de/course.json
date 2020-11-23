@@ -47,6 +47,14 @@
                 "title": "Beschwerden von Studierenden aktivieren",
                 "description": "Wenn du diese Option aktivierst, können sich Studierende über Ergebnisse beschweren."
             },
+            "requestMoreFeedbackEnabled": {
+                "title": "Feedback Anfragen von Studierenden aktivieren",
+                "description": "Diese Option ermöglicht den Studierenden, erneut Feedback anzufragen, ohne dabei eine Beschwerde zu nutzen. Weiteres Feedback anzufragen wird nicht auf die Anzahl der Beschwerden angerechnet, erlaubt dafür jedoch keine Veränderung der Bewertung. Standardmäßig ist diese Option aktiviert, sie kann jedoch deaktiviert werden, wenn eine Korrektur der Bewertung immer möglich sein muss."
+            },
+            "maxRequestMoreFeedbackTimeDays": {
+                "title": "Frist für Feedback Anfragen von Studierenden in Tagen nach dem Ergebnis",
+                "description": "Diese Zahl bezieht sich auf die Tage, nachdem das Ergebnis verfügbar ist (Einreichungsfrist der Bewertung oder Ergebnisdatum, je nachdem, welches später liegt). Studierende können nach Ablauf dieser Frist nicht mehr Feedback anfragen."
+            },
             "customizeGroupNames": {
                 "title": "Passe Gruppen Namen an",
                 "description": "Stelle sicher, dass die Gruppen in der externen Nutzerverwaltung existieren, wenn du diese Option aktivierst. Die Gruppen werden dann nicht automatisch erzeugt."
@@ -60,7 +68,8 @@
             "semester": "Semester",
             "testCourse": {
                 "title": "Testkurs",
-                "description": "Aktiviere diese Checkbox für Kurse die für Testzwecke sind."
+                "description": "Aktiviere diese Checkbox für Kurse die für Testzwecke sind.",
+                "plural": "Testkurse"
             },
             "accessGroups": "Zugriffsrechte",
             "onlineCourse": {

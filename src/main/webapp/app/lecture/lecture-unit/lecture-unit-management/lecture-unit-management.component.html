@@ -9,10 +9,11 @@
 <div *ngIf="!isLoading" class="container">
     <!-- Lecture Unit Rows-->
     <div class="row mb-4" *ngFor="let lectureUnit of lectureUnits; index as i; trackBy: identify">
-        <div class="col-10 col-md-6 offset-md-3" [ngSwitch]="lectureUnit.type">
+        <div class="col-10 col-md-8 offset-md-2" [ngSwitch]="lectureUnit.type">
             <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture?.course"></jhi-exercise-unit>
             <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
             <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit"></jhi-video-unit>
+            <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit"></jhi-text-unit>
         </div>
         <div class="col-1 my-auto">
             <div class="container">
@@ -41,7 +42,7 @@
             >
                 <fa-icon [icon]="'times'"></fa-icon>
             </button>
-            <button *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary" (click)="editButtonClicked(lectureUnit)">
+            <button *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary edit" (click)="editButtonClicked(lectureUnit)">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                 <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
             </button>
@@ -55,6 +56,7 @@
                 (createExerciseUnit)="createExerciseUnit()"
                 (createAttachmentUnit)="createAttachmentUnit()"
                 (createVideoUnit)="createVideoUnit()"
+                (createTextUnit)="createTextUnit()"
             ></jhi-unit-creation-card>
         </div>
     </div>

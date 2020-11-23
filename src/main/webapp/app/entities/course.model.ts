@@ -33,6 +33,8 @@ export class Course implements BaseEntity {
     public complaintsEnabled?: boolean;
     public studentQuestionsEnabled?: boolean;
     public achievementsEnabled?: boolean;
+    public requestMoreFeedbackEnabled?: boolean;
+    public maxRequestMoreFeedbackTimeDays?: number;
 
     // the following values are only used in course administration
     public numberOfStudents?: number;
@@ -65,6 +67,8 @@ export class Course implements BaseEntity {
         this.complaintsEnabled = true; // default value
         this.studentQuestionsEnabled = true; // default value
         this.achievementsEnabled = false; // default value
+        this.requestMoreFeedbackEnabled = true; // default value
+        this.maxRequestMoreFeedbackTimeDays = 7; // default value
     }
 
     /**

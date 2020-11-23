@@ -172,7 +172,7 @@ Other run / debug configurations
 
 * **Artemis (Server & Client):** Will start the server and the client. The client will be available at `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
 * **Artemis (Server, Jenkins & Gitlab):** The server will be started separated from the client with the profiles ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
-* **Artemis (Server, Text Clustering):** The server will be started separated from the client with ``automaticText`` profile enabled (see `Text Assessment Clustering Service <setup.rst#text-assessment-clustering-service>`__).
+* **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled (see `Athene Service <setup.rst#athene-service>`__).
 
 
 Typical problems with Liquibase checksums

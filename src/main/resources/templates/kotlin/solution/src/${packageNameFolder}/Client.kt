@@ -19,16 +19,10 @@ object Client {
     fun simulateRuntimeConfigurationChange(sortPolicy: Policy) {
         if (Random.nextBoolean()) {
             println("Time is important!")
-            //TODO: configure policy
-            /*<remove>*/
             sortPolicy.configure(timeIsImportant = true, spaceIsImportant = false)
-            /*</remove>*/
         } else {
             println("Time and space are important!")
-            //TODO: configure policy
-            /*<remove>*/
             sortPolicy.configure(timeIsImportant = true, spaceIsImportant = true)
-            /*</remove>*/
         }
     }
 
