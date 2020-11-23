@@ -339,12 +339,11 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         result = resultRepository.save(result);
         // Create submission for result and save
         ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission = programmingSubmissionRepository.save(submission);
+        result.setSubmission(submission);
         submission.setResult(result);
         submission = programmingSubmissionRepository.save(submission);
 
-        // Set submission and save again
-        result.setSubmission(submission);
-        result = resultRepository.save(result);
         Long id = result.getId();
 
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,

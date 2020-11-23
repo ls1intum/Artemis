@@ -36,6 +36,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
      */
     @Transactional
     public Result saveManualAssessment(Result result) {
+        resultRepository.save(result);
         result.setHasFeedback(!result.getFeedbacks().isEmpty());
 
         User user = userService.getUserWithGroupsAndAuthorities();
