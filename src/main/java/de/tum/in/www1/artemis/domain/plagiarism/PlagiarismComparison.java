@@ -29,12 +29,12 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> {
     /**
      * Similarity of the compared submissions (between 0 and 1).
      */
-    private float similarity;
+    private double similarity;
 
     /**
      * Status of this submission comparison.
      */
-    private PlagiarismStatus status;
+    private PlagiarismStatus status = PlagiarismStatus.NONE;
 
     /**
      * Create a new PlagiarismComparison instance from an existing JPlagComparison object.
@@ -78,11 +78,11 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> {
         this.matches = matches;
     }
 
-    public float getSimilarity() {
+    public double getSimilarity() {
         return similarity;
     }
 
-    public void setSimilarity(float similarity) {
+    public void setSimilarity(double similarity) {
         this.similarity = similarity;
     }
 
