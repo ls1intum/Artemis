@@ -7,6 +7,7 @@ import 'brace/mode/haskell';
 import 'brace/mode/c_cpp';
 import 'brace/mode/python';
 import 'brace/mode/swift';
+import 'brace/mode/yaml';
 import 'brace/mode/makefile';
 import 'brace/mode/kotlin';
 import 'brace/mode/assembly_x86';
