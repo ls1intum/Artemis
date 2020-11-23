@@ -176,6 +176,7 @@ Best Practices
            feedback.setResult(result);
            savedFeedbacks.add(feedback);
        });
+       
 
         // set the association of the parent to its child objects which are now persisted in the database
         result.setFeedbacks(savedFeedbacks);
