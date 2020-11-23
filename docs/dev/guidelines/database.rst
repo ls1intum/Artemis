@@ -19,7 +19,7 @@ We **always** use ``FetchType.LAZY``, unless there is a very strong case to be m
 2. Relationships
 ================
 
-A relationship is a reference from one object to another. In a relational database relationships are defined through foreign keys. The source row contains the primary key of the target row to define the relationship (and sometimes the inverse). A query must be performed to read the target objects of the relationship using the foreign key and primary key information. In Java, if a relationship is to a collection of other objects, a ``Collection`` or ``array`` type is used in Java to hold the contents of the relationship. In a relational database, collection relations are either defined by the target objects having a foreign key back to the source object's primary key, or by having an intermediate join table to store the relationship (both objects' primary keys). |br|
+A relationship is a reference from one object to another. In a relational database relationships are defined through foreign keys. The source row contains the primary key of the target row to define the relationship (and sometimes the inverse). A query must be performed to read the target objects of the relationship using the foreign key and primary key information. In Java, if a relationship is to a collection of other objects, a ``Collection`` or ``array`` type is used to hold the contents of the relationship. In a relational database, collection relations are either defined by the target objects having a foreign key back to the source object's primary key, or by having an intermediate join table to store the relationship (both objects' primary keys). |br|
 
 In this section, we depict common entity relationships we use in Artemis and show some code snippets. 
 
@@ -45,7 +45,7 @@ In this section, we depict common entity relationships we use in Artemis and sho
     private List<Feedback> feedbacks = new ArrayList<>();
 
 
-* **ManyToOne** A reference from one object to another. It is the inverse of a **OneToMany** relationship. Example: one ``Feedback`` has a reference to one ``Result``. 
+* **ManyToOne** A reference from one object to another. It is the inverse of an **OneToMany** relationship. Example: one ``Feedback`` has a reference to one ``Result``. 
 
  .. code:: java
 
@@ -55,7 +55,7 @@ In this section, we depict common entity relationships we use in Artemis and sho
     private Result result;
 
 
-* **ManyToMany** ``A Collection`` or ``Map`` of objects. It is the inverse of a itself. Example: one ``Exercise`` has a list of ``LearningGoal`` elements, one ``LearningGoal`` has list of ``Exercise`` elements. In other words: many exercises are connected to many learning goals and vice-versa.
+* **ManyToMany** ``A Collection`` or ``Map`` of objects. It is the inverse of itself. Example: one ``Exercise`` has a list of ``LearningGoal`` elements, one ``LearningGoal`` has list of ``Exercise`` elements. In other words: many exercises are connected to many learning goals and vice-versa.
 
  .. code:: java
 
