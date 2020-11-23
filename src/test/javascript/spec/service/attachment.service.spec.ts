@@ -9,20 +9,20 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { SERVER_API_URL } from 'app/app.constants';
-import { LectureService } from 'app/lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
-import { Course } from 'app/entities/course.model';
 import * as moment from 'moment';
+import { AttachmentService } from 'app/lecture/attachment.service';
+import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 
 const expect = chai.expect;
 
-describe('Lecture Service', () => {
+describe('Attachment Service', () => {
     let injector: TestBed;
     let httpMock: HttpTestingController;
-    let service: LectureService;
-    const resourceUrl = SERVER_API_URL + 'api/lectures';
+    let service: AttachmentService;
+    const resourceUrl = SERVER_API_URL + 'api/attachments';
     let expectedResult: any;
-    let elemDefault: Lecture;
+    let elemDefault: Attachment;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -34,15 +34,17 @@ describe('Lecture Service', () => {
             ],
         });
         injector = getTestBed();
-        service = injector.get(LectureService);
+        service = injector.get(AttachmentService);
         httpMock = injector.get(HttpTestingController);
 
-        expectedResult = {} as HttpResponse<Lecture>;
-        elemDefault = new Lecture();
-        elemDefault.startDate = moment();
-        elemDefault.course = new Course();
-        elemDefault.description = 'new service test Lecture';
-        elemDefault.endDate = moment();
+        expectedResult = {} as HttpResponse<Attachment>;
+        elemDefault = new Attachment();
+        elemDefault.releaseDate = moment();
+        elemDefault.link = '/api/files/attachments/lecture/4/Mein_Test_PDF4.pdf';
+        elemDefault.name = 'testss';
+        elemDefault.lecture = new Lecture();
+        elemDefault.attachmentType = AttachmentType.FILE;
+        elemDefault.uploadDate = moment();
         elemDefault.id = 1;
     });
 
@@ -51,7 +53,7 @@ describe('Lecture Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should create a lecture in the database', async () => {
+        it('should create an attachment in the database', async () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
             service
@@ -66,7 +68,7 @@ describe('Lecture Service', () => {
             expect(expectedResult.body).to.deep.equal(expected);
         });
 
-        it('should update a lecture in the database', async () => {
+        it('should update an attachment in the database', async () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
             service
@@ -81,9 +83,9 @@ describe('Lecture Service', () => {
             expect(expectedResult.body).to.deep.equal(expected);
         });
 
-        it('should find a lecture in the database', async () => {
+        it('should find an attachment in the database', async () => {
             const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService, studentQuestions: [] };
+            const expected = { ...returnedFromService };
             const id = elemDefault.id!;
             service
                 .find(id)
@@ -112,40 +114,35 @@ describe('Lecture Service', () => {
             expect(expectedResult.body).to.deep.equal(expected);
         });
 
-        it('should get all lectures by courseId', async () => {
+        it('should get all attachments by lectureId', async () => {
             const returnedFromService = [elemDefault];
             const expected = returnedFromService;
-            const courseId = 1;
+            const lectureId = 1;
             service
-                .findAllByCourseId(courseId)
+                .findAllByLectureId(lectureId)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/lectures`,
+                url: `api/lectures/${lectureId}/attachments`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
             expect(expectedResult.body).to.deep.equal(expected);
         });
 
-        it('should delete a lecture in the database', async () => {
+        it('should delete an attachment in the database', async () => {
             const returnedFromService = { ...elemDefault };
-            const lectureId = elemDefault.id!;
+            const attachmentId = elemDefault.id!;
             service
-                .delete(lectureId)
+                .delete(attachmentId)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `${resourceUrl}/${lectureId}`,
+                url: `${resourceUrl}/${attachmentId}`,
                 method: 'DELETE',
             });
             req.flush(returnedFromService);
             expect(req.request.method).to.equal('DELETE');
-        });
-
-        it('should convert Dates from server', async () => {
-            const results = service.convertDatesForLecturesFromServer([elemDefault, elemDefault]);
-            expect(results).to.deep.equal([elemDefault, elemDefault]);
         });
     });
 });
