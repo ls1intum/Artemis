@@ -379,6 +379,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getProgrammingSubmissionWithoutAssessment_alreadyAssessed_noFound() throws Exception {
+        exercise.setDueDate(ZonedDateTime.now().minusDays(2));
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
         var submission = ModelFactory.generateProgrammingSubmission(true);
