@@ -59,7 +59,7 @@ const expect = chai.expect;
 
 describe('CodeEditorInstructorIntegration', () => {
     // needed to make sure ace is defined
-    ace.acequire('ace/ext/modelist');
+    // ace.acequire('ace/ext/modelist');
     let container: CodeEditorInstructorContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorInstructorContainerComponent>;
     let containerDebugElement: DebugElement;
