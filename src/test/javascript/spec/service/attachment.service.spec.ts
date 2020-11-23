@@ -144,5 +144,10 @@ describe('Attachment Service', () => {
             req.flush(returnedFromService);
             expect(req.request.method).to.equal('DELETE');
         });
+
+        it('should convert attachment date from server', async () => {
+            const results = service.convertAttachmentDateFromServer(elemDefault);
+            expect(results).to.deep.equal(elemDefault);
+        });
     });
 });
