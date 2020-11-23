@@ -5,8 +5,9 @@ import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
 import java.io.IOException;
 import java.util.*;
 
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.lang3.EnumUtils;
-import org.jetbrains.annotations.NotNull;
 
 import com.google.common.base.CaseFormat;
 import com.google.gson.JsonArray;

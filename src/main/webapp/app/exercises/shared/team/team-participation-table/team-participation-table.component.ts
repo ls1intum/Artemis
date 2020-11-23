@@ -9,8 +9,9 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { get } from 'lodash';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Submission } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 
@@ -104,7 +105,18 @@ export class TeamParticipationTableComponent implements OnInit {
      */
     async openAssessmentEditor(exercise: Exercise, submission: Submission | 'new'): Promise<void> {
         const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
-        const route = `/course-management/${this.course.id}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionUrlParameter}/assessment`;
+        let route;
+        if (exercise.type === ExerciseType.PROGRAMMING) {
+            // Ensure that submission has the value 'new' for the first assessment
+            const isFirstAssessment = this.assessmentAction(submission === 'new' ? undefined : submission) === AssessmentAction.START;
+            if (isFirstAssessment) {
+                submission = 'new';
+            }
+            const participationURLParameter: number | 'new' = submission === 'new' ? 'new' : submission.result?.participation?.id!;
+            route = `/course-management/${this.course.id}/${exercise.type}-exercises/${exercise.id}/code-editor/${participationURLParameter}/assessment`;
+        } else {
+            route = `/course-management/${this.course.id}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionUrlParameter}/assessment`;
+        }
         await this.router.navigate([route]);
     }
 
@@ -113,7 +125,11 @@ export class TeamParticipationTableComponent implements OnInit {
      * @param submission Submission which to check
      */
     assessmentAction(submission?: Submission): AssessmentAction {
-        if (!submission || !submission.result) {
+        if (
+            !submission ||
+            !submission.result ||
+            (submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && submission.result.assessmentType === AssessmentType.AUTOMATIC)
+        ) {
             return AssessmentAction.START;
         } else if (!submission.result.completionDate) {
             return AssessmentAction.CONTINUE;

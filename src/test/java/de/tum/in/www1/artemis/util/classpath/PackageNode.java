@@ -18,9 +18,9 @@ public class PackageNode extends ClassPathNode {
     /**
      * Using a map here to find sub-packages by their segment name quickly.
      */
-    private final SortedMap<String, PackageNode> subPackages = new TreeMap<>();
+    private final Map<String, PackageNode> subPackages = new HashMap<>();
 
-    private final SortedSet<ClassNode> ownClasses = new TreeSet<>();
+    private final Set<ClassNode> ownClasses = new HashSet<>();
 
     /**
      * Creates a new package node with <code>null</code> parent, only for {@link RootNode}.

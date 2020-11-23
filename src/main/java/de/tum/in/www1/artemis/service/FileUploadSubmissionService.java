@@ -250,8 +250,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a locked file upload submission that needs an assessment
      */
-    @Transactional
-    public FileUploadSubmission getLockedFileUploadSubmissionWithoutResult(FileUploadExercise fileUploadExercise, boolean removeTestRunParticipations) {
+    public FileUploadSubmission lockAndGetFileUploadSubmissionWithoutResult(FileUploadExercise fileUploadExercise, boolean removeTestRunParticipations) {
         FileUploadSubmission fileUploadSubmission = getRandomFileUploadSubmissionEligibleForNewAssessment(fileUploadExercise, removeTestRunParticipations)
                 .orElseThrow(() -> new EntityNotFoundException("File upload submission for exercise " + fileUploadExercise.getId() + " could not be found"));
         lockSubmission(fileUploadSubmission);

@@ -351,11 +351,13 @@ public class ProgrammingSubmissionResource {
      * GET /programming-submission-without-assessment : get one Programming Submission without assessment.
      *
      * @param exerciseId the id of the exercise
+     * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/programming-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+    public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a programming submission without assessment");
         final ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
@@ -369,14 +371,22 @@ public class ProgrammingSubmissionResource {
             return forbidden();
         }
 
-        // TODO: Handle lock limit.
+        // Check if the limit of simultaneously locked submissions has been reached
+        programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
-        Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionService.getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise,
-                programmingExercise.hasExerciseGroup());
-        if (optionalProgrammingSubmission.isEmpty()) {
-            return notFound();
+        final ProgrammingSubmission programmingSubmission;
+        if (lockSubmission) {
+            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmissionWithoutResult(programmingExercise);
         }
-        final ProgrammingSubmission programmingSubmission = optionalProgrammingSubmission.get();
+        else {
+            Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionService.getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise,
+                    programmingExercise.hasExerciseGroup());
+            if (optionalProgrammingSubmission.isEmpty()) {
+                return notFound();
+            }
+            programmingSubmission = optionalProgrammingSubmission.get();
+
+        }
 
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) programmingSubmission.getParticipation();

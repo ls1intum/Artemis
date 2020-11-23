@@ -80,6 +80,7 @@
             },
             "admin": {
                 "main": "Server Administration",
+                "upcomingExamsAndExercises": "Upcoming exams & exercises",
                 "userManagement": "User management",
                 "systemNotifications": "System notifications",
                 "featureToggles": "Feature Toggles",

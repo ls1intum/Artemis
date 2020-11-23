@@ -1,12 +1,11 @@
 package ${packageName}
 
-//TODO: add the missing inheritance
-class QuickSort /*<remove>*/ : SortStrategy /*</remove>*/{
+class QuickSort : SortStrategy {
 
     private lateinit var a: Array<Int>
     private var n: Int = 0
 
-    /*<remove>*/override /*</remove>*/fun performSort(a: Array<Int>) {
+    override fun performSort(a: Array<Int>) {
         this.a = a
         n = a.size
         if (n != 0) quicksort(0, n - 1)
