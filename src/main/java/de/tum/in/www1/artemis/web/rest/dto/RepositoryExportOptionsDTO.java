@@ -19,6 +19,8 @@ public class RepositoryExportOptionsDTO {
 
     private boolean normalizeCodeStyle;
 
+    private boolean hideStudentNameInZippedFolder;
+
     public boolean isExportAllParticipants() {
         return exportAllParticipants;
     }
@@ -65,5 +67,13 @@ public class RepositoryExportOptionsDTO {
 
     public void setNormalizeCodeStyle(boolean normalizeCodeStyle) {
         this.normalizeCodeStyle = normalizeCodeStyle;
+    }
+
+    public boolean isHideStudentNameInZippedFolder() {
+        return this.hideStudentNameInZippedFolder;
+    }
+
+    public void setHideStudentNameInZippedFolder(boolean hideStudentNameInZippedFolder) {
+        this.hideStudentNameInZippedFolder = hideStudentNameInZippedFolder;
     }
 }

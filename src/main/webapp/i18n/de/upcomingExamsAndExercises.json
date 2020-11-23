@@ -1,0 +1,16 @@
+{
+    "artemisApp": {
+        "upcomingExamsAndExercises": {
+            "upcomingExamsAndExercises": "Kommende Prüfungen & Übungen",
+            "upcomingExercises": "Bevorstehende Übungen",
+            "exercise": "Übung",
+            "course": "Kurs",
+            "dueDate": "Einreichungsfrist",
+            "upcomingExams": "Bevorstehende Prüfungen",
+            "exam": "Prüfung",
+            "startDate": "Beginn",
+            "endDate": "Ende",
+            "releaseDate": "Veröffentlichungsdatum"
+        }
+    }
+}

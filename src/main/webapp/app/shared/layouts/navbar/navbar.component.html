@@ -20,12 +20,6 @@
         </a>
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed" [ngSwitch]="isAuthenticated()">
-        <ol class="breadcrumb" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']">
-            <li *ngFor="let breadcrumb of breadcrumbs" class="breadcrumb-item">
-                <a [routerLink]="breadcrumb.uri" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ breadcrumb.label }}</a>
-            </li>
-        </ol>
-
         <ul class="navbar-nav ml-auto">
             <li *ngIf="currAccount && !examModeActive()" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                 <a class="guided-tour-overview nav-link" routerLink="courses" (click)="collapseNavbar()" id="overview-menu">
@@ -66,6 +60,12 @@
                     </span>
                 </a>
                 <ul class="dropdown-menu" ngbDropdownMenu>
+                    <li>
+                        <a class="dropdown-item" routerLink="admin/upcoming-exams-and-exercises" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="'book-open'" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.upcomingExamsAndExercises">Upcoming Exams & Exercises</span>
+                        </a>
+                    </li>
                     <li>
                         <a class="dropdown-item" routerLink="admin/user-management" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="'user'" [fixedWidth]="true"></fa-icon>
@@ -204,4 +204,11 @@
         </ul>
     </div>
 </nav>
+<div class="breadcrumb-container">
+    <ol class="breadcrumb" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']">
+        <li *ngFor="let breadcrumb of breadcrumbs" class="breadcrumb-item">
+            <a class="breadcrumb-link" [routerLink]="breadcrumb.uri" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ breadcrumb.label }}</a>
+        </li>
+    </ol>
+</div>
 <jhi-guided-tour></jhi-guided-tour>

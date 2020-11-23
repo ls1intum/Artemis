@@ -27,7 +27,7 @@ public class VideoUnitResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseUnitResource.class);
+    private final Logger log = LoggerFactory.getLogger(VideoUnitResource.class);
 
     private static final String ENTITY_NAME = "videoUnit";
 

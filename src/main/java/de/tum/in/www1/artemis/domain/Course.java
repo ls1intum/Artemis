@@ -108,6 +108,10 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private boolean studentQuestionsEnabled;
 
+    @Column(name = "max_request_more_feedback_time_days")
+    @JsonView(QuizView.Before.class)
+    private int maxRequestMoreFeedbackTimeDays;
+
     @Column(name = "color")
     private String color;
 
@@ -291,16 +295,19 @@ public class Course extends DomainObject {
         this.maxTeamComplaints = maxTeamComplaints;
     }
 
-    public Integer getMaxComplaintTimeDays() {
+    public int getMaxComplaintTimeDays() {
         return maxComplaintTimeDays;
     }
 
-    public void setMaxComplaintTimeDays(Integer maxComplaintTimeDays) {
+    public void setMaxComplaintTimeDays(int maxComplaintTimeDays) {
         this.maxComplaintTimeDays = maxComplaintTimeDays;
     }
 
     public boolean getComplaintsEnabled() {
-        return this.maxComplaints > 0 && this.maxComplaintTimeDays > 0;
+        // maxComplaintTimeDays must be larger than zero,
+        // and then either maxComplaints, maxTeamComplaints is larger than zero
+        // See CourseResource for more details on the validation
+        return this.maxComplaintTimeDays > 0;
     }
 
     public boolean getStudentQuestionsEnabled() {
@@ -309,6 +316,18 @@ public class Course extends DomainObject {
 
     public void setStudentQuestionsEnabled(boolean studentQuestionsEnabled) {
         this.studentQuestionsEnabled = studentQuestionsEnabled;
+    }
+
+    public boolean getRequestMoreFeedbackEnabled() {
+        return maxRequestMoreFeedbackTimeDays > 0;
+    }
+
+    public int getMaxRequestMoreFeedbackTimeDays() {
+        return maxRequestMoreFeedbackTimeDays;
+    }
+
+    public void setMaxRequestMoreFeedbackTimeDays(int maxRequestMoreFeedbackTimeDays) {
+        this.maxRequestMoreFeedbackTimeDays = maxRequestMoreFeedbackTimeDays;
     }
 
     public String getColor() {
