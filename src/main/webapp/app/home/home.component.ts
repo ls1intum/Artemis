@@ -150,6 +150,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     currentUserCallback(account: User) {
         this.account = account;
         if (account) {
+            // TODO: Remove redirect after summer 2021 term. New deep links should no longer ues /#.
             const url = this.router.url.startsWith('/#') ? this.router.url.substr(2) : 'courses';
             this.router.navigate([url]);
         }
