@@ -26,13 +26,16 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.listeners.ResultListener;
 
 /**
  * A Result.
  */
 @Entity
 @Table(name = "result")
+@EntityListeners(ResultListener.class)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result extends DomainObject {
@@ -107,6 +110,12 @@ public class Result extends DomainObject {
 
     @Column(name = "example_result")
     private Boolean exampleResult;
+
+    @OneToOne(mappedBy = "result", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties(value = "result", allowSetters = true)
+    @Nullable
+    private StudentScore studentScore = null;
 
     public String getResultString() {
         return resultString;
@@ -446,6 +455,14 @@ public class Result extends DomainObject {
 
     public void setExampleResult(Boolean exampleResult) {
         this.exampleResult = exampleResult;
+    }
+
+    public void setStudentScore(StudentScore studentScore) {
+        this.studentScore = studentScore;
+    }
+
+    public StudentScore getStudentScore() {
+        return this.studentScore;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
