@@ -239,7 +239,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getLateSubmissionWithoutAssessmentLock() throws Exception {
+    public void testGetLateSubmissionWithoutAssessmentLock() throws Exception {
 
         database.saveFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, submittedFileUploadSubmission, "student1", "tutor1");
         FileUploadSubmission lateSubmission = database.addFileUploadSubmission(releasedFileUploadExercise, lateFileUploadSubmission, "student1");

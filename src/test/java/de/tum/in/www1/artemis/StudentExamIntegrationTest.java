@@ -353,7 +353,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllTestRunSubmissionsForExercise_notExamExercise() throws Exception {
-        var instructor = database.getUserByLogin("instructor1");
         course2 = database.addEmptyCourse();
         var exercise = database.addProgrammingExerciseToCourse(course2, false);
         request.getList("/api/exercises/" + exercise.getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
