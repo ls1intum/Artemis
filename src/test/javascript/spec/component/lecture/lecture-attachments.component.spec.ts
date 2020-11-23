@@ -15,8 +15,6 @@ import { Lecture } from 'app/entities/lecture.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { AttachmentService } from 'app/lecture/attachment.service';
-import * as sinon from 'sinon';
-import { of } from 'rxjs';
 import { FileService } from 'app/shared/http/file.service';
 
 chai.use(sinonChai);
@@ -278,10 +276,25 @@ describe('LectureAttachmentsComponent', () => {
 
     it('should download attachment', fakeAsync(() => {
         fixture.detectChanges();
-
         comp.isDownloadingAttachmentLink = undefined;
         expect(comp.isDownloadingAttachmentLink).to.equal(undefined);
-        const returnValue = comp.downloadAttachment('https://my/own/download/url');
+        comp.downloadAttachment('https://my/own/download/url');
         expect(comp.isDownloadingAttachmentLink).to.equal(undefined);
+    }));
+
+    it('should set lecture attachment', fakeAsync(() => {
+        fixture.detectChanges();
+        const myBlob1 = { size: 1024, name: '/api/files/attachments/lecture/4/NewTest34.pdf' };
+        const myBlob2 = { size: 1024, name: '/api/files/attachments/lecture/4/NewTest100.pdf' };
+        const object = {
+            target: {
+                files: [myBlob1, myBlob2],
+            },
+        };
+        comp.attachmentToBeCreated = newAttachment;
+        comp.setLectureAttachment(object);
+
+        expect(comp.attachmentFile).to.deep.equal(myBlob1);
+        expect(comp.attachmentToBeCreated.link).to.equal(myBlob1.name);
     }));
 });
