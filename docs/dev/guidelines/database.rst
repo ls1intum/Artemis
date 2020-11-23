@@ -9,7 +9,7 @@ WORK IN PROGRESS
 
 The cost of retrieving and building an object's relationships far exceeds the cost of selecting the object. This is especially true for relationships where it would trigger the loading of every child through the relationship hierarchy. The solution to this issue is **lazy fetching** (lazy loading). Lazy fetching allows the fetching of a relationship to be deferred until it is accessed. This is important not only to avoid the database access, but also to avoid the cost of building the objects if they are not needed. |br|
 
-In JPA lazy fetching can be set on any relationship using the fetch attribute. The fetch can be set to either ``LAZY`` or ``EAGER`` as defined in the ``FetchType`` enum. The default fetch type is ``LAZY`` for all relationships except for **OneToOne** and **ManyToOne**, but in general it is a good idea to make every relationship ``LAZY``. The ``EAGER`` default for **OneToOne** and **ManyToOne** is for implementation reasons (more difficult to implement), not because it is a good idea. |br|
+In JPA lazy fetching can be set on any relationship using the fetch attribute. The fetch can be set to either ``LAZY`` or ``EAGER`` as defined in the ``FetchType`` enum. The default fetch type is ``LAZY`` for all relationships except for **OneToOne** and **ManyToOne**, but in general it is a good idea to make every relationship ``LAZY``. The ``EAGER`` default for **OneToOne** and **ManyToOne** is for implementation reasons (more easier to implement), not because it is a good idea. |br|
 
 We **always** use ``FetchType.LAZY``, unless there is a very strong case to be made for ``FetchType.EAGER``.
 
@@ -71,11 +71,11 @@ In this section, we depict common entity relationships we use in Artemis and sho
 
 
  .. warning::
-        For **OneToMany**, **ManyToOne**, and **ManyToMany** relationships you must not forget to mark the associated elements with ``@JsonIgnoreProperties()``. Without this, the object serialization process with be stuck in an endless loop and throw an error. For more information check out the examples listed above and see: `Jackson and JsonIgnoreType <https://www.concretepage.com/jackson-api/jackson-jsonignore-jsonignoreproperties-and-jsonignoretype>`_. 
+        For **OneToMany**, **ManyToOne**, and **ManyToMany** relationships you must not forget to mark the associated elements with ``@JsonIgnoreProperties()``. Without this, the object serialization process will be stuck in an endless loop and throw an error. For more information check out the examples listed above and see: `Jackson and JsonIgnoreType <https://www.concretepage.com/jackson-api/jackson-jsonignore-jsonignoreproperties-and-jsonignoretype>`_. 
 
 
 2. Cascade Types
-=================
+================
 Entity relationships often depend on the existence of another entity — for example, the Result-Feedback relationship. Without the Result, the Feedback entity doesn't have any meaning of its own. When we delete the Result entity, our Feedback entity should also get deleted. For more information see: `jpa cascade types <https://www.baeldung.com/jpa-cascade-types>`_.
 
 * ``CascadeType.ALL`` Propagates all operations mentioned below from the parent object to the to child object. 
@@ -101,7 +101,7 @@ Entity relationships often depend on the existence of another entity — for exa
     private AnswerOption answer;
 
 
-* ``CascadeType.MERGE`` If you merge the source entity (saved/updated/synchronized)  to the database, the merge is cascaded to the target of the association. This rule applies to existing objects only. Use this type to always merge/synchronize the existing data in the table with the data in the object. Example below: whenever we merge a ``Result`` to the database, i.e. save the changes on the object, the ``Assessor`` object is also merged/saved. 
+* ``CascadeType.MERGE`` If you merge the source entity (saved/updated/synchronized) to the database, the merge is cascaded to the target of the association. This rule applies to existing objects only. Use this type to always merge/synchronize the existing data in the table with the data in the object. Example below: whenever we merge a ``Result`` to the database, i.e. save the changes on the object, the ``Assessor`` object is also merged/saved. 
 
  .. code-block:: java
 
@@ -124,11 +124,11 @@ Entity relationships often depend on the existence of another entity — for exa
 
 * ``CascadeType.REFRESH`` If the source entity is refreshed, it cascades the refresh to the target of the association. This is used to refresh the data in the object and its associations. This is useful for cases where there is a change which needs to be synchronized FROM the database.
 
-Not used in Artemis yet
+Not used in Artemis yet.
 
 
 Best Practices
-===============
+==============
 * If you want to create a ``@OneToMany`` relationship or ``@ManyToMany`` relationship, first think about if it is important for the association to be ordered. If you do not need the association to be ordered, then always go for a ``Set`` instead of ``List``. If you are unsure, start with a ``Set``. 
 
   * **Unordered Collection**: A ``Set`` comes with certain advantages such as ensuring that there are no duplicates and null values in your collection. There are also performance arguments to use a ``Set``, especially for ``@ManyToMany`` relationships. For more information see this `stackoverflow thread <https://stackoverflow.com/questions/4655392/which-java-type-do-you-use-for-jpa-collections-and-why>`_. E.g.:
@@ -168,14 +168,14 @@ Best Practices
         // ProgrammingAssessmentService
         List<Feedback> savedFeedbacks = new ArrayList<>();
         result.getFeedbacks().forEach(feedback -> {
-               // cut association to parent object
-               feedback.setResult(null);
-               // persist the child object without an association to the parent object. IMPORTANT: Use the object returned from the database!
-               feedback = feedbackRepository.save(feedback);
-               // restore the association to the parent object
-               feedback.setResult(result);
-               savedFeedbacks.add(feedback);
-               });
+           // cut association to parent object
+           feedback.setResult(null);
+           // persist the child object without an association to the parent object. IMPORTANT: Use the object returned from the database!
+           feedback = feedbackRepository.save(feedback);
+           // restore the association to the parent object
+           feedback.setResult(result);
+           savedFeedbacks.add(feedback);
+       });
 
         // set the association of the parent to its child objects which are now persisted in the database
         result.setFeedbacks(savedFeedbacks);
@@ -184,7 +184,7 @@ Best Practices
 
 
 Solutions for known issues
-==============================
+==========================
 
 * ``org.hibernate.LazyInitializationException : could not initialize proxy – no Session`` caused by ``fetchType.LAZY``. You must explicitly load the associated object from the database before trying to access those. Example of how to eagerly fetch the feedbacks with the result:
 
