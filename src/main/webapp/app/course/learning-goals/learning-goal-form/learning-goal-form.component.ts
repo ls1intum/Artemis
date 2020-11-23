@@ -1,5 +1,37 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { of } from 'rxjs';
+import { catchError, delay, map, switchMap } from 'rxjs/operators';
+
+/**
+ * Async Validator to make sure that a learning goal title is unique within a course
+ */
+export const titleUniqueValidator = (learningGoalService: LearningGoalService, courseId: number) => {
+    return (learningGoalTitleControl: FormControl) => {
+        return of(learningGoalTitleControl.value).pipe(
+            delay(250),
+            switchMap((title) => {
+                return learningGoalService.getAllForCourse(courseId).pipe(
+                    map((res) => {
+                        let learningGoalTitles: string[] = [];
+                        if (res.body) {
+                            learningGoalTitles = res.body.map((learningGoal) => learningGoal.title!);
+                        }
+                        if (learningGoalTitles.includes(title)) {
+                            return {
+                                titleUnique: { valid: false },
+                            };
+                        } else {
+                            return null;
+                        }
+                    }),
+                    catchError(() => of(null)),
+                );
+            }),
+        );
+    };
+};
 
 export interface LearningGoalFormData {
     title?: string;
@@ -20,17 +52,22 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
 
     @Input()
     isEditMode = false;
+    @Input()
+    courseId: number;
+
     @Output()
     formSubmitted: EventEmitter<LearningGoalFormData> = new EventEmitter<LearningGoalFormData>();
 
     form: FormGroup;
-    // not included in reactive form
-    description: string | undefined;
 
-    constructor(private fb: FormBuilder) {}
+    constructor(private fb: FormBuilder, private learningGoalService: LearningGoalService) {}
 
     get titleControl() {
         return this.form.get('title');
+    }
+
+    get descriptionControl() {
+        return this.form.get('description');
     }
 
     ngOnChanges(): void {
@@ -49,19 +86,17 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             return;
         }
         this.form = this.fb.group({
-            title: [undefined, [Validators.required, Validators.maxLength(255)]],
-            releaseDate: [undefined],
+            title: [undefined, [Validators.required, Validators.maxLength(255)], [titleUniqueValidator(this.learningGoalService, this.courseId)]],
+            description: [undefined, [Validators.maxLength(10000)]],
         });
     }
 
     private setFormValues(formData: LearningGoalFormData) {
         this.form.patchValue(formData);
-        this.description = formData.description;
     }
 
     submitForm() {
         const learningGoalFormData: LearningGoalFormData = { ...this.form.value };
-        learningGoalFormData.description = this.description;
         this.formSubmitted.emit(learningGoalFormData);
     }
 

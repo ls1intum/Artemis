@@ -6,9 +6,12 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ReactiveFormsModule } from '@angular/forms';
+import { EditLearningGoalComponent } from './edit-learning-goal/edit-learning-goal.component';
+import { LearningGoalManagementComponent } from './learning-goal-management/learning-goal-management.component';
+import { LearningGoalCardComponent } from './learning-goal-card/learning-goal-card.component';
 
 @NgModule({
     imports: [ArtemisMarkdownEditorModule, ArtemisSharedModule, ReactiveFormsModule, ArtemisSharedComponentModule, ArtemisLearningGoalsRoutingModule],
-    declarations: [LearningGoalFormComponent, CreateLearningGoalComponent],
+    declarations: [LearningGoalFormComponent, CreateLearningGoalComponent, EditLearningGoalComponent, LearningGoalManagementComponent, LearningGoalCardComponent],
 })
 export class ArtemisLearningGoalsModule {}

@@ -1,0 +1,12 @@
+<div class="card learning-goal-card">
+    <div class="card-header learning-goal-header bg-primary text-white text-center">
+        {{ learningGoal.title }}
+    </div>
+    <div class="card-body">
+        <p class="card-text">{{ descriptionShown }}</p>
+        <button class="btn btn-sm btn-primary" *ngIf="truncatedDescription" (click)="expandCollapseDescription()">
+            <span *ngIf="descriptionShown === truncatedDescription; else elseBlock">Expand</span>
+            <ng-template #elseBlock>Collapse</ng-template>
+        </button>
+    </div>
+</div>

@@ -17,22 +17,25 @@
                     <div *ngIf="titleControl?.errors?.maxlength">
                         {{ 'artemisApp.learningGoal.createLearningGoal.titleMaxLengthValidationError' | translate }}
                     </div>
+                    <div *ngIf="titleControl?.errors?.titleUnique">
+                        {{ 'artemisApp.learningGoal.createLearningGoal.titleUniqueValidationError' | translate }}
+                    </div>
                 </div>
             </div>
             <div class="form-group">
-                <label class="d-block" for="description">{{ 'artemisApp.learningGoal.description' | translate }}</label>
-                <small id="descriptionHelp" class="form-text mb-1 text-muted">
-                    {{ 'artemisApp.textUnit.markdownHelp' | translate }}
-                    <a href="https://guides.github.com/features/mastering-markdown/"> GitHub Markdown Guide</a>
-                </small>
-                <!-- not included in reactive form -->
-                <jhi-markdown-editor
-                    aria-describedby="descriptionHelp"
+                <label for="description">{{ 'artemisApp.learningGoal.description' | translate }}</label>
+                <textarea
+                    class="form-control"
                     id="description"
-                    class="markdown-editor"
-                    [(markdown)]="description"
-                    [enableResize]="true"
-                ></jhi-markdown-editor>
+                    rows="6"
+                    formControlName="description"
+                    [placeholder]="'artemisApp.learningGoal.createLearningGoal.descriptionPlaceholder' | translate"
+                ></textarea>
+                <div *ngIf="descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="descriptionControl?.errors?.maxlength">
+                        {{ 'artemisApp.learningGoal.createLearningGoal.descriptionMaxLengthValidationError' | translate }}
+                    </div>
+                </div>
             </div>
             <div class="row">
                 <div class="col-12">
