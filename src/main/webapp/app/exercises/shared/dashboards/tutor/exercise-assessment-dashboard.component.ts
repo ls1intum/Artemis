@@ -461,7 +461,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      * @param complaint that we want to show
      */
     viewComplaint(complaint: Complaint) {
-        this.openAssessmentEditor(complaint.result!.submission!);
+        const submission: Submission = complaint.result?.submission!;
+        // For programming exercises we need the participationId
+        submission.participation = complaint.result?.participation;
+        this.openAssessmentEditor(submission);
     }
 
     /**
