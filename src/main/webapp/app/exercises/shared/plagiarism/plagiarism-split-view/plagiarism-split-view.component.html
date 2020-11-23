@@ -4,8 +4,15 @@
             {{ comparison.submissionA.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}
         </div>
 
-        <!--        <jhi-modeling-editor *ngIf="submission1" [umlModel]="submission1?.model"-->
-        <!--                             [diagramType]="diagramType" [readOnly]="true"></jhi-modeling-editor>-->
+        <div class="plagiarism-split-pane-body">
+            <jhi-modeling-editor *ngIf="!loadingSubmissionA" [umlModel]="submissionA?.model" [diagramType]="'ClassDiagram'" [readOnly]="true"></jhi-modeling-editor>
+
+            <div class="plagiarism-split-pane-loader" *ngIf="loadingSubmissionA">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="plagiarism-split-pane" jhiPane>
@@ -13,7 +20,14 @@
             {{ comparison.submissionB.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}
         </div>
 
-        <!--        <jhi-modeling-editor *ngIf="submission2" [umlModel]="submission2?.model"-->
-        <!--                             [diagramType]="diagramType" [readOnly]="true"></jhi-modeling-editor>-->
+        <div class="plagiarism-split-pane-body">
+            <jhi-modeling-editor *ngIf="!loadingSubmissionB" [umlModel]="submissionB?.model" [diagramType]="'ClassDiagram'" [readOnly]="true"></jhi-modeling-editor>
+
+            <div class="plagiarism-split-pane-loader" *ngIf="loadingSubmissionB">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
