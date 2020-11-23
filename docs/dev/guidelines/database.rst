@@ -111,7 +111,7 @@ Entity relationships often depend on the existence of another entity — for exa
     private User assessor;
 
 
-* ``CascadeType.REMOVE`` If the source entity is removed, the target of the association is also removed. Example below: propagates **remove** operation from parent ``Submission`` to child ``Result``. When a ``Submission`` is deleted, also the ``Result`` is deleted.
+* ``CascadeType.REMOVE`` If the source entity is removed, the target of the association is also removed. Example below: propagates **remove** operation from parent ``Submission`` to child ``Result``. When a ``Submission`` is deleted, the corresponding ``Result`` is also deleted.
 
  .. code-block:: java
 
