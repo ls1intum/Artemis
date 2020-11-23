@@ -162,10 +162,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises;
     }
 
-    checkIfAllSelectedAtLeastInstructor() {
-        return this.selectedProgrammingExercises.filter((pe) => !pe.isAtLeastInstructor).length === 0;
-    }
-
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
 
     /**

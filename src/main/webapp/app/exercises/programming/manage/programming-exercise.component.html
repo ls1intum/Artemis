@@ -63,7 +63,9 @@
 
             <tbody>
                 <tr *ngFor="let programmingExercise of programmingExercises; trackBy: trackId">
-                    <td class="d-none d-md-table-cell"><input type="checkbox" (change)="toggleProgrammingExercise(programmingExercise)" /></td>
+                    <td *ngIf="programmingExercise.isAtLeastInstructor" class="d-none d-md-table-cell">
+                        <input type="checkbox" (change)="toggleProgrammingExercise(programmingExercise)" />
+                    </td>
                     <td class="d-none d-md-table-cell">
                         <a [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id]">{{ programmingExercise.id }}</a>
                     </td>
@@ -321,11 +323,11 @@
             </tbody>
         </table>
         <div *ngIf="selectedProgrammingExercises.length > 0">
-            <button type="submit" *ngIf="checkIfAllSelectedAtLeastInstructor()" (click)="openEditSelectedModal()" class="btn btn-primary btn-sm mr-1 mb-1">
+            <button type="submit" (click)="openEditSelectedModal()" class="btn btn-primary btn-sm mr-1 mb-1">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.editSelected">Edit selected</span>
             </button>
-            <button type="submit" *ngIf="checkIfAllSelectedAtLeastInstructor()" (click)="openRepoExportModal()" class="btn btn-primary btn-sm mr-1 mb-1">
+            <button type="submit" (click)="openRepoExportModal()" class="btn btn-primary btn-sm mr-1 mb-1">
                 <fa-icon [icon]="'download'"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.exportRepos">Download Repos</span>
             </button>
