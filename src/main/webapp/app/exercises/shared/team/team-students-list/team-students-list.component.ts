@@ -10,4 +10,6 @@ export class TeamStudentsListComponent {
     @Input() students: User[];
     @Input() errorStudentLogins: string[] = [];
     @Input() renderLinks = false;
+    @Input() withRegistrationNumber = false;
+    @Input() errorStudentRegistrationNumbers: string[] = [];
 }

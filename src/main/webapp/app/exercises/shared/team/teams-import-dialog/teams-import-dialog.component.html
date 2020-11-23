@@ -1,4 +1,4 @@
-<form id="teamsImportDialogForm" name="importForm" role="form" novalidate (ngSubmit)="importFile()" #editForm="ngForm">
+<form id="teamsImportDialogForm" name="importForm" role="form" novalidate (ngSubmit)="importTeams()" #editForm="ngForm">
     <div class="modal-header">
         <h4 class="modal-title">
             <span [jhiTranslate]="'artemisApp.team.importTeams.dialogTitle'"> Import teams into: </span>
@@ -9,10 +9,23 @@
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
         <jhi-alert></jhi-alert>
-        <div class="form-group">
-            <p class="intro-text" jhiTranslate="artemisApp.team.importTeams.introText">This dialog can be used to import teams from another exercise.</p>
+        <div class="w100 row justify-content-center card-header">
+            <div class="btn-group">
+                <div class="btn" [ngClass]="{ 'btn-primary': showImportFromExercise, 'btn-default': !showImportFromExercise }" (click)="setShowImportFromExercise(true)">
+                    <span jhiTranslate="artemisApp.quizExercise.fromACourse"></span>
+                </div>
+                <div class="btn" [ngClass]="{ 'btn-primary': !showImportFromExercise, 'btn-default': showImportFromExercise }" (click)="setShowImportFromExercise(false)">
+                    <span jhiTranslate="artemisApp.quizExercise.fromAFile"></span>
+                </div>
+            </div>
         </div>
         <div class="form-group">
+            <p *ngIf="showImportFromExercise" class="intro-text" jhiTranslate="artemisApp.team.importTeams.introText">
+                This dialog can be used to import teams from another exercise.
+            </p>
+            <p *ngIf="!showImportFromExercise" class="intro-text">This dialog can be used to import teams from a file into this exercise.</p>
+        </div>
+        <div *ngIf="!showImportFromExercise" class="form-group">
             <div class="d-flex align-items-end">
                 <jhi-teams-import-from-file-form
                     (teamsChanged)="onTeamsChanged($event)"
@@ -22,7 +35,7 @@
                 ></jhi-teams-import-from-file-form>
             </div>
         </div>
-        <div class="form-group">
+        <div *ngIf="showImportFromExercise" class="form-group">
             <div class="d-flex align-items-end">
                 <div>
                     <label class="label-narrow" jhiTranslate="artemisApp.team.sourceExercise.label">Source exercise</label>
@@ -51,7 +64,7 @@
             >
             </jhi-team-exercise-search>
         </div>
-        <div *ngIf="sourceExercise" class="form-group mt-2">
+        <div *ngIf="sourceExercise || sourceTeams" class="form-group mt-2">
             <div class="d-flex align-items-end">
                 <div>
                     <label class="label-narrow" jhiTranslate="artemisApp.team.sourceTeams.label">Source teams</label>
@@ -63,13 +76,80 @@
                 </span>
             </div>
             <div *ngIf="sourceTeams">
-                <jhi-teams-import-teams-list
-                    [sourceTeams]="sourceTeams"
-                    [teamShortNamesAlreadyExistingInExercise]="teamShortNamesAlreadyExistingInExercise"
-                    [isSourceTeamFreeOfAnyConflicts]="isSourceTeamFreeOfAnyConflicts"
-                    [studentLoginsAlreadyExistingInExercise]="studentLoginsAlreadyExistingInExercise"
-                >
-                </jhi-teams-import-teams-list>
+                <ul class="list-group list-group--teams mt-2">
+                    <li *ngFor="let team of sourceTeams; index as i" class="list-group-item-container d-flex align-items-center">
+                        <div class="list-group-item-index">
+                            {{ i + 1 }}
+                        </div>
+                        <div
+                            class="list-group-item list-group-item--teams"
+                            [class.has-error]="teamShortNamesAlreadyExistingInExercise.includes(team.shortName!)"
+                            [class.has-success]="isSourceTeamFreeOfAnyConflicts(team)"
+                        >
+                            <div class="team-name">{{ team.shortName }}</div>
+                            <jhi-team-students-list
+                                class="team-students"
+                                [students]="team.students"
+                                [errorStudentLogins]="studentLoginsAlreadyExistingInExercise"
+                                [withRegistrationNumber]="true"
+                                [errorStudentRegistrationNumbers]="studentRegistrationNumbersAlreadyExistingInOtherTeams"
+                            >
+                            </jhi-team-students-list>
+                        </div>
+                    </li>
+                    <li *ngIf="!sourceTeams || sourceTeams.length === 0" class="list-group-item-container d-flex align-items-center">
+                        <div class="list-group-item-index text-muted">1</div>
+                        <div class="list-group-item list-group-item--teams py-5" [class.has-warning]="sourceTeams?.length === 0">
+                            <span *ngIf="sourceTeams?.length === 0" jhiTranslate="artemisApp.team.noTeamsInSourceExercise"> The source exercise has no teams. </span>
+                        </div>
+                    </li>
+                </ul>
+                <div *ngIf="showLegend" class="source-teams-legend-container mt-4">
+                    <hr class="mt-3 mb-2" />
+                    <div>
+                        <label jhiTranslate="artemisApp.team.sourceTeams.legend.label">Legend</label>
+                        <jhi-help-icon placement="right" text="artemisApp.team.sourceTeams.legend.tooltip" class="mr-1"></jhi-help-icon>
+                    </div>
+                    <div class="source-teams-legend-box">
+                        <div class="source-teams-legend d-flex justify-content-between">
+                            <div>
+                                <div class="list-group-item--teams" [class.has-success]="true">
+                                    <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | translate }}1</div>
+                                    <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students"> </jhi-team-students-list>
+                                </div>
+                                <div class="label-with-tooltip">
+                                    <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.conflictFreeTeam.label">Conflict-free team</label>
+                                    <jhi-help-icon placement="right" text="artemisApp.team.sourceTeams.legend.items.conflictFreeTeam.tooltip" class="mr-1"></jhi-help-icon>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="list-group-item--teams" [class.has-error]="true">
+                                    <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | translate }}2</div>
+                                    <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students"> </jhi-team-students-list>
+                                </div>
+                                <div class="label-with-tooltip">
+                                    <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.teamShortNameConflict.label">Team short name conflict</label>
+                                    <jhi-help-icon placement="right" text="artemisApp.team.sourceTeams.legend.items.teamShortNameConflict.tooltip" class="mr-1"></jhi-help-icon>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="list-group-item--teams">
+                                    <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | translate }}3</div>
+                                    <jhi-team-students-list
+                                        class="team-students"
+                                        [students]="sampleTeamForLegend.students"
+                                        [errorStudentLogins]="sampleErrorStudentLoginsForLegend"
+                                    >
+                                    </jhi-team-students-list>
+                                </div>
+                                <div class="label-with-tooltip">
+                                    <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.studentConflict.label">Student conflict</label>
+                                    <jhi-help-icon placement="right" text="artemisApp.team.sourceTeams.legend.items.studentConflict.tooltip" class="mr-1"></jhi-help-icon>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <ng-container *ngIf="showImportStrategyChoices">
@@ -124,34 +204,39 @@
     </div>
     <div class="modal-footer">
         <div *ngIf="showImportPreviewNumbers && sourceTeams" class="flex-shrink-0 mr-2 d-flex">
-            <div *ngIf="numberOfTeamsToBeImported! === 0">
-                <strong *ngIf="sourceTeams.length === 0">{{ 'artemisApp.team.importPreview.noTeamsToImport' | translate }}</strong>
-                <strong *ngIf="sourceTeams.length > 0">{{ 'artemisApp.team.importPreview.noConflictFreeTeamsToImport' | translate }}</strong>
+            <div *ngIf="studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0; else elseBlock">
+                <strong>There are students that are in more than one team.</strong>
             </div>
-            <ng-container *ngIf="numberOfTeamsToBeImported! > 0">
-                <div *ngIf="numberOfTeamsToBeDeleted! > 0" class="mr-3">
-                    <strong>{{ 'artemisApp.team.importPreview.teamsToBeDeleted' | translate }}</strong> {{ numberOfTeamsToBeDeleted! }}
+            <ng-template #elseBlock>
+                <div *ngIf="numberOfTeamsToBeImported! === 0">
+                    <strong *ngIf="sourceTeams.length === 0">{{ 'artemisApp.team.importPreview.noTeamsToImport' | translate }}</strong>
+                    <strong *ngIf="sourceTeams.length > 0">{{ 'artemisApp.team.importPreview.noConflictFreeTeamsToImport' | translate }}</strong>
                 </div>
-                <div *ngIf="numberOfTeamsToBeImported! !== numberOfTeamsAfterImport!" class="mr-3">
-                    <strong>{{ 'artemisApp.team.importPreview.teamsToBeImported' | translate }}</strong> {{ numberOfTeamsToBeImported! }}
-                    <span
-                        *ngIf="numberOfTeamsToBeImported! < sourceTeams.length"
-                        jhiTranslate="artemisApp.team.importPreview.outOf"
-                        [translateValues]="{ number: sourceTeams.length }"
-                    >
-                        (out of {{ sourceTeams.length }})
-                    </span>
-                </div>
-                <div>
-                    <strong>{{ 'artemisApp.team.importPreview.totalTeamsAfterImport' | translate }}</strong> {{ numberOfTeamsAfterImport! }}
-                </div>
-            </ng-container>
+                <ng-container *ngIf="numberOfTeamsToBeImported! > 0">
+                    <div *ngIf="numberOfTeamsToBeDeleted! > 0" class="mr-3">
+                        <strong>{{ 'artemisApp.team.importPreview.teamsToBeDeleted' | translate }}</strong> {{ numberOfTeamsToBeDeleted! }}
+                    </div>
+                    <div *ngIf="numberOfTeamsToBeImported! !== numberOfTeamsAfterImport!" class="mr-3">
+                        <strong>{{ 'artemisApp.team.importPreview.teamsToBeImported' | translate }}</strong> {{ numberOfTeamsToBeImported! }}
+                        <span
+                            *ngIf="numberOfTeamsToBeImported! < sourceTeams.length"
+                            jhiTranslate="artemisApp.team.importPreview.outOf"
+                            [translateValues]="{ number: sourceTeams.length }"
+                        >
+                            (out of {{ sourceTeams.length }})
+                        </span>
+                    </div>
+                    <div>
+                        <strong>{{ 'artemisApp.team.importPreview.totalTeamsAfterImport' | translate }}</strong> {{ numberOfTeamsAfterImport! }}
+                    </div>
+                </ng-container>
+            </ng-template>
         </div>
         <div class="flex-grow-1 d-flex justify-content-end">
             <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
                 <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
-            <button *ngIf="importStrategy !== ImportStrategy.PURGE_EXISTING" type="submit" class="btn btn-warning">
+            <button *ngIf="importStrategy !== ImportStrategy.PURGE_EXISTING" type="submit" class="btn btn-warning" [disabled]="editForm.invalid || isSubmitDisabled">
                 <fa-icon [icon]="'upload'" class="mr-2"></fa-icon>
                 <span jhiTranslate="entity.action.to-import">Import</span>
                 <fa-icon class="ml-1" [hidden]="!isImporting" [spin]="true" [icon]="'circle-notch'"></fa-icon>

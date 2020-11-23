@@ -96,43 +96,4 @@ export class TeamsImportFromFileFormComponent implements OnInit {
         });
         return teams;
     }
-
-    isTeamFreeOfAnyConflicts(team: Team) {
-        if (!this.isSourceTeamFreeOfAnyConflicts(team)) {
-            console.log('not free', team);
-            return false;
-        }
-
-        if (this.sourceTeams!.filter((te) => te.shortName === team.shortName).length > 1) {
-            console.log('same short name', team);
-            return false;
-        }
-
-        if (
-            this.importedTeams &&
-            team.students?.some((student) => {
-                return (
-                    this.importedTeams!.students!.filter((importedStudent) => {
-                        console.log(importedStudent.registrationNumber, student.visibleRegistrationNumber);
-                        return importedStudent.registrationNumber === student.visibleRegistrationNumber;
-                    }).length > 1
-                );
-            })
-        ) {
-            console.log('same student', team);
-            return false;
-        }
-
-        // // Short name of source team already exists among teams of destination exercise
-        // if (this.teamShortNamesAlreadyExistingInExercise.includes(sourceTeam.shortName!)) {
-        //     return false;
-        // }
-        // // One of the students of the source team is already part of a team in the destination exercise
-        // if (sourceTeam.students!.some((student) => this.studentLoginsAlreadyExistingInExercise.includes(student.login!))) {
-        //     return false;
-        // }
-        // // This source team can be imported without any issues
-        // return true;
-        return true;
-    }
 }

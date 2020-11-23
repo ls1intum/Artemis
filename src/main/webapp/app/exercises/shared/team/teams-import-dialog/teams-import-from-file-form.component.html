@@ -7,12 +7,3 @@
     <input id="importFileInput" type="file" accept=".json" class="custom-file-input" (change)="setImportFile($event)" placeholder="Upload file..." />
     <label class="custom-file-label overflow-ellipsis" for="importFileInput">{{ importFileName }}</label>
 </div>
-<div *ngIf="sourceTeams && importedTeams">
-    <jhi-teams-import-teams-list
-        [sourceTeams]="sourceTeams"
-        [teamShortNamesAlreadyExistingInExercise]="teamShortNamesAlreadyExistingInExercise"
-        [isSourceTeamFreeOfAnyConflicts]="isTeamFreeOfAnyConflicts.bind(this)"
-        [studentLoginsAlreadyExistingInExercise]="studentLoginsAlreadyExistingInExercise"
-    >
-    </jhi-teams-import-teams-list>
-</div>

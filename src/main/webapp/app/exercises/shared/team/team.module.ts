@@ -21,7 +21,6 @@ import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exer
 import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-participation-table/team-participation-table.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { TeamsImportFromFileFormComponent } from './teams-import-dialog/teams-import-from-file-form.component';
-import { TeamsImportTeamsListComponent } from './teams-import-dialog/teams-import-teams-list.component';
 
 const ENTITY_STATES = [...teamRoute];
 
@@ -43,9 +42,8 @@ const ENTITY_STATES = [...teamRoute];
         TeamParticipationTableComponent,
         TeamComponent,
         TeamsImportFromFileFormComponent,
-        TeamsImportTeamsListComponent,
     ],
-    exports: [TeamUpdateButtonComponent, TeamsImportButtonComponent, TeamStudentsListComponent, TeamParticipateInfoBoxComponent, TeamsImportTeamsListComponent],
+    exports: [TeamUpdateButtonComponent, TeamsImportButtonComponent, TeamStudentsListComponent, TeamParticipateInfoBoxComponent],
     entryComponents: [TeamUpdateDialogComponent, TeamsImportDialogComponent],
 })
 export class ArtemisTeamModule {}

@@ -26,14 +26,13 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     @Input() exercise: Exercise;
     @Input() teams: Team[]; // existing teams already in exercise
 
-    sourceExercise: Exercise;
+    sourceExercise?: Exercise;
 
     searchingExercises = false;
     searchingExercisesFailed = false;
     searchingExercisesNoResultsForQuery?: string;
 
     sourceTeams?: Team[];
-    sourceTeamsFromFile?: Team[];
     loadingSourceTeams = false;
     loadingSourceTeamsFailed = false;
 
@@ -41,11 +40,13 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     readonly defaultImportStrategy: ImportStrategy = ImportStrategy.CREATE_ONLY;
 
     isImporting = false;
+    showImportFromExercise = true;
 
     // computed properties
     teamShortNamesAlreadyExistingInExercise: string[] = [];
     studentLoginsAlreadyExistingInExercise: string[] = [];
     sourceTeamsFreeOfConflicts: Team[] = [];
+    studentRegistrationNumbersAlreadyExistingInOtherTeams: string[] = [];
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -123,6 +124,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      */
     computeSourceTeamsFreeOfConflicts() {
         this.sourceTeamsFreeOfConflicts = this.sourceTeams!.filter((team: Team) => this.isSourceTeamFreeOfAnyConflicts(team));
+        console.log('source', this.sourceTeamsFreeOfConflicts);
     }
 
     /**
@@ -135,15 +137,26 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * @param sourceTeam Team which is checked for conflicts
      */
     isSourceTeamFreeOfAnyConflicts(sourceTeam: Team): boolean {
-        console.log('here fu', this.teamShortNamesAlreadyExistingInExercise);
         // Short name of source team already exists among teams of destination exercise
         if (this.teamShortNamesAlreadyExistingInExercise.includes(sourceTeam.shortName!)) {
             return false;
         }
         // One of the students of the source team is already part of a team in the destination exercise
-        if (sourceTeam.students!.some((student) => this.studentLoginsAlreadyExistingInExercise.includes(student.login!))) {
+        if (this.showImportFromExercise && sourceTeam.students!.some((student) => this.studentLoginsAlreadyExistingInExercise.includes(student.login!))) {
             return false;
         }
+
+        if (
+            !this.showImportFromExercise &&
+            this.sourceTeams &&
+            sourceTeam.students?.some(
+                (sourceStudent) =>
+                    sourceStudent.visibleRegistrationNumber && this.studentRegistrationNumbersAlreadyExistingInOtherTeams.includes(sourceStudent.visibleRegistrationNumber),
+            )
+        ) {
+            return false;
+        }
+
         // This source team can be imported without any issues
         return true;
     }
@@ -188,7 +201,10 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * 3. The current exercise already has existing teams in it
      */
     get showImportStrategyChoices(): boolean {
-        return this.sourceExercise && this.sourceTeams!?.length > 0 && this.teams.length > 0;
+        if (this.showImportFromExercise) {
+            return this.sourceExercise !== undefined && this.sourceTeams!?.length > 0 && this.teams.length > 0;
+        }
+        return this.sourceTeams !== undefined && this.sourceTeams!?.length > 0 && this.teams.length > 0;
     }
 
     /**
@@ -197,13 +213,17 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      */
     updateImportStrategy(importStrategy: ImportStrategy) {
         this.importStrategy = importStrategy;
+        console.log('submit', this.isSubmitDisabled, this.sourceTeams, this.importStrategy, this.numberOfTeamsToBeImported, this.numberOfTeamsAfterImport);
     }
 
     /**
      * Computed flag whether to show the import preview numbers in the footer of the modal
      */
     get showImportPreviewNumbers(): boolean {
-        return this.sourceExercise && this.sourceTeams! && Boolean(this.importStrategy);
+        if (this.showImportFromExercise) {
+            return this.sourceExercise !== undefined && this.sourceTeams! && Boolean(this.importStrategy);
+        }
+        return this.studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0 || (this.sourceTeams! && Boolean(this.importStrategy));
     }
 
     /**
@@ -216,7 +236,16 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * 5. There are no (conflict-free depending on strategy) source teams to be imported
      */
     get isSubmitDisabled(): boolean {
-        return this.isImporting || !this.sourceExercise || !this.sourceTeams || !this.importStrategy || !this.numberOfTeamsToBeImported;
+        if (this.showImportFromExercise) {
+            return this.isImporting || !this.sourceExercise || !this.sourceTeams || !this.importStrategy || !this.numberOfTeamsToBeImported;
+        }
+        return (
+            !this.sourceTeams ||
+            this.sourceTeams.length === 0 ||
+            !this.importStrategy ||
+            !this.numberOfTeamsToBeImported ||
+            this.studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0
+        );
     }
 
     /**
@@ -241,27 +270,42 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         if (this.isSubmitDisabled) {
             return;
         }
-        this.isImporting = true;
-        this.teamService.importTeamsFromSourceExercise(this.exercise, this.sourceExercise, this.importStrategy!).subscribe(
-            (res) => this.onSaveSuccess(res),
-            () => this.onSaveError(),
-        );
+        if (this.showImportFromExercise) {
+            this.isImporting = true;
+            this.teamService.importTeamsFromSourceExercise(this.exercise, this.sourceExercise!, this.importStrategy!).subscribe(
+                (res) => this.onSaveSuccess(res),
+                ({ error }) => this.onSaveError(error),
+            );
+        } else if (this.sourceTeams) {
+            this.teamService.importTeamsFromFile(this.exercise, this.sourceTeams, this.importStrategy!).subscribe(
+                (res) => this.onSaveSuccess(res),
+                ({ error }) => this.onSaveError(error),
+            );
+        }
     }
 
     onTeamsChanged(fileTeams: Team[]) {
         this.initImportStrategy();
-        this.sourceTeamsFromFile = fileTeams;
-        console.log('teams', this.sourceTeamsFromFile);
-    }
+        this.sourceTeams = fileTeams;
 
-    /** */
-    importFile() {
-        if (this.sourceTeamsFromFile) {
-            this.teamService.importTeamsFromFile(this.exercise, this.sourceTeamsFromFile, this.importStrategy!).subscribe(
-                (res) => this.onSaveSuccess(res),
-                () => this.onSaveError(),
-            );
-        }
+        console.log(this.sourceTeams, this.studentRegistrationNumbersAlreadyExistingInOtherTeams);
+        fileTeams.forEach((team) => {
+            if (team.students) {
+                team.students.forEach((sourceStudent) => {
+                    const fk = flatMap(fileTeams, (fileTeam) =>
+                        fileTeam.students?.map((student) => sourceStudent.visibleRegistrationNumber === student.visibleRegistrationNumber),
+                    ).filter((fileTeam) => fileTeam);
+                    if (
+                        fk.length > 1 &&
+                        sourceStudent.visibleRegistrationNumber &&
+                        !this.studentRegistrationNumbersAlreadyExistingInOtherTeams.includes(sourceStudent.visibleRegistrationNumber)
+                    ) {
+                        this.studentRegistrationNumbersAlreadyExistingInOtherTeams.push(sourceStudent.visibleRegistrationNumber);
+                    }
+                });
+            }
+        });
+        this.computeSourceTeamsFreeOfConflicts();
     }
 
     /**
@@ -280,9 +324,23 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     /**
      * Hook to indicate an error on save
      */
-    onSaveError() {
-        this.jhiAlertService.error('artemisApp.team.importError');
+    onSaveError(e: any) {
+        console.log(e);
+        if (e.detail) {
+            this.jhiAlertService.error(e.detail);
+        } else {
+            this.jhiAlertService.error('artemisApp.team.importError');
+        }
         this.isImporting = false;
+    }
+
+    setShowImportFromExercise(showFromExercise: boolean) {
+        this.showImportFromExercise = showFromExercise;
+        this.sourceTeams = undefined;
+        this.sourceExercise = undefined;
+        this.initImportStrategy();
+        this.isImporting = false;
+        this.studentRegistrationNumbersAlreadyExistingInOtherTeams = [];
     }
 
     /**
@@ -298,5 +356,9 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
     get sampleErrorStudentLoginsForLegend() {
         return this.sampleTeamForLegend.students!.map((student) => student.login);
+    }
+
+    get showLegend() {
+        return this.sourceTeams && this.numberOfConflictFreeSourceTeams !== this.sourceTeams.length;
     }
 }

@@ -4,7 +4,9 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.springframework.data.util.Pair;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -219,6 +221,38 @@ public class TeamService {
         teamImportStrategy.importTeams(sourceExercise, destinationExercise);
         return teamRepository.findAllByExerciseId(destinationExercise.getId());
     }
+
+    /**
+     * Converts teams' students with only registration numbers to students on database
+     *
+     * @param course Course in which the users will be searched
+     * @param teamsWithRegistrationNumber Teams that students are described only by visible registration number
+     * @return list of all teams that now have registered users
+     */
+    public List<Team> convertTeamsStudentsWithRegistrationNumbersToAlreadyRegisteredUsers(Course course, List<Team> teamsWithRegistrationNumber) {
+        List<String> notFoundRegistrationNumbers = new ArrayList<>();
+        List<Team> convertedTeams = new ArrayList<>();
+        teamsWithRegistrationNumber.forEach(team -> {
+            Set<User> newStudents = new HashSet<>();
+            team.getStudents().forEach(student -> {
+                Optional<User> userWithRegistrationNumber = userRepository.getByRegistrationNumberInGroup(course.getStudentGroupName(),student.getVisibleRegistrationNumber());
+                userWithRegistrationNumber.ifPresentOrElse((value) -> {
+                    newStudents.add(value);
+                }, () -> {
+                    notFoundRegistrationNumbers.add(student.getVisibleRegistrationNumber());
+                });
+            });
+            team.students(newStudents);
+            convertedTeams.add(team);
+        });
+
+        if(!notFoundRegistrationNumbers.isEmpty()){
+            throw new EntityNotFoundException("Following registration numbers could not be found in course: "+String.join("\n",notFoundRegistrationNumbers));
+        }
+        return convertedTeams;
+    }
+
+
 
     /**
      * Returns an instance of TeamImportStrategy based on the given import strategy type (enum)
