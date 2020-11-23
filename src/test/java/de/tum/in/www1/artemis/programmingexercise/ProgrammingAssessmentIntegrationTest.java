@@ -399,20 +399,25 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     @WithMockUser(value = "tutor1", roles = "TA")
     public void updateManualProgrammingExerciseResult() throws Exception {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
-        database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
+        programmingSubmission = database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
         var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
+
+        resultRepository.save(result);
 
         result.setParticipation(participation);
         result.setSubmission(programmingSubmission);
+        programmingSubmission.setResult(result);
+        programmingSubmissionRepository.save(programmingSubmission);
+
         // Result has to be manual to be updated
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        result = resultRepository.save(result);
 
         // Remove feedbacks, change text and score.
         result.setFeedbacks(result.getFeedbacks().subList(0, 1));
         double points = programmingAssessmentService.calculateTotalScore(result);
         result.setScore((long) points);
         result.resultString("3 of 3 passed, 1 issue, " + result.createResultString(points, programmingExercise.getMaxScore()));
+        result = resultRepository.save(result);
 
         Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK);
         assertThat(response.getScore()).isEqualTo(2);

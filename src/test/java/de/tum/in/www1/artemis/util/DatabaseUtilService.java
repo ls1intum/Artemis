@@ -1833,7 +1833,7 @@ public class DatabaseUtilService {
     public ProgrammingSubmission addProgrammingSubmission(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
         submission.setParticipation(participation);
-        programmingSubmissionRepo.save(submission);
+        submission = programmingSubmissionRepo.save(submission);
         return submission;
     }
 
