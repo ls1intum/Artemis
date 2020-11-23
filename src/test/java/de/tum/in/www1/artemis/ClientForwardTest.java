@@ -32,18 +32,18 @@ public class ClientForwardTest extends AbstractSpringDevelopmentTest {
     }
 
     @Test
-    public void getManagementEndpoint() throws Exception {
+    public void testManagementEndpoint() throws Exception {
         restMockMvc.perform(get("/management/logs")).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
 
     @Test
-    public void getClientEndpoint() throws Exception {
+    public void testClientEndpoint() throws Exception {
         ResultActions perform = restMockMvc.perform(get("/non-existant-mapping"));
         perform.andExpect(status().isOk()).andExpect(forwardedUrl("/"));
     }
 
     @Test
-    public void getNestedClientEndpoint() throws Exception {
+    public void testNestedClientEndpoint() throws Exception {
         restMockMvc.perform(get("/admin/user-management")).andExpect(status().isOk()).andExpect(forwardedUrl("/"));
     }
 }
