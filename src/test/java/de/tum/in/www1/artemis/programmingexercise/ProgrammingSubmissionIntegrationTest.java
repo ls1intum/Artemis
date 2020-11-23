@@ -386,7 +386,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         final var tutor = database.getUserByLogin("tutor1");
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, tutor);
 
-        request.get("/api/exercises" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.NOT_FOUND, String.class);
     }
 
     private void createTenLockedSubmissionsForExercise(String assessor) {
