@@ -52,10 +52,12 @@ public class ProgrammingExerciseGradingService {
 
     private final ResultService resultService;
 
+    private final StudentScoreService studentScoreService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
-            ResultService resultService) {
+            ResultService resultService, StudentScoreService studentScoreService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.participationService = participationService;
@@ -65,6 +67,7 @@ public class ProgrammingExerciseGradingService {
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.programmingAssessmentService = programmingAssessmentService;
         this.resultService = resultService;
+        this.studentScoreService = studentScoreService;
     }
 
     /**
@@ -99,6 +102,10 @@ public class ProgrammingExerciseGradingService {
             }
             result = updateResult(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
             result = resultRepository.save(result);
+
+            // update StudentScore
+            studentScoreService.updateResult(result);
+
             // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
 
             // If the solution participation was updated, also trigger the template participation build.

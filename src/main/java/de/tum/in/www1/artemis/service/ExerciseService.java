@@ -67,11 +67,13 @@ public class ExerciseService {
 
     private final ExerciseUnitRepository exerciseUnitRepository;
 
+    private final StudentScoreService studentScoreService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
             AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService,
-            StudentExamRepository studentExamRepository, ExamRepository exampRepository) {
+            StudentExamRepository studentExamRepository, ExamRepository exampRepository, StudentScoreService studentScoreService) {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = exampRepository;
         this.participationService = participationService;
@@ -87,6 +89,7 @@ public class ExerciseService {
         this.quizScheduleService = quizScheduleService;
         this.studentExamRepository = studentExamRepository;
         this.exerciseUnitRepository = exerciseUnitRepository;
+        this.studentScoreService = studentScoreService;
     }
 
     /**
@@ -293,6 +296,8 @@ public class ExerciseService {
         // delete all exercise units linking to the exercise
         this.exerciseUnitRepository.removeAllByExerciseId(exerciseId);
 
+        // make sure student scores are deleted before the exercise is deleted
+        studentScoreService.deleteStudentScoresForExercise(exercise);
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
         // clean up the many to many relationship to avoid problems when deleting the entities but not the relationship table
