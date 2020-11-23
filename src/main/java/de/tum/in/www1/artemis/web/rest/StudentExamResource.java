@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -16,13 +17,16 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
@@ -56,9 +60,14 @@ public class StudentExamResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final SubmissionService submissionService;
+
+    private final ResultRepository resultRepository;
+
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserService userService, StudentExamRepository studentExamRepository, ExamSessionService examSessionService, ParticipationService participationService,
-            QuizExerciseService quizExerciseService, ExamRepository examRepository, AuthorizationCheckService authorizationCheckService) {
+            QuizExerciseService quizExerciseService, ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, SubmissionService submissionService,
+            ResultRepository resultRepository) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -69,6 +78,8 @@ public class StudentExamResource {
         this.quizExerciseService = quizExerciseService;
         this.examRepository = examRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.submissionService = submissionService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -365,6 +376,55 @@ public class StudentExamResource {
 
         StudentExam testRun = studentExamService.generateTestRun(testRunConfiguration);
         return ResponseEntity.ok(testRun);
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/automatically-assess-unsubmitted-student-exams : Automatically assess unsubmitted student exams
+     *
+     * Finds student exams which the students did not submit on time i.e {@link StudentExam#isSubmitted()} is false.
+     * Automatically grade all modeling- and text exercises with 0 points.
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     */
+    @PostMapping("courses/{courseId}/exams/{examId}/automatically-assess-unsubmitted-student-exams")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> automaticallyAssessUnsubmittedStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to automatically assess the unsubmitted student exams of the exam with id {}", examId);
+
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        Set<StudentExam> unsubmittedStudentExams = studentExamService.findAllUnsubmittedStudentExams(examId);
+
+        // load student participation with submissions and results
+        unsubmittedStudentExams.forEach(studentExam -> fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, studentExam.getUser()));
+
+        // This list has a 1-1 relationship between exercise and participation
+        // Therefore we need a list as there can be duplicate exercises with different participations
+        List<Exercise> exercises = unsubmittedStudentExams.stream().flatMap(studentExam -> studentExam.getExercises().stream()).collect(Collectors.toList());
+
+        for (final var exercise : exercises) {
+            if (exercise instanceof ModelingExercise || exercise instanceof TextExercise && !exercise.getStudentParticipations().isEmpty()) {
+                // get user participation
+                final var studentParticipation = exercise.getStudentParticipations().iterator().next();
+
+                if (studentParticipation.findLatestSubmission().isPresent()) {
+                    // get last submission
+                    final var latestSubmission = studentParticipation.findLatestSubmission().get();
+                    final Result result = submissionService.setNewResult(latestSubmission);
+                    result.setCompletionDate(ZonedDateTime.now());
+                    result.setScore(0L);
+                    // Set semi automatic in order to make sure it is not considered for manual assessment see
+                    // {StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation}
+                    result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+                    resultRepository.save(result);
+                }
+            }
+
+        }
+        return ResponseEntity.ok().build();
     }
 
     /**

@@ -61,4 +61,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @Query("select distinct u from StudentExam se left join se.user u where se.testRun = false and se.exam.id = :#{#examId}")
     Set<User> findUsersWithStudentExamsForExam(@Param("examId") Long examId);
 
+    @Query("SELECT studentExam FROM StudentExam studentExam LEFT JOIN FETCH studentExam.exercises exercises WHERE studentExam.exam.id = :#{#examId} AND studentExam.submitted = FALSE AND studentExam.testRun = FALSE")
+    Set<StudentExam> findAllUnsubmittedWithExercisesByExamId(Long examId);
 }

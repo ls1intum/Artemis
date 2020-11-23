@@ -387,6 +387,15 @@ public class StudentExamService {
     }
 
     /**
+     * Find all unsubmitted student exams (ignores test runs) with exercises.
+     * @param examId the exam id
+     * @return a set of student exams with {@link StudentExam#isSubmitted()} false
+     */
+    public Set<StudentExam> findAllUnsubmittedStudentExams(Long examId) {
+        return studentExamRepository.findAllUnsubmittedWithExercisesByExamId(examId);
+    }
+
+    /**
      * Deletes a test run.
      * In case the participation is  not referenced by other test runs, the participation, submission, buildplans and repositories are deleted as well.
      * @param testRunId the id of the test run
