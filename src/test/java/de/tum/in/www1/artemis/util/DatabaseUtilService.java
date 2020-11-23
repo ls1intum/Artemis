@@ -756,6 +756,13 @@ public class DatabaseUtilService {
         QuizSubmission quizSubmission = ModelFactory.generateQuizSubmission(true);
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
 
+        // Save submissions
+        modelingSubmission = submissionRepository.save(modelingSubmission);
+        textSubmission = submissionRepository.save(textSubmission);
+        fileUploadSubmission = submissionRepository.save(fileUploadSubmission);
+        quizSubmission = submissionRepository.save(quizSubmission);
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
         modelingSubmission.setParticipation(participationModeling);
         modelingSubmission.setResult(resultModeling);
         textSubmission.setParticipation(participationText);
@@ -1927,6 +1934,7 @@ public class DatabaseUtilService {
     public ModelingSubmission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
+        submission = modelingSubmissionRepo.save(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setCompletionDate(ZonedDateTime.now());

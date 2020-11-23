@@ -108,6 +108,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @param assessor the assessor we are interested in
      * @return the submissions belonging to the exercise id, which have been assessed by the given assessor
      */
-    @Query("SELECT DISTINCT submission FROM Submission submission WHERE submission.participation.exercise.id = :#{#exerciseId} AND :#{#assessor} IN (select r.assessor from submission.results r join r.assessor)")
+    @Query("SELECT DISTINCT submission FROM Submission submission left join fetch submission.results r left join fetch r.assessor a WHERE submission.participation.exercise.id = :#{#exerciseId} AND :#{#assessor} = a")
     List<Submission> findAllByParticipationExerciseIdAndResultAssessor(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 }

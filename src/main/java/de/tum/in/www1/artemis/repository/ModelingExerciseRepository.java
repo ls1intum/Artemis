@@ -49,6 +49,6 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
     Page<ModelingExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("groups") Set<String> groups, Pageable pageable);
 
-    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.result" })
+    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<ModelingExercise> findWithEagerStudentParticipationSubmissionsResultsById(Long exerciseId);
 }
