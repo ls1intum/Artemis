@@ -323,7 +323,7 @@ public class AssessmentService {
         User user = userService.getUser();
         result.setAssessor(user);
         // first save the feedback (that is not yet in the database) to prevent null index exception
-        var savedFeedbackList = saveUnreferencedFeedback(feedbackList);
+        var savedFeedbackList = saveFeedbacks(feedbackList);
         result.updateAllFeedbackItems(savedFeedbackList, false);
         // Note: this boolean flag is only used for programming exercises
         result.setHasFeedback(false);
@@ -337,7 +337,7 @@ public class AssessmentService {
         return resultRepository.save(result);
     }
 
-    private List<Feedback> saveUnreferencedFeedback(List<Feedback> feedbackList) {
+    private List<Feedback> saveFeedbacks(List<Feedback> feedbackList) {
         log.debug("Save new feedback: " + feedbackList);
         List<Feedback> updatedFeedbackList = new ArrayList<>();
         for (var feedback : feedbackList) {
