@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,6 +26,9 @@ public interface ExampleSubmissionRepository extends JpaRepository<ExampleSubmis
     List<ExampleSubmission> findAllByExerciseId(long exerciseId);
 
     List<ExampleSubmission> findAllByExerciseIdAndUsedForTutorial(Long exercise_id, Boolean usedForTutorial);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results" })
+    Set<ExampleSubmission> findAllWithEagerResultByExerciseId(long exerciseId);
 
     @Query("select distinct exampleSubmission from ExampleSubmission exampleSubmission left join fetch exampleSubmission.tutorParticipations where exampleSubmission.id = :#{#exampleSubmissionId}")
     Optional<ExampleSubmission> findByIdWithEagerTutorParticipations(@Param("exampleSubmissionId") Long exampleSubmissionId);
