@@ -145,6 +145,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
                 HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
         assertThat(exampleSubmissionService.findById(storedExampleSubmission.getId())).isPresent();
+        // NOTE: for some reason this test failes in IntelliJ but works fine on the command line
         request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
                 Result.class);
     }
@@ -617,7 +618,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
                 case AUTOMATIC_ADAPTED -> adaptedFeedback.add(storedFeedback);
             }
         });
-        assertThat(storedResult.getAssessmentType()).as("type of result is MANUAL").isEqualTo(AssessmentType.MANUAL);
+        assertThat(storedResult.getAssessmentType()).as("type of result is SEMI_AUTOMATIC").isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         assertThat(manualFeedback.size()).as("number of manual feedback elements is correct").isEqualTo(newFeedback.size());
         assertThat(automaticFeedback.size()).as("number of automatic feedback elements is correct").isEqualTo(existingFeedback.size() - 2);
         assertThat(adaptedFeedback.size()).as("number of adapted feedback elements is correct").isEqualTo(2);

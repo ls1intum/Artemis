@@ -452,18 +452,6 @@ public class ParticipationService {
         // get submission from HashMap
         QuizSubmission quizSubmission = quizScheduleService.getQuizSubmission(quizExercise.getId(), username);
 
-        // TODO: SK I guess we can delete this code, because it is unreachable as we return above in case the quiz has ended
-        if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
-            if (quizSubmission.isSubmitted()) {
-                quizSubmission.setType(SubmissionType.MANUAL);
-            }
-            else {
-                quizSubmission.setSubmitted(true);
-                quizSubmission.setType(SubmissionType.TIMEOUT);
-                quizSubmission.setSubmissionDate(ZonedDateTime.now());
-            }
-        }
-
         // construct result
         Result result = new Result().submission(quizSubmission);
 
@@ -472,19 +460,6 @@ public class ParticipationService {
         participation.setInitializationState(INITIALIZED);
         participation.setExercise(quizExercise);
         participation.addResult(result);
-
-        // TODO: SK I guess we can delete this code, because it is unreachable as we return above in case the quiz has ended
-        if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
-            // update result and participation state
-            result.setRated(true);
-            result.setAssessmentType(AssessmentType.AUTOMATIC);
-            result.setCompletionDate(ZonedDateTime.now());
-            participation.setInitializationState(InitializationState.FINISHED);
-
-            // calculate scores and update result and submission accordingly
-            quizSubmission.calculateAndUpdateScores(quizExercise);
-            result.evaluateSubmission();
-        }
 
         return participation;
     }
@@ -787,9 +762,9 @@ public class ParticipationService {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exercise.getId());
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
-            return optionalTeam.flatMap(team -> studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), team.getId()));
+            return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
-        return studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), username);
+        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**
@@ -801,7 +776,7 @@ public class ParticipationService {
      */
     public Optional<StudentParticipation> findOneByExerciseAndTeamIdAnyState(Exercise exercise, Long teamId) {
         log.debug("Request to get Participation for Team with id {} for Exercise with id: {}", teamId, exercise.getId());
-        return studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), teamId);
+        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
     }
 
     /**
@@ -1143,7 +1118,7 @@ public class ParticipationService {
      * @param deleteBuildPlan  determines whether the corresponding build plan should be deleted as well
      * @param deleteRepository determines whether the corresponding repository should be deleted as well
      */
-    @Transactional
+    @Transactional // ok
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
         StudentParticipation participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsById(participationId).get();
         log.debug("Request to delete Participation : {}", participation);
@@ -1197,7 +1172,7 @@ public class ParticipationService {
      * @param participationId the id of the participation to delete results/submissions from.
      * @return participation without submissions and results.
      */
-    @Transactional
+    @Transactional // ok
     public Participation deleteResultsAndSubmissionsOfParticipation(Long participationId) {
         Participation participation = participationRepository.getOneWithEagerSubmissionsAndResults(participationId);
         // This is the default case: We delete results and submissions from direction result -> submission. This will only delete submissions that have a result.
@@ -1232,7 +1207,7 @@ public class ParticipationService {
      * @param deleteBuildPlan specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
-    @Transactional
+    @Transactional // ok
     public void deleteAllByExerciseId(Long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
         List<StudentParticipation> participationsToDelete = findByExerciseId(exerciseId);
 
@@ -1248,7 +1223,7 @@ public class ParticipationService {
      * @param deleteBuildPlan specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
-    @Transactional
+    @Transactional // ok
     public void deleteAllByTeamId(Long teamId, boolean deleteBuildPlan, boolean deleteRepository) {
         log.info("Request to delete all participations of Team with id : {}", teamId);
 
@@ -1265,7 +1240,7 @@ public class ParticipationService {
      * @param participationId id of the participation
      * @return participation with eager course
      */
-    public StudentParticipation findOneWithEagerCourse(Long participationId) {
+    public StudentParticipation findOneWithEagerCourseAndExercise(Long participationId) {
         return studentParticipationRepository.findOneByIdWithEagerExerciseAndEagerCourse(participationId);
     }
 
