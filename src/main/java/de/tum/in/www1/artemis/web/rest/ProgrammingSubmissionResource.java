@@ -350,7 +350,7 @@ public class ProgrammingSubmissionResource {
 
     // TODO: Make this call use submissionId instead of participationId (after implementation of one to many relation ship of submission and results)
     /**
-     * GET /programming-submissions/:id : get the programmingSubmissions participation by it's id and locks the corresponding submission for assessment
+     * GET /programming-submissions/:participationId/lock : get the programmingSubmissions participation by it's id and locks the corresponding submission for assessment
      *
      * @param participationId the id of the participation to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the programmingSubmissions participation
@@ -377,8 +377,7 @@ public class ProgrammingSubmissionResource {
             programmingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
             // As no manual result is present we need to lock the submission for assessment
-            Result latestAutomaticResult = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC)
-                    .sorted(Comparator.comparing(Result::getId).reversed()).iterator().next();
+            Result latestAutomaticResult = participation.findLatestResult();
             ProgrammingSubmission submission = programmingSubmissionService.findByResultId(latestAutomaticResult.getId());
             submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId());
             return ResponseEntity.ok(submission.getParticipation());
