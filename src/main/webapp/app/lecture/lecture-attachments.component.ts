@@ -112,10 +112,6 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         this.attachmentBackup = Object.assign({}, attachment, {});
     }
 
-    attachmentFileName(attachmentLink: string): string {
-        return attachmentLink.replace(/\/.*\//, '');
-    }
-
     deleteAttachment(attachment: Attachment) {
         this.attachmentService.delete(attachment.id!).subscribe(
             () => {

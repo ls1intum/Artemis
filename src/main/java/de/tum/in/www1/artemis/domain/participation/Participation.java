@@ -207,15 +207,16 @@ public abstract class Participation extends DomainObject implements Participatio
      * by submission date and return the first. WARNING: The submissions of the participation might not be loaded because of Hibernate and therefore, the function might return
      * null, although the participation has submissions. This might not be high-performance, so use it at your own risk.
      *
+     * @param <T> submission type
      * @return the latest submission or null
      */
-    public Optional<Submission> findLatestSubmission() {
+    public <T extends Submission> Optional<T> findLatestSubmission() {
         Set<Submission> submissions = this.submissions;
         if (submissions == null || submissions.size() == 0) {
             return Optional.empty();
         }
 
-        return submissions.stream().max((s1, s2) -> {
+        return (Optional<T>) submissions.stream().max((s1, s2) -> {
             if (s1.getSubmissionDate() == null || s2.getSubmissionDate() == null) {
                 // this case should not happen, but in the rare case we can compare the ids
                 // newer ids are typically later
