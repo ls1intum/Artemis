@@ -28,9 +28,10 @@ public class JavaJenkinsBuildPlanCreator extends BaseJenkinsBuildPlanCreator {
     }
 
     @Override
-    protected Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
+    protected Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL,
+            boolean isStaticCodeAnalysisEnabled) {
         Map<String, String> replacements = super.getReplacements(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled);
-        if(isStaticCodeAnalysisEnabled){
+        if (isStaticCodeAnalysisEnabled) {
             String staticCodeAnalysisScript = createStaticCodeAnalysisScript();
             replacements.put(REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript);
         }
