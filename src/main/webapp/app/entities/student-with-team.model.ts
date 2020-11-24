@@ -1,9 +1,9 @@
 import { StudentDTO } from './student-dto.model';
 
 export class StudentWithTeam extends StudentDTO {
-    public firstName: string;
-    public lastName: string;
-    public registrationNumber: string;
-    public team: string;
+    public Name: string;
+    public Surname: string;
+    public 'Registration Number': string;
+    public 'Team Name': string;
     public login: string;
 }

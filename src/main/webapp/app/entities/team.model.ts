@@ -41,5 +41,4 @@ export class Team implements BaseEntity {
 
 export class TeamList {
     public students?: StudentWithTeam[];
-    // public tutors?: TutorWithTeam[];
 }

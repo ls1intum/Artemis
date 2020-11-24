@@ -77,17 +77,17 @@ export class TeamsImportFromFileFormComponent implements OnInit {
     convertTeams(importTeam: TeamList): Team[] {
         const teams: Team[] = [];
         importTeam.students!.forEach((student) => {
-            const index = teams.findIndex((team) => team.name === student.team);
+            const index = teams.findIndex((team) => team.name === student['Team Name']);
             const newStudent = new User();
-            newStudent.firstName = student.firstName;
-            newStudent.lastName = student.lastName;
-            newStudent.visibleRegistrationNumber = student.registrationNumber;
-            newStudent.name = `${student.firstName} ${student.lastName}`;
+            newStudent.firstName = student.Name;
+            newStudent.lastName = student.Surname;
+            newStudent.visibleRegistrationNumber = student['Registration Number'];
+            newStudent.name = `${student.Name} ${student.Surname}`;
             newStudent.login = student.login;
             if (index === -1) {
                 const newTeam = new Team();
-                newTeam.name = student.team;
-                newTeam.shortName = student.team.replace(/[^0-9a-z]/gi, '').toLowerCase();
+                newTeam.name = student['Team Name'];
+                newTeam.shortName = student['Team Name'].replace(/[^0-9a-z]/gi, '').toLowerCase();
                 newTeam.students = [newStudent];
                 teams.push(newTeam);
             } else {
