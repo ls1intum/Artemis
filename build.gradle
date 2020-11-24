@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.8.0"
+version = "4.7.6"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -253,6 +253,7 @@ dependencies {
     implementation "com.ibm.icu:icu4j:68.1"
     implementation "com.github.seancfoley:ipaddress:5.3.3"
     implementation "info.debatty:java-string-similarity:2.0.0"
+    implementation "org.apache.maven:maven-model:3.6.3"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
