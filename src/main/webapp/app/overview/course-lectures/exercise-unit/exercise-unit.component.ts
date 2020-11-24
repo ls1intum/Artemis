@@ -1,4 +1,4 @@
-import { Component, Input, ViewEncapsulation } from '@angular/core';
+import { Component, HostBinding, Input, ViewEncapsulation } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 
@@ -9,6 +9,12 @@ import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
     styleUrls: ['./exercise-unit.component.scss'],
 })
 export class ExerciseUnitComponent {
+    @HostBinding('className') componentClass: string;
+
+    constructor() {
+        this.componentClass = 'exercise-unit';
+    }
+
     @Input()
     exerciseUnit: ExerciseUnit;
 
