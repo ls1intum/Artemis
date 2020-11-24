@@ -176,8 +176,14 @@ public class StaticCodeAnalysisService {
                 }
 
                 if (category.isPresent()) {
-                    // update the penalty of the issue
-                    issue.setPenalty(category.get().getPenalty());
+                    if (category.get().getState() == CategoryState.GRADED) {
+                        // update the penalty of the issue
+                        issue.setPenalty(category.get().getPenalty());
+                    }
+                    else if (issue.getPenalty() != null) {
+                        // remove the penalty of the issue
+                        issue.setPenalty(null);
+                    }
                     feedback.setDetailText(mapper.writeValueAsString(issue));
                 }
             }
