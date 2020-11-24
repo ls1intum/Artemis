@@ -55,6 +55,7 @@ export class ResultDetailComponent implements OnInit {
     buildLogs: BuildLogEntryArray;
 
     scoreChartPreset: ScoreChartPreset;
+    showScoreChartTooltip = false;
 
     constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private buildLogService: BuildLogService, translateService: TranslateService) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
@@ -314,6 +315,10 @@ export class ResultDetailComponent implements OnInit {
         const appliedNegativePoints = codeIssueCredits + negativeCredits;
         const receivedNegativePoints = codeIssuePenalties + negativeCredits;
         const positivePoints = testCaseCredits + positiveCredits;
+
+        if (appliedNegativePoints !== receivedNegativePoints) {
+            this.showScoreChartTooltip = true;
+        }
 
         // the chart preset handles the capping to the maximum score of the exercise
         this.scoreChartPreset.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, exercise);
