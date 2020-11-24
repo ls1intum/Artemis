@@ -180,7 +180,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @param fileUploadExercise the corresponding exercise
      * @return the locked file upload submission
      */
-    public FileUploadSubmission getLockedFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise) {
+    public FileUploadSubmission lockAndGetFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise) {
         FileUploadSubmission fileUploadSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
         if (fileUploadSubmission.getResult() == null || fileUploadSubmission.getResult().getAssessor() == null) {
