@@ -266,7 +266,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Update a field of a sca category in the component state (does not persist the value on the server!).
      * Adds the currently edited category to the list of unsaved changes.
      *
-     * @param newValue          of updated field;
      * @param editedCategory    the edited category;
      * @param field             the edited field;
      */
@@ -297,10 +296,11 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         }
         if (typeof oldValue === 'number') {
             newValue = Number(newValue);
+            if (isNaN(newValue)) {
+                newValue = oldValue;
+            }
         }
-        if (isNaN(newValue)) {
-            newValue = oldValue;
-        }
+
         return newValue;
     }
 
