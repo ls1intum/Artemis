@@ -1201,8 +1201,12 @@ public class DatabaseUtilService {
     }
 
     public Result addResultToParticipation(Participation participation, Submission submission) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).score(100L).submission(submission);
-        return resultRepo.save(result);
+        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).score(100L);
+        result = resultRepo.save(result);
+        result.setSubmission(submission);
+        submission.setResult(result);
+        submissionRepository.save(submission);
+        return result;
     }
 
     public Result addSampleFeedbackToResults(Result result) {
