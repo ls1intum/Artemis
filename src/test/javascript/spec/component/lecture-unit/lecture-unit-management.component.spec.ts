@@ -1,166 +1,235 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
-import { Lecture } from 'app/entities/lecture.model';
-import { Attachment } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import * as moment from 'moment';
-import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { RouterTestingModule } from '@angular/router/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisCoursesModule } from 'app/overview/courses.module';
-import { ReactiveFormsModule } from '@angular/forms';
-import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
-import { By } from '@angular/platform-browser';
+import { TranslatePipe } from '@ngx-translate/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import * as sinon from 'sinon';
+import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
+import { Component, EventEmitter, Output } from '@angular/core';
+import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
+import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { LectureService } from 'app/lecture/lecture.service';
+import { JhiAlertService } from 'ng-jhipster';
+import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { HttpResponse } from '@angular/common/http';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { of } from 'rxjs';
+import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import sinon = require('sinon');
 
 chai.use(sinonChai);
 const expect = chai.expect;
+
+@Component({ selector: 'jhi-unit-creation-card', template: '' })
+class UnitCreationCardStubComponent {
+    @Output()
+    createTextUnit: EventEmitter<any> = new EventEmitter<any>();
+    @Output()
+    createExerciseUnit: EventEmitter<any> = new EventEmitter<any>();
+    @Output()
+    createVideoUnit: EventEmitter<any> = new EventEmitter<any>();
+    @Output()
+    createAttachmentUnit: EventEmitter<any> = new EventEmitter<any>();
+}
+
 describe('LectureUnitManagementComponent', () => {
-    let comp: LectureUnitManagementComponent;
-    let fixture: ComponentFixture<LectureUnitManagementComponent>;
+    let lectureUnitManagementComponent: LectureUnitManagementComponent;
+    let lectureUnitManagementComponentFixture: ComponentFixture<LectureUnitManagementComponent>;
+    let unitCreationCardStubComponent: UnitCreationCardStubComponent;
 
-    const attachments = [
-        {
-            id: 50,
-            name: 'test',
-            link: '/api/files/attachments/lecture/4/Mein_Test_PDF4.pdf',
-            version: 2,
-            uploadDate: moment('2019-05-05T10:05:25+02:00'),
-            releaseDate: moment('2019-06-05T10:05:25+02:00'),
-            attachmentType: 'FILE',
-        },
-        {
-            id: 52,
-            name: 'test2',
-            link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
-            version: 1,
-            uploadDate: moment('2019-05-07T08:49:59+02:00'),
-            attachmentType: 'FILE',
-        },
-    ] as Attachment[];
+    let lectureService: LectureService;
+    let lectureUnitService: LectureUnitService;
+    let findLectureStub: sinon.SinonStub;
+    let updateOrderStub: sinon.SinonStub;
 
-    const attachmentUnits = [
-        {
-            id: 42,
-            name: 'A',
-            attachment: attachments[0],
-            type: LectureUnitType.ATTACHMENT,
-        },
-        {
-            id: 49,
-            name: 'B',
-            attachment: attachments[1],
-            type: LectureUnitType.ATTACHMENT,
-        },
-    ] as AttachmentUnit[];
+    let attachmentUnit: AttachmentUnit;
+    let exerciseUnit: ExerciseUnit;
+    let textUnit: TextUnit;
+    let videoUnit: VideoUnit;
+    let lecture: Lecture;
 
-    const lecture = {
-        id: 4,
-        title: 'Second Test Lecture2',
-        description:
-            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
-        startDate: moment('2019-04-15T14:00:19+02:00'),
-        endDate: moment('2019-04-15T15:30:20+02:00'),
-        course: {
-            id: 1,
-            title: 'Refactoring CSS',
-            description:
-                'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
-            shortName: 'RCSS',
-            studentGroupName: 'artemis-dev',
-            teachingAssistantGroupName: 'tumuser',
-            instructorGroupName: 'tumuser',
-            startDate: moment('2018-12-15T16:11:00+01:00'),
-            endDate: moment('2019-06-15T16:11:14+02:00'),
-            onlineCourse: false,
-            color: '#691b0b',
-            registrationEnabled: false,
-        },
-        lectureUnits: attachmentUnits,
-    } as Lecture;
-
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [
-                TranslateModule.forRoot(),
-                ArtemisTestModule,
-                RouterTestingModule.withRoutes([]),
-                ArtemisSharedModule,
-                ReactiveFormsModule,
-                ArtemisSharedComponentModule,
-                ArtemisCoursesModule,
-                FormDateTimePickerModule,
+            imports: [],
+            declarations: [
+                LectureUnitManagementComponent,
+                UnitCreationCardStubComponent,
+                MockPipe(TranslatePipe),
+                MockComponent(ExerciseUnitComponent),
+                MockComponent(AttachmentUnitComponent),
+                MockComponent(VideoUnitComponent),
+                MockComponent(TextUnitComponent),
+                MockComponent(FaIconComponent),
+                MockComponent(AlertComponent),
+                MockDirective(DeleteButtonDirective),
+                MockDirective(HasAnyAuthorityDirective),
             ],
-            declarations: [LectureUnitManagementComponent, UnitCreationCardComponent],
+            providers: [
+                MockProvider(LectureUnitService),
+                MockProvider(LectureService),
+                MockProvider(JhiAlertService),
+                { provide: Router, useClass: MockRouter },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: {
+                            subscribe: (fn: (value: Params) => void) =>
+                                fn({
+                                    lectureId: 1,
+                                }),
+                        },
+                    },
+                },
+            ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(LectureUnitManagementComponent);
-                comp = fixture.componentInstance;
-                comp.lectureUnits = [...lecture.lectureUnits!];
-                fixture.detectChanges();
+                lectureUnitManagementComponentFixture = TestBed.createComponent(LectureUnitManagementComponent);
+                lectureUnitManagementComponent = lectureUnitManagementComponentFixture.componentInstance;
+                lectureService = TestBed.inject(LectureService);
+                lectureUnitService = TestBed.inject(LectureUnitService);
+
+                findLectureStub = sinon.stub(lectureService, 'find');
+                updateOrderStub = sinon.stub(lectureUnitService, 'updateOrder');
+
+                textUnit = new TextUnit();
+                textUnit.id = 0;
+                videoUnit = new VideoUnit();
+                videoUnit.id = 1;
+                exerciseUnit = new ExerciseUnit();
+                exerciseUnit.id = 2;
+                attachmentUnit = new AttachmentUnit();
+                attachmentUnit.id = 3;
+
+                lecture = new Lecture();
+                lecture.id = 0;
+                lecture.lectureUnits = [textUnit, videoUnit, exerciseUnit, attachmentUnit];
+
+                findLectureStub.returns(
+                    of(
+                        new HttpResponse({
+                            body: lecture,
+                            status: 200,
+                        }),
+                    ),
+                );
+
+                updateOrderStub.returns(
+                    of(
+                        new HttpResponse({
+                            body: [],
+                            status: 200,
+                        }),
+                    ),
+                );
+
+                lectureUnitManagementComponentFixture.detectChanges();
+                unitCreationCardStubComponent = lectureUnitManagementComponentFixture.debugElement.query(By.directive(UnitCreationCardStubComponent)).componentInstance;
             });
     });
+    it('should initialize', () => {
+        lectureUnitManagementComponentFixture.detectChanges();
+        expect(lectureUnitManagementComponent).to.be.ok;
+    });
+
     it('should move down', () => {
-        const moveDownSpy = sinon.spy(comp, 'moveDown');
-        const moveUpSpy = sinon.spy(comp, 'moveUp');
-        fixture.detectChanges();
-        const upButton = fixture.debugElement.query(By.css('#up-0'));
+        const originalOrder = [...lecture.lectureUnits!];
+        lectureUnitManagementComponentFixture.detectChanges();
+        const moveDownSpy = sinon.spy(lectureUnitManagementComponent, 'moveDown');
+        const moveUpSpy = sinon.spy(lectureUnitManagementComponent, 'moveUp');
+        const upButton = lectureUnitManagementComponentFixture.debugElement.query(By.css('#up-0'));
         expect(upButton).to.exist;
         upButton.nativeElement.click();
-        fixture.detectChanges();
         expect(moveUpSpy).to.not.have.been.calledOnce;
         // not moved as first one
-        expect(comp.lectureUnits[0].id).to.equal(42);
-        const downButton = fixture.debugElement.query(By.css('#down-0'));
+        expect(lectureUnitManagementComponent.lectureUnits[0].id).to.equal(originalOrder[0].id);
+        const downButton = lectureUnitManagementComponentFixture.debugElement.query(By.css('#down-0'));
         expect(downButton).to.exist;
         downButton.nativeElement.click();
-        fixture.detectChanges();
         expect(moveDownSpy).to.have.been.calledOnce;
-        expect(comp.lectureUnits[0].id).to.equal(49);
+        expect(lectureUnitManagementComponent.lectureUnits[0].id).to.equal(originalOrder[1].id);
+        expect(lectureUnitManagementComponent.lectureUnits[1].id).to.equal(originalOrder[0].id);
     });
 
     it('should move up', () => {
-        const moveDownSpy = sinon.spy(comp, 'moveDown');
-        const moveUpSpy = sinon.spy(comp, 'moveUp');
-        fixture.detectChanges();
-        const downButton = fixture.debugElement.query(By.css('#down-1'));
+        const originalOrder = [...lecture.lectureUnits!];
+        lectureUnitManagementComponentFixture.detectChanges();
+        const moveDownSpy = sinon.spy(lectureUnitManagementComponent, 'moveDown');
+        const moveUpSpy = sinon.spy(lectureUnitManagementComponent, 'moveUp');
+        const lastPosition = lectureUnitManagementComponent.lectureUnits.length - 1;
+        const downButton = lectureUnitManagementComponentFixture.debugElement.query(By.css(`#down-${lastPosition}`));
         expect(downButton).to.exist;
         downButton.nativeElement.click();
-        fixture.detectChanges();
         expect(moveDownSpy).to.not.have.been.calledOnce;
-        // not moved as last one
-        expect(comp.lectureUnits[1].id).to.equal(49);
 
-        const upButton = fixture.debugElement.query(By.css('#up-1'));
+        expect(lectureUnitManagementComponent.lectureUnits[lastPosition].id).to.equal(originalOrder[lastPosition].id);
+        const upButton = lectureUnitManagementComponentFixture.debugElement.query(By.css(`#up-${lastPosition}`));
         expect(upButton).to.exist;
         upButton.nativeElement.click();
-        fixture.detectChanges();
         expect(moveUpSpy).to.have.been.calledOnce;
-        expect(comp.lectureUnits[1].id).to.equal(42);
+        expect(lectureUnitManagementComponent.lectureUnits[lastPosition].id).to.equal(originalOrder[lastPosition - 1].id);
     });
 
+    it('should navigate to edit attachment unit page', () => {
+        const editButtonClickedSpy = sinon.spy(lectureUnitManagementComponent, 'editButtonClicked');
+        const buttons = lectureUnitManagementComponentFixture.debugElement.queryAll(By.css(`.edit`));
+        for (const button of buttons) {
+            button.nativeElement.click();
+        }
+        expect(editButtonClickedSpy).to.have.been.called;
+    });
+
+    it('should navigate to create exercise unit page', () => {
+        const createExerciseUnitSpy = sinon.spy(lectureUnitManagementComponent, 'createExerciseUnit');
+        unitCreationCardStubComponent.createExerciseUnit.emit();
+        expect(createExerciseUnitSpy).to.have.been.called;
+    });
+    it('should navigate to create text unit page', () => {
+        const createTextUnitSpy = sinon.spy(lectureUnitManagementComponent, 'createTextUnit');
+        unitCreationCardStubComponent.createTextUnit.emit();
+        expect(createTextUnitSpy).to.have.been.called;
+    });
+    it('should navigate to create video unit page', () => {
+        const createVideoUnitSpy = sinon.spy(lectureUnitManagementComponent, 'createVideoUnit');
+        unitCreationCardStubComponent.createVideoUnit.emit();
+        expect(createVideoUnitSpy).to.have.been.called;
+    });
+    it('should navigate to create attachment unit page', () => {
+        const createAttachmentUnitSpy = sinon.spy(lectureUnitManagementComponent, 'createAttachmentUnit');
+        unitCreationCardStubComponent.createAttachmentUnit.emit();
+        expect(createAttachmentUnitSpy).to.have.been.called;
+    });
     it('should give the correct delete question translation key', () => {
-        expect(comp.getDeleteQuestionKey(new AttachmentUnit())).to.equal('artemisApp.attachmentUnit.delete.question');
-        expect(comp.getDeleteQuestionKey(new ExerciseUnit())).to.equal('artemisApp.exerciseUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new AttachmentUnit())).to.equal('artemisApp.attachmentUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new ExerciseUnit())).to.equal('artemisApp.exerciseUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new TextUnit())).to.equal('artemisApp.textUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new VideoUnit())).to.equal('artemisApp.videoUnit.delete.question');
     });
 
     it('should give the correct confirmation text translation key', () => {
-        expect(comp.getDeleteConfirmationTextKey(new AttachmentUnit())).to.equal('artemisApp.attachmentUnit.delete.typeNameToConfirm');
-        expect(comp.getDeleteConfirmationTextKey(new ExerciseUnit())).to.equal('artemisApp.exerciseUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentUnit())).to.equal('artemisApp.attachmentUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new ExerciseUnit())).to.equal('artemisApp.exerciseUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new VideoUnit())).to.equal('artemisApp.videoUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new TextUnit())).to.equal('artemisApp.textUnit.delete.typeNameToConfirm');
     });
 
     it('should give the correct action type', () => {
-        expect(comp.getActionType(new AttachmentUnit())).to.equal(ActionType.Delete);
-        expect(comp.getActionType(new ExerciseUnit())).to.equal(ActionType.Unlink);
+        expect(lectureUnitManagementComponent.getActionType(new AttachmentUnit())).to.equal(ActionType.Delete);
+        expect(lectureUnitManagementComponent.getActionType(new ExerciseUnit())).to.equal(ActionType.Unlink);
+        expect(lectureUnitManagementComponent.getActionType(new TextUnit())).to.equal(ActionType.Delete);
+        expect(lectureUnitManagementComponent.getActionType(new VideoUnit())).to.equal(ActionType.Delete);
     });
 });

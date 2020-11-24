@@ -7,6 +7,10 @@ export class MockExerciseService {
         return MockExerciseService.response({ id: exerciseId } as Exercise);
     }
 
+    getUpcomingExercises() {
+        return MockExerciseService.response([{ id: 1 } as Exercise, { id: 2 } as Exercise]);
+    }
+
     // helper method
     private static response<T>(entity: T) {
         return of({ body: entity }) as Observable<HttpResponse<T>>;

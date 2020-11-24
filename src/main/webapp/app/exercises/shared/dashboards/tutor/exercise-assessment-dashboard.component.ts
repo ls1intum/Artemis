@@ -456,26 +456,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         this.openingAssessmentEditorForNewSubmission = false;
     }
 
-    async openCodeEditorWithStudentSubmission(participationId: number) {
-        const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationId}/assessment`;
-        if (this.isTestRun) {
-            await this.router.navigate([route], { queryParams: { testRun: this.isTestRun } });
-        } else {
-            await this.router.navigate([route]);
-        }
-    }
-
     /**
      * Show complaint depending on the exercise type
      * @param complaint that we want to show
      */
     viewComplaint(complaint: Complaint) {
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            // this.openCodeEditorWithStudentSubmission(complaint.result!.participation!.id!);
-            this.openAssessmentEditor(complaint.result!.submission!);
-        } else {
-            this.openAssessmentEditor(complaint.result!.submission!);
-        }
+        const submission: Submission = complaint.result?.submission!;
+        // For programming exercises we need the participationId
+        submission.participation = complaint.result?.participation;
+        this.openAssessmentEditor(submission);
     }
 
     /**

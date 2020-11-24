@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
@@ -491,6 +492,7 @@ public class GitService {
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
+    @NotNull
     public Collection<File> listFiles(Repository repo) {
         // Check if list of files is already cached
         if (repo.getFiles() == null) {
