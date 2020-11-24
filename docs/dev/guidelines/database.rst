@@ -19,7 +19,7 @@ We **always** use ``FetchType.LAZY``, unless there is a very strong case to be m
 2. Relationships
 ================
 
-A relationship is a reference from one object to another. In a relational database relationships are defined through foreign keys. The source row contains the primary key of the target row to define the relationship (and sometimes the inverse). A query must be performed to read the target objects of the relationship using the foreign key and primary key information. In Java, if a relationship is to a collection of other objects, a ``Collection`` or ``array`` type is used to hold the contents of the relationship. In a relational database, collection relations are either defined by the target objects having a foreign key back to the source object's primary key, or by having an intermediate join table to store the relationship (both objects' primary keys). |br|
+A relationship is a reference from one object to another. In a relational database relationships are defined through foreign keys. The source row contains the primary key of the target row to define the relationship (and sometimes the inverse). A query must be performed to read the target objects of the relationship using the foreign key and primary key information. If there is a relationship to a collection of other objects, a ``Collection`` or ``array`` type is used to hold the contents of the relationship. In a relational database, collection relations are either defined by the target objects having a foreign key back to the source object's primary key, or by having an intermediate join table to store the relationship (containing both objects' primary keys). |br|
 
 In this section, we depict common entity relationships we use in Artemis and show some code snippets. 
 
