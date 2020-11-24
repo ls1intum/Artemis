@@ -45,7 +45,7 @@ public class DatabaseCleanupService implements InitializingBean {
     /**
      * Utility method that truncates all identified tables
      */
-    @Transactional
+    @Transactional // ok
     public void clearDatabase() {
         entityManager.flush();
         entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY FALSE").executeUpdate();
