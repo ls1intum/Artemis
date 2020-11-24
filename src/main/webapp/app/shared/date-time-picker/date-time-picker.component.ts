@@ -25,7 +25,7 @@ import * as moment from 'moment';
             <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
                 <fa-icon [icon]="'calendar-alt'"></fa-icon>
             </button>
-            <owl-date-time [startAt]="startAt?.isValid() ? startAt.toDate() : null" #dt></owl-date-time>
+            <owl-date-time [startAt]="setStartAt()" #dt></owl-date-time>
         </div>
     `,
     providers: [
@@ -46,6 +46,18 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() min: Moment; // Dates before this date are not selectable.
     @Input() max: Moment; // Dates after this date are not selectable.
     @Output() valueChange = new EventEmitter();
+
+    /**
+     * For all default values:
+     * Selects the current date and time and sets the seconds to 00 only in the case where
+     * value is not previously set and startAt is not set explicitly.
+     */
+    setStartAt() {
+        if (this.value === null && !this.startAt?.isValid()) {
+            this.startAt = moment().startOf('minutes');
+        }
+        return this.startAt?.isValid() ? this.startAt.toDate() : null;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (val: Moment) => {};
