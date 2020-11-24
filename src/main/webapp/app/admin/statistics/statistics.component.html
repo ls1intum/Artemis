@@ -2,6 +2,36 @@
     <h2 id="statistics-page-heading" jhiTranslate="statistics.title">User statistics</h2>
 
     <div class="row">
+        <h3 class="col-md-2" jhiTranslate="statistics.userLogins">User Login</h3>
+        <canvas
+            class="col-md-9"
+            baseChart
+            height="250"
+            width="1500"
+            [datasets]="barChartData"
+            [options]="barChartOptions"
+            [labels]="barChartLabels"
+            [legend]="barChartLegend"
+            [chartType]="barChartType"
+        ></canvas>
+    </div>
+
+    <div class="row">
+        <h3 class="col-md-2" jhiTranslate="statistics.submissions">Submissions</h3>
+        <canvas
+            class="col-md-9"
+            baseChart
+            height="250"
+            width="1500"
+            [datasets]="barChartData"
+            [options]="barChartOptions"
+            [labels]="barChartLabels"
+            [legend]="barChartLegend"
+            [chartType]="barChartType"
+        ></canvas>
+    </div>
+
+    <div class="row">
         <h4 jhiTranslate="statistics.loggedInUsers">Amount of logins of distinct users in the last</h4>
         <div class="form-group-narrow">
             <input

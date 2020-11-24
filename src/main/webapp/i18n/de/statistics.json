@@ -14,6 +14,8 @@
         "examRegistrations": " -> Die Anzahl an Studenten mit einer Registrierung für die Klausur: ",
         "activeTutors": "Anzahl der Tutoren, die eine Bewertung erstellt haben in den letzten ",
         "results": "Anzahl erstellter Resultate in den letzten ",
-        "resultFeedbacks": "-> mit der absoluten Feedbackanzahl: "
+        "resultFeedbacks": "-> mit der absoluten Feedbackanzahl: ",
+        "userLogins": "Benutzer Anmeldungen",
+        "submissions": "Abgaben"
     }
 }

@@ -1,9 +1,16 @@
-import { Component, OnInit, OnChanges } from '@angular/core';
+import { Component, OnInit, OnChanges, ViewChild } from '@angular/core';
 import { StatisticsService } from 'app/admin/statistics/statistics.service';
 import { SPAN_PATTERN } from 'app/app.constants';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
-import { Label } from 'ng2-charts';
+import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+
+enum SpanType {
+    DAY = 'DAY',
+    WEEK = 'WEEK',
+    MONTH = 'MONTH',
+    YEAR = 'YEAR',
+}
 
 @Component({
     selector: 'jhi-statistics',
@@ -11,6 +18,7 @@ import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/qui
 })
 export class JhiStatisticsComponent implements OnInit, OnChanges {
     spanPattern = SPAN_PATTERN;
+    span: SpanType = SpanType.YEAR;
     userSpan = 7;
     activeUserSpan = 7;
     submissionSpan = 7;
@@ -40,9 +48,12 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
     public barChartLegend = true;
     public barChartData: ChartDataSets[] = [];
 
+    @ViewChild(BaseChartDirective) chart: BaseChartDirective;
+
     constructor(private service: StatisticsService) {}
 
     ngOnInit() {
+        this.createChart([]);
         this.onChangedUserSpan();
         this.onChangedActiveUserSpan();
         this.onChangedSubmissionSpan();
@@ -57,6 +68,29 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
         this.service.getloggedUsers(this.userSpan).subscribe((res: number) => {
             this.loggedInUsers = res;
         });
+        this.createChart([]);
+    }
+
+    private setBinWidth(): void {
+        switch (this.span) {
+            case SpanType.DAY:
+                this.histogramData = Array(24).fill(0);
+                break;
+            case SpanType.WEEK:
+                this.histogramData = Array(7).fill(0);
+                break;
+            case SpanType.MONTH:
+                const days = this.daysInMonth();
+                this.histogramData = Array(days).fill(0);
+                break;
+            case SpanType.YEAR:
+                this.histogramData = Array(12).fill(0);
+                break;
+        }
+    }
+
+    private daysInMonth(): number {
+        return new Date(new Date().getFullYear(), new Date().getMonth(), 0).getDate();
     }
 
     onChangedUserSpan(): void {
@@ -64,11 +98,13 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
             this.loggedInUsers = res;
         });
     }
+
     onChangedActiveUserSpan(): void {
         this.service.getActiveUsers(this.activeUserSpan).subscribe((res: number) => {
             this.activeUsers = res;
         });
     }
+
     onChangedSubmissionSpan(): void {
         this.service.getTotalSubmissions(this.submissionSpan).subscribe((res: number) => {
             this.totalSubmissions = res;
@@ -117,59 +153,45 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
         });
     }
 
-    /*private createChart() {
-        const labels: string[] = [];
-        let i;
-        for (i = 0; i < this.histogramData.length; i++) {
-            labels[i] = `[${i},${(i + 1)}`;
-            labels[i] += i === this.histogramData.length - 1 ? ']' : ')';
+    private createChart(includedData: number[]) {
+        this.setBinWidth();
+        let labels: string[] = [];
+        switch (this.span) {
+            case SpanType.DAY:
+                for (let i = 0; i < this.histogramData.length; i++) {
+                    labels[i] = `${i}:00,${i + 1}:00`;
+                }
+                break;
+            case SpanType.WEEK:
+                labels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                break;
+            case SpanType.MONTH:
+                for (let i = 0; i < this.histogramData.length; i++) {
+                    labels[i] = i + 1 + '';
+                }
+                break;
+            case SpanType.YEAR:
+                labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                break;
         }
         this.barChartLabels = labels;
+        this.histogramData = [4002, 2020, 2088, 2050, 3660, 2110, 1202, 802, 2809, 2150, 2543, 909];
 
-        const component = this;
-
+        this.barChartData = [
+            {
+                label: '# of students',
+                data: this.histogramData,
+                backgroundColor: 'rgba(53,61,71,1)',
+                borderColor: 'rgba(53,61,71,1)',
+                hoverBackgroundColor: 'rgba(53,61,71,1)',
+            },
+        ];
         this.barChartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            legend: {
-                align: 'start',
-                position: 'bottom',
-            },
-            scales: {
-                yAxes: [
-                    {
-                        scaleLabel: {
-                            display: true,
-                            labelString: this.translateService.instant('artemisApp.examScores.yAxes'),
-                        },
-                        ticks: {
-                            maxTicksLimit: 11,
-                            beginAtZero: true,
-                            precision: 0,
-                            min: 0,
-                            max: this.calculateTickMax(),
-                        } as LinearTickOptions,
-                    },
-                ],
-                xAxes: [
-                    {
-                        scaleLabel: {
-                            display: true,
-                            labelString: this.translateService.instant('artemisApp.examScores.xAxes'),
-                        },
-                    },
-                ],
-            },
-            hover: {
-                animationDuration: 0,
-            },
             animation: {
                 duration: 1,
                 onComplete() {
                     const chartInstance = this.chart,
                         ctx = chartInstance.ctx;
-
-                    ctx.font = Chart.helpers.fontString(Chart.defaults.global.defaultFontSize, Chart.defaults.global.defaultFontStyle, Chart.defaults.global.defaultFontFamily);
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
 
@@ -177,20 +199,11 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
                         const meta = chartInstance.controller.getDatasetMeta(j);
                         meta.data.forEach(function (bar: any, index: number) {
                             const data = dataset.data[index];
-                            ctx.fillText(data, bar._model.x, bar._model.y - 20);
-                            ctx.fillText(`(${component.roundAndPerformLocalConversion((data * 100) / component.noOfExamsFiltered, 2, 2)}%)`, bar._model.x, bar._model.y - 5);
+                            ctx.fillText(data, bar._model.x, bar._model.y - 5);
                         });
                     });
                 },
             },
         };
-
-        this.barChartData = [
-            {
-                label: '# of students',
-                data: this.histogramData,
-                backgroundColor: 'rgba(0,0,0,0.5)',
-            },
-        ];
-    }*/
+    }
 }
