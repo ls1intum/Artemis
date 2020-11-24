@@ -31,12 +31,14 @@ export class ScoreChartPreset implements ChartPreset {
                 generateLabels: () =>
                     [
                         {
+                            datasetIndex: 0,
                             text: this.labels[0] + (this.showValues ? `: ${this.valueLabels[0]}` : ''),
                             fillStyle: '#28a745',
                             strokeStyle: '#28a745',
                             lineWidth: 1,
                         },
                         {
+                            datasetIndex: 1,
                             text: this.labels[1] + (this.showValues ? `: ${this.valueLabels[1]}` : ''),
                             fillStyle: this.redTransparentPattern,
                             strokeStyle: '#dc3545',
