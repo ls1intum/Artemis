@@ -175,8 +175,7 @@ Best Practices
            // restore the association to the parent object
            feedback.setResult(result);
            savedFeedbacks.add(feedback);
-       });
-       
+        });  
 
         // set the association of the parent to its child objects which are now persisted in the database
         result.setFeedbacks(savedFeedbacks);
@@ -198,24 +197,15 @@ Solutions for known issues
 
 * ``JpaSystemException: null index column for collection`` caused by ``@OrderColumn`` annotation:
 
+ There is a problem with the way you save the associated objects. You must follow this procedure: 
+ 
  #. Save the child entity (e.g., `Feedback <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/in/www1/artemis/domain/Feedback.java>`_) without connection to the parent entity (e.g., `Result <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/in/www1/artemis/domain/Result.java>`_)
  #. Add back the connection of the child entity to the parent entity.
  #. Save the parent entity.
  #. Always use the returned value after saving the entity, see: ``feedback = feedbackRepository.save(feedback);``
 
- .. code:: java
-
-    // ProgrammingAssessmentService
-    List<Feedback> savedFeedbacks = new ArrayList<>();
-    result.getFeedbacks().forEach(feedback -> {
-        // cut association to parent object
-        feedback.setResult(null);
-        // persist the child object without an association to the parent object. IMPORTANT: Use the object returned from the database!
-        feedback = feedbackRepository.save(feedback);
-        // restore the association to the parent object
-        feedback.setResult(result);
-        savedFeedbacks.add(feedback);
-    });
+ .. note::
+        For more information see :ref:`ordered collections <ordered>`.
 
 
 * There are ``null`` values in your ordered collection: You must annotate the ordered collection with ``CascadeType.ALL`` and ``orphanRemoval = true``. E.g:
