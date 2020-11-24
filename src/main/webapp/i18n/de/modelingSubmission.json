@@ -15,7 +15,7 @@
             "detail": {
                 "title": "Einreichung"
             },
-            "view": "Einreichung ansehen",
+            "view": "Bewertung ansehen",
             "model": "Modell",
             "explanationText": "Erklärungstext",
             "modelingEditor": "Modellierungseditor",

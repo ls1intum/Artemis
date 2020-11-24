@@ -156,8 +156,8 @@ public class ProgrammingExerciseParticipationService {
         return studentParticipationRepository.findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
     }
 
-    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(Long participationId) {
-        return studentParticipationRepository.findByIdWithResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(participationId);
+    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestManualResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(Long participationId) {
+        return studentParticipationRepository.findByIdWithLatestManualResultAndFeedbacksAndRelatedSubmissionsAndAssessor(participationId);
     }
 
     /**

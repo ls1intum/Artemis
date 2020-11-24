@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 
 /**
  * An inline editing field to use for tables.
@@ -13,17 +13,22 @@ import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@
                 class="table-editable-field__input form-control mr-2"
                 (blur)="sendValueUpdate($event)"
                 (keyup.enter)="sendValueUpdate($event)"
-                [value]="value"
+                [value]="inputValue"
+                (input)="inputValue = $event.target.value"
                 type="text"
             />
         </div>
     `,
 })
-export class TableEditableFieldComponent<T> {
+export class TableEditableFieldComponent {
     @ViewChild('editingInput', { static: false }) editingInput: ElementRef;
 
-    @Input() value: T;
-    @Output() onValueUpdate = new EventEmitter<T>();
+    @Input() set value(value: any) {
+        this.inputValue = value;
+    }
+    @Input() onValueUpdate: (value: any) => any;
+
+    inputValue: any;
 
     /**
      * Triggers a value update signal and delegates the task to method specified in the Output decorator,
@@ -31,6 +36,6 @@ export class TableEditableFieldComponent<T> {
      * @param event The event that occurred.
      */
     sendValueUpdate(event: any) {
-        this.onValueUpdate.emit(event.target.value);
+        this.inputValue = this.onValueUpdate(event.target.value);
     }
 }

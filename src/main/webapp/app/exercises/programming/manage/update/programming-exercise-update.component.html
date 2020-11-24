@@ -203,7 +203,7 @@
                             class="form-check-input custom-control-input"
                             id="field_staticCodeAnalysisEnabled"
                             name="staticCodeAnalysisEnabled"
-                            [disabled]="!!programmingExercise.id"
+                            [disabled]="!!programmingExercise.id || programmingExercise.sequentialTestRuns"
                             [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
                             (change)="onStaticCodeAnalysisChanged()"
                         />
@@ -300,7 +300,7 @@
                                 type="checkbox"
                                 name="sequentialTestRuns"
                                 id="field_sequentialTestRuns"
-                                [disabled]="!!programmingExercise.id"
+                                [disabled]="!!programmingExercise.id || programmingExercise.staticCodeAnalysisEnabled"
                                 [(ngModel)]="programmingExercise.sequentialTestRuns"
                                 checked
                             />
@@ -415,6 +415,15 @@
                             <input class="form-check-input" type="checkbox" name="recreateBuildPlans" id="field_recreateBuildPlans" [(ngModel)]="recreateBuildPlans" checked />
                             <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title">Recreate Build Plans</span>
                             <jhi-help-icon placement="top" text="artemisApp.programmingExercise.recreateBuildPlans.description"></jhi-help-icon>
+                        </label>
+                    </div>
+                </div>
+                <div *ngIf="isImport" class="form-group-narrow">
+                    <div class="form-check">
+                        <label class="form-check-label" for="field_updateTemplateFiles">
+                            <input class="form-check-input" type="checkbox" name="recreateBuildPlans" id="field_updateTemplateFiles" [(ngModel)]="updateTemplate" checked />
+                            <span jhiTranslate="artemisApp.programmingExercise.updateTemplate.title">Update template</span>
+                            <jhi-help-icon placement="top" text="artemisApp.programmingExercise.updateTemplate.description"></jhi-help-icon>
                         </label>
                     </div>
                 </div>
