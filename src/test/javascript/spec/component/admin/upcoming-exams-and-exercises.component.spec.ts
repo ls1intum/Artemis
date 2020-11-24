@@ -11,8 +11,6 @@ import { MockExamManagementService } from '../../helpers/mocks/service/mock-exam
 describe('UpcomingExamsAndExercisesComponent', () => {
     let component: UpcomingExamsAndExercisesComponent;
     let fixture: ComponentFixture<UpcomingExamsAndExercisesComponent>;
-    let exerciseService: ExerciseService;
-    let examService: ExamManagementService;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -29,8 +27,6 @@ describe('UpcomingExamsAndExercisesComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(UpcomingExamsAndExercisesComponent);
                 component = fixture.componentInstance;
-                exerciseService = fixture.debugElement.injector.get(ExerciseService);
-                examService = fixture.debugElement.injector.get(ExamManagementService);
             });
     });
 
