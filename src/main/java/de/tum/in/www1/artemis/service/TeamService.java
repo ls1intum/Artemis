@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.RegistrationNumbersNotFoundException;
 import org.springframework.data.util.Pair;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -247,7 +248,7 @@ public class TeamService {
         });
 
         if(!notFoundRegistrationNumbers.isEmpty()){
-            throw new EntityNotFoundException("Following registration numbers could not be found in course: "+String.join("\n",notFoundRegistrationNumbers));
+            throw new RegistrationNumbersNotFoundException(notFoundRegistrationNumbers);
         }
         return convertedTeams;
     }

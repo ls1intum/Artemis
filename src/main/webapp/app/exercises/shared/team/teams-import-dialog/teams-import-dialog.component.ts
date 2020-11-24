@@ -2,7 +2,7 @@ import { Component, Input, ViewChild, OnInit, OnDestroy, ViewEncapsulation } fro
 import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Team, TeamImportStrategyType as ImportStrategy } from 'app/entities/team.model';
@@ -47,6 +47,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     studentLoginsAlreadyExistingInExercise: string[] = [];
     sourceTeamsFreeOfConflicts: Team[] = [];
     studentRegistrationNumbersAlreadyExistingInOtherTeams: string[] = [];
+    notFoundRegistrationNumbers: string[] = [];
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -274,12 +275,13 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
             this.isImporting = true;
             this.teamService.importTeamsFromSourceExercise(this.exercise, this.sourceExercise!, this.importStrategy!).subscribe(
                 (res) => this.onSaveSuccess(res),
-                ({ error }) => this.onSaveError(error),
+                (error) => this.onSaveError(error),
             );
         } else if (this.sourceTeams) {
+            this.notFoundRegistrationNumbers = [];
             this.teamService.importTeamsFromFile(this.exercise, this.sourceTeams, this.importStrategy!).subscribe(
                 (res) => this.onSaveSuccess(res),
-                ({ error }) => this.onSaveError(error),
+                (error) => this.onSaveError(error),
             );
         }
     }
@@ -323,14 +325,26 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
     /**
      * Hook to indicate an error on save
+     * @param {HttpErrorResponse} httpErrorResponse - The occurred error
      */
-    onSaveError(e: any) {
-        console.log(e);
-        if (e.detail) {
-            this.jhiAlertService.error(e.detail);
+    onSaveError(httpErrorResponse: HttpErrorResponse) {
+        const { errorKey, params } = httpErrorResponse.error;
+
+        switch (errorKey) {
+            case 'registrationNumbersNotFound':
+                const { registrationNumbers } = params;
+                this.notFoundRegistrationNumbers = registrationNumbers;
+                break;
+            default:
+                break;
+        }
+
+        if (this.notFoundRegistrationNumbers.length > 0) {
+            this.jhiAlertService.error('artemisApp.team.errors.registrationNumbersNotFound', { registrationNumbers: this.notFoundRegistrationNumbers });
         } else {
             this.jhiAlertService.error('artemisApp.team.importError');
         }
+
         this.isImporting = false;
     }
 
@@ -341,6 +355,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         this.initImportStrategy();
         this.isImporting = false;
         this.studentRegistrationNumbersAlreadyExistingInOtherTeams = [];
+        this.notFoundRegistrationNumbers = [];
     }
 
     /**
@@ -360,5 +375,9 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
     get showLegend() {
         return this.sourceTeams && this.numberOfConflictFreeSourceTeams !== this.sourceTeams.length;
+    }
+
+    get problematicRegistrationNumbers() {
+        return [...new Set([...this.notFoundRegistrationNumbers, ...this.studentRegistrationNumbersAlreadyExistingInOtherTeams])];
     }
 }

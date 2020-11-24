@@ -60,7 +60,8 @@
                 "noResults": "No students found in course for search:"
             },
             "errors": {
-                "studentAlreadyAssignedToTeam": "Student with login {{ studentLogin }} is already assigned to team with id {{ teamId }."
+                "studentAlreadyAssignedToTeam": "Student with login {{ studentLogin }} is already assigned to team with id {{ teamId }.",
+                "registrationNumbersNotFound": "Students with following registration numbers could not be found: {{ registrationNumbers }}"
             },
             "selectOwnerForTeam": "Select tutor (by searching for login or name)",
             "ownerSearch": {

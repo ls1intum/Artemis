@@ -30,6 +30,8 @@ public final class ErrorConstants {
 
     public static final URI STUDENT_ALREADY_ASSIGNED_TYPE = URI.create(PROBLEM_BASE_URL + "/student-already-assigned");
 
+    public static final URI REGISTRATION_NUMBER_NOT_FOUND = URI.create(PROBLEM_BASE_URL + "/registration-number-not-found");
+
     private ErrorConstants() {
     }
 }
