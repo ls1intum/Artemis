@@ -235,7 +235,7 @@
                             Online editor
                         </button>
                         <button
-                            *ngIf="exercise.course && isManualResult(value)"
+                            *ngIf="exercise.course"
                             [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id, 'assessment']"
                             class="btn btn-primary btn-sm mr-1"
                         >
@@ -243,7 +243,7 @@
                             {{ 'artemisApp.programmingSubmission.view' | translate }}
                         </button>
                         <button
-                            *ngIf="exercise.exerciseGroup && isManualResult(value)"
+                            *ngIf="exercise.exerciseGroup"
                             [routerLink]="[
                                 '/course-management',
                                 exercise.exerciseGroup?.exam.course.id,
