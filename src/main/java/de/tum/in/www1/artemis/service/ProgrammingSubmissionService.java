@@ -639,7 +639,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     /**
      * Get the programming submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it.
      *
-     * @param submissionId       the id of the programming submission
+     * @param submissionId the id of the programming submission
      * @return the locked programming submission
      */
     public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId) {
