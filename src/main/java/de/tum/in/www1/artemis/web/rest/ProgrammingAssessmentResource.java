@@ -34,8 +34,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final WebsocketMessagingService messagingService;
-
     private final LtiService ltiService;
 
     private final ParticipationService participationService;
@@ -43,10 +41,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService,
             WebsocketMessagingService messagingService, LtiService ltiService, ParticipationService participationService) {
-        super(authCheckService, userService, exerciseService, programmingSubmissionService, programmingAssessmentService, resultRepository, examService);
+        super(authCheckService, userService, exerciseService, programmingSubmissionService, programmingAssessmentService, resultRepository, examService, messagingService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.messagingService = messagingService;
         this.ltiService = ltiService;
         this.participationService = participationService;
     }
@@ -118,7 +115,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        Result manualResult = participation.getResults().stream().filter(result -> result.isManualResult()).findFirst().get();
+        Result manualResult = participation.getResults().stream().filter(Result::isManualResult).findFirst().get();
         // prevent that tutors create multiple manual results
         newResult.setId(manualResult.getId());
         // load assessor
