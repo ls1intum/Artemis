@@ -100,7 +100,7 @@ jobs:
     - name: Install Dependencies
       run: yarn install
     - name: TypeScript Tests
-      run: yarn test:coverage --ci
+      run: yarn test:ci --ci
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
