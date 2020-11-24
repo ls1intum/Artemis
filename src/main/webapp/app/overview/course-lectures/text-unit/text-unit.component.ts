@@ -7,7 +7,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 @Component({
     selector: 'jhi-text-unit',
     templateUrl: './text-unit.component.html',
-    styleUrls: ['./text-unit.component.scss'],
+    styleUrls: ['../lecture-unit.component.scss'],
 })
 export class TextUnitComponent implements OnInit {
     @Input()

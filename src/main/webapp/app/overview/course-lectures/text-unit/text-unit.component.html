@@ -1,9 +1,9 @@
 <div class="row align-items-center mb-2 mt-2">
-    <div class="card text-unit">
-        <div class="text-unit-header container" (click)="handleCollapse($event)">
+    <div class="card unit-card">
+        <div class="unit-card-header card-header container" [class.rounded]="isCollapsed" (click)="handleCollapse($event)">
             <div class="row">
-                <div class="col-10 my-auto">
-                    <h5 class="card-title">
+                <div class="col-10">
+                    <h5 class="card-title my-auto">
                         <fa-icon class="mr-2" [icon]="'scroll'" [ngbTooltip]="'artemisApp.textUnit.tooltip' | translate"></fa-icon>
                         {{ textUnit?.name ? textUnit.name : '' }}
                         <span
@@ -16,14 +16,14 @@
                         >
                     </h5>
                 </div>
-                <div class="col-2 btn-group flex-btn-group-container p-2">
-                    <button id="popupButton" type="button" class="btn btn-sm btn-primary" (click)="openPopup($event)">
+                <div class="col-2 btn-group flex-btn-group-container">
+                    <button id="popupButton" type="button" style="max-height: 40px" class="btn btn-sm btn-primary rounded-pill" (click)="openPopup($event)">
                         <fa-icon [icon]="'external-link-alt'"></fa-icon>
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.textUnit.isolated">View in Popup</span>
                     </button>
                 </div>
             </div>
         </div>
-        <div class="card-body markdown-preview" id="printContent" [ngbCollapse]="isCollapsed" [innerHtml]="formattedContent"></div>
+        <div class="card-body markdown-preview unit-card-body" id="printContent" [ngbCollapse]="isCollapsed" [innerHtml]="formattedContent"></div>
     </div>
 </div>

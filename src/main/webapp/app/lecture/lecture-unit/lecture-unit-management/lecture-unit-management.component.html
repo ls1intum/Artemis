@@ -31,6 +31,7 @@
         </div>
         <div class="col-1 my-auto">
             <button
+                class="rounded-pill"
                 *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                 jhiDeleteButton
                 [actionType]="getActionType(lectureUnit)"
@@ -42,7 +43,7 @@
             >
                 <fa-icon [icon]="'times'"></fa-icon>
             </button>
-            <button *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary edit" (click)="editButtonClicked(lectureUnit)">
+            <button *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary edit rounded-pill" (click)="editButtonClicked(lectureUnit)">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                 <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
             </button>
