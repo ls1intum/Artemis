@@ -28,6 +28,7 @@ describe('ResultDetailComponent', () => {
     let fixture: ComponentFixture<ResultDetailComponent>;
     let debugElement: DebugElement;
 
+    let exercise: ProgrammingExercise;
     let buildLogService: BuildLogService;
     let resultService: ResultService;
     let buildlogsStub: SinonStub;
@@ -41,7 +42,13 @@ describe('ResultDetailComponent', () => {
         return Object.assign({ type: FeedbackItemType.Feedback, credits: 0, title: undefined, positive: undefined } as FeedbackItem, item);
     };
 
-    const generateSCAFeedbackPair = (showDetails: boolean, category: string, credits: number, { line = 1, column = undefined }: { line?: number; column?: number } = {}) => {
+    const generateSCAFeedbackPair = (
+        showDetails: boolean,
+        category: string,
+        credits: number,
+        penalty: number,
+        { line = 1, column = undefined }: { line?: number; column?: number } = {},
+    ) => {
         return {
             fb: makeFeedback({
                 text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + category,
@@ -51,6 +58,7 @@ describe('ResultDetailComponent', () => {
                     startColumn: column,
                     rule: 'Rule',
                     message: 'This is a code issue',
+                    penalty,
                 }),
                 credits,
                 positive: false,
@@ -60,7 +68,8 @@ describe('ResultDetailComponent', () => {
                 category: 'Code Issue',
                 title: category + ' Issue in file www/packet/File.java at line ' + line + (column != undefined ? ' column ' + column : ''),
                 text: showDetails ? 'Rule: This is a code issue' : 'This is a code issue',
-                credits,
+                credits: -penalty,
+                appliedCredits: credits,
                 positive: false,
             }),
         };
@@ -112,8 +121,9 @@ describe('ResultDetailComponent', () => {
             feedbacks.push(pair.fb);
             expectedItems.push(pair.item);
         };
-        addPair(generateSCAFeedbackPair(showTestDetails, 'Bad Practice', -2));
-        addPair(generateSCAFeedbackPair(showTestDetails, 'Styling', -0.5, { column: 10 }));
+        addPair(generateSCAFeedbackPair(showTestDetails, 'Bad Practice', -2, 2));
+        addPair(generateSCAFeedbackPair(showTestDetails, 'Styling', -0.5, 1, { column: 10 }));
+        addPair(generateSCAFeedbackPair(showTestDetails, 'Styling', -0.5, 1, { line: 2, column: 1 }));
         addPair(generateManualFeedbackPair(showTestDetails, 'Positive', 'This is good', 4));
         addPair(generateManualFeedbackPair(showTestDetails, 'Negative', 'This is bad', -2));
         addPair(generateManualFeedbackPair(showTestDetails, 'Neutral', 'This is neutral', 0));
@@ -145,17 +155,19 @@ describe('ResultDetailComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 
+                exercise = {
+                    maxScore: 100,
+                    bonusPoints: 0,
+                    type: ExerciseType.PROGRAMMING,
+                    staticCodeAnalysisEnabled: true,
+                    maxStaticCodeAnalysisPenalty: 20,
+                } as ProgrammingExercise;
+
                 comp.result = {
                     id: 89,
                     participation: {
                         id: 55,
-                        exercise: {
-                            maxScore: 100,
-                            bonusPoints: 0,
-                            type: ExerciseType.PROGRAMMING,
-                            staticCodeAnalysisEnabled: true,
-                            maxStaticCodeAnalysisPenalty: 20,
-                        } as ProgrammingExercise,
+                        exercise,
                     },
                 } as Result;
 
@@ -287,8 +299,8 @@ describe('ResultDetailComponent', () => {
     it('should generate correct class names for feedback items', () => {
         const { expectedItems } = generateFeedbacksAndExpectedItems();
 
-        //                       test case 1       sca              sca              manual 1         manual 2        manual 3           test case 2
-        const expectedClasses = ['alert-success', 'alert-warning', 'alert-warning', 'alert-success', 'alert-danger', 'alert-warning', 'alert-danger'];
+        //                       test case 1       sca              sca              sca              manual 1         manual 2        manual 3         test case 2
+        const expectedClasses = ['alert-success', 'alert-warning', 'alert-warning', 'alert-warning', 'alert-success', 'alert-danger', 'alert-warning', 'alert-danger'];
 
         expectedItems.forEach((item, index) => expect(comp.getClassNameForFeedbackItem(item)).to.equal(expectedClasses[index]));
     });
@@ -304,13 +316,18 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
-        expect(chartSetValuesSpy).to.have.been.calledOnce;
+        expect(comp.showScoreChartTooltip).to.equal(true);
+        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(7, 5, 6, exercise);
         // @ts-ignore
         expect(comp.scoreChartPreset.datasets.length).to.equal(2);
         // @ts-ignore
-        expect(comp.scoreChartPreset.datasets[0].data[0]).to.equal(2.5);
+        expect(comp.scoreChartPreset.datasets[0].data[0]).to.equal(2);
         // @ts-ignore
-        expect(comp.scoreChartPreset.datasets[1].data[0]).to.equal(4.5);
+        expect(comp.scoreChartPreset.valueLabels[0]).to.equal('7');
+        // @ts-ignore
+        expect(comp.scoreChartPreset.datasets[1].data[0]).to.equal(5);
+        // @ts-ignore
+        expect(comp.scoreChartPreset.valueLabels[1]).to.equal('5 of 6');
         expect(comp.isLoading).to.be.false;
     });
 });

@@ -308,7 +308,6 @@ export class ResultDetailComponent implements OnInit {
                 const maxPoints = programmingExercise.maxScore! + (programmingExercise.bonusPoints || 0) === 0 ? 100 : programmingExercise.maxScore!;
                 const maxPenaltyCredits = (maxPoints * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
                 codeIssueCredits = Math.min(codeIssueCredits, maxPenaltyCredits);
-                codeIssuePenalties = Math.min(codeIssuePenalties, maxPenaltyCredits);
             }
         }
 
