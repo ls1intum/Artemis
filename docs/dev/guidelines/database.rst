@@ -158,7 +158,7 @@ Best Practices
 
 
        .. note::
-        Hiberanate will take care of the ordering for you but you must create the order column in the database. This is not created automatically!
+        Hibernate will take care of the ordering for you but you must create the order column in the database. This is not created automatically!
 
 
     With ordered collections, you have to be very careful with the way you persist the objects in the database. You must first persist the child object without a relation to the parent object. Then, you recreate the association and persist the parent object. Example of how to correctly persist objects in an ordered collection:
