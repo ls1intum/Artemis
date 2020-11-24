@@ -192,7 +192,7 @@
                                     ></fa-icon>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <select [ngModel]="value" class="p-1" (change)="updateEditedCategoryField(row, EditableField.STATE)">
+                                    <select [ngModel]="value" class="p-1" (change)="updateEditedCategoryField(row, EditableField.STATE)($event.target.value)">
                                         <option *ngFor="let s of categoryStateList" [value]="s.value">{{ s.name }}</option>
                                     </select>
                                 </ng-template>
