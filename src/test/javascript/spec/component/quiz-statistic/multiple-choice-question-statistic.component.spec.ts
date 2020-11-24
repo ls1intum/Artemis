@@ -10,26 +10,25 @@ import { Course } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { DragAndDropQuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
-import { DropLocation } from 'app/entities/quiz/drop-location.model';
-import { DragAndDropQuestionStatistic } from 'app/entities/quiz/drag-and-drop-question-statistic.model';
-import { DropLocationCounter } from 'app/entities/quiz/drop-location-counter.model';
+import { MultipleChoiceQuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/multiple-choice-question-statistic/multiple-choice-question-statistic.component';
+import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
+import { AnswerCounter } from 'app/entities/quiz/answer-counter.model';
+import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 
-const route = { params: of({ courseId: 2, exerciseId: 42, questionId: 1 }) };
-const dropLocation1 = { posX: 5, invalid: false, tempID: 1 } as DropLocation;
-const dropLocation2 = { posX: 0, invalid: false, tempID: 2 } as DropLocation;
-const dropLocationCounter = { dropLocation: dropLocation1, ratedCounter: 0, unRatedCounter: 0 } as DropLocationCounter;
-const questionStatistic = { dropLocation: dropLocation1, dropLocationCounters: [dropLocationCounter] } as DragAndDropQuestionStatistic;
-const question = { id: 1, dropLocations: [dropLocation1, dropLocation2], quizQuestionStatistic: questionStatistic } as DragAndDropQuestion;
-const course = { id: 2 } as Course;
-let quizExercise = { id: 42, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
+const route = { params: of({ courseId: 3, exerciseId: 22, questionId: 1 }) };
+const answerOption1 = { id: 5 } as AnswerOption;
+const answerCounter = { answer: answerOption1 } as AnswerCounter;
+const questionStatistic = { answerCounters: [answerCounter] } as MultipleChoiceQuestionStatistic;
+const question = { id: 1, answerOptions: [answerOption1], quizQuestionStatistic: questionStatistic } as MultipleChoiceQuestion;
+const course = { id: 3 } as Course;
+let quizExercise = { id: 22, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
 
-describe('QuizExercise Drag And Drop Question Statistic Component', () => {
-    let comp: DragAndDropQuestionStatisticComponent;
-    let fixture: ComponentFixture<DragAndDropQuestionStatisticComponent>;
+describe('QuizExercise Multiple Choice Question Statistic Component', () => {
+    let comp: MultipleChoiceQuestionStatisticComponent;
+    let fixture: ComponentFixture<MultipleChoiceQuestionStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
     let accountSpy: jasmine.Spy;
@@ -38,7 +37,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [DragAndDropQuestionStatisticComponent],
+            declarations: [MultipleChoiceQuestionStatisticComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -47,10 +46,10 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
                 { provide: AccountService, useClass: MockAccountService },
             ],
         })
-            .overrideTemplate(DragAndDropQuestionStatisticComponent, '')
+            .overrideTemplate(MultipleChoiceQuestionStatisticComponent, '')
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(DragAndDropQuestionStatisticComponent);
+                fixture = TestBed.createComponent(MultipleChoiceQuestionStatisticComponent);
                 comp = fixture.componentInstance;
                 quizService = fixture.debugElement.injector.get(QuizExerciseService);
                 accountService = fixture.debugElement.injector.get(AccountService);
@@ -59,7 +58,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
     });
 
     afterEach(() => {
-        quizExercise = { id: 42, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
+        quizExercise = { id: 22, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
     });
 
     describe('OnInit', function () {
@@ -71,9 +70,9 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
             comp.ngOnInit();
 
             expect(accountSpy).toHaveBeenCalled();
-            expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
+            expect(quizServiceFindSpy).toHaveBeenCalledWith(22);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
-            expect(comp.websocketChannelForData).toEqual('/topic/statistic/42');
+            expect(comp.websocketChannelForData).toEqual('/topic/statistic/22');
         });
 
         it('should not load Quiz if not authorised', () => {
@@ -91,18 +90,18 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
     describe('loadLayout', function () {
         it('should call functions from loadLayout', () => {
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
-            const orderDropLocationSpy = spyOn(comp, 'orderDropLocationByPos');
             const resetLabelsSpy = spyOn(comp, 'resetLabelsColors');
             const addLastBarSpy = spyOn(comp, 'addLastBarLayout');
             const loadInvalidLayoutSpy = spyOn(comp, 'loadInvalidLayout');
+            const loadSolutionSpy = spyOn(comp, 'loadSolutionLayout');
 
             comp.ngOnInit();
             comp.loadLayout();
 
-            expect(orderDropLocationSpy).toHaveBeenCalled();
             expect(resetLabelsSpy).toHaveBeenCalled();
             expect(addLastBarSpy).toHaveBeenCalled();
             expect(loadInvalidLayoutSpy).toHaveBeenCalled();
+            expect(loadSolutionSpy).toHaveBeenCalled();
         });
     });
 
@@ -110,12 +109,14 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
         it('should call functions from loadData', () => {
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
             const resetDataSpy = spyOn(comp, 'resetData');
+            const addDataSpy = spyOn(comp, 'addData');
             const updateDataSpy = spyOn(comp, 'updateData');
 
             comp.ngOnInit();
             comp.loadData();
 
             expect(resetDataSpy).toHaveBeenCalled();
+            expect(addDataSpy).toHaveBeenCalled();
             expect(updateDataSpy).toHaveBeenCalled();
         });
     });
