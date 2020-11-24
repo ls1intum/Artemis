@@ -164,7 +164,8 @@ public class ExerciseService {
     }
 
     /**
-     * Finds all exercises where the due date is in the future.
+     * Finds all exercises where the due date is in the future
+     * (does not return exercises belonging to test courses).
      *
      * @return set of exercises
      */

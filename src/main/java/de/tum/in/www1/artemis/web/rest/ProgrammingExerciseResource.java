@@ -51,6 +51,8 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
+import de.tum.in.www1.artemis.service.programming.TemplateUpgradePolicy;
+import de.tum.in.www1.artemis.service.programming.TemplateUpgradeService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -101,6 +103,8 @@ public class ProgrammingExerciseResource {
 
     private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
+    private final TemplateUpgradePolicy templateUpgradePolicy;
+
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -122,7 +126,7 @@ public class ProgrammingExerciseResource {
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
             ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionService gradingCriterionService,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService) {
+            ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -138,6 +142,7 @@ public class ProgrammingExerciseResource {
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.gradingCriterionService = gradingCriterionService;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
+        this.templateUpgradePolicy = templateUpgradePolicy;
     }
 
     /**
@@ -463,7 +468,8 @@ public class ProgrammingExerciseResource {
      * @see ProgrammingExerciseImportService#importRepositories(ProgrammingExercise, ProgrammingExercise)
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param newExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
-     * @param recreateBuildPlans Flag which determines whether the build plans should be copied or re-created from scratch
+     * @param recreateBuildPlans Option determining whether the build plans should be copied or re-created from scratch
+     * @param updateTemplate Option determining whether the template files should be updated with the most recent template version
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
      *         (403) if the user is not at least an instructor in the target course.
      */
@@ -471,7 +477,7 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise,
-            @RequestParam(defaultValue = "false") boolean recreateBuildPlans) {
+            @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean updateTemplate) {
         if (sourceExerciseId < 0) {
             return badRequest();
         }
@@ -555,6 +561,14 @@ public class ProgrammingExerciseResource {
         final var importedProgrammingExercise = programmingExerciseImportService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
         HttpHeaders responseHeaders;
         programmingExerciseImportService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
+
+        // Update the template files
+        if (updateTemplate) {
+            TemplateUpgradeService upgradeService = templateUpgradePolicy.getUpgradeService(importedProgrammingExercise.getProgrammingLanguage());
+            upgradeService.upgradeTemplate(importedProgrammingExercise);
+        }
+
+        // Copy or recreate the build plans
         try {
             if (recreateBuildPlans) {
                 // Create completely new build plans for the exercise
