@@ -37,6 +37,9 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "participation", "participation.results" })
     Optional<ModelingSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(Long submissionId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "results" })
+    Optional<ModelingSubmission> findWithEagerResultById(Long submissionId);
+
     /**
      * Load all modeling submissions with the given ids. Load every submission together with its result, the feedback list of the result, the assessor of the result, its
      * participation and all results of the participation.
