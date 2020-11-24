@@ -7,6 +7,9 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
@@ -20,6 +23,7 @@ export class SplitPaneDirective {
 })
 export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit {
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+    @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
 
     public submissionA: ModelingSubmission;
@@ -32,7 +36,11 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
     private split: Split.Instance;
 
-    constructor(private submissionService: ModelingSubmissionService) {}
+    constructor(
+        private modelingSubmissionService: ModelingSubmissionService,
+        private textSubmissionService: TextSubmissionService,
+        private programmingSubmissionService: ProgrammingSubmissionService,
+    ) {}
 
     /**
      * Initialize third party libs inside this lifecycle hook.
@@ -58,14 +66,14 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
             const currentComparison: PlagiarismComparison<ModelingSubmissionElement> = changes.comparison.currentValue;
 
-            this.submissionService.getSubmission(currentComparison.submissionA.submissionId).subscribe((submission: ModelingSubmission) => {
+            this.modelingSubmissionService.getSubmission(currentComparison.submissionA.submissionId).subscribe((submission: ModelingSubmission) => {
                 this.loadingSubmissionA = false;
 
                 submission.model = JSON.parse(submission.model!);
                 this.submissionA = submission;
             });
 
-            this.submissionService.getSubmission(currentComparison.submissionB.submissionId).subscribe((submission: ModelingSubmission) => {
+            this.modelingSubmissionService.getSubmission(currentComparison.submissionB.submissionId).subscribe((submission: ModelingSubmission) => {
                 this.loadingSubmissionB = false;
 
                 submission.model = JSON.parse(submission.model!);

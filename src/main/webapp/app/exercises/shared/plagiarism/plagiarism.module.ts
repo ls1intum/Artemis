@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { AceEditorModule } from 'ng2-ace-editor';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { PlagiarismDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-details/plagiarism-details.component';
@@ -10,7 +11,7 @@ import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plag
 import { PlagiarismSplitViewComponent, SplitPaneDirective } from 'app/exercises/shared/plagiarism/plagiarism-split-view/plagiarism-split-view.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisModelingEditorModule, RouterModule, TranslateModule],
+    imports: [AceEditorModule, ArtemisSharedModule, ArtemisModelingEditorModule, RouterModule, TranslateModule],
     declarations: [
         PlagiarismDetailsComponent,
         PlagiarismHeaderComponent,

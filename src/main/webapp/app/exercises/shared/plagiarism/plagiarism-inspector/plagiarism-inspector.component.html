@@ -26,7 +26,7 @@
             [activeIndex]="selectedComparisonIndex"
         ></jhi-plagiarism-sidebar>
 
-        <jhi-plagiarism-details [comparison]="plagiarismResult?.comparisons[selectedComparisonIndex]"></jhi-plagiarism-details>
+        <jhi-plagiarism-details [comparison]="plagiarismResult?.comparisons[selectedComparisonIndex]" [exercise]="exercise"></jhi-plagiarism-details>
     </div>
 
     <div class="plagiarism-empty" *ngIf="!plagiarismResult">
