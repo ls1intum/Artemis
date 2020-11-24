@@ -87,12 +87,24 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
         return this.exercise.type === ExerciseType.MODELING;
     }
 
+    isTextOrProgrammingExercise() {
+        return this.exercise.type === ExerciseType.TEXT || this.exercise.type === ExerciseType.PROGRAMMING;
+    }
+
     getModelingSubmissionA() {
         return this.comparison.submissionA as PlagiarismSubmission<ModelingSubmissionElement>;
     }
 
     getModelingSubmissionB() {
         return this.comparison.submissionB as PlagiarismSubmission<ModelingSubmissionElement>;
+    }
+
+    getTextSubmissionA() {
+        return this.comparison.submissionA as PlagiarismSubmission<TextSubmissionElement>;
+    }
+
+    getTextSubmissionB() {
+        return this.comparison.submissionB as PlagiarismSubmission<TextSubmissionElement>;
     }
 
     handleSplitControl(pane: string) {
