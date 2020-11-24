@@ -13,7 +13,7 @@ export class NewStudentParticipationResolver implements Resolve<number | undefin
     constructor(private programmingSubmissionService: ProgrammingSubmissionService, private jhiAlertService: JhiAlertService) {}
 
     /**
-     * Resolves the needed StudentParticipations for the ProgrammingSubmissionAssessmentComponent using the ProgrammingAssessmentsService.
+     * Resolves the needed studentParticipationId for the CodeEditorTutorAssessmentContainerComponent for submissions without assessment
      * @param route
      */
     resolve(route: ActivatedRouteSnapshot) {
@@ -22,6 +22,31 @@ export class NewStudentParticipationResolver implements Resolve<number | undefin
         if (exerciseId) {
             return this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(exerciseId, true).pipe(
                 map((submission) => submission.participation!.id!),
+                catchError((error) => {
+                    if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                        this.jhiAlertService.error('artemisApp.submission.lockedSubmissionsLimitReached');
+                    }
+                    return Observable.of(error);
+                }),
+            );
+        }
+        return Observable.of(undefined);
+    }
+}
+
+@Injectable({ providedIn: 'root' })
+export class StudentParticipationResolver implements Resolve<number | undefined> {
+    constructor(private programmingSubmissionService: ProgrammingSubmissionService, private jhiAlertService: JhiAlertService) {}
+
+    /**
+     * Locks the latest submission of a programming exercises participation, if it is not already locked
+     * @param route
+     */
+    resolve(route: ActivatedRouteSnapshot) {
+        const participationId = Number(route.paramMap.get('participationId'));
+        if (participationId) {
+            return this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(participationId).pipe(
+                map((participation) => participation.id),
                 catchError((error) => {
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                         this.jhiAlertService.error('artemisApp.submission.lockedSubmissionsLimitReached');
