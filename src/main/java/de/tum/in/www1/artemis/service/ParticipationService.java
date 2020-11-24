@@ -762,9 +762,9 @@ public class ParticipationService {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exercise.getId());
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
-            return optionalTeam.flatMap(team -> studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), team.getId()));
+            return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
-        return studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), username);
+        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**
@@ -776,7 +776,7 @@ public class ParticipationService {
      */
     public Optional<StudentParticipation> findOneByExerciseAndTeamIdAnyState(Exercise exercise, Long teamId) {
         log.debug("Request to get Participation for Team with id {} for Exercise with id: {}", teamId, exercise.getId());
-        return studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), teamId);
+        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
     }
 
     /**
