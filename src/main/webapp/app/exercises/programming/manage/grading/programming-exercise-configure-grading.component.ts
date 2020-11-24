@@ -296,10 +296,11 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         }
         if (typeof oldValue === 'number') {
             newValue = Number(newValue);
+            if (isNaN(newValue)) {
+                newValue = oldValue;
+            }
         }
-        if (isNaN(newValue)) {
-            newValue = oldValue;
-        }
+
         return newValue;
     }
 
