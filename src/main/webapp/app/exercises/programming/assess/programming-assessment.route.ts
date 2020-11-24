@@ -80,6 +80,9 @@ export const routes: Routes = [
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
+        resolve: {
+            studentParticipationId: StudentParticipationResolver,
+        },
         canActivate: [UserRouteAccessService],
     },
 ];
