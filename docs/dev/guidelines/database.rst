@@ -14,7 +14,7 @@ In JPA lazy fetching can be set on any relationship using the fetch attribute. T
 We **always** use ``FetchType.LAZY``, unless there is a very strong case to be made for ``FetchType.EAGER``.
 
        .. note::
-        Additional effort to use ``FetchType.LAZY`` does count as a strong argument.
+        Additional effort to use ``FetchType.LAZY`` does not count as a strong argument.
 
 2. Relationships
 ================
