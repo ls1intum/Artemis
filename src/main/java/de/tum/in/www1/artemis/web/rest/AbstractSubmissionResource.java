@@ -11,11 +11,9 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
- * REST controller for managing Submission.
+ * Abstract class that allows reuse
  */
-@RestController
-@RequestMapping("/api")
-public class AbstractSubmissionResource {
+public abstract class AbstractSubmissionResource {
 
     protected final SubmissionRepository submissionRepository;
 
