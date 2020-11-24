@@ -133,7 +133,7 @@ public class SubmissionService {
      * @return number of locked submissions for the current user in the given course
      */
     public List<Submission> getLockedSubmissions(long courseId) {
-        return submissionRepository.getLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
     }
 
     /**
