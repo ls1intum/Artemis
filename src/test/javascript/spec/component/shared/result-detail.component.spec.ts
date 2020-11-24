@@ -19,6 +19,7 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ChartComponent } from 'app/shared/chart/chart.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -306,11 +307,13 @@ describe('ResultDetailComponent', () => {
     });
 
     it('should calculate the correct chart values and update the score chart', () => {
-        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems();
+        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems(true);
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.showScoreChart = true;
+        comp.showTestDetails = true;
         comp.result.feedbacks = feedbacks;
 
+        comp.scoreChartPreset.applyTo(new ChartComponent());
         const chartSetValuesSpy = spy(comp.scoreChartPreset, 'setValues');
 
         comp.ngOnInit();
@@ -318,16 +321,48 @@ describe('ResultDetailComponent', () => {
         expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
         expect(comp.showScoreChartTooltip).to.equal(true);
         expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(7, 5, 6, exercise);
+        checkChartPreset(2, 5, '7', '5 of 6');
+        expect(comp.isLoading).to.be.false;
+
+        // test score exceeding exercise maxpoints
+
+        const feedbackPair1 = generateTestCaseFeedbackPair(true, '', '', 120);
+        feedbacks.push(feedbackPair1.fb);
+        expectedItems.push(feedbackPair1.item);
+
+        chartSetValuesSpy.resetHistory();
+        comp.ngOnInit();
+
+        expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
+        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(104, 5, 6, exercise);
+        checkChartPreset(99, 1, '100 of 104', '1 of 6');
+
+        // test negative > positive, limit at 0
+
+        feedbacks.pop();
+        expectedItems.pop();
+        const feedbackPair2 = generateSCAFeedbackPair(true, 'Tohuwabohu', -200, 200);
+        feedbacks.push(feedbackPair2.fb);
+        expectedItems.push(feedbackPair2.item);
+
+        chartSetValuesSpy.resetHistory();
+        comp.ngOnInit();
+
+        expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
+        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(7, 22, 206, exercise);
+        checkChartPreset(0, 7, '7', '7 of 206');
+    });
+
+    const checkChartPreset = (d1: number, d2: number, l1: string, l2: string) => {
         // @ts-ignore
         expect(comp.scoreChartPreset.datasets.length).to.equal(2);
         // @ts-ignore
-        expect(comp.scoreChartPreset.datasets[0].data[0]).to.equal(2);
+        expect(comp.scoreChartPreset.datasets[0].data[0]).to.equal(d1);
         // @ts-ignore
-        expect(comp.scoreChartPreset.valueLabels[0]).to.equal('7');
+        expect(comp.scoreChartPreset.valueLabels[0]).to.equal(l1);
         // @ts-ignore
-        expect(comp.scoreChartPreset.datasets[1].data[0]).to.equal(5);
+        expect(comp.scoreChartPreset.datasets[1].data[0]).to.equal(d2);
         // @ts-ignore
-        expect(comp.scoreChartPreset.valueLabels[1]).to.equal('5 of 6');
-        expect(comp.isLoading).to.be.false;
-    });
+        expect(comp.scoreChartPreset.valueLabels[1]).to.equal(l2);
+    };
 });
