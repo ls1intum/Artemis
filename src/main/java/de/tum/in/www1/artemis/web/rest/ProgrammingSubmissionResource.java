@@ -5,10 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BA
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
@@ -20,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -52,6 +50,8 @@ public class ProgrammingSubmissionResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final ParticipationService participationService;
+
     private final ResultService resultService;
 
     private final Optional<VersionControlService> versionControlService;
@@ -63,7 +63,7 @@ public class ProgrammingSubmissionResource {
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
             ProgrammingExerciseService programmingExerciseService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultService resultService, Optional<VersionControlService> versionControlService,
-            UserService userService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+            UserService userService, Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
@@ -73,6 +73,7 @@ public class ProgrammingSubmissionResource {
         this.versionControlService = versionControlService;
         this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.participationService = participationService;
     }
 
     /**
@@ -345,6 +346,43 @@ public class ProgrammingSubmissionResource {
         }
 
         return ResponseEntity.ok().body(programmingSubmissions);
+    }
+
+    // TODO: Make this call use submissionId instead of participationId (after implementation of one to many relation ship of submission and results)
+    /**
+     * GET /programming-submissions/:id : get the programmingSubmissions participation by it's id and locks the corresponding submission for assessment
+     *
+     * @param participationId the id of the participation to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the programmingSubmissions participation
+     */
+    @GetMapping("/programming-submissions/{participationId}/lock")
+    @PreAuthorize("hasAnyRole('TA','INSTRUCTOR','ADMIN')")
+    public ResponseEntity<Participation> lockAndGetProgrammingSubmissionParticipation(@PathVariable Long participationId) {
+        log.debug("REST request to get ProgrammingSubmission of Participation with id: {}", participationId);
+        final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
+        final var exercise = participation.getExercise();
+        final User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            return forbidden();
+        }
+
+        Optional<Result> manualResult = participation.getResults().stream().filter(Result::isManualResult).findFirst();
+
+        if (manualResult.isPresent()) {
+            return ResponseEntity.ok(participation);
+        }
+        else {
+            // Check lock limit
+            programmingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+
+            // As no manual result is present we need to lock the submission for assessment
+            Result latestAutomaticResult = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC)
+                    .sorted(Comparator.comparing(Result::getId).reversed()).iterator().next();
+            ProgrammingSubmission submission = programmingSubmissionService.findByResultId(latestAutomaticResult.getId());
+            submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId());
+            return ResponseEntity.ok(submission.getParticipation());
+        }
     }
 
     /**
