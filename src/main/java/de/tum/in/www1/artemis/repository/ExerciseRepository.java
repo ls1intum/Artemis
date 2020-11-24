@@ -27,7 +27,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("select e from Exercise e where e.course.id = :#{#courseId} and e.mode = 'TEAM'")
     Set<Exercise> findAllTeamExercisesByCourseId(@Param("courseId") Long courseId);
 
-    @Query("select e from Exercise e where e.dueDate >= :#{#now} order by e.dueDate asc")
+    @Query("select e from Exercise e where e.course.testCourse = false and e.dueDate >= :#{#now} order by e.dueDate asc")
     Set<Exercise> findAllExercisesWithUpcomingDueDate(@Param("now") ZonedDateTime now);
 
     /**
