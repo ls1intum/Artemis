@@ -309,7 +309,6 @@ public class AssessmentService {
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
      * database.
      *
-     * <br><br>
      * For programming exercises we use a different approach see {@link ProgrammingAssessmentService#saveManualAssessment(Result)}
      *
      * @param submission the file upload submission to which the feedback belongs to
