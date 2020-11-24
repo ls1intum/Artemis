@@ -7,9 +7,10 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
@@ -80,6 +81,18 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
                 this.submissionB = submission;
             });
         }
+    }
+
+    isModelingExercise() {
+        return this.exercise.type === ExerciseType.MODELING;
+    }
+
+    getModelingSubmissionA() {
+        return this.comparison.submissionA as PlagiarismSubmission<ModelingSubmissionElement>;
+    }
+
+    getModelingSubmissionB() {
+        return this.comparison.submissionB as PlagiarismSubmission<ModelingSubmissionElement>;
     }
 
     handleSplitControl(pane: string) {

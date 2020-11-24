@@ -5,13 +5,7 @@
         </div>
 
         <div class="plagiarism-split-pane-body">
-            <jhi-modeling-editor *ngIf="!loadingSubmissionA" [umlModel]="submissionA?.model" [diagramType]="'ClassDiagram'" [readOnly]="true"></jhi-modeling-editor>
-
-            <div class="plagiarism-split-pane-loader" *ngIf="loadingSubmissionA">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="sr-only">Loading...</span>
-                </div>
-            </div>
+            <jhi-modeling-submission-viewer *ngIf="isModelingExercise()" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()"> </jhi-modeling-submission-viewer>
         </div>
     </div>
 
@@ -21,13 +15,7 @@
         </div>
 
         <div class="plagiarism-split-pane-body">
-            <jhi-modeling-editor *ngIf="!loadingSubmissionB" [umlModel]="submissionB?.model" [diagramType]="'ClassDiagram'" [readOnly]="true"></jhi-modeling-editor>
-
-            <div class="plagiarism-split-pane-loader" *ngIf="loadingSubmissionB">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="sr-only">Loading...</span>
-                </div>
-            </div>
+            <jhi-modeling-submission-viewer *ngIf="isModelingExercise()" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionB()"> </jhi-modeling-submission-viewer>
         </div>
     </div>
 </div>
