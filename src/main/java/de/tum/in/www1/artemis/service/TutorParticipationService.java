@@ -190,7 +190,7 @@ public class TutorParticipationService {
             return existingTutorParticipation;
         }
 
-        long numberOfExampleSubmissionsForTutor = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId()).stream()
+        long numberOfExampleSubmissionsForTutor = this.exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exercise.getId()).stream()
                 // We are only interested in example submissions with an assessment as these are the ones that can be reviewed/assessed by tutors.
                 // Otherwise, the tutor could not reach the total number of example submissions, if there are example submissions without assessment.
                 // In this case the tutor could not reach status "TRAINED" in the if statement below and would not be allowed

@@ -287,7 +287,7 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        Set<ExampleSubmission> exampleSubmissions = new HashSet<>(this.exampleSubmissionRepository.findAllByExerciseId(exerciseId));
+        Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         textExercise.setGradingCriteria(gradingCriteria);
         textExercise.setExampleSubmissions(exampleSubmissions);
