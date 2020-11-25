@@ -46,6 +46,9 @@ public class ExampleSubmissionService {
     public ExampleSubmission save(ExampleSubmission exampleSubmission) {
         Submission submission = exampleSubmission.getSubmission();
         if (submission != null) {
+            if (submission.getId() != null) {
+                submission = submissionRepository.findWithEagerResultsById(exampleSubmission.getSubmission().getId()).get();
+            }
             submission.setExampleSubmission(true);
             // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
             if (submission.getResult() != null && submission.getResult().getSubmission() == null) {
