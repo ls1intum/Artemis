@@ -28,20 +28,14 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
      */
     @Override
     public void importTeams(Exercise sourceExercise, Exercise destinationExercise) {
-        // Delete participations of existing teams in destination exercise (must happen before deleting teams themselves)
-        participationService.deleteAllByExerciseId(destinationExercise.getId(), false, false);
-
-        // Purge existing teams in destination exercise
-        List<Team> destinationTeams = teamRepository.findAllByExerciseId(destinationExercise.getId());
-        teamRepository.deleteAll(destinationTeams);
-
         // Get all source teams and clone them into the destination exercise
         List<Team> sourceTeams = teamRepository.findAllByExerciseId(sourceExercise.getId());
-        cloneTeamsIntoDestinationExercise(sourceTeams, destinationExercise);
+
+        deleteExistingTeamsAndAddNewTeams(destinationExercise, sourceTeams);
     }
 
     /**
-     * Imports all teams of the source exercise into the destination exercise
+     * Imports all given teams into the destination exercise
      *
      * Conflicts are prevented trivially by first deleting all teams of the destination exercise.
      *
@@ -51,13 +45,25 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
     @Override
     public void importTeams(Exercise exercise, List<Team> teams) {
         // Delete participations of existing teams in destination exercise (must happen before deleting teams themselves)
+        deleteExistingTeamsAndAddNewTeams(exercise, teams);
+    }
+
+    /**
+     * Deletes all existing teams and add given teams into the exercise
+     *
+     * Conflicts are prevented trivially by first deleting all teams of the destination exercise.
+     *
+     * @param exercise Exercise from which to take the teams for the import
+     * @param teams Teams which to add to the exercise
+     */
+    private void deleteExistingTeamsAndAddNewTeams(Exercise exercise, List<Team> teams){
+        // Delete participations of existing teams in destination exercise (must happen before deleting teams themselves)
         participationService.deleteAllByExerciseId(exercise.getId(), false, false);
 
         // Purge existing teams in destination exercise
         List<Team> destinationTeams = teamRepository.findAllByExerciseId(exercise.getId());
         teamRepository.deleteAll(destinationTeams);
 
-        // Get all source teams and clone them into the destination exercise
         cloneTeamsIntoDestinationExercise(teams, exercise);
     }
 }

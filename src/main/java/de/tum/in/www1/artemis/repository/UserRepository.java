@@ -67,7 +67,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             + "(user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%)")
     List<User> searchByLoginOrNameInGroup(@Param("groupName") String groupName, @Param("loginOrName") String loginOrName);
 
- /**
+    /**
      * Gets users in a group by their registration number.
      * @param groupName Name of group in which to search for users
      * @param registrationNumber Registration number of user

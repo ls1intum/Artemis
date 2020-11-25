@@ -187,7 +187,9 @@ export class TeamService implements ITeamService {
      */
     importTeamsFromFile(exercise: Exercise, teams: Team[], importStrategyType: TeamImportStrategyType) {
         const copy = teams.map((team) => TeamService.convertDateFromClient(team));
-        return this.http.put<Team[]>(`${TeamService.resourceUrl(exercise.id!)}/import-from-file?importStrategyType=${importStrategyType}`, copy, { observe: 'response' });
+        return this.http.put<Team[]>(`${TeamService.resourceUrl(exercise.id!)}/import-with-registration-numbers?importStrategyType=${importStrategyType}`, copy, {
+            observe: 'response',
+        });
     }
 
     /**

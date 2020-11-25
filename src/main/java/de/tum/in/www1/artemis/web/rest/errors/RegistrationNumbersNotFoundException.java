@@ -6,6 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Exception that will be thrown if the user tries to imports teams that contains students whose registration number cannot be found. The error response will
+ * contain a list of registration numbers.
+ */
 public class RegistrationNumbersNotFoundException extends BadRequestAlertException {
     private static final long serialVersionUID = 1L;
 

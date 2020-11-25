@@ -113,6 +113,7 @@ public class TeamResource {
         }
         Team savedTeam = teamService.save(exercise, team);
         savedTeam.filterSensitiveInformation();
+        savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam);
         return ResponseEntity.created(new URI("/api/teams/" + savedTeam.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedTeam.getId().toString())).body(savedTeam);
@@ -183,6 +184,7 @@ public class TeamResource {
         }
 
         savedTeam.filterSensitiveInformation();
+        savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
         List<StudentParticipation> participationsOfSavedTeam = participationService.findByExerciseAndTeamWithEagerResultsAndSubmissions(exercise, savedTeam);
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeam.get(), savedTeam, participationsOfSavedTeam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(savedTeam);
@@ -234,7 +236,7 @@ public class TeamResource {
         }
         List<Team> teams = teamService.findAllByExerciseIdWithEagerStudents(exercise, teamOwnerId);
         teams.forEach(Team::filterSensitiveInformation);
-        teams.forEach(team->team.getStudents().forEach(student->student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
+        teams.forEach(team -> team.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
         return ResponseEntity.ok().body(teams);
     }
 
@@ -320,16 +322,17 @@ public class TeamResource {
     }
 
     /**
-     * PUT /exercises/:destinationExerciseId/teams/import-from-exercise/:sourceExerciseId : copy teams from source exercise into destination exercise
+     * PUT /exercises/:destinationExerciseId/teams/import-from-file : add given teams into exercise
      *
-     * @param exerciseId the exercise id of the exercise for which to import teams (= destination exercise)
-     * @param teams      the exercise id of the exercise from which to copy the teams (= source exercise)
+     * @param exerciseId         the exercise id of the exercise for which to import teams
+     * @param teams              teams whose students have registration numbers as identifiers
+     * @param importStrategyType the import strategy to use when importing the teams
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
-    @PutMapping("/exercises/{exerciseId}/teams/import-from-file")
+    @PutMapping("/exercises/{exerciseId}/teams/import-with-registration-numbers")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Team>> importTeamsFromFile(@PathVariable long exerciseId,
-                                                          @RequestBody List<Team> teams,@RequestParam TeamImportStrategyType importStrategyType) {
+    public ResponseEntity<List<Team>> importTeamsWithRegistrationNumbers(@PathVariable long exerciseId,
+                                                                         @RequestBody List<Team> teams, @RequestParam TeamImportStrategyType importStrategyType) {
         log.debug("REST request import all teams from source exercise with id {} into destination exercise with id {}", exerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -340,13 +343,13 @@ public class TeamResource {
         }
 
         if (!exercise.isTeamMode()) {
-            throw new BadRequestAlertException("The destination exercise must be a team-based exercise.", ENTITY_NAME, "destinationExerciseNotTeamBased");
+            throw new BadRequestAlertException("The exercise must be a team-based exercise.", ENTITY_NAME, "destinationExerciseNotTeamBased");
         }
 
-        List<Team> filledTeams = teamService.convertTeamsStudentsWithRegistrationNumbersToAlreadyRegisteredUsers(exercise.getCourseViaExerciseGroupOrCourseMember(),teams);
+        List<Team> filledTeams = teamService.convertTeamsStudentsWithRegistrationNumbersToAlreadyRegisteredUsers(exercise.getCourseViaExerciseGroupOrCourseMember(), teams);
 
         // Create audit event for team import action
-        var logMessage = "Import teams from file into exercise '"
+        var logMessage = "Import teams with registration numbers into exercise '"
             + exercise.getTitle() + "' (id: " + exercise.getId() + ") ";
         var auditEvent = new AuditEvent(user.getLogin(), Constants.IMPORT_TEAMS, logMessage);
         auditEventRepository.add(auditEvent);
@@ -354,13 +357,10 @@ public class TeamResource {
         // Import teams and return the teams that now belong to the destination exercise
         List<Team> destinationTeams = teamService.importTeamsFromTeamListIntoExerciseUsingStrategy(exercise, filledTeams, importStrategyType);
         destinationTeams.forEach(Team::filterSensitiveInformation);
-        destinationTeams.forEach(team->team.getStudents().forEach(student->student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
-//
-//        // Send out team assignment update via websockets
-//        Map<String, List<StudentParticipation>> participationsMap = participationService.findByExerciseIdWithEagerSubmissionsResult(destinationExercise.getId()).stream()
-//            .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).collect(Collectors.toList())));
-//        destinationTeams.forEach(
-//            team -> teamWebsocketService.sendTeamAssignmentUpdate(destinationExercise, null, team, participationsMap.getOrDefault(team.getParticipantIdentifier(), List.of())));
+        destinationTeams.forEach(team -> team.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
+
+        // Send out team assignment update via websockets
+        sendTeamAssignmentUpdates(exercise, destinationTeams);
 
         return ResponseEntity.ok().body(destinationTeams);
     }
@@ -407,10 +407,7 @@ public class TeamResource {
         destinationTeams.forEach(Team::filterSensitiveInformation);
 
         // Send out team assignment update via websockets
-        Map<String, List<StudentParticipation>> participationsMap = participationService.findByExerciseIdWithEagerSubmissionsResult(destinationExercise.getId()).stream()
-            .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).collect(Collectors.toList())));
-        destinationTeams.forEach(
-            team -> teamWebsocketService.sendTeamAssignmentUpdate(destinationExercise, null, team, participationsMap.getOrDefault(team.getParticipantIdentifier(), List.of())));
+        sendTeamAssignmentUpdates(destinationExercise, destinationTeams);
 
         return ResponseEntity.ok().body(destinationTeams);
     }
@@ -477,5 +474,19 @@ public class TeamResource {
 
         course.setExercises(exercises);
         return ResponseEntity.ok(course);
+    }
+
+    /**
+     * Sends team assignments updates
+     *
+     * @param exercise Exercise which students will receive team update
+     * @param teams    Teams of exercise
+     */
+    private void sendTeamAssignmentUpdates(Exercise exercise, List<Team> teams) {
+        // Send out team assignment update via websockets
+        Map<String, List<StudentParticipation>> participationsMap = participationService.findByExerciseIdWithEagerSubmissionsResult(exercise.getId()).stream()
+            .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).collect(Collectors.toList())));
+        teams.forEach(
+            team -> teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, team, participationsMap.getOrDefault(team.getParticipantIdentifier(), List.of())));
     }
 }
