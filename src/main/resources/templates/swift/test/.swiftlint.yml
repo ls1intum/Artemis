@@ -332,8 +332,8 @@ large_tuple: # Tuples shouldn't have too many members. Create a custom type inst
   - 2 # error - default: 3
 
 line_length: # Lines should not span too many characters.
-  warning: 150 # default: 120
-  error: 150 # default: 200
+  warning: 120 # default: 120
+  error: 120 # default: 200
   ignores_comments: true # default: false
   ignores_urls: true # default: false
   ignores_function_declarations: false # default: false
@@ -344,7 +344,7 @@ nesting: # Types should be nested at most 2 level deep, and statements should be
     warning: 2 # warning - default: 1
   statement_level:
     warning: 5 # warning - default: 5
-    
+
 trailing_closure:
   only_single_muted_parameter: true
 
@@ -359,9 +359,12 @@ type_name:
 trailing_whitespace:
   ignores_empty_lines: true # default: false
   ignores_comments: true # default: false
-  
+
 unused_optional_binding:
   ignore_optional_try: true
 
 vertical_whitespace: # Limit vertical whitespace to a single empty line.
   max_empty_lines: 2 # warning - default: 1
+
+# reporter type (xcode, json, csv, checkstyle, codeclimate, junit, html, emoji, sonarqube, markdown, github-actions-logging)
+reporter: checkstyle
