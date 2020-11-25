@@ -18,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.SubmissionVersion;
 import de.tum.in.www1.artemis.domain.Team;
@@ -112,7 +111,6 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     public void initTestCase() throws Exception {
         database.addUsers(3, 1, 1);
         course = database.addCourseWithDifferentModelingExercises();
-        List<Exercise> exercises = new ArrayList<>(course.getExercises());
         classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         activityExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
         objectExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
@@ -362,7 +360,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllSubmittedSubmissionsOfExercise() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmission(classExercise, submittedSubmission, "student1");
-        ModelingSubmission submission2 = database.addModelingSubmission(classExercise, unsubmittedSubmission, "student2");
+        database.addModelingSubmission(classExercise, unsubmittedSubmission, "student2");
         ModelingSubmission submission3 = database.addModelingSubmission(classExercise, generateSubmittedSubmission(), "student3");
 
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?submittedOnly=true", HttpStatus.OK,
