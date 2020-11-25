@@ -16,7 +16,9 @@ public abstract class TeamImportStrategy {
     }
 
     abstract public void importTeams(Exercise sourceExercise, Exercise destinationExercise);
+
     abstract public void importTeams(Exercise exercise, List<Team> teams);
+
     /**
      * Clones the given original teams via copy constructor, assigns them to the given destination exercise and persists them
      *

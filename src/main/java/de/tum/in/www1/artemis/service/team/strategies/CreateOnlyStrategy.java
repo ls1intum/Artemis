@@ -80,7 +80,7 @@ public class CreateOnlyStrategy extends TeamImportStrategy {
      * @param newTeams Teams which will be added into exercise
      * @return list of those source teams that have no conflicts
      */
-    private List<Team> getConflictFreeTeams(List<Team> existingTeams, List<Team> newTeams){
+    private List<Team> getConflictFreeTeams(List<Team> existingTeams, List<Team> newTeams) {
         Set<String> existingTeamShortNames = existingTeams.stream().map(Team::getShortName).collect(Collectors.toSet());
         Set<User> existingTeamStudents = existingTeams.stream().flatMap(team -> team.getStudents().stream()).collect(Collectors.toSet());
 

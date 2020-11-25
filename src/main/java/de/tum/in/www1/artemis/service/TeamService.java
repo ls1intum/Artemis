@@ -4,10 +4,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.errors.RegistrationNumbersNotFoundException;
 import org.springframework.data.util.Pair;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -23,6 +20,7 @@ import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.service.team.TeamImportStrategy;
 import de.tum.in.www1.artemis.service.team.strategies.CreateOnlyStrategy;
 import de.tum.in.www1.artemis.service.team.strategies.PurgeExistingStrategy;
+import de.tum.in.www1.artemis.web.rest.errors.RegistrationNumbersNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsAlreadyAssignedException;
 
 @Service
@@ -201,8 +199,7 @@ public class TeamService {
      * @param importStrategyType Type of strategy used to import teams (relevant for conflicts)
      * @return list of all teams that are now in the exercise
      */
-    public List<Team> importTeamsFromTeamListIntoExerciseUsingStrategy(Exercise exercise,List<Team> teams,
-                                                                                        TeamImportStrategyType importStrategyType) {
+    public List<Team> importTeamsFromTeamListIntoExerciseUsingStrategy(Exercise exercise, List<Team> teams, TeamImportStrategyType importStrategyType) {
         TeamImportStrategy teamImportStrategy = getTeamImportStrategy(importStrategyType);
         teamImportStrategy.importTeams(exercise, teams);
         return teamRepository.findAllByExerciseId(exercise.getId());
@@ -236,7 +233,7 @@ public class TeamService {
         teamsWithRegistrationNumber.forEach(team -> {
             Set<User> newStudents = new HashSet<>();
             team.getStudents().forEach(student -> {
-                Optional<User> userWithRegistrationNumber = userRepository.getByRegistrationNumberInGroup(course.getStudentGroupName(),student.getVisibleRegistrationNumber());
+                Optional<User> userWithRegistrationNumber = userRepository.getByRegistrationNumberInGroup(course.getStudentGroupName(), student.getVisibleRegistrationNumber());
                 userWithRegistrationNumber.ifPresentOrElse((value) -> {
                     newStudents.add(value);
                 }, () -> {
@@ -247,13 +244,11 @@ public class TeamService {
             convertedTeams.add(team);
         });
 
-        if(!notFoundRegistrationNumbers.isEmpty()){
+        if (!notFoundRegistrationNumbers.isEmpty()) {
             throw new RegistrationNumbersNotFoundException(notFoundRegistrationNumbers);
         }
         return convertedTeams;
     }
-
-
 
     /**
      * Returns an instance of TeamImportStrategy based on the given import strategy type (enum)

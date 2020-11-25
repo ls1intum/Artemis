@@ -74,8 +74,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return found user that match the criteria
      */
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    @Query("select user from User user where :#{#groupName} member of user.groups and "
-            + "user.registrationNumber = :#{#registrationNumber}")
+    @Query("select user from User user where :#{#groupName} member of user.groups and " + "user.registrationNumber = :#{#registrationNumber}")
     Optional<User> getByRegistrationNumberInGroup(@Param("groupName") String groupName, @Param("registrationNumber") String registrationNumber);
 
     /**

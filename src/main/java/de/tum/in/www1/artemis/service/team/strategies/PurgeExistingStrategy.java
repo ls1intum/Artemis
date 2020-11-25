@@ -56,7 +56,7 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
      * @param exercise Exercise from which to take the teams for the import
      * @param teams Teams which to add to the exercise
      */
-    private void deleteExistingTeamsAndAddNewTeams(Exercise exercise, List<Team> teams){
+    private void deleteExistingTeamsAndAddNewTeams(Exercise exercise, List<Team> teams) {
         // Delete participations of existing teams in destination exercise (must happen before deleting teams themselves)
         participationService.deleteAllByExerciseId(exercise.getId(), false, false);
 
