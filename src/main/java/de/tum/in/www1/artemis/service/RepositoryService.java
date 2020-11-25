@@ -13,6 +13,7 @@ import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -80,6 +81,53 @@ public class RepositoryService {
         byte[] fileInBytes = org.apache.commons.io.IOUtils.toByteArray(inputStream);
         inputStream.close();
         return fileInBytes;
+    }
+
+    /**
+     * Gets the files of the repository and checks whether they were changed during a student participation.
+     * Compares the files from the students repository with the files of the template repository.
+     *
+     * @param repository the students repository with possibly new files and changed files
+     * @param templateRepository the template repository with default files on which the student started working on
+     * @return a map of files with the information if they were changed/are new.
+     */
+    public Map<String, Boolean> getFilesWithInformationAboutChange(Repository repository, Repository templateRepository) {
+        Map<String, Boolean> filesWithInformationAboutChange = new HashMap<>();
+
+        var repoFiles = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+        var templateRepoFiles = gitService.listFilesAndFolders(templateRepository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+        // Used to avoid going through the loop when the file which the student added was not in the template repository
+        var templateRepoFilesNames = templateRepoFiles.stream().map(File::toString).collect(Collectors.toList());
+
+        repoFiles.forEach(file -> {
+            var fileName = file.toString();
+            // When template repository does not contain this file it is new/changed, no need to iterate through the loop
+            if (!templateRepoFilesNames.contains(fileName)) {
+                filesWithInformationAboutChange.put(fileName, true);
+            }
+            else {
+                templateRepoFiles.forEach(templateFile -> {
+                    try {
+                        // Check to assure we are comparing the correct files
+                        if (file.toString().equalsIgnoreCase(templateFile.toString())) {
+                            // When having the same content, it was not changed
+                            if (FileUtils.contentEquals(file, templateFile)) {
+                                filesWithInformationAboutChange.put(fileName, false);
+                            }
+                            else {
+                                filesWithInformationAboutChange.put(fileName, true);
+                            }
+                        }
+                    }
+                    catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+        });
+        return filesWithInformationAboutChange;
     }
 
     /**
