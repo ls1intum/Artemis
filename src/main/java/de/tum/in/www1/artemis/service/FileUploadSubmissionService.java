@@ -1,30 +1,22 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.util.stream.Collectors.toList;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -37,8 +29,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class FileUploadSubmissionService extends SubmissionService {
-
-    private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionService.class);
 
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
@@ -64,7 +54,6 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @throws IOException if file can't be saved
      * @throws EmptyFileException if file is empty
      */
-    @Transactional
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise fileUploadExercise,
             Principal principal) throws IOException, EmptyFileException {
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(fileUploadExercise, principal.getName());
@@ -77,45 +66,6 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     /**
-     * Given an exerciseId, returns all the file upload submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
-     * submissions
-     *
-     * @param exerciseId    - the id of the exercise we are interested into
-     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
-     * @param examMode - set flag to to ignore exam test run submissions
-     * @return a list of file upload submissions for the given exercise id
-     */
-    @Transactional(readOnly = true)
-    public List<FileUploadSubmission> getFileUploadSubmissions(Long exerciseId, boolean submittedOnly, boolean examMode) {
-        List<StudentParticipation> participations;
-        if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
-        }
-        else {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
-        }
-        List<FileUploadSubmission> submissions = new ArrayList<>();
-        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
-                // filter out non submitted submissions if the flag is set to true
-                .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted()))
-                .forEach(submission -> submissions.add((FileUploadSubmission) submission.get()));
-        return submissions;
-    }
-
-    /**
-     * Given an exercise id and a tutor id, it returns all the file upload submissions where the tutor has a result associated.
-     *
-     * @param exerciseId - the id of the exercise we are looking for
-     * @param tutor - the tutor we are interested in
-     * @param examMode - flag should be set to ignore the test run submissions
-     * @return a list of file upload Submissions
-     */
-    public List<FileUploadSubmission> getAllFileUploadSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor, boolean examMode) {
-        var submissions = super.getAllSubmissionsAssessedByTutorForExercise(exerciseId, tutor, examMode);
-        return submissions.stream().map(submission -> (FileUploadSubmission) submission).collect(toList());
-    }
-
-    /**
      * Given an exercise id, find a random file upload submission for that exercise which still doesn't have any manual result.
      * No manual result means that no user has started an assessment for the corresponding submission yet.
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
@@ -124,7 +74,6 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    @Transactional(readOnly = true)
     public Optional<FileUploadSubmission> getRandomFileUploadSubmissionEligibleForNewAssessment(FileUploadExercise fileUploadExercise, boolean examMode) {
         var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(fileUploadExercise, examMode);
         if (submissionWithoutResult.isPresent()) {
@@ -179,7 +128,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         fileUploadSubmission.setFilePath(fileService.publicPathForActualPath(localPath, fileUploadSubmission.getId()));
-        fileUploadSubmissionRepository.save(fileUploadSubmission);
+        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
 
         participation.addSubmissions(fileUploadSubmission);
         participation.setInitializationState(InitializationState.FINISHED);
@@ -231,8 +180,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @param fileUploadExercise the corresponding exercise
      * @return the locked file upload submission
      */
-    @Transactional
-    public FileUploadSubmission getLockedFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise) {
+    public FileUploadSubmission lockAndGetFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise) {
         FileUploadSubmission fileUploadSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
         if (fileUploadSubmission.getResult() == null || fileUploadSubmission.getResult().getAssessor() == null) {
@@ -258,27 +206,6 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     /**
-     * The same as `save()`, but without participation, is used by example submission, which aren't linked to any participation
-     *
-     * @param fileUploadSubmission the submission to notifyCompass
-     * @return the fileUploadSubmission entity
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission) {
-        fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
-        fileUploadSubmission.setType(SubmissionType.MANUAL);
-
-        // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
-        if (fileUploadSubmission.getResult() != null && fileUploadSubmission.getResult().getSubmission() == null) {
-            fileUploadSubmission.getResult().setSubmission(fileUploadSubmission);
-        }
-
-        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
-
-        return fileUploadSubmission;
-    }
-
-    /**
      * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
      * result. Throws an EntityNotFoundException if no submission could be found for the given id.
      *
@@ -287,18 +214,6 @@ public class FileUploadSubmissionService extends SubmissionService {
      */
     public FileUploadSubmission findOneWithEagerResultAndFeedback(Long submissionId) {
         return fileUploadSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * Get the file upload submission with the given id from the database. The submission is loaded together with its result and the assessor. Throws an EntityNotFoundException if no
-     * submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the file upload submission with the given id
-     */
-    public FileUploadSubmission findOneWithEagerResult(Long submissionId) {
-        return fileUploadSubmissionRepository.findByIdWithEagerResult(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
     }
 
