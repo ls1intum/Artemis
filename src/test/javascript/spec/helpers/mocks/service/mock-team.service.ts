@@ -11,9 +11,9 @@ import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model'
 import * as moment from 'moment';
 
 export const mockTeamStudents = [
-    { id: 1, firstName: 'John', lastName: 'Doe', name: 'John Doe', login: 'ga12abc', email: 'john.doe@example.com' },
-    { id: 2, firstName: 'Sidney', lastName: 'Humphrey', name: 'Sidney Humphrey', login: 'ga23bcd', email: 'sidney.humphrey@example.com' },
-    { id: 3, firstName: 'Elane', lastName: 'Cravens', name: 'Elane Cravens', login: 'ga34cde', email: 'elane.cravens@example.com' },
+    { id: 1, firstName: 'John', lastName: 'Doe', name: 'John Doe', login: 'ga12abc', email: 'john.doe@example.com', visibleRegistrationNumber: '01234567' },
+    { id: 2, firstName: 'Sidney', lastName: 'Humphrey', name: 'Sidney Humphrey', login: 'ga23bcd', email: 'sidney.humphrey@example.com', visibleRegistrationNumber: '01234568' },
+    { id: 3, firstName: 'Elane', lastName: 'Cravens', name: 'Elane Cravens', login: 'ga34cde', email: 'elane.cravens@example.com', visibleRegistrationNumber: '01234569' },
 ] as User[];
 
 export const mockNonTeamStudents = [
@@ -22,11 +22,18 @@ export const mockNonTeamStudents = [
     { id: 6, firstName: 'Jeffrey', lastName: 'McGill', name: 'Jeffrey McGill', login: 'ga67ghi', email: 'jeffrey.mcgill@example.com' },
 ] as User[];
 
+export const mockSourceTeamStudents = [
+    { id: 7, firstName: 'Alice', lastName: 'McCarthy', name: 'Alice McCarthy', login: 'ga78abc', email: 'alice.mccarthy@example.com', visibleRegistrationNumber: '11234567' },
+    { id: 8, firstName: 'Lena', lastName: 'Dudley', name: 'Lena Dudley', login: 'ga89bcd', email: 'lena.dudley@example.com', visibleRegistrationNumber: '11234568' },
+    { id: 9, firstName: 'Thomas', lastName: 'Smith', name: 'Thomas Smith', login: 'ga90cde', email: 'thomas.smith@example.com', visibleRegistrationNumber: '11234569' },
+] as User[];
+
 const teamAssignmentConfig = { minTeamSize: 1, maxTeamSize: 5 } as TeamAssignmentConfig; // note: size of mockTeamStudents above should conform
 
 const mockCourse = { id: 1 };
 
 export const mockExercise = { id: 1, title: 'Programming exercise', teamAssignmentConfig, course: mockCourse } as ProgrammingExercise;
+export const mockSourceExercise = { id: 2, title: 'Source Programming exercise', teamAssignmentConfig, course: mockCourse } as ProgrammingExercise;
 
 export const mockEmptyTeam = ({
     students: [],
@@ -46,6 +53,22 @@ export const mockTeams = [
     mockTeam,
     { id: 2, name: 'Team 2', shortName: 'team2', students: [], owner: { id: 1 } as User, createdBy: 'tutor1', createdDate: moment() } as Team,
     { id: 3, name: 'Team 3', shortName: 'team3', students: [], owner: { id: 1 } as User, createdBy: 'tutor1', createdDate: moment() } as Team,
+];
+
+export const mockSourceTeam = {
+    id: 1,
+    name: 'Team 4',
+    shortName: 'team4',
+    students: mockSourceTeamStudents,
+    owner: { id: 1 } as User,
+    createdBy: 'tutor1',
+    createdDate: moment(),
+} as Team;
+
+export const mockSourceTeams = [
+    mockSourceTeam,
+    { id: 2, name: 'Team 5', shortName: 'team5', students: [], owner: { id: 1 } as User, createdBy: 'tutor1', createdDate: moment() } as Team,
+    { id: 3, name: 'Team 6', shortName: 'team6', students: [], owner: { id: 1 } as User, createdBy: 'tutor1', createdDate: moment() } as Team,
 ];
 
 export const mockShortNames = {
@@ -88,6 +111,10 @@ export class MockTeamService implements ITeamService {
     }
 
     importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategy: TeamImportStrategyType) {
+        return MockTeamService.response(mockTeams);
+    }
+
+    importTeamsFromFile(exercise: Exercise, teams: Team[], importStrategyType: TeamImportStrategyType) {
         return MockTeamService.response(mockTeams);
     }
 

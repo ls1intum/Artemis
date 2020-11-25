@@ -81,6 +81,13 @@ export interface ITeamService {
     importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategyType: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
 
     /**
+     * Import the teams of an existing source exercise
+     * @param {Exercise} exercise - Exercise the teams should be imported into
+     * @param {Team[]} teams - Exercise the teams should be imported from
+     */
+    importTeamsFromFile(exercise: Exercise, teams: Team[], importStrategyType: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
+
+    /**
      * Finds a course with all its team exercises and participations in which the given team exists
      * @param {Course} course - Course which to find
      * @param {Team} team - Team for which to find exercises and participations (by team short name)

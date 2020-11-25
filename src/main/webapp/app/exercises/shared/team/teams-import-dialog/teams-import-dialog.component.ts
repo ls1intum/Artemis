@@ -160,7 +160,6 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
         if (
             !this.showImportFromExercise &&
-            this.sourceTeams &&
             sourceTeam.students?.some(
                 (sourceStudent) =>
                     sourceStudent.visibleRegistrationNumber && this.studentRegistrationNumbersAlreadyExistingInOtherTeams.includes(sourceStudent.visibleRegistrationNumber),
@@ -232,9 +231,11 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      */
     get showImportPreviewNumbers(): boolean {
         if (this.showImportFromExercise) {
-            return this.sourceExercise !== undefined && this.sourceTeams! && Boolean(this.importStrategy);
+            return this.sourceExercise !== undefined && this.sourceTeams !== undefined && this.sourceTeams.length > 0 && Boolean(this.importStrategy);
         }
-        return this.studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0 || (this.sourceTeams! && Boolean(this.importStrategy));
+        return (
+            this.studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0 || (this.sourceTeams !== undefined && this.sourceTeams.length > 0 && Boolean(this.importStrategy))
+        );
     }
 
     /**
@@ -393,7 +394,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     }
 
     get showLegend() {
-        return this.sourceTeams && this.numberOfConflictFreeSourceTeams !== this.sourceTeams.length;
+        return Boolean(this.sourceTeams && this.numberOfConflictFreeSourceTeams !== this.sourceTeams.length);
     }
 
     get problematicRegistrationNumbers() {
