@@ -332,7 +332,7 @@ public class TeamResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Team>> importTeamsWithRegistrationNumbers(@PathVariable long exerciseId, @RequestBody List<Team> teams,
             @RequestParam TeamImportStrategyType importStrategyType) {
-        log.debug("REST request import all teams from source exercise with id {} into destination exercise with id {}", exerciseId);
+        log.debug("REST request import given teams into destination exercise with id {}", exerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -403,7 +403,7 @@ public class TeamResource {
         // Import teams and return the teams that now belong to the destination exercise
         List<Team> destinationTeams = teamService.importTeamsFromSourceExerciseIntoDestinationExerciseUsingStrategy(sourceExercise, destinationExercise, importStrategyType);
         destinationTeams.forEach(Team::filterSensitiveInformation);
-
+        destinationTeams.forEach(team -> team.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
         // Send out team assignment update via websockets
         sendTeamAssignmentUpdates(destinationExercise, destinationTeams);
 

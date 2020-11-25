@@ -5,5 +5,4 @@ export class StudentWithTeam extends StudentDTO {
     public Surname: string;
     public 'Registration Number': string;
     public 'Team Name': string;
-    public login: string;
 }

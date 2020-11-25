@@ -115,6 +115,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * Computes two lists of potential conflict sources:
      * 1. The existing team short names of team already in this exercise
      * 2. The logins of students who already belong to teams of this exercise
+     * 3. Registration numbers of students who already belong to teams of this exercise
      */
     computePotentialConflictsBasedOnExistingTeams() {
         this.teamShortNamesAlreadyExistingInExercise = this.teams.map((team) => team.shortName!);
@@ -127,7 +128,6 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      */
     computeSourceTeamsFreeOfConflicts() {
         this.sourceTeamsFreeOfConflicts = this.sourceTeams!.filter((team: Team) => this.isSourceTeamFreeOfAnyConflicts(team));
-        console.log('source', this.sourceTeamsFreeOfConflicts);
     }
 
     /**
@@ -136,6 +136,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * This is the case if the following two conditions are fulfilled:
      * 1. No team short name unique constraint violation
      * 2. No student is in the team that is already assigned to a team of the exercise
+     * 3. No student in the team is also in another team
      *
      * @param sourceTeam Team which is checked for conflicts
      */
@@ -224,7 +225,6 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      */
     updateImportStrategy(importStrategy: ImportStrategy) {
         this.importStrategy = importStrategy;
-        console.log('submit', this.isSubmitDisabled, this.sourceTeams, this.importStrategy, this.numberOfTeamsToBeImported, this.numberOfTeamsAfterImport);
     }
 
     /**
@@ -245,6 +245,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * 3. Source teams have not been loaded yet
      * 4. No import strategy has been chosen yet
      * 5. There are no (conflict-free depending on strategy) source teams to be imported
+     * 6. Student's registration number appears just once
      */
     get isSubmitDisabled(): boolean {
         if (this.showImportFromExercise) {
@@ -296,11 +297,15 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Update source teams to given teams
+     * @param {Team[]} fileTeams - Teams which its students only have visible registration number
+     */
     onTeamsChanged(fileTeams: Team[]) {
         this.initImportStrategy();
         this.sourceTeams = fileTeams;
-
-        console.log(this.sourceTeams, this.studentRegistrationNumbersAlreadyExistingInOtherTeams);
+        this.studentRegistrationNumbersAlreadyExistingInOtherTeams = [];
+        this.notFoundRegistrationNumbers = [];
         fileTeams.forEach((team) => {
             if (team.students) {
                 team.students.forEach((sourceStudent) => {
@@ -358,6 +363,10 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         this.isImporting = false;
     }
 
+    /**
+     * Update showing whether the source selection or file selection and reset values
+     * @param {boolean} showFromExercise - New value to set
+     */
     setShowImportFromExercise(showFromExercise: boolean) {
         this.showImportFromExercise = showFromExercise;
         this.sourceTeams = undefined;

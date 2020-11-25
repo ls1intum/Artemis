@@ -61,7 +61,9 @@
                 "noResults": "Keine Studenten im Kurs gefunden für Suche:"
             },
             "errors": {
-                "studentAlreadyAssignedToTeam": "Student mit Login {{ studentLogin }} ist bereits in Team mit Id {{ teamId }."
+                "studentAlreadyAssignedToTeam": "Student mit Login {{ studentLogin }} ist bereits in Team mit Id {{ teamId }.",
+                "registrationNumbersNotFound": "Studierende mit folgenden Matrikelnummern konnten nicht gefunden werden: {{ registrationNumbers }}",
+                "studentsWithoutRegistrationNumbers": "Folgende Studenten haben keine Matrikelnummern: {{ students }}"
             },
             "selectOwnerForTeam": "Tutor auswählen (nach Login oder Name suchen)",
             "ownerSearch": {
@@ -87,12 +89,22 @@
             "importTeams": {
                 "buttonLabel": "Importiere Teams",
                 "dialogTitle": "Importiere Teams nach:",
-                "introText": "Dieser Dialog kann dazu verwendet werden, Teams einer anderen Übung dieses Kurses in diese Übung zu importieren.",
-                "error": "Teams konnten nicht importiert werden. Bitte versuche es nochmal."
+                "introTextExercise": "Dieser Dialog kann dazu verwendet werden, Teams einer anderen Übung dieses Kurses in diese Übung zu importieren.",
+                "introTextFile": "Dieser Dialog kann dazu verwendet werden, Teams aus einer Datei in diese Übung zu importieren.",
+                "error": "Teams konnten nicht importiert werden. Bitte versuche es nochmal.",
+                "fromAnExercise": "Von einer Übung",
+                "fromAFile": "Aus einer Datei"
+            },
+            "exportTeams": {
+                "buttonLabel": "Exportiere Teams"
             },
             "sourceExercise": {
                 "label": "Quell-Übung",
                 "tooltip": "Die Teams der ausgewählten Quell-Übung werden in diese Übung kopiert."
+            },
+            "sourceFile": {
+                "label": "Quell-Datei",
+                "tooltip": "Die Teams der ausgewählten Datei werden in diese Übung kopiert."
             },
             "selectExerciseForImport": "Übung auswählen (nach Titel suchen)",
             "exerciseSearch": {
@@ -149,7 +161,8 @@
                 "teamsToBeDeleted": "Teams zum Löschen:",
                 "teamsToBeImported": "Teams zum Importieren:",
                 "outOf": "(von {{ number }})",
-                "totalTeamsAfterImport": "Teams insgesamt nach Import:"
+                "totalTeamsAfterImport": "Teams insgesamt nach Import:",
+                "studentsInMultipleTeams": "Es gibt Studierende, die in mehr als einem Team sind."
             },
             "purgeConfirmationDialog": {
                 "question": "Sollen alle Teams der Übung <strong>{{ title }}</strong> und ihre Teilnahmen an der Aufgabe wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",

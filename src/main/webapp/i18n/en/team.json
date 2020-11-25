@@ -89,12 +89,22 @@
             "importTeams": {
                 "buttonLabel": "Import teams",
                 "dialogTitle": "Import teams into:",
-                "introText": "This dialog can be used to import teams from another exercise of this course into this exercise.",
-                "error": "Could not import teams. Please try again."
+                "introTextExercise": "This dialog can be used to import teams from another exercise of this course into this exercise.",
+                "introTextFile": "This dialog can be used to import teams from a file into this exercise.",
+                "error": "Could not import teams. Please try again.",
+                "fromAnExercise": "From an exercise",
+                "fromAFile": "From a file"
+            },
+            "exportTeams": {
+                "buttonLabel": "Export teams"
             },
             "sourceExercise": {
                 "label": "Source exercise",
                 "tooltip": "The teams from the selected source exercise will be copied into this exercise."
+            },
+            "sourceFile": {
+                "label": "Source file",
+                "tooltip": "The teams from the selected file will be copied into this exercise."
             },
             "selectExerciseForImport": "Select exercise (by searching for the title)",
             "exerciseSearch": {
@@ -151,7 +161,8 @@
                 "teamsToBeDeleted": "Existing teams to be deleted:",
                 "teamsToBeImported": "Teams to be imported:",
                 "outOf": "(out of {{ number }})",
-                "totalTeamsAfterImport": "Total teams after import:"
+                "totalTeamsAfterImport": "Total teams after import:",
+                "studentsInMultipleTeams": "There are students that are in more than one team."
             },
             "purgeConfirmationDialog": {
                 "question": "Are you sure you want to delete all teams of exercise <strong>{{ title }}</strong> and their participations in the exercise? This action can NOT be undone!",

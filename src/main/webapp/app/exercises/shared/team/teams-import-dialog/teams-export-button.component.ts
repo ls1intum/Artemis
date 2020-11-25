@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Team } from 'app/entities/team.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { JhiAlertService } from 'ng-jhipster';
@@ -10,8 +10,8 @@ import { TeamService } from '../team.service';
         <jhi-button
             [btnType]="ButtonType.PRIMARY"
             [btnSize]="buttonSize"
-            [icon]="'plus'"
-            [title]="'artemisApp.team.importTeams.buttonLabel'"
+            [icon]="'file-export'"
+            [title]="'artemisApp.team.exportTeams.buttonLabel'"
             (onClick)="exportTeams($event)"
         ></jhi-button>
     `,
@@ -23,10 +23,12 @@ export class TeamsExportButtonComponent {
     @Input() teams: Team[];
     @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
 
-    @Output() save: EventEmitter<Team[]> = new EventEmitter();
-
     constructor(private teamService: TeamService, private jhiAlertService: JhiAlertService) {}
 
+    /**
+     * Export teams or show students if there is an error
+     * @param {MouseEvent} event - To stop propagation
+     */
     exportTeams(event: MouseEvent) {
         event.stopPropagation();
         try {

@@ -12,27 +12,24 @@
         <div class="w100 row justify-content-center card-header">
             <div class="btn-group">
                 <div class="btn" [ngClass]="{ 'btn-primary': showImportFromExercise, 'btn-default': !showImportFromExercise }" (click)="setShowImportFromExercise(true)">
-                    <span jhiTranslate="artemisApp.quizExercise.fromACourse"></span>
+                    <span jhiTranslate="artemisApp.team.importTeams.fromAnExercise"></span>
                 </div>
                 <div class="btn" [ngClass]="{ 'btn-primary': !showImportFromExercise, 'btn-default': showImportFromExercise }" (click)="setShowImportFromExercise(false)">
-                    <span jhiTranslate="artemisApp.quizExercise.fromAFile"></span>
+                    <span jhiTranslate="artemisApp.team.importTeams.fromAFile"></span>
                 </div>
             </div>
         </div>
         <div class="form-group">
-            <p *ngIf="showImportFromExercise" class="intro-text" jhiTranslate="artemisApp.team.importTeams.introText">
+            <p *ngIf="showImportFromExercise" class="intro-text" jhiTranslate="artemisApp.team.importTeams.introTextExercise">
                 This dialog can be used to import teams from another exercise.
             </p>
-            <p *ngIf="!showImportFromExercise" class="intro-text">This dialog can be used to import teams from a file into this exercise.</p>
+            <p *ngIf="!showImportFromExercise" class="intro-text" jhiTranslate="artemisApp.team.importTeams.introTextFile">
+                This dialog can be used to import teams from a file into this exercise.
+            </p>
         </div>
         <div *ngIf="!showImportFromExercise" class="form-group">
             <div class="d-flex align-items-end">
-                <jhi-teams-import-from-file-form
-                    (teamsChanged)="onTeamsChanged($event)"
-                    [isSourceTeamFreeOfAnyConflicts]="isSourceTeamFreeOfAnyConflicts.bind(this)"
-                    [teamShortNamesAlreadyExistingInExercise]="teamShortNamesAlreadyExistingInExercise"
-                    [studentLoginsAlreadyExistingInExercise]="studentLoginsAlreadyExistingInExercise"
-                ></jhi-teams-import-from-file-form>
+                <jhi-teams-import-from-file-form (teamsChanged)="onTeamsChanged($event)"></jhi-teams-import-from-file-form>
             </div>
         </div>
         <div *ngIf="showImportFromExercise" class="form-group">
@@ -205,7 +202,7 @@
     <div class="modal-footer">
         <div *ngIf="showImportPreviewNumbers && sourceTeams" class="flex-shrink-0 mr-2 d-flex">
             <div *ngIf="studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0; else elseBlock">
-                <strong>There are students that are in more than one team.</strong>
+                <strong>{{ 'artemisApp.team.importPreview.studentsInMultipleTeams' | translate }}</strong>
             </div>
             <ng-template #elseBlock>
                 <div *ngIf="numberOfTeamsToBeImported! === 0">
