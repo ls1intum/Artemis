@@ -20,8 +20,8 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.EmptyFileException;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @RestController
 @RequestMapping("/api")
-public class FileUploadSubmissionResource {
+public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
 
@@ -42,44 +42,34 @@ public class FileUploadSubmissionResource {
 
     private final FileUploadExerciseService fileUploadExerciseService;
 
-    private final AuthorizationCheckService authCheckService;
-
-    private final ExerciseService exerciseService;
-
-    private final UserService userService;
-
-    private final ParticipationService participationService;
-
     private final GradingCriterionService gradingCriterionService;
 
     private final ExamSubmissionService examSubmissionService;
 
-    public FileUploadSubmissionResource(FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
-            AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService,
-            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
-        this.userService = userService;
-        this.exerciseService = exerciseService;
+    public FileUploadSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
+            FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService,
+            ParticipationService participationService, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
+        super(submissionRepository, resultService, participationService, authCheckService, userService, exerciseService, fileUploadSubmissionService);
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseService = fileUploadExerciseService;
-        this.authCheckService = authCheckService;
-        this.participationService = participationService;
         this.gradingCriterionService = gradingCriterionService;
         this.examSubmissionService = examSubmissionService;
     }
 
     /**
-     * POST /file-upload-submissions : Submit file upload exercise with file.
+     * POST /exercises/{exerciseId}/file-upload-submissions : Create a new fileUploadSubmission
      *
-     * @param fileUploadSubmission the fileUploadSubmission to create
      * @param exerciseId the id of the exercise of the submission
-     * @param file The uploaded file belonging to the submission
      * @param principal the user principal, i.e. the identity of the logged in user - provided by Spring
+     * @param fileUploadSubmission the fileUploadSubmission to create
+     * @param file The uploaded file belonging to the submission
+     *
      * @return the ResponseEntity with status 200 and with body the new fileUploadSubmission, or with status 400 (Bad Request) if the fileUploadSubmission has already an
      * ID
      */
     @PostMapping(value = "/exercises/{exerciseId}/file-upload-submissions")
     @PreAuthorize("hasAnyRole('USER','TA','INSTRUCTOR','ADMIN')")
-    public ResponseEntity<FileUploadSubmission> submitFileUploadExercise(@PathVariable long exerciseId, Principal principal,
+    public ResponseEntity<FileUploadSubmission> createFileUploadSubmission(@PathVariable long exerciseId, Principal principal,
             @RequestPart("submission") FileUploadSubmission fileUploadSubmission, @RequestPart("file") MultipartFile file) {
         log.debug("REST request to submit new FileUploadSubmission : {}", fileUploadSubmission);
         long start = System.currentTimeMillis();
@@ -160,13 +150,13 @@ public class FileUploadSubmissionResource {
         var fileUploadSubmission = fileUploadSubmissionService.findOne(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(fileUploadExercise.getId());
+        var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(fileUploadExercise.getId());
         fileUploadExercise.setGradingCriteria(gradingCriteria);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
             return forbidden();
         }
-        fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmission(submissionId, fileUploadExercise);
+        fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmission(submissionId, fileUploadExercise);
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(fileUploadExercise);
         fileUploadSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
@@ -187,43 +177,10 @@ public class FileUploadSubmissionResource {
     @GetMapping("/exercises/{exerciseId}/file-upload-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
-    public ResponseEntity<List<FileUploadSubmission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+    public ResponseEntity<List<Submission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all file upload submissions");
-        final Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        final User user = userService.getUserWithGroupsAndAuthorities();
-
-        if (assessedByTutor) {
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                throw new AccessForbiddenException("You are not allowed to access this resource");
-            }
-        }
-        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
-
-        final boolean examMode = exercise.hasExerciseGroup();
-        List<FileUploadSubmission> fileUploadSubmissions;
-        if (assessedByTutor) {
-            fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsAssessedByTutorForExercise(exerciseId, user, examMode);
-        }
-        else {
-            fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly, examMode);
-        }
-
-        // tutors should not see information about the student of a submission
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            fileUploadSubmissions.forEach(submission -> fileUploadSubmissionService.hideDetails(submission, user));
-        }
-
-        // remove unnecessary data from the REST response
-        fileUploadSubmissions.forEach(submission -> {
-            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-                submission.getParticipation().setExercise(null);
-            }
-        });
-
-        return ResponseEntity.ok().body(fileUploadSubmissions);
+        return super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor);
     }
 
     /**

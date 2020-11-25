@@ -77,7 +77,7 @@ describe('TextUnitFormComponent', () => {
         expect(textUnitComponent.isCollapsed).to.be.true;
         const handleCollapseSpy = sinon.spy(textUnitComponent, 'handleCollapse');
 
-        const header = textUnitComponentFixture.debugElement.nativeElement.querySelector('.text-unit-header');
+        const header = textUnitComponentFixture.debugElement.nativeElement.querySelector('.unit-card-header');
         expect(header).to.be.ok;
         header.click();
 

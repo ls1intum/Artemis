@@ -52,6 +52,8 @@ public class StaticCodeAnalysisReportDTO {
 
         private String priority;
 
+        private Double penalty;
+
         public String getFilePath() {
             return filePath;
         }
@@ -122,6 +124,14 @@ public class StaticCodeAnalysisReportDTO {
 
         public void setPriority(String priority) {
             this.priority = priority;
+        }
+
+        public Double getPenalty() {
+            return penalty;
+        }
+
+        public void setPenalty(Double penalty) {
+            this.penalty = penalty;
         }
 
         @Override
