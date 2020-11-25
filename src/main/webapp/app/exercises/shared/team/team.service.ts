@@ -5,7 +5,7 @@ import { map, shareReplay } from 'rxjs/operators';
 import * as moment from 'moment';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/entities/team.model';
+import { Team, TeamAssignmentPayload, TeamImportStrategyType, TeamList } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
@@ -13,6 +13,8 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { createRequestOption } from 'app/shared/util/request-util';
+import { StudentWithTeam } from 'app/entities/student-with-team.model';
+import { downloadFile } from 'app/shared/util/download.util';
 
 export type TeamResponse = HttpResponse<Team>;
 export type TeamArrayResponse = HttpResponse<Team[]>;
@@ -209,6 +211,39 @@ export class TeamService implements ITeamService {
      */
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
         return this.http.get<Course>(`${SERVER_API_URL}api/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' });
+    }
+
+    /**
+     * Exports given quiz questions into json file
+     * @param quizQuestions Quiz questions we want to export
+     * @param exportAll If true exports all questions, else exports only those whose export flag is true
+     */
+    exportTeams(teams: Team[]) {
+        // Make list of questions which we need to export,
+        const exportedTeams: TeamList = { students: [] };
+        const studentsWithoutRegistrationNumbers: { login: string; name: string }[] = [];
+        teams!.forEach((team) => {
+            if (team.students) {
+                team.students.forEach((student) => {
+                    const exportStudent = new StudentWithTeam();
+                    exportStudent.Name = student.firstName || '';
+                    exportStudent.Surname = student.lastName || '';
+                    exportStudent['Team Name'] = team.name || '';
+                    if (!student.visibleRegistrationNumber) {
+                        studentsWithoutRegistrationNumbers.push({ login: student.login || '', name: `${student.firstName || ''} ${student.lastName || ''}` });
+                    }
+                    exportStudent['Registration Number'] = student.visibleRegistrationNumber || '';
+                    exportedTeams.students.push(exportStudent);
+                });
+            }
+        });
+        if (studentsWithoutRegistrationNumbers.length !== 0) {
+            throw new Error(studentsWithoutRegistrationNumbers.map((student) => `${student.login} ${student.name}`).join(', '));
+        }
+        // Make blob from the list of questions and download the file,
+        const teamJson = JSON.stringify(exportedTeams);
+        const blob = new Blob([teamJson], { type: 'application/json' });
+        downloadFile(blob, 'teams.json');
     }
 
     /**

@@ -21,7 +21,7 @@ import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exer
 import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-participation-table/team-participation-table.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { TeamsImportFromFileFormComponent } from './teams-import-dialog/teams-import-from-file-form.component';
-
+import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-export-button.component';
 const ENTITY_STATES = [...teamRoute];
 
 @NgModule({
@@ -31,6 +31,7 @@ const ENTITY_STATES = [...teamRoute];
         TeamUpdateButtonComponent,
         TeamUpdateDialogComponent,
         TeamsImportButtonComponent,
+        TeamsExportButtonComponent,
         TeamsImportDialogComponent,
         TeamDeleteButtonComponent,
         TeamStudentSearchComponent,
@@ -43,7 +44,7 @@ const ENTITY_STATES = [...teamRoute];
         TeamComponent,
         TeamsImportFromFileFormComponent,
     ],
-    exports: [TeamUpdateButtonComponent, TeamsImportButtonComponent, TeamStudentsListComponent, TeamParticipateInfoBoxComponent],
+    exports: [TeamUpdateButtonComponent, TeamsImportButtonComponent, TeamStudentsListComponent, TeamParticipateInfoBoxComponent, TeamsExportButtonComponent],
     entryComponents: [TeamUpdateDialogComponent, TeamsImportDialogComponent],
 })
 export class ArtemisTeamModule {}

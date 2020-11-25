@@ -234,6 +234,7 @@ public class TeamResource {
         }
         List<Team> teams = teamService.findAllByExerciseIdWithEagerStudents(exercise, teamOwnerId);
         teams.forEach(Team::filterSensitiveInformation);
+        teams.forEach(team->team.getStudents().forEach(student->student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
         return ResponseEntity.ok().body(teams);
     }
 
@@ -342,29 +343,7 @@ public class TeamResource {
             throw new BadRequestAlertException("The destination exercise must be a team-based exercise.", ENTITY_NAME, "destinationExerciseNotTeamBased");
         }
 
-//        List<String> notFoundRegistrationNumbers = new ArrayList<>();
-//        List<Team> filledTeams = new ArrayList<>();
-//        teams.forEach(team -> {
-//            Set<User> newStudents = new HashSet<>();
-//            team.getStudents().forEach(student -> {
-//                Optional<User> userWithRegistrationNumber = userService.findUserWithGroupsAndAuthoritiesByRegistrationNumber(student.getVisibleRegistrationNumber());
-//                userWithRegistrationNumber.ifPresentOrElse((value) -> {
-//                    newStudents.add(value);
-//                }, () -> {
-//                    notFoundRegistrationNumbers.add(student.getVisibleRegistrationNumber());
-//                });
-//            });
-//            team.students(newStudents);
-//            filledTeams.add(team);
-//        });
-//
-//        if(!notFoundRegistrationNumbers.isEmpty()){
-//            throw new EntityNotFoundException("vavav");
-//        }
-
         List<Team> filledTeams = teamService.convertTeamsStudentsWithRegistrationNumbersToAlreadyRegisteredUsers(exercise.getCourseViaExerciseGroupOrCourseMember(),teams);
-
-
 
         // Create audit event for team import action
         var logMessage = "Import teams from file into exercise '"
@@ -375,6 +354,7 @@ public class TeamResource {
         // Import teams and return the teams that now belong to the destination exercise
         List<Team> destinationTeams = teamService.importTeamsFromTeamListIntoExerciseUsingStrategy(exercise, filledTeams, importStrategyType);
         destinationTeams.forEach(Team::filterSensitiveInformation);
+        destinationTeams.forEach(team->team.getStudents().forEach(student->student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
 //
 //        // Send out team assignment update via websockets
 //        Map<String, List<StudentParticipation>> participationsMap = participationService.findByExerciseIdWithEagerSubmissionsResult(destinationExercise.getId()).stream()
