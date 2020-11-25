@@ -10,7 +10,6 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import * as sinon from 'sinon';
 import { stub } from 'sinon';
 import { Observable, Subject } from 'rxjs';
 import { AlertComponent } from 'app/shared/alert/alert.component';
