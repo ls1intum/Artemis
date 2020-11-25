@@ -47,6 +47,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     studentLoginsAlreadyExistingInExercise: string[] = [];
     sourceTeamsFreeOfConflicts: Team[] = [];
     studentRegistrationNumbersAlreadyExistingInOtherTeams: string[] = [];
+    studentRegistrationNumbersAlreadyExistingInExercise: string[] = [];
     notFoundRegistrationNumbers: string[] = [];
 
     private dialogErrorSource = new Subject<string>();
@@ -118,6 +119,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     computePotentialConflictsBasedOnExistingTeams() {
         this.teamShortNamesAlreadyExistingInExercise = this.teams.map((team) => team.shortName!);
         this.studentLoginsAlreadyExistingInExercise = flatMap(this.teams, (team) => team.students!.map((student) => student.login!));
+        this.studentRegistrationNumbersAlreadyExistingInExercise = flatMap(this.teams, (team) => team.students!.map((student) => student.visibleRegistrationNumber || ''));
     }
 
     /**
@@ -144,6 +146,14 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         }
         // One of the students of the source team is already part of a team in the destination exercise
         if (this.showImportFromExercise && sourceTeam.students!.some((student) => this.studentLoginsAlreadyExistingInExercise.includes(student.login!))) {
+            return false;
+        }
+
+        // One of the students of the source team is already part of a team in the destination exercise
+        if (
+            !this.showImportFromExercise &&
+            sourceTeam.students!.some((student) => this.studentRegistrationNumbersAlreadyExistingInExercise.includes(student.visibleRegistrationNumber || ''))
+        ) {
             return false;
         }
 
@@ -378,6 +388,12 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     }
 
     get problematicRegistrationNumbers() {
-        return [...new Set([...this.notFoundRegistrationNumbers, ...this.studentRegistrationNumbersAlreadyExistingInOtherTeams])];
+        return [
+            ...new Set([
+                ...this.notFoundRegistrationNumbers,
+                ...this.studentRegistrationNumbersAlreadyExistingInOtherTeams,
+                ...this.studentRegistrationNumbersAlreadyExistingInExercise,
+            ]),
+        ];
     }
 }

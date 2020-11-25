@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Team } from 'app/entities/team.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { JhiAlertService } from 'ng-jhipster';
