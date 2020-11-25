@@ -95,7 +95,7 @@ jobs:
     - name: Cache jest tests
       uses: actions/cache@v2
       with:
-          path: .jest-cache
+          path: jest-cache
           key: ${{ runner.os }}-jest-cache
     - name: Install Dependencies
       run: yarn install
