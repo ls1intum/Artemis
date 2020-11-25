@@ -9,3 +9,4 @@ Coding and design guidelines
 
    guidelines/server
    guidelines/client
+   guidelines/database

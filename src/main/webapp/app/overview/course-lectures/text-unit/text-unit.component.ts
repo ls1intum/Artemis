@@ -7,7 +7,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 @Component({
     selector: 'jhi-text-unit',
     templateUrl: './text-unit.component.html',
-    styleUrls: ['./text-unit.component.scss'],
+    styleUrls: ['../lecture-unit.component.scss'],
 })
 export class TextUnitComponent implements OnInit {
     @Input()
@@ -32,9 +32,7 @@ export class TextUnitComponent implements OnInit {
     openPopup($event: any) {
         $event.stopPropagation();
 
-        const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-        const height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-        const win = window.open('', ' ', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,' + `width=${width},height=${height}`);
+        const win = window.open('about:blank', '_blank');
         win!.document.write(`<html><head><title>${this.textUnit.name}</title>`);
         win!.document.write(`<link rel="stylesheet" href="${SERVER_API_URL}public/content/github-markdown.css">`);
         win!.document.write('</head><body class="markdown-body">');

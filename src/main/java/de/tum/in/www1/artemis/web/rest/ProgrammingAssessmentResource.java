@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /** REST controller for managing ProgrammingAssessment. */
 @RestController
@@ -34,8 +35,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final WebsocketMessagingService messagingService;
-
     private final LtiService ltiService;
 
     private final ParticipationService participationService;
@@ -43,10 +42,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService,
             WebsocketMessagingService messagingService, LtiService ltiService, ParticipationService participationService) {
-        super(authCheckService, userService, exerciseService, programmingSubmissionService, programmingAssessmentService, resultRepository, examService);
+        super(authCheckService, userService, exerciseService, programmingSubmissionService, programmingAssessmentService, resultRepository, examService, messagingService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.messagingService = messagingService;
         this.ltiService = ltiService;
         this.participationService = participationService;
     }
@@ -118,7 +116,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        Result manualResult = participation.getResults().stream().filter(result -> result.isManualResult()).findFirst().get();
+        Result manualResult = participation.getResults().stream().filter(Result::isManualResult).findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Manual result for participation with id " + participationId + " does not exist"));
         // prevent that tutors create multiple manual results
         newResult.setId(manualResult.getId());
         // load assessor

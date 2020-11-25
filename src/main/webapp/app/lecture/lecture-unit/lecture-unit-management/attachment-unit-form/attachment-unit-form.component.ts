@@ -67,10 +67,10 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
         }
         this.form = this.fb.group({
             name: [undefined, [Validators.required, Validators.maxLength(255)]],
-            description: [undefined, [Validators.maxLength(255)]],
+            description: [undefined, [Validators.maxLength(1000)]],
             releaseDate: [undefined],
             version: [1],
-            updateNotificationText: [undefined, [Validators.maxLength(255)]],
+            updateNotificationText: [undefined, [Validators.maxLength(1000)]],
         });
     }
 
