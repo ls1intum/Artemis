@@ -24,6 +24,14 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
     Optional<TextSubmission> findByIdWithEagerParticipationExerciseResultAssessor(@Param("submissionId") Long submissionId);
 
     /**
+     * Load text submission with eager Results
+     * @param submissionId the submissionId
+     * @return optional text submission
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor" })
+    Optional<TextSubmission> findWithEagerResultsById(Long submissionId);
+
+    /**
      * @param submissionId the submission id we are interested in
      * @return the submission with its feedback and assessor
      */
@@ -59,4 +67,5 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
      * @return List of Text Submissions
      */
     List<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrueAndLanguage(Long exerciseId, Language language);
+
 }
