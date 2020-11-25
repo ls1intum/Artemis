@@ -20,6 +20,11 @@ import de.tum.in.www1.artemis.domain.User;
 @Repository
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
+    /**
+     * Load submission with eager Results
+     * @param submissionId the submissionId
+     * @return optional submission
+     */
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor" })
     Optional<Submission> findWithEagerResultsById(Long submissionId);
 

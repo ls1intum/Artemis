@@ -30,6 +30,7 @@ public interface ExampleSubmissionRepository extends JpaRepository<ExampleSubmis
     @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results" })
     Set<ExampleSubmission> findAllWithEagerResultByExerciseId(long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results" })
     @Query("select distinct exampleSubmission from ExampleSubmission exampleSubmission left join fetch exampleSubmission.tutorParticipations where exampleSubmission.id = :#{#exampleSubmissionId}")
     Optional<ExampleSubmission> findByIdWithEagerTutorParticipations(@Param("exampleSubmissionId") Long exampleSubmissionId);
 

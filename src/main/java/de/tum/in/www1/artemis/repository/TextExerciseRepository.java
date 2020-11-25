@@ -53,6 +53,6 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     @Query("select textExercise from TextExercise textExercise left join fetch textExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.results result left join fetch result.feedbacks left join fetch submission.blocks left join fetch result.assessor left join fetch textExercise.teamAssignmentConfig where textExercise.id = :#{#exerciseId}")
     Optional<TextExercise> findByIdWithEagerExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions" })
+    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<TextExercise> findWithEagerStudentParticipationAndSubmissionsById(Long exerciseId);
 }

@@ -566,7 +566,7 @@ public class TextExerciseResource {
     @GetMapping("/text-exercises/{exerciseId}/check-plagiarism")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Stream<SubmissionComparisonDTO>> checkPlagiarism(@PathVariable long exerciseId) {
-        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissions(exerciseId);
+        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissionsAndResults(exerciseId);
 
         if (optionalTextExercise.isEmpty()) {
             return notFound();
@@ -609,7 +609,7 @@ public class TextExerciseResource {
     @GetMapping(value = "/text-exercises/{exerciseId}/check-plagiarism", params = { "strategy=JPlag" })
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Resource> checkPlagiarismJPlag(@PathVariable long exerciseId) throws ExitException, IOException {
-        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissions(exerciseId);
+        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissionsAndResults(exerciseId);
 
         if (optionalTextExercise.isEmpty()) {
             return notFound();
