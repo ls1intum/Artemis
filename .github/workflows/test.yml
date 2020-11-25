@@ -127,21 +127,8 @@ jobs:
                   ${{ runner.os }}-node_modules-
         - name: Install Dependencies
           run: yarn install
-        - name: Fast TypeScript Test without Typechecking
+        - name: TypeScript Test With Typechecking
           run: yarn test --ci
-        - name: "Codacy: Report coverage"
-          uses: codacy/codacy-coverage-reporter-action@master
-          with:
-              project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-              coverage-reports: coverage/lcov.info
-          if: (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (success() || failure())
-        - name: Annotate Client Test Results
-          uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
-          if: always()
-          with:
-              access-token: ${{ secrets.GITHUB_TOKEN }}
-              path: junit.xml
-              numFailures: 99
 
   client-style:
     runs-on: ubuntu-latest
