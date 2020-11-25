@@ -215,6 +215,8 @@ public class TextExerciseResource {
 
         // Avoid recursions
         if (textExercise.getExampleSubmissions().size() != 0) {
+            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithEagerResultByExerciseId(textExercise.getId());
+            result.setExampleSubmissions(exampleSubmissionsWithResults);
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
