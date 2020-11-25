@@ -27,22 +27,6 @@ export class TeamsExportButtonComponent {
 
     constructor(private teamService: TeamService, private jhiAlertService: JhiAlertService) {}
 
-    /**
-     * Open up import dialog for teams
-     * @param {Event} event - Mouse Event which invoked the opening
-     */
-    // openTeamsImportDialog(event: MouseEvent) {
-    //     event.stopPropagation();
-    //     const modalRef: NgbModalRef = this.modalService.open(TeamsImportDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-    //     modalRef.componentInstance.exercise = this.exercise;
-    //     modalRef.componentInstance.teams = this.teams;
-
-    //     modalRef.result.then(
-    //         (teams: Team[]) => this.save.emit(teams),
-    //         () => {},
-    //     );
-    // }
-
     exportTeams(event: MouseEvent) {
         event.stopPropagation();
         try {
