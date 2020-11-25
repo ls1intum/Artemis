@@ -2026,8 +2026,8 @@ public class DatabaseUtilService {
         submission = textSubmissionRepo.save(submission);
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
-        // re-assign after save to avoid issues
-        submission.setResult(result);
+
+        submission = textSubmissionRepo.save(submission);
         return submission;
     }
 

@@ -78,7 +78,7 @@ public class Result extends DomainObject {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonView(QuizView.Before.class)
-    @JsonIgnoreProperties({ "result", "participation" })
+    @JsonIgnoreProperties({ "results", "participation" })
     private Submission submission;
 
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -118,9 +118,16 @@ public abstract class Submission extends DomainObject {
         return null;
     }
 
+    @JsonSetter("results")
     public void setResult(Result result) {
         // addResult
         this.results.add(result);
+    }
+
+    // todo: WIP consider during refactoring
+    @JsonIgnore()
+    public void setResults(List<Result> results) {
+        this.results = results;
     }
 
     public Participation getParticipation() {
