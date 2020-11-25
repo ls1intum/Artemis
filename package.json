@@ -194,7 +194,7 @@
         "serve": "yarn run start",
         "build": "yarn run webpack:prod",
         "test": "jest --logHeapUsage -w=4 --config=src/test/javascript/jest.config.js --env=jsdom",
-        "test:ci": "jest --coverage --logHeapUsage -w=1 --config=src/test/javascript/jest.config.ci.js --cacheDirectory=jest-cache --env=jsdom",
+        "test:ci": "jest --coverage --logHeapUsage -w=1 --config=src/test/javascript/jest.config.ci.js --env=jsdom",
         "test:coverage": "jest --coverage --logHeapUsage -w=4 --config=src/test/javascript/jest.config.js --env=jsdom",
         "test:server-api-tests": "`pwd`/src/test/k6/api_tests.sh",
         "update": "yarn upgrade-interactive --latest",

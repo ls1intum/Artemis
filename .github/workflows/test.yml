@@ -92,11 +92,6 @@ jobs:
         key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
         restore-keys: |
           ${{ runner.os }}-node_modules-
-    - name: Cache jest tests
-      uses: actions/cache@v2
-      with:
-          path: jest-cache
-          key: ${{ runner.os }}-jest-cache
     - name: Install Dependencies
       run: yarn install
     - name: Fast TypeScript Test without Typechecking
