@@ -1,4 +1,5 @@
-const mainConfig = require('jest.config');
+const mainConfig = require('./jest.config');
+
 module.exports = {
     ...mainConfig,
     globals: {
