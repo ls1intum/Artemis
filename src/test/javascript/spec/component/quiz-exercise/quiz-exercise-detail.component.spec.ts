@@ -1,4 +1,3 @@
-import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
 import { ChangeDetectorRef, EventEmitter, SimpleChange } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
@@ -54,7 +53,6 @@ describe('QuizExercise Management Detail Component', () => {
     let fileUploaderService: FileUploaderService;
     let fixture: ComponentFixture<QuizExerciseDetailComponent>;
     let router: Router;
-    let location: Location;
     let alertService: JhiAlertService;
     let dragAndDropQuestionUtil: DragAndDropQuestionUtil;
     let shortAnswerQuestionUtil: ShortAnswerQuestionUtil;
@@ -166,7 +164,6 @@ describe('QuizExercise Management Detail Component', () => {
         courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
         quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
         router = fixture.debugElement.injector.get(Router);
-        location = fixture.debugElement.injector.get(Location);
         fileUploaderService = TestBed.inject(FileUploaderService);
         alertService = fixture.debugElement.injector.get(JhiAlertService);
         dragAndDropQuestionUtil = fixture.debugElement.injector.get(DragAndDropQuestionUtil);
@@ -1023,13 +1020,11 @@ describe('QuizExercise Management Detail Component', () => {
 
         describe('routing', () => {
             let routerSpy: SinonSpy;
-            let locationSpy: SinonSpy;
 
             beforeEach(() => {
                 resetQuizExercise();
                 comp.quizExercise = quizExercise;
                 routerSpy = spy(router, 'navigate');
-                locationSpy = spy(location, 'back');
             });
 
             afterEach(() => {
@@ -1045,11 +1040,6 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.isExamMode = true;
                 comp.cancel();
                 expect(routerSpy).to.have.been.calledOnceWithExactly(['/course-management', comp.courseId, 'exams', comp.examId, 'exercise-groups']);
-            });
-
-            it('should call back on location on back', () => {
-                comp.back();
-                expect(locationSpy).to.have.been.called;
             });
         });
 
