@@ -7,7 +7,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { mockTeams } from '../../helpers/mocks/service/mock-team.service';
-import config from './config';
+import { config } from './teams-import-dialog.component.spec';
 chai.use(sinonChai);
 const expect = chai.expect;
 

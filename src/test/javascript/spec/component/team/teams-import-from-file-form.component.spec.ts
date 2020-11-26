@@ -6,7 +6,7 @@ import * as chai from 'chai';
 import { SinonStub, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { mockFileStudents, mockFileTeamsConverted } from '../../helpers/mocks/service/mock-team.service';
-import config from './config';
+import { config } from './teams-import-dialog.component.spec';
 
 chai.use(sinonChai);
 const expect = chai.expect;

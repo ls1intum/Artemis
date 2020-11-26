@@ -5,19 +5,42 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team, TeamImportStrategyType } from 'app/entities/team.model';
+import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
 import * as chai from 'chai';
 import { flatMap } from 'lodash';
-import { JhiAlertService } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { mockExercise, mockSourceExercise, mockSourceTeams, mockSourceTeamStudents, mockTeam, mockTeams, mockTeamStudents } from '../../helpers/mocks/service/mock-team.service';
-import config from './config';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import {
+    mockExercise,
+    mockSourceExercise,
+    mockSourceTeams,
+    mockSourceTeamStudents,
+    mockTeam,
+    mockTeams,
+    MockTeamService,
+    mockTeamStudents,
+} from '../../helpers/mocks/service/mock-team.service';
+import { ArtemisTestModule } from '../../test.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
+
+export const config = {
+    imports: [ArtemisTestModule, ArtemisTeamModule],
+    declarations: [],
+    providers: [
+        JhiEventManager,
+        { provide: TeamService, useClass: MockTeamService },
+        { provide: LocalStorageService, useClass: MockSyncStorage },
+        { provide: SessionStorageService, useClass: MockSyncStorage },
+    ],
+};
 
 describe('TeamsImportDialogComponent', () => {
     let comp: TeamsImportDialogComponent;
