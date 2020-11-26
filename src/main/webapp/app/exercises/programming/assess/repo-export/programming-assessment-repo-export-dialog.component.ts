@@ -59,7 +59,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                     catchError((err) => {
                         this.jhiAlertService.error(err);
                         this.clear();
-                        return of(null);
+                        return of(undefined);
                     }),
                 )
                 .subscribe(() => {
