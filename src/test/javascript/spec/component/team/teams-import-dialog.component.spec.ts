@@ -60,7 +60,7 @@ describe('TeamsImportDialogComponent', () => {
         fixture = TestBed.createComponent(TeamsImportDialogComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        ngbActiveModal = TestBed.inject(NgbActiveModal);
+        ngbActiveModal = debugElement.injector.get(NgbActiveModal);
         alertService = debugElement.injector.get(JhiAlertService);
         teamService = fixture.debugElement.injector.get(TeamService);
     });
@@ -461,10 +461,8 @@ describe('TeamsImportDialogComponent', () => {
             resetComponent();
         });
         it('should return false', () => {
-            const activeStub = stub(ngbActiveModal, 'dismiss');
             comp.clear();
-            expect(activeStub).to.have.been.calledWith('cancel');
-            activeStub.restore();
+            expect(ngbActiveModal.dismiss).to.have.been.calledWith('cancel');
         });
     });
 
@@ -583,26 +581,19 @@ describe('TeamsImportDialogComponent', () => {
     });
 
     describe('onSaveSuccess', () => {
-        let activeStub: SinonStub;
-        let alertServiceStub: SinonStub;
         let response: HttpResponse<Team[]>;
         beforeEach(() => {
             resetComponent();
-            activeStub = stub(ngbActiveModal, 'close');
-            alertServiceStub = stub(alertService, 'success');
             response = new HttpResponse<Team[]>({ body: mockSourceTeams });
         });
-        afterEach(() => {
-            activeStub.restore();
-            alertServiceStub.restore();
-        });
+
         it('change component files and convert file teams to normal teams', fakeAsync(() => {
             comp.isImporting = true;
             comp.onSaveSuccess(response);
             tick(500);
-            expect(activeStub).to.have.been.calledWithExactly(mockSourceTeams);
+            expect(ngbActiveModal.close).to.have.been.calledWithExactly(mockSourceTeams);
             expect(comp.isImporting).to.equal(false);
-            expect(alertServiceStub).to.have.been.calledWith('artemisApp.team.importSuccess', { numberOfImportedTeams: comp.numberOfTeamsToBeImported });
+            expect(alertService.success).to.have.been.calledWith('artemisApp.team.importSuccess', { numberOfImportedTeams: comp.numberOfTeamsToBeImported });
         }));
     });
 
