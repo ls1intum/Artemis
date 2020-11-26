@@ -247,6 +247,17 @@ public class ModelFactory {
         return generateActivatedUser(login, USER_PASSWORD);
     }
 
+    /**
+     * Generate a team
+     *
+     * @param exercise exercise of the team
+     * @param name name of the team
+     * @param shortName short name of the team
+     * @param numberOfStudents amount of users to generate for team as students
+     * @param owner owner of the team generally a tutor
+     * @param creatorLogin login of user that creates the teams
+     * @return team that was generated
+     */
     public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String creatorLogin) {
         List<User> students = generateActivatedUsersWithRegistrationNumber(shortName + loginPrefix, new String[] { "tumuser", "testgroup" },
                 Set.of(new Authority(AuthoritiesConstants.USER)), numberOfStudents, shortName);
