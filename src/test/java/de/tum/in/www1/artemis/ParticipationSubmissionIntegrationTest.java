@@ -50,7 +50,7 @@ public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegr
         Long submissionId = submissionWithResult.getId();
 
         // There should be a submission found by participation.
-        assertThat(submissionRepository.findByParticipationId(participationId)).hasSize(1);
+        assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(1);
 
         request.delete("/api/submissions/" + submissionId + "/", HttpStatus.OK);
         Optional<Submission> submission = submissionRepository.findById(submissionId);
@@ -58,7 +58,7 @@ public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegr
         // Submission should now be gone.
         assertThat(submission.isPresent()).isFalse();
         // Make sure that also the submission was deleted.
-        assertThat(submissionRepository.findByParticipationId(participationId)).hasSize(0);
+        assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(0);
         // Result is deleted.
         assertThat(resultRepository.findById(submissionWithResult.getResult().getId()).isPresent()).isFalse();
     }

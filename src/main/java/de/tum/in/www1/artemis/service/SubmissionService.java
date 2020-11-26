@@ -192,13 +192,13 @@ public class SubmissionService {
     }
 
     /**
-     * Get the submission with the given id from the database. The submission is loaded together with its result and the assessor. Throws an EntityNotFoundException if no
+     * Get the submission with the given id from the database. The submission is loaded together with its results and the assessors. Throws an EntityNotFoundException if no
      * submission could be found for the given id.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the submission with the given id
      */
-    public Submission findOneWithEagerResult(long submissionId) {
+    public Submission findOneWithEagerResults(long submissionId) {
         return submissionRepository.findWithEagerResultsById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
