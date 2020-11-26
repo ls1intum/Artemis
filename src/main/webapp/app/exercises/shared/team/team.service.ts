@@ -93,6 +93,12 @@ export interface ITeamService {
      * @param {Team} team - Team for which to find exercises and participations (by team short name)
      */
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>>;
+
+    /**
+     * Exports given teams into json file
+     * @param teams Teams to add to export file
+     */
+    exportTeams(teams: Team[]): void;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -223,9 +229,8 @@ export class TeamService implements ITeamService {
     }
 
     /**
-     * Exports given quiz questions into json file
-     * @param quizQuestions Quiz questions we want to export
-     * @param exportAll If true exports all questions, else exports only those whose export flag is true
+     * Exports given teams into json file
+     * @param teams Teams to add to export file
      */
     exportTeams(teams: Team[]) {
         // Make list of questions which we need to export,

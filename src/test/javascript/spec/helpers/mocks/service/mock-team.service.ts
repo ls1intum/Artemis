@@ -3,6 +3,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ITeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team, TeamImportStrategyType } from 'app/entities/team.model';
+import { StudentWithTeam } from 'app/entities/student-with-team.model';
 import { Course } from 'app/entities/course.model';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { User } from 'app/core/user/user.model';
@@ -76,6 +77,32 @@ export const mockShortNames = {
     nonExisting: 'team2',
 };
 
+export const mockFileStudents = {
+    students: [
+        { Name: 'Jack', Surname: 'Doe', 'Registration Number': '23456', 'Team Name': 'File Team 1' } as StudentWithTeam,
+        { Name: 'Jackie', Surname: 'Doen', 'Registration Number': '23457', 'Team Name': 'File Team 1' } as StudentWithTeam,
+        { Name: 'Alyson', Surname: 'Smithson', 'Registration Number': '23458', 'Team Name': 'File Team 2' } as StudentWithTeam,
+    ],
+};
+
+export const mockFileTeamsConverted: Team[] = [
+    {
+        ...new Team(),
+        name: 'File Team 1',
+        shortName: 'fileteam1',
+        students: [
+            { ...new User(), firstName: 'Jack', lastName: 'Doe', visibleRegistrationNumber: '23456', name: 'Jack Doe' } as User,
+            { ...new User(), firstName: 'Jackie', lastName: 'Doen', visibleRegistrationNumber: '23457', name: 'Jackie Doen' } as User,
+        ],
+    } as Team,
+    {
+        ...new Team(),
+        name: 'File Team 2',
+        shortName: 'fileteam2',
+        students: [{ ...new User(), firstName: 'Alyson', lastName: 'Smithson', visibleRegistrationNumber: '23458', name: 'Alyson Smithson' } as User],
+    } as Team,
+];
+
 export const mockTeamSearchUsers = [...mockTeamStudents, ...mockNonTeamStudents].map((student) => ({
     ...student,
     assignedTeamId: mockTeamStudents.includes(student) ? mockTeam.id : null,
@@ -121,6 +148,8 @@ export class MockTeamService implements ITeamService {
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
         return MockTeamService.response({ ...mockCourse, exercises: [{ ...(mockExercise as Exercise), teams: [mockTeam] }] } as Course);
     }
+
+    exportTeams(teams: Team[]) {}
 
     // helper method
     private static response<T>(entity: T) {

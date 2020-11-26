@@ -1,6 +1,4 @@
-import { StudentDTO } from './student-dto.model';
-
-export class StudentWithTeam extends StudentDTO {
+export class StudentWithTeam {
     public Name: string;
     public Surname: string;
     public 'Registration Number': string;

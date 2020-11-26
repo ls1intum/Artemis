@@ -43,7 +43,6 @@ describe('TeamsImportDialogComponent', () => {
     let debugElement: DebugElement;
     let ngbActiveModal: NgbActiveModal;
     let alertService: JhiAlertService;
-    let changeDetector: ChangeDetectorRef;
     let teamService: TeamService;
 
     const teams: Team[] = mockTeams;
@@ -101,7 +100,6 @@ describe('TeamsImportDialogComponent', () => {
         debugElement = fixture.debugElement;
         ngbActiveModal = TestBed.inject(NgbActiveModal);
         alertService = debugElement.injector.get(JhiAlertService);
-        changeDetector = debugElement.injector.get(ChangeDetectorRef);
         teamService = fixture.debugElement.injector.get(TeamService);
     });
 
