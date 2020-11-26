@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -36,6 +38,8 @@ public class RepositoryService {
     private UserService userService;
 
     private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    private final Logger log = LoggerFactory.getLogger(TextSubmissionService.class);
 
     public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserService userService, ParticipationService participationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
@@ -122,7 +126,7 @@ public class RepositoryService {
                         }
                     }
                     catch (IOException e) {
-                        e.printStackTrace();
+                        log.error("Comparing file1 " + fileName + " with file2 " + templateFile.toString() + " throws in following error: " + e.getMessage());
                     }
                 });
             }
