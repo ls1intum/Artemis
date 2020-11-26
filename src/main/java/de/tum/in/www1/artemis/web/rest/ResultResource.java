@@ -152,10 +152,7 @@ public class ResultResource {
                     result.get().getParticipation());
             // notify user via websocket
             messagingService.broadcastNewResult((Participation) participation, result.get());
-
-            if (participation instanceof ProgrammingExerciseStudentParticipation) {
-                ltiService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
-            }
+            ltiService.onNewResult((StudentParticipation) participation);
             log.info("The new result for {} was saved successfully", planKey);
         }
         return ResponseEntity.ok().build();

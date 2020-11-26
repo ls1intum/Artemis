@@ -1,96 +1,100 @@
-<dt *ngIf="superExerciseDetails.course || superExerciseDetails.exerciseGroup"><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
-<dd *ngIf="superExerciseDetails.course">
+<dt *ngIf="exercise.course || exercise.exerciseGroup"><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
+<dd *ngIf="exercise.course">
     <div>
-        <a [routerLink]="['/course-management', superExerciseDetails.course?.id]">{{ superExerciseDetails.course?.title }}</a>
+        <a [routerLink]="['/course-management', exercise.course?.id]">{{ exercise.course?.title }}</a>
     </div>
 </dd>
-<dd *ngIf="superExerciseDetails.exerciseGroup">
+<dd *ngIf="exercise.exerciseGroup">
     <div>
-        <a [routerLink]="['/course-management', superExerciseDetails.exerciseGroup?.exam?.course?.id]">{{ superExerciseDetails.exerciseGroup?.exam?.course?.title }}</a>
+        <a [routerLink]="['/course-management', exercise.exerciseGroup?.exam?.course?.id]">{{ exercise.exerciseGroup?.exam?.course?.title }}</a>
     </div>
 </dd>
-<dt *ngIf="superExerciseDetails.exerciseGroup"><span jhiTranslate="artemisApp.exercise.exam">Exam</span></dt>
-<dd *ngIf="superExerciseDetails.exerciseGroup">
+<dt *ngIf="exercise.exerciseGroup"><span jhiTranslate="artemisApp.exercise.exam">Exam</span></dt>
+<dd *ngIf="exercise.exerciseGroup">
     <div>
-        <a [routerLink]="['/course-management', superExerciseDetails.exerciseGroup?.exam?.course?.id, 'exams', superExerciseDetails.exerciseGroup?.exam?.id]">{{
-            superExerciseDetails.exerciseGroup?.exam?.title
-        }}</a>
-        <span>{{ superExerciseDetails.exerciseGroup?.exam?.title }}</span>
+        <a [routerLink]="['/course-management', exercise.exerciseGroup?.exam?.course?.id, 'exams', exercise.exerciseGroup?.exam?.id]">{{ exercise.exerciseGroup?.exam?.title }}</a>
+        <span>{{ exercise.exerciseGroup?.exam?.title }}</span>
     </div>
 </dd>
 <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
 <dd>
-    <span>{{ superExerciseDetails.title }}</span>
+    <span>{{ exercise.title }}</span>
 </dd>
-<ng-container *ngIf="superExerciseDetails.type === 'programming'">
+<ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING">
     <dt><span jhiTranslate="artemisApp.exercise.shortName">short Name</span></dt>
     <dd>
-        <span>{{ superExerciseDetails.shortName }}</span>
+        <span>{{ exercise.shortName }}</span>
     </dd>
 </ng-container>
 <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
-<dd *ngIf="superExerciseDetails.categories">
-    <span class="custom-tag" *ngFor="let item of superExerciseDetails.categories" [ngStyle]="{ backgroundColor: item.color }">
+<dd *ngIf="exercise.categories">
+    <span class="custom-tag" *ngFor="let item of exercise.categories" [ngStyle]="{ backgroundColor: item.color }">
         <span>{{ item.category }}</span>
     </span>
 </dd>
-<dd *ngIf="!superExerciseDetails.categories">
+<dd *ngIf="!exercise.categories">
     <span jhiTranslate="artemisApp.exercise.noCategory">No categories</span>
 </dd>
 <dt><span jhiTranslate="artemisApp.exercise.difficulty">Difficulty</span></dt>
 <dd>
-    <span *ngIf="superExerciseDetails.difficulty">{{ superExerciseDetails.difficulty }}</span>
-    <span *ngIf="!superExerciseDetails.difficulty" jhiTranslate="artemisApp.exercise.noLevel"></span>
+    <span *ngIf="exercise.difficulty">{{ exercise.difficulty }}</span>
+    <span *ngIf="!exercise.difficulty" jhiTranslate="artemisApp.exercise.noLevel"></span>
 </dd>
 <dt><span jhiTranslate="artemisApp.exercise.mode">Mode</span></dt>
 <dd>
-    <span>{{ superExerciseDetails.mode }}</span>
+    <span>{{ exercise.mode }}</span>
 </dd>
-<ng-container *ngIf="superExerciseDetails.teamAssignmentConfig">
+<ng-container *ngIf="exercise.teamAssignmentConfig">
     <dt><span jhiTranslate="artemisApp.exercise.teamAssignmentConfig.teamSize">Team Size</span></dt>
     <dd>
         <span>Min.</span>
-        <span>{{ superExerciseDetails.teamAssignmentConfig.minTeamSize }}</span>
+        <span>{{ exercise.teamAssignmentConfig.minTeamSize }}</span>
         <span>Max.</span>
-        <span>{{ superExerciseDetails.teamAssignmentConfig.maxTeamSize }}</span>
+        <span>{{ exercise.teamAssignmentConfig.maxTeamSize }}</span>
         <span jhiTranslate="artemisApp.exercise.teamAssignmentConfig.participants">Participants</span>
     </dd>
 </ng-container>
 <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
 <dd>
-    <span *ngIf="superExerciseDetails.releaseDate">{{ superExerciseDetails.releaseDate | artemisDate }}</span>
-    <span *ngIf="!superExerciseDetails.releaseDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+    <span *ngIf="exercise.releaseDate">{{ exercise.releaseDate | artemisDate }}</span>
+    <span *ngIf="!exercise.releaseDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
 </dd>
 <dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
 <dd>
-    <span *ngIf="superExerciseDetails.dueDate">{{ superExerciseDetails.dueDate | artemisDate }}</span>
-    <span *ngIf="!superExerciseDetails.dueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+    <span *ngIf="exercise.dueDate">{{ exercise.dueDate | artemisDate }}</span>
+    <span *ngIf="!exercise.dueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
 </dd>
 <dt><span jhiTranslate="artemisApp.exercise.assessmentDueDate">Due Date</span></dt>
 <dd>
-    <span *ngIf="superExerciseDetails.assessmentDueDate">{{ superExerciseDetails.assessmentDueDate | artemisDate }}</span>
-    <span *ngIf="!superExerciseDetails.assessmentDueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+    <span *ngIf="exercise.assessmentDueDate">{{ exercise.assessmentDueDate | artemisDate }}</span>
+    <span *ngIf="!exercise.assessmentDueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
 </dd>
-<ng-container *ngIf="superExerciseDetails.type !== 'programming'">
-    <dt><span jhiTranslate="artemisApp.exercise.points">Points</span></dt>
-    <dd>
-        <span>{{ superExerciseDetails.maxScore }}</span>
-    </dd>
-    <dt *ngIf="superExerciseDetails.bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus points</span></dt>
-    <dd *ngIf="superExerciseDetails.bonusPoints">
-        <span>{{ superExerciseDetails.bonusPoints }}</span>
-    </dd>
-    <dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
-    <dd>
-        <span *ngIf="superExerciseDetails.presentationScoreEnabled">{{ 'global.generic.yes' | translate }}</span>
-        <span *ngIf="!superExerciseDetails.presentationScoreEnabled">{{ 'global.generic.no' | translate }}</span>
-    </dd>
-    <dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>
+<dt><span jhiTranslate="artemisApp.exercise.points">Points</span></dt>
+<dd>
+    <span>{{ exercise.maxScore }}</span>
+</dd>
+<dt *ngIf="exercise.bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus points</span></dt>
+<dd *ngIf="exercise.bonusPoints">
+    <span>{{ exercise.bonusPoints }}</span>
+</dd>
+<dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
+<dd>
+    <span *ngIf="exercise.presentationScoreEnabled">{{ 'global.generic.yes' | translate }}</span>
+    <span *ngIf="!exercise.presentationScoreEnabled">{{ 'global.generic.no' | translate }}</span>
+</dd>
+<dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>
+<ng-container *ngIf="exercise.type !== ExerciseType.PROGRAMMING">
     <dd class="editor-outline-background" [innerHTML]="formattedProblemStatement"></dd>
-    <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
-    <dd class="editor-outline-background"><span [innerHTML]="formattedGradingInstructions"></span></dd>
-    <jhi-structured-grading-instructions-assessment-layout
-        [readonly]="true"
-        [criteria]="superExerciseDetails.gradingCriteria"
-    ></jhi-structured-grading-instructions-assessment-layout>
 </ng-container>
+<ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING">
+    <dd>
+        <jhi-programming-exercise-instructions
+            [exercise]="exercise"
+            [participation]="programmingExercise.templateParticipation"
+            [personalParticipation]="true"
+        ></jhi-programming-exercise-instructions>
+    </dd>
+</ng-container>
+<dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
+<dd class="editor-outline-background"><span [innerHTML]="formattedGradingInstructions"></span></dd>
+<jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="exercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
