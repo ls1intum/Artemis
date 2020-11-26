@@ -401,6 +401,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getProgrammingSubmissionWithoutAssessment_alreadyAssessed_noFound() throws Exception {
+        exercise.setDueDate(ZonedDateTime.now().minusDays(2));
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
         var submission = ModelFactory.generateProgrammingSubmission(true);
@@ -408,7 +409,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         final var tutor = database.getUserByLogin("tutor1");
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, tutor);
 
-        request.get("/api/exercises" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.NOT_FOUND, String.class);
     }
 
     private void createTenLockedSubmissionsForExercise(String assessor) {
