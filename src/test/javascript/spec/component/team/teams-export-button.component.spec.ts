@@ -21,8 +21,6 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('TeamsExportButtonComponent', () => {
-    // needed to make sure ace is defined
-    // ace.acequire('ace/ext/modelist.js');
     let comp: TeamsExportButtonComponent;
     let fixture: ComponentFixture<TeamsExportButtonComponent>;
     let debugElement: DebugElement;
@@ -36,16 +34,7 @@ describe('TeamsExportButtonComponent', () => {
     beforeEach(
         waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [
-                    TranslateModule.forRoot(),
-                    ArtemisTestModule,
-                    FormsModule,
-                    NgJhipsterModule,
-                    NgbModule,
-                    ArtemisSharedModule,
-                    ArtemisSharedComponentModule,
-                    ArtemisTeamModule,
-                ],
+                imports: [ArtemisTestModule, ArtemisTeamModule],
                 declarations: [],
                 providers: [
                     JhiEventManager,

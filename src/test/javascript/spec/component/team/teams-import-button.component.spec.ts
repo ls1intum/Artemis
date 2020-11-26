@@ -36,16 +36,7 @@ describe('TeamsImportButtonComponent', () => {
     beforeEach(
         waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [
-                    TranslateModule.forRoot(),
-                    ArtemisTestModule,
-                    FormsModule,
-                    NgJhipsterModule,
-                    NgbModule,
-                    ArtemisSharedModule,
-                    ArtemisSharedComponentModule,
-                    ArtemisTeamModule,
-                ],
+                imports: [ArtemisTestModule, ArtemisTeamModule],
                 declarations: [],
                 providers: [JhiEventManager, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
             })
@@ -74,7 +65,6 @@ describe('TeamsImportButtonComponent', () => {
             eventSpy = spy(event, 'stopPropagation');
             comp.save.subscribe((value: Team[]) => {
                 teams = value;
-                console.log('save', teams);
             });
             componentInstance = { teams: [], exercise: undefined };
             const result = new Promise((resolve) => resolve(mockSourceTeams));
@@ -91,8 +81,6 @@ describe('TeamsImportButtonComponent', () => {
             expect(componentInstance.exercise).to.deep.equal(mockExercise);
             expect(componentInstance.teams).to.deep.equal(mockTeams);
             tick(100);
-            console.log(teams);
-            console.log(mockSourceTeams);
             expect(teams).to.deep.equal(mockSourceTeams);
         }));
     });

@@ -39,16 +39,7 @@ describe('TeamsImportFromFileFormComponent', () => {
     beforeEach(
         waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [
-                    TranslateModule.forRoot(),
-                    ArtemisTestModule,
-                    FormsModule,
-                    NgJhipsterModule,
-                    NgbModule,
-                    ArtemisSharedModule,
-                    ArtemisSharedComponentModule,
-                    ArtemisTeamModule,
-                ],
+                imports: [ArtemisTestModule, ArtemisTeamModule],
                 declarations: [],
                 providers: [JhiEventManager, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
             })

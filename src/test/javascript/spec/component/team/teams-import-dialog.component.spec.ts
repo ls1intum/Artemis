@@ -518,18 +518,6 @@ describe('TeamsImportDialogComponent', () => {
         });
     });
 
-    describe('purgeAndImportTeams', () => {
-        beforeEach(() => {
-            resetComponent();
-        });
-        it('should return false', () => {
-            const importTeamsStub = stub(comp, 'importTeams');
-            comp.purgeAndImportTeams();
-            expect(importTeamsStub).to.have.been.called;
-            importTeamsStub.restore();
-        });
-    });
-
     describe('importTeams', () => {
         let importFromSourceExerciseStub: SinonStub;
         let importFromFileStub: SinonStub;
@@ -715,17 +703,6 @@ describe('TeamsImportDialogComponent', () => {
             comp.setShowImportFromExercise(false);
             expect(comp.showImportFromExercise).to.equal(false);
             expectValuesToBeReset();
-        });
-    });
-
-    describe('sampleTeamForLegend', () => {
-        beforeEach(() => {
-            resetComponent();
-        });
-        it('should return a sample team', () => {
-            const team = new Team();
-            team.students = [{ ...new User(1, 'ga12abc', 'John', 'Doe', 'john.doe@tum.de'), name: 'John Doe' }];
-            expect(comp.sampleTeamForLegend).to.deep.equal(team);
         });
     });
 
