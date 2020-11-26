@@ -210,6 +210,15 @@ public class ModelFactory {
         return generatedUsers;
     }
 
+    public static List<User> generateActivatedUsersWithRegistrationNumber(String loginPrefix, String[] groups, Set<Authority> authorities, int amount,
+            String registrationNumberPrefix) {
+        List<User> generatedUsers = ModelFactory.generateActivatedUsers(loginPrefix, groups, authorities, amount);
+        for (int i = 0; i < amount; i++) {
+            generatedUsers.get(i).setRegistrationNumber(registrationNumberPrefix + i + "R");
+        }
+        return generatedUsers;
+    }
+
     public static User generateActivatedUser(String login, String password) {
         User user = new User();
         user.setLogin(login);
@@ -228,29 +237,34 @@ public class ModelFactory {
         return generateActivatedUser(login, USER_PASSWORD);
     }
 
-    public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner) {
-        List<User> students = generateActivatedUsers(shortName + loginPrefix, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(AuthoritiesConstants.USER)),
-                numberOfStudents);
+    public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String creatorLogin) {
+        List<User> students = generateActivatedUsersWithRegistrationNumber(shortName + loginPrefix, new String[] { "tumuser", "testgroup" },
+                Set.of(new Authority(AuthoritiesConstants.USER)), numberOfStudents, shortName);
 
         Team team = new Team();
         team.setName(name);
         team.setShortName(shortName);
         team.setExercise(exercise);
         team.setStudents(new HashSet<>(students));
-        team.setOwner(owner);
-
+        if (owner != null) {
+            team.setOwner(owner);
+        }
+        if (creatorLogin != null) {
+            team.setCreatedBy(creatorLogin);
+            team.setLastModifiedBy(creatorLogin);
+        }
         return team;
     }
 
     public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents, User owner) {
-        return generateTeamForExercise(exercise, name, shortName, "student", numberOfStudents, owner);
+        return generateTeamForExercise(exercise, name, shortName, "student", numberOfStudents, owner, null);
     }
 
-    public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner) {
+    public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin) {
         List<Team> teams = new ArrayList<>();
         for (int i = 1; i <= numberOfTeams; i++) {
             int numberOfStudents = new Random().nextInt(4) + 1; // range: 1-4 students
-            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, numberOfStudents, owner));
+            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, numberOfStudents, owner, creatorLogin));
         }
         return teams;
     }

@@ -70,8 +70,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /**
      * Gets users in a group by their registration number.
      * @param groupName Name of group in which to search for users
-     * @param registrationNumbers Registration number of user
-     * @return found user that match the criteria
+     * @param registrationNumbers Registration numbers of users
+     * @return found users that match the criteria
      */
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("select user from User user where :#{#groupName} member of user.groups and " + "user.registrationNumber in :#{#registrationNumbers}")
