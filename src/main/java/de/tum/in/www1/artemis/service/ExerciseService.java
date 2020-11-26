@@ -167,7 +167,8 @@ public class ExerciseService {
     }
 
     /**
-     * Finds all exercises where the due date is in the future.
+     * Finds all exercises where the due date is in the future
+     * (does not return exercises belonging to test courses).
      *
      * @return set of exercises
      */
@@ -288,7 +289,7 @@ public class ExerciseService {
      * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
      * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
      */
-    @Transactional
+    @Transactional // ok
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
         final var exercise = findOne(exerciseId);

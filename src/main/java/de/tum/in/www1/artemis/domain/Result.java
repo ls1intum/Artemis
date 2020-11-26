@@ -342,6 +342,9 @@ public class Result extends DomainObject {
             if (feedback.getCredits() != null) {
                 feedback.setPositive(feedback.getCredits() >= 0);
             }
+            else {
+                feedback.setCredits(0.0);
+            }
             setFeedbackType(feedback);
         }
         // Note: If there is old feedback that gets removed here and not added again in the forEach-loop, it
