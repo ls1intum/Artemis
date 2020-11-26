@@ -21,7 +21,7 @@ Artemis supports the following exercises:
 
 Artemis supports all these exercises to run either live in the lecture with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
 
-Artemis also supports an exam mode now. You can find more information on [Exam mode student features](https://artemis.ase.in.tum.de/#/features/students) and on [Exam mode instructor features](https://artemis.ase.in.tum.de/#/features/instructors).
+Artemis also supports an exam mode now. You can find more information on [Exam mode student features](https://artemis.ase.in.tum.de/features/students) and on [Exam mode instructor features](https://artemis.ase.in.tum.de/features/instructors).
 
 ## Setup, guides and contributing
 

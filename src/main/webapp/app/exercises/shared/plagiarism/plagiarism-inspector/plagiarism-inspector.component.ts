@@ -132,7 +132,7 @@ export class PlagiarismInspectorComponent implements OnInit {
 
             const courseId = this.modelingExercise.course ? this.modelingExercise.course.id : this.modelingExercise.exerciseGroup?.exam?.course?.id;
 
-            const baseUrl = location.origin + '/#/course-management/';
+            const baseUrl = location.origin + '/course-management/';
 
             const csvData = this.modelingSubmissionComparisons.map((comparisonResult) => {
                 return Object.assign({
