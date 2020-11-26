@@ -161,7 +161,6 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
     private void testImportTeamsIntoExerciseWithNoConflictsUsingCreateOnlyStrategy(ImportType type, List<Team> body, List<Team> addedTeams) throws Exception {
         TeamImportStrategyType strategyType = TeamImportStrategyType.CREATE_ONLY;
         List<Team> destinationTeamsBefore = database.addTeamsForExercise(destinationExercise, 1, tutor);
-        List<Team> destinationTeamsAfter = request.putWithResponseBodyList(importFromSourceExerciseUrl(strategyType), body, Team.class, HttpStatus.OK);
         // destination teams before + source teams = destination teams after
         testImportTeamsIntoExercise(type, strategyType, body, addLists(destinationTeamsBefore, addedTeams));
     }
@@ -260,7 +259,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromExercise_BadRequests() throws Exception {
+    public void testImportTeamsFromExerciseBadRequests() throws Exception {
         // Specifying the destination exercise to also be the source exercise should fail
         request.put(importFromExerciseUrl(destinationExercise), null, HttpStatus.BAD_REQUEST);
 
@@ -277,7 +276,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsWithRegistrationNumbers_BadRequests() throws Exception {
+    public void testImportTeamsWithRegistrationNumbersBadRequests() throws Exception {
         // If the destination exercise is not a team exercise, the request should fail
         exerciseRepo.save(destinationExercise.mode(ExerciseMode.INDIVIDUAL));
         request.put(importWithRegistrationNumberUrl(), importedTeamsWithOnlyRegistrationNumbers, HttpStatus.BAD_REQUEST);
@@ -293,19 +292,19 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testImportTeamsFromExercise_Forbidden_AsTutor() throws Exception {
+    public void testImportTeamsFromExerciseForbiddenAsTutor() throws Exception {
         request.put(importFromSourceExerciseUrl(), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testImportTeamsWithRegistrationNumbers_Forbidden_AsTutor() throws Exception {
+    public void testImportTeamsWithRegistrationNumbersForbiddenAsTutor() throws Exception {
         request.put(importWithRegistrationNumberUrl(), importedTeamsWithOnlyRegistrationNumbers, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromExercise_Forbidden_AsInstructorOfOtherCourse() throws Exception {
+    public void testImportTeamsFromExerciseForbiddenAsInstructorOfOtherCourse() throws Exception {
         // If the instructor is not part of the correct course instructor group anymore, he should not be able to import teams
         course.setInstructorGroupName("Different group name");
         courseRepo.save(course);
@@ -315,7 +314,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsWithRegistrationNumbers_Forbidden_AsInstructorOfOtherCourse() throws Exception {
+    public void testImportTeamsWithRegistrationNumbersForbiddenAsInstructorOfOtherCourse() throws Exception {
         // If the instructor is not part of the correct course instructor group anymore, he should not be able to import teams
         course.setInstructorGroupName("Different group name");
         courseRepo.save(course);

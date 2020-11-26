@@ -210,6 +210,16 @@ public class ModelFactory {
         return generatedUsers;
     }
 
+    /**
+     * Generate users that has registration numbers
+     *
+     * @param loginPrefix prefix that will be added in front of every user's login
+     * @param groups groups that the users will be added
+     * @param authorities authorities that the users will have
+     * @param amount amount of users to generate
+     * @param registrationNumberPrefix prefix that will be added in front of every user
+     * @return users that were generated
+     */
     public static List<User> generateActivatedUsersWithRegistrationNumber(String loginPrefix, String[] groups, Set<Authority> authorities, int amount,
             String registrationNumberPrefix) {
         List<User> generatedUsers = ModelFactory.generateActivatedUsers(loginPrefix, groups, authorities, amount);
@@ -256,10 +266,31 @@ public class ModelFactory {
         return team;
     }
 
+    /**
+     * Generate a team
+     *
+     * @param exercise exercise of the team
+     * @param name name of the team
+     * @param shortName short name of the team
+     * @param numberOfStudents amount of users to generate for team as students
+     * @param owner owner of the team generally a tutor
+     * @return team that was generated
+     */
     public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents, User owner) {
         return generateTeamForExercise(exercise, name, shortName, "student", numberOfStudents, owner, null);
     }
 
+    /**
+     * Generate teams
+     *
+     * @param exercise exercise of the teams
+     * @param shortNamePrefix prefix that will be added in front of every team's short name
+     * @param loginPrefix prefix that will be added in front of every student's login
+     * @param numberOfTeams amount of teams to generate
+     * @param owner owner of the teams generally a tutor
+     * @param creatorLogin login of user that created the teams
+     * @return teams that were generated
+     */
     public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin) {
         List<Team> teams = new ArrayList<>();
         for (int i = 1; i <= numberOfTeams; i++) {
