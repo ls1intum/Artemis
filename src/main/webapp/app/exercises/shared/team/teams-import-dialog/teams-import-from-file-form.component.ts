@@ -47,7 +47,7 @@ export class TeamsImportFromFileFormComponent implements OnInit {
                 control.value = '';
             }
         } catch (e) {
-            alert(`Import Quiz Failed! Invalid quiz file. ${e}`);
+            alert(`Import Teams Failed! Invalid teams file. ${e}`);
         }
     }
 
