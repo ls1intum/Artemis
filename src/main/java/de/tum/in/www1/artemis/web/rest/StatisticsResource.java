@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.StatisticsObject;
+import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 
@@ -76,7 +78,7 @@ public class StatisticsResource {
      */
     @GetMapping("management/statistics/submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Integer> getTotalSubmissions(@RequestParam long span) {
+    public ResponseEntity<StatisticsObject> getTotalSubmissions(@RequestParam SpanType span) {
         log.debug("REST request to get amount of submission in the last {} days", span);
         return ResponseEntity.ok(this.service.getTotalSubmissions(span));
     }

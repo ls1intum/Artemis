@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.StatisticsObject;
 import de.tum.in.www1.artemis.domain.User;
 
 /**
@@ -23,7 +24,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> { // Cha
     Integer getActiveUsers(@Param("span") ZonedDateTime span);
 
     @Query("select count(distinct sub.id) from Submission sub where sub.submissionDate >= :#{#span}")
-    Integer getTotalsubmissions(@Param("span") ZonedDateTime span);
+    Integer getTotalSubmissions(@Param("span") ZonedDateTime span);
 
     @Query("select count(distinct e.id) from Exercise e where e.releaseDate >= :#{#span} and e.releaseDate <= :#{#now}")
     Integer getReleasedExercises(@Param("span") ZonedDateTime span, @Param("now") ZonedDateTime now);
@@ -48,5 +49,11 @@ public interface StatisticsRepository extends JpaRepository<User, Long> { // Cha
 
     @Query("select sum(r.feedbacks.size) from Result r where r.completionDate >= :#{#span}")
     Integer getResultFeedbacks(@Param("span") ZonedDateTime span);
+
+    @Query("select 'DATE(s.submissionDate)' as day, count(s.id) as amount from Submission s where s.submissionDate > '1970-01-01 00:00:01' group by 'DATE(s.submissionDate)' order by 'DATE(s.submissionDate)' asc")
+    StatisticsObject getTotalSubmissionsDay();
+
+    @Query("select sub.submissionDate from Submission sub where sub.submissionDate >= :#{#span}")
+    ZonedDateTime[] getTotalSubmissionsWeek(@Param("span") ZonedDateTime span);
 
 }

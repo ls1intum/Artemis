@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.StatisticsObject;
+import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.repository.StatisticsRepository;
 
 @Service
@@ -23,8 +25,13 @@ public class StatisticsService {
         return this.statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(span));
     }
 
-    public Integer getTotalSubmissions(Long span) {
-        return this.statisticsRepository.getTotalsubmissions(ZonedDateTime.now().minusDays(span));
+    public StatisticsObject getTotalSubmissions(SpanType span) {
+        /*
+         * ZonedDateTime[] outcome; Integer[] result; switch (span) { case DAY: // result = this.statisticsRepository.getTotalSubmissionsDay(ZonedDateTime.now().minusDays(7));
+         * return result; case WEEK: result = new Integer[]{0, 0, 0, 0, 0, 0, 0}; outcome = this.statisticsRepository.getTotalSubmissionsWeek(ZonedDateTime.now().minusDays(7));
+         * break; case MONTH: break; case YEAR: //result = this.statisticsRepository.getTotalSubmissionsDay(); return result; } return result;
+         */
+        return this.statisticsRepository.getTotalSubmissionsDay();
     }
 
     public Integer getReleasedExercises(Long span) {
