@@ -1,43 +1,25 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ChangeDetectorRef, DebugElement } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
-import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team, TeamImportStrategyType } from 'app/entities/team.model';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import * as chai from 'chai';
 import { flatMap } from 'lodash';
-import { JhiAlertService, JhiEventManager, NgJhipsterModule } from 'ng-jhipster';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { JhiAlertService } from 'ng-jhipster';
 import { of, throwError } from 'rxjs';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import {
-    mockExercise,
-    mockSourceExercise,
-    mockSourceTeams,
-    mockSourceTeamStudents,
-    mockTeam,
-    mockTeams,
-    MockTeamService,
-    mockTeamStudents,
-} from '../../helpers/mocks/service/mock-team.service';
-import { ArtemisTestModule } from '../../test.module';
-import { User } from 'app/core/user/user.model';
+import { mockExercise, mockSourceExercise, mockSourceTeams, mockSourceTeamStudents, mockTeam, mockTeams, mockTeamStudents } from '../../helpers/mocks/service/mock-team.service';
+import config from './config';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('TeamsImportDialogComponent', () => {
-    // needed to make sure ace is defined
-    // ace.acequire('ace/ext/modelist.js');
     let comp: TeamsImportDialogComponent;
     let fixture: ComponentFixture<TeamsImportDialogComponent>;
     let debugElement: DebugElement;
@@ -71,27 +53,7 @@ describe('TeamsImportDialogComponent', () => {
 
     beforeEach(
         waitForAsync(() => {
-            TestBed.configureTestingModule({
-                imports: [
-                    TranslateModule.forRoot(),
-                    ArtemisTestModule,
-                    FormsModule,
-                    NgJhipsterModule,
-                    NgbModule,
-                    ArtemisSharedModule,
-                    ArtemisSharedComponentModule,
-                    ArtemisTeamModule,
-                ],
-                declarations: [],
-                providers: [
-                    JhiEventManager,
-                    { provide: TeamService, useClass: MockTeamService },
-                    { provide: LocalStorageService, useClass: MockSyncStorage },
-                    { provide: SessionStorageService, useClass: MockSyncStorage },
-                ],
-            })
-                .overrideTemplate(TeamsImportDialogComponent, '')
-                .compileComponents();
+            TestBed.configureTestingModule(config).overrideTemplate(TeamsImportDialogComponent, '').compileComponents();
         }),
     );
     beforeEach(() => {

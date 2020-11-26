@@ -1,22 +1,13 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-export-button.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import * as chai from 'chai';
-import { JhiAlertService, JhiEventManager, NgJhipsterModule } from 'ng-jhipster';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { JhiAlertService } from 'ng-jhipster';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { mockTeams, MockTeamService } from '../../helpers/mocks/service/mock-team.service';
-import { ArtemisTestModule } from '../../test.module';
-
+import { mockTeams } from '../../helpers/mocks/service/mock-team.service';
+import config from './config';
 chai.use(sinonChai);
 const expect = chai.expect;
 
@@ -33,18 +24,7 @@ describe('TeamsExportButtonComponent', () => {
 
     beforeEach(
         waitForAsync(() => {
-            TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, ArtemisTeamModule],
-                declarations: [],
-                providers: [
-                    JhiEventManager,
-                    { provide: TeamService, useClass: MockTeamService },
-                    { provide: LocalStorageService, useClass: MockSyncStorage },
-                    { provide: SessionStorageService, useClass: MockSyncStorage },
-                ],
-            })
-                .overrideTemplate(TeamsExportButtonComponent, '')
-                .compileComponents();
+            TestBed.configureTestingModule(config).overrideTemplate(TeamsExportButtonComponent, '').compileComponents();
         }),
     );
     beforeEach(() => {

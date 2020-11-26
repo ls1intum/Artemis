@@ -1,28 +1,17 @@
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
 import { Team } from 'app/entities/team.model';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import * as chai from 'chai';
-import { JhiEventManager, NgJhipsterModule } from 'ng-jhipster';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SinonStub, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { mockFileStudents, mockFileTeamsConverted } from '../../helpers/mocks/service/mock-team.service';
-import { ArtemisTestModule } from '../../test.module';
+import config from './config';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('TeamsImportFromFileFormComponent', () => {
-    // needed to make sure ace is defined
-    // ace.acequire('ace/ext/modelist.js');
     let comp: TeamsImportFromFileFormComponent;
     let fixture: ComponentFixture<TeamsImportFromFileFormComponent>;
     let debugElement: DebugElement;
@@ -38,13 +27,7 @@ describe('TeamsImportFromFileFormComponent', () => {
 
     beforeEach(
         waitForAsync(() => {
-            TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, ArtemisTeamModule],
-                declarations: [],
-                providers: [JhiEventManager, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
-            })
-                .overrideTemplate(TeamsImportFromFileFormComponent, '')
-                .compileComponents();
+            TestBed.configureTestingModule(config).overrideTemplate(TeamsImportFromFileFormComponent, '').compileComponents();
         }),
     );
     beforeEach(() => {

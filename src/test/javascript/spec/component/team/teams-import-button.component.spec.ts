@@ -1,28 +1,18 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
-import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { Team } from 'app/entities/team.model';
 import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import * as chai from 'chai';
-import { JhiEventManager, NgJhipsterModule } from 'ng-jhipster';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { mockExercise, mockSourceTeams, mockTeams } from '../../helpers/mocks/service/mock-team.service';
-import { ArtemisTestModule } from '../../test.module';
-import { Team } from 'app/entities/team.model';
+import config from './config';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('TeamsImportButtonComponent', () => {
-    // needed to make sure ace is defined
-    // ace.acequire('ace/ext/modelist.js');
     let comp: TeamsImportButtonComponent;
     let fixture: ComponentFixture<TeamsImportButtonComponent>;
     let debugElement: DebugElement;
@@ -35,13 +25,7 @@ describe('TeamsImportButtonComponent', () => {
 
     beforeEach(
         waitForAsync(() => {
-            TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, ArtemisTeamModule],
-                declarations: [],
-                providers: [JhiEventManager, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
-            })
-                .overrideTemplate(TeamsImportButtonComponent, '')
-                .compileComponents();
+            TestBed.configureTestingModule(config).overrideTemplate(TeamsImportButtonComponent, '').compileComponents();
         }),
     );
     beforeEach(() => {
