@@ -230,20 +230,24 @@ public class TeamService {
     public List<Team> convertTeamsStudentsWithRegistrationNumbersToAlreadyRegisteredUsers(Course course, List<Team> teamsWithRegistrationNumber) {
         List<String> notFoundRegistrationNumbers = new ArrayList<>();
         List<Team> convertedTeams = new ArrayList<>();
+        List<String> registrationNumbers = teamsWithRegistrationNumber.stream().flatMap(team -> team.getStudents().stream().map(student -> student.getVisibleRegistrationNumber()))
+                .collect(Collectors.toList());
+        List<User> existingStudents = userRepository.getByRegistrationNumbersInGroup(course.getStudentGroupName(), new HashSet<>(registrationNumbers));
+        List<String> existingRegistrationNumbers = existingStudents.stream().map(existingStudent -> existingStudent.getRegistrationNumber()).collect(Collectors.toList());
         teamsWithRegistrationNumber.forEach(team -> {
             Set<User> newStudents = new HashSet<>();
             team.getStudents().forEach(student -> {
-                Optional<User> userWithRegistrationNumber = userRepository.getByRegistrationNumberInGroup(course.getStudentGroupName(), student.getVisibleRegistrationNumber());
-                userWithRegistrationNumber.ifPresentOrElse((value) -> {
-                    newStudents.add(value);
-                }, () -> {
+                Integer index = existingRegistrationNumbers.indexOf(student.getVisibleRegistrationNumber());
+                if (index == -1) {
                     notFoundRegistrationNumbers.add(student.getVisibleRegistrationNumber());
-                });
+                }
+                else {
+                    newStudents.add(existingStudents.get(index));
+                }
             });
             team.students(newStudents);
             convertedTeams.add(team);
         });
-
         if (!notFoundRegistrationNumbers.isEmpty()) {
             throw new RegistrationNumbersNotFoundException(notFoundRegistrationNumbers);
         }

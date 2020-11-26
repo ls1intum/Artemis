@@ -70,12 +70,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /**
      * Gets users in a group by their registration number.
      * @param groupName Name of group in which to search for users
-     * @param registrationNumber Registration number of user
+     * @param registrationNumbers Registration number of user
      * @return found user that match the criteria
      */
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    @Query("select user from User user where :#{#groupName} member of user.groups and " + "user.registrationNumber = :#{#registrationNumber}")
-    Optional<User> getByRegistrationNumberInGroup(@Param("groupName") String groupName, @Param("registrationNumber") String registrationNumber);
+    @Query("select user from User user where :#{#groupName} member of user.groups and " + "user.registrationNumber in :#{#registrationNumbers}")
+    List<User> getByRegistrationNumbersInGroup(@Param("groupName") String groupName, @Param("registrationNumbers") Set<String> registrationNumbers);
 
     /**
      * Searches for users by their login or full name.
