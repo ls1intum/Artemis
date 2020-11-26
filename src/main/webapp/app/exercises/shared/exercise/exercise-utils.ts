@@ -27,7 +27,7 @@ export const problemStatementHasChanged = (changes: SimpleChanges) => {
  * @return {boolean}
  */
 export const hasExerciseDueDatePassed = (exercise: Exercise): boolean => {
-    if (exercise.dueDate == null) {
+    if (exercise.dueDate == undefined) {
         return false;
     }
     return moment(exercise.dueDate).isBefore();
@@ -94,9 +94,9 @@ export const participationStatus = (exercise: Exercise): ParticipationStatus => 
  */
 export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean => {
     return (
-        exercise.dueDate == null ||
+        exercise.dueDate == undefined ||
         moment() <= exercise.dueDate! ||
-        (exercise.buildAndTestStudentSubmissionsAfterDueDate == null && exercise.assessmentType === AssessmentType.AUTOMATIC)
+        (exercise.buildAndTestStudentSubmissionsAfterDueDate == undefined && exercise.assessmentType === AssessmentType.AUTOMATIC)
     );
 };
 

@@ -13,6 +13,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -121,18 +122,29 @@ public class Result extends DomainObject {
     }
 
     /**
-     * builds and sets the resultString attribute
+     * Sets the resultString attribute
      *
      * @param totalScore total amount of scored points between 0 and maxScore
      * @param maxScore   maximum score reachable at corresponding exercise
      */
     public void setResultString(Double totalScore, @Nullable Double maxScore) {
+        resultString = createResultString(totalScore, maxScore);
+    }
+
+    /**
+     * Builds the resultString attribute
+     *
+     * @param totalScore total amount of scored points
+     * @param maxScore   maximum score reachable at corresponding exercise
+     * @return String with result string in this format "2 of 13 points" or "2 points"
+     */
+    public String createResultString(Double totalScore, @Nullable Double maxScore) {
         DecimalFormat formatter = new DecimalFormat("#.##");
         if (maxScore == null) {
-            resultString = (formatter.format(totalScore) + " points");
+            return formatter.format(totalScore) + " points";
         }
         else {
-            resultString = (formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points");
+            return formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points";
         }
     }
 
@@ -311,11 +323,18 @@ public class Result extends DomainObject {
      * assigns the new feedback afterwards. IMPORTANT: This method should not be used for Quiz and Programming exercises with completely automatic assessments!
      *
      * @param feedbacks the new feedback list
+     * @param skipAutomaticResults if true automatic results won't be updated
      */
-    public void updateAllFeedbackItems(List<Feedback> feedbacks) {
+    public void updateAllFeedbackItems(List<Feedback> feedbacks, boolean skipAutomaticResults) {
         for (Feedback feedback : feedbacks) {
+            if (skipAutomaticResults && feedback.getType() == FeedbackType.AUTOMATIC) {
+                continue;
+            }
             if (feedback.getCredits() != null) {
                 feedback.setPositive(feedback.getCredits() >= 0);
+            }
+            else {
+                feedback.setCredits(0.0);
             }
             setFeedbackType(feedback);
         }
@@ -456,6 +475,16 @@ public class Result extends DomainObject {
      */
     public void filterSensitiveInformation() {
         setAssessor(null);
+    }
+
+    /**
+     * Checks whether the result is a manual result. A manual result can be from type MANUAL or SEMI_AUTOMATIC
+     *
+     * @return true if the result is a manual result
+     */
+    @JsonIgnore
+    public boolean isManualResult() {
+        return assessmentType == AssessmentType.MANUAL || assessmentType == AssessmentType.SEMI_AUTOMATIC;
     }
 
     @Override

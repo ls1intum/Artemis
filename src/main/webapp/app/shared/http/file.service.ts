@@ -2,7 +2,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class FileService {
@@ -14,11 +14,13 @@ export class FileService {
      * Fetches the template file for the given programming language
      * @param {string} filename
      * @param {ProgrammingLanguage} language
+     * @param {ProjectType} projectType (if available)
      * @returns json test file
      */
-    getTemplateFile(filename: string, language?: ProgrammingLanguage) {
+    getTemplateFile(filename: string, language?: ProgrammingLanguage, projectType?: ProjectType) {
         const languagePrefix = !!language ? `${language}/` : '';
-        return this.http.get<string>(`${this.resourceUrl}/templates/${languagePrefix}${filename}`, { responseType: 'text' as 'json' });
+        const projectTypePrefix = !!projectType ? `${projectType}/` : '';
+        return this.http.get<string>(`${this.resourceUrl}/templates/${languagePrefix}${projectTypePrefix}${filename}`, { responseType: 'text' as 'json' });
     }
 
     /**

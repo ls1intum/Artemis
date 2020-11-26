@@ -16,7 +16,7 @@ public final class Constants {
 
     public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 5;
 
-    public static final String FILEPATH_ID_PLACHEOLDER = "PLACEHOLDER_FOR_ID";
+    public static final String FILEPATH_ID_PLACEHOLDER = "PLACEHOLDER_FOR_ID";
 
     public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
 
@@ -33,6 +33,10 @@ public final class Constants {
     public static final String PROGRAMMING_SUBMISSION_RESOURCE_PATH = "/programming-submissions/";
 
     public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH;
+
+    public static final String ATHENE_RESULT_PATH = "/athene-result/";
+
+    public static final String ATHENE_RESULT_API_PATH = "/api" + ATHENE_RESULT_PATH;
 
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH = "/system-notifications/";
 
@@ -84,7 +88,11 @@ public final class Constants {
 
     public static final String PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION = "The due date of this programming exercise has passed. When removing the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
 
+    public static final String PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION = "The due date of this programming exercise has passed. When stashing the changes for the student repositories, not all operations were successful. Number of failed operations: ";
+
     public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were locked successfully when the due date passed.";
+
+    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION = "The unsubmitted changes in the student repositories for this programming exercise were stashed successfully when the due date passed.";
 
     public static final String PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION = "The visible date of the exam of the programming exercise has passed. When adding the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
 

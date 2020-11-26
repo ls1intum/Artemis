@@ -11,6 +11,7 @@ export type RepositoryExportOptions = {
     addParticipantName: boolean;
     combineStudentCommits: boolean;
     normalizeCodeStyle: boolean;
+    hideStudentNameInZippedFolder: boolean;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -27,7 +28,8 @@ export class ProgrammingAssessmentRepoExportService {
      * @param {RepositoryExportOptions} repositoryExportOptions
      */
     exportReposByParticipantIdentifiers(exerciseId: number, participantIdentifiers: string[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
-        return this.http.post(`${this.resourceUrl}/${exerciseId}/export-repos-by-participant-identifiers/${participantIdentifiers}`, repositoryExportOptions, {
+        const url = `${this.resourceUrl}/${exerciseId}/export-repos-by-participant-identifiers/${participantIdentifiers}`;
+        return this.http.post(url, repositoryExportOptions, {
             observe: 'response',
             responseType: 'blob',
         });
@@ -40,7 +42,8 @@ export class ProgrammingAssessmentRepoExportService {
      * @param {RepositoryExportOptions} repositoryExportOptions
      */
     exportReposByParticipations(exerciseId: number, participationIds: number[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
-        return this.http.post(`${this.resourceUrl}/${exerciseId}/export-repos-by-participation-ids/${participationIds}`, repositoryExportOptions, {
+        const url = `${this.resourceUrl}/${exerciseId}/export-repos-by-participation-ids/${participationIds}`;
+        return this.http.post(url, repositoryExportOptions, {
             observe: 'response',
             responseType: 'blob',
         });

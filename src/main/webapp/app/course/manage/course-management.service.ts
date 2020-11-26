@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import * as moment from 'moment';
 import { filter, map, tap } from 'rxjs/operators';
 
@@ -18,7 +18,6 @@ import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashb
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Submission } from 'app/entities/submission.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
@@ -33,13 +32,10 @@ export class CourseManagementService {
 
     private readonly courses: Map<number, SubjectObservablePair<Course>> = new Map();
 
-    constructor(
-        private http: HttpClient,
-        private exerciseService: ExerciseService,
-        private lectureService: LectureService,
-        private notificationService: NotificationService,
-        private accountService: AccountService,
-    ) {}
+    private coursesForNotifications: BehaviorSubject<Course[] | null> = new BehaviorSubject<Course[] | null>(null);
+    private fetchingCoursesForNotifications = false;
+
+    constructor(private http: HttpClient, private exerciseService: ExerciseService, private lectureService: LectureService, private accountService: AccountService) {}
 
     /**
      * creates a course using a POST request
@@ -99,12 +95,13 @@ export class CourseManagementService {
      * finds all courses using a GET request
      */
     findAllForDashboard(): Observable<EntityArrayResponseType> {
+        this.fetchingCoursesForNotifications = true;
         return this.http
             .get<Course[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
             .pipe(map((res: EntityArrayResponseType) => this.setParticipationStatusForExercisesInCourses(res)))
-            .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)));
     }
 
     findOneForDashboard(courseId: number): Observable<EntityResponseType> {
@@ -113,7 +110,6 @@ export class CourseManagementService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
             .pipe(map((res: EntityResponseType) => this.checkAccessRightsCourse(res)))
             .pipe(map((res: EntityResponseType) => this.setParticipationStatusForExercisesInCourse(res)))
-            .pipe(map((res: EntityResponseType) => this.subscribeToCourseNotification(res)))
             .pipe(tap((res: EntityResponseType) => this.courseWasUpdated(res.body)));
     }
 
@@ -184,7 +180,7 @@ export class CourseManagementService {
             .post<User>(`${this.resourceUrl}/${courseId}/register`, null, { observe: 'response' })
             .pipe(
                 map((res: HttpResponse<User>) => {
-                    if (res.body != null) {
+                    if (res.body != undefined) {
                         this.accountService.syncGroups(res.body);
                     }
                     return res;
@@ -198,11 +194,12 @@ export class CourseManagementService {
      */
     getAll(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
+        this.fetchingCoursesForNotifications = true;
         return this.http
             .get<Course[]>(this.resourceUrl, { params: options, observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
-            .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)));
     }
 
     /**
@@ -211,11 +208,12 @@ export class CourseManagementService {
      */
     getWithUserStats(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
+        this.fetchingCoursesForNotifications = true;
         return this.http
             .get<Course[]>(`${this.resourceUrl}/with-user-stats`, { params: options, observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
-            .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)));
     }
 
     /**
@@ -298,6 +296,35 @@ export class CourseManagementService {
         course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
     }
 
+    /**
+     * Gets the cached courses. If there none the courses for the current user will be fetched.
+     * @returns {BehaviorSubject<Course[] | null>}
+     */
+    getCoursesForNotifications(): BehaviorSubject<Course[] | null> {
+        // The timeout is set to ensure that the request for retrieving courses
+        // here is only made if there was no similar request made before.
+        setTimeout(() => {
+            // Retrieve courses if no courses were fetched before and are not queried at the moment.
+            if (!this.fetchingCoursesForNotifications && !this.coursesForNotifications) {
+                this.findAllForNotifications().subscribe(
+                    (res: HttpResponse<Course[]>) => {
+                        this.coursesForNotifications.next(res.body);
+                    },
+                    () => (this.fetchingCoursesForNotifications = false),
+                );
+            }
+        }, 500);
+        return this.coursesForNotifications;
+    }
+
+    private setCoursesForNotifications(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            this.coursesForNotifications.next(res.body);
+            this.fetchingCoursesForNotifications = false;
+        }
+        return res;
+    }
+
     private static convertDateFromClient(course: Course): Course {
         // copy of the object
         return Object.assign({}, course, {
@@ -306,40 +333,25 @@ export class CourseManagementService {
         });
     }
 
-    convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.startDate = res.body.startDate ? moment(res.body.startDate) : undefined;
-            res.body.endDate = res.body.endDate ? moment(res.body.endDate) : undefined;
-            res.body.exercises = this.exerciseService.convertExercisesDateFromServer(res.body.exercises);
-            res.body.lectures = this.lectureService.convertDatesForLecturesFromServer(res.body.lectures);
+            this.setCourseDates(res.body);
         }
         return res;
     }
 
     private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.forEach((course: Course) => {
-                course.startDate = course.startDate ? moment(course.startDate) : undefined;
-                course.endDate = course.endDate ? moment(course.endDate) : undefined;
-                course.exercises = this.exerciseService.convertExercisesDateFromServer(course.exercises);
-                course.lectures = this.lectureService.convertDatesForLecturesFromServer(course.lectures);
-            });
+            res.body.forEach((course: Course) => this.setCourseDates(course));
         }
         return res;
     }
 
-    private subscribeToCourseNotifications(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            this.notificationService.handleCoursesNotifications(res.body);
-        }
-        return res;
-    }
-
-    private subscribeToCourseNotification(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            this.notificationService.handleCourseNotifications(res.body);
-        }
-        return res;
+    private setCourseDates(course: Course) {
+        course.startDate = course.startDate ? moment(course.startDate) : undefined;
+        course.endDate = course.endDate ? moment(course.endDate) : undefined;
+        course.exercises = this.exerciseService.convertExercisesDateFromServer(course.exercises);
+        course.lectures = this.lectureService.convertDatesForLecturesFromServer(course.lectures);
     }
 
     private checkAccessRightsCourse(res: EntityResponseType): EntityResponseType {
@@ -374,6 +386,14 @@ export class CourseManagementService {
             });
         }
         return res;
+    }
+
+    private findAllForNotifications(): Observable<EntityArrayResponseType> {
+        this.fetchingCoursesForNotifications = true;
+        return this.http
+            .get<Course[]>(`${this.resourceUrl}/for-notifications`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)));
     }
 }
 

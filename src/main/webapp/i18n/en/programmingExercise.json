@@ -31,6 +31,7 @@
             },
             "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it would be published immediately and visible to the students.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
+            "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
             "templateRepositoryUrl": "Template Repository Url",
             "testRepositoryUrl": "Test Repository Url",
             "solutionRepositoryUrl": "Solution Repository Url",
@@ -43,11 +44,13 @@
             "onlineEditor": "Online Editor",
             "allowOfflineIde": "Allow Offline IDE",
             "offlineIde": "Offline IDE",
+            "showTestNamesToStudents": "Show Test Names to Students",
+            "showTestNamesToStudentsTooltip": "Activate this option to show the names of the automated test cases to the students. Leave the option disabled to make no visual distinction between manual and automated feedback for the students.",
             "participationMode": "Participation Mode",
             "noVersionControlAndContinuousIntegrationAvailable": "Setup without connection to the VCS and CI",
             "sequentialTestRuns": {
                 "title": "Sequential Test Runs",
-                "description": "Activate to first run structural and then behavior test. This feature can help students to better concentrate on the immediate challenge at hand. If activated, you will be provided with more information in a readme file within the test repository. ATTENTION: Can not be changed after creation!"
+                "description": "Activate to first run structural and then behavior test. Does not support static code analysis. This feature can help students to better concentrate on the immediate challenge at hand. If activated, you will be provided with more information in a readme file within the test repository. ATTENTION: Can not be changed after creation!"
             },
             "checkoutSolutionRepository": {
                 "title": "Check out repository of sample solution",
@@ -55,13 +58,22 @@
             },
             "enableStaticCodeAnalysis": {
                 "title": "Enable Static Code Analysis",
-                "description": "This option enables the execution of static code analysis. Additional options are available on the grading page. This option can't be changed after the creation of the exercise."
+                "description": "This option enables the execution of static code analysis. Sequential test runs are not supported. Additional options are available on the grading page. This option can't be changed after the creation of the exercise."
             },
             "maxStaticCodeAnalysisPenalty": {
                 "title": "Max Static Code Analysis Penalty",
                 "description": "You can choose a value between 0 and 100 percent or leave the field empty. If the maximum penalty is 20% for a 10 point exercise, a maximum of two points can be deducted because of issues found by static code analysis. If the field is left empty, no penalty limit will be enforced."
             },
+            "recreateBuildPlans": {
+                "title": "Recreate Build Plans",
+                "description": "Activate this option to create new build plans instead of copying them from the imported exercise. Newly created build plans support the latest features of the Artemis exercise templates by default."
+            },
+            "updateTemplate": {
+                "title": "Update Template",
+                "description": "Activate this option to update the template files in the repositories. This can be useful if the imported exercise is old and contains outdated dependencies. For Java, Artemis replaces JUnit4 by Ares (which includes JUnit5) and updates the dependencies and plugins with the versions found in the latest template. Afterwards you might need to adapt the test cases."
+            },
             "programmingLanguage": "Programming Language",
+            "projectType": "Project Type",
             "packageName": "Package Name",
             "templateResult": "Template Result",
             "solutionResult": "Solution Result",

@@ -14,6 +14,7 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-course-update',
@@ -36,6 +37,7 @@ export class CourseUpdateComponent implements OnInit {
     showCropper = false;
     presentationScoreEnabled = false;
     complaintsEnabled = true; // default value
+    requestMoreFeedbackEnabled = true; // default value
     customizeGroupNames = false; // default value
 
     shortNamePattern = /^[a-zA-Z][a-zA-Z0-9]{2,}$/; // must start with a letter and cannot contain special characters, at least 3 characters
@@ -55,6 +57,7 @@ export class CourseUpdateComponent implements OnInit {
             this.course = course;
             // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
             this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;
+            this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -95,8 +98,11 @@ export class CourseUpdateComponent implements OnInit {
                 description: new FormControl(this.course.description),
                 startDate: new FormControl(this.course.startDate),
                 endDate: new FormControl(this.course.endDate),
+                semester: new FormControl(this.course.semester),
+                testCourse: new FormControl(this.course.testCourse),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
+                requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
                 maxComplaints: new FormControl(this.course.maxComplaints, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
@@ -106,10 +112,13 @@ export class CourseUpdateComponent implements OnInit {
                 maxComplaintTimeDays: new FormControl(this.course.maxComplaintTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
+                maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
+                    validators: [Validators.required, Validators.min(0)],
+                }),
                 studentQuestionsEnabled: new FormControl(this.course.studentQuestionsEnabled),
                 registrationEnabled: new FormControl(this.course.registrationEnabled),
                 registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
-                    validators: [Validators.maxLength(255)],
+                    validators: [Validators.maxLength(2000)],
                 }),
                 presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
                     Validators.min(1),
@@ -295,6 +304,19 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
+     * Enable or disable complaints
+     */
+    changeRequestMoreFeedbackEnabled() {
+        if (!this.requestMoreFeedbackEnabled) {
+            this.requestMoreFeedbackEnabled = true;
+            this.courseForm.controls['maxRequestMoreFeedbackTimeDays'].setValue(7);
+        } else {
+            this.requestMoreFeedbackEnabled = false;
+            this.courseForm.controls['maxRequestMoreFeedbackTimeDays'].setValue(0);
+        }
+    }
+
+    /**
      * Enable or disable the customization of groups
      */
     changeCustomizeGroupNames() {
@@ -310,11 +332,33 @@ export class CourseUpdateComponent implements OnInit {
             this.courseForm.controls['instructorGroupName'].setValue(undefined);
         }
     }
+
+    /**
+     * Enable or disable test course
+     */
+    changeTestCourseEnabled() {
+        this.course.testCourse = !this.course.testCourse;
+    }
+
+    /**
+     * Returns a string array of possible semester values
+     */
+    getSemesters() {
+        // 2018 is the first year we offer semesters for and go one year into the future
+        const years = moment().year() - 2018 + 1;
+        // Add an empty semester as default value
+        const semesters: string[] = [''];
+        for (let i = 0; i <= years; i++) {
+            semesters[2 * i + 1] = 'SS' + (18 + i);
+            semesters[2 * i + 2] = 'WS' + (18 + i) + '/' + (19 + i);
+        }
+        return semesters;
+    }
 }
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {
     const onlineCourse = formGroup.controls['onlineCourse'].value;
     const registrationEnabled = formGroup.controls['registrationEnabled'].value;
     // it cannot be the case that both values are true
-    return onlineCourse != null && registrationEnabled != null && !(onlineCourse && registrationEnabled) ? null : { range: true };
+    return onlineCourse != undefined && registrationEnabled != undefined && !(onlineCourse && registrationEnabled) ? null : { range: true };
 };

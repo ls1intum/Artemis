@@ -14,10 +14,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.StudentQuestion;
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
+import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.SingleUserNotificationService;
@@ -44,6 +46,8 @@ public class StudentQuestionAnswerResource {
 
     private final CourseRepository courseRepository;
 
+    private final StudentQuestionRepository studentQuestionRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final UserService userService;
@@ -54,9 +58,10 @@ public class StudentQuestionAnswerResource {
 
     public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository, GroupNotificationService groupNotificationService,
             SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authorizationCheckService, UserService userService,
-            CourseRepository courseRepository) {
+            CourseRepository courseRepository, StudentQuestionRepository studentQuestionRepository) {
         this.studentQuestionAnswerRepository = studentQuestionAnswerRepository;
         this.courseRepository = courseRepository;
+        this.studentQuestionRepository = studentQuestionRepository;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.authorizationCheckService = authorizationCheckService;
@@ -88,7 +93,11 @@ public class StudentQuestionAnswerResource {
         if (!this.authorizationCheckService.isAtLeastStudentInCourse(optionalCourse.get(), user)) {
             return forbidden();
         }
-        if (!studentQuestionAnswer.getQuestion().getCourse().getId().equals(courseId)) {
+        Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(studentQuestionAnswer.getQuestion().getId());
+        if (optionalStudentQuestion.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!optionalStudentQuestion.get().getCourse().getId().equals(courseId)) {
             return forbidden();
         }
         // answer to approved if written by an instructor

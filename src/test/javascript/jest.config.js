@@ -14,11 +14,11 @@ module.exports = {
     },
     coverageThreshold: {
         global: {
-            branches: 36,
-            functions: 44,
-            lines: 62,
-            // TODO: in the future, the following value should be increase to 80%
-            statements: 63,
+            // TODO: in the future, the following values should be increase to 80%
+            statements: 68,
+            branches: 44,
+            functions: 51,
+            lines: 67,
         },
     },
     preset: 'jest-preset-angular',

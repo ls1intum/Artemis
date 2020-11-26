@@ -8,6 +8,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Lecture } from 'app/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;
@@ -16,7 +17,7 @@ type EntityArrayResponseType = HttpResponse<Lecture[]>;
 export class LectureService {
     public resourceUrl = SERVER_API_URL + 'api/lectures';
 
-    constructor(protected http: HttpClient, private accountService: AccountService) {}
+    constructor(protected http: HttpClient, private accountService: AccountService, private lectureUnitService: LectureUnitService) {}
 
     create(lecture: Lecture): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(lecture);
@@ -72,6 +73,9 @@ export class LectureService {
             startDate: lecture.startDate && lecture.startDate.isValid() ? lecture.startDate.toJSON() : undefined,
             endDate: lecture.endDate && lecture.endDate.isValid() ? lecture.endDate.toJSON() : undefined,
         });
+        if (copy.lectureUnits) {
+            copy.lectureUnits = this.lectureUnitService.convertDateArrayFromClient(copy.lectureUnits);
+        }
         if (copy.course) {
             copy.course.exercises = undefined;
             copy.course.lectures = undefined;
@@ -83,6 +87,9 @@ export class LectureService {
         if (res.body) {
             res.body.startDate = res.body.startDate ? moment(res.body.startDate) : undefined;
             res.body.endDate = res.body.endDate ? moment(res.body.endDate) : undefined;
+            if (res.body.lectureUnits) {
+                res.body.lectureUnits = this.lectureUnitService.convertDateArrayFromServerEntity(res.body.lectureUnits);
+            }
         }
         return res;
     }
@@ -111,6 +118,9 @@ export class LectureService {
         if (lecture) {
             lecture.startDate = lecture.startDate ? moment(lecture.startDate) : undefined;
             lecture.endDate = lecture.endDate ? moment(lecture.endDate) : undefined;
+            if (lecture.lectureUnits) {
+                lecture.lectureUnits = this.lectureUnitService.convertDateArrayFromServerEntity(lecture.lectureUnits);
+            }
         }
         return lecture;
     }

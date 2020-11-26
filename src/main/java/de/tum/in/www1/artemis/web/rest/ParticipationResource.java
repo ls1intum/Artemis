@@ -616,7 +616,7 @@ public class ParticipationResource {
             return participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
 
-        return participationService.findOneWithEagerCourse(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        return participationService.findOneWithEagerCourseAndExercise(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
     }
 
     /**

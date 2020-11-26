@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -50,6 +51,8 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
+import de.tum.in.www1.artemis.service.programming.TemplateUpgradePolicy;
+import de.tum.in.www1.artemis.service.programming.TemplateUpgradeService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -100,20 +103,30 @@ public class ProgrammingExerciseResource {
 
     private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
+    private final TemplateUpgradePolicy templateUpgradePolicy;
+
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
      */
-    private final String packageNameRegex = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$";
+    private static final String packageNameRegex = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$";
+
+    /**
+     * Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
+     * with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
+     */
+    private static final String packageNameRegexForSwift = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_)$)[A-Za-z][0-9A-Za-z]*$";
 
     private final Pattern packageNamePattern = Pattern.compile(packageNameRegex);
+
+    private final Pattern packageNamePatternForSwift = Pattern.compile(packageNameRegexForSwift);
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
             ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionService gradingCriterionService,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService) {
+            ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -129,6 +142,7 @@ public class ProgrammingExerciseResource {
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.gradingCriterionService = gradingCriterionService;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
+        this.templateUpgradePolicy = templateUpgradePolicy;
     }
 
     /**
@@ -235,9 +249,10 @@ public class ProgrammingExerciseResource {
     /**
      * Validates static code analysis settings
      * 1. The flag staticCodeAnalysisEnabled must not be null
-     * 2. Static code analysis can only be enabled for supported programming languages
-     * 3. Static code analysis max penalty must only be set if static code analysis is enabled
-     * 4. Static code analysis max penalty must be positive
+     * 2. Static code analysis and sequential test runs can't be active at the same time
+     * 3. Static code analysis can only be enabled for supported programming languages
+     * 4. Static code analysis max penalty must only be set if static code analysis is enabled
+     * 5. Static code analysis max penalty must be positive
      *
      * @param programmingExercise exercise to validate
      * @return Optional validation error response
@@ -249,6 +264,13 @@ public class ProgrammingExerciseResource {
         if (programmingExercise.isStaticCodeAnalysisEnabled() == null) {
             return Optional.of(ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "The static code analysis flag must be set to true or false", "staticCodeAnalysisFlagNotSet")).body(null));
+        }
+
+        // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && programmingExercise.hasSequentialTestRuns()) {
+            return Optional.of(ResponseEntity.badRequest().headers(
+                    HeaderUtil.createAlert(applicationName, "The static code analysis with sequential test runs is not supported at the moment", "staticCodeAnalysisAndSequential"))
+                    .body(null));
         }
 
         // Static code analysis is only supported for Java at the moment
@@ -327,9 +349,31 @@ public class ProgrammingExerciseResource {
             }
 
             // Check if package name matches regex
-            Matcher packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
+            Matcher packageNameMatcher;
+            if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
+                packageNameMatcher = packageNamePatternForSwift.matcher(programmingExercise.getPackageName());
+            }
+            else {
+                packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
+            }
             if (!packageNameMatcher.matches()) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
+            }
+        }
+
+        // Check if project type is selected
+        if (programmingLanguageFeature.getProjectTypes().size() > 0) {
+            if (programmingExercise.getProjectType() == null) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The project type is not set", "projectTypeNotSet")).body(null);
+            }
+            if (!programmingLanguageFeature.getProjectTypes().contains(programmingExercise.getProjectType())) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createAlert(applicationName, "The project type is not supported for this programming language", "projectTypeNotSupported")).body(null);
+            }
+        }
+        else {
+            if (programmingExercise.getProjectType() != null) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The project type is set but not supported", "projectTypeSet")).body(null);
             }
         }
 
@@ -424,13 +468,16 @@ public class ProgrammingExerciseResource {
      * @see ProgrammingExerciseImportService#importRepositories(ProgrammingExercise, ProgrammingExercise)
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param newExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @param recreateBuildPlans Option determining whether the build plans should be copied or re-created from scratch
+     * @param updateTemplate Option determining whether the template files should be updated with the most recent template version
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
      *         (403) if the user is not at least an instructor in the target course.
      */
     @PostMapping(Endpoints.IMPORT)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
+    public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise,
+            @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean updateTemplate) {
         if (sourceExerciseId < 0) {
             return badRequest();
         }
@@ -514,11 +561,25 @@ public class ProgrammingExerciseResource {
         final var importedProgrammingExercise = programmingExerciseImportService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
         HttpHeaders responseHeaders;
         programmingExerciseImportService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
+
+        // Update the template files
+        if (updateTemplate) {
+            TemplateUpgradeService upgradeService = templateUpgradePolicy.getUpgradeService(importedProgrammingExercise.getProgrammingLanguage());
+            upgradeService.upgradeTemplate(importedProgrammingExercise);
+        }
+
+        // Copy or recreate the build plans
         try {
-            // We have removed the automatic build trigger from test to base for new programming exercises.
-            // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
-            // The importBuildPlans method includes this process
-            programmingExerciseImportService.importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
+            if (recreateBuildPlans) {
+                // Create completely new build plans for the exercise
+                programmingExerciseService.setupBuildPlansForNewExercise(importedProgrammingExercise);
+            }
+            else {
+                // We have removed the automatic build trigger from test to base for new programming exercises.
+                // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
+                // The importBuildPlans method includes this process
+                programmingExerciseImportService.importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
+            }
             responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle());
         }
         catch (HttpException e) {

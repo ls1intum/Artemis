@@ -111,6 +111,7 @@
             },
             "lectureDetails": {
                 "description": "Description",
+                "lectureUnits": "Lecture Units",
                 "attachments": "Attachments",
                 "noAttachments": "There are no attachments available for this lecture.",
                 "date": "Date",
@@ -121,10 +122,11 @@
             "exerciseDetails": {
                 "dueDate": "Due date:",
                 "categories": "Categories:",
-                "exerciseType": "Exercise Type:",
+                "type": "Type:",
                 "difficulty": "Difficulty:",
                 "exerciseStatus": "Exercise status:",
-                "maxPoints": "Max. points:",
+                "points": "Points:",
+                "bonus": "Bonus:",
                 "problemStatement": "Problem statement:",
                 "noResults": "You have no results yet",
                 "instructorActions": {

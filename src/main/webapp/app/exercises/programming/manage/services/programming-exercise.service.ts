@@ -75,10 +75,16 @@ export class ProgrammingExerciseService {
      *                                         new exercise. E.g. with another title than the original exercise. Old
      *                                         values that should get discarded (like the old ID) will be handled by the
      *                                         server.
+     * @param recreateBuildPlans Option determining whether the build plans should be recreated or copied from the imported exercise
+     * @param updateTemplate Option determining whether the template files in the repositories should be updated
      */
-    importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise): Observable<EntityResponseType> {
+    importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise, recreateBuildPlans: boolean, updateTemplate: boolean): Observable<EntityResponseType> {
+        const options = createRequestOption({ recreateBuildPlans, updateTemplate });
         return this.http
-            .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, adaptedSourceProgrammingExercise, { observe: 'response' })
+            .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, adaptedSourceProgrammingExercise, {
+                params: options,
+                observe: 'response',
+            })
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
     }
 

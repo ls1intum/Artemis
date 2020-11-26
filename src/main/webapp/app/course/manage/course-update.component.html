@@ -91,6 +91,25 @@
                         <jhi-date-time-picker labelName="{{ 'artemisApp.course.endDate' | translate }}" formControlName="endDate"></jhi-date-time-picker>
                     </div>
                 </div>
+                <div class="form-check">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        name="testCourse"
+                        id="field_testCourse"
+                        formControlName="testCourse"
+                        [checked]="course.testCourse"
+                        (change)="changeTestCourseEnabled()"
+                    />
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.testCourse.title" for="field_testCourse"></label>
+                    <fa-icon [icon]="'question-circle'" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.course.testCourse.description' | translate }}"></fa-icon>
+                </div>
+                <div class="form-group">
+                    <label jhiTranslate="artemisApp.course.semester"></label>
+                    <select class="form-control" formControlName="semester">
+                        <option *ngFor="let semester of getSemesters()" [value]="semester">{{ semester }}</option>
+                    </select>
+                </div>
 
                 <div *jhiHasAnyAuthority="'ROLE_ADMIN'">
                     <div *ngIf="!course.id" class="form-check">
@@ -190,6 +209,45 @@
                         ngbTooltip="{{ 'artemisApp.course.maxComplaintTimeDays.description' | translate }}"
                     ></fa-icon>
                     <input required type="number" class="form-control" name="maxComplaintTimeDays" id="field_maxComplaintTimeDays" formControlName="maxComplaintTimeDays" />
+                </div>
+                <div class="form-check">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        name="requestMoreFeedbackEnabled"
+                        [checked]="requestMoreFeedbackEnabled"
+                        id="field_maxRequestMoreFeedbackSettingEnabled"
+                        (change)="changeRequestMoreFeedbackEnabled()"
+                        formControlName="requestMoreFeedbackEnabled"
+                    />
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.requestMoreFeedbackEnabled.title" for="field_maxRequestMoreFeedbackSettingEnabled"
+                        >Enable More Feedback Requests</label
+                    >
+                    <fa-icon
+                        [icon]="'question-circle'"
+                        class="text-secondary"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.course.requestMoreFeedbackEnabled.description' | translate }}"
+                    ></fa-icon>
+                </div>
+                <div class="form-group" *ngIf="requestMoreFeedbackEnabled">
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title" for="field_maxComplaintTimeDays">
+                        Deadline for more feedback requests in days after result date
+                    </label>
+                    <fa-icon
+                        [icon]="'question-circle'"
+                        class="text-secondary"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.course.maxRequestMoreFeedbackTimeDays.description' | translate }}"
+                    ></fa-icon>
+                    <input
+                        required
+                        type="number"
+                        class="form-control"
+                        name="maxRequestMoreFeedbackTimeDays"
+                        id="field_maxRequestMoreFeedbackTimeDays"
+                        formControlName="maxRequestMoreFeedbackTimeDays"
+                    />
                 </div>
                 <div class="form-check">
                     <input type="checkbox" class="form-check-input" name="studentQuestionsEnabled" id="field_studentQuestionsEnabled" formControlName="studentQuestionsEnabled" />

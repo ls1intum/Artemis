@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpResponse;
@@ -19,7 +20,6 @@ import org.imsglobal.lti.launch.LtiVerificationException;
 import org.imsglobal.lti.launch.LtiVerificationResult;
 import org.imsglobal.lti.launch.LtiVerifier;
 import org.imsglobal.pox.IMSPOXRequest;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -305,7 +305,7 @@ public class LtiService {
             Set<String> groups = user.getGroups();
             groups.add(courseStudentGroupName);
             user.setGroups(groups);
-            userRepository.save(user);
+            userService.save(user);
 
             if (!user.getLogin().startsWith("edx")) {
                 // try to sync with authentication service for actual users (not for edx users)
@@ -313,9 +313,7 @@ public class LtiService {
                     artemisAuthenticationProvider.addUserToGroup(user, courseStudentGroupName);
                 }
                 catch (ArtemisAuthenticationException e) {
-                    /*
-                     * This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore them.
-                     */
+                    // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
                 }
             }
         }

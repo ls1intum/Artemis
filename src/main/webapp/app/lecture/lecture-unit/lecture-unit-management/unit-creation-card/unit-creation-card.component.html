@@ -1,0 +1,29 @@
+<div class="creation-card bg-light text-primary container">
+    <div class="row">
+        <div class="col text-center">
+            <h4 class="font-weight-bold">
+                {{ 'artemisApp.lectureUnit.unitCreationCard.title' | translate }}
+            </h4>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col text-center">
+            <button id="createTextUnitButton" type="button" class="btn btn-lg btn-primary m-1 rounded-pill" (click)="createTextUnit.emit()">
+                <fa-icon [icon]="'scroll'"></fa-icon>
+                <span class="ml-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.text">text</span>
+            </button>
+            <button id="createExerciseUnitButton" type="button" class="btn btn-lg btn-primary m-1 rounded-pill" (click)="createExerciseUnit.emit()">
+                <fa-icon [icon]="'check'"></fa-icon>
+                <span class="ml-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.exercise">Exercise</span>
+            </button>
+            <button id="createVideoUnitButton" type="button" class="btn btn-lg btn-primary m-1 rounded-pill" (click)="createVideoUnit.emit()">
+                <fa-icon [icon]="'video'"></fa-icon>
+                <span class="ml-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.video">Video</span>
+            </button>
+            <button id="createFileUploadUnitButton" type="button" class="btn btn-lg btn-primary m-1 rounded-pill" (click)="createAttachmentUnit.emit()">
+                <fa-icon [icon]="'file-upload'"></fa-icon>
+                <span class="ml-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.file">File</span>
+            </button>
+        </div>
+    </div>
+</div>

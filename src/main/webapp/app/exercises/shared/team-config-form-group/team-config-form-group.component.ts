@@ -14,6 +14,8 @@ export class TeamConfigFormGroupComponent implements OnInit {
 
     @Input() exercise: Exercise;
 
+    @Input() isImport: boolean;
+
     config: TeamAssignmentConfig;
 
     /**
@@ -24,7 +26,9 @@ export class TeamConfigFormGroupComponent implements OnInit {
     }
 
     get changeExerciseModeDisabled(): boolean {
-        return Boolean(this.exercise.id) || !!this.exercise.exerciseGroup;
+        // Should be disabled if exercise is present (-> edit menu), but not if menu is shown during import
+        // (old exercise id is present). Should also not be present for exam exercises.
+        return (!this.isImport && Boolean(this.exercise.id)) || !!this.exercise.exerciseGroup;
     }
 
     /**

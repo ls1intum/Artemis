@@ -3,24 +3,32 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static de.tum.in.www1.artemis.util.ProgrammingExerciseTestService.studentLogin;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.ProgrammingExerciseTestService;
 
 public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
+
+    @Autowired
+    private ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
     @BeforeEach
     public void setup() throws Exception {
@@ -51,11 +59,11 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     @ParameterizedTest
-    // TODO René Lalla: incldue Swift again as soon as it is fully supported
-    @EnumSource(value = ProgrammingLanguage.class, names = { "SWIFT" }, mode = EnumSource.Mode.EXCLUDE)
+    @EnumSource(ProgrammingLanguage.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language) throws Exception {
-        programmingExerciseTestService.createProgrammingExercise_programmingLanguage_validExercise_created(language);
+        programmingExerciseTestService.createProgrammingExercise_programmingLanguage_validExercise_created(language,
+                programmingLanguageFeatureService.getProgrammingLanguageFeatures(language));
     }
 
     @Test
@@ -76,12 +84,15 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         programmingExerciseTestService.createProgrammingExerciseForExam_validExercise_created();
     }
 
+    private static Stream<Arguments> generateArgumentsForImportExercise() {
+        return Arrays.stream(ProgrammingLanguage.values()).flatMap(language -> Stream.of(Arguments.of(language, true), Arguments.of(language, false)));
+    }
+
     @ParameterizedTest
-    // TODO René Lalla: incldue Swift again as soon as it is fully supported
-    @EnumSource(value = ProgrammingLanguage.class, names = { "SWIFT" }, mode = EnumSource.Mode.EXCLUDE)
+    @MethodSource("generateArgumentsForImportExercise")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
-        programmingExerciseTestService.importExercise_created(programmingLanguage);
+    public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans) throws Exception {
+        programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans);
     }
 
     @Test
@@ -130,6 +141,48 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam() throws Exception {
         programmingExerciseTestService.repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_mode_changedToIndividual() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExercise_individual_modeChange();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_mode_changedToTeam() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExercise_team_modeChange();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void configureRepository_createTeamUserWhenLtiUserIsNotExistent() throws Exception {
+        programmingExerciseTestService.configureRepository_createTeamUserWhenLtiUserIsNotExistent();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void copyRepository_testInternalServerError() throws Exception {
+        programmingExerciseTestService.copyRepository_testInternalServerError();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void copyRepository_testBadRequestError() throws Exception {
+        programmingExerciseTestService.copyRepository_testBadRequestError();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void copyRepository_testConflictError() throws Exception {
+        programmingExerciseTestService.copyRepository_testConflictError();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void configureRepository_testBadRequestError() throws Exception {
+        programmingExerciseTestService.configureRepository_testBadRequestError();
     }
 
 }

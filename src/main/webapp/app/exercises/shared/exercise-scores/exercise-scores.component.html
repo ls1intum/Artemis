@@ -142,7 +142,7 @@
                             {{ value.team.shortName }}
                         </a>
                         <ng-template #defaultMode>
-                            <a [routerLink]="['/admin', 'user-management', value.student.login, 'view']">
+                            <a [routerLink]="['/admin', 'user-management', value.student.login]">
                                 {{ value.student.login }}
                             </a>
                         </ng-template>
@@ -158,7 +158,7 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <!-- TODO: Had to Remove Date Pipe as UI did not update when sorting. Investigate the reason -->
-                        {{ value.format('MMM DD YYYY, HH:mm:ss') }}
+                        {{ formatDate(value) }}
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -170,11 +170,11 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <jhi-result [result]="value" [showTestNames]="true" [participation]="value.participation"></jhi-result>
+                        <jhi-result [result]="value" [showTestDetails]="true" [participation]="value.participation"></jhi-result>
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="assessmentType" *ngIf="newManualResultAllowed" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="100">
+                <ngx-datatable-column prop="assessmentType" *ngIf="newManualResultAllowed" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="125">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('type')">
                             <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.type' | translate }}</span>
@@ -215,7 +215,13 @@
                     <ng-template ngx-datatable-cell-template let-value="value"> {{ value }} min</ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.PROGRAMMING" [resizeable]="false" [minWidth]="450" [width]="450">
+                <ngx-datatable-column
+                    prop=""
+                    *ngIf="exercise.type === ExerciseType.PROGRAMMING && exercise.isAtLeastInstructor"
+                    [resizeable]="false"
+                    [minWidth]="470"
+                    [width]="470"
+                >
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button class="btn btn-primary btn-sm mr-1" (click)="goToRepository(value)">
                             <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>
@@ -234,14 +240,30 @@
                             <fa-icon class="mr-1" [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             Online editor
                         </button>
-                        <jhi-programming-assessment-manual-result
-                            *ngIf="newManualResultAllowed"
-                            [participationId]="value.participation.id"
-                            [latestResult]="value"
-                            [exercise]="exercise"
-                            (onResultModified)="refresh()"
-                            class="mr-1"
-                        ></jhi-programming-assessment-manual-result>
+                        <button
+                            *ngIf="exercise.course && newManualResultAllowed"
+                            [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id, 'assessment']"
+                            class="btn btn-primary btn-sm mr-1"
+                        >
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            {{ 'artemisApp.programmingSubmission.view' | translate }}
+                        </button>
+                        <button
+                            *ngIf="exercise.exerciseGroup && newManualResultAllowed"
+                            [routerLink]="[
+                                '/course-management',
+                                exercise.exerciseGroup?.exam.course.id,
+                                'programming-exercises',
+                                exercise.id,
+                                'code-editor',
+                                value.participation.id,
+                                'assessment'
+                            ]"
+                            class="btn btn-primary btn-sm mr-1"
+                        >
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            {{ 'artemisApp.programmingSubmission.view' | translate }}
+                        </button>
                     </ng-template>
                 </ngx-datatable-column>
 

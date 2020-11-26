@@ -1,3 +1,4 @@
+import * as ace from 'brace';
 import 'brace/ext/language_tools';
 import 'brace/ext/modelist';
 import 'brace/mode/java';
@@ -5,12 +6,16 @@ import 'brace/mode/markdown';
 import 'brace/mode/haskell';
 import 'brace/mode/c_cpp';
 import 'brace/mode/python';
+import 'brace/mode/swift';
+import 'brace/mode/makefile';
+import 'brace/mode/kotlin';
+import 'brace/mode/assembly_x86';
+import 'brace/mode/vhdl';
 import 'brace/theme/dreamweaver';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
-import * as ace from 'brace';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
@@ -276,7 +281,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             const sessionAnnotations = this.loadAnnotations();
             this.annotationsArray = annotations.map((a) => {
                 const hash = a.fileName + a.row + a.column + a.text;
-                if (sessionAnnotations[hash] == null || sessionAnnotations[hash].timestamp < a.timestamp) {
+                if (sessionAnnotations[hash] == undefined || sessionAnnotations[hash].timestamp < a.timestamp) {
                     return { ...a, hash };
                 } else {
                     return sessionAnnotations[hash];

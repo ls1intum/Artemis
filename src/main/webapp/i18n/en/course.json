@@ -43,6 +43,14 @@
                 "title": "Enable complaints",
                 "description": "Enabling this allows students to complain about results."
             },
+            "requestMoreFeedbackEnabled": {
+                "title": "Enable more feedback requests",
+                "description": "This option allows students to request more feedback without using a complaint. Asking for further feedback will not count towards the number of complaints, but it will also not allow a modification of the assessment. By default, this option is enabled, but it can be disabled if a correction of the assessment must always be possible."
+            },
+            "maxRequestMoreFeedbackTimeDays": {
+                "title": "Deadline for more feedback requests in days after result date",
+                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to request more feedback after this deadline."
+            },
             "customizeGroupNames": {
                 "title": "Customize group names",
                 "description": "Make sure that the groups exist in the external user management if you enable this option. The groups are not created automatically then."
@@ -53,6 +61,12 @@
             "description": "Course Description",
             "startDate": "Start",
             "endDate": "End",
+            "semester": "Semester",
+            "testCourse": {
+                "title": "Test Course",
+                "description": "Activate this checkbox for courses used for testing.",
+                "plural": "Test Courses"
+            },
             "accessGroups": "Access Groups",
             "onlineCourse": {
                 "title": "Online Course",
@@ -77,8 +91,6 @@
             "student": "Student",
             "tutor": "Tutor",
             "instructor": "Instructor",
-            "onlineCourseFalse": "No",
-            "onlineCourseTrue": "Yes",
             "form": {
                 "shortname": {
                     "minlength": "Short Name must have a length of 3 or more characters.",

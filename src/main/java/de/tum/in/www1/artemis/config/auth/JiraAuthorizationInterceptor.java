@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.config.auth;
 
 import java.io.IOException;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;

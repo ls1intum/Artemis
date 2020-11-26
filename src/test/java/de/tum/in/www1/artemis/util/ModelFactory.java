@@ -21,12 +21,9 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.ErrorDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestsuiteDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.*;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class ModelFactory {
@@ -115,8 +112,9 @@ public class ModelFactory {
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise.setProjectType(ProjectType.ECLIPSE);
         programmingExercise.setPackageName("de.test");
-        final var repoName = (programmingExercise.getProjectKey() + "-" + RepositoryType.TESTS.getName()).toLowerCase();
+        final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
         String testRepoUrl = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUrl(testRepoUrl);
     }
@@ -341,12 +339,12 @@ public class ModelFactory {
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String instructorGroupName) {
-        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, instructorGroupName, 3, 3, 7, true);
+        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, instructorGroupName, 3, 3, 7, true, 7);
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
-            Boolean studentQuestionsEnabled) {
+            boolean studentQuestionsEnabled, int requestMoreFeedbackTimeDays) {
         Course course = new Course();
         course.setId(id);
         course.setTitle("Course title " + UUID.randomUUID().toString());
@@ -357,6 +355,7 @@ public class ModelFactory {
         course.setMaxTeamComplaints(maxTeamComplaints);
         course.setMaxComplaintTimeDays(maxComplaintTimeDays);
         course.setStudentQuestionsEnabled(studentQuestionsEnabled);
+        course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
         course.setStudentGroupName(studentGroupName);
         course.setTeachingAssistantGroupName(teachingAssistantGroupName);
         course.setInstructorGroupName(instructorGroupName);
@@ -448,15 +447,18 @@ public class ModelFactory {
         Feedback positiveFeedback = new Feedback();
         positiveFeedback.setCredits(2D);
         positiveFeedback.setReference("theory");
+        positiveFeedback.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(positiveFeedback);
         Feedback positiveFeedback2 = new Feedback();
         positiveFeedback2.setCredits(1D);
         positiveFeedback2.setReference("theory2");
+        positiveFeedback2.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(positiveFeedback2);
         Feedback negativeFeedback = new Feedback();
         negativeFeedback.setCredits(-1D);
         negativeFeedback.setDetailText("Bad solution");
         negativeFeedback.setReference("practice");
+        negativeFeedback.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(negativeFeedback);
         return feedbacks;
     }
@@ -545,6 +547,7 @@ public class ModelFactory {
         toBeImported.setExampleSubmissions(null);
         toBeImported.setTestRepositoryUrl(template.getTestRepositoryUrl());
         toBeImported.setProgrammingLanguage(template.getProgrammingLanguage());
+        toBeImported.setProjectType(template.getProjectType());
         toBeImported.setAssessmentDueDate(template.getAssessmentDueDate());
         toBeImported.setAttachments(null);
         toBeImported.setDueDate(template.getDueDate());
@@ -652,7 +655,7 @@ public class ModelFactory {
             var testcase = new TestCaseDTO();
             testcase.setName(name);
             testcase.setClassname("Class");
-            var error = new ErrorDTO();
+            var error = new ErrorOrFailureDTO();
             error.setMessage(name + " error message");
             testcase.setErrors(List.of(error));
             return testcase;
@@ -681,6 +684,7 @@ public class ModelFactory {
         final var successfulTests = successfulTestNames.stream().map(name -> generateBambooTestJob(name, true)).collect(Collectors.toList());
         final var failedTests = failedTestNames.stream().map(name -> generateBambooTestJob(name, false)).collect(Collectors.toList());
         final var vcs = new BambooBuildResultNotificationDTO.BambooVCSDTO();
+        final var plan = new BambooBuildPlanDTO("TEST201904BPROGRAMMINGEXERCISE6-STUDENT1");
 
         vcs.setRepositoryName(repoName);
         vcs.setId(TestConstants.COMMIT_HASH_STRING);
@@ -714,6 +718,7 @@ public class ModelFactory {
         notification.setSecret("secret");
         notification.setNotificationType("TestNotification");
         notification.setBuild(build);
+        notification.setPlan(plan);
 
         return notification;
     }
@@ -782,6 +787,7 @@ public class ModelFactory {
             case SPOTBUGS -> "BAD_PRACTICE";
             case PMD -> "Best Practices";
             case CHECKSTYLE -> "coding";
+            case PMD_CPD -> "Copy/Paste Detection";
         };
 
         var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
@@ -817,5 +823,39 @@ public class ModelFactory {
         test.setName(name);
 
         return test;
+    }
+
+    /**
+     * Generates example TextSubmissions
+     * @param count How many submissions should be generated (max. 10)
+     * @return A list containing the generated TextSubmissions
+     */
+    public static List<TextSubmission> generateTextSubmissions(int count) {
+        if (count > 10) {
+            throw new IllegalArgumentException();
+        }
+
+        // Example texts for submissions
+        String[] submissionTexts = {
+                "Differences: \nAntipatterns: \n-Have one problem and two solutions(one problematic and one refactored)\n-Antipatterns are a sign of bad architecture and bad coding \nPattern:\n-Have one problem and one solution\n-Patterns are a sign of elaborated architecutre and coding",
+                "The main difference between patterns and antipatterns is, that patterns show you a good way to do something and antipatterns show a bad way to do something. Nevertheless patterns may become antipatterns in the course of changing understanding of how good software engineering looks like. One example for that is functional decomposition, which used to be a pattern and \"good practice\". Over the time it turned out that it is not a goog way to solve problems, so it became a antipattern.\n\nA pattern itsself is a proposed solution to a problem that occurs often and in different situations.\nIn contrast to that a antipattern shows commonly made mistakes when dealing with a certain problem. Nevertheless a refactored solution is aswell proposed.",
+                "1.Patterns can evolve into Antipatterns when change occurs\\n2. Pattern has one solution, whereas anti pattern can have subtypes of solution\\n3. Antipattern has negative consequences and symptom, where as patterns looks only into benefits and consequences",
+                "Patterns: A way to Model code in differents ways \nAntipattern: A way of how Not to Model code",
+                "Antipatterns are used when there are common mistakes in software management and development to find these, while patterns by themselves are used to build software systems in the context of frequent change by reducing complexity and isolating the change.\nAnother difference is that the antipatterns have problematic solution and then refactored solution, while patterns only have a solution.",
+                "- In patterns we have a problem and a solution, in antipatterns we have a problematic solution and a refactored solution instead\n- patterns represent best practices from the industry etc. so proven concepts, whereas antipatterns shed a light on common mistakes during software development etc.",
+                "1) Patterns have one solution, antipatterns have to solutions (one problematic and one refactored).\n2) for the coice of patterns code has to be written; for antipatterns, the bad smell code already exists",
+                "Design Patterns:\n\nSolutions which are productive and efficient and are developed by Software Engineers over the years of practice and solving problems.\n\nAnti Patterns:\n\nKnown solutions which are actually bad or defective to certain kind of problems.",
+                "Patterns has one problem and one solution.\nAntipatterns have one problematic solution and a solution for that. The antipattern happens when  a solution that is been used for a long time can not apply anymore. ",
+                "Patterns identify problems and present solutions.\nAntipatterns identify problems but two kinds of solutions. One problematic solution and a better \"refactored\" version of the solution. Problematic solutions are suggested not to be used because they results in smells or hinder future work." };
+
+        // Create Submissions with id's 0 - count
+        List<TextSubmission> textSubmissions = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            TextSubmission s = new TextSubmission((long) i).text(submissionTexts[i]);
+            s.setLanguage(Language.ENGLISH);
+            textSubmissions.add(s);
+        }
+
+        return textSubmissions;
     }
 }

@@ -4,9 +4,10 @@ on:
     types: [ready_for_review]
 
 jobs:
-  moveToReadyForReview:
+  pullequestReadyForReview:
     runs-on: ubuntu-latest
     steps:
+
       - name: Move to "Ready for review" column
         if: github.event.pull_request.draft == false
         uses: alex-page/github-project-automation-plus@v0.3.0
@@ -15,12 +16,21 @@ jobs:
           column: Ready for review
           repo-token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}
 
-  requestReviews:
-    runs-on: ubuntu-latest
-    steps:
       - name: Request Reviews from @ls1intum/artemis Team
         uses: rowi1de/auto-assign-review-teams@v1.0.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           teams: "@ls1intum/artemis"
           skip-with-manual-reviewers: 5
+
+      - name: Label "ready for review"
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            await github.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['ready for review']
+            })

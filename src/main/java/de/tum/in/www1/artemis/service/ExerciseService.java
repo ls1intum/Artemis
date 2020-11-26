@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -64,11 +65,13 @@ public class ExerciseService {
 
     private final TeamService teamService;
 
-    public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, QuizScheduleService quizScheduleService,
-            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamRepository studentExamRepository,
-            ExamRepository exampRepository) {
+    private final ExerciseUnitRepository exerciseUnitRepository;
+
+    public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
+            AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
+            QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
+            AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService,
+            StudentExamRepository studentExamRepository, ExamRepository exampRepository) {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = exampRepository;
         this.participationService = participationService;
@@ -83,6 +86,7 @@ public class ExerciseService {
         this.quizExerciseService = quizExerciseService;
         this.quizScheduleService = quizScheduleService;
         this.studentExamRepository = studentExamRepository;
+        this.exerciseUnitRepository = exerciseUnitRepository;
     }
 
     /**
@@ -157,6 +161,16 @@ public class ExerciseService {
      */
     public Set<Exercise> findAllTeamExercisesForCourse(Course course) {
         return exerciseRepository.findAllTeamExercisesByCourseId(course.getId());
+    }
+
+    /**
+     * Finds all exercises where the due date is in the future
+     * (does not return exercises belonging to test courses).
+     *
+     * @return set of exercises
+     */
+    public Set<Exercise> findAllExercisesWithUpcomingDueDate() {
+        return exerciseRepository.findAllExercisesWithUpcomingDueDate(ZonedDateTime.now());
     }
 
     /**
@@ -272,10 +286,13 @@ public class ExerciseService {
      * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
      * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
      */
-    @Transactional
+    @Transactional // ok
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
         final var exercise = findOne(exerciseId);
+
+        // delete all exercise units linking to the exercise
+        this.exerciseUnitRepository.removeAllByExerciseId(exerciseId);
 
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
@@ -409,10 +426,10 @@ public class ExerciseService {
      * Find the participation in participations that belongs to the given exercise that includes the exercise data, plus the found participation with its most recent relevant
      * result. Filter everything else that is not relevant
      *
-     * @param exercise the exercise that should be filtered (this deletes many field values of the passed exercise object)
+     * @param exercise       the exercise that should be filtered (this deletes many field values of the passed exercise object)
      * @param participations the set of participations, wherein to search for the relevant participation
-     * @param username used to get quiz submission for the user
-     * @param isStudent defines if the current user is a student
+     * @param username       used to get quiz submission for the user
+     * @param isStudent      defines if the current user is a student
      */
     public void filterForCourseDashboard(Exercise exercise, List<StudentParticipation> participations, String username, boolean isStudent) {
         // remove the unnecessary inner course attribute

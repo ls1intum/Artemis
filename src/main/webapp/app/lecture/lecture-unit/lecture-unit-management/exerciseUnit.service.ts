@@ -1,0 +1,31 @@
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { SERVER_API_URL } from 'app/app.constants';
+import { Observable } from 'rxjs';
+import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import { map } from 'rxjs/operators';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+
+type EntityResponseType = HttpResponse<ExerciseUnit>;
+type EntityArrayResponseType = HttpResponse<ExerciseUnit[]>;
+
+@Injectable({
+    providedIn: 'root',
+})
+export class ExerciseUnitService {
+    private resourceURL = SERVER_API_URL + 'api';
+
+    constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
+
+    create(exerciseUnit: ExerciseUnit, lectureId: number): Observable<EntityResponseType> {
+        return this.httpClient
+            .post<ExerciseUnit>(`${this.resourceURL}/lectures/${lectureId}/exercise-units`, exerciseUnit, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+    }
+
+    findAllByLectureId(lectureId: number): Observable<EntityArrayResponseType> {
+        return this.httpClient
+            .get<ExerciseUnit[]>(`${this.resourceURL}/lectures/${lectureId}/exercise-units`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.lectureUnitService.convertDateArrayFromServerResponse(res)));
+    }
+}

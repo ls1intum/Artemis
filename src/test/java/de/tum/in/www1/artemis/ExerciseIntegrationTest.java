@@ -212,6 +212,37 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testGetUpcomingExercises() throws Exception {
+        List<Exercise> exercises = request.getList("/api/exercises/upcoming", HttpStatus.OK, Exercise.class);
+        assertThat(exercises.size()).isEqualTo(0);
+
+        // Test for exercise with upcoming due date.
+        Course course = database.addCourseWithOneProgrammingExercise();
+        exercises = request.getList("/api/exercises/upcoming", HttpStatus.OK, Exercise.class);
+        assertThat(exercises.size()).isEqualTo(1);
+        assertThat(exercises).contains(course.getExercises().stream().findFirst().get());
+    }
+
+    @Test
+    @WithMockUser(value = "student11", roles = "USER")
+    public void testGetUpcomingExercisesAsStudentForbidden() throws Exception {
+        request.getList("/api/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
+    public void testGetUpcomingExercisesAsInstructorForbidden() throws Exception {
+        request.getList("/api/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor6", roles = "TA")
+    public void testGetUpcomingExercisesAsTutorForbidden() throws Exception {
+        request.getList("/api/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
+    }
+
+    @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testGetExerciseDetails() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
@@ -266,7 +297,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether the manual result will be displayed before the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next());
+                database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next());
             }
             Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
             for (StudentParticipation participation : exerciseWithDetails.getStudentParticipations()) {
@@ -294,7 +325,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add an manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next());
+                database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next());
             }
             Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
             for (StudentParticipation participation : exerciseWithDetails.getStudentParticipations()) {
@@ -302,7 +333,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 if (exercise instanceof ProgrammingExercise) {
                     assertThat(participation.getResults().size()).isEqualTo(2);
                     assertThat(participation.getResults().stream().sorted(Comparator.comparing(Result::getId).reversed()).iterator().next().getAssessmentType())
-                            .isEqualTo(AssessmentType.MANUAL);
+                            .isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                 }
                 else {
                     // All other exercises have only one visible result now
@@ -319,8 +350,8 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether the manual result will be displayed before the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                exercise.getStudentParticipations().iterator().next().setResults(Set
-                        .of(database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
+                exercise.getStudentParticipations().iterator().next().setResults(Set.of(database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC,
+                        ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
             }
             exerciseService.filterForCourseDashboard(exercise, List.copyOf(exercise.getStudentParticipations()), "student1", true);
             // Programming exercises should only have one automatic result
@@ -345,7 +376,8 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add an manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                Result result = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next());
+                Result result = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
+                        exercise.getStudentParticipations().iterator().next());
                 exercise.getStudentParticipations().iterator().next().setResults(Set.of(result));
                 exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().setResult(result);
             }
@@ -354,7 +386,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
             assertThat(exercise.getStudentParticipations().iterator().next().getResults().size()).isEqualTo(1);
             // Programming exercises should now have one manual result
             if (exercise instanceof ProgrammingExercise) {
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+                assertThat(exercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
             }
         }
     }

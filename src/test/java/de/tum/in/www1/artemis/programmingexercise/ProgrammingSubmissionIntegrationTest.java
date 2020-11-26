@@ -6,11 +6,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -25,10 +28,11 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -52,9 +56,11 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     ProgrammingExercise exercise;
 
+    ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
+
     @BeforeEach
     public void init() {
-        database.addUsers(3, 2, 2);
+        database.addUsers(10, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
@@ -64,9 +70,13 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         exercise.setTestCasesChanged(true);
         programmingExerciseRepository.save(exercise);
 
+        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(exercise, "student2");
+
         var newObjectId = new ObjectId(4, 5, 2, 5, 3);
         doReturn(newObjectId).when(gitService).getLastCommitHash(null);
         doReturn(newObjectId).when(gitService).getLastCommitHash(exercise.getTemplateParticipation().getRepositoryUrlAsUrl());
+        var dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl());
     }
 
     @AfterEach
@@ -279,7 +289,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         var assessedSubmission = ModelFactory.generateProgrammingSubmission(true);
         assessedSubmission = database.addProgrammingSubmission(exercise, assessedSubmission, "student2");
         final var tutor = database.getUserByLogin("tutor1");
-        database.addResultToSubmission(assessedSubmission, AssessmentType.MANUAL, tutor);
+        database.addResultToSubmission(assessedSubmission, AssessmentType.SEMI_AUTOMATIC, tutor);
 
         final var paramMap = new LinkedMultiValueMap<String, String>();
         paramMap.add("assessedByTutor", "true");
@@ -303,6 +313,81 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testLockAndGetProgrammingSubmission_withManualResult() throws Exception {
+        ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
+        database.addProgrammingSubmission(exercise, submission, "student1");
+        database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), programmingExerciseStudentParticipation);
+
+        request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.OK, Participation.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testLockAndGetProgrammingSubmission_withoutManualResult() throws Exception {
+        var result = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), programmingExerciseStudentParticipation);
+        database.addProgrammingSubmissionToResultAndParticipation(result, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        Participation response = request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.OK, Participation.class);
+        var participation = programmingExerciseStudentParticipationRepository.findByIdWithLatestManualResultAndFeedbacksAndRelatedSubmissionsAndAssessor(response.getId());
+        var newManualResult = participation.get().getResults().stream().filter(Result::isManualResult).collect(Collectors.toList()).get(0);
+        assertThat(newManualResult.getAssessor().getLogin()).isEqualTo("tutor1");
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetProgrammingSubmissionWithoutAssessment() throws Exception {
+        ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
+        submission = database.addProgrammingSubmission(exercise, submission, "student1");
+        database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        ProgrammingSubmission storedSubmission = request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK,
+                ProgrammingSubmission.class);
+
+        // set dates to UTC and round to milliseconds for comparison
+        submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
+        assertThat(storedSubmission.getResult()).as("result is not set").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetProgrammingSubmissionWithoutAssessment_lockSubmission() throws Exception {
+        User user = database.getUserByLogin("tutor1");
+        var automaticFeedback = new Feedback().credits(null).detailText("asdfasdf").type(FeedbackType.AUTOMATIC).text("asdf");
+        var automaticFeedbacks = new ArrayList<Feedback>();
+        automaticFeedbacks.add(automaticFeedback);
+        var newResult = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), programmingExerciseStudentParticipation);
+        programmingExerciseStudentParticipation.addResult(newResult);
+        var submission = database.addProgrammingSubmissionToResultAndParticipation(newResult, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+
+        database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        ProgrammingSubmission storedSubmission = request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=true", HttpStatus.OK,
+                ProgrammingSubmission.class);
+
+        assertThat(storedSubmission.getSubmissionDate().isAfter(submission.getSubmissionDate())).isEqualTo(true);
+        assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
+        assertThat(storedSubmission.getResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        var automaticResults = storedSubmission.getResult().getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC).collect(Collectors.toList());
+        assertThat(storedSubmission.getResult().getFeedbacks().size()).isEqualTo(automaticResults.size());
+        assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
+        assertThat(storedSubmission.getResult().getResultString()).isEqualTo(submission.getResult().getResultString());
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetModelSubmissionWithoutAssessment_testLockLimit() throws Exception {
+        createTenLockedSubmissionsForExercise("tutor1");
+        database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.BAD_REQUEST, ProgrammingSubmission.class);
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getProgrammingSubmissionWithoutAssessment_dueDateNotPassedYet() throws Exception {
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
@@ -316,13 +401,22 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getProgrammingSubmissionWithoutAssessment_alreadyAssessed_noFound() throws Exception {
+        exercise.setDueDate(ZonedDateTime.now().minusDays(2));
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
         var submission = ModelFactory.generateProgrammingSubmission(true);
         submission = database.addProgrammingSubmission(exercise, submission, "student1");
         final var tutor = database.getUserByLogin("tutor1");
-        database.addResultToSubmission(submission, AssessmentType.MANUAL, tutor);
+        database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, tutor);
 
-        request.get("/api/exercises" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    private void createTenLockedSubmissionsForExercise(String assessor) {
+        ProgrammingSubmission submission;
+        for (int i = 1; i < 11; i++) {
+            submission = ModelFactory.generateProgrammingSubmission(true);
+            database.addProgrammingSubmissionWithResultAndAssessor(exercise, submission, "student" + i, assessor, AssessmentType.SEMI_AUTOMATIC, false);
+        }
     }
 }

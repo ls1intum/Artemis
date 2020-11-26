@@ -46,9 +46,14 @@
             "positive": "Positiv",
             "graded": "Bewertet",
             "notGraded": "Nicht bewertet",
-            "preliminary": "(vorläufig)",
+            "preliminary": "vorläufig",
             "preliminaryTooltip": "Dein Ergebnis ist nicht endgültig. Nach der Einreichungsfrist werden weitere Tests durchgeführt.",
-            "noResultDetails": "Keine weiteren Informationen verfügbar für dieses Ergebnis."
+            "noResultDetails": "Keine weiteren Informationen verfügbar für dieses Ergebnis.",
+            "chart": {
+                "points": "Punkte",
+                "deductions": "Abzüge",
+                "tooltip": "Deine Punktabzüge werden begrenzt um den Einfluss von Folgefehlern durch Code-Issues abzuschwächen. Beachte, dass du gegebenenfalls mehrere Code-Issues lösen musst, bevor sich deine Punkte erhöhen."
+            }
         }
     }
 }

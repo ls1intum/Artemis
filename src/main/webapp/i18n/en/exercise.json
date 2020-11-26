@@ -59,7 +59,7 @@
             "assessmentDueDateError": "Assessment Due Date must be after Release and Due Date. Please check your selection again",
             "dateNotSet": "No date set",
             "points": "Points",
-            "bonusPoints": "Bonus Points",
+            "bonusPoints": "Bonus points",
             "difficulty": "Difficulty",
             "noLevel": "No Level",
             "easy": "Easy",
@@ -102,7 +102,7 @@
             "score": "Score",
             "duration": "Duration",
             "showBuildFailed": "Show Build Failed",
-            "showFailed": "Show Failed Submissions (without Result)",
+            "showFailed": "Show Latest Submission without Result",
             "showNoSubmissions": "Show No Submissions",
             "showUnsuccessful": "Show Unsuccessful",
             "showSuccessful": "Show Successful",
@@ -137,7 +137,11 @@
                     "minlength": "The short name must be at least 3 characters long!"
                 },
                 "packageName": {
-                    "pattern": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\"!"
+                    "pattern": {
+                        "JAVA": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\"!",
+                        "KOTLIN": "The package name must consist of one or more valid Kotlin identifiers separated by '.', e.g. \"net.kotlin\"!",
+                        "SWIFT": "The package name must consist of one or more valid Swift identifiers without any separator, e.g. \"SwiftEx\"!"
+                    }
                 },
                 "points": {
                     "pattern": "The points must be between 1 and 9999!"

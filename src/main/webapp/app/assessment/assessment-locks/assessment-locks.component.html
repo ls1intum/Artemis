@@ -2,7 +2,6 @@
     <div class="row justify-content-between">
         <div class="col-8">
             <h2>
-                <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
                 <span>{{ 'artemisApp.assessment.locks.title' | translate }}</span>
             </h2>
         </div>
@@ -48,8 +47,8 @@
                                     courseId,
                                     submission.participation.exercise.type + '-exercises',
                                     submission.participation.exercise.id,
-                                    'submissions',
-                                    submission.id,
+                                    submission.participation.exercise.type !== PROGRAMMING_EXERCISE ? 'submissions' : 'code-editor',
+                                    submission.participation.exercise.type !== PROGRAMMING_EXERCISE ? submission.id : submission.participation.id,
                                     'assessment'
                                 ]"
                                 class="btn btn-outline-secondary btn-sm mb-1"

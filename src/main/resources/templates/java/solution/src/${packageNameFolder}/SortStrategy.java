@@ -5,5 +5,10 @@ import java.util.List;
 
 public interface SortStrategy {
 
-	public void performSort(List<Date> input);
+    /**
+     * Sorts a list of Dates.
+     *
+     * @param input list of Dates
+     */
+    void performSort(List<Date> input);
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
-import { Cacheable } from 'ngx-cacheable';
+import { Cacheable } from 'ts-cacheable';
 import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })

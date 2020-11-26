@@ -4,10 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -190,6 +187,24 @@ public class ExerciseResource {
     }
 
     /**
+     * GET /exercises/upcoming : Find all exercises that have an upcoming due date.
+     *
+     * @return the ResponseEntity with status 200 (OK) and a list of exercises.
+     */
+    @GetMapping("/exercises/upcoming")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Set<Exercise>> getUpcomingExercises() {
+        log.debug("REST request to get all upcoming exercises");
+
+        if (!authCheckService.isAdmin()) {
+            return forbidden();
+        }
+
+        Set<Exercise> upcomingExercises = exerciseService.findAllExercisesWithUpcomingDueDate();
+        return ResponseEntity.ok(upcomingExercises);
+    }
+
+    /**
      * GET /exercises/:exerciseId/stats-for-tutor-dashboard A collection of useful statistics for the tutor exercise dashboard of the exercise with the given exerciseId
      *
      * @param exerciseId the exerciseId of the exercise to retrieve
@@ -206,8 +221,6 @@ public class ExerciseResource {
         }
 
         StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise, exercise.hasExerciseGroup());
-        stats.setNumberOfOpenComplaints(0L);
-        stats.setNumberOfOpenMoreFeedbackRequests(0L);
 
         return ResponseEntity.ok(stats);
     }

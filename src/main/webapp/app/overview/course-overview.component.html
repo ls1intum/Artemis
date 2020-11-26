@@ -1,47 +1,50 @@
-<div *ngIf="course">
-    <div class="course-info-bar" [class.course-info-bar--ide]="isOrion">
-        <div class="row">
-            <div class="col general-info">
-                <h3>{{ course.title }}</h3>
-                <h4 class="d-none d-sm-inline">{{ course.description || ('artemisApp.courseOverview.noDescription' | translate) }}</h4>
-                <h4 class="d-sm-none">{{ courseDescription || ('artemisApp.courseOverview.noDescription' | translate) }}</h4>
-                <h6 class="d-sm-none" *ngIf="enableShowMore && !longTextShown" (click)="showLongDescription()">{{ 'artemisApp.courseOverview.showMore' | translate }}</h6>
-                <h6 class="d-sm-none" *ngIf="enableShowMore && longTextShown" (click)="showShortDescription()">{{ 'artemisApp.courseOverview.showLess' | translate }}</h6>
+<div>
+    <div *ngIf="course">
+        <div class="course-info-bar" [class.course-info-bar--ide]="isOrion">
+            <div class="row">
+                <div class="col general-info">
+                    <h3>{{ course.title }}</h3>
+                    <h4 class="d-none d-sm-inline">{{ course.description || ('artemisApp.courseOverview.noDescription' | translate) }}</h4>
+                    <h4 class="d-sm-none">{{ courseDescription || ('artemisApp.courseOverview.noDescription' | translate) }}</h4>
+                    <h6 class="d-sm-none" *ngIf="enableShowMore && !longTextShown" (click)="showLongDescription()">{{ 'artemisApp.courseOverview.showMore' | translate }}</h6>
+                    <h6 class="d-sm-none" *ngIf="enableShowMore && longTextShown" (click)="showShortDescription()">{{ 'artemisApp.courseOverview.showLess' | translate }}</h6>
+                </div>
+                <div class="col-4 d-none d-md-flex justify-content-end course-icon">
+                    <jhi-secured-image
+                        *ngIf="course.courseIcon"
+                        [src]="course.courseIcon"
+                        [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"
+                        [alt]="'artemisApp.courseOverview.noCourseIcon' | translate"
+                    >
+                    </jhi-secured-image>
+                </div>
             </div>
-            <div class="col-4 d-none d-md-flex justify-content-end course-icon">
-                <jhi-secured-image
-                    *ngIf="course.courseIcon"
-                    [src]="course.courseIcon"
-                    [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"
-                    [alt]="'artemisApp.courseOverview.noCourseIcon' | translate"
-                >
-                </jhi-secured-image>
+        </div>
+        <jhi-alert></jhi-alert>
+        <div class="tab-bar tab-bar-course-overview">
+            <div *ngIf="course.exams && hasVisibleExams()" jhiOrionFilter [showInOrionWindow]="false" class="tab-item exams" routerLink="exams" routerLinkActive="active">
+                <b jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</b>
+            </div>
+            <div class="tab-item exercises" routerLink="exercises" routerLinkActive="active">
+                <b jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</b>
+            </div>
+            <div *ngIf="course.lectures" jhiOrionFilter [showInOrionWindow]="false" class="tab-item lectures" routerLink="lectures" routerLinkActive="active">
+                <b jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</b>
+            </div>
+            <div jhiOrionFilter [showInOrionWindow]="false" class="guided-tour tab-item statistics" routerLink="statistics" routerLinkActive="active">
+                <b jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</b>
+            </div>
+            <button class="btn btn-primary btn-md ml-1" (click)="loadCourse(true)" [disabled]="refreshingCourse">
+                <fa-icon [icon]="'sync'" [spin]="refreshingCourse"></fa-icon>
+                <span class="d-none d-md-inline ml-1" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
+            </button>
+        </div>
+        <div class="course-body-container">
+            <router-outlet></router-outlet>
+            <div class="refresh-overlay" [class.active]="refreshingCourse">
+                <fa-icon size="lg" [icon]="'circle-notch'" [spin]="true"></fa-icon>
             </div>
         </div>
     </div>
-    <jhi-alert></jhi-alert>
-    <div class="tab-bar tab-bar-course-overview">
-        <div *ngIf="course.exams && hasVisibleExams()" jhiOrionFilter [showInOrionWindow]="false" class="tab-item exams" routerLink="exams" routerLinkActive="active">
-            <b jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</b>
-        </div>
-        <div class="tab-item exercises" routerLink="exercises" routerLinkActive="active">
-            <b jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</b>
-        </div>
-        <div *ngIf="course.lectures" jhiOrionFilter [showInOrionWindow]="false" class="tab-item lectures" routerLink="lectures" routerLinkActive="active">
-            <b jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</b>
-        </div>
-        <div jhiOrionFilter [showInOrionWindow]="false" class="guided-tour tab-item statistics" routerLink="statistics" routerLinkActive="active">
-            <b jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</b>
-        </div>
-        <button class="btn btn-primary btn-md ml-1" (click)="loadCourse(true)" [disabled]="refreshingCourse">
-            <fa-icon [icon]="'sync'" [spin]="refreshingCourse"></fa-icon>
-            <span class="d-none d-md-inline ml-1" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
-        </button>
-    </div>
-    <div class="course-body-container">
-        <router-outlet></router-outlet>
-        <div class="refresh-overlay" [class.active]="refreshingCourse">
-            <fa-icon size="lg" [icon]="'circle-notch'" [spin]="true"></fa-icon>
-        </div>
-    </div>
+    <jhi-alert-error></jhi-alert-error>
 </div>

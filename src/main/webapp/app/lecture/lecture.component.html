@@ -24,15 +24,17 @@
             <tbody class="markdown-preview">
                 <tr *ngFor="let lecture of lectures; trackBy: trackId">
                     <td>
-                        <a [routerLink]="[lecture.id, 'view']">{{ lecture.id }}</a>
+                        <a [routerLink]="[lecture.id]">{{ lecture.id }}</a>
                     </td>
-                    <td>{{ lecture.title }}</td>
+                    <td>
+                        <a [routerLink]="[lecture.id]">{{ lecture.title }}</a>
+                    </td>
                     <td [innerHTML]="lecture.description | htmlForMarkdown"></td>
                     <td>{{ lecture.startDate | artemisDate }}</td>
                     <td>{{ lecture.endDate | artemisDate }}</td>
                     <td>
                         <div *ngIf="lecture.course">
-                            <a [routerLink]="['../view']">{{ lecture.course?.title }}</a>
+                            <a [routerLink]="['..']">{{ lecture.course?.title }}</a>
                         </div>
                     </td>
                     <td class="text-right">
@@ -42,9 +44,9 @@
                                     <fa-icon [icon]="'file'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.attachments">Attachment</span>
                                 </button>
-                                <button type="submit" *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'view']" class="btn btn-info btn-sm">
-                                    <fa-icon [icon]="'eye'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                                <button type="submit" *ngIf="lecture.isAtLeastInstructor" [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm">
+                                    <fa-icon [icon]="'puzzle-piece'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.units">Units</span>
                                 </button>
                             </div>
 

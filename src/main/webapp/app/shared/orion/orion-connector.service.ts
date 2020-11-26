@@ -191,7 +191,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * @param exerciseId
      */
     startedBuildInOrion(courseId: number, exerciseId: number) {
-        this.router.navigateByUrl(`/courses/${courseId}/exercises/${exerciseId}`, { queryParams: { withIdeSubmit: true } });
+        this.router.navigateByUrl(`/courses/${courseId}/exercises/${exerciseId}?withIdeSubmit=true`);
     }
 
     /**

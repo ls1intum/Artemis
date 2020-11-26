@@ -154,7 +154,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.DUE);
         }
         // For exercises with buildAndTestAfterDueDate
-        if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
+        if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
             log.debug("Scheduled build and test for student submissions after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
                     + exercise.getBuildAndTestStudentSubmissionsAfterDueDate() + ".");
@@ -227,20 +227,31 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             SecurityUtils.setAuthorizationObject();
             try {
                 List<ProgrammingExerciseStudentParticipation> failedLockOperations = removeWritePermissionsFromAllStudentRepositories(programmingExerciseId, condition);
+                // Stash also the not submitted/committed changes, to ensure that only submitted/commited changes are displayed
+                List<ProgrammingExerciseStudentParticipation> failedStashOperations = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
 
-                // We sent a notification to the instructor about the success of the repository locking operation.
+                // We sent a notification to the instructor about the success of the repository locking and stashing operations.
                 long numberOfFailedLockOperations = failedLockOperations.size();
+                long numberOfFailedStashOperations = failedStashOperations.size();
                 Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
                 if (programmingExercise.isEmpty()) {
                     throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
                 }
                 if (numberOfFailedLockOperations > 0) {
                     groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
-                            Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION + failedLockOperations.size());
+                            Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION + numberOfFailedLockOperations);
                 }
                 else {
                     groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
                             Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION);
+                }
+                if (numberOfFailedStashOperations > 0) {
+                    groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                            Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION + numberOfFailedStashOperations);
+                }
+                else {
+                    groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                            Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION);
                 }
             }
             catch (EntityNotFoundException ex) {
@@ -363,6 +374,12 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             Predicate<ProgrammingExerciseStudentParticipation> condition) throws EntityNotFoundException {
         return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::lockStudentRepository, condition,
                 "remove write permissions from all student repositories");
+    }
+
+    private List<ProgrammingExerciseStudentParticipation> stashChangesInAllStudentRepositories(Long programmingExerciseId,
+            Predicate<ProgrammingExerciseStudentParticipation> condition) throws EntityNotFoundException {
+        return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::stashChangesInStudentRepositoryAfterDueDateHasPassed,
+                condition, "stash changes from all student repositories");
     }
 
     /**

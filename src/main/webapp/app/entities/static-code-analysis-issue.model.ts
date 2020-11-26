@@ -1,3 +1,5 @@
+import { Feedback } from 'app/entities/feedback.model';
+
 export class StaticCodeAnalysisIssue {
     public filePath: string;
     public startLine: number;
@@ -8,4 +10,9 @@ export class StaticCodeAnalysisIssue {
     public category: string;
     public message: string;
     public priority: string;
+    public penalty?: number;
+
+    static fromFeedback(feedback: Feedback): StaticCodeAnalysisIssue {
+        return JSON.parse(feedback.detailText!);
+    }
 }

@@ -100,13 +100,7 @@ export default function (data) {
             someSuccessfulErrorContent = someSuccessfulErrorContentC;
             allSuccessfulContent = allSuccessfulContentC;
             buildErrorContent = buildErrorContentC;
-            /*
-             * TODO: The C template currently only contains compile test cases that will never pass only partly,
-             *   so there can only be either a build failure or everything passes. This should be changed in the future,
-             *   but to make the simulation work again with the template, that's our solution here.
-             * */
-            // somePassedString = '1 of 4 passed';
-            somePassedString = '4 of 4 passed';
+            somePassedString = '5 of 22 passed';
             break;
     }
 
@@ -115,19 +109,13 @@ export default function (data) {
         if (participationId) {
             // partial success, then 100%, then build error -- wait some time between submissions in order to the build server time for the result
             let simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, someSuccessfulErrorContent);
-            if (programmingLanguage === 'C') {
-                // Due to the problems with the C template described above, the C tests can't partly fail right now
-                // TODO:  Remove the if-else once the template has been adjusted
-                simulateSubmission(artemis, simulation, TestResult.SUCCESS);
-            } else {
-                simulateSubmission(artemis, simulation, TestResult.FAIL, somePassedString);
-            }
+            simulateSubmission(artemis, simulation, TestResult.FAIL, somePassedString);
             simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, allSuccessfulContent);
             simulateSubmission(artemis, simulation, TestResult.SUCCESS);
             simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, buildErrorContent);
             if (programmingLanguage === 'C') {
-                // C builds do never fail - they will only show 0/4 passed
-                simulateSubmission(artemis, simulation, TestResult.FAIL, '0 of 4 passed');
+                // C builds do never fail - they will only show 0/21 passed
+                simulateSubmission(artemis, simulation, TestResult.FAIL, '0 of 21 passed');
             } else {
                 simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
             }
