@@ -253,6 +253,7 @@ public class ModelFactory {
      * @param exercise exercise of the team
      * @param name name of the team
      * @param shortName short name of the team
+     * @param loginPrefix prefix that will be added in front of every user's login
      * @param numberOfStudents amount of users to generate for team as students
      * @param owner owner of the team generally a tutor
      * @param creatorLogin login of user that creates the teams
