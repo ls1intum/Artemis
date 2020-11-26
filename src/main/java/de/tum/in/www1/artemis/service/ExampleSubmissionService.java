@@ -37,7 +37,7 @@ public class ExampleSubmissionService {
     }
 
     /**
-     * First saves the corresponding modeling submission with the exampleSubmission flag. Then the example submission itself is saved. Rolls back if inserting fails - occurs for
+     * First saves the corresponding submission with the exampleSubmission flag. Then the example submission itself is saved. Rolls back if inserting fails - occurs for
      * concurrent createExampleSubmission() calls.
      *
      * @param exampleSubmission the example submission to save
