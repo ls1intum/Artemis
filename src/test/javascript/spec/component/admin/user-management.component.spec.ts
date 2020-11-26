@@ -95,7 +95,7 @@ describe('UserManagementComponent', () => {
 
                 // THEN
                 expect(service.query).toHaveBeenCalled();
-                expect(comp.users && comp.users[0]).toEqual(jasmine.objectContaining({ id: 123 }));
+                expect(comp.users && comp.users[0]).toEqual(expect.objectContaining({ id: 123 }));
             }),
         ));
     });
@@ -124,7 +124,7 @@ describe('UserManagementComponent', () => {
                 // THEN
                 expect(service.update).toHaveBeenCalledWith({ ...user, activated: true });
                 expect(service.query).toHaveBeenCalled();
-                expect(comp.users && comp.users[0]).toEqual(jasmine.objectContaining({ id: 123 }));
+                expect(comp.users && comp.users[0]).toEqual(expect.objectContaining({ id: 123 }));
             }),
         ));
     });
