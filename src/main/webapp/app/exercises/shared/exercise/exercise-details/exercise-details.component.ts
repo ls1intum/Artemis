@@ -14,11 +14,12 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 export class ExerciseDetailsComponent implements OnInit {
     @Input() exercise: Exercise;
 
-    programmingExercise: ProgrammingExercise;
+    programmingExercise?: ProgrammingExercise;
     AssessmentType = AssessmentType;
     ExerciseType = ExerciseType;
     formattedProblemStatement: SafeHtml;
     formattedGradingInstructions: SafeHtml;
+    isExamExercise: boolean;
 
     constructor(private artemisMarkdown: ArtemisMarkdownService) {}
     /**
@@ -30,5 +31,6 @@ export class ExerciseDetailsComponent implements OnInit {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.programmingExercise = this.exercise as ProgrammingExercise;
         }
+        this.isExamExercise = !!this.exercise.exerciseGroup;
     }
 }

@@ -90,11 +90,19 @@
     <dd>
         <jhi-programming-exercise-instructions
             [exercise]="exercise"
-            [participation]="programmingExercise.templateParticipation"
+            [participation]="programmingExercise?.templateParticipation"
             [personalParticipation]="true"
         ></jhi-programming-exercise-instructions>
     </dd>
 </ng-container>
-<dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
-<dd class="editor-outline-background"><span [innerHTML]="formattedGradingInstructions"></span></dd>
+<ng-container *ngIf="exercise.gradingInstructions">
+    <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
+    <dd class="editor-outline-background"><span [innerHTML]="formattedGradingInstructions"></span></dd>
+</ng-container>
 <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="exercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
+<ng-container *ngIf="!isExamExercise && exercise.isAtLeastInstructor">
+    <dt><span jhiTranslate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
+    <dd>
+        <a [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id, 'lti-configuration']">LTI Configuration</a>
+    </dd>
+</ng-container>
