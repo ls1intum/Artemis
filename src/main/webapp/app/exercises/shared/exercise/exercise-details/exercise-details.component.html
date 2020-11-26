@@ -100,7 +100,7 @@
     <dd class="editor-outline-background"><span [innerHTML]="formattedGradingInstructions"></span></dd>
 </ng-container>
 <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="exercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
-<ng-container *ngIf="!isExamExercise && exercise.isAtLeastInstructor">
+<ng-container *ngIf="isExamExercise === false">
     <dt><span jhiTranslate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
     <dd>
         <a [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id, 'lti-configuration']">LTI Configuration</a>
