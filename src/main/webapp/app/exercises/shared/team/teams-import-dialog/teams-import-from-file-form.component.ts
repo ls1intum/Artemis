@@ -45,6 +45,7 @@ export class TeamsImportFromFileFormComponent {
                 control.value = '';
             }
         } catch (e) {
+            this.loading = false;
             alert(`Import Teams Failed! Invalid teams file. ${e}`);
         }
     }
