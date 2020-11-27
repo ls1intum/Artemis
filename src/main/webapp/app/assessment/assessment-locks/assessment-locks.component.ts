@@ -98,13 +98,6 @@ export class AssessmentLocksComponent implements OnInit {
     }
 
     /**
-     * Navigates back in browser.
-     */
-    back() {
-        this.location.back();
-    }
-
-    /**
      * Pass on an error to the browser console and the jhiAlertService.
      * @param error
      */

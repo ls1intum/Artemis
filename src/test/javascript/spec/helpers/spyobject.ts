@@ -1,4 +1,6 @@
-export interface GuinessCompatibleSpy extends jasmine.Spy {
+import * as sinon from 'sinon';
+
+export interface GuinessCompatibleSpy extends sinon.SinonStub {
     /** By chaining the spy with and.returnValue, all calls to the function will return a specific
      * value. */
     andReturn(val: any): GuinessCompatibleSpy;
@@ -37,12 +39,11 @@ export class SpyObject {
     }
 
     private createGuinnessCompatibleSpy(name: string): GuinessCompatibleSpy {
-        const newSpy: GuinessCompatibleSpy = jasmine.createSpy(name) as any;
-        newSpy.andCallFake = newSpy.and.callFake as any;
-        newSpy.andReturn = newSpy.and.returnValue as any;
-        newSpy.reset = newSpy.calls.reset as any;
-        // revisit return null here (previously needed for rtts_assert).
-        newSpy.and.returnValue(null);
+        const stub = {};
+        stub[name] = function () {};
+        const newSpy: GuinessCompatibleSpy = sinon.stub(stub, name as keyof typeof stub) as any;
+        newSpy.andCallFake = newSpy.callsFake as any;
+        newSpy.andReturn = newSpy.returns as any;
         return newSpy;
     }
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
@@ -21,9 +22,9 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
-public abstract class AbstractJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
+public class BaseJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
-    private static final Logger log = LoggerFactory.getLogger(AbstractJenkinsBuildPlanCreator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BaseJenkinsBuildPlanCreator.class);
 
     protected static final String REPLACE_PIPELINE_SCRIPT = "#pipelineScript";
 
@@ -47,6 +48,8 @@ public abstract class AbstractJenkinsBuildPlanCreator implements JenkinsXmlConfi
 
     protected static final String REPLACE_DOCKER_IMAGE_NAME = "#dockerImage";
 
+    protected static final String REPLACE_JENKINS_TIMEOUT = "#jenkinsTimeout";
+
     protected String artemisNotificationUrl;
 
     @Value("${artemis.continuous-integration.secret-push-token}")
@@ -54,6 +57,9 @@ public abstract class AbstractJenkinsBuildPlanCreator implements JenkinsXmlConfi
 
     @Value("${artemis.continuous-integration.vcs-credentials}")
     protected String gitCredentialsKey;
+
+    @Value("${artemis.continuous-integration.build-timeout:#{30}}")
+    protected String buildTimeout;
 
     @Value("${server.url}")
     protected String ARTEMIS_SERVER_URL;
@@ -65,7 +71,7 @@ public abstract class AbstractJenkinsBuildPlanCreator implements JenkinsXmlConfi
 
     protected final JenkinsService jenkinsService;
 
-    public AbstractJenkinsBuildPlanCreator(ResourceLoaderService resourceLoaderService, JenkinsService jenkinsService) {
+    public BaseJenkinsBuildPlanCreator(ResourceLoaderService resourceLoaderService, JenkinsService jenkinsService) {
         this.resourceLoaderService = resourceLoaderService;
         this.jenkinsService = jenkinsService;
     }
@@ -75,7 +81,29 @@ public abstract class AbstractJenkinsBuildPlanCreator implements JenkinsXmlConfi
         this.artemisNotificationUrl = ARTEMIS_SERVER_URL + "/api" + Constants.NEW_RESULT_RESOURCE_PATH;
     }
 
-    public abstract String getPipelineScript(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled);
+    public String getPipelineScript(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
+        return replacePipelineScriptParameters(getResourcePath(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled),
+                getReplacements(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled));
+    }
+
+    protected Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL,
+            boolean isStaticCodeAnalysisEnabled) {
+        Map<String, String> replacements = new HashMap<>();
+        replacements.put(REPLACE_TEST_REPO, testRepositoryURL.toString());
+        replacements.put(REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString());
+        replacements.put(REPLACE_GIT_CREDENTIALS, gitCredentialsKey);
+        replacements.put(REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH);
+        replacements.put(REPLACE_TESTS_CHECKOUT_PATH, Constants.TESTS_CHECKOUT_PATH);
+        replacements.put(REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl);
+        replacements.put(REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
+        replacements.put(REPLACE_DOCKER_IMAGE_NAME, jenkinsService.getDockerImageName(programmingLanguage));
+        replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);
+        return replacements;
+    }
+
+    protected String[] getResourcePath(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
+        return new String[] { "templates", "jenkins", programmingLanguage.name().toLowerCase(), "Jenkinsfile" };
+    }
 
     @Override
     public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
@@ -107,7 +135,7 @@ public abstract class AbstractJenkinsBuildPlanCreator implements JenkinsXmlConfi
         }
         catch (IOException e) {
             final var errorMessage = "Error loading template Jenkins build XML: " + e.getMessage();
-            log.error(errorMessage, e);
+            LOG.error(errorMessage, e);
             throw new IllegalStateException(errorMessage, e);
         }
     }

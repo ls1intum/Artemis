@@ -1,9 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
-
-import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -29,60 +25,32 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
     private static final String ENTITY_NAME = "fileUploadAssessment";
 
-    private final FileUploadAssessmentService fileUploadAssessmentService;
-
     private final FileUploadExerciseService fileUploadExerciseService;
 
     private final FileUploadSubmissionService fileUploadSubmissionService;
 
-    private final WebsocketMessagingService messagingService;
-
-    public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, FileUploadAssessmentService fileUploadAssessmentService, UserService userService,
+    public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserService userService,
             FileUploadExerciseService fileUploadExerciseService, FileUploadSubmissionService fileUploadSubmissionService, WebsocketMessagingService messagingService,
             ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService) {
-        super(authCheckService, userService, exerciseService, fileUploadSubmissionService, fileUploadAssessmentService, resultRepository, examService);
-        this.fileUploadAssessmentService = fileUploadAssessmentService;
+        super(authCheckService, userService, exerciseService, fileUploadSubmissionService, assessmentService, resultRepository, examService, messagingService);
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
-        this.messagingService = messagingService;
     }
 
     /**
-     * Get the result of the file upload submission with the given id. Returns a 403 Forbidden response if the user is not allowed to retrieve the assessment. The user is not allowed
-     * to retrieve the assessment if he/she is not a student of the corresponding course, the submission is not his/her submission, the result is not finished or the assessment due date of
-     * the corresponding exercise is in the future (or not set).
+     * Get the result of the file upload submission with the given id. See {@link AssessmentResource#getAssessmentBySubmissionId}.
      *
      * @param submissionId the id of the submission that should be sent to the client
-     * @return the submission with the given id
+     * @return the assessment or error
      */
     @GetMapping("/file-upload-submissions/{submissionId}/result")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
-        log.debug("REST request to get assessment for submission with id {}", submissionId);
-        FileUploadSubmission submission = fileUploadSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
-        Exercise exercise = participation.getExercise();
-
-        Result result = submission.getResult();
-        if (result == null) {
-            return notFound();
-        }
-
-        if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
-            return forbidden();
-        }
-
-        // remove sensitive information for students
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            exercise.filterSensitiveInformation();
-            result.setAssessor(null);
-        }
-
-        return ResponseEntity.ok(result);
+        return super.getAssessmentBySubmissionId(submissionId);
     }
 
     /**
-     * Save or submit feedback for file upload exercise.
+     * PUT file-upload-submissions/:submissionId/assessment : save or submit manual assessment for file upload exercise. See {@link AssessmentResource#saveAssessment}.
      *
      * @param submissionId the id of the submission that should be sent to the client
      * @param submit       defines if assessment is submitted or saved
@@ -94,32 +62,8 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> saveFileUploadAssessment(@PathVariable Long submissionId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestBody List<Feedback> feedbacks) {
-        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        long exerciseId = studentParticipation.getExercise().getId();
-        FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
-        checkAuthorization(fileUploadExercise, userService.getUserWithGroupsAndAuthorities());
-
-        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(fileUploadSubmission.getResult(), fileUploadExercise, studentParticipation, user, isAtLeastInstructor)) {
-            log.debug("The user " + user.getLogin() + " is not allowed to override the assessment for the submission " + fileUploadSubmission.getId());
-            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
-        }
-
-        Result result = fileUploadAssessmentService.saveAssessment(fileUploadSubmission, feedbacks);
-        if (submit) {
-            result = fileUploadAssessmentService.submitAssessment(result.getId(), fileUploadExercise, fileUploadSubmission.getSubmissionDate());
-        }
-        // remove information about the student for tutors to ensure double-blind assessment
-        if (!isAtLeastInstructor) {
-            ((StudentParticipation) result.getParticipation()).setParticipant(null);
-        }
-        if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
-                || (result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
-            messagingService.broadcastNewResult(result.getParticipation(), result);
-        }
-        return ResponseEntity.ok(result);
+        Submission submission = submissionService.findOneWithEagerResultAndFeedback(submissionId);
+        return super.saveAssessment(submission, submit, feedbacks);
     }
 
     /**
@@ -141,7 +85,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
         checkAuthorization(fileUploadExercise, user);
 
-        Result result = fileUploadAssessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getResult(), fileUploadExercise, assessmentUpdate);
+        Result result = assessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getResult(), fileUploadExercise, assessmentUpdate);
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
