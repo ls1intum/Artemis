@@ -122,11 +122,17 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
 
         // Note: we can only delete the file, if the file name was changed (i.e. the new file name is different), otherwise this will cause issues
-        if (oldFilePath != null && !oldFilePath.equals(newFilePath)) {
+        if (oldFilePath != null) {
             // check if we already had file associated with this submission
-            fileUploadSubmission.onDelete();
+            if (!oldFilePath.equals(newFilePath)) { // different name
+                // IMPORTANT: only delete the file when it has changed the name
+                fileUploadSubmission.onDelete();
+            }
+            else { // same name
+                   // IMPORTANT: invalidate the cache so that the new file with the same name will be downloaded (and not a potentially cached one)
+                fileService.resetOnPath(newLocalFilePath);
+            }
         }
-
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here!
         fileUploadSubmission.setSubmitted(true);
