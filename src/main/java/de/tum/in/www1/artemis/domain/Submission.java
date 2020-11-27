@@ -65,7 +65,6 @@ public abstract class Submission extends DomainObject {
      */
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
-    @JsonAlias({ "result" })
     @JsonIgnoreProperties({ "submission", "participation" })
     private List<Result> results = new ArrayList<>();
 
@@ -99,8 +98,6 @@ public abstract class Submission extends DomainObject {
 
     // TODO: double check Jackson and client compatibility, maybe refactoring to getLatestResult
     @Nullable
-    // TODO: remove the getter annotation after it has been renamed in the client to "results" as well
-    @JsonGetter("result")
     public Result getResult() {
         // in all cases (except 2nd, 3rd correction, etc.) we would like to have the latest result
         // getLatestResult
@@ -121,7 +118,6 @@ public abstract class Submission extends DomainObject {
         return null;
     }
 
-    // TODO: consider removing redundant deserialization annotation after client changes & refactoring
     @JsonSetter("results")
     public void setResult(Result result) {
         // addResult
