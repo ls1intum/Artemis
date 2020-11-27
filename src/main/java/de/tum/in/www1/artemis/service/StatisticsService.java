@@ -26,6 +26,13 @@ public class StatisticsService {
         return this.statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(span));
     }
 
+    /**
+     * Forwards the request to the repository, which returns a List<Map<String, Object>>, with String being the column name, "day" and "amount" and Object being the value,
+     * either the date or the amount of submissions. It then collects the amounts in an array, depending on the span value, and returns it
+     *
+     * @param span DAY,WEEK,MONTH or YEAR depending on the active tab in the view
+     * @return a array, containing the values for each bar in the graph
+     */
     public Integer[] getTotalSubmissions(String span) {
         switch (span) {
             case "DAY": // result = this.statisticsRepository.getTotalSubmissionsDay(ZonedDateTime.now().minusDays(7));
@@ -48,13 +55,10 @@ public class StatisticsService {
             case "MONTH":
                 return null;
             case "YEAR":
-                Integer[] resultYear = new Integer[12];
-                Arrays.fill(resultYear, 0);
-                ZonedDateTime borderYear = ZonedDateTime.now().minusYears(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
-                List<Map<String, Object>> outcomeYear = this.statisticsRepository.getTotalSubmissionsYear(borderYear);
-                break;
+                return null;
+            default:
+                return null;
         }
-        return null;
     }
 
     public Integer getReleasedExercises(Long span) {
@@ -74,8 +78,7 @@ public class StatisticsService {
     }
 
     public Integer getExamRegistrations(Long span) {
-        Integer result = this.statisticsRepository.getExamRegistrations(ZonedDateTime.now().minusDays(span), ZonedDateTime.now());
-        return (result != null ? result : 0);
+        return this.statisticsRepository.getExamRegistrations(ZonedDateTime.now().minusDays(span), ZonedDateTime.now());
     }
 
     public Integer getActiveTutors(Long span) {
