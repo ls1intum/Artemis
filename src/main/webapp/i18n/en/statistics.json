@@ -1,5 +1,11 @@
 {
     "statistics": {
+        "span": {
+            "day": "Day",
+            "week": "Week",
+            "month": "Month",
+            "year": "Year"
+        },
         "title": "User statistics",
         "days": " days",
         "loggedInUsers": "Amount of logins of distinct users in the last ",
@@ -17,5 +23,14 @@
         "resultFeedbacks": "-> feedback count: ",
         "userLogins": "User Logins",
         "submissions": "Submissions"
+    },
+    "weekdays": {
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday"
     }
 }

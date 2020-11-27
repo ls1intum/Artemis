@@ -57,4 +57,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> { // Cha
     @Query("select s.submissionDate as day, count(s.id) as amount from Submission s where s.submissionDate > :#{#date} group by s.submissionDate order by s.submissionDate asc")
     List<Map<String, Object>> getTotalSubmissionsWeek(ZonedDateTime date);
 
+    @Query("select s.submissionDate as day, count(s.id) as amount from Submission s where s.submissionDate > :#{#date} group by s.submissionDate order by s.submissionDate asc")
+    List<Map<String, Object>> getTotalSubmissionsYear(ZonedDateTime date);
+
 }

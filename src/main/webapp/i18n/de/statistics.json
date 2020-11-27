@@ -1,5 +1,11 @@
 {
     "statistics": {
+        "span": {
+            "day": "Tag",
+            "week": "Woche",
+            "month": "Monat",
+            "year": "Jahr"
+        },
         "title": "Benutzer Statistiken",
         "days": " Tagen",
         "loggedInUsers": "Anzahl an Anmeldungen unterschiedlicher Benutzer in den letzten ",
@@ -17,5 +23,14 @@
         "resultFeedbacks": "-> mit der absoluten Feedbackanzahl: ",
         "userLogins": "Benutzer Anmeldungen",
         "submissions": "Abgaben"
+    },
+    "weekdays": {
+        "monday": "Montag",
+        "tuesday": "Dienstag",
+        "wednesday": "Mittwoch",
+        "thursday": "Donnerstag",
+        "friday": "Freitag",
+        "saturday": "Samstag",
+        "sunday": "Sonntag"
     }
 }

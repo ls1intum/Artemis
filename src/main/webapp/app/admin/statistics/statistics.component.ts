@@ -3,6 +3,9 @@ import { StatisticsService } from 'app/admin/statistics/statistics.service';
 import { SPAN_PATTERN } from 'app/app.constants';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
+import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { TranslateService } from '@ngx-translate/core';
+import * as moment from 'moment';
 
 export enum SpanType {
     DAY = 'DAY',
@@ -39,24 +42,22 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
     resultFeedbacks = 0;
 
     // Histogram related properties
-    public binWidth = 7;
-    public histogramData: number[] = Array(this.binWidth).fill(0);
+    public histogramData: number[] = [];
     public barChartOptions: ChartOptions = {};
     public barChartLabels: Label[] = [];
     public barChartType: ChartType = 'bar';
     public barChartLegend = true;
     public UserLoginChartData: ChartDataSets[] = [];
     public SubmissionsChartData: ChartDataSets[] = [];
-    public testing: number[];
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
-    constructor(private service: StatisticsService) {}
+    constructor(private service: StatisticsService, private translateService: TranslateService) {}
 
     async ngOnInit() {
-        const value = await this.getSubmissions();
+        await this.setBinWidth();
+        await this.createChart();
 
-        this.createChart(value);
         this.onChangedUserSpan();
         this.onChangedActiveUserSpan();
         this.onChangedReleasedExerciseSpan();
@@ -66,12 +67,9 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
         this.onChangedCreatedResultsSpan();
     }
 
-    async ngOnChanges() {
-        const value = await this.getSubmissions();
-        this.createChart(value);
-    }
+    async ngOnChanges() {}
 
-    private setBinWidth(): void {
+    private async setBinWidth(): Promise<void> {
         switch (this.span) {
             case SpanType.DAY:
                 this.histogramData = Array(24).fill(0);
@@ -164,7 +162,7 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
         });
     }
 
-    onTabChanged(event: Event, span: String): void {
+    onTabChanged(span: string): void {
         switch (span) {
             case 'Day':
                 this.span = SpanType.DAY;
@@ -179,12 +177,25 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
                 this.span = SpanType.YEAR;
                 break;
         }
-        console.log(this.span);
-        // event.currentTarget!.className += " active";
+        console.log(this.span); // works
     }
 
-    private createChart(value: number[]) {
-        this.setBinWidth();
+    private getWeekdays(day: number): string[] {
+        const days = [
+            this.translateService.instant('weekdays.monday'),
+            this.translateService.instant('weekdays.tuesday'),
+            this.translateService.instant('weekdays.wednesday'),
+            this.translateService.instant('weekdays.thursday'),
+            this.translateService.instant('weekdays.friday'),
+            this.translateService.instant('weekdays.saturday'),
+            this.translateService.instant('weekdays.sunday'),
+        ];
+        const back = days.slice(day, days.length);
+        const front = days.slice(0, day);
+        return back.concat(front);
+    }
+
+    private createLabels(): string[] {
         let labels: string[] = [];
         switch (this.span) {
             case SpanType.DAY:
@@ -193,7 +204,8 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
                 }
                 break;
             case SpanType.WEEK:
-                labels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                const weekdayIndex = moment().day();
+                labels = this.getWeekdays(weekdayIndex);
                 break;
             case SpanType.MONTH:
                 for (let i = 0; i < this.histogramData.length; i++) {
@@ -204,12 +216,15 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
                 labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
                 break;
         }
-        this.barChartLabels = labels;
-        // this.histogramData = [4002, 2020, 2088, 2050, 3660, 2110, 1202, 802, 2809, 2150, 2543, 909];
+        return labels;
+    }
+
+    private async createChart() {
+        this.barChartLabels = this.createLabels();
         this.UserLoginChartData = [
             {
                 label: '# of students',
-                data: value,
+                data: await this.getSubmissions(),
                 backgroundColor: 'rgba(53,61,71,1)',
                 borderColor: 'rgba(53,61,71,1)',
                 hoverBackgroundColor: 'rgba(53,61,71,1)',
@@ -218,13 +233,13 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
         this.SubmissionsChartData = [
             {
                 label: '# of students',
-                data: value,
+                data: await this.getSubmissions(),
                 backgroundColor: 'rgba(53,61,71,1)',
                 borderColor: 'rgba(53,61,71,1)',
                 hoverBackgroundColor: 'rgba(53,61,71,1)',
             },
         ];
-        /*this.barChartOptions = {
+        this.barChartOptions = {
             animation: {
                 duration: 1,
                 onComplete() {
@@ -237,11 +252,11 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
                         const meta = chartInstance.controller.getDatasetMeta(j);
                         meta.data.forEach(function (bar: any, index: number) {
                             const data = dataset.data[index];
-                            ctx.fillText(data, bar._model.x, bar._model.y - 5);
+                            ctx.fillText(String(data), bar._model.x, bar._model.y - 5);
                         });
                     });
                 },
             },
-        };*/
+        };
     }
 }

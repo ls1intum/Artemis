@@ -4,10 +4,10 @@
 
         <div class="col-md-10 my-auto">
             <div class="my-auto">
-                <button class="tablinks" onclick="onTabChanged(event,'Day')">Day</button>
-                <button class="tablinks" onclick="onTabChanged(event,'Week')">Week</button>
-                <button class="tablinks" onclick="onTabChanged(event,'Month')">Month</button>
-                <button class="tablinks" onclick="onTabChanged(event,'Year')">Year</button>
+                <button jhiTranslate="statistics.span.day" (click)="onTabChanged('Day')">Day</button>
+                <button jhiTranslate="statistics.span.week" (click)="onTabChanged('Week')">Week</button>
+                <button jhiTranslate="statistics.span.month" (click)="onTabChanged('Month')">Month</button>
+                <button jhiTranslate="statistics.span.year" (click)="onTabChanged('Year')">Year</button>
             </div>
         </div>
     </div>
@@ -21,6 +21,7 @@
             width="1500"
             [datasets]="UserLoginChartData"
             [labels]="barChartLabels"
+            [options]="barChartOptions"
             [legend]="barChartLegend"
             [chartType]="barChartType"
         ></canvas>
@@ -35,6 +36,7 @@
             width="1500"
             [datasets]="SubmissionsChartData"
             [labels]="barChartLabels"
+            [options]="barChartOptions"
             [legend]="barChartLegend"
             [chartType]="barChartType"
         ></canvas>
