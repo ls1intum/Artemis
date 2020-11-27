@@ -2,10 +2,10 @@ import { SpyObject } from '../../spyobject';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { of } from 'rxjs';
-import Spy = jasmine.Spy;
+import { SinonStub } from 'sinon';
 
 export class MockLanguageService extends SpyObject {
-    getCurrentLanguageSpy: Spy;
+    getCurrentLanguageSpy: SinonStub;
 
     constructor() {
         super(JhiLanguageService);
@@ -15,7 +15,7 @@ export class MockLanguageService extends SpyObject {
 }
 
 export class MockLanguageHelper extends SpyObject {
-    getAllSpy: Spy;
+    getAllSpy: SinonStub;
     fakeResponse: 'en';
 
     constructor() {

@@ -1,7 +1,7 @@
-import Spy = jasmine.Spy;
 import { ActivatedRoute, Data, Params, Router, RouterEvent } from '@angular/router';
 import { Observable, ReplaySubject } from 'rxjs';
 import { SpyObject } from '../../spyobject';
+import { SinonStub } from 'sinon';
 
 export class MockActivatedRoute extends ActivatedRoute {
     private queryParamsSubject = new ReplaySubject<Params>();
@@ -27,8 +27,8 @@ export class MockActivatedRoute extends ActivatedRoute {
 }
 
 export class MockRouter extends SpyObject {
-    navigateSpy: Spy;
-    navigateByUrlSpy: Spy;
+    navigateSpy: SinonStub;
+    navigateByUrlSpy: SinonStub;
     events?: Observable<RouterEvent>;
     routerState: any;
     url = '';

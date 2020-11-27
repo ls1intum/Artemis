@@ -52,7 +52,7 @@ describe('LogsComponent', () => {
 
             // THEN
             expect(service.findAll).toHaveBeenCalled();
-            expect(comp.loggers[0]).toEqual(jasmine.objectContaining(log));
+            expect(comp.loggers[0]).toEqual(expect.objectContaining(log));
         });
     });
     describe('change log level', () => {
@@ -68,7 +68,7 @@ describe('LogsComponent', () => {
             // THEN
             expect(service.changeLevel).toHaveBeenCalled();
             expect(service.findAll).toHaveBeenCalled();
-            expect(comp.loggers[0]).toEqual(jasmine.objectContaining(log));
+            expect(comp.loggers[0]).toEqual(expect.objectContaining(log));
         });
     });
 });
