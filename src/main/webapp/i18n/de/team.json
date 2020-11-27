@@ -138,7 +138,8 @@
             "loadSourceTeams": {
                 "failed": "Teams konnten nicht geladen werden. Bitte versuche es nochmal."
             },
-            "noTeamsInSourceExercise": "Die Quell-Übung hat keine Teams.",
+            "noTeamsInSourceExercise": "Die Quell-Übung hat kein Team.",
+            "noTeamsInFile": "Die Datei hat kein Team.",
             "importStrategy": {
                 "label": "Import-Strategie",
                 "tooltip": "Die Import-Strategie bestimmt, welche Quell-Teams importiert werden und was mit den existierenden Teams in dieser Übung geschieht.",

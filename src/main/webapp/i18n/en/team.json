@@ -138,7 +138,8 @@
             "loadSourceTeams": {
                 "failed": "Loading teams failed. Please try again."
             },
-            "noTeamsInSourceExercise": "The source exercise has no teams.",
+            "noTeamsInSourceExercise": "The source exercise has no team.",
+            "noTeamsInFile": "File has no team.",
             "importStrategy": {
                 "label": "Import strategy",
                 "tooltip": "The import strategy determines which of the source teams will be imported and what happens to existing teams in this exercise.",

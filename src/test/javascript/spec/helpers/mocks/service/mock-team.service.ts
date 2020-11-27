@@ -141,7 +141,7 @@ export class MockTeamService implements ITeamService {
         return MockTeamService.response(mockTeams);
     }
 
-    importTeamsFromFile(exercise: Exercise, teams: Team[], importStrategyType: TeamImportStrategyType) {
+    importTeams(exercise: Exercise, teams: Team[], importStrategyType: TeamImportStrategyType) {
         return MockTeamService.response(mockTeams);
     }
 

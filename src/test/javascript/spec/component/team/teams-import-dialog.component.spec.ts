@@ -1,46 +1,32 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslatePipe } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team, TeamImportStrategyType } from 'app/entities/team.model';
-import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
+import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exercise-search/team-exercise-search.component';
+import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-students-list/team-students-list.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
+import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component.ts';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import * as chai from 'chai';
 import { flatMap } from 'lodash';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { SinonSpy, SinonStub, spy, stub } from 'sinon';
+import { restore, SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import {
-    mockExercise,
-    mockSourceExercise,
-    mockSourceTeams,
-    mockSourceTeamStudents,
-    mockTeam,
-    mockTeams,
-    MockTeamService,
-    mockTeamStudents,
-} from '../../helpers/mocks/service/mock-team.service';
+import { mockExercise, mockSourceExercise, mockSourceTeams, mockSourceTeamStudents, mockTeam, mockTeams, mockTeamStudents } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
-
 chai.use(sinonChai);
 const expect = chai.expect;
-
-export const config = {
-    imports: [ArtemisTestModule, ArtemisTeamModule],
-    declarations: [],
-    providers: [
-        JhiEventManager,
-        { provide: TeamService, useClass: MockTeamService },
-        { provide: LocalStorageService, useClass: MockSyncStorage },
-        { provide: SessionStorageService, useClass: MockSyncStorage },
-    ],
-};
 
 describe('TeamsImportDialogComponent', () => {
     let comp: TeamsImportDialogComponent;
@@ -76,16 +62,30 @@ describe('TeamsImportDialogComponent', () => {
 
     beforeEach(
         waitForAsync(() => {
-            TestBed.configureTestingModule(config).overrideTemplate(TeamsImportDialogComponent, '').compileComponents();
+            TestBed.configureTestingModule({
+                imports: [ArtemisTestModule, FormsModule, MockModule(NgJhipsterModule)],
+                declarations: [
+                    TeamsImportDialogComponent,
+                    MockComponent(TeamsImportFromFileFormComponent),
+                    MockDirective(DeleteButtonDirective),
+                    MockPipe(TranslatePipe),
+                    MockComponent(AlertComponent),
+                    MockComponent(AlertErrorComponent),
+                    MockComponent(TeamExerciseSearchComponent),
+                    MockComponent(TeamStudentsListComponent),
+                    MockComponent(HelpIconComponent),
+                ],
+                providers: [MockProvider(TeamService)],
+            }).compileComponents();
         }),
     );
     beforeEach(() => {
         fixture = TestBed.createComponent(TeamsImportDialogComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        ngbActiveModal = debugElement.injector.get(NgbActiveModal);
-        alertService = debugElement.injector.get(JhiAlertService);
-        teamService = fixture.debugElement.injector.get(TeamService);
+        ngbActiveModal = TestBed.inject(NgbActiveModal);
+        alertService = TestBed.inject(JhiAlertService);
+        teamService = TestBed.inject(TeamService);
     });
 
     describe('OnInit', () => {
@@ -115,8 +115,7 @@ describe('TeamsImportDialogComponent', () => {
         });
 
         afterEach(() => {
-            teamServiceStub.restore();
-            computeSourceStub.restore();
+            restore();
         });
 
         it('should load teams of given exercise if find was successful', () => {
@@ -152,8 +151,7 @@ describe('TeamsImportDialogComponent', () => {
         });
 
         afterEach(() => {
-            loadSourceStub.restore();
-            initImportStrategy.restore();
+            restore();
         });
 
         it('should load selected exercise', () => {
@@ -205,7 +203,7 @@ describe('TeamsImportDialogComponent', () => {
         });
 
         afterEach(() => {
-            sourceFreeStub.restore();
+            restore();
         });
         it('should filter source teams according to conflict', () => {
             comp.sourceTeams = mockSourceTeams;
@@ -497,13 +495,13 @@ describe('TeamsImportDialogComponent', () => {
             const importTeamsStub = stub(comp, 'importTeams');
             comp.purgeAndImportTeams();
             expect(importTeamsStub).to.have.been.called;
-            importTeamsStub.restore();
+            restore();
         });
     });
 
     describe('importTeams', () => {
         let importFromSourceExerciseStub: SinonStub;
-        let importFromFileStub: SinonStub;
+        let importTeamsStub: SinonStub;
         let onSuccessStub: SinonStub;
         let onErrorStub: SinonStub;
         let fromExerciseResponse: HttpResponse<Team[]>;
@@ -514,8 +512,8 @@ describe('TeamsImportDialogComponent', () => {
             importFromSourceExerciseStub = stub(teamService, 'importTeamsFromSourceExercise');
             importFromSourceExerciseStub.returns(of(fromExerciseResponse));
             fromFileResponse = new HttpResponse<Team[]>({ body: [...mockSourceTeams, mockTeam] });
-            importFromFileStub = stub(teamService, 'importTeamsFromFile');
-            importFromFileStub.returns(of(fromFileResponse));
+            importTeamsStub = stub(teamService, 'importTeams');
+            importTeamsStub.returns(of(fromFileResponse));
             onSuccessStub = stub(comp, 'onSaveSuccess');
             onErrorStub = stub(comp, 'onSaveError');
             comp.sourceExercise = mockSourceExercise;
@@ -523,16 +521,13 @@ describe('TeamsImportDialogComponent', () => {
             comp.importStrategy = TeamImportStrategyType.PURGE_EXISTING;
         });
         afterEach(() => {
-            importFromSourceExerciseStub.restore();
-            importFromFileStub.restore();
-            onSuccessStub.restore();
-            onErrorStub.restore();
+            restore();
         });
         it('should not call team service if submit disabled', () => {
             comp.importStrategy = undefined;
             comp.importTeams();
             expect(importFromSourceExerciseStub).to.not.have.been.called;
-            expect(importFromFileStub).to.not.have.been.called;
+            expect(importTeamsStub).to.not.have.been.called;
             expect(onSuccessStub).to.not.have.been.called;
             expect(onErrorStub).to.not.have.been.called;
             expect(comp.isImporting).to.equal(false);
@@ -540,7 +535,7 @@ describe('TeamsImportDialogComponent', () => {
         it('should call importTeamsFromSourceExercise if show import from exercise and call save success', () => {
             comp.importTeams();
             expect(importFromSourceExerciseStub).to.have.been.calledWithExactly(comp.exercise, comp.sourceExercise, comp.importStrategy);
-            expect(importFromFileStub).to.not.have.been.called;
+            expect(importTeamsStub).to.not.have.been.called;
             expect(onSuccessStub).to.have.been.calledWithExactly(fromExerciseResponse);
             expect(onErrorStub).to.not.have.been.called;
             expect(comp.isImporting).to.equal(true);
@@ -550,7 +545,7 @@ describe('TeamsImportDialogComponent', () => {
             importFromSourceExerciseStub.returns(throwError(error));
             comp.importTeams();
             expect(importFromSourceExerciseStub).to.have.been.calledWithExactly(comp.exercise, comp.sourceExercise, comp.importStrategy);
-            expect(importFromFileStub).to.not.have.been.called;
+            expect(importTeamsStub).to.not.have.been.called;
             expect(onSuccessStub).to.not.have.been.called;
             expect(onErrorStub).to.have.been.calledWithExactly(error);
             expect(comp.isImporting).to.equal(true);
@@ -559,7 +554,7 @@ describe('TeamsImportDialogComponent', () => {
             comp.showImportFromExercise = false;
             comp.importTeams();
             expect(importFromSourceExerciseStub).to.not.have.been.called;
-            expect(importFromFileStub).to.have.been.calledWithExactly(comp.exercise, comp.sourceTeams, comp.importStrategy);
+            expect(importTeamsStub).to.have.been.calledWithExactly(comp.exercise, comp.sourceTeams, comp.importStrategy);
             expect(onSuccessStub).to.have.been.calledWithExactly(fromFileResponse);
             expect(onErrorStub).to.not.have.been.called;
             expect(comp.isImporting).to.equal(false);
@@ -567,10 +562,10 @@ describe('TeamsImportDialogComponent', () => {
         it('should call importTeamsFromFile if not show import from exercise and call save error on Error', () => {
             const error = { status: 404 };
             comp.showImportFromExercise = false;
-            importFromFileStub.returns(throwError(error));
+            importTeamsStub.returns(throwError(error));
             comp.importTeams();
             expect(importFromSourceExerciseStub).to.not.have.been.called;
-            expect(importFromFileStub).to.have.been.calledWithExactly(comp.exercise, comp.sourceTeams, comp.importStrategy);
+            expect(importTeamsStub).to.have.been.calledWithExactly(comp.exercise, comp.sourceTeams, comp.importStrategy);
             expect(onSuccessStub).to.not.have.been.called;
             expect(onErrorStub).to.have.been.calledWithExactly(error);
             expect(comp.isImporting).to.equal(false);
@@ -586,8 +581,7 @@ describe('TeamsImportDialogComponent', () => {
             computeSourceFreeOfConflictsStub = stub(comp, 'computeSourceTeamsFreeOfConflicts');
         });
         afterEach(() => {
-            initImportStub.restore();
-            computeSourceFreeOfConflictsStub.restore();
+            restore();
         });
         it('change component files and convert file teams to normal teams', () => {
             comp.onTeamsChanged(mockSourceTeams);
@@ -628,7 +622,7 @@ describe('TeamsImportDialogComponent', () => {
             alertServiceStub = stub(alertService, 'error');
         });
         afterEach(() => {
-            alertServiceStub.restore();
+            restore();
         });
         it('call alert service', () => {
             response = new HttpErrorResponse({ error: {} });
@@ -667,7 +661,7 @@ describe('TeamsImportDialogComponent', () => {
             comp.notFoundRegistrationNumbers = [];
         });
         afterEach(() => {
-            initImportStrategyStub.restore();
+            restore();
         });
         it('should set show import from exercise to true', () => {
             comp.showImportFromExercise = false;

@@ -112,7 +112,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Computes two lists of potential conflict sources:
+     * Computes lists of potential conflict sources:
      * 1. The existing team short names of team already in this exercise
      * 2. The logins of students who already belong to teams of this exercise
      * 3. Registration numbers of students who already belong to teams of this exercise
@@ -133,7 +133,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     /**
      * Predicate that returns true iff the given source team is conflict-free
      *
-     * This is the case if the following two conditions are fulfilled:
+     * This is the case if the following conditions are fulfilled:
      * 1. No team short name unique constraint violation
      * 2. No student is in the team that is already assigned to a team of the exercise
      * 3. No student in the team is also in another team
@@ -213,9 +213,9 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      */
     get showImportStrategyChoices(): boolean {
         if (this.showImportFromExercise) {
-            return this.sourceExercise !== undefined && this.sourceTeams!?.length > 0 && this.teams.length > 0;
+            return this.sourceExercise !== undefined && this.sourceTeams !== undefined && this.sourceTeams.length > 0 && this.teams.length > 0;
         }
-        return this.sourceTeams !== undefined && this.sourceTeams!?.length > 0 && this.teams.length > 0;
+        return this.sourceTeams !== undefined && this.sourceTeams.length > 0 && this.teams.length > 0;
     }
 
     /**
@@ -291,7 +291,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
             );
         } else if (this.sourceTeams) {
             this.notFoundRegistrationNumbers = [];
-            this.teamService.importTeamsFromFile(this.exercise, this.sourceTeams, this.importStrategy!).subscribe(
+            this.teamService.importTeams(this.exercise, this.sourceTeams, this.importStrategy!).subscribe(
                 (res) => this.onSaveSuccess(res),
                 (error) => this.onSaveError(error),
             );

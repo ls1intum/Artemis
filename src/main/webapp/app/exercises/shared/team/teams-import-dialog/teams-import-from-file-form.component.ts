@@ -7,7 +7,7 @@ import { Team, TeamList } from 'app/entities/team.model';
     templateUrl: './teams-import-from-file-form.component.html',
     styleUrls: ['./teams-import-from-file-form.component.scss'],
 })
-export class TeamsImportFromFileFormComponent implements OnInit {
+export class TeamsImportFromFileFormComponent {
     @Output() teamsChanged = new EventEmitter<Team[]>();
     sourceTeams?: Team[];
     importedTeams: TeamList = { students: [] };
@@ -16,8 +16,6 @@ export class TeamsImportFromFileFormComponent implements OnInit {
     loading: boolean;
 
     constructor(private changeDetector: ChangeDetectorRef) {}
-
-    ngOnInit(): void {}
 
     /**
      * Move file reader creation to separate function to be able to mock
@@ -77,12 +75,12 @@ export class TeamsImportFromFileFormComponent implements OnInit {
     convertTeams(importTeam: TeamList): Team[] {
         const teams: Team[] = [];
         importTeam.students!.forEach((student) => {
-            const index = teams.findIndex((team) => team.name === student['Team Name']);
             const newStudent = new User();
             newStudent.firstName = student.Name;
             newStudent.lastName = student.Surname;
             newStudent.visibleRegistrationNumber = student['Registration Number'];
             newStudent.name = `${student.Name} ${student.Surname}`;
+            const index = teams.findIndex((team) => team.name === student['Team Name']);
             if (index === -1) {
                 const newTeam = new Team();
                 newTeam.name = student['Team Name'];

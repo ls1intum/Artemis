@@ -83,9 +83,9 @@ export interface ITeamService {
     /**
      * Import the teams of an existing source exercise
      * @param {Exercise} exercise - Exercise the teams should be imported into
-     * @param {Team[]} teams - Exercise the teams should be imported from
+     * @param {Team[]} teams - Teams that should be imported into the exercise
      */
-    importTeamsFromFile(exercise: Exercise, teams: Team[], importStrategyType: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
+    importTeams(exercise: Exercise, teams: Team[], importStrategyType: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
 
     /**
      * Finds a course with all its team exercises and participations in which the given team exists
@@ -196,9 +196,9 @@ export class TeamService implements ITeamService {
     /**
      * Import the teams of an existing source exercise
      * @param {Exercise} exercise - Exercise the teams should be imported into
-     * @param {Team[]} teams - Exercise the teams should be imported from
+     * @param {Team[]} teams - Teams that should be imported into the exercise
      */
-    importTeamsFromFile(exercise: Exercise, teams: Team[], importStrategyType: TeamImportStrategyType) {
+    importTeams(exercise: Exercise, teams: Team[], importStrategyType: TeamImportStrategyType) {
         const copy = teams.map((team) => TeamService.convertDateFromClient(team));
         return this.http.put<Team[]>(`${TeamService.resourceUrl(exercise.id!)}/import-with-registration-numbers?importStrategyType=${importStrategyType}`, copy, {
             observe: 'response',
@@ -233,28 +233,28 @@ export class TeamService implements ITeamService {
      * @param teams Teams to add to export file
      */
     exportTeams(teams: Team[]) {
-        // Make list of questions which we need to export,
+        // Make list of teams which we need to export,
         const exportedTeams: TeamList = { students: [] };
         const studentsWithoutRegistrationNumbers: { login: string; name: string }[] = [];
         teams!.forEach((team) => {
             if (team.students) {
                 team.students.forEach((student) => {
                     const exportStudent = new StudentWithTeam();
-                    exportStudent.Name = student.firstName || '';
-                    exportStudent.Surname = student.lastName || '';
-                    exportStudent['Team Name'] = team.name || '';
+                    exportStudent.Name = student.firstName ?? '';
+                    exportStudent.Surname = student.lastName ?? '';
+                    exportStudent['Team Name'] = team.name ?? '';
                     if (!student.visibleRegistrationNumber) {
-                        studentsWithoutRegistrationNumbers.push({ login: student.login || '', name: `${student.firstName || ''} ${student.lastName || ''}` });
+                        studentsWithoutRegistrationNumbers.push({ login: student.login ?? '', name: `${exportStudent.Name} ${exportStudent.Surname}` });
                     }
-                    exportStudent['Registration Number'] = student.visibleRegistrationNumber || '';
+                    exportStudent['Registration Number'] = student.visibleRegistrationNumber ?? '';
                     exportedTeams.students.push(exportStudent);
                 });
             }
         });
-        if (studentsWithoutRegistrationNumbers.length !== 0) {
+        if (studentsWithoutRegistrationNumbers.length > 0) {
             throw new Error(studentsWithoutRegistrationNumbers.map((student) => `${student.login} ${student.name}`).join(', '));
         }
-        // Make blob from the list of questions and download the file,
+        // Make blob from the list of teams and download the file,
         const teamJson = JSON.stringify(exportedTeams);
         const blob = new Blob([teamJson], { type: 'application/json' });
         downloadFile(blob, 'teams.json');

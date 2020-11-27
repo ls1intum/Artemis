@@ -18,7 +18,9 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.User;
 
-/** Spring Data JPA repository for the User entity. */
+/**
+ * Spring Data JPA repository for the User entity.
+ */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
@@ -58,7 +60,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /**
      * Searches for users in a group by their login or full name.
-     * @param groupName Name of group in which to search for users
+     *
+     * @param groupName   Name of group in which to search for users
      * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
      * @return list of found users that match the search criteria
      */
@@ -69,17 +72,23 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /**
      * Gets users in a group by their registration number.
-     * @param groupName Name of group in which to search for users
+     *
+     * @param groupName           Name of group in which to search for users
      * @param registrationNumbers Registration numbers of users
      * @return found users that match the criteria
      */
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    @Query("select user from User user where :#{#groupName} member of user.groups and " + "user.registrationNumber in :#{#registrationNumbers}")
+    @Query("""
+            select user
+            from User user
+            where :#{#groupName} member of user.groups and user.registrationNumber in :#{#registrationNumbers}
+            """)
     List<User> getByRegistrationNumbersInGroup(@Param("groupName") String groupName, @Param("registrationNumbers") Set<String> registrationNumbers);
 
     /**
      * Searches for users by their login or full name.
-     * @param page Pageable related info (e.g. for page size)
+     *
+     * @param page        Pageable related info (e.g. for page size)
      * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
      * @return list of found users that match the search criteria
      */

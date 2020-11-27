@@ -1,12 +1,15 @@
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Team } from 'app/entities/team.model';
+import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component.ts';
 import * as chai from 'chai';
-import { SinonStub, stub } from 'sinon';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { restore, SinonStub, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { mockFileStudents, mockFileTeamsConverted } from '../../helpers/mocks/service/mock-team.service';
-import { config } from './teams-import-dialog.component.spec';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -27,7 +30,11 @@ describe('TeamsImportFromFileFormComponent', () => {
 
     beforeEach(
         waitForAsync(() => {
-            TestBed.configureTestingModule(config).overrideTemplate(TeamsImportFromFileFormComponent, '').compileComponents();
+            TestBed.configureTestingModule({
+                imports: [],
+                declarations: [TeamsImportFromFileFormComponent, MockComponent(HelpIconComponent), MockComponent(FaIconComponent)],
+                providers: [MockProvider(TeamService)],
+            }).compileComponents();
         }),
     );
     beforeEach(() => {
@@ -65,9 +72,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             getElementStub = stub(document, 'getElementById').returns(control);
         });
         afterEach(() => {
-            generateFileReaderStub.restore();
-            convertTeamsStub.restore();
-            getElementStub.restore();
+            restore();
         });
         it('should parse file and send converted teams', () => {
             expect(control.value).to.equal('test');
@@ -90,7 +95,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             changeDetectorDetectChangesStub = stub(changeDetector.constructor.prototype, 'detectChanges');
         });
         afterEach(() => {
-            changeDetectorDetectChangesStub.restore();
+            restore();
         });
         it('should set import file correctly', () => {
             const file = new File(['content'], 'testFileName', { type: 'text/plain' });

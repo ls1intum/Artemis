@@ -1,14 +1,19 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Team } from 'app/entities/team.model';
+import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import * as chai from 'chai';
-import { SinonSpy, SinonStub, spy, stub } from 'sinon';
+import { NgJhipsterModule } from 'ng-jhipster';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { restore, SinonStub, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { mockExercise, mockSourceTeams, mockTeams } from '../../helpers/mocks/service/mock-team.service';
-import { config } from './teams-import-dialog.component.spec';
-
+import { ArtemisTestModule } from '../../test.module';
 chai.use(sinonChai);
 const expect = chai.expect;
 
@@ -25,20 +30,21 @@ describe('TeamsImportButtonComponent', () => {
 
     beforeEach(
         waitForAsync(() => {
-            TestBed.configureTestingModule(config).overrideTemplate(TeamsImportButtonComponent, '').compileComponents();
+            TestBed.configureTestingModule({
+                imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(NgJhipsterModule), MockModule(FeatureToggleModule)],
+                declarations: [TeamsImportButtonComponent, ButtonComponent, MockPipe(TranslatePipe)],
+                providers: [MockProvider(TeamService), MockProvider(NgbModal)],
+            }).compileComponents();
         }),
     );
     beforeEach(() => {
         fixture = TestBed.createComponent(TeamsImportButtonComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        modalService = debugElement.injector.get(NgbModal);
+        modalService = TestBed.inject(NgbModal);
     });
 
     describe('openTeamsImportDialog', () => {
-        const event = { stopPropagation: () => {} } as MouseEvent;
-        let eventSpy: SinonSpy;
-
         let modalServiceStub: SinonStub;
         let componentInstance: any;
 
@@ -46,7 +52,6 @@ describe('TeamsImportButtonComponent', () => {
 
         beforeEach(() => {
             resetComponent();
-            eventSpy = spy(event, 'stopPropagation');
             comp.save.subscribe((value: Team[]) => {
                 teams = value;
             });
@@ -55,12 +60,11 @@ describe('TeamsImportButtonComponent', () => {
             modalServiceStub = stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
         });
         afterEach(() => {
-            modalServiceStub.restore();
-            eventSpy.restore();
+            restore();
         });
         it('should open teams import dialog when called', fakeAsync(() => {
-            comp.openTeamsImportDialog(event);
-            expect(eventSpy).to.have.been.called;
+            const button = debugElement.nativeElement.querySelector('button');
+            button.click();
             expect(modalServiceStub).to.have.been.called;
             expect(componentInstance.exercise).to.deep.equal(mockExercise);
             expect(componentInstance.teams).to.deep.equal(mockTeams);
