@@ -10,6 +10,7 @@ import java.util.*;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,6 +33,7 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 
@@ -66,10 +68,13 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private final UrlService urlService;
 
-    public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UrlService urlService) {
+    private final GitService gitService;
+
+    public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UrlService urlService, GitService gitService) {
         this.userService = userService;
         this.restTemplate = restTemplate;
         this.urlService = urlService;
+        this.gitService = gitService;
     }
 
     @Override
@@ -193,13 +198,13 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) {
+    public VcsRepositoryUrl forkRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
         final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
         final var body = new BitbucketCloneDTO(targetRepoSlug, new BitbucketCloneDTO.CloneDetailsDTO(targetProjectKey));
         HttpEntity<?> entity = new HttpEntity<>(body, null);
-        log.info("Try to copy repository " + sourceProjectKey + "/repos/" + sourceRepositoryName + " into " + targetRepoSlug);
+        log.info("Try to fork repository " + sourceProjectKey + "/repos/" + sourceRepositoryName + " into " + targetRepoSlug);
         final String repoUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + sourceProjectKey + "/repos/" + sourceRepositoryName;
 
         try {
@@ -263,6 +268,32 @@ public class BitbucketService extends AbstractVersionControlService {
         }
 
         throw new BitbucketException("Max retries for forking reached. Could not fork repository " + sourceRepositoryName + " to " + targetRepositoryName);
+    }
+
+    @Override
+    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) {
+        sourceRepositoryName = sourceRepositoryName.toLowerCase();
+        targetRepositoryName = targetRepositoryName.toLowerCase();
+        final var sourceRepoSlug = sourceProjectKey.toLowerCase() + "-" + sourceRepositoryName;
+        final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
+        try {
+            var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepoSlug);
+            URL sourceRepositoryUrlAsUrl = new URL(sourceRepoUrl.toString());
+            Repository sourceRepo = gitService.getOrCheckoutRepository(sourceRepositoryUrlAsUrl, true);
+
+            // create target repo
+            createRepository(targetProjectKey, targetRepoSlug);
+            var targetRepoUrl = getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
+            URL targetRepoUrlAsUrl = new URL(targetRepoUrl.toString());
+            Repository targetRepo = gitService.getOrCheckoutRepository(targetRepoUrlAsUrl, true);
+            gitService.pushToTargetRepo(sourceRepo, targetRepo, targetRepoUrlAsUrl);
+
+        }
+        catch (InterruptedException | GitAPIException | MalformedURLException e) {
+            throw new BitbucketException("Error while pushing the source repo to the target repo", e);
+        }
+
+        return getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
     }
 
     private BitbucketProjectDTO getBitbucketProject(String projectKey) {

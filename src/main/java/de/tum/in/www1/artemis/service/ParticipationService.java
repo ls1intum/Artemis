@@ -217,7 +217,7 @@ public class ParticipationService {
         // specific to programming exercises
         if (exercise instanceof ProgrammingExercise) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
-            programmingExerciseStudentParticipation = copyRepository(programmingExerciseStudentParticipation);
+            programmingExerciseStudentParticipation = forkRepository(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = configureRepository((ProgrammingExercise) exercise, programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = copyBuildPlan(programmingExerciseStudentParticipation);
             // Restore programming exercise that got removed due to saving the programmingExerciseStudentParticipation
@@ -329,7 +329,7 @@ public class ParticipationService {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
             // Note: we need a repository, otherwise the student cannot click resume.
-            programmingParticipation = copyRepository(programmingParticipation);
+            programmingParticipation = forkRepository(programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
             programmingParticipation = configureRepositoryWebHook(programmingParticipation);
             participation = programmingParticipation;
@@ -492,7 +492,7 @@ public class ParticipationService {
         return save(participation);
     }
 
-    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExerciseStudentParticipation participation) {
+    private ProgrammingExerciseStudentParticipation forkRepository(ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository url is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getRepositoryUrlAsUrl() == null) {
             final var programmingExercise = participation.getProgrammingExercise();
@@ -501,7 +501,7 @@ public class ParticipationService {
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
-            var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, projectKey, participantIdentifier);
+            var newRepoUrl = versionControlService.get().forkRepository(projectKey, templateRepoName, projectKey, participantIdentifier);
             // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)
             if (participation.getStudent().isPresent()) {
                 newRepoUrl = newRepoUrl.withUser(participantIdentifier);

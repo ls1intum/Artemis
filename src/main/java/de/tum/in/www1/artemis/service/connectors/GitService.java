@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -33,6 +34,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -253,6 +255,28 @@ public class GitService {
         git.commit().setMessage(message).setAllowEmpty(true).setCommitter(name, email).call();
         git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
         git.close();
+    }
+
+    public void pushToTargetRepo(Repository sourceRepo, Repository targetRepo, URL targetRepoUrl) throws GitAPIException {
+        Git git = new Git(sourceRepo);
+        // Git targetGit = new Git(targetRepo);
+        // var targetRemote = targetGit.remoteList().call().stream().findFirst().get();
+        // var targetUri = targetRemote.getURIs().stream().findFirst().get();
+        var targetUri = targetRepoUrl.toString();
+        System.out.println("++targetURi");
+        System.out.println(targetUri);
+        try {
+            git.remoteAdd().setName("target").setUri(new URIish(targetUri));
+            git.push().setRemote("target").setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+            git.remoteRemove().setRemoteName("target");
+            git.close();
+            // targetGit.close();
+        }
+        catch (URISyntaxException ex) {
+            log.error("Error while pushing to remote target", ex);
+        }
+        // return git.pull().setRemote("origin").setRemoteBranchName(sourceBranchName).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER,
+        // GIT_PASSWORD)).call();
     }
 
     /**
