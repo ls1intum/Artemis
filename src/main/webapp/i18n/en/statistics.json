@@ -1,5 +1,6 @@
 {
     "statistics": {
+        "amountOfStudents": "# of students",
         "span": {
             "day": "Day",
             "week": "Week",

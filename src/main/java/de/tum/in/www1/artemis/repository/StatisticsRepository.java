@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.User;
  * Spring Data JPA repository for the user statistics
  */
 @Repository
-public interface StatisticsRepository extends JpaRepository<User, Long> { // Change user with something better
+public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     @Query("select count(distinct u.login) from User u, PersistentAuditEvent p where u.login like p.principal and p.auditEventType = 'AUTHENTICATION_SUCCESS' and u.login not like '%test%' and p.auditEventDate >= :#{#span}")
     Integer getLoggedInUsers(@Param("span") Instant span);

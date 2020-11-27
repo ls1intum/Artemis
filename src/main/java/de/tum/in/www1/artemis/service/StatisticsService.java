@@ -46,7 +46,7 @@ public class StatisticsService {
                 }
                 return result;
             case "MONTH":
-                break;
+                return null;
             case "YEAR":
                 Integer[] resultYear = new Integer[12];
                 Arrays.fill(resultYear, 0);

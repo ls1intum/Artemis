@@ -21,25 +21,6 @@ export enum SpanType {
 export class JhiStatisticsComponent implements OnInit, OnChanges {
     spanPattern = SPAN_PATTERN;
     span: SpanType = SpanType.WEEK;
-    userSpan = 7;
-    activeUserSpan = 7;
-    submissionSpan = 7;
-    releasedExerciseSpan = 7;
-    exerciseDeadlineSpan = 7;
-    conductedExamsSpan = 7;
-    activeTutorsSpan = 7;
-    createdResultsSpan = 7;
-    loggedInUsers = 0;
-    activeUsers = 0;
-    totalSubmissions = 0;
-    releasedExercises = 0;
-    exerciseDeadlines = 0;
-    conductedExams = 0;
-    activeTutors = 0;
-    createdResults = 0;
-    examParticipations = 0;
-    examRegistrations = 0;
-    resultFeedbacks = 0;
 
     // Histogram related properties
     public histogramData: number[] = [];
@@ -57,14 +38,6 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
     async ngOnInit() {
         await this.setBinWidth();
         await this.createChart();
-
-        this.onChangedUserSpan();
-        this.onChangedActiveUserSpan();
-        this.onChangedReleasedExerciseSpan();
-        this.onChangedExerciseDeadlineSpan();
-        this.onChangedConductedExamsSpan();
-        this.onChangedActiveTutorsSpan();
-        this.onChangedCreatedResultsSpan();
     }
 
     async ngOnChanges() {}
@@ -103,65 +76,6 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
         });
     }
 
-    onChangedUserSpan(): void {
-        this.service.getloggedUsers(this.userSpan).subscribe((res: number) => {
-            this.loggedInUsers = res;
-        });
-    }
-
-    onChangedActiveUserSpan(): void {
-        this.service.getActiveUsers(this.activeUserSpan).subscribe((res: number) => {
-            this.activeUsers = res;
-        });
-    }
-
-    onChangedSubmissionSpan(): void {
-        this.service.getReleasedExercises(this.releasedExerciseSpan).subscribe((res: number) => {
-            this.releasedExercises = res;
-        });
-    }
-    onChangedReleasedExerciseSpan(): void {
-        this.service.getReleasedExercises(this.releasedExerciseSpan).subscribe((res: number) => {
-            this.releasedExercises = res;
-        });
-    }
-
-    onChangedExerciseDeadlineSpan(): void {
-        this.service.getExerciseDeadlines(this.exerciseDeadlineSpan).subscribe((res: number) => {
-            this.exerciseDeadlines = res;
-        });
-    }
-
-    onChangedConductedExamsSpan(): void {
-        this.service.getConductedExams(this.conductedExamsSpan).subscribe((res: number) => {
-            this.conductedExams = res;
-        });
-
-        this.service.getExamParticipations(this.conductedExamsSpan).subscribe((res: number) => {
-            this.examParticipations = res;
-        });
-
-        this.service.getExamRegistrations(this.conductedExamsSpan).subscribe((res: number) => {
-            this.examRegistrations = res;
-        });
-    }
-
-    onChangedActiveTutorsSpan(): void {
-        this.service.getActiveTutors(this.activeTutorsSpan).subscribe((res: number) => {
-            this.activeTutors = res;
-        });
-    }
-
-    onChangedCreatedResultsSpan(): void {
-        this.service.getCreatedResults(this.createdResultsSpan).subscribe((res: number) => {
-            this.createdResults = res;
-        });
-
-        this.service.getResultFeedbacks(this.createdResultsSpan).subscribe((res: number) => {
-            this.resultFeedbacks = res;
-        });
-    }
-
     onTabChanged(span: string): void {
         switch (span) {
             case 'Day':
@@ -177,9 +91,7 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
                 this.span = SpanType.YEAR;
                 break;
         }
-        console.log(this.span); // works
     }
-
     private getWeekdays(day: number): string[] {
         const days = [
             this.translateService.instant('weekdays.monday'),
@@ -223,7 +135,7 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
         this.barChartLabels = this.createLabels();
         this.UserLoginChartData = [
             {
-                label: '# of students',
+                label: this.translateService.instant('statistics.amountOfStudents'),
                 data: await this.getSubmissions(),
                 backgroundColor: 'rgba(53,61,71,1)',
                 borderColor: 'rgba(53,61,71,1)',
@@ -232,7 +144,7 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
         ];
         this.SubmissionsChartData = [
             {
-                label: '# of students',
+                label: await this.translateService.instant('statistics.amountOfStudents'),
                 data: await this.getSubmissions(),
                 backgroundColor: 'rgba(53,61,71,1)',
                 borderColor: 'rgba(53,61,71,1)',
@@ -240,6 +152,10 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
             },
         ];
         this.barChartOptions = {
+            responsive: true,
+            hover: {
+                animationDuration: 0,
+            },
             animation: {
                 duration: 1,
                 onComplete() {

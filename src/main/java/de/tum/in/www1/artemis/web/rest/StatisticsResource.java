@@ -21,25 +21,8 @@ public class StatisticsResource {
 
     private final StatisticsService service;
 
-    private final UserRepository userRepository;
-
-    private final PersistenceAuditEventRepository persistentAuditEventRepository;
-
-    private final SubmissionRepository submissionRepository;
-
-    private final StudentParticipationRepository studentParticipationRepository;
-
-    private final ExerciseRepository exerciseRepository;
-
-    public StatisticsResource(StatisticsService service, UserRepository userRepository, PersistenceAuditEventRepository persistentAuditEventRepository,
-            SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository, StudentParticipationRepository studentParticipationRepository) {
-
+    public StatisticsResource(StatisticsService service) {
         this.service = service;
-        this.userRepository = userRepository;
-        this.persistentAuditEventRepository = persistentAuditEventRepository;
-        this.submissionRepository = submissionRepository;
-        this.exerciseRepository = exerciseRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**

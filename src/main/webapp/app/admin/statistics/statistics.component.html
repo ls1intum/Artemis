@@ -1,36 +1,26 @@
 <div>
-    <div class="row">
-        <h2 id="statistics-page-heading" jhiTranslate="statistics.title">User statistics</h2>
-
-        <div class="col-md-10 my-auto">
-            <div class="my-auto">
-                <button jhiTranslate="statistics.span.day" (click)="onTabChanged('Day')">Day</button>
-                <button jhiTranslate="statistics.span.week" (click)="onTabChanged('Week')">Week</button>
-                <button jhiTranslate="statistics.span.month" (click)="onTabChanged('Month')">Month</button>
-                <button jhiTranslate="statistics.span.year" (click)="onTabChanged('Year')">Year</button>
-            </div>
+    <div class="row mb-5">
+        <h2 class="col-md-2" id="statistics-page-heading" jhiTranslate="statistics.title">User statistics</h2>
+        <div class="col-md-9 btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-secondary">
+                <input type="radio" name="options" id="option1" autocomplete="off" jhiTranslate="statistics.span.day" (click)="onTabChanged('Day')" />Day
+            </label>
+            <label class="btn btn-secondary active">
+                <input type="radio" name="options" id="option2" autocomplete="off" checked jhiTranslate="statistics.span.week" (click)="onTabChanged('Week')" />Week
+            </label>
+            <label class="btn btn-secondary">
+                <input type="radio" name="options" id="option3" autocomplete="off" jhiTranslate="statistics.span.month" (click)="onTabChanged('Month')" />Month
+            </label>
+            <label class="btn btn-secondary">
+                <input type="radio" name="options" id="option4" autocomplete="off" jhiTranslate="statistics.span.year" (click)="onTabChanged('Year')" />Year
+            </label>
         </div>
-    </div>
-
-    <div class="row">
-        <h3 class="col-md-2" jhiTranslate="statistics.userLogins">User Login</h3>
-        <canvas
-            class="col-md-10"
-            baseChart
-            height="250"
-            width="1500"
-            [datasets]="UserLoginChartData"
-            [labels]="barChartLabels"
-            [options]="barChartOptions"
-            [legend]="barChartLegend"
-            [chartType]="barChartType"
-        ></canvas>
     </div>
 
     <div class="row">
         <h3 class="col-md-2" jhiTranslate="statistics.submissions">Submissions</h3>
         <canvas
-            class="col-md-10"
+            class="col-md-9"
             baseChart
             height="250"
             width="1500"
@@ -41,170 +31,4 @@
             [chartType]="barChartType"
         ></canvas>
     </div>
-
-    <div class="row">
-        <h4 jhiTranslate="statistics.loggedInUsers">Amount of logins of distinct users in the last</h4>
-        <div class="form-group-narrow">
-            <input
-                type="number"
-                required
-                class="form-control"
-                [pattern]="spanPattern"
-                min="0"
-                max="9999"
-                name="span"
-                id="field_users"
-                [(ngModel)]="userSpan"
-                (ngModelChange)="onChangedUserSpan()"
-            />
-        </div>
-        <h4 jhiTranslate="statistics.days">days</h4>
-    </div>
-    <h2>{{ loggedInUsers }}</h2>
-
-    <div class="row">
-        <h4 jhiTranslate="statistics.activeUsers">Amount of active users in the last</h4>
-        <div class="form-group-narrow">
-            <input
-                type="number"
-                required
-                class="form-control"
-                [pattern]="spanPattern"
-                min="0"
-                max="9999"
-                name="span"
-                id="field_active-users"
-                [(ngModel)]="activeUserSpan"
-                (ngModelChange)="onChangedActiveUserSpan()"
-            />
-        </div>
-        <h4 jhiTranslate="statistics.days">days</h4>
-    </div>
-    <h2>{{ activeUsers }}</h2>
-
-    <div class="row">
-        <h4 jhiTranslate="statistics.totalSubmissions">Total amount of submissions in the last</h4>
-        <div class="form-group-narrow">
-            <input
-                type="number"
-                required
-                class="form-control"
-                [pattern]="spanPattern"
-                min="0"
-                max="9999"
-                name="span"
-                id="field_submissions"
-                [(ngModel)]="submissionSpan"
-                (ngModelChange)="onChangedSubmissionSpan()"
-            />
-        </div>
-        <h4 jhiTranslate="statistics.days">days</h4>
-    </div>
-    <h2>{{ totalSubmissions }}</h2>
-
-    <div class="row">
-        <h4 jhiTranslate="statistics.exercises.released">Total amount of released exercises in the last</h4>
-        <div class="form-group-narrow">
-            <input
-                type="number"
-                required
-                class="form-control"
-                [pattern]="spanPattern"
-                min="0"
-                max="9999"
-                name="span"
-                id="field_releasedExercises"
-                [(ngModel)]="releasedExerciseSpan"
-                (ngModelChange)="onChangedReleasedExerciseSpan()"
-            />
-        </div>
-        <h4 jhiTranslate="statistics.days">days</h4>
-    </div>
-    <h2>{{ releasedExercises }}</h2>
-
-    <div class="row">
-        <h4 jhiTranslate="statistics.exercises.due">Total amount of exercise deadlines in the last</h4>
-        <div class="form-group-narrow">
-            <input
-                type="number"
-                required
-                class="form-control"
-                [pattern]="spanPattern"
-                min="0"
-                max="9999"
-                name="span"
-                id="field_dueExercises"
-                [(ngModel)]="exerciseDeadlineSpan"
-                (ngModelChange)="onChangedExerciseDeadlineSpan()"
-            />
-        </div>
-        <h4 jhiTranslate="statistics.days">days</h4>
-    </div>
-    <h2>{{ exerciseDeadlines }}</h2>
-
-    <div class="row">
-        <h4 jhiTranslate="statistics.conductedExams">Total amount of conducted exams in the last</h4>
-        <div class="form-group-narrow">
-            <input
-                type="number"
-                required
-                class="form-control"
-                [pattern]="spanPattern"
-                min="0"
-                max="9999"
-                name="span"
-                id="field_conductedExams"
-                [(ngModel)]="conductedExamsSpan"
-                (ngModelChange)="onChangedConductedExamsSpan()"
-            />
-        </div>
-        <h4 jhiTranslate="statistics.days">days</h4>
-        <h4 jhiTranslate="statistics.examRegistrations">-> with the amount of students being registered in these exam:</h4>
-        <h4>{{ examRegistrations }}</h4>
-        <h4 jhiTranslate="statistics.examParticipation">-> amount of student who actually participated:</h4>
-        <h4>{{ examParticipations }}</h4>
-    </div>
-    <h2>{{ conductedExams }}</h2>
-
-    <div class="row">
-        <h4 jhiTranslate="statistics.activeTutors">Total amount of tutors which have created an assessment in the last</h4>
-        <div class="form-group-narrow">
-            <input
-                type="number"
-                required
-                class="form-control"
-                [pattern]="spanPattern"
-                min="0"
-                max="9999"
-                name="span"
-                id="field_activeTutors"
-                [(ngModel)]="activeTutorsSpan"
-                (ngModelChange)="onChangedActiveTutorsSpan()"
-            />
-        </div>
-        <h4 jhiTranslate="statistics.days">days</h4>
-    </div>
-    <h2>{{ activeTutors }}</h2>
-
-    <div class="row">
-        <h4 jhiTranslate="statistics.results">Total amount of results created in the last</h4>
-        <div class="form-group-narrow">
-            <input
-                type="number"
-                required
-                class="form-control"
-                [pattern]="spanPattern"
-                min="0"
-                max="9999"
-                name="span"
-                id="field_createdResults"
-                [(ngModel)]="createdResultsSpan"
-                (ngModelChange)="onChangedCreatedResultsSpan()"
-            />
-        </div>
-        <h4 jhiTranslate="statistics.days">days</h4>
-        <h4 jhiTranslate="statistics.resultFeedbacks">-> feedback count:</h4>
-        <h4>{{ resultFeedbacks }}</h4>
-    </div>
-    <h2>{{ createdResults }}</h2>
 </div>
