@@ -225,7 +225,7 @@ public class FileService implements DisposableBean {
                 exerciseId = Long.parseLong(shouldBeExerciseId);
             }
             catch (IllegalArgumentException e) {
-                throw new FilePathParsingException("Unexpected String in upload file path. Course ID should be present here: " + actualPath);
+                throw new FilePathParsingException("Unexpected String in upload file path. Exercise ID should be present here: " + actualPath);
             }
             return "/api/files/file-upload-exercises/" + exerciseId + "/submissions/" + id + "/" + filename;
         }

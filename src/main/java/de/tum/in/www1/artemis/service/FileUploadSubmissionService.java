@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -104,21 +105,27 @@ public class FileUploadSubmissionService extends SubmissionService {
             throw new EmptyFileException(file.getOriginalFilename());
         }
 
+        final var oldFilePath = fileUploadSubmission.getFilePath();
+
         final var multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
         // We need to set id for newly created submissions
         if (fileUploadSubmission.getId() == null) {
             fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         }
-        final var localPath = saveFileForSubmission(file, fileUploadSubmission, exercise);
+        final var newLocalFilePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
+        final var newFilePath = fileService.publicPathForActualPath(newLocalFilePath, fileUploadSubmission.getId());
 
         // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
-        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(localPath)));
+        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(newLocalFilePath)));
         if (!multipartFileHash.equals(storedFileHash)) {
             throw new IOException("The file " + file.getName() + "could not be stored");
         }
 
-        // check if we already had file associated with this submission
-        fileUploadSubmission.onDelete();
+        // Note: we can only delete the file, if the file name was changed (i.e. the new file name is different), otherwise this will cause issues
+        if (oldFilePath != null && !oldFilePath.equals(newFilePath)) {
+            // check if we already had file associated with this submission
+            fileUploadSubmission.onDelete();
+        }
 
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here!
@@ -127,7 +134,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmission.setType(SubmissionType.MANUAL);
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
-        fileUploadSubmission.setFilePath(fileService.publicPathForActualPath(localPath, fileUploadSubmission.getId()));
+        fileUploadSubmission.setFilePath(newFilePath);
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
 
         participation.addSubmissions(fileUploadSubmission);
@@ -161,8 +168,8 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
         final var dirPath = FileUploadSubmission.buildFilePath(exerciseId, submissionId);
         final var filePath = dirPath + filename;
-        final var savedFile = new java.io.File(filePath);
-        final var dir = new java.io.File(dirPath);
+        final var savedFile = new File(filePath);
+        final var dir = new File(dirPath);
 
         if (!dir.exists()) {
             dir.mkdirs();
