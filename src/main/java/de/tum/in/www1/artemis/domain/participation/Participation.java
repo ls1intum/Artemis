@@ -76,7 +76,8 @@ public abstract class Participation extends DomainObject implements Participatio
      * participationId to all submissions.
      */
     @OneToMany(mappedBy = "participation")
-    @JsonIgnoreProperties({ "participation", "results" })
+    // TODO: rename ignored property to "results" after change in client
+    @JsonIgnoreProperties({ "participation", "result" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Submission> submissions = new HashSet<>();
 

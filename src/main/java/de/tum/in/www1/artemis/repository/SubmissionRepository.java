@@ -31,9 +31,20 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("select distinct submission from Submission submission left join fetch submission.results r left join fetch r.feedbacks where submission.exampleSubmission = true and submission.id = :#{#submissionId}")
     Optional<Submission> findExampleSubmissionByIdWithEagerResult(long submissionId);
 
-    /* Get all submissions from a participation_id and load results at the same time */
+    /**
+     * Get all submissions of a participation
+     * @param participationId the id of the participation
+     * @return a list of the participation's submissions
+     */
+    List<Submission> findAllByParticipationId(long participationId);
+
+    /**
+     * Get all submissions of a participation and eagerly load results
+     * @param participationId the id of the participation
+     * @return a list of the participation's submissions
+     */
     @EntityGraph(type = LOAD, attributePaths = { "results" })
-    List<Submission> findAllByParticipationId(Long participationId);
+    List<Submission> findAllWithResultsByParticipationId(Long participationId);
 
     /**
      * Get the number of currently locked submissions for a specific user in the given course. These are all submissions for which the user started, but has not yet finished the
@@ -64,8 +75,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return true if a submission for the given participation exists, false otherwise
      */
     boolean existsByParticipationId(long participationId);
-
-    List<Submission> findByParticipationId(long participationId);
 
     /**
      * @param courseId the course id we are interested in

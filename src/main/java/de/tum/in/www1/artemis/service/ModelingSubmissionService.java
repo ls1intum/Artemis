@@ -274,11 +274,12 @@ public class ModelingSubmissionService extends SubmissionService {
         long exerciseId = studentParticipation.getExercise().getId();
         Result automaticResult = compassService.getAutomaticResultForSubmission(modelingSubmission.getId(), exerciseId);
         if (automaticResult != null) {
+            automaticResult.setParticipation(modelingSubmission.getParticipation());
+            automaticResult = resultRepository.save(automaticResult);
+            modelingSubmission.getParticipation().addResult(automaticResult);
             automaticResult.setSubmission(modelingSubmission);
             modelingSubmission.setResult(automaticResult);
-            modelingSubmission.getParticipation().addResult(automaticResult);
             modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
-            resultRepository.save(automaticResult);
 
             compassService.removeAutomaticResultForSubmission(modelingSubmission.getId(), exerciseId);
         }
