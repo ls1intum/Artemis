@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -176,9 +175,10 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         if (!isAtLeastInstructor) {
             ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
         }
+        // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
+        ltiService.onNewResult((StudentParticipation) result.getParticipation());
         if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
                 || result.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
-            ltiService.onNewResult((ProgrammingExerciseStudentParticipation) result.getParticipation());
             messagingService.broadcastNewResult(result.getParticipation(), result);
         }
         return ResponseEntity.ok(result);

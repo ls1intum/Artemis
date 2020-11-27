@@ -35,21 +35,13 @@
                 </button>
             </div>
             <dl class="row-md jh-entity-details">
-                <jhi-exercise-details [superExerciseDetails]="programmingExercise"></jhi-exercise-details>
+                <jhi-exercise-details [exercise]="programmingExercise"></jhi-exercise-details>
                 <ng-container *ngIf="programmingExercise.dueDate">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>
                     <dd>
                         <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | artemisDate: 'long':true }}</span>
                     </dd>
                 </ng-container>
-                <dt><span jhiTranslate="artemisApp.exercise.points">Points</span></dt>
-                <dd>
-                    <span>{{ programmingExercise.maxScore }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus points</span></dt>
-                <dd>
-                    <span>{{ programmingExercise.bonusPoints }}</span>
-                </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title">Enable Static Code Analysis</span></dt>
                 <dd>
                     <span>{{ programmingExercise.staticCodeAnalysisEnabled }}</span>
@@ -59,29 +51,6 @@
                     <dd>
                         <span>{{ programmingExercise.maxStaticCodeAnalysisPenalty == undefined ? '-' : programmingExercise.maxStaticCodeAnalysisPenalty }}</span>
                     </dd>
-                </ng-container>
-                <dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
-                <dd>
-                    <span *ngIf="programmingExercise.presentationScoreEnabled">{{ 'global.generic.yes' | translate }}</span>
-                    <span *ngIf="!programmingExercise.presentationScoreEnabled">{{ 'global.generic.no' | translate }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.programmingExercise.problemStatement.title">Problem Statement</span></dt>
-                <dd>
-                    <jhi-programming-exercise-instructions
-                        [exercise]="programmingExercise"
-                        [participation]="programmingExercise.templateParticipation"
-                        [personalParticipation]="true"
-                    ></jhi-programming-exercise-instructions>
-                </dd>
-                <ng-container *ngIf="programmingExercise.gradingInstructions">
-                    <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
-                    <dd class="editor-outline-background">
-                        <span [innerHTML]="gradingInstructions"></span>
-                    </dd>
-                    <jhi-structured-grading-instructions-assessment-layout
-                        [readonly]="true"
-                        [criteria]="programmingExercise.gradingCriteria"
-                    ></jhi-structured-grading-instructions-assessment-layout>
                 </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span></dt>
                 <dd>
@@ -149,12 +118,6 @@
                 <dd>
                     <span>{{ programmingExercise.packageName }}</span>
                 </dd>
-                <ng-container *ngIf="!isExamExercise && programmingExercise.isAtLeastInstructor">
-                    <dt><span jhiTranslate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
-                    <dd>
-                        <a [routerLink]="['/course-management', programmingExercise.course?.id, 'exercises', programmingExercise.id, 'lti-configuration']">LTI Configuration</a>
-                    </dd>
-                </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateResult">Template Result</span></dt>
                 <dd>
                     <div *ngIf="programmingExercise?.templateParticipation" class="d-flex align-items-center">
