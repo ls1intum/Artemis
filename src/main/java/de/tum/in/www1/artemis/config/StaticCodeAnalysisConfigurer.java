@@ -30,7 +30,8 @@ public class StaticCodeAnalysisConfigurer {
 
     @PostConstruct
     private void init() {
-        languageToDefaultCategories = Map.of(ProgrammingLanguage.JAVA, createDefaultCategoriesForJava());
+        // TODO: add for Swift
+        languageToDefaultCategories = Map.of(ProgrammingLanguage.JAVA, createDefaultCategoriesForJava(), ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift());
         log.debug("Initialized default static code analysis categories for JAVA");
     }
 
@@ -69,6 +70,20 @@ public class StaticCodeAnalysisConfigurer {
                         List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "imports"), createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "indentation"),
                                 createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "naming"), createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "whitespace"))),
                 new StaticCodeAnalysisDefaultCategory("Miscellaneous", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "miscellaneous"))));
+    }
+
+    /**
+     * Create an unmodifiable List of default static code analysis categories for Swift
+     *
+     * @return unmodifiable static code analysis categories
+     */
+    private List<StaticCodeAnalysisDefaultCategory> createDefaultCategoriesForSwift() {
+        return List.of(new StaticCodeAnalysisDefaultCategory("Code Style", 0.2D, 2D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
+                new StaticCodeAnalysisDefaultCategory("Design", 5D, 5D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
+                new StaticCodeAnalysisDefaultCategory("Code Metrics", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
+                new StaticCodeAnalysisDefaultCategory("Documentation", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
+                new StaticCodeAnalysisDefaultCategory("Naming & Formatting", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
+                new StaticCodeAnalysisDefaultCategory("Miscellaneous", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))));
     }
 
     @Bean(name = "staticCodeAnalysisConfiguration")

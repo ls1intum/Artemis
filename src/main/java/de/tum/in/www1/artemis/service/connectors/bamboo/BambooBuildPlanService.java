@@ -190,6 +190,7 @@ public class BambooBuildPlanService {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/result.xml");
             }
             case SWIFT -> {
+                // TODO: add swiftlint
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/tests.xml");
             }
             // this is needed, otherwise the compiler complaints with missing return statement
