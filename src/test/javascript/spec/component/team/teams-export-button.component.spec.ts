@@ -9,7 +9,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import * as chai from 'chai';
 import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { restore, SinonSpy, SinonStub, spy, stub } from 'sinon';
+import { restore, SinonStub, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { mockTeams } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -45,13 +45,10 @@ describe('TeamsExportButtonComponent', () => {
     });
 
     describe('exportTeams', () => {
-        const event = { stopPropagation: () => {} } as MouseEvent;
-        let eventSpy: SinonSpy;
         let exportTeamsStub: SinonStub;
         let alertServiceStub: SinonStub;
         beforeEach(() => {
             resetComponent();
-            eventSpy = spy(event, 'stopPropagation');
             exportTeamsStub = stub(teamService, 'exportTeams');
             alertServiceStub = stub(alertService, 'error');
         });
