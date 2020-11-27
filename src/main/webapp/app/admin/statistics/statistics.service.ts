@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
+import { SpanType } from 'app/admin/statistics/statistics.component';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
@@ -28,9 +29,9 @@ export class StatisticsService {
     /**
      * Sends a GET request to retrieve the amount of submissions made in the last *span* days
      */
-    getTotalSubmissions(span: number): Observable<number> {
+    getTotalSubmissions(span: SpanType): Observable<number[]> {
         const params = new HttpParams().set('span', '' + span);
-        return this.http.get<number>(`${this.resourceUrl}management/statistics/submissions`, { params });
+        return this.http.get<number[]>(`${this.resourceUrl}management/statistics/submissions`, { params });
     }
 
     /**

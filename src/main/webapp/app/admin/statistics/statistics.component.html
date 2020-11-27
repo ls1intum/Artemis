@@ -1,15 +1,25 @@
 <div>
-    <h2 id="statistics-page-heading" jhiTranslate="statistics.title">User statistics</h2>
+    <div class="row">
+        <h2 id="statistics-page-heading" jhiTranslate="statistics.title">User statistics</h2>
+
+        <div class="col-md-10 my-auto">
+            <div class="my-auto">
+                <button class="tablinks" onclick="onTabChanged(event,'Day')">Day</button>
+                <button class="tablinks" onclick="onTabChanged(event,'Week')">Week</button>
+                <button class="tablinks" onclick="onTabChanged(event,'Month')">Month</button>
+                <button class="tablinks" onclick="onTabChanged(event,'Year')">Year</button>
+            </div>
+        </div>
+    </div>
 
     <div class="row">
         <h3 class="col-md-2" jhiTranslate="statistics.userLogins">User Login</h3>
         <canvas
-            class="col-md-9"
+            class="col-md-10"
             baseChart
             height="250"
             width="1500"
-            [datasets]="barChartData"
-            [options]="barChartOptions"
+            [datasets]="UserLoginChartData"
             [labels]="barChartLabels"
             [legend]="barChartLegend"
             [chartType]="barChartType"
@@ -19,12 +29,11 @@
     <div class="row">
         <h3 class="col-md-2" jhiTranslate="statistics.submissions">Submissions</h3>
         <canvas
-            class="col-md-9"
+            class="col-md-10"
             baseChart
             height="250"
             width="1500"
-            [datasets]="barChartData"
-            [options]="barChartOptions"
+            [datasets]="SubmissionsChartData"
             [labels]="barChartLabels"
             [legend]="barChartLegend"
             [chartType]="barChartType"

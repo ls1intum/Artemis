@@ -3,9 +3,8 @@ import { StatisticsService } from 'app/admin/statistics/statistics.service';
 import { SPAN_PATTERN } from 'app/app.constants';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
-import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 
-enum SpanType {
+export enum SpanType {
     DAY = 'DAY',
     WEEK = 'WEEK',
     MONTH = 'MONTH',
@@ -18,7 +17,7 @@ enum SpanType {
 })
 export class JhiStatisticsComponent implements OnInit, OnChanges {
     spanPattern = SPAN_PATTERN;
-    span: SpanType = SpanType.YEAR;
+    span: SpanType = SpanType.WEEK;
     userSpan = 7;
     activeUserSpan = 7;
     submissionSpan = 7;
@@ -40,23 +39,26 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
     resultFeedbacks = 0;
 
     // Histogram related properties
-    public binWidth = 4;
+    public binWidth = 7;
     public histogramData: number[] = Array(this.binWidth).fill(0);
     public barChartOptions: ChartOptions = {};
     public barChartLabels: Label[] = [];
     public barChartType: ChartType = 'bar';
     public barChartLegend = true;
-    public barChartData: ChartDataSets[] = [];
+    public UserLoginChartData: ChartDataSets[] = [];
+    public SubmissionsChartData: ChartDataSets[] = [];
+    public testing: number[];
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
     constructor(private service: StatisticsService) {}
 
-    ngOnInit() {
-        this.createChart([]);
+    async ngOnInit() {
+        const value = await this.getSubmissions();
+
+        this.createChart(value);
         this.onChangedUserSpan();
         this.onChangedActiveUserSpan();
-        this.onChangedSubmissionSpan();
         this.onChangedReleasedExerciseSpan();
         this.onChangedExerciseDeadlineSpan();
         this.onChangedConductedExamsSpan();
@@ -64,11 +66,9 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
         this.onChangedCreatedResultsSpan();
     }
 
-    ngOnChanges(): void {
-        this.service.getloggedUsers(this.userSpan).subscribe((res: number) => {
-            this.loggedInUsers = res;
-        });
-        this.createChart([]);
+    async ngOnChanges() {
+        const value = await this.getSubmissions();
+        this.createChart(value);
     }
 
     private setBinWidth(): void {
@@ -93,6 +93,18 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
         return new Date(new Date().getFullYear(), new Date().getMonth(), 0).getDate();
     }
 
+    async getSubmissions(): Promise<number[]> {
+        return new Promise<number[]>((resolve, reject) => {
+            this.service.getTotalSubmissions(this.span).subscribe((res: number[]) => {
+                if (res !== null) {
+                    resolve(res);
+                } else {
+                    reject('Submissions could not get fetched');
+                }
+            });
+        });
+    }
+
     onChangedUserSpan(): void {
         this.service.getloggedUsers(this.userSpan).subscribe((res: number) => {
             this.loggedInUsers = res;
@@ -106,11 +118,10 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
     }
 
     onChangedSubmissionSpan(): void {
-        this.service.getTotalSubmissions(this.submissionSpan).subscribe((res: number) => {
-            this.totalSubmissions = res;
+        this.service.getReleasedExercises(this.releasedExerciseSpan).subscribe((res: number) => {
+            this.releasedExercises = res;
         });
     }
-
     onChangedReleasedExerciseSpan(): void {
         this.service.getReleasedExercises(this.releasedExerciseSpan).subscribe((res: number) => {
             this.releasedExercises = res;
@@ -153,7 +164,26 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
         });
     }
 
-    private createChart(includedData: number[]) {
+    onTabChanged(event: Event, span: String): void {
+        switch (span) {
+            case 'Day':
+                this.span = SpanType.DAY;
+                break;
+            case 'Week':
+                this.span = SpanType.WEEK;
+                break;
+            case 'Month':
+                this.span = SpanType.MONTH;
+                break;
+            case 'Year':
+                this.span = SpanType.YEAR;
+                break;
+        }
+        console.log(this.span);
+        // event.currentTarget!.className += " active";
+    }
+
+    private createChart(value: number[]) {
         this.setBinWidth();
         let labels: string[] = [];
         switch (this.span) {
@@ -175,18 +205,26 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
                 break;
         }
         this.barChartLabels = labels;
-        this.histogramData = [4002, 2020, 2088, 2050, 3660, 2110, 1202, 802, 2809, 2150, 2543, 909];
-
-        this.barChartData = [
+        // this.histogramData = [4002, 2020, 2088, 2050, 3660, 2110, 1202, 802, 2809, 2150, 2543, 909];
+        this.UserLoginChartData = [
             {
                 label: '# of students',
-                data: this.histogramData,
+                data: value,
                 backgroundColor: 'rgba(53,61,71,1)',
                 borderColor: 'rgba(53,61,71,1)',
                 hoverBackgroundColor: 'rgba(53,61,71,1)',
             },
         ];
-        this.barChartOptions = {
+        this.SubmissionsChartData = [
+            {
+                label: '# of students',
+                data: value,
+                backgroundColor: 'rgba(53,61,71,1)',
+                borderColor: 'rgba(53,61,71,1)',
+                hoverBackgroundColor: 'rgba(53,61,71,1)',
+            },
+        ];
+        /*this.barChartOptions = {
             animation: {
                 duration: 1,
                 onComplete() {
@@ -204,6 +242,6 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
                     });
                 },
             },
-        };
+        };*/
     }
 }
