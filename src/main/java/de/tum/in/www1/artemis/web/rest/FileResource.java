@@ -222,15 +222,16 @@ public class FileResource {
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename,
             @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
-        Optional<FileUploadSubmission> optionalSubmission = fileUploadSubmissionRepository.findById(submissionId);
-        Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
-        if (optionalSubmission.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
         if (!validateTemporaryAccessToken(temporaryAccessToken, filename)) {
             // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the file in the corresponding exercise";
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
+        }
+
+        Optional<FileUploadSubmission> optionalSubmission = fileUploadSubmissionRepository.findById(submissionId);
+        Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
+        if (optionalSubmission.isEmpty()) {
+            return ResponseEntity.badRequest().build();
         }
         return buildFileResponse(FileUploadSubmission.buildFilePath(optionalFileUploadExercise.get().getId(), optionalSubmission.get().getId()), filename);
     }
@@ -421,7 +422,8 @@ public class FileResource {
      */
     private ResponseEntity<byte[]> buildFileResponse(String path, String filename) {
         try {
-            var file = fileService.getFileForPath(path + '/' + filename);
+            var actualPath = path + (path.endsWith(File.separator) ? filename : File.separator + filename);
+            var file = fileService.getFileForPath(actualPath);
             if (file == null) {
                 return ResponseEntity.notFound().build();
             }
