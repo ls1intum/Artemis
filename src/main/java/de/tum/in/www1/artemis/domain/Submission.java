@@ -98,7 +98,6 @@ public abstract class Submission extends DomainObject {
 
     // TODO: double check Jackson and client compatibility, maybe refactoring to getLatestResult
     @Nullable
-    // TODO: remove the getter annotation after it has been renamed in the client to "results" aswell
     @JsonProperty(value = "result", access = JsonProperty.Access.READ_ONLY)
     public Result getResult() {
         // in all cases (except 2nd, 3rd correction, etc.) we would like to have the latest result
@@ -120,16 +119,22 @@ public abstract class Submission extends DomainObject {
         return null;
     }
 
-    // TODO: consider removing redundant deserialization annotation after client changes & refactoring
-    @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
+    // TODO: remove redundant setter after relationship change on client. Currently we need two deserializing setters for "result" (client) and "results" (server)
+    @JsonProperty(value = "result", access = JsonProperty.Access.WRITE_ONLY)
     public void setResult(Result result) {
+        this.results.add(result);
+    }
+
+    // TODO: WIP consider during refactoring : addResult
+    @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
+    public void setResults(Result result) {
         // addResult
         this.results.add(result);
     }
 
-    // todo: WIP consider during refactoring
+    // todo: WIP consider during refactoring : setResults
     @JsonIgnore()
-    public void setResults(List<Result> results) {
+    public void setResultsList(List<Result> results) {
         this.results = results;
     }
 
