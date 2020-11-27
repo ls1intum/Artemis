@@ -88,7 +88,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         assertThat(submissions).hasSize(1);
 
         ProgrammingSubmission submission = submissions.get(0);
-        assertThat(submission.getResult()).isNull();
+        assertThat(submissionRepository.findWithEagerResultById(submission.getId()).get().getResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
     }
@@ -107,7 +107,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         assertThat(submissions).hasSize(1);
 
         ProgrammingSubmission submission = submissions.get(0);
-        assertThat(submission.getResult()).isNull();
+        assertThat(submissionRepository.findWithEagerResultById(submission.getId()).get().getResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
     }
@@ -156,7 +156,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
         List<ProgrammingExerciseParticipation> participations = new ArrayList<>();
         for (ProgrammingSubmission submission : submissions) {
-            assertThat(submission.getResult()).isNull();
+            assertThat(submissionRepository.findWithEagerResultById(submission.getId()).get().getResult()).isNull();
             assertThat(submission.isSubmitted()).isTrue();
             assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
             assertThat(submission.getParticipation()).isNotNull();
@@ -207,7 +207,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
         List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>();
         for (ProgrammingSubmission submission : submissions) {
-            assertThat(submission.getResult()).isNull();
+            assertThat(submissionRepository.findWithEagerResultById(submission.getId()).get().getResult()).isNull();
             assertThat(submission.isSubmitted()).isTrue();
             assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
             assertThat(submission.getParticipation()).isNotNull();
