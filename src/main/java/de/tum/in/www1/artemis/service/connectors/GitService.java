@@ -258,6 +258,7 @@ public class GitService {
     }
 
     public void pushToTargetRepo(Repository sourceRepo, Repository targetRepo, URL targetRepoUrl) throws GitAPIException {
+        System.out.println("++pushToTargetRepo");
         Git git = new Git(sourceRepo);
         // Git targetGit = new Git(targetRepo);
         // var targetRemote = targetGit.remoteList().call().stream().findFirst().get();
@@ -275,8 +276,6 @@ public class GitService {
         catch (URISyntaxException ex) {
             log.error("Error while pushing to remote target", ex);
         }
-        // return git.pull().setRemote("origin").setRemoteBranchName(sourceBranchName).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER,
-        // GIT_PASSWORD)).call();
     }
 
     /**

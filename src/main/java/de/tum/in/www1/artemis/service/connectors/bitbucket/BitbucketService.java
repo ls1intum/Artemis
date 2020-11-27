@@ -274,10 +274,9 @@ public class BitbucketService extends AbstractVersionControlService {
     public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
-        final var sourceRepoSlug = sourceProjectKey.toLowerCase() + "-" + sourceRepositoryName;
         final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
         try {
-            var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepoSlug);
+            var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepositoryName);
             URL sourceRepositoryUrlAsUrl = new URL(sourceRepoUrl.toString());
             Repository sourceRepo = gitService.getOrCheckoutRepository(sourceRepositoryUrlAsUrl, true);
 
