@@ -267,9 +267,9 @@ public class GitService {
         System.out.println("++targetURi");
         System.out.println(targetUri);
         try {
-            git.remoteAdd().setName("target").setUri(new URIish(targetUri));
+            git.remoteAdd().setName("target").setUri(new URIish(targetUri)).call();
             git.push().setRemote("target").setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
-            git.remoteRemove().setRemoteName("target");
+            git.remoteRemove().setRemoteName("target").call();
             git.close();
             // targetGit.close();
         }
