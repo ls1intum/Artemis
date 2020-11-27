@@ -1205,6 +1205,7 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setResult(result);
+        submission.setParticipation(participation);
         submissionRepository.save(submission);
         return result;
     }
