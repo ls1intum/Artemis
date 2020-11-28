@@ -17,6 +17,9 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'account',
                     loadChildren: () => import('./account/account.module').then((m) => m.ArtemisAccountModule),
+                    data: {
+                        pageTitle: 'global.menu.account.main',
+                    },
                 },
                 // ===== COURSE MANAGEMENT =====
                 {
