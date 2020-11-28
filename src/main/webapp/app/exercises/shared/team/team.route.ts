@@ -11,6 +11,7 @@ export const teamRoute: Routes = [
         component: TeamsComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.team.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -20,6 +21,7 @@ export const teamRoute: Routes = [
         component: TeamComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.team.detail.title',
         },
         canActivate: [UserRouteAccessService],
