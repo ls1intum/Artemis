@@ -18,6 +18,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 export class LectureUpdateComponent implements OnInit {
     EditorMode = EditorMode;
     lecture: Lecture;
+    course: Course;
     isSaving: boolean;
 
     courses: Course[];
@@ -40,9 +41,15 @@ export class LectureUpdateComponent implements OnInit {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ lecture }) => {
             this.lecture = lecture;
-            this.courseService.find(Number(this.activatedRoute.snapshot.paramMap.get('courseId'))).subscribe((response: HttpResponse<Course>) => {
-                this.lecture.course = response.body!;
-            });
+            if (this.course) {
+                this.lecture.course = this.course;
+            }
+        });
+        this.activatedRoute.parent!.data.subscribe(({ course }) => {
+            this.course = course;
+            if (this.lecture) {
+                this.lecture.course = course;
+            }
         });
     }
 

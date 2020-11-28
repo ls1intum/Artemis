@@ -7,7 +7,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureService } from './lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { onError } from 'app/shared/util/global.utils';
 import { JhiAlertService } from 'ng-jhipster';
 
@@ -20,6 +20,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     currentAccount: any;
     eventSubscriber: Subscription;
     courseId: number;
+    isVisible: boolean;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -27,6 +28,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     constructor(
         protected lectureService: LectureService,
         private route: ActivatedRoute,
+        private router: Router,
         private jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
         protected accountService: AccountService,
@@ -54,6 +56,8 @@ export class LectureComponent implements OnInit, OnDestroy {
             this.currentAccount = account;
         });
         this.registerChangeInLectures();
+        this.isVisible = this.route.children.length === 0;
+        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => (this.isVisible = this.route.children.length === 0));
     }
 
     ngOnDestroy() {
