@@ -188,7 +188,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.assessor" })
-    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch r.assessor a where p.exercise.id = :#{#exerciseId} and (:#{#assessorId} in (select a.id from User a) and s.id = (select max(id) from p.submissions) or s.id = null)")
+    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch r.assessor where p.exercise.id = :#{#exerciseId} and (r.assessor.id = :#{#assessorId} and s.id = (select max(id) from p.submissions) or s.id = null)")
     List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessor(@Param("exerciseId") Long exerciseId, @Param("assessorId") Long assessorId);
 
     @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch r.assessor a where p.exercise.id = :#{#exerciseId} and (:#{#assessorId} in (select a.id from User a) and s.id = (select max(id) from p.submissions) or s.id = null) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
