@@ -27,7 +27,7 @@ const question = { id: 1, dropLocations: [dropLocation1, dropLocation2], quizQue
 const course = { id: 2 } as Course;
 let quizExercise = { id: 42, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
 
-describe('QuizExercise Question Statistic Component', () => {
+describe('QuizExercise Drag And Drop Question Statistic Component', () => {
     let comp: DragAndDropQuestionStatisticComponent;
     let fixture: ComponentFixture<DragAndDropQuestionStatisticComponent>;
     let quizService: QuizExerciseService;
@@ -107,7 +107,7 @@ describe('QuizExercise Question Statistic Component', () => {
     });
 
     describe('loadData', function () {
-        it('should call functions from loadLayout', () => {
+        it('should call functions from loadData', () => {
             accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
             const resetDataSpy = spyOn(comp, 'resetData');
             const updateDataSpy = spyOn(comp, 'updateData');

@@ -439,6 +439,21 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
+     * Returns the repository url for the given repository type.
+     *
+     * @param repositoryType The repository type for which the url should be returned
+     * @return The repository url
+     */
+    @JsonIgnore
+    public URL getRepositoryURL(RepositoryType repositoryType) {
+        return switch (repositoryType) {
+            case TEMPLATE -> this.getTemplateRepositoryUrlAsUrl();
+            case SOLUTION -> this.getSolutionRepositoryUrlAsUrl();
+            case TESTS -> this.getTestRepositoryUrlAsUrl();
+        };
+    }
+
+    /**
      * Returns the project name by concatenating the course short name with the exercise title.
      *
      * @return project name of the programming exercise

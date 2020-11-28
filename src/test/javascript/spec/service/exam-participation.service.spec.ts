@@ -16,7 +16,6 @@ import { Course } from 'app/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
-import { expect } from '../helpers/jest.fix';
 
 describe('Exam Participation Service', () => {
     let injector: TestBed;
