@@ -6,7 +6,9 @@
             "yes": "Ja",
             "no": "Nein",
             "emptyList": "Keine Elemente verfügbar",
-            "unset": "Nicht gesetzt"
+            "unset": "Nicht gesetzt",
+            "create": "Erstellen",
+            "edit": "Editieren"
         },
         "menu": {
             "home": "Startseite",
