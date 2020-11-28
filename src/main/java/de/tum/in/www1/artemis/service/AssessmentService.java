@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -45,11 +46,13 @@ public class AssessmentService {
 
     private final SubmissionService submissionService;
 
+    private final LtiService ltiService;
+
     private final Logger log = LoggerFactory.getLogger(AssessmentService.class);
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, ExamService examService, GradingCriterionService gradingCriterionService, UserService userService) {
+            SubmissionRepository submissionRepository, ExamService examService, GradingCriterionService gradingCriterionService, UserService userService, LtiService ltiService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -61,6 +64,7 @@ public class AssessmentService {
         this.examService = examService;
         this.gradingCriterionService = gradingCriterionService;
         this.userService = userService;
+        this.ltiService = ltiService;
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
@@ -196,8 +200,9 @@ public class AssessmentService {
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
         Result result = submission.getResult();
 
-        /** For programming exercises we need to delete the submission of the manual result as well, as for each new manual result a new submission will be generated.
-        *  The CascadeType.REMOVE of {@link Submission#result} will delete also the result and the corresponding feedbacks {@link Result#feedbacks}.
+        /*
+         * For programming exercises we need to delete the submission of the manual result as well, as for each new manual result a new submission will be generated. The
+         * CascadeType.REMOVE of {@link Submission#result} will delete also the result and the corresponding feedbacks {@link Result#feedbacks}.
          */
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
             participation.removeSubmissions(submission);
@@ -302,7 +307,10 @@ public class AssessmentService {
         result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
         Double calculatedScore = calculateTotalScore(result.getFeedbacks());
-        return submitResult(result, exercise, calculatedScore);
+        result = submitResult(result, exercise, calculatedScore);
+        // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system
+        ltiService.onNewResult((StudentParticipation) result.getParticipation());
+        return result;
     }
 
     /**

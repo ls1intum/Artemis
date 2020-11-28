@@ -33,7 +33,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
 import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
@@ -433,11 +433,11 @@ public class LtiService {
     }
 
     /**
-     * This method is pinged on new programming exercise results. It sends an message to the LTI consumer with the new score.
+     * This method is pinged on new exercise results. It sends an message to the LTI consumer with the new score.
      *
-     * @param participation The programming exercise participation for which a new build result is available
+     * @param participation The exercise participation for which a new build result is available
      */
-    public void onNewResult(ProgrammingExerciseStudentParticipation participation) {
+    public void onNewResult(StudentParticipation participation) {
         if (this.OAUTH_KEY.isPresent() && this.OAUTH_SECRET.isPresent()) {
             // Get the LTI outcome URL
             participation.getStudents().forEach(student -> ltiOutcomeUrlRepository.findByUserAndExercise(student, participation.getExercise()).ifPresent(ltiOutcomeUrl -> {
