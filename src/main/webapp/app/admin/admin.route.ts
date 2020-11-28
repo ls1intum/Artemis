@@ -1,32 +1,16 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { logsRoute } from 'app/admin/logs/logs.route';
-import { trackerRoute } from 'app/admin/tracker/tracker.route';
-import { auditsRoute } from 'app/admin/audits/audits.route';
-import { configurationRoute } from 'app/admin/configuration/configuration.route';
-import { featureRoute } from 'app/admin/features/features.route';
-import { userMgmtRoute1, userMgmtRoute2, userMgmtRoute3, userMgmtRoute4 } from 'app/admin/user-management/user-management.route';
+import { userMgmtRoute } from 'app/admin/user-management/user-management.route';
 import { systemNotificationManagementRoute } from 'app/admin/system-notification-management/system-notification-management.route';
-import { healthRoute } from 'app/admin/health/health.route';
-import { metricsRoute } from 'app/admin/metrics/metrics.route';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { upcomingExamsAndExercisesRoute } from 'app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.route';
-
-const ADMIN_ROUTES = [
-    auditsRoute,
-    configurationRoute,
-    healthRoute,
-    logsRoute,
-    trackerRoute,
-    userMgmtRoute1,
-    userMgmtRoute2,
-    userMgmtRoute3,
-    userMgmtRoute4,
-    metricsRoute,
-    featureRoute,
-    upcomingExamsAndExercisesRoute,
-    ...systemNotificationManagementRoute,
-];
+import { AuditsComponent } from 'app/admin/audits/audits.component';
+import { JhiConfigurationComponent } from 'app/admin/configuration/configuration.component';
+import { AdminFeatureToggleComponent } from 'app/admin/features/admin-feature-toggle.component';
+import { HealthComponent } from 'app/admin/health/health.component';
+import { LogsComponent } from 'app/admin/logs/logs.component';
+import { JhiMetricsMonitoringComponent } from 'app/admin/metrics/metrics.component';
+import { JhiTrackerComponent } from 'app/admin/tracker/tracker.component';
 
 export const adminState: Routes = [
     {
@@ -35,6 +19,60 @@ export const adminState: Routes = [
             authorities: [Authority.ADMIN],
         },
         canActivate: [UserRouteAccessService],
-        children: ADMIN_ROUTES,
+        children: [
+            {
+                path: 'audits',
+                component: AuditsComponent,
+                data: {
+                    pageTitle: 'audits.title',
+                    defaultSort: 'auditEventDate,desc',
+                },
+            },
+            {
+                path: 'jhi-configuration',
+                component: JhiConfigurationComponent,
+                data: {
+                    pageTitle: 'configuration.title',
+                },
+            },
+            {
+                path: 'feature-toggles',
+                component: AdminFeatureToggleComponent,
+                data: {
+                    pageTitle: 'featureToggles.title',
+                },
+            },
+            {
+                path: 'jhi-health',
+                component: HealthComponent,
+                data: {
+                    pageTitle: 'health.title',
+                },
+            },
+            {
+                path: 'logs',
+                component: LogsComponent,
+                data: {
+                    pageTitle: 'logs.title',
+                },
+            },
+            {
+                path: 'jhi-metrics',
+                component: JhiMetricsMonitoringComponent,
+                data: {
+                    pageTitle: 'metrics.title',
+                },
+            },
+            {
+                path: 'jhi-tracker',
+                component: JhiTrackerComponent,
+                data: {
+                    pageTitle: 'tracker.title',
+                },
+            },
+            userMgmtRoute,
+            systemNotificationManagementRoute,
+            upcomingExamsAndExercisesRoute,
+        ],
     },
 ];

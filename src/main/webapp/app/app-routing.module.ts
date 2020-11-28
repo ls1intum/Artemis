@@ -13,6 +13,9 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'admin',
                     loadChildren: () => import('./admin/admin.module').then((m) => m.ArtemisAdminModule),
+                    data: {
+                        pageTitle: 'global.menu.admin.main',
+                    },
                 },
                 {
                     path: 'account',
