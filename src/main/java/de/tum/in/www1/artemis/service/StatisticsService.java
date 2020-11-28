@@ -90,7 +90,6 @@ public class StatisticsService {
     }
 
     public Integer getResultFeedbacks(Long span) {
-        Integer result = this.statisticsRepository.getResultFeedbacks(ZonedDateTime.now().minusDays(span));
-        return (result != null ? result : 0);
+        return this.statisticsRepository.getResultFeedbacks(ZonedDateTime.now().minusDays(span));
     }
 }

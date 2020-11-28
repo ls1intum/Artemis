@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
-import { SpanType } from 'app/admin/statistics/statistics.component';
+import { SpanType } from 'app/entities/statistics.model';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {

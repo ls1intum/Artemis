@@ -13,7 +13,7 @@ import { HealthComponent } from 'app/admin/health/health.component';
 import { JhiConfigurationComponent } from 'app/admin/configuration/configuration.component';
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
-import { JhiStatisticsComponent } from 'app/admin/statistics/statistics.component';
+import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { AuditsComponent } from 'app/admin/audits/audits.component';
 import { HealthModalComponent } from 'app/admin/health/health-modal.component';
 import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
@@ -46,7 +46,7 @@ const ENTITY_STATES = [...adminState];
         JhiConfigurationComponent,
         HealthComponent,
         HealthModalComponent,
-        JhiStatisticsComponent,
+        StatisticsComponent,
         JhiMetricsMonitoringComponent,
         AdminFeatureToggleComponent,
         UpcomingExamsAndExercisesComponent,

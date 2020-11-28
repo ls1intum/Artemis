@@ -6,19 +6,13 @@ import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-
-export enum SpanType {
-    DAY = 'DAY',
-    WEEK = 'WEEK',
-    MONTH = 'MONTH',
-    YEAR = 'YEAR',
-}
+import { SpanType } from 'app/entities/statistics.model';
 
 @Component({
     selector: 'jhi-statistics',
     templateUrl: './statistics.component.html',
 })
-export class JhiStatisticsComponent implements OnInit, OnChanges {
+export class StatisticsComponent implements OnInit, OnChanges {
     spanPattern = SPAN_PATTERN;
     span: SpanType = SpanType.WEEK;
 
@@ -51,17 +45,12 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
                 this.histogramData = Array(7).fill(0);
                 break;
             case SpanType.MONTH:
-                const days = this.daysInMonth();
-                this.histogramData = Array(days).fill(0);
+                this.histogramData = Array(moment().daysInMonth()).fill(0);
                 break;
             case SpanType.YEAR:
                 this.histogramData = Array(12).fill(0);
                 break;
         }
-    }
-
-    private daysInMonth(): number {
-        return new Date(new Date().getFullYear(), new Date().getMonth(), 0).getDate();
     }
 
     async getSubmissions(): Promise<number[]> {
@@ -92,19 +81,18 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
                 break;
         }
     }
-    private getWeekdays(day: number): string[] {
-        const days = [
-            this.translateService.instant('weekdays.monday'),
-            this.translateService.instant('weekdays.tuesday'),
-            this.translateService.instant('weekdays.wednesday'),
-            this.translateService.instant('weekdays.thursday'),
-            this.translateService.instant('weekdays.friday'),
-            this.translateService.instant('weekdays.saturday'),
-            this.translateService.instant('weekdays.sunday'),
-        ];
-        const back = days.slice(day, days.length);
-        const front = days.slice(0, day);
-        return back.concat(front);
+
+    private getWeekdays(): string[] {
+        const days: string[] = [];
+
+        for (let i = 0; i < 7; i++) {
+            days.push(
+                moment()
+                    .subtract(6 - i, 'd')
+                    .format('dddd'),
+            );
+        }
+        return days;
     }
 
     private createLabels(): string[] {
@@ -116,8 +104,7 @@ export class JhiStatisticsComponent implements OnInit, OnChanges {
                 }
                 break;
             case SpanType.WEEK:
-                const weekdayIndex = moment().day();
-                labels = this.getWeekdays(weekdayIndex);
+                labels = this.getWeekdays();
                 break;
             case SpanType.MONTH:
                 for (let i = 0; i < this.histogramData.length; i++) {

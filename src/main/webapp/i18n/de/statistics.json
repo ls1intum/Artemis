@@ -24,14 +24,5 @@
         "resultFeedbacks": "-> mit der absoluten Feedbackanzahl: ",
         "userLogins": "Benutzer Anmeldungen",
         "submissions": "Abgaben"
-    },
-    "weekdays": {
-        "monday": "Montag",
-        "tuesday": "Dienstag",
-        "wednesday": "Mittwoch",
-        "thursday": "Donnerstag",
-        "friday": "Freitag",
-        "saturday": "Samstag",
-        "sunday": "Sonntag"
     }
 }

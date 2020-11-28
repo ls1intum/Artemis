@@ -1,9 +1,9 @@
 import { Route } from '@angular/router';
-import { JhiStatisticsComponent } from 'app/admin/statistics/statistics.component';
+import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 
 export const statisticsRoute: Route = {
     path: 'jhi-statistics',
-    component: JhiStatisticsComponent,
+    component: StatisticsComponent,
     data: {
         pageTitle: 'statistics.title',
     },
