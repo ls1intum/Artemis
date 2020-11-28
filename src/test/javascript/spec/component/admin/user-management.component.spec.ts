@@ -7,7 +7,7 @@ import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute, MockRouter } from '../../helpers/mocks/service/mock-route.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule, RouterEvent } from '@angular/router';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { of } from 'rxjs';
@@ -18,13 +18,18 @@ describe('UserManagementComponent', () => {
     let service: UserService;
     let mockActivatedRoute: MockActivatedRoute;
 
+    const route = ({
+        params: of({ courseId: 123, sort: 'id,desc' }),
+        children: [],
+    } as any) as ActivatedRoute;
+
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisAdminModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisAdminModule, RouterModule.forRoot([])],
             providers: [
                 {
                     provide: ActivatedRoute,
-                    useValue: new MockActivatedRoute({ courseId: 123 }),
+                    useValue: route,
                 },
                 {
                     provide: Router,
@@ -39,9 +44,6 @@ describe('UserManagementComponent', () => {
                 comp = fixture.componentInstance;
                 service = fixture.debugElement.injector.get(UserService);
                 mockActivatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
-                mockActivatedRoute.setParameters({
-                    sort: 'id,desc',
-                });
             });
     });
 
@@ -73,32 +75,6 @@ describe('UserManagementComponent', () => {
             expect(comp.loadingSearchResult).toEqual(false);
         }),
     ));
-
-    describe('OnInit', () => {
-        it('Should call load all on init', inject(
-            [],
-            fakeAsync(() => {
-                // GIVEN
-                const headers = new HttpHeaders().append('link', 'link;link');
-                spyOn(service, 'query').and.returnValue(
-                    of(
-                        new HttpResponse({
-                            body: [new User(123)],
-                            headers,
-                        }),
-                    ),
-                );
-
-                // WHEN
-                comp.ngOnInit();
-                tick(1000); // simulate async
-
-                // THEN
-                expect(service.query).toHaveBeenCalled();
-                expect(comp.users && comp.users[0]).toEqual(expect.objectContaining({ id: 123 }));
-            }),
-        ));
-    });
 
     describe('setActive', () => {
         it('Should update user and call load all', inject(
