@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -14,49 +13,30 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 describe('Course Management Detail Component', () => {
     let comp: CourseDetailComponent;
     let fixture: ComponentFixture<CourseDetailComponent>;
-    let service: CourseManagementService;
 
     const course: Course = { id: 123 } as Course;
-    const route = ({ params: of({ courseId: course.id }) } as any) as ActivatedRoute;
+    const route = ({ data: of({ courseId: course.id }), children: [] } as any) as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [CourseDetailComponent],
-            providers: [
-                { provide: ActivatedRoute, useValue: route },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: CourseManagementService, useClass: MockCourseManagementService },
-            ],
+            providers: [{ provide: ActivatedRoute, useValue: route }],
         })
             .overrideTemplate(CourseDetailComponent, '')
             .compileComponents();
         fixture = TestBed.createComponent(CourseDetailComponent);
         comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(CourseManagementService);
     });
 
     describe('OnInit', () => {
-        it('Should call load on init', () => {
-            // GIVEN
-            const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'find').and.returnValue(
-                of(
-                    new HttpResponse({
-                        body: course,
-                        headers,
-                    }),
-                ),
-            );
+        it('Should call registerChangeInCourses on init', () => {
+            const registerSpy = spyOn(comp, 'registerChangeInCourses');
 
-            // WHEN
             fixture.detectChanges();
             comp.ngOnInit();
 
-            // THEN
-            expect(service.find).toHaveBeenCalled();
-            expect(comp.course).toEqual(expect.objectContaining({ id: course.id }));
+            expect(registerSpy).toHaveBeenCalled();
         });
     });
 });

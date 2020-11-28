@@ -28,6 +28,9 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'course-management',
                     loadChildren: () => import('./course/manage/course-management.module').then((m) => m.ArtemisCourseManagementModule),
+                    data: {
+                        pageTitle: 'global.menu.course',
+                    },
                 },
                 {
                     path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',
