@@ -56,6 +56,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("select r from Result r left join fetch r.feedbacks where r.id = :resultId")
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long id);
 
+    @Query("select r from Result r left join fetch r.submission left join fetch r.feedbacks where r.id = :resultId")
+    Optional<Result> findByIdWithEagerSubmissionAndFeedbacks(@Param("resultId") Long id);
+
     @Query("select r from Result r left join fetch r.feedbacks left join fetch r.assessor where r.id = :resultId")
     Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") Long id);
 

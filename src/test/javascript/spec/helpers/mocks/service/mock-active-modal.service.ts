@@ -1,9 +1,9 @@
 import { SpyObject } from '../../spyobject';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import Spy = jasmine.Spy;
+import { SinonStub } from 'sinon';
 
 export class MockActiveModal extends SpyObject {
-    dismissSpy: Spy;
+    dismissSpy: SinonStub;
 
     constructor() {
         super(NgbActiveModal);

@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.domain.participation;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -190,14 +192,18 @@ public abstract class Participation extends DomainObject implements Participatio
      *
      * @return the latest result or null
      */
+    @Nullable
     public Result findLatestResult() {
         Set<Result> results = this.results;
         if (results == null || results.size() == 0) {
             return null;
         }
-        List<Result> sortedResults = new ArrayList<>(results);
-        sortedResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
-        return sortedResults.get(0);
+        List<Result> sortedResultsWithCompletionDate = results.stream().filter(r -> r.getCompletionDate() != null)
+                .sorted((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate())).collect(Collectors.toList());
+        if (sortedResultsWithCompletionDate.size() == 0) {
+            return null;
+        }
+        return sortedResultsWithCompletionDate.get(0);
     }
 
     // TODO: implement a method Result findLatestResultBeforeDueDate(ZonedDateTime dueDate)
@@ -207,15 +213,16 @@ public abstract class Participation extends DomainObject implements Participatio
      * by submission date and return the first. WARNING: The submissions of the participation might not be loaded because of Hibernate and therefore, the function might return
      * null, although the participation has submissions. This might not be high-performance, so use it at your own risk.
      *
+     * @param <T> submission type
      * @return the latest submission or null
      */
-    public Optional<Submission> findLatestSubmission() {
+    public <T extends Submission> Optional<T> findLatestSubmission() {
         Set<Submission> submissions = this.submissions;
         if (submissions == null || submissions.size() == 0) {
             return Optional.empty();
         }
 
-        return submissions.stream().max((s1, s2) -> {
+        return (Optional<T>) submissions.stream().max((s1, s2) -> {
             if (s1.getSubmissionDate() == null || s2.getSubmissionDate() == null) {
                 // this case should not happen, but in the rare case we can compare the ids
                 // newer ids are typically later

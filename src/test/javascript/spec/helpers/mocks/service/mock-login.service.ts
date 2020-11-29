@@ -1,13 +1,13 @@
 import { SpyObject } from '../../spyobject';
 import { LoginService } from 'app/core/login/login.service';
-import Spy = jasmine.Spy;
+import { SinonStub } from 'sinon';
 
 export class MockLoginService extends SpyObject {
-    loginSpy: Spy;
-    logoutSpy: Spy;
-    registerSpy: Spy;
-    requestResetPasswordSpy: Spy;
-    cancelSpy: Spy;
+    loginSpy: SinonStub;
+    logoutSpy: SinonStub;
+    registerSpy: SinonStub;
+    requestResetPasswordSpy: SinonStub;
+    cancelSpy: SinonStub;
 
     constructor() {
         super(LoginService);

@@ -29,6 +29,7 @@ export class FeedbackItem {
     text?: string;
     positive?: boolean;
     credits?: number;
+    appliedCredits?: number;
 }
 
 // Modal -> Result details view
@@ -54,6 +55,7 @@ export class ResultDetailComponent implements OnInit {
     buildLogs: BuildLogEntryArray;
 
     scoreChartPreset: ScoreChartPreset;
+    showScoreChartTooltip = false;
 
     constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private buildLogService: BuildLogService, translateService: TranslateService) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
@@ -148,7 +150,8 @@ export class ResultDetailComponent implements OnInit {
                         title: `${scaCategory} Issue in file ${this.getIssueLocation(scaIssue)}`.trim(),
                         text: this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message,
                         positive: false,
-                        credits: feedback.credits,
+                        credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
+                        appliedCredits: feedback.credits,
                     };
                 } else if (feedback.type === FeedbackType.AUTOMATIC) {
                     return {
@@ -281,10 +284,13 @@ export class ResultDetailComponent implements OnInit {
         }
 
         const sumCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.credits || 0);
+        const sumAppliedCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.appliedCredits || 0);
 
         let testCaseCredits = feedbackList.filter((item) => item.type === FeedbackItemType.Test).reduce(sumCredits, 0);
         const positiveCredits = feedbackList.filter((item) => item.type !== FeedbackItemType.Test && item.credits && item.credits > 0).reduce(sumCredits, 0);
-        let codeIssueCredits = -feedbackList.filter((item) => item.type === FeedbackItemType.Issue).reduce(sumCredits, 0);
+
+        let codeIssueCredits = -feedbackList.filter((item) => item.type === FeedbackItemType.Issue).reduce(sumAppliedCredits, 0);
+        const codeIssuePenalties = -feedbackList.filter((item) => item.type === FeedbackItemType.Issue).reduce(sumCredits, 0);
         const negativeCredits = -feedbackList.filter((item) => item.type !== FeedbackItemType.Issue && item.credits && item.credits < 0).reduce(sumCredits, 0);
 
         const exercise = this.result.participation.exercise;
@@ -305,11 +311,16 @@ export class ResultDetailComponent implements OnInit {
             }
         }
 
-        const negativePoints = codeIssueCredits + negativeCredits;
+        const appliedNegativePoints = codeIssueCredits + negativeCredits;
+        const receivedNegativePoints = codeIssuePenalties + negativeCredits;
         const positivePoints = testCaseCredits + positiveCredits;
 
+        if (appliedNegativePoints !== receivedNegativePoints) {
+            this.showScoreChartTooltip = true;
+        }
+
         // the chart preset handles the capping to the maximum score of the exercise
-        this.scoreChartPreset.setValues(positivePoints, negativePoints, exercise);
+        this.scoreChartPreset.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, exercise);
     }
 
     /**
