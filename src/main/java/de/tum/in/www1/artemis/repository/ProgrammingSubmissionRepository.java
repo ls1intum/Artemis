@@ -20,6 +20,14 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 @Repository
 public interface ProgrammingSubmissionRepository extends JpaRepository<ProgrammingSubmission, Long> {
 
+    /**
+     * Load submission with eager Results
+     * @param submissionId the submissionId
+     * @return optional submission
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "results" })
+    Optional<ProgrammingSubmission> findWithEagerResultsById(Long submissionId);
+
     @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks" })
     ProgrammingSubmission findFirstByParticipationIdAndCommitHash(Long participationId, String commitHash);
 

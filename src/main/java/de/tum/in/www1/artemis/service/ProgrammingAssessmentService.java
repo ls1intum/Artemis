@@ -37,19 +37,23 @@ public class ProgrammingAssessmentService extends AssessmentService {
     @Transactional
     public Result saveManualAssessment(Result result) {
         result.setHasFeedback(!result.getFeedbacks().isEmpty());
-
+        var participation = result.getParticipation();
         User user = userService.getUserWithGroupsAndAuthorities();
+
         result.setHasComplaint(false);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(user);
         result.setCompletionDate(null);
 
+        Result finalResult = result;
         result.getFeedbacks().forEach(feedback -> {
-            feedback.setResult(result);
+            feedback.setResult(finalResult);
         });
 
         // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
-        return resultRepository.save(result);
+        result = resultRepository.save(finalResult);
+        result.setParticipation(participation);
+        return result;
     }
 
     /**

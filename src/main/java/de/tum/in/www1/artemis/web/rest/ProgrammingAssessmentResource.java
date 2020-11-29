@@ -107,7 +107,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      *
      * @param participationId the id of the participation that should be sent to the client
      * @param submit       defines if assessment is submitted or saved
-     * @param newResult    result with ist of feedbacks to be saved to the database
+     * @param newResult    result with list of feedbacks to be saved to the database
      * @return the result saved to the database
      */
     @ResponseStatus(HttpStatus.OK)
@@ -173,14 +173,14 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             // Create manual submission with last commit hash and current time stamp.
             submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
                     SubmissionType.MANUAL);
-            newResult.setSubmission(submission);
         }
         else {
             submission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(latestExistingResult.get().getSubmission().getId());
-            newResult.setSubmission(submission);
         }
 
         Result result = programmingAssessmentService.saveManualAssessment(newResult);
+
+        result = submissionService.setOrderedResult(submission, result);
 
         if (submit) {
             result = programmingAssessmentService.submitManualAssessment(result.getId());

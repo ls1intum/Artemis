@@ -51,6 +51,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
@@ -72,6 +73,8 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final ResultRepository resultRepository;
+
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
@@ -88,7 +91,7 @@ public class BambooService implements ContinuousIntegrationService {
 
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackService feedbackService,
-            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, ObjectMapper mapper, UrlService urlService) {
+            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, ObjectMapper mapper, UrlService urlService, ResultRepository resultRepository) {
         this.gitService = gitService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
@@ -98,6 +101,7 @@ public class BambooService implements ContinuousIntegrationService {
         this.restTemplate = restTemplate;
         this.mapper = mapper;
         this.urlService = urlService;
+        this.resultRepository = resultRepository;
     }
 
     @Override
@@ -562,9 +566,14 @@ public class BambooService implements ContinuousIntegrationService {
             // Do not remove this save, otherwise Hibernate will throw an order column index null exception on saving the build logs
             programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
 
+            // todo wip, save currently necessary, because of relationship between result and submission
+            result = resultRepository.save(result);
+
             var buildLogs = extractAndPrepareBuildLogs(buildResult, programmingSubmission);
             // Set the received logs in order to avoid duplicate entries (this removes existing logs)
             programmingSubmission.setBuildLogEntries(buildLogs);
+            result.setSubmission(programmingSubmission);
+            programmingSubmission.setResult(result);
             programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
 
             result.setSubmission(programmingSubmission);

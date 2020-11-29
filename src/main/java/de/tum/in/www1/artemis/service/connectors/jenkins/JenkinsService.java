@@ -51,6 +51,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -78,6 +79,8 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final ResultRepository resultRepository;
+
     private final JenkinsServer jenkinsServer;
 
     private final FeedbackService feedbackService;
@@ -86,12 +89,13 @@ public class JenkinsService implements ContinuousIntegrationService {
     private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
     public JenkinsService(JenkinsBuildPlanCreatorProvider buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackService feedbackService) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackService feedbackService, ResultRepository resultRepository) {
         this.buildPlanCreatorProvider = buildPlanCreatorFactory;
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.feedbackService = feedbackService;
+        this.resultRepository = resultRepository;
     }
 
     @Override
@@ -319,7 +323,12 @@ public class JenkinsService implements ContinuousIntegrationService {
         final ProgrammingSubmission submission;
         submission = latestPendingSubmission.orElseGet(() -> createFallbackSubmission(participation, report));
         submission.setBuildFailed(result.getResultString().equals("No tests found"));
+
+        // todo wip, save currently necessary, because of relationship between result and submission
+        resultRepository.save(result);
+
         result.setSubmission(submission);
+        submission.setResult(result);
         result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), submission);
         programmingSubmissionRepository.save(submission);
         // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).

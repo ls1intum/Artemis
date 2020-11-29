@@ -295,7 +295,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         List<Result> results = resultRepository.findAll();
         assertThat(results).hasSize(1);
         Result result = resultRepository.findWithEagerSubmissionAndFeedbackById(results.get(0).getId()).get();
-        submission = submissionRepository.findById(submission.getId()).get();
+        submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
         assertThat(result.getSubmission()).isNotNull();
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
         assertThat(submission.getResult()).isNotNull();

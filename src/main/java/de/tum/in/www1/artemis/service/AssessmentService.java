@@ -39,7 +39,7 @@ public class AssessmentService {
 
     private final ExamService examService;
 
-    private final SubmissionRepository submissionRepository;
+    protected final SubmissionRepository submissionRepository;
 
     protected final GradingCriterionService gradingCriterionService;
 

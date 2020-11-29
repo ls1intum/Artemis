@@ -5,10 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toList;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -278,6 +275,23 @@ public class SubmissionService {
     public Result setNewResult(Submission submission) {
         Result result = new Result();
         result.setParticipation(submission.getParticipation());
+        result = resultRepository.save(result);
+        result.setSubmission(submission);
+        submission.setResult(result);
+        submissionRepository.save(submission);
+        return result;
+    }
+
+    /**
+     * todo wip
+     * currently used to fix issues with saving / assigning results to submissions
+     */
+    public Result setOrderedResult(Submission submission, Result result) {
+        result.setSubmission(null);
+        submission.setResultsList(new ArrayList<>());
+        if (result.getParticipation() == null) {
+            result.setParticipation(submission.getParticipation());
+        }
         result = resultRepository.save(result);
         result.setSubmission(submission);
         submission.setResult(result);
