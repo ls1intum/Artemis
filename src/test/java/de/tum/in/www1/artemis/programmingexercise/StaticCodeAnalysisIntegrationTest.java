@@ -13,7 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -22,6 +24,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.StaticCodeAnalysisResource;
 
@@ -232,7 +235,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    void shouldCategorizeFeedback() {
+    void shouldCategorizeFeedback() throws JsonProcessingException {
         var result = new Result();
         var feedback = new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS").detailText("{\"category\": \"BAD_PRACTICE\"}")
                 .type(FeedbackType.AUTOMATIC).positive(false);
@@ -241,5 +244,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(filteredFeedback.size()).isEqualTo(1);
         assertThat(result.getFeedbacks()).containsExactlyInAnyOrderElementsOf(filteredFeedback);
         assertThat(result.getFeedbacks().iterator().next().getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");
+        assertThat(new ObjectMapper().readValue(result.getFeedbacks().iterator().next().getDetailText(), StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue.class).getPenalty())
+                .isEqualTo(3.0);
     }
 }

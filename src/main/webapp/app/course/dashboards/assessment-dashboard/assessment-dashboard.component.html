@@ -2,7 +2,6 @@
     <div class="row justify-content-between">
         <div class="col-8">
             <h2>
-                <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
                 <h2 *ngIf="!isExamMode">{{ 'artemisApp.assessmentDashboard.pageHeader' | translate }} {{ course?.title }}</h2>
                 <h2 *ngIf="isExamMode">
                     {{ !isTestRun ? ('artemisApp.assessmentDashboard.pageHeaderExam' | translate) : ('artemisApp.assessmentDashboard.pageHeaderExamTestRun' | translate) }}

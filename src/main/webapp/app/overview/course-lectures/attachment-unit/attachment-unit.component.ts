@@ -5,15 +5,22 @@ import { FileService } from 'app/shared/http/file.service';
 @Component({
     selector: 'jhi-attachment-unit',
     templateUrl: './attachment-unit.component.html',
-    styleUrls: ['../../course-exercises/course-exercise-row.scss'],
+    styleUrls: ['../lecture-unit.component.scss'],
 })
 export class AttachmentUnitComponent implements OnInit {
     @Input()
     attachmentUnit: AttachmentUnit;
 
+    isCollapsed = true;
+
     constructor(private fileService: FileService) {}
 
     ngOnInit(): void {}
+
+    handleCollapse($event: any) {
+        $event.stopPropagation();
+        this.isCollapsed = !this.isCollapsed;
+    }
 
     downloadAttachment() {
         if (this.attachmentUnit?.attachment?.link) {

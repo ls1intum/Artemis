@@ -119,10 +119,6 @@ export class ListOfComplaintsComponent implements OnInit {
         this.jhiAlertService.error('error.http.400');
     }
 
-    back() {
-        this.location.back();
-    }
-
     sortRows() {
         this.sortService.sortByProperty(this.complaintsToShow, this.complaintsSortingPredicate, this.complaintsReverseOrder);
     }

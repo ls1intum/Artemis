@@ -12,9 +12,10 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { By } from '@angular/platform-browser';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { Lecture } from 'app/entities/lecture.model';
-import { Attachment } from 'app/entities/attachment.model';
+import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { AttachmentService } from 'app/lecture/attachment.service';
+import { FileService } from 'app/shared/http/file.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -111,6 +112,42 @@ describe('LectureAttachmentsComponent', () => {
                                     }),
                             };
                         },
+                        update() {
+                            return {
+                                subscribe: (fn: (value: any) => void) =>
+                                    fn({
+                                        body: {
+                                            id: 52,
+                                            name: 'TestFile',
+                                            link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+                                            version: 2,
+                                            uploadDate: moment('2019-05-07T08:49:59+02:00'),
+                                            attachmentType: 'FILE',
+                                        } as Attachment,
+                                    }),
+                            };
+                        },
+                        delete() {
+                            return {
+                                subscribe: (fn: (value: any) => void) =>
+                                    fn({
+                                        body: newAttachment,
+                                    }),
+                            };
+                        },
+                    },
+                },
+                {
+                    provide: FileService,
+                    useValue: {
+                        downloadFileWithAccessToken() {
+                            return {
+                                subscribe: (fn: (value: any) => void) =>
+                                    fn({
+                                        body: new Window(),
+                                    }),
+                            };
+                        },
                     },
                 },
             ],
@@ -171,5 +208,93 @@ describe('LectureAttachmentsComponent', () => {
         const fileAlert = fixture.debugElement.query(By.css('#too-large-file-alert'));
         expect(comp.attachments.length).to.equal(2);
         expect(fileAlert).to.exist;
+    }));
+
+    it('should exit saveAttachment', fakeAsync(() => {
+        fixture.detectChanges();
+        comp.attachmentToBeCreated = undefined;
+        comp.saveAttachment();
+        expect(comp.attachmentToBeCreated).to.deep.equal({
+            lecture: comp.lecture,
+            attachmentType: AttachmentType.FILE,
+            version: 0,
+            uploadDate: comp.attachmentToBeCreated!.uploadDate,
+        } as Attachment);
+    }));
+
+    it('should create Attachment', fakeAsync(() => {
+        fixture.detectChanges();
+        comp.attachmentToBeCreated = {
+            id: 1,
+            lecture: comp.lecture,
+            attachmentType: AttachmentType.FILE,
+            version: 1,
+            uploadDate: moment(),
+        } as Attachment;
+        comp.notificationText = 'wow how did i get here';
+        comp.saveAttachment();
+        expect(comp.attachments[1].version).to.equal(2);
+    }));
+
+    it('should edit attachment', fakeAsync(() => {
+        fixture.detectChanges();
+        comp.attachmentToBeCreated = undefined;
+        expect(comp.attachmentToBeCreated).to.equal(undefined);
+        comp.editAttachment(newAttachment);
+        expect(comp.attachmentToBeCreated).to.equal(newAttachment);
+        expect(comp.attachmentBackup).to.deep.equal(newAttachment);
+    }));
+
+    it('should delete attachment', fakeAsync(() => {
+        fixture.detectChanges();
+        const toDelete = {
+            id: 52,
+            name: 'test2',
+            link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+            version: 1,
+            uploadDate: moment('2019-05-07T08:49:59+02:00'),
+            attachmentType: 'FILE',
+        } as Attachment;
+        comp.deleteAttachment(toDelete);
+        expect(comp.attachments.length).to.equal(1);
+    }));
+
+    it('should call cancel', fakeAsync(() => {
+        fixture.detectChanges();
+        const toCancel = {
+            id: 52,
+            name: 'test34',
+            link: '/api/files/attachments/lecture/4/Mein_Test_PDF34.pdf',
+            version: 5,
+            uploadDate: moment('2019-05-07T08:49:59+02:00'),
+            attachmentType: 'FILE',
+        } as Attachment;
+        comp.attachmentBackup = toCancel;
+        comp.cancel();
+        expect(comp.attachments[1]).to.deep.equal(toCancel);
+    }));
+
+    it('should download attachment', fakeAsync(() => {
+        fixture.detectChanges();
+        comp.isDownloadingAttachmentLink = undefined;
+        expect(comp.isDownloadingAttachmentLink).to.equal(undefined);
+        comp.downloadAttachment('https://my/own/download/url');
+        expect(comp.isDownloadingAttachmentLink).to.equal(undefined);
+    }));
+
+    it('should set lecture attachment', fakeAsync(() => {
+        fixture.detectChanges();
+        const myBlob1 = { size: 1024, name: '/api/files/attachments/lecture/4/NewTest34.pdf' };
+        const myBlob2 = { size: 1024, name: '/api/files/attachments/lecture/4/NewTest100.pdf' };
+        const object = {
+            target: {
+                files: [myBlob1, myBlob2],
+            },
+        };
+        comp.attachmentToBeCreated = newAttachment;
+        comp.setLectureAttachment(object);
+
+        expect(comp.attachmentFile).to.deep.equal(myBlob1);
+        expect(comp.attachmentToBeCreated.link).to.equal(myBlob1.name);
     }));
 });

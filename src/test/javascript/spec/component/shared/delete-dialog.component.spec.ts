@@ -10,7 +10,6 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import * as sinon from 'sinon';
 import { stub } from 'sinon';
 import { Observable, Subject } from 'rxjs';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -53,14 +52,13 @@ describe('DeleteDialogComponent', () => {
 
         const closeButton = fixture.debugElement.query(By.css('.close'));
         expect(closeButton).to.exist;
-        const modalDismissSpy = sinon.spy(ngbActiveModal, 'dismiss');
         closeButton.nativeElement.click();
-        expect(modalDismissSpy.callCount).to.equal(1);
+        expect(ngbActiveModal.dismiss).to.be.calledOnce;
 
         const cancelButton = fixture.debugElement.query(By.css('.btn.btn-secondary'));
         expect(cancelButton).to.exist;
         cancelButton.nativeElement.click();
-        expect(modalDismissSpy.callCount).to.equal(2);
+        expect(ngbActiveModal.dismiss).to.be.calledTwice;
 
         inputFormGroup = debugElement.query(By.css('.form-group'));
         expect(inputFormGroup).to.exist;

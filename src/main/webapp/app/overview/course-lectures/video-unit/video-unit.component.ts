@@ -6,7 +6,7 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 @Component({
     selector: 'jhi-video-unit',
     templateUrl: './video-unit.component.html',
-    styleUrls: ['../../course-exercises/course-exercise-row.scss'],
+    styleUrls: ['../lecture-unit.component.scss'],
 })
 export class VideoUnitComponent implements OnInit {
     @Input()
@@ -24,7 +24,7 @@ export class VideoUnitComponent implements OnInit {
         }
     }
 
-    handleUnitClick($event: any) {
+    handleCollapse($event: any) {
         $event.stopPropagation();
         this.isCollapsed = !this.isCollapsed;
     }

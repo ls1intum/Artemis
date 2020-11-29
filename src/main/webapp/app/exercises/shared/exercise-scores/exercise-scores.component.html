@@ -215,7 +215,13 @@
                     <ng-template ngx-datatable-cell-template let-value="value"> {{ value }} min</ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.PROGRAMMING" [resizeable]="false" [minWidth]="470" [width]="470">
+                <ngx-datatable-column
+                    prop=""
+                    *ngIf="exercise.type === ExerciseType.PROGRAMMING && exercise.isAtLeastInstructor"
+                    [resizeable]="false"
+                    [minWidth]="470"
+                    [width]="470"
+                >
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button class="btn btn-primary btn-sm mr-1" (click)="goToRepository(value)">
                             <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>
@@ -235,7 +241,7 @@
                             Online editor
                         </button>
                         <button
-                            *ngIf="exercise.course && isManualResult(value)"
+                            *ngIf="exercise.course && newManualResultAllowed"
                             [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id, 'assessment']"
                             class="btn btn-primary btn-sm mr-1"
                         >
@@ -243,7 +249,7 @@
                             {{ 'artemisApp.programmingSubmission.view' | translate }}
                         </button>
                         <button
-                            *ngIf="exercise.exerciseGroup && isManualResult(value)"
+                            *ngIf="exercise.exerciseGroup && newManualResultAllowed"
                             [routerLink]="[
                                 '/course-management',
                                 exercise.exerciseGroup?.exam.course.id,

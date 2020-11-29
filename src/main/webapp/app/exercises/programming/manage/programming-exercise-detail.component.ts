@@ -11,8 +11,6 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { SafeHtml } from '@angular/platform-browser';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -37,7 +35,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
-    gradingInstructions: SafeHtml | null;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -50,7 +47,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private artemisMarkdown: ArtemisMarkdownService,
         private eventManager: JhiEventManager,
     ) {}
 
@@ -58,7 +54,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
-            this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
 
             this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorForExercise(this.programmingExercise);
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
