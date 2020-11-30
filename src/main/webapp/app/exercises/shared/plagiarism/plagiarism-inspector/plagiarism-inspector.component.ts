@@ -6,6 +6,7 @@ import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/tex
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { downloadFile } from 'app/shared/util/download.util';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
+import { PlagiarismResult } from 'app/exercises/shared/plagiarism/types/PlagiarismResult';
 
 @Component({
     selector: 'jhi-plagiarism-inspector',
@@ -68,6 +69,8 @@ export class PlagiarismInspectorComponent implements OnInit {
             (result: TextPlagiarismResult) => {
                 this.detectionInProgress = false;
 
+                this.sortComparisonsForResult(result);
+
                 this.plagiarismResult = result;
                 this.selectedComparisonIndex = 0;
             },
@@ -85,11 +88,17 @@ export class PlagiarismInspectorComponent implements OnInit {
             (result: ModelingPlagiarismResult) => {
                 this.detectionInProgress = false;
 
+                this.sortComparisonsForResult(result);
+
                 this.plagiarismResult = result;
                 this.selectedComparisonIndex = 0;
             },
             () => (this.detectionInProgress = false),
         );
+    }
+
+    sortComparisonsForResult(result: PlagiarismResult<any>) {
+        result.comparisons = result.comparisons.sort((a, b) => b.similarity - a.similarity);
     }
 
     /**
