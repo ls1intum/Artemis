@@ -131,15 +131,10 @@ public class BitbucketRequestMockProvider {
         final var templateRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var clonedRepoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
 
-        mockCopyRepository(projectKey, projectKey, templateRepoName, clonedRepoName, status);
+        mockForkRepository(projectKey, projectKey, templateRepoName, clonedRepoName, status);
     }
 
-    public void mockCopyRepository(String sourceProjectKey, String targetProjectKey, String sourceRepoName, String targetRepoName)
-            throws JsonProcessingException, URISyntaxException {
-        mockCopyRepository(sourceProjectKey, targetProjectKey, sourceRepoName, targetRepoName, HttpStatus.CREATED);
-    }
-
-    public void mockCopyRepository(String sourceProjectKey, String targetProjectKey, String sourceRepoName, String targetRepoName, HttpStatus httpStatus)
+    public void mockForkRepository(String sourceProjectKey, String targetProjectKey, String sourceRepoName, String targetRepoName, HttpStatus httpStatus)
             throws JsonProcessingException, URISyntaxException {
         sourceRepoName = sourceRepoName.toLowerCase();
         targetRepoName = targetRepoName.toLowerCase();
