@@ -47,7 +47,9 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     Integer getExerciseDeadlines(@Param("span") ZonedDateTime span, @Param("now") ZonedDateTime now);
 
     @Query("""
-            select count(e.id) from Exam e where e.endDate >= :#{#span} and e.endDate <= :#{#now}
+            select count(e.id)
+            from Exam e
+            where e.endDate >= :#{#span} and e.endDate <= :#{#now}
             """)
     Integer getConductedExams(@Param("span") ZonedDateTime span, @Param("now") ZonedDateTime now);
 
