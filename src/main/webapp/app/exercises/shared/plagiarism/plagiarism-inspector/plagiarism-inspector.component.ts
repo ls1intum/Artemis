@@ -7,6 +7,10 @@ import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/
 import { downloadFile } from 'app/shared/util/download.util';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismResult } from 'app/exercises/shared/plagiarism/types/PlagiarismResult';
+import { ExportToCsv } from 'export-to-csv';
+import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
+import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
+import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 
 @Component({
     selector: 'jhi-plagiarism-inspector',
@@ -115,69 +119,35 @@ export class PlagiarismInspectorComponent implements OnInit {
      * Download plagiarism detection results as CSV document.
      */
     downloadPlagiarismResultsCsv() {
-        // TODO
-        // if (this.modelingSubmissionComparisons.length > 0) {
-        //     const csvExporter = new ExportToCsv({
-        //         fieldSeparator: ';',
-        //         quoteStrings: '"',
-        //         decimalSeparator: 'locale',
-        //         showLabels: true,
-        //         title: `Plagiarism Check for Modeling Exercise ${this.modelingExercise.id}: ${this.modelingExercise.title}`,
-        //         filename: `check-plagiarism-modeling-exercise-${this.modelingExercise.id}-${this.modelingExercise.title}`,
-        //         useTextFile: false,
-        //         useBom: true,
-        //         headers: [
-        //             'Similarity',
-        //             'Confirmed',
-        //             'Participant 1',
-        //             'Submission 1',
-        //             'Score 1',
-        //             'Size 1',
-        //             'Link 1',
-        //             'Participant 2',
-        //             'Submission 2',
-        //             'Score 2',
-        //             'Size 2',
-        //             'Link 2',
-        //         ],
-        //     });
-        //
-        //     const courseId = this.modelingExercise.course ? this.modelingExercise.course.id : this.modelingExercise.exerciseGroup?.exam?.course?.id;
-        //
-        //     const baseUrl = location.origin + '/#/course-management/';
-        //
-        //     const csvData = this.modelingSubmissionComparisons.map((comparisonResult) => {
-        //         return Object.assign({
-        //             Similarity: comparisonResult.similarity,
-        //             Confirmed: comparisonResult.confirmed ?? '',
-        //             'Participant 1': comparisonResult.element1.studentLogin,
-        //             'Submission 1': comparisonResult.element1.submissionId,
-        //             'Score 1': comparisonResult.element1.score,
-        //             'Size 1': comparisonResult.element1.size,
-        //             'Link 1':
-        //                 baseUrl +
-        //                 courseId +
-        //                 '/modeling-exercises/' +
-        //                 this.modelingExercise.id +
-        //                 '/submissions/' +
-        //                 comparisonResult.element1.submissionId +
-        //                 '/assessment?optimal=false&hideBackButton=true',
-        //             'Participant 2': comparisonResult.element2.studentLogin,
-        //             'Submission 2': comparisonResult.element2.submissionId,
-        //             'Score 2': comparisonResult.element2.score,
-        //             'Size 2': comparisonResult.element2.size,
-        //             'Link 2':
-        //                 baseUrl +
-        //                 courseId +
-        //                 '/modeling-exercises/' +
-        //                 this.modelingExercise.id +
-        //                 '/submissions/' +
-        //                 comparisonResult.element2.submissionId +
-        //                 '/assessment?optimal=false&hideBackButton=true',
-        //         });
-        //     });
-        //
-        //     csvExporter.generateCsv(csvData);
-        // }
+        if (this.plagiarismResult && this.plagiarismResult.comparisons.length > 0) {
+            const csvExporter = new ExportToCsv({
+                fieldSeparator: ';',
+                quoteStrings: '"',
+                decimalSeparator: 'locale',
+                showLabels: true,
+                title: `Plagiarism Check for Exercise ${this.exercise.id}: ${this.exercise.title}`,
+                filename: `plagiarism-result_${this.exercise.type}-exercise-${this.exercise.id}`,
+                useTextFile: false,
+                useBom: true,
+                headers: ['Similarity', 'Status', 'Participant 1', 'Submission 1', 'Score 1', 'Size 1', 'Participant 2', 'Submission 2', 'Score 2', 'Size 2'],
+            });
+
+            const csvData = (this.plagiarismResult.comparisons as PlagiarismComparison<ModelingSubmissionElement | TextSubmissionElement>[]).map((comparison) => {
+                return Object.assign({
+                    Similarity: comparison.similarity,
+                    Status: comparison.status,
+                    'Participant 1': comparison.submissionA.studentLogin,
+                    'Submission 1': comparison.submissionA.submissionId,
+                    'Score 1': comparison.submissionA.score,
+                    'Size 1': comparison.submissionA.size,
+                    'Participant 2': comparison.submissionB.studentLogin,
+                    'Submission 2': comparison.submissionB.submissionId,
+                    'Score 2': comparison.submissionB.score,
+                    'Size 2': comparison.submissionB.size,
+                });
+            });
+
+            csvExporter.generateCsv(csvData);
+        }
     }
 }
