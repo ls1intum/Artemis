@@ -117,6 +117,7 @@ export class CourseUpdateComponent implements OnInit {
                 }),
                 studentQuestionsEnabled: new FormControl(this.course.studentQuestionsEnabled),
                 registrationEnabled: new FormControl(this.course.registrationEnabled),
+                achievementsEnabled: new FormControl(this.course.achievementsEnabled),
                 registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
                     validators: [Validators.maxLength(2000)],
                 }),

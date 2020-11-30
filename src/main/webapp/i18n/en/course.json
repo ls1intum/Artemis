@@ -39,6 +39,10 @@
                 "title": "Enable questions and answers by students",
                 "description": "Enable Questions and Answers section on lecture and exercise page."
             },
+            "achievementsEnabled": {
+                "title": "Enable achievements",
+                "description": "Enable / disable achievements. Achievements are automatically generated and assigned to users."
+            },
             "complaintsEnabled": {
                 "title": "Enable complaints",
                 "description": "Enabling this allows students to complain about results."

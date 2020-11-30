@@ -32,6 +32,7 @@ export class Course implements BaseEntity {
     public maxComplaintTimeDays?: number;
     public complaintsEnabled?: boolean;
     public studentQuestionsEnabled?: boolean;
+    public achievementsEnabled?: boolean;
     public requestMoreFeedbackEnabled?: boolean;
     public maxRequestMoreFeedbackTimeDays?: number;
 
@@ -65,6 +66,7 @@ export class Course implements BaseEntity {
         this.maxComplaintTimeDays = 7; // default value
         this.complaintsEnabled = true; // default value
         this.studentQuestionsEnabled = true; // default value
+        this.achievementsEnabled = false; // default value
         this.requestMoreFeedbackEnabled = true; // default value
         this.maxRequestMoreFeedbackTimeDays = 7; // default value
     }

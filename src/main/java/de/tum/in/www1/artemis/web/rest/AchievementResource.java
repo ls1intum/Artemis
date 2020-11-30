@@ -32,16 +32,16 @@ public class AchievementResource {
     }
 
     /**
-     * GET /courses/{courseId}/achievements : Get all achievements for requesting user in given course.
+     * GET /courses/{courseId}/earned-achievements : Get earned achievements for requesting user in given course.
      *
      * @param courseId
      * @return the ResponseEntity with status 200 (OK) and with the found achievements as body
      */
-    @GetMapping("/courses/{courseId}/achievements")
+    @GetMapping("/courses/{courseId}/earned-achievements")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<Achievement>> getAchievementsForUserInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<Achievement>> getEarnedAchievementsForUserInCourse(@PathVariable Long courseId) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get achievements for user : {} in course : {}", user.getLogin(), courseId);
+        log.debug("REST request to get earned achievements for user : {} in course : {}", user.getLogin(), courseId);
         Set<Achievement> achievements = achievementService.findAllByUserIdAndCourseId(user.getId(), courseId);
         achievementService.prepareForClient(achievements);
         return ResponseEntity.ok(achievements);

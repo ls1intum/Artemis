@@ -309,6 +309,16 @@
                     />
                 </div>
                 <div class="form-check">
+                    <input type="checkbox" class="form-check-input" name="achievementsEnabled" id="field_achievementsEnabled" formControlName="achievementsEnabled" />
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.achievementsEnabled.title" for="field_achievementsEnabled">Achievements Enabled</label>
+                    <fa-icon
+                        [icon]="'question-circle'"
+                        class="text-secondary"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.course.achievementsEnabled.description' | translate }}"
+                    ></fa-icon>
+                </div>
+                <div class="form-check">
                     <input type="checkbox" class="form-check-input" [checked]="course.presentationScore !== 0" (change)="this.changePresentationScoreInput()" />
                     <label class="form-control-label" jhiTranslate="artemisApp.course.presentationScoreEnabled.title">Presentation Score Enabled</label>
                     <fa-icon
