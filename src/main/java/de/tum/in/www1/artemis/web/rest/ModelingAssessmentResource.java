@@ -1,10 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
-import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -44,60 +43,32 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ModelingAssessmentService modelingAssessmentService;
-
     private final ModelingSubmissionService modelingSubmissionService;
 
     private final ExampleSubmissionService exampleSubmissionService;
 
-    private final WebsocketMessagingService messagingService;
-
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
-            ModelingExerciseService modelingExerciseService, ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService,
+            ModelingExerciseService modelingExerciseService, AssessmentService assessmentService, ModelingSubmissionService modelingSubmissionService,
             ExampleSubmissionService exampleSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository,
             ExamService examService) {
-        super(authCheckService, userService, exerciseService, modelingSubmissionService, modelingAssessmentService, resultRepository, examService);
+        super(authCheckService, userService, exerciseService, modelingSubmissionService, assessmentService, resultRepository, examService, messagingService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
         this.authCheckService = authCheckService;
-        this.modelingAssessmentService = modelingAssessmentService;
         this.modelingSubmissionService = modelingSubmissionService;
-        this.messagingService = messagingService;
         this.exampleSubmissionService = exampleSubmissionService;
     }
 
     /**
-     * Get the result of the modeling submission with the given id. Returns a 403 Forbidden response if the user is not allowed to retrieve the assessment. The user is not allowed
-     * to retrieve the assessment if he is not a student of the corresponding course, the submission is not his submission, the result is not finished or the assessment due date of
-     * the corresponding exercise is in the future (or not set).
+     * Get the result of the modeling submission with the given id. See {@link AssessmentResource#getAssessmentBySubmissionId}.
      *
      * @param submissionId the id of the submission that should be sent to the client
-     * @return the submission with the given id
+     * @return the assessment of the given submission
      */
     @GetMapping("/modeling-submissions/{submissionId}/result")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
-        log.debug("REST request to get assessment for submission with id {}", submissionId);
-        ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
-        Exercise exercise = participation.getExercise();
-
-        Result result = submission.getResult();
-        if (result == null) {
-            return notFound();
-        }
-
-        if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
-            return forbidden();
-        }
-
-        // remove sensitive information for students
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            exercise.filterSensitiveInformation();
-            result.setAssessor(null);
-        }
-
-        return ResponseEntity.ok(result);
+        return super.getAssessmentBySubmissionId(submissionId);
     }
 
     /**
@@ -122,11 +93,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
             forbidden();
         }
 
-        return ResponseEntity.ok(modelingAssessmentService.getExampleAssessment(submissionId));
+        return ResponseEntity.ok(assessmentService.getExampleAssessment(submissionId));
     }
 
     /**
-     * PUT modeling-submissions/:submissionId/assessment : save manual modeling assessment
+     * PUT modeling-submissions/:submissionId/assessment : save manual modeling assessment. See {@link AssessmentResource#saveAssessment}.
      *
      * @param submissionId id of the submission
      * @param feedbacks list of feedbacks
@@ -138,38 +109,17 @@ public class ModelingAssessmentResource extends AssessmentResource {
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
     @PutMapping("/modeling-submissions/{submissionId}/assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Object> saveModelingAssessment(@PathVariable long submissionId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
+    public ResponseEntity<Result> saveModelingAssessment(@PathVariable long submissionId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestBody List<Feedback> feedbacks) {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
-        long exerciseId = studentParticipation.getExercise().getId();
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        checkAuthorization(modelingExercise, user);
+        Submission submission = submissionService.findOneWithEagerResultAndFeedback(submissionId);
+        ModelingExercise exercise = (ModelingExercise) submission.getParticipation().getExercise();
+        ResponseEntity<Result> response = super.saveAssessment(submission, submit, feedbacks);
 
-        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(modelingExercise);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(modelingSubmission.getResult(), modelingExercise, studentParticipation, user, isAtLeastInstructor)) {
-            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
+        if (response.getStatusCode().is2xxSuccessful() && submit && compassService.isSupported(exercise)) {
+            compassService.addAssessment(exercise.getId(), submissionId, Objects.requireNonNull(response.getBody()).getFeedbacks());
         }
 
-        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
-
-        if (submit) {
-            result = modelingAssessmentService.submitManualAssessment(result.getId(), modelingExercise, modelingSubmission.getSubmissionDate());
-            if (compassService.isSupported(modelingExercise)) {
-                compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
-            }
-            // }
-        }
-        // remove information about the student for tutors to ensure double-blind assessment
-        if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise, user)) {
-            ((StudentParticipation) result.getParticipation()).setParticipant(null);
-        }
-        if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
-                || (result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
-            messagingService.broadcastNewResult(result.getParticipation(), result);
-        }
-        return ResponseEntity.ok(result);
+        return response;
     }
 
     /**
@@ -190,7 +140,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingSubmission modelingSubmission = (ModelingSubmission) exampleSubmission.getSubmission();
         ModelingExercise modelingExercise = (ModelingExercise) exampleSubmission.getExercise();
         checkAuthorization(modelingExercise, user);
-        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
+        Result result = assessmentService.saveManualAssessment(modelingSubmission, feedbacks);
         return ResponseEntity.ok(result);
     }
 
@@ -216,7 +166,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise, user);
 
-        Result result = modelingAssessmentService.updateAssessmentAfterComplaint(modelingSubmission.getResult(), modelingExercise, assessmentUpdate);
+        Result result = assessmentService.updateAssessmentAfterComplaint(modelingSubmission.getResult(), modelingExercise, assessmentUpdate);
 
         if (compassService.isSupported(modelingExercise)) {
             compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());

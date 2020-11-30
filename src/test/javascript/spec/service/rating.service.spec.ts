@@ -9,7 +9,6 @@ import { ArtemisTestModule } from '../test.module';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { Rating } from 'app/entities/rating.model';
 import { Result } from 'app/entities/result.model';
-import { expect } from '../helpers/jest.fix';
 
 describe('Rating Service', () => {
     let injector: TestBed;

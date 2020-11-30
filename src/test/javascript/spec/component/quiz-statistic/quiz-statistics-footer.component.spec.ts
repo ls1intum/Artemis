@@ -16,6 +16,7 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
+import { SinonStub, stub } from 'sinon';
 
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
@@ -27,11 +28,11 @@ describe('QuizExercise Statistic Footer Component', () => {
     let fixture: ComponentFixture<QuizStatisticsFooterComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy: jasmine.Spy;
-    let routerSpy: jasmine.Spy;
+    let accountSpy: SinonStub;
+    let routerSpy: SinonStub;
     let router: Router;
     let quizStatisticUtil: QuizStatisticUtil;
-    let quizServiceFindSpy: jasmine.Spy;
+    let quizServiceFindSpy: SinonStub;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -55,9 +56,9 @@ describe('QuizExercise Statistic Footer Component', () => {
                 accountService = fixture.debugElement.injector.get(AccountService);
                 router = fixture.debugElement.injector.get(Router);
                 quizStatisticUtil = fixture.debugElement.injector.get(QuizStatisticUtil);
-                routerSpy = spyOn(router, 'navigateByUrl');
-                accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
-                quizServiceFindSpy = spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
+                routerSpy = stub(router, 'navigateByUrl');
+                accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(true);
+                quizServiceFindSpy = stub(quizService, 'find').returns(of(new HttpResponse({ body: quizExercise })));
             });
     });
 

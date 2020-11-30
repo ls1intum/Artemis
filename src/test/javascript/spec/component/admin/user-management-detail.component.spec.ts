@@ -43,7 +43,7 @@ describe('User Management Detail Component', () => {
 
             // THEN
             expect(comp.user).toEqual(
-                jasmine.objectContaining({
+                expect.objectContaining({
                     id: 1,
                     login: 'user',
                     firstName: 'first',
