@@ -25,6 +25,8 @@ export interface IAccountService {
     hasAuthority: (authority: string) => Promise<boolean>;
     identity: (force?: boolean) => Promise<User | undefined>;
     isAtLeastTutorInCourse: (course: Course) => boolean;
+    isAtLeastTutorForExercise: (exercise?: Exercise) => boolean;
+    isAtLeastInstructorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastInstructorInCourse: (course: Course) => boolean;
     isAuthenticated: () => boolean;
     getAuthenticationState: () => Observable<User | undefined>;

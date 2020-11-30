@@ -146,7 +146,7 @@ public class GitUtilService {
 
     public void updateFile(REPOS repo, FILES fileToUpdate, String content) {
         try {
-            PrintWriter writer = new PrintWriter(getCompleteRepoPathStringByType(repo) + '/' + fileToUpdate, "UTF-8");
+            PrintWriter writer = new PrintWriter(getCompleteRepoPathStringByType(repo) + File.separator + fileToUpdate, "UTF-8");
             writer.print(content);
             writer.close();
         }
@@ -156,7 +156,7 @@ public class GitUtilService {
 
     public String getFileContent(REPOS repo, FILES fileToRead) {
         try {
-            byte[] encoded = Files.readAllBytes(Paths.get(getCompleteRepoPathStringByType(repo) + '/' + fileToRead));
+            byte[] encoded = Files.readAllBytes(Paths.get(getCompleteRepoPathStringByType(repo) + File.separator + fileToRead));
             return new String(encoded, Charset.defaultCharset());
         }
         catch (IOException ex) {

@@ -143,6 +143,8 @@ public class GitService {
 
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         Repository repository = getRepositoryByLocalPath(localPath);
+        // TODO: in case the actual git repository in the file system was deleted (e.g. by accident or through some administrator), we will get an exception here
+        // so we should basically check if the folder localPath still includes a valid git repository or not and potentially fix this situation then.
         if (repository != null) {
             if (pullOnGet) {
                 pull(repository);

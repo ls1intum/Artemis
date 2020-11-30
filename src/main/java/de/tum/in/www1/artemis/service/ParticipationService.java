@@ -7,6 +7,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -1286,8 +1288,9 @@ public class ParticipationService {
      * @param planKey the id of build plan
      * @return template exercise participation belonging to build plan
      */
-    public Optional<TemplateProgrammingExerciseParticipation> findTemplateParticipationByBuildPlanId(String planKey) {
-        return templateProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey);
+    @Nullable
+    public TemplateProgrammingExerciseParticipation findTemplateParticipationByBuildPlanId(String planKey) {
+        return templateProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
     }
 
     /**
@@ -1296,8 +1299,9 @@ public class ParticipationService {
      * @param planKey the id of build plan
      * @return solution exercise participation belonging to build plan
      */
-    public Optional<SolutionProgrammingExerciseParticipation> findSolutionParticipationByBuildPlanId(String planKey) {
-        return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey);
+    @Nullable
+    public SolutionProgrammingExerciseParticipation findSolutionParticipationByBuildPlanId(String planKey) {
+        return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
     }
 
     /**
