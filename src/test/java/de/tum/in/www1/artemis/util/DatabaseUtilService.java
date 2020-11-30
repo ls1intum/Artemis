@@ -1912,9 +1912,9 @@ public class DatabaseUtilService {
         ProgrammingSubmission submission = createProgrammingSubmission(participation, false);
         submission.setResult(result);
         submission.setCommitHash(commitHash);
+        resultRepo.save(result);
         result.setSubmission(submission);
         participation.addSubmissions(submission);
-        resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submissionRepository.save(submission);
     }
