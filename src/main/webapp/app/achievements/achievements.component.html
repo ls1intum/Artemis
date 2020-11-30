@@ -4,10 +4,10 @@
         <thead>
             <tr>
                 <th></th>
-                <th class="d-none d-md-table-cell">
+                <th class="d-md-table-cell">
                     <span>{{ 'artemisApp.achievements.title' | translate }}</span>
                 </th>
-                <th class="d-none d-md-table-cell">
+                <th class="d-md-table-cell">
                     <span>{{ 'artemisApp.achievements.description' | translate }}</span>
                 </th>
             </tr>
@@ -15,7 +15,7 @@
         <tbody>
             <tr *ngFor="let achievement of achievements">
                 <ng-container>
-                    <td class="d-none d-md-table-cell">
+                    <td class="d-md-table-cell">
                         <div
                             class="circle"
                             [ngClass]="{
@@ -28,10 +28,10 @@
                             <fa-icon class="achievement-icon" [icon]="achievement.icon"></fa-icon>
                         </div>
                     </td>
-                    <td class="d-none d-md-table-cell">
+                    <td class="d-md-table-cell">
                         <div>{{ achievement.title }}</div>
                     </td>
-                    <td class="d-none d-md-table-cell">
+                    <td class="d-md-table-cell">
                         <div>{{ achievement.description }}</div>
                     </td>
                 </ng-container>
