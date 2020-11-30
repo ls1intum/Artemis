@@ -571,11 +571,12 @@ public class BambooService implements ContinuousIntegrationService {
 
             var buildLogs = extractAndPrepareBuildLogs(buildResult, programmingSubmission);
             // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-            programmingSubmission.setBuildLogEntries(buildLogs);
             result.setSubmission(programmingSubmission);
             programmingSubmission.setResult(result);
             programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
-
+            // programmingSubmission needs to be saved again before setting the buildLogEntries
+            programmingSubmission.setBuildLogEntries(buildLogs);
+            programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
             result.setSubmission(programmingSubmission);
             result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
             // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
