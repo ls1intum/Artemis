@@ -73,7 +73,7 @@ public class TextAssessmentService extends AssessmentService {
             result = resultRepository.save(result);
             result.setSubmission(textSubmission);
             textSubmission.setResult(result);
-            textSubmissionRepository.save(textSubmission);
+            submissionRepository.save(textSubmission);
 
             // If enabled, we want to compute feedback suggestions using Athene.
             if (computeFeedbackSuggestions) {

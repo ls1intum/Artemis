@@ -122,7 +122,7 @@ public abstract class Submission extends DomainObject {
     // TODO: remove redundant setter after relationship change on client. Currently we need two deserializing setters for "result" (client) and "results" (server)
     @JsonProperty(value = "result", access = JsonProperty.Access.WRITE_ONLY)
     public void setResult(Result result) {
-        this.results.add(result);
+        this.setResults(result);
     }
 
     // TODO: WIP consider during refactoring : addResult
