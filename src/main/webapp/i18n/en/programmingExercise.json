@@ -68,6 +68,10 @@
                 "title": "Recreate Build Plans",
                 "description": "Activate this option to create new build plans instead of copying them from the imported exercise. Newly created build plans support the latest features of the Artemis exercise templates by default."
             },
+            "updateTemplate": {
+                "title": "Update Template",
+                "description": "Activate this option to update the template files in the repositories. This can be useful if the imported exercise is old and contains outdated dependencies. For Java, Artemis replaces JUnit4 by Ares (which includes JUnit5) and updates the dependencies and plugins with the versions found in the latest template. Afterwards you might need to adapt the test cases."
+            },
             "programmingLanguage": "Programming Language",
             "projectType": "Project Type",
             "packageName": "Package Name",

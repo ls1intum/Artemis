@@ -202,21 +202,6 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
         this.jhiAlertService.error(error);
     }
 
-    /**
-     * Navigate back to the origin page.
-     */
-    back() {
-        if (this.isExamMode) {
-            if (this.isTestRun) {
-                this.router.navigate(['course-management', this.course.id, 'exams', this.examId, 'test-runs']);
-            } else {
-                this.router.navigate(['course-management', this.course.id, 'exams']);
-            }
-        } else {
-            this.router.navigate(['course-management']);
-        }
-    }
-
     sortRows() {
         this.sortService.sortByProperty(this.exercises, this.exercisesSortingPredicate, this.exercisesReverseOrder);
     }
