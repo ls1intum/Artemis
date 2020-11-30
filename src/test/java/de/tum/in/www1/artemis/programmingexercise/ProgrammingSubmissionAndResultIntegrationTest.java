@@ -196,7 +196,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         assertThat(createdResult.getAssessor()).isNull();
         // Needs to be set for using a custom repository method, known spring bug.
         Participation updatedParticipation = participationRepository.findWithEagerSubmissionsById(participation.getId()).get();
-        submission = submissionRepository.findWithEagerResultById(submission.getId()).get();
+        submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
         assertThat(submission.getResult().getId()).isEqualTo(createdResult.getId());
         assertThat(updatedParticipation.getSubmissions()).hasSize(1);
@@ -227,7 +227,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         Result createdResult = results.get(0);
         // Needs to be set for using a custom repository method, known spring bug.
         Participation participation = participationRepository.findWithEagerSubmissionsById(participationId).get();
-        submission = submissionRepository.findWithEagerResultById(submission.getId()).get();
+        submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(participation.getId());
         assertThat(submission.getResult().getId()).isEqualTo(createdResult.getId());
         assertThat(participation.getSubmissions()).hasSize(1);
@@ -261,8 +261,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         // Make sure there are now 2 submission: 1 that was created on submit and 1 when the second result came in.
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         assertThat(submissions).hasSize(2);
-        ProgrammingSubmission submission1 = submissionRepository.findWithEagerResultById(submissions.get(0).getId()).get();
-        ProgrammingSubmission submission2 = submissionRepository.findWithEagerResultById(submissions.get(1).getId()).get();
+        ProgrammingSubmission submission1 = submissionRepository.findWithEagerResultsById(submissions.get(0).getId()).get();
+        ProgrammingSubmission submission2 = submissionRepository.findWithEagerResultsById(submissions.get(1).getId()).get();
 
         // There should be 1 result linked to each submission.
         List<Result> results = resultRepository.findAll();
