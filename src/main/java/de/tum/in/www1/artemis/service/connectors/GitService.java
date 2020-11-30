@@ -257,24 +257,25 @@ public class GitService {
         git.close();
     }
 
-    public void pushToTargetRepo(Repository sourceRepo, Repository targetRepo, URL targetRepoUrl) throws GitAPIException {
-        System.out.println("++pushToTargetRepo");
+    /**
+     * The target's repo is added as a remote to the source's repo. The content to be copied then gets pushed to the new remote.
+     * Afterwards we delete the target remote.
+     *
+     * @param sourceRepo    Local source repo
+     * @param targetRepoUrl URI of targets repo
+     * @throws GitAPIException if the repo could not be pushed
+     */
+    public void pushSourceToTargetRepo(Repository sourceRepo, URL targetRepoUrl) throws GitAPIException {
         Git git = new Git(sourceRepo);
-        // Git targetGit = new Git(targetRepo);
-        // var targetRemote = targetGit.remoteList().call().stream().findFirst().get();
-        // var targetUri = targetRemote.getURIs().stream().findFirst().get();
         var targetUri = targetRepoUrl.toString();
-        System.out.println("++targetURi");
-        System.out.println(targetUri);
         try {
             git.remoteAdd().setName("target").setUri(new URIish(targetUri)).call();
             git.push().setRemote("target").setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
             git.remoteRemove().setRemoteName("target").call();
             git.close();
-            // targetGit.close();
         }
-        catch (URISyntaxException ex) {
-            log.error("Error while pushing to remote target", ex);
+        catch (URISyntaxException e) {
+            log.error("Error while pushing to remote target: ", e);
         }
     }
 

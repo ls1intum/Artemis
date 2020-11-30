@@ -272,20 +272,18 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) {
-        sourceRepositoryName = sourceRepositoryName.toLowerCase();
-        targetRepositoryName = targetRepositoryName.toLowerCase();
-        final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
+        final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName.toLowerCase();
         try {
-            var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepositoryName);
+            var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepositoryName.toLowerCase());
             URL sourceRepositoryUrlAsUrl = new URL(sourceRepoUrl.toString());
+            // checkout the source repo
             Repository sourceRepo = gitService.getOrCheckoutRepository(sourceRepositoryUrlAsUrl, true);
-
             // create target repo
             createRepository(targetProjectKey, targetRepoSlug);
             var targetRepoUrl = getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
             URL targetRepoUrlAsUrl = new URL(targetRepoUrl.toString());
-            Repository targetRepo = gitService.getOrCheckoutRepository(targetRepoUrlAsUrl, true);
-            gitService.pushToTargetRepo(sourceRepo, targetRepo, targetRepoUrlAsUrl);
+            // copy by pushing the source's content to the target's repo
+            gitService.pushSourceToTargetRepo(sourceRepo, targetRepoUrlAsUrl);
 
         }
         catch (InterruptedException | GitAPIException | MalformedURLException e) {
