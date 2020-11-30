@@ -6,7 +6,7 @@ import { SpanType } from 'app/entities/statistics.model';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
-    private resourceUrl = SERVER_API_URL + 'api/';
+    private resourceUrl = SERVER_API_URL + 'api/management/statistics/';
 
     constructor(private http: HttpClient) {}
 
@@ -15,7 +15,7 @@ export class StatisticsService {
      */
     getloggedUsers(span: number): Observable<number> {
         const params = new HttpParams().set('span', '' + span);
-        return this.http.get<number>(`${this.resourceUrl}management/statistics/users`, { params });
+        return this.http.get<number>(`${this.resourceUrl}users`, { params });
     }
 
     /**
@@ -23,7 +23,7 @@ export class StatisticsService {
      */
     getActiveUsers(span: number): Observable<number> {
         const params = new HttpParams().set('span', '' + span);
-        return this.http.get<number>(`${this.resourceUrl}management/statistics/activeUsers`, { params });
+        return this.http.get<number>(`${this.resourceUrl}activeUsers`, { params });
     }
 
     /**
@@ -31,7 +31,7 @@ export class StatisticsService {
      */
     getTotalSubmissions(span: SpanType): Observable<number[]> {
         const params = new HttpParams().set('span', '' + span);
-        return this.http.get<number[]>(`${this.resourceUrl}management/statistics/submissions`, { params });
+        return this.http.get<number[]>(`${this.resourceUrl}submissions`, { params });
     }
 
     /**
@@ -39,7 +39,7 @@ export class StatisticsService {
      */
     getReleasedExercises(span: number): Observable<number> {
         const params = new HttpParams().set('span', '' + span);
-        return this.http.get<number>(`${this.resourceUrl}management/statistics/releasedExercises`, { params });
+        return this.http.get<number>(`${this.resourceUrl}releasedExercises`, { params });
     }
 
     /**
@@ -47,7 +47,7 @@ export class StatisticsService {
      */
     getExerciseDeadlines(span: number): Observable<number> {
         const params = new HttpParams().set('span', '' + span);
-        return this.http.get<number>(`${this.resourceUrl}management/statistics/exerciseDeadlines`, { params });
+        return this.http.get<number>(`${this.resourceUrl}exerciseDeadlines`, { params });
     }
 
     /**
@@ -55,7 +55,7 @@ export class StatisticsService {
      */
     getConductedExams(span: number): Observable<number> {
         const params = new HttpParams().set('span', '' + span);
-        return this.http.get<number>(`${this.resourceUrl}management/statistics/conductedExams`, { params });
+        return this.http.get<number>(`${this.resourceUrl}conductedExams`, { params });
     }
 
     /**
@@ -63,7 +63,7 @@ export class StatisticsService {
      */
     getExamParticipations(span: number): Observable<number> {
         const params = new HttpParams().set('span', '' + span);
-        return this.http.get<number>(`${this.resourceUrl}management/statistics/examParticipations`, { params });
+        return this.http.get<number>(`${this.resourceUrl}examParticipations`, { params });
     }
 
     /**
@@ -71,7 +71,7 @@ export class StatisticsService {
      */
     getExamRegistrations(span: number): Observable<number> {
         const params = new HttpParams().set('span', '' + span);
-        return this.http.get<number>(`${this.resourceUrl}management/statistics/examRegistrations`, { params });
+        return this.http.get<number>(`${this.resourceUrl}examRegistrations`, { params });
     }
 
     /**
@@ -79,7 +79,7 @@ export class StatisticsService {
      */
     getActiveTutors(span: number): Observable<number> {
         const params = new HttpParams().set('span', '' + span);
-        return this.http.get<number>(`${this.resourceUrl}management/statistics/activeTutors`, { params });
+        return this.http.get<number>(`${this.resourceUrl}activeTutors`, { params });
     }
 
     /**
@@ -87,7 +87,7 @@ export class StatisticsService {
      */
     getCreatedResults(span: number): Observable<number> {
         const params = new HttpParams().set('span', '' + span);
-        return this.http.get<number>(`${this.resourceUrl}management/statistics/createdResults`, { params });
+        return this.http.get<number>(`${this.resourceUrl}createdResults`, { params });
     }
 
     /**
@@ -95,6 +95,6 @@ export class StatisticsService {
      */
     getResultFeedbacks(span: number): Observable<number> {
         const params = new HttpParams().set('span', '' + span);
-        return this.http.get<number>(`${this.resourceUrl}management/statistics/resultFeedbacks`, { params });
+        return this.http.get<number>(`${this.resourceUrl}resultFeedbacks`, { params });
     }
 }
