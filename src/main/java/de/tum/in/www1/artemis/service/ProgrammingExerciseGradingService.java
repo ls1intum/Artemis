@@ -14,6 +14,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -52,10 +53,12 @@ public class ProgrammingExerciseGradingService {
 
     private final ResultService resultService;
 
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
-            ResultService resultService) {
+            ResultService resultService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.participationService = participationService;
@@ -64,6 +67,7 @@ public class ProgrammingExerciseGradingService {
         this.messagingTemplate = messagingTemplate;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.programmingAssessmentService = programmingAssessmentService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.resultService = resultService;
     }
 
@@ -105,6 +109,60 @@ public class ProgrammingExerciseGradingService {
             if (isSolutionParticipation) {
                 // This method will return without triggering the build if the submission is not of type TEST.
                 triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), result.getId());
+            }
+
+            if (!isSolutionParticipation && !isTemplateParticipation) {
+
+                Optional<ProgrammingExerciseStudentParticipation> studentParticipation = programmingExerciseParticipationService
+                        .findStudentParticipationWithLatestManualResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(participation.getId());
+                if (studentParticipation.isPresent() && studentParticipation.get().getResults().stream().findFirst().isPresent()) {
+
+                    Result manualResult = studentParticipation.get().getResults().stream().findFirst().get();
+
+                    ProgrammingSubmission newSubmission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(participation, SubmissionType.MANUAL);
+                    Result newResult = programmingSubmissionService.setNewResult(newSubmission);
+                    newResult.setAssessor(manualResult.getAssessor());
+                    newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+                    newResult.setCompletionDate(manualResult.getCompletionDate());
+                    newResult.setHasFeedback(manualResult.getHasFeedback());
+                    newResult.setRated(manualResult.isRated());
+
+                    for (Feedback feedback : result.getFeedbacks()) {
+                        Feedback newFeedback = feedback.copyProgrammingAutomaticFeedbackForManualResult();
+                        newResult.addFeedback(newFeedback);
+                    }
+
+                    double manualPoints = 0;
+
+                    for (Feedback feedback : manualResult.getFeedbacks()) {
+                        if (feedback != null && feedback.getType() != FeedbackType.AUTOMATIC) {
+                            Feedback newFeedback = feedback.copyProgrammingAutomaticFeedbackForManualResult();
+                            newResult.addFeedback(newFeedback);
+                            manualPoints += newFeedback.getCredits();
+                        }
+                    }
+
+                    double maxPoints = getMaxScoreRespectingZeroPointExercises(programmingExercise);
+                    double points = result.getScore() / 100.0 * maxPoints + manualPoints;
+                    double maxPointsWithBonus = maxPoints + Objects.requireNonNullElse(programmingExercise.getBonusPoints(), 0.0);
+
+                    if (points > maxPointsWithBonus) {
+                        points = maxPointsWithBonus;
+                    }
+                    else if (points < 0) {
+                        points = 0;
+                    }
+
+                    newResult.setScore(Math.round(points / maxPoints));
+
+                    String resultString = result.getResultString() + ", " + Math.round(points) + " of " + Math.round(maxPoints) + " points";
+                    newResult.setResultString(resultString);
+
+                    newResult = resultRepository.save(newResult);
+
+                    return Optional.of(newResult);
+                }
+
             }
         }
         return Optional.ofNullable(result);
