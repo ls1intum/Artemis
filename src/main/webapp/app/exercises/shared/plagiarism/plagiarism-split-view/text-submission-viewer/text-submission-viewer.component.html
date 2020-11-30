@@ -1,4 +1,4 @@
-<div class="text-submission-viewer" *ngIf="!loading">Text Submission</div>
+<div class="text-submission-viewer" *ngIf="!loading">{{ this.submission?.text }}</div>
 
 <div class="plagiarism-submission-loader" *ngIf="loading">
     <div class="spinner-border text-primary" role="status">

@@ -1,27 +1,23 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
-import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 @Component({
     selector: 'jhi-text-submission-viewer',
-    styleUrls: ['./text-submission-viewer.component.html'],
+    styleUrls: ['./text-submission-viewer.component.scss'],
     templateUrl: './text-submission-viewer.component.html',
 })
 export class TextSubmissionViewerComponent implements OnChanges {
-    @Input() exercise: ModelingExercise;
-    @Input() plagiarismSubmission: PlagiarismSubmission<ModelingSubmissionElement>;
+    @Input() exercise: TextExercise;
+    @Input() plagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>;
 
     public loading: boolean;
-    public submission: ProgrammingSubmission | TextSubmission;
+    public submission: TextSubmission;
 
-    constructor(private programmingSubmissionService: ProgrammingSubmissionService, private textSubmissionService: TextSubmissionService) {}
+    constructor(private textSubmissionService: TextSubmissionService) {}
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.plagiarismSubmission) {
@@ -29,25 +25,16 @@ export class TextSubmissionViewerComponent implements OnChanges {
 
             const currentPlagiarismSubmission: PlagiarismSubmission<TextSubmissionElement> = changes.plagiarismSubmission.currentValue;
 
-            if (this.isProgrammingExercise()) {
-                // TODO
-                this.loading = false;
-            } else {
-                this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(currentPlagiarismSubmission.submissionId).subscribe(
-                    (submission: TextSubmission) => {
-                        this.loading = false;
+            this.textSubmissionService.getTextSubmission(currentPlagiarismSubmission.submissionId).subscribe(
+                (submission: TextSubmission) => {
+                    this.loading = false;
 
-                        this.submission = submission;
-                    },
-                    () => {
-                        this.loading = false;
-                    },
-                );
-            }
+                    this.submission = submission;
+                },
+                () => {
+                    this.loading = false;
+                },
+            );
         }
-    }
-
-    isProgrammingExercise() {
-        return this.exercise.type === ExerciseType.PROGRAMMING;
     }
 }

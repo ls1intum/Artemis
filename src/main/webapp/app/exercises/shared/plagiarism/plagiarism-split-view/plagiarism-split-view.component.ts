@@ -1,15 +1,11 @@
-import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
 // @ts-ignore
 import Split from 'split.js';
 import { Subject } from 'rxjs';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 
 @Directive({ selector: '[jhiPane]' })
@@ -22,26 +18,14 @@ export class SplitPaneDirective {
     styleUrls: ['./plagiarism-split-view.component.scss'],
     templateUrl: './plagiarism-split-view.component.html',
 })
-export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit {
+export class PlagiarismSplitViewComponent implements AfterViewInit, OnInit {
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
 
-    public submissionA: ModelingSubmission;
-    public submissionB: ModelingSubmission;
-
-    public loadingSubmissionA: boolean;
-    public loadingSubmissionB: boolean;
-
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
     private split: Split.Instance;
-
-    constructor(
-        private modelingSubmissionService: ModelingSubmissionService,
-        private textSubmissionService: TextSubmissionService,
-        private programmingSubmissionService: ProgrammingSubmissionService,
-    ) {}
 
     /**
      * Initialize third party libs inside this lifecycle hook.
@@ -58,29 +42,6 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
     ngOnInit(): void {
         this.splitControlSubject.subscribe((pane: string) => this.handleSplitControl(pane));
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.comparison) {
-            this.loadingSubmissionA = true;
-            this.loadingSubmissionB = true;
-
-            const currentComparison: PlagiarismComparison<ModelingSubmissionElement> = changes.comparison.currentValue;
-
-            this.modelingSubmissionService.getSubmission(currentComparison.submissionA.submissionId).subscribe((submission: ModelingSubmission) => {
-                this.loadingSubmissionA = false;
-
-                submission.model = JSON.parse(submission.model!);
-                this.submissionA = submission;
-            });
-
-            this.modelingSubmissionService.getSubmission(currentComparison.submissionB.submissionId).subscribe((submission: ModelingSubmission) => {
-                this.loadingSubmissionB = false;
-
-                submission.model = JSON.parse(submission.model!);
-                this.submissionB = submission;
-            });
-        }
     }
 
     isModelingExercise() {

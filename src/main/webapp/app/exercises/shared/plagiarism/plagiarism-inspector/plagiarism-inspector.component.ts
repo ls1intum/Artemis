@@ -19,11 +19,6 @@ export class PlagiarismInspectorComponent implements OnInit {
     exercise: Exercise;
 
     /**
-     * Type of the currently selected exercise.
-     */
-    exerciseType: ExerciseType;
-
-    /**
      * Result of the automated plagiarism detection
      */
     plagiarismResult?: TextPlagiarismResult | ModelingPlagiarismResult;
@@ -48,12 +43,11 @@ export class PlagiarismInspectorComponent implements OnInit {
     ngOnInit() {
         this.route.data.subscribe(({ exercise }) => {
             this.exercise = exercise;
-            this.exerciseType = exercise.type;
         });
     }
 
     checkPlagiarism() {
-        if (this.exerciseType === ExerciseType.MODELING) {
+        if (this.exercise.type === ExerciseType.MODELING) {
             this.checkPlagiarismModeling();
         } else {
             this.checkPlagiarismJPlag();
@@ -74,8 +68,6 @@ export class PlagiarismInspectorComponent implements OnInit {
             (result: TextPlagiarismResult) => {
                 this.detectionInProgress = false;
 
-                console.log(result);
-
                 this.plagiarismResult = result;
                 this.selectedComparisonIndex = 0;
             },
@@ -93,8 +85,6 @@ export class PlagiarismInspectorComponent implements OnInit {
             (result: ModelingPlagiarismResult) => {
                 this.detectionInProgress = false;
 
-                console.log(result);
-
                 this.plagiarismResult = result;
                 this.selectedComparisonIndex = 0;
             },
@@ -109,7 +99,7 @@ export class PlagiarismInspectorComponent implements OnInit {
         const json = JSON.stringify(this.plagiarismResult);
         const blob = new Blob([json], { type: 'application/json' });
 
-        downloadFile(blob, `check-plagiarism-modeling-exercise_${this.exercise.id}.json`);
+        downloadFile(blob, `plagiarism-result_${this.exercise.type}-exercise-${this.exercise.id}.json`);
     }
 
     /**

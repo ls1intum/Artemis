@@ -27,8 +27,9 @@
         }
 
         &-body {
-            margin-top: 26px;
             height: 100%;
+            padding-top: 26px;
+            overflow-y: auto;
         }
     }
 }
