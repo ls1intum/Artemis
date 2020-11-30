@@ -17,6 +17,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { QuizPointStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-point-statistic/quiz-point-statistic.component';
 import moment = require('moment');
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
+import { SinonStub, stub } from 'sinon';
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 const question = { id: 1 } as QuizQuestion;
@@ -32,10 +33,10 @@ describe('QuizExercise Point Statistic Component', () => {
     let fixture: ComponentFixture<QuizPointStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy: jasmine.Spy;
+    let accountSpy: SinonStub;
     let router: Router;
     let translateService: TranslateService;
-    let quizServiceFindSpy: jasmine.Spy;
+    let quizServiceFindSpy: SinonStub;
     Date.now = jest.fn(() => new Date(Date.UTC(2017, 0, 1)).valueOf());
 
     beforeEach(() => {
@@ -60,7 +61,7 @@ describe('QuizExercise Point Statistic Component', () => {
                 accountService = fixture.debugElement.injector.get(AccountService);
                 router = fixture.debugElement.injector.get(Router);
                 translateService = fixture.debugElement.injector.get(TranslateService);
-                quizServiceFindSpy = spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
+                quizServiceFindSpy = stub(quizService, 'find').returns(of(new HttpResponse({ body: quizExercise })));
             });
     });
 
@@ -72,7 +73,7 @@ describe('QuizExercise Point Statistic Component', () => {
         it('should call functions on Init', fakeAsync(() => {
             // setup
             jest.useFakeTimers();
-            accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
+            accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(true);
             const loadQuizSuccessSpy = spyOn(comp, 'loadQuizSuccess');
             const updateDisplayedTimesSpy = spyOn(comp, 'updateDisplayedTimes');
             comp.quizExerciseChannel = '';
@@ -93,7 +94,7 @@ describe('QuizExercise Point Statistic Component', () => {
         }));
 
         it('should not load QuizSuccess if not authorised', fakeAsync(() => {
-            accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(false);
+            accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(false);
             const loadQuizSuccessSpy = spyOn(comp, 'loadQuizSuccess');
 
             comp.ngOnInit();
@@ -145,22 +146,22 @@ describe('QuizExercise Point Statistic Component', () => {
     });
 
     describe('loadQuizSuccess', function () {
-        let loadDataSpy: jasmine.Spy;
-        let routerSpy: jasmine.Spy;
+        let loadDataSpy: SinonStub;
+        let routerSpy: SinonStub;
 
         beforeEach(() => {
-            loadDataSpy = spyOn(comp, 'loadData');
-            routerSpy = spyOn(router, 'navigate');
+            loadDataSpy = stub(comp, 'loadData');
+            routerSpy = stub(router, 'navigate');
         });
 
         afterEach(() => {
-            loadDataSpy.calls.reset();
-            routerSpy.calls.reset();
+            loadDataSpy.reset();
+            routerSpy.reset();
         });
 
         it('should call router if called by student', () => {
             // setup
-            accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(false);
+            accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(false);
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -171,7 +172,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
         it('should load the quiz', () => {
             // setup
-            accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
+            accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(true);
 
             // call
             comp.loadQuizSuccess(quizExercise);

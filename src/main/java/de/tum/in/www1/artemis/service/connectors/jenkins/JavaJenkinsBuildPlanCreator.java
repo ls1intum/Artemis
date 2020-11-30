@@ -8,13 +8,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.ResourceLoaderService;
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 
 @Profile("jenkins")
 @Component
-public class JavaJenkinsBuildPlanCreator extends AbstractJenkinsBuildPlanCreator {
+public class JavaJenkinsBuildPlanCreator extends BaseJenkinsBuildPlanCreator {
 
     private static final String STATIC_CODE_ANALYSIS_REPORT_DIR = "staticCodeAnalysisReports";
 
@@ -23,25 +22,20 @@ public class JavaJenkinsBuildPlanCreator extends AbstractJenkinsBuildPlanCreator
     }
 
     @Override
-    public String getPipelineScript(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
+    protected String[] getResourcePath(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
         final var buildPlan = isStaticCodeAnalysisEnabled ? "Jenkinsfile-staticCodeAnalysis" : "Jenkinsfile";
-        final var resourcePath = new String[] { "templates", "jenkins", "java", buildPlan };
+        return new String[] { "templates", "jenkins", "java", buildPlan };
+    }
 
-        Map<String, String> replacements;
+    @Override
+    protected Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL,
+            boolean isStaticCodeAnalysisEnabled) {
+        Map<String, String> replacements = super.getReplacements(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled);
         if (isStaticCodeAnalysisEnabled) {
             String staticCodeAnalysisScript = createStaticCodeAnalysisScript();
-            replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
-                    gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl,
-                    REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY, REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript, REPLACE_DOCKER_IMAGE_NAME,
-                    jenkinsService.getDockerImageName(ProgrammingLanguage.JAVA));
+            replacements.put(REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript);
         }
-        else {
-            replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
-                    gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl,
-                    REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY, REPLACE_DOCKER_IMAGE_NAME, jenkinsService.getDockerImageName(ProgrammingLanguage.JAVA));
-        }
-
-        return replacePipelineScriptParameters(resourcePath, replacements);
+        return replacements;
     }
 
     private String createStaticCodeAnalysisScript() {

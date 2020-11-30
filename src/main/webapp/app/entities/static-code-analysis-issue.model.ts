@@ -10,6 +10,7 @@ export class StaticCodeAnalysisIssue {
     public category: string;
     public message: string;
     public priority: string;
+    public penalty?: number;
 
     static fromFeedback(feedback: Feedback): StaticCodeAnalysisIssue {
         return JSON.parse(feedback.detailText!);

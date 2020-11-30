@@ -28,13 +28,11 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -316,6 +314,30 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
+    public void testLockAndGetProgrammingSubmission_withManualResult() throws Exception {
+        ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
+        database.addProgrammingSubmission(exercise, submission, "student1");
+        database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), programmingExerciseStudentParticipation);
+
+        request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.OK, Participation.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testLockAndGetProgrammingSubmission_withoutManualResult() throws Exception {
+        var result = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), programmingExerciseStudentParticipation);
+        database.addProgrammingSubmissionToResultAndParticipation(result, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        Participation response = request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.OK, Participation.class);
+        var participation = programmingExerciseStudentParticipationRepository.findByIdWithLatestManualResultAndFeedbacksAndRelatedSubmissionsAndAssessor(response.getId());
+        var newManualResult = participation.get().getResults().stream().filter(Result::isManualResult).collect(Collectors.toList()).get(0);
+        assertThat(newManualResult.getAssessor().getLogin()).isEqualTo("tutor1");
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetProgrammingSubmissionWithoutAssessment() throws Exception {
         ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
         submission = database.addProgrammingSubmission(exercise, submission, "student1");
@@ -379,6 +401,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getProgrammingSubmissionWithoutAssessment_alreadyAssessed_noFound() throws Exception {
+        exercise.setDueDate(ZonedDateTime.now().minusDays(2));
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
         var submission = ModelFactory.generateProgrammingSubmission(true);
@@ -386,7 +409,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         final var tutor = database.getUserByLogin("tutor1");
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, tutor);
 
-        request.get("/api/exercises" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.NOT_FOUND, String.class);
     }
 
     private void createTenLockedSubmissionsForExercise(String assessor) {

@@ -15,7 +15,6 @@ import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { DebounceClickDirective } from 'app/shared/directives/DebounceClickDirective';
 import { ChartComponent } from 'app/shared/chart/chart.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 
@@ -33,7 +32,6 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
         SlideToggleComponent,
         JhiConnectionStatusComponent,
         ChartComponent,
-        DebounceClickDirective,
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -53,7 +51,6 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
         SecureLinkDirective,
         SlideToggleComponent,
         JhiConnectionStatusComponent,
-        DebounceClickDirective,
         ChartComponent,
     ],
 })
