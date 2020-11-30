@@ -80,10 +80,12 @@ public class StaticCodeAnalysisConfigurer {
     private List<StaticCodeAnalysisDefaultCategory> createDefaultCategoriesForSwift() {
         return List.of(new StaticCodeAnalysisDefaultCategory("Code Style", 0.2D, 2D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
                 new StaticCodeAnalysisDefaultCategory("Design", 5D, 5D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
-                new StaticCodeAnalysisDefaultCategory("Code Metrics", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
-                new StaticCodeAnalysisDefaultCategory("Documentation", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
-                new StaticCodeAnalysisDefaultCategory("Naming & Formatting", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
-                new StaticCodeAnalysisDefaultCategory("Miscellaneous", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))));
+                // changed
+                new StaticCodeAnalysisDefaultCategory("Code Metrics", 0.1D, 0.1D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
+                new StaticCodeAnalysisDefaultCategory("Documentation", 0.1D, 0.1D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
+                new StaticCodeAnalysisDefaultCategory("Naming & Formatting", 0.1D, 0.1D, CategoryState.FEEDBACK,
+                        List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
+                new StaticCodeAnalysisDefaultCategory("Miscellaneous", 0.1D, 0.1D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))));
     }
 
     @Bean(name = "staticCodeAnalysisConfiguration")
