@@ -20,14 +20,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 @Repository
 public interface ProgrammingSubmissionRepository extends JpaRepository<ProgrammingSubmission, Long> {
 
-    /**
-     * Load submission with eager Results
-     * @param submissionId the submissionId
-     * @return optional submission
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "results" })
-    Optional<ProgrammingSubmission> findWithEagerResultsById(Long submissionId);
-
     @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks" })
     ProgrammingSubmission findFirstByParticipationIdAndCommitHash(Long participationId, String commitHash);
 
@@ -54,8 +46,13 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks" })
     List<ProgrammingSubmission> findByParticipationIdAndResultsIsNullOrderBySubmissionDateDesc(Long participationId);
 
+    /**
+     * Load submission with eager Results
+     * @param submissionId the submissionId
+     * @return optional submission
+     */
     @EntityGraph(type = LOAD, attributePaths = "results")
-    Optional<ProgrammingSubmission> findWithEagerResultById(Long submissionId);
+    Optional<ProgrammingSubmission> findWithEagerResultsById(Long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor" })
     Optional<ProgrammingSubmission> findWithEagerResultAssessorFeedbackById(long submissionId);
