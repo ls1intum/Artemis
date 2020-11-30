@@ -39,7 +39,7 @@ public class RepositoryService {
 
     private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final Logger log = LoggerFactory.getLogger(TextSubmissionService.class);
+    private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
     public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserService userService, ParticipationService participationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
@@ -100,35 +100,29 @@ public class RepositoryService {
 
         var repoFiles = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey)
                 .collect(Collectors.toList());
-        var templateRepoFiles = gitService.listFilesAndFolders(templateRepository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-        // Used to avoid going through the loop when the file which the student added was not in the template repository
-        var templateRepoFilesNames = templateRepoFiles.stream().map(File::toString).collect(Collectors.toList());
+
+        Map<String, File> templateRepoFiles = gitService.listFilesAndFolders(templateRepository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE)
+                .collect(Collectors.toMap(entry -> entry.getKey().toString(), entry -> entry.getKey()));
 
         repoFiles.forEach(file -> {
-            var fileName = file.toString();
-            // When template repository does not contain this file it is new/changed, no need to iterate through the loop
-            if (!templateRepoFilesNames.contains(fileName)) {
+            String fileName = file.toString();
+
+            if (templateRepoFiles.get(fileName) == null) {
                 filesWithInformationAboutChange.put(fileName, true);
             }
             else {
-                templateRepoFiles.forEach(templateFile -> {
-                    try {
-                        // Check to assure we are comparing the correct files
-                        if (file.toString().equalsIgnoreCase(templateFile.toString())) {
-                            // When having the same content, it was not changed
-                            if (FileUtils.contentEquals(file, templateFile)) {
-                                filesWithInformationAboutChange.put(fileName, false);
-                            }
-                            else {
-                                filesWithInformationAboutChange.put(fileName, true);
-                            }
-                        }
+                File templateFile = templateRepoFiles.get(fileName);
+                try {
+                    if (FileUtils.contentEquals(file, templateFile)) {
+                        filesWithInformationAboutChange.put(fileName, false);
                     }
-                    catch (IOException e) {
-                        log.error("Comparing file1 " + fileName + " with file2 " + templateFile.toString() + " throws in following error: " + e.getMessage());
+                    else {
+                        filesWithInformationAboutChange.put(fileName, true);
                     }
-                });
+                }
+                catch (IOException e) {
+                    log.error("Comparing file1 " + fileName + " with file2 " + templateFile.toString() + " throws in following error: " + e.getMessage());
+                }
             }
         });
         return filesWithInformationAboutChange;
