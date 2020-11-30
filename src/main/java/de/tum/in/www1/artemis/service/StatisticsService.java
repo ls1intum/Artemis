@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.repository.StatisticsRepository;
 
 @Service
@@ -33,15 +34,18 @@ public class StatisticsService {
      * @param span DAY,WEEK,MONTH or YEAR depending on the active tab in the view
      * @return a array, containing the values for each bar in the graph
      */
-    public Integer[] getTotalSubmissions(String span) {
+    public Integer[] getTotalSubmissions(SpanType span) {
+        Integer[] result;
+        ZonedDateTime border;
+        List<Map<String, Object>> outcome;
         switch (span) {
-            case "DAY": // result = this.statisticsRepository.getTotalSubmissionsDay(ZonedDateTime.now().minusDays(7));
+            case DAY: // result = this.statisticsRepository.getTotalSubmissionsDay(ZonedDateTime.now().minusDays(7));
                 return null;
-            case "WEEK":
-                Integer[] result = new Integer[7];
+            case WEEK:
+                result = new Integer[7];
                 Arrays.fill(result, 0);
-                ZonedDateTime border = ZonedDateTime.now().minusDays(6).withHour(0).withMinute(0).withSecond(0);
-                List<Map<String, Object>> outcome = this.statisticsRepository.getTotalSubmissionsWeek(border);
+                border = ZonedDateTime.now().minusDays(6).withHour(0).withMinute(0).withSecond(0);
+                outcome = this.statisticsRepository.getTotalSubmissions(border);
                 for (Map<String, Object> map : outcome) {
                     ZonedDateTime date = (ZonedDateTime) map.get("day");
                     Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
@@ -52,9 +56,9 @@ public class StatisticsService {
                     }
                 }
                 return result;
-            case "MONTH":
+            case MONTH:
                 return null;
-            case "YEAR":
+            case YEAR:
                 return null;
             default:
                 return null;

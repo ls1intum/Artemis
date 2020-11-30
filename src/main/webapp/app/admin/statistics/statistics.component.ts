@@ -81,18 +81,54 @@ export class StatisticsComponent implements OnInit, OnChanges {
                 break;
         }
     }
+    private getMonths(): string[] {
+        const currentMonth = moment().month();
+        const year = [
+            this.translateService.instant('months.january'),
+            this.translateService.instant('months.february'),
+            this.translateService.instant('months.march'),
+            this.translateService.instant('months.april'),
+            this.translateService.instant('months.may'),
+            this.translateService.instant('months.june'),
+            this.translateService.instant('months.july'),
+            this.translateService.instant('months.august'),
+            this.translateService.instant('months.september'),
+            this.translateService.instant('months.october'),
+            this.translateService.instant('months.november'),
+            this.translateService.instant('months.december'),
+        ];
+        const back = year.slice(currentMonth + 1, year.length);
+        const front = year.slice(0, currentMonth + 1);
+        return back.concat(front);
+    }
 
-    private getWeekdays(): string[] {
+    private getDaysInMonth(): string[] {
         const days: string[] = [];
 
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < this.histogramData.length; i++) {
             days.push(
                 moment()
-                    .subtract(6 - i, 'd')
-                    .format('dddd'),
+                    .subtract(this.histogramData.length - 1 - i, 'days')
+                    .format('DD.MM'),
             );
         }
         return days;
+    }
+
+    private getWeekdays(): string[] {
+        const currentDay = moment().day();
+        const days = [
+            this.translateService.instant('weekdays.monday'),
+            this.translateService.instant('weekdays.tuesday'),
+            this.translateService.instant('weekdays.wednesday'),
+            this.translateService.instant('weekdays.thursday'),
+            this.translateService.instant('weekdays.friday'),
+            this.translateService.instant('weekdays.saturday'),
+            this.translateService.instant('weekdays.sunday'),
+        ];
+        const back = days.slice(currentDay, days.length);
+        const front = days.slice(0, currentDay);
+        return back.concat(front);
     }
 
     private createLabels(): string[] {
