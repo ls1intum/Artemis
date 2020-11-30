@@ -668,8 +668,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         textSubmission2 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, "student2", "tutor1", Collections.singletonList(feedback));
 
         // refetch the database objects to avoid lazy exceptions
-        textSubmission1 = textSubmissionRepository.findWithEagerResultsFeedbackAndTextBlocksById(textSubmission1.getId()).get();
-        textSubmission2 = textSubmissionRepository.findWithEagerResultsFeedbackAndTextBlocksById(textSubmission2.getId()).get();
+        textSubmission1 = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission1.getId()).get();
+        textSubmission2 = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission2.getId()).get();
         return asList(textSubmission1, textSubmission2);
     }
 

@@ -256,7 +256,7 @@ public class TextSubmissionService extends SubmissionService {
     }
 
     public TextSubmission getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(Long resultId) {
-        return textSubmissionRepository.findWithEagerResultsFeedbackAndTextBlocksById(resultId)
+        return textSubmissionRepository.findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(resultId)
                 .orElseThrow(() -> new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound"));
     }
 
@@ -279,6 +279,6 @@ public class TextSubmissionService extends SubmissionService {
     }
 
     public TextSubmission findOneWithEagerResultFeedbackAndTextBlocks(Long submissionId) {
-        return textSubmissionRepository.findWithEagerResultsFeedbackAndTextBlocksById(submissionId).get();
+        return textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(submissionId).get();
     }
 }
