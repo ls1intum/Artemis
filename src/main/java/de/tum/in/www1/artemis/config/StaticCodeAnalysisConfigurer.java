@@ -78,7 +78,7 @@ public class StaticCodeAnalysisConfigurer {
      * @return unmodifiable static code analysis categories
      */
     private List<StaticCodeAnalysisDefaultCategory> createDefaultCategoriesForSwift() {
-        return List.of(new StaticCodeAnalysisDefaultCategory("Code Style", 0.2D, 2D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
+        return List.of(new StaticCodeAnalysisDefaultCategory("Code Style", 0.2D, 2D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "blocks"))),
                 new StaticCodeAnalysisDefaultCategory("Design", 5D, 5D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
                 // changed
                 new StaticCodeAnalysisDefaultCategory("Code Metrics", 0.1D, 0.1D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "rules"))),
