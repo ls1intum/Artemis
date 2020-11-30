@@ -23,8 +23,6 @@ export class RatingComponent implements OnInit {
             return;
         }
 
-        // delete participation to prevent circular dependency
-        this.result.participation = undefined;
         this.ratingService.getRating(this.result.id!).subscribe((rating) => {
             if (rating) {
                 this.rating = rating;
@@ -46,6 +44,8 @@ export class RatingComponent implements OnInit {
 
         // update feedback locally
         this.rating.rating = $event.newValue;
+        // Delete participation to avoid circular dependency
+        this.rating.result!.participation = undefined;
 
         // set/update feedback on the server
         if (this.rating.id) {
