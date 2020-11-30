@@ -154,7 +154,7 @@ public class BambooBuildPlanService {
 
         // Do not run the builds in extra docker containers if the dev-profile is active
         if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-            defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage));
+            defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage, staticCodeAnalysisEnabled));
         }
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
@@ -196,6 +196,13 @@ public class BambooBuildPlanService {
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask);
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
+                    // Create artifacts and a final task for the execution of static code analysis
+                    List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA); // TODO: change to SWIFT
+                                                                                                                                                            // -> requires change in
+                                                                                                                                                            // sca-parser
+                    Artifact[] artifacts = staticCodeAnalysisTools.stream()
+                            .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
+                    defaultJob.artifacts(artifacts);
                     var scaTasks = readScriptTasksFromTemplate(programmingLanguage, false, true);
                     defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
                 }
@@ -304,8 +311,8 @@ public class BambooBuildPlanService {
         }
     }
 
-    private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage language) {
-        var dockerImage = bambooService.getDockerImageName(language);
+    private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage language, Boolean isSCA) {
+        var dockerImage = bambooService.getDockerImageName(language, Boolean.TRUE.equals(isSCA));
         return new DockerConfiguration().image(dockerImage);
     }
 }

@@ -33,12 +33,12 @@ public class JavaJenkinsBuildPlanCreator extends AbstractJenkinsBuildPlanCreator
             replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
                     gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl,
                     REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY, REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript, REPLACE_DOCKER_IMAGE_NAME,
-                    jenkinsService.getDockerImageName(ProgrammingLanguage.JAVA));
+                    jenkinsService.getDockerImageName(ProgrammingLanguage.JAVA, true));
         }
         else {
             replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
                     gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl,
-                    REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY, REPLACE_DOCKER_IMAGE_NAME, jenkinsService.getDockerImageName(ProgrammingLanguage.JAVA));
+                    REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY, REPLACE_DOCKER_IMAGE_NAME, jenkinsService.getDockerImageName(ProgrammingLanguage.JAVA, false));
         }
 
         return replacePipelineScriptParameters(resourcePath, replacements);
