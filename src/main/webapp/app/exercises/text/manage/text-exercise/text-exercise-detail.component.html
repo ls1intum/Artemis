@@ -9,7 +9,7 @@
                 <jhi-external-submission [exercise]="textExercise"></jhi-external-submission>
             </div>
             <dl class="row-md jh-entity-details markdown-preview">
-                <jhi-exercise-details [superExerciseDetails]="textExercise"></jhi-exercise-details>
+                <jhi-exercise-details [exercise]="textExercise"></jhi-exercise-details>
                 <dt><span jhiTranslate="artemisApp.textExercise.automaticAssessmentEnabled">Automatic Assessment Enabled</span></dt>
                 <dd>
                     <span>{{ (textExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ? 'global.generic.yes' : 'global.generic.no') | translate }}</span>

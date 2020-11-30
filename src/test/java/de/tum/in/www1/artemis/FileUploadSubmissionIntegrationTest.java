@@ -103,6 +103,32 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
+    @WithMockUser(value = "student3")
+    public void submitFileUploadSubmissionTwiceSameFile() throws Exception {
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
+        FileUploadSubmission returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission);
+        String actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).concat("file.png");
+        String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
+        assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
+        assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
+        var fileBytes = Files.readAllBytes(Path.of(actualFilePath));
+        assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
+        checkDetailsHidden(returnedSubmission, true);
+
+        submission = ModelFactory.generateFileUploadSubmission(false);
+        returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission);
+        actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).concat("file.png");
+        publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
+        assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
+        assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
+        fileBytes = Files.readAllBytes(Path.of(actualFilePath));
+        assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
+        checkDetailsHidden(returnedSubmission, true);
+
+        // TODO: upload a real file from the file system twice with the same and with different names and test both works correctly
+    }
+
+    @Test
     @WithMockUser(value = "student1")
     public void submitFileUploadSubmission_wrongExercise() throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
