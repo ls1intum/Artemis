@@ -140,7 +140,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param participationId the id of the participation
      * @return the participation with eager submissions and results or an empty Optional
      */
-    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.result", "results", "team.students" })
+    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "results", "team.students" })
     Optional<StudentParticipation> findWithEagerSubmissionsAndResultsById(Long participationId);
 
     /**
@@ -150,19 +150,19 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param participationId the id of the participation
      * @return the participation with eager submissions, results, exercise and course or an empty Optional
      */
-    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.result", "submissions.result.feedbacks", "results", "exercise", "exercise.course", "team.students" })
+    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.feedbacks", "results", "exercise", "exercise.course", "team.students" })
     Optional<StudentParticipation> findWithEagerSubmissionsAndResultsAndExerciseAndCourseById(Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "results", "results.assessor" })
     Optional<StudentParticipation> findWithEagerSubmissionsAndResultsAssessorsById(Long participationId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.result", "submissions.result.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.result.assessor" })
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(long exerciseId);
 
     @Query("SELECT DISTINCT p FROM StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch r.assessor a WHERE p.exercise.id = :#{#exerciseId} AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.result", "results" })
+    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "results" })
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(long exerciseId);
 
     @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.exercise e LEFT JOIN FETCH e.course WHERE participation.id = :#{#participationId}")
