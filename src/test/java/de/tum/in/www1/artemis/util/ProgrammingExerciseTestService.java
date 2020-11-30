@@ -4,8 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoi
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
@@ -296,7 +294,6 @@ public class ProgrammingExerciseTestService {
         List<Verifiable> verifiables = mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, recreateBuildPlans);
         setupRepositoryMocks(sourceExercise, exerciseRepo, solutionRepo, testRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
 
         // Create request parameters
         var params = new LinkedMultiValueMap<String, String>();
@@ -359,6 +356,7 @@ public class ProgrammingExerciseTestService {
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
+        setupRepositoryMocks(sourceExercise, exerciseRepo, solutionRepo, testRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
 
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
@@ -400,6 +398,7 @@ public class ProgrammingExerciseTestService {
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
+        setupRepositoryMocks(sourceExercise, exerciseRepo, solutionRepo, testRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
 
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,

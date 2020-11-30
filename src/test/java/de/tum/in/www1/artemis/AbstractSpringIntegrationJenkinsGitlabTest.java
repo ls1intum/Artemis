@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,7 +89,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public List<Verifiable> mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans)
-            throws IOException, URISyntaxException {
+            throws IOException, URISyntaxException, GitAPIException {
         // TODO: implement
         return null;
     }
