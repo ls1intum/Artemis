@@ -86,6 +86,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
+    showExistingQuestionsFromCourse = true;
     courses: Course[] = [];
     selectedCourseId?: number;
     quizExercises: QuizExercise[];
@@ -145,6 +146,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     ngOnInit(): void {
         /** Initialize local constants **/
         this.showExistingQuestions = false;
+        this.showExistingQuestionsFromCourse = true;
         this.courses = [];
         this.quizExercises = [];
         this.allExistingQuestions = [];
@@ -401,9 +403,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             });
         }
         this.showExistingQuestions = !this.showExistingQuestions;
-        this.selectedCourseId = undefined;
-        this.allExistingQuestions = this.existingQuestions = [];
-        this.changeDetector.detectChanges();
+        this.setExistingQuestionSourceToCourse(true);
     }
 
     /**
@@ -498,6 +498,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         }
         this.verifyAndImportQuestions(questions);
         this.showExistingQuestions = !this.showExistingQuestions;
+        this.showExistingQuestionsFromCourse = true;
         this.selectedCourseId = undefined;
         this.allExistingQuestions = this.existingQuestions = [];
         this.cacheValidation();
@@ -933,27 +934,39 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
+     * Move file reader creation to separate function to be able to mock
+     * https://fromanegg.com/post/2015/04/22/easy-testing-of-code-involving-native-methods-in-javascript/
+     */
+    generateFileReader() {
+        return new FileReader();
+    }
+
+    onFileLoadImport(fileReader: FileReader) {
+        try {
+            // Read the file and get list of questions from the file
+            const questions = JSON.parse(fileReader.result as string) as QuizQuestion[];
+            this.verifyAndImportQuestions(questions);
+            // Clearing html elements,
+            this.importFile = undefined;
+            this.importFileName = '';
+            const control = document.getElementById('importFileInput') as HTMLInputElement;
+            if (control) {
+                control.value = '';
+            }
+        } catch (e) {
+            alert('Import Quiz Failed! Invalid quiz file.');
+        }
+    }
+
+    /**
      * Imports a json quiz file and adds questions to current quiz exercise.
      */
     async importQuiz() {
         if (!this.importFile) {
             return;
         }
-        const fileReader = new FileReader();
-        fileReader.onload = () => {
-            try {
-                // Read the file and get list of questions from the file
-                const questions = JSON.parse(fileReader.result as string) as QuizQuestion[];
-                this.verifyAndImportQuestions(questions);
-                // Clearing html elements,
-                this.importFile = undefined;
-                this.importFileName = '';
-                const control = document.getElementById('importFileInput') as HTMLInputElement;
-                control.value = '';
-            } catch (e) {
-                alert('Import Quiz Failed! Invalid quiz file.');
-            }
-        };
+        const fileReader = this.generateFileReader();
+        fileReader.onload = () => this.onFileLoadImport(fileReader);
         fileReader.readAsText(this.importFile);
         this.cacheValidation();
     }
@@ -1206,6 +1219,22 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (this.duration.seconds !== undefined) {
             this.duration.seconds = duration.seconds();
         }
+    }
+
+    /**
+     * Update adding existing questions from a file or course
+     */
+    setExistingQuestionSourceToCourse(setToCourse: boolean): void {
+        this.showExistingQuestionsFromCourse = setToCourse;
+        this.selectedCourseId = undefined;
+        this.allExistingQuestions = this.existingQuestions = [];
+        this.importFile = undefined;
+        this.importFileName = '';
+        const control = document.getElementById('importFileInput') as HTMLInputElement;
+        if (control) {
+            control.value = '';
+        }
+        this.changeDetector.detectChanges();
     }
 
     /**

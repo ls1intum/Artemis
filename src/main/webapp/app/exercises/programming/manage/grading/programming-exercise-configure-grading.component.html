@@ -44,7 +44,7 @@
                             <jhi-programming-exercise-grading-table-actions
                                 [exercise]="exercise"
                                 [hasUnsavedChanges]="!!changedTestCaseIds.length"
-                                [hasUpdatedGrading]="hasUpdatedGradingConfig"
+                                [disableReset]="false"
                                 [isSaving]="isSaving"
                                 (onReset)="resetTestCases()"
                                 (onSave)="saveTestCases()"
@@ -71,23 +71,17 @@
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Weight" prop="weight">
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <jhi-table-editable-field [value]="value" (onValueUpdate)="updateEditedField($event, row, EditableField.WEIGHT)"></jhi-table-editable-field>
+                                    <jhi-table-editable-field [value]="value" [onValueUpdate]="updateEditedField(row, EditableField.WEIGHT)"></jhi-table-editable-field>
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Bonus Multiplier" prop="bonusMultiplier">
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <jhi-table-editable-field
-                                        [value]="value"
-                                        (onValueUpdate)="updateEditedField($event, row, EditableField.BONUS_MULTIPLIER)"
-                                    ></jhi-table-editable-field>
+                                    <jhi-table-editable-field [value]="value" [onValueUpdate]="updateEditedField(row, EditableField.BONUS_MULTIPLIER)"></jhi-table-editable-field>
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Bonus Points" prop="bonusPoints">
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <jhi-table-editable-field
-                                        [value]="value"
-                                        (onValueUpdate)="updateEditedField($event, row, EditableField.BONUS_POINTS)"
-                                    ></jhi-table-editable-field>
+                                    <jhi-table-editable-field [value]="value" [onValueUpdate]="updateEditedField(row, EditableField.BONUS_POINTS)"></jhi-table-editable-field>
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="After Due Date" prop="afterDueDate">
@@ -163,7 +157,7 @@
                             <jhi-programming-exercise-grading-table-actions
                                 [exercise]="exercise"
                                 [hasUnsavedChanges]="!!changedCategoryIds.length"
-                                [hasUpdatedGrading]="false"
+                                [disableReset]="true"
                                 [isSaving]="isSaving"
                                 (onReset)="resetCategories()"
                                 (onSave)="saveCategories()"
@@ -198,7 +192,7 @@
                                     ></fa-icon>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <select [ngModel]="value" class="p-1" (change)="updateEditedCategoryField($event.target.value, row, EditableField.STATE)">
+                                    <select [ngModel]="value" class="p-1" (change)="updateEditedCategoryField(row, EditableField.STATE)($event.target.value)">
                                         <option *ngFor="let s of categoryStateList" [value]="s.value">{{ s.name }}</option>
                                     </select>
                                 </ng-template>
@@ -218,7 +212,7 @@
                                     <jhi-table-editable-field
                                         *ngIf="row.state === CategoryState.Graded"
                                         [value]="value"
-                                        (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.PENALTY)"
+                                        [onValueUpdate]="updateEditedCategoryField(row, EditableField.PENALTY)"
                                     ></jhi-table-editable-field>
                                     <span *ngIf="row.state === CategoryState.Feedback" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
                                     <span *ngIf="row.state === CategoryState.Inactive" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
@@ -239,7 +233,7 @@
                                     <jhi-table-editable-field
                                         *ngIf="row.state === CategoryState.Graded"
                                         [value]="value"
-                                        (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.MAX_PENALTY)"
+                                        [onValueUpdate]="updateEditedCategoryField(row, EditableField.MAX_PENALTY)"
                                     ></jhi-table-editable-field>
                                     <span *ngIf="row.state === CategoryState.Feedback" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
                                     <span *ngIf="row.state === CategoryState.Inactive" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>

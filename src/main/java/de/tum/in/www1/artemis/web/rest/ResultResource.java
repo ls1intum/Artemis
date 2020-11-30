@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -73,16 +75,12 @@ public class ResultResource {
 
     private final LtiService ltiService;
 
-    private final ProgrammingSubmissionService programmingSubmissionService;
-
-    private final AssessmentService assessmentService;
-
-    private ProgrammingExerciseGradingService programmingExerciseGradingService;
+    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            ResultRepository resultRepository, WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService, UserService userService,
-            AssessmentService assessmentService, ExamService examService, ProgrammingExerciseGradingService programmingExerciseGradingService) {
+            ResultRepository resultRepository, WebsocketMessagingService messagingService, UserService userService, ExamService examService,
+            ProgrammingExerciseGradingService programmingExerciseGradingService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -92,8 +90,6 @@ public class ResultResource {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.messagingService = messagingService;
         this.ltiService = ltiService;
-        this.programmingSubmissionService = programmingSubmissionService;
-        this.assessmentService = assessmentService;
         this.userService = userService;
         this.examService = examService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -136,13 +132,12 @@ public class ResultResource {
         log.info("Artemis received a new result for build plan {}", planKey);
 
         // Try to retrieve the participation with the build plan key.
-        Optional<ProgrammingExerciseParticipation> optionalParticipation = getParticipationWithResults(planKey);
-        if (optionalParticipation.isEmpty()) {
+        var participation = getParticipationWithResults(planKey);
+        if (participation == null) {
             log.warn("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
             return notFound();
         }
 
-        var participation = optionalParticipation.get();
         // Process the new result from the build result.
         Optional<Result> result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, requestBody);
 
@@ -152,8 +147,8 @@ public class ResultResource {
                     result.get().getParticipation());
             // notify user via websocket
             messagingService.broadcastNewResult((Participation) participation, result.get());
-
-            if (participation instanceof ProgrammingExerciseStudentParticipation) {
+            if (participation instanceof StudentParticipation) {
+                // do not try to report results for template or solution participations
                 ltiService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
             }
             log.info("The new result for {} was saved successfully", planKey);
@@ -161,49 +156,29 @@ public class ResultResource {
         return ResponseEntity.ok().build();
     }
 
-    private Optional<ProgrammingExerciseParticipation> getParticipationWithResults(String planKey) {
+    @Nullable
+    private ProgrammingExerciseParticipation getParticipationWithResults(String planKey) {
         // we have to support template, solution and student build plans here
         if (planKey.contains(BuildPlanType.TEMPLATE.getName())) {
-            Optional<TemplateProgrammingExerciseParticipation> templateParticipation = participationService.findTemplateParticipationByBuildPlanId(planKey);
-            // we have to convert the optional type here to make Java happy
-            if (templateParticipation.isPresent()) {
-                return Optional.of(templateParticipation.get());
-            }
-            else {
-                return Optional.empty();
-            }
+            return participationService.findTemplateParticipationByBuildPlanId(planKey);
         }
         else if (planKey.contains(BuildPlanType.SOLUTION.getName())) {
-            Optional<SolutionProgrammingExerciseParticipation> solutionParticipation = participationService.findSolutionParticipationByBuildPlanId(planKey);
-            // we have to convert the optional type here to make Java happy
-            if (solutionParticipation.isPresent()) {
-                return Optional.of(solutionParticipation.get());
-            }
-            else {
-                return Optional.empty();
-            }
+            return participationService.findSolutionParticipationByBuildPlanId(planKey);
         }
         List<ProgrammingExerciseStudentParticipation> participations = participationService.findByBuildPlanIdWithEagerResults(planKey);
-        Optional<ProgrammingExerciseStudentParticipation> participation = Optional.empty();
+        ProgrammingExerciseStudentParticipation participation = null;
         if (participations.size() > 0) {
-            participation = Optional.of(participations.get(0));
+            participation = participations.get(0);
             if (participations.size() > 1) {
                 // in the rare case of multiple participations, take the latest one.
                 for (ProgrammingExerciseStudentParticipation otherParticipation : participations) {
-                    if (otherParticipation.getInitializationDate().isAfter(participation.get().getInitializationDate())) {
-                        participation = Optional.of(otherParticipation);
+                    if (otherParticipation.getInitializationDate().isAfter(participation.getInitializationDate())) {
+                        participation = otherParticipation;
                     }
                 }
             }
         }
-
-        // we have to convert the optional type here to make Java happy
-        if (participation.isPresent()) {
-            return Optional.of(participation.get());
-        }
-        else {
-            return Optional.empty();
-        }
+        return participation;
     }
 
     /**
@@ -447,8 +422,7 @@ public class ResultResource {
 
         // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, studentLogin);
-        Optional<Result> optionalResult = optionalParticipation.map(Participation::findLatestResult);
-        if (optionalResult.isPresent()) {
+        if (optionalParticipation.isPresent() && optionalParticipation.get().getResults() != null && optionalParticipation.get().getResults().size() > 0) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "resultAlreadyExists", "A result already exists for this student in this exercise."))
                     .build();

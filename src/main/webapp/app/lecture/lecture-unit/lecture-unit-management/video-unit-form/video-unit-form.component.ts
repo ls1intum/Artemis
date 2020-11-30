@@ -53,6 +53,9 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
     formSubmitted: EventEmitter<VideoUnitFormData> = new EventEmitter<VideoUnitFormData>();
     form: FormGroup;
 
+    urlValidator = urlValidator;
+    videoUrlValidator = videoUrlValidator;
+
     constructor(private fb: FormBuilder) {}
 
     get nameControl() {
@@ -92,10 +95,10 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
         }
         this.form = this.fb.group({
             name: [undefined, [Validators.required, Validators.maxLength(255)]],
-            description: [undefined, [Validators.maxLength(255)]],
+            description: [undefined, [Validators.maxLength(1000)]],
             releaseDate: [undefined],
-            source: [undefined, [Validators.required, urlValidator]],
-            urlHelper: [undefined, videoUrlValidator],
+            source: [undefined, [Validators.required, this.urlValidator]],
+            urlHelper: [undefined, this.videoUrlValidator],
         });
     }
 
@@ -120,13 +123,15 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
         }
     }
 
-    createEmbeddableVideoUrl(event: any) {
+    setEmbeddedVideoUrl(event: any) {
         event.stopPropagation();
-        this.sourceControl!.setValue(
-            urlParser.create({
-                videoInfo: urlParser.parse(this.urlHelperControl!.value)!,
-                format: 'embed',
-            }),
-        );
+        this.sourceControl!.setValue(this.extractEmbeddedUrl(this.urlHelperControl!.value));
+    }
+
+    extractEmbeddedUrl(videoUrl: string) {
+        return urlParser.create({
+            videoInfo: urlParser.parse(videoUrl)!,
+            format: 'embed',
+        });
     }
 }

@@ -1,10 +1,10 @@
 import { SpyObject } from '../../spyobject';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
-import Spy = jasmine.Spy;
+import { SinonStub } from 'sinon';
 
 export class MockStateStorageService extends SpyObject {
-    getUrlSpy: Spy;
-    storeUrlSpy: Spy;
+    getUrlSpy: SinonStub;
+    storeUrlSpy: SinonStub;
 
     constructor() {
         super(StateStorageService);

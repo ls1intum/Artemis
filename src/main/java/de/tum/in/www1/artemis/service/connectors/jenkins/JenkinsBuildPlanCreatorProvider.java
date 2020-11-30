@@ -11,11 +11,11 @@ public class JenkinsBuildPlanCreatorProvider {
 
     private final JavaJenkinsBuildPlanCreator javaJenkinsBuildPlanCreator;
 
-    private final DefaultJenkinsBuildPlanCreator defaultJenkinsBuildPlanCreator;
+    private final BaseJenkinsBuildPlanCreator baseJenkinsBuildPlanCreator;
 
-    public JenkinsBuildPlanCreatorProvider(JavaJenkinsBuildPlanCreator javaJenkinsBuildPlanCreator, DefaultJenkinsBuildPlanCreator defaultJenkinsBuildPlanCreator) {
+    public JenkinsBuildPlanCreatorProvider(JavaJenkinsBuildPlanCreator javaJenkinsBuildPlanCreator, BaseJenkinsBuildPlanCreator defaultJenkinsBuildPlanCreator) {
         this.javaJenkinsBuildPlanCreator = javaJenkinsBuildPlanCreator;
-        this.defaultJenkinsBuildPlanCreator = defaultJenkinsBuildPlanCreator;
+        this.baseJenkinsBuildPlanCreator = defaultJenkinsBuildPlanCreator;
     }
 
     /**
@@ -28,7 +28,7 @@ public class JenkinsBuildPlanCreatorProvider {
     public JenkinsXmlConfigBuilder builderFor(ProgrammingLanguage programmingLanguage) {
         return switch (programmingLanguage) {
             case JAVA, KOTLIN -> javaJenkinsBuildPlanCreator;
-            case PYTHON, C, HASKELL -> defaultJenkinsBuildPlanCreator;
+            case PYTHON, C, HASKELL -> baseJenkinsBuildPlanCreator;
             case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
             case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
             case SWIFT -> throw new UnsupportedOperationException("Swift templates are not available for Jenkins.");

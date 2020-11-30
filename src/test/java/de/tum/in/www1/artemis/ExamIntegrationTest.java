@@ -553,6 +553,30 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testGetCurrentAndUpcomingExams() throws Exception {
+        request.getList("/api/courses/upcoming-exams", HttpStatus.OK, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = "USER")
+    public void testGetCurrentAndUpcomingExamsForbiddenForUser() throws Exception {
+        request.getList("/api/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetCurrentAndUpcomingExamsForbiddenForInstructor() throws Exception {
+        request.getList("/api/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCurrentAndUpcomingExamsForbiddenForTutor() throws Exception {
+        request.getList("/api/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteEmptyExam_asInstructor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);

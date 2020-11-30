@@ -11,7 +11,6 @@ import { Course } from 'app/entities/course.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
-import { expect } from '../helpers/jest.fix';
 
 describe('Course Service', () => {
     let injector: TestBed;

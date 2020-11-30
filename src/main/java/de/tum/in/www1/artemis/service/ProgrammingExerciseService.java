@@ -295,11 +295,11 @@ public class ProgrammingExerciseService {
         }
     }
 
-    private String getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
+    public String getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
         return getProgrammingLanguageTemplatePath(programmingLanguage) + "/" + projectType.name().toLowerCase();
     }
 
-    private String getProgrammingLanguageTemplatePath(ProgrammingLanguage programmingLanguage) {
+    public String getProgrammingLanguageTemplatePath(ProgrammingLanguage programmingLanguage) {
         return "templates/" + programmingLanguage.name().toLowerCase();
     }
 
@@ -379,7 +379,7 @@ public class ProgrammingExerciseService {
             }
 
             replacePlaceholders(programmingExercise, repository);
-            commitAndPushRepository(repository, templateName, user);
+            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", user);
         }
     }
 
@@ -403,23 +403,15 @@ public class ProgrammingExerciseService {
             String templatePath = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()) + "/test";
 
             String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
-            String testUtilsPath = templatePath + "/testutils/**/*.*";
-
-            Resource[] testUtils = resourceLoaderService.getResources(testUtilsPath);
             Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
-
             fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
 
             // These resources might override the programming language dependent resources as they are project type dependent.
-            Resource[] projectTypeTestUtils = null;
             ProjectType projectType = programmingExercise.getProjectType();
             if (projectType != null) {
                 String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
 
                 String projectTypeProjectTemplatePath = projectTypeTemplatePath + "/projectTemplate/**/*.*";
-                String projectTypeTestUtilsPath = projectTypeTemplatePath + "/testutils/**/*.*";
-
-                projectTypeTestUtils = resourceLoaderService.getResources(projectTypeTestUtilsPath);
 
                 try {
                     Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(projectTypeProjectTemplatePath);
@@ -435,7 +427,7 @@ public class ProgrammingExerciseService {
             sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
 
             if (!programmingExercise.hasSequentialTestRuns()) {
-                String testFilePath = templatePath + "/testFiles" + "/**/*.*";
+                String testFilePath = templatePath + "/testFiles/**/*.*";
                 Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
                 String packagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
@@ -444,15 +436,11 @@ public class ProgrammingExerciseService {
 
                 fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
 
-                fileService.copyResources(testUtils, prefix, packagePath, true);
                 fileService.copyResources(testFileResources, prefix, packagePath, false);
 
                 // Possibly overwrite files if the project type is defined
                 if (projectType != null) {
                     String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
-                    if (projectTypeTestUtils != null) {
-                        fileService.copyResources(projectTypeTestUtils, prefix, packagePath, true);
-                    }
 
                     try {
                         Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
@@ -500,14 +488,10 @@ public class ProgrammingExerciseService {
                     String packagePath = Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
                     Files.copy(stagePomXml.getInputStream(), Paths.get(buildStagePath.toAbsolutePath().toString(), "pom.xml"));
-                    fileService.copyResources(testUtils, prefix, packagePath, true);
                     fileService.copyResources(buildStageResources, prefix, packagePath, false);
 
                     // Possibly overwrite files if the project type is defined
                     if (projectType != null) {
-                        if (projectTypeTestUtils != null) {
-                            fileService.copyResources(projectTypeTestUtils, prefix, packagePath, true);
-                        }
                         buildStageResourcesPath = projectTemplatePath + "/testFiles/" + buildStage + "/**/*.*";
                         try {
                             buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
@@ -520,7 +504,7 @@ public class ProgrammingExerciseService {
             }
 
             replacePlaceholders(programmingExercise, repository);
-            commitAndPushRepository(repository, templateName, user);
+            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", user);
         }
         else {
             // If there is no special test structure for a programming language, just copy all the test files.
@@ -556,19 +540,22 @@ public class ProgrammingExerciseService {
 
         replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
 
+        replacements.put("${packaging}", programmingExercise.hasSequentialTestRuns() ? "pom" : "jar");
+
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements);
     }
 
     /**
      * Stage, commit and push.
      * @param repository The repository to which the changes should get pushed
-     * @param templateName The template name which should be put in the commit message
-     * @throws GitAPIException If committing, or pushing to the repo throws an exception
+     * @param message The commit message
      * @param user the user who has initiated the generation of the programming exercise
+     * @throws GitAPIException If committing, or pushing to the repo throws an exception
+     *
      */
-    public void commitAndPushRepository(Repository repository, String templateName, User user) throws GitAPIException {
+    public void commitAndPushRepository(Repository repository, String message, User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
-        gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis", user);
+        gitService.commitAndPush(repository, message, user);
         repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
     }
 
@@ -798,7 +785,7 @@ public class ProgrammingExerciseService {
      * @param programmingExerciseId id of the programming exercise to delete.
      * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
      */
-    @Transactional
+    @Transactional // ok
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
         // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).

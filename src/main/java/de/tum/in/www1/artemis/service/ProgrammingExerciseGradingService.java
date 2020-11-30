@@ -633,7 +633,7 @@ public class ProgrammingExerciseGradingService {
             // add 1 to the passed or failed amount for this test case
             // dependant on the positive flag of the feedback
             if (testCaseStatsMap.containsKey(testName)) {
-                if (feedback.isPositive()) {
+                if (Boolean.TRUE.equals(feedback.isPositive())) {
                     testCaseStatsMap.get(testName).increaseNumPassed();
                 }
                 else {

@@ -191,6 +191,24 @@ public class ExerciseResource {
     }
 
     /**
+     * GET /exercises/upcoming : Find all exercises that have an upcoming due date.
+     *
+     * @return the ResponseEntity with status 200 (OK) and a list of exercises.
+     */
+    @GetMapping("/exercises/upcoming")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Set<Exercise>> getUpcomingExercises() {
+        log.debug("REST request to get all upcoming exercises");
+
+        if (!authCheckService.isAdmin()) {
+            return forbidden();
+        }
+
+        Set<Exercise> upcomingExercises = exerciseService.findAllExercisesWithUpcomingDueDate();
+        return ResponseEntity.ok(upcomingExercises);
+    }
+
+    /**
      * GET /exercises/:exerciseId/stats-for-tutor-dashboard A collection of useful statistics for the tutor exercise dashboard of the exercise with the given exerciseId
      *
      * @param exerciseId the exerciseId of the exercise to retrieve
@@ -360,30 +378,28 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        if (exercise != null) {
-            List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerResultsAndSubmissions(exercise, user.getId());
-            exercise.setStudentParticipations(new HashSet<>());
-            for (StudentParticipation participation : participations) {
+        List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerResultsAndSubmissions(exercise, user.getId());
+        exercise.setStudentParticipations(new HashSet<>());
+        for (StudentParticipation participation : participations) {
 
-                participation.setResults(exercise.findResultsFilteredForStudents(participation));
-                // By filtering the results available yet, they can become null for the exercise.
-                if (participation.getResults() != null) {
-                    participation.getResults().forEach(r -> r.setAssessor(null));
-                }
-                exercise.addParticipation(participation);
+            participation.setResults(exercise.findResultsFilteredForStudents(participation));
+            // By filtering the results available yet, they can become null for the exercise.
+            if (participation.getResults() != null) {
+                participation.getResults().forEach(r -> r.setAssessor(null));
             }
+            exercise.addParticipation(participation);
+        }
 
-            this.programmingExerciseService.checksAndSetsIfProgrammingExerciseIsLocalSimulation(exercise);
-            // TODO: we should also check that the submissions do not contain sensitive data
+        this.programmingExerciseService.checksAndSetsIfProgrammingExerciseIsLocalSimulation(exercise);
+        // TODO: we should also check that the submissions do not contain sensitive data
 
-            // remove sensitive information for students
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-                exercise.filterSensitiveInformation();
-            }
+        // remove sensitive information for students
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            exercise.filterSensitiveInformation();
         }
 
         log.debug("getResultsForCurrentUser took " + (System.currentTimeMillis() - start) + "ms");
 
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
+        return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
 }

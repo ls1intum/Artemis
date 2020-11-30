@@ -14,15 +14,15 @@ module.exports = {
     },
     coverageThreshold: {
         global: {
-            branches: 39,
-            functions: 46,
-            lines: 63,
-            // TODO: in the future, the following value should be increase to 80%
-            statements: 64,
+            // TODO: in the future, the following values should be increase to 80%
+            statements: 68,
+            branches: 44,
+            functions: 51,
+            lines: 67,
         },
     },
     preset: 'jest-preset-angular',
-    setupFilesAfterEnv: ['<rootDir>/src/test/javascript/jest.ts'],
+    setupFilesAfterEnv: ['<rootDir>/src/test/javascript/jest.ts', 'jest-sinon'],
     modulePaths: ['<rootDir>/src/main/webapp/'],
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
     rootDir: '../../../',

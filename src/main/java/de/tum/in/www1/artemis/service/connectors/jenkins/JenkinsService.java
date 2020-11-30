@@ -10,12 +10,12 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import javax.validation.constraints.NotNull;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -66,6 +66,8 @@ import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 public class JenkinsService implements ContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
+
+    private static final String PIPELINE_SCRIPT_DETECTION_COMMENT = "// ARTEMIS: JenkinsPipeline";
 
     @Value("${artemis.continuous-integration.url}")
     private URL JENKINS_SERVER_URL;
@@ -175,9 +177,10 @@ public class JenkinsService implements ContinuousIntegrationService {
             throw new IllegalArgumentException("Pipeline Script not found");
         }
 
-        String pipeLineScript = scriptNode.getFirstChild().getTextContent();
-        // If the script does not start with "pipeline", it is not actually a pipeline script, but a deprecated programming exercise with an old configuration
-        if (!pipeLineScript.trim().startsWith("pipeline")) {
+        String pipeLineScript = scriptNode.getFirstChild().getTextContent().trim();
+        // If the script does not start with "pipeline" or the special comment,
+        // it is not actually a pipeline script, but a deprecated programming exercise with an old configuration
+        if (!pipeLineScript.startsWith("pipeline") && !pipeLineScript.startsWith(PIPELINE_SCRIPT_DETECTION_COMMENT)) {
             log.debug("Pipeline Script not found");
             throw new IllegalArgumentException("Pipeline Script not found");
         }

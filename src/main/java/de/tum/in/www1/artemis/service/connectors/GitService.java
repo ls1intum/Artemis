@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
@@ -140,6 +141,8 @@ public class GitService {
 
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         Repository repository = getRepositoryByLocalPath(localPath);
+        // TODO: in case the actual git repository in the file system was deleted (e.g. by accident or through some administrator), we will get an exception here
+        // so we should basically check if the folder localPath still includes a valid git repository or not and potentially fix this situation then.
         if (repository != null) {
             if (pullOnGet) {
                 pull(repository);
@@ -491,6 +494,7 @@ public class GitService {
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
+    @NotNull
     public Collection<File> listFiles(Repository repo) {
         // Check if list of files is already cached
         if (repo.getFiles() == null) {
@@ -657,7 +661,7 @@ public class GitService {
      * @return path to zip file.
      */
     public Path zipRepository(Repository repo) throws IOException {
-        return zipRepository(repo, REPO_CLONE_PATH);
+        return zipRepository(repo, REPO_CLONE_PATH, false);
     }
 
     /**
@@ -665,15 +669,27 @@ public class GitService {
      *
      * @param repo Local Repository Object.
      * @param targetPath path where the repo is located on disk
+     * @param hideStudentName option to hide the student name for the zip file
      * @throws IOException if the zipping process failed.
      * @return path to zip file.
      */
-    public Path zipRepository(Repository repo, String targetPath) throws IOException {
+    public Path zipRepository(Repository repo, String targetPath, boolean hideStudentName) throws IOException {
+        /*
+         * This will split the repositoryUrl e.g. http://artemis-admin@localhost:7990/scm/TC1SCHEDULER1/tc1scheduler1-artemis-admin.git into a string array e.g. ["http", "",
+         * "artemis-admin@localhost:7990", "scm", "TC1SCHEDULER1", "tc1scheduler1-artemis-admin.git"]
+         */
         String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split(File.separator);
         ProgrammingExercise exercise = repo.getParticipation().getProgrammingExercise();
         String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName().replaceAll("\\s", "");
-        // take the last component
-        String zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";
+        String zipRepoName;
+        if (hideStudentName) {
+            // Take the last but one component, which does not contain the students name
+            zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 2].toLowerCase() + "-student-submission.git" + ".zip";
+        }
+        else {
+            // Take the last component, which contains the students name
+            zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";
+        }
 
         Path repoPath = repo.getLocalPath();
         Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipRepoName);

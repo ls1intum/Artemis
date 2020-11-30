@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toSet;
 
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.Nullable;
 
@@ -57,8 +54,6 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    private final WebsocketMessagingService messagingService;
-
     private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
 
     private final Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService;
@@ -72,14 +67,13 @@ public class TextAssessmentResource extends AssessmentResource {
             WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService,
             Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
             Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository) {
-        super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository, examService);
+        super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository, examService, messagingService);
 
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
         this.textSubmissionService = textSubmissionService;
-        this.messagingService = messagingService;
         this.gradingCriterionService = gradingCriterionService;
         this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
         this.automaticTextAssessmentConflictService = automaticTextAssessmentConflictService;
@@ -97,31 +91,20 @@ public class TextAssessmentResource extends AssessmentResource {
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> saveTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        checkTextExerciseForRequest(textExercise, user);
+        final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks().stream().filter(Feedback::hasReference)
+                .anyMatch(f -> f.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
+        if (hasAssessmentWithTooLongReference) {
+            throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
+                    "feedbackReferenceTooLong");
+        }
+        final TextSubmission textSubmission = textSubmissionService.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(resultId);
+        ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks());
 
-        final Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findByResultId(resultId);
-        if (optionalTextSubmission.isEmpty()) {
-            throw new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound");
+        if (response.getStatusCode().is2xxSuccessful()) {
+            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission);
         }
 
-        StudentParticipation studentParticipation = (StudentParticipation) optionalTextSubmission.get().getParticipation();
-        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
-
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(optionalTextSubmission.get().getResult(), textExercise, studentParticipation, user, isAtLeastInstructor)) {
-            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
-        }
-
-        saveTextBlocks(textAssessment.getTextBlocks(), optionalTextSubmission.get());
-        Result result = textAssessmentService.saveAssessment(resultId, textAssessment.getFeedbacks());
-
-        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
-                && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
-            ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
-        }
-
-        return ResponseEntity.ok(result);
+        return response;
     }
 
     /**
@@ -135,40 +118,27 @@ public class TextAssessmentResource extends AssessmentResource {
     @PutMapping("/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> submitTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        checkTextExerciseForRequest(textExercise, user);
+        final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks().stream().filter(Feedback::hasReference)
+                .anyMatch(f -> f.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
+        if (hasAssessmentWithTooLongReference) {
+            throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
+                    "feedbackReferenceTooLong");
+        }
+        final TextExercise exercise = textExerciseService.findOne(exerciseId);
+        final TextSubmission textSubmission = textSubmissionService.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(resultId);
+        ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, textAssessment.getFeedbacks());
 
-        final Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findByResultId(resultId);
-        if (optionalTextSubmission.isEmpty()) {
-            throw new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound");
+        if (response.getStatusCode().is2xxSuccessful()) {
+            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission);
+
+            // call feedback conflict service
+            if (exercise.isAutomaticAssessmentEnabled() && automaticTextAssessmentConflictService.isPresent()) {
+                this.automaticTextAssessmentConflictService.get().asyncCheckFeedbackConsistency(textAssessment.getTextBlocks(), textSubmission.getResult().getFeedbacks(),
+                        exerciseId);
+            }
         }
 
-        StudentParticipation studentParticipation = (StudentParticipation) optionalTextSubmission.get().getParticipation();
-        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
-
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(optionalTextSubmission.get().getResult(), textExercise, studentParticipation, user, isAtLeastInstructor)) {
-            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
-        }
-
-        saveTextBlocks(textAssessment.getTextBlocks(), optionalTextSubmission.get());
-        Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessment.getFeedbacks());
-        studentParticipation = (StudentParticipation) result.getParticipation();
-        if (studentParticipation.getExercise().getAssessmentDueDate() == null || studentParticipation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
-            // TODO: we should send a result object here that includes the feedback (this might already be the case)
-            messagingService.broadcastNewResult(studentParticipation, result);
-        }
-
-        if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
-            studentParticipation.filterSensitiveInformation();
-        }
-
-        // call feedback conflict service
-        if (textExercise.isAutomaticAssessmentEnabled() && automaticTextAssessmentConflictService.isPresent()) {
-            this.automaticTextAssessmentConflictService.get().asyncCheckFeedbackConsistency(textAssessment.getTextBlocks(), result.getFeedbacks(), exerciseId);
-        }
-
-        return ResponseEntity.ok(result);
+        return response;
     }
 
     /**
@@ -413,9 +383,8 @@ public class TextAssessmentResource extends AssessmentResource {
     private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission) {
         if (textBlocks != null) {
             final Set<String> existingTextBlockIds = textSubmission.getBlocks().stream().map(TextBlock::getId).collect(toSet());
-            final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> {
-                tb.setSubmission(textSubmission);
-            }).collect(toSet());
+            final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> tb.setSubmission(textSubmission))
+                    .collect(toSet());
             textBlockRepository.saveAll(updatedTextBlocks);
         }
     }

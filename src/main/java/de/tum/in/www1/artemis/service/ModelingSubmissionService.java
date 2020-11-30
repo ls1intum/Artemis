@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.util.stream.Collectors.toList;
-
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -12,12 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -53,40 +48,6 @@ public class ModelingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Given an exerciseId, returns all the modeling submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
-     * submissions
-     *
-     * @param exerciseId    - the id of the exercise we are interested into
-     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
-     * @param examMode - set flag to ignore exam test run submissions
-     * @return a list of modeling submissions for the given exercise id
-     */
-    @Transactional(readOnly = true)
-    public List<ModelingSubmission> getModelingSubmissions(Long exerciseId, boolean submittedOnly, boolean examMode) {
-        List<StudentParticipation> participations;
-        if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
-        }
-        else {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
-        }
-        List<ModelingSubmission> submissions = new ArrayList<>();
-        for (StudentParticipation participation : participations) {
-            Optional<Submission> optionalSubmission = participation.findLatestSubmission();
-            if (optionalSubmission.isPresent()) {
-                if (submittedOnly && !optionalSubmission.get().isSubmitted()) {
-                    // filter out non submitted submissions if the flag is set to true
-                    continue;
-                }
-                submissions.add((ModelingSubmission) optionalSubmission.get());
-            }
-            // avoid infinite recursion
-            participation.getExercise().setStudentParticipations(null);
-        }
-        return submissions;
-    }
-
-    /**
      * Get the modeling submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it. Additionally, check if the
      * submission lock limit has been reached.
      *
@@ -94,8 +55,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param modelingExercise the corresponding exercise
      * @return the locked modeling submission
      */
-    @Transactional
-    public ModelingSubmission getLockedModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
+    public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
         if (modelingSubmission.getResult() == null || modelingSubmission.getResult().getAssessor() == null) {
@@ -114,7 +74,6 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a locked modeling submission that needs an assessment
      */
-    @Transactional
     public ModelingSubmission lockModelingSubmissionWithoutResult(ModelingExercise modelingExercise, boolean removeTestRunParticipations) {
         ModelingSubmission modelingSubmission = getRandomModelingSubmissionEligibleForNewAssessment(modelingExercise, removeTestRunParticipations)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
@@ -134,7 +93,6 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a modeling submission without any result
      */
-    @Transactional
     public Optional<ModelingSubmission> getRandomModelingSubmissionEligibleForNewAssessment(ModelingExercise modelingExercise, boolean examMode) {
         // if the diagram type is supported by Compass, ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess next
         if (compassService.isSupported(modelingExercise)) {
@@ -160,19 +118,6 @@ public class ModelingSubmissionService extends SubmissionService {
             return Optional.of(modelingSubmission);
         }
         return Optional.empty();
-    }
-
-    /**
-     * Given an exercise id and a tutor id, it returns all the modeling submissions where the tutor has a result associated.
-     *
-     * @param exerciseId - the id of the exercise we are looking for
-     * @param tutor - the tutor we are interested in
-     * @param examMode - flag should be set to ignore the test run submissions
-     * @return a list of modeling submissions
-     */
-    public List<ModelingSubmission> getAllModelingSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor, boolean examMode) {
-        var submissions = super.getAllSubmissionsAssessedByTutorForExercise(exerciseId, tutor, examMode);
-        return submissions.stream().map(submission -> (ModelingSubmission) submission).collect(toList());
     }
 
     /**
@@ -277,6 +222,7 @@ public class ModelingSubmissionService extends SubmissionService {
             automaticResult.setParticipation(modelingSubmission.getParticipation());
             automaticResult = resultRepository.save(automaticResult);
             modelingSubmission.getParticipation().addResult(automaticResult);
+
             automaticResult.setSubmission(modelingSubmission);
             modelingSubmission.setResult(automaticResult);
             modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
@@ -307,18 +253,6 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     public ModelingSubmission findOne(Long submissionId) {
         return modelingSubmissionRepository.findById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * Get the modeling submission with the given id from the database. The submission is loaded together with its result and the assessor. Throws an EntityNotFoundException if no
-     * submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the modeling submission with the given id
-     */
-    public ModelingSubmission findOneWithEagerResult(Long submissionId) {
-        return modelingSubmissionRepository.findByIdWithEagerResult(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist"));
     }
 

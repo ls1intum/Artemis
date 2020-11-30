@@ -67,17 +67,17 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
         }
         this.form = this.fb.group({
             name: [undefined, [Validators.required, Validators.maxLength(255)]],
-            description: [undefined, [Validators.maxLength(255)]],
+            description: [undefined, [Validators.maxLength(1000)]],
             releaseDate: [undefined],
             version: [1],
-            updateNotificationText: [undefined, [Validators.maxLength(255)]],
+            updateNotificationText: [undefined, [Validators.maxLength(1000)]],
         });
     }
 
     onFileChange($event: any): void {
         if ($event.target.files.length) {
             this.fileUploadErrorMessage = undefined; // removes the file size error message when the user selects a new file
-            const fileList: FileList = $event.target.files;
+            const fileList = $event.target.files;
             this.file = fileList[0];
             this.fileName = this.file['name'];
         }
@@ -97,6 +97,10 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
 
     get updateNotificationTextControl() {
         return this.form.get('updateNotificationText');
+    }
+
+    get versionControl() {
+        return this.form.get('version');
     }
 
     get isSubmitPossible() {

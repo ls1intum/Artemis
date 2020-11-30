@@ -98,12 +98,12 @@ public class Attachment extends DomainObject implements Serializable {
     public void beforeCreate() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // move file if necessary (id at this point will be null, so placeholder will be inserted)
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(),
-                    true);
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + File.separator,
+                    getLecture().getId(), true);
         }
         else if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null) {
             // move file if necessary (id at this point will be null, so placeholder will be inserted)
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getAttachmentUnitFilePath() + getAttachmentUnit().getId() + '/',
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getAttachmentUnitFilePath() + getAttachmentUnit().getId() + File.separator,
                     getAttachmentUnit().getId(), true);
         }
     }
@@ -131,12 +131,12 @@ public class Attachment extends DomainObject implements Serializable {
     public void onUpdate() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // move file and delete old file if necessary
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(),
-                    true);
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + File.separator,
+                    getLecture().getId(), true);
         }
         else if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null) {
             // move file and delete old file if necessary
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getAttachmentUnitFilePath() + getAttachmentUnit().getId() + '/',
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, FilePathService.getAttachmentUnitFilePath() + getAttachmentUnit().getId() + File.separator,
                     getAttachmentUnit().getId(), true);
         }
     }
@@ -149,12 +149,13 @@ public class Attachment extends DomainObject implements Serializable {
     public void onDelete() {
         if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // delete old file if necessary
-            fileService.manageFilesForUpdatedFilePath(prevLink, null, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(), true);
+            fileService.manageFilesForUpdatedFilePath(prevLink, null, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + File.separator, getLecture().getId(),
+                    true);
         }
         else if (attachmentType == AttachmentType.FILE && getAttachmentUnit() != null) {
             // delete old file if necessary
-            fileService.manageFilesForUpdatedFilePath(prevLink, null, FilePathService.getAttachmentUnitFilePath() + getAttachmentUnit().getId() + '/', getAttachmentUnit().getId(),
-                    true);
+            fileService.manageFilesForUpdatedFilePath(prevLink, null, FilePathService.getAttachmentUnitFilePath() + getAttachmentUnit().getId() + File.separator,
+                    getAttachmentUnit().getId(), true);
         }
     }
 

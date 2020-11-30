@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -15,13 +14,12 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /** REST controller for managing ProgrammingAssessment. */
 @RestController
@@ -36,8 +34,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final WebsocketMessagingService messagingService;
-
     private final LtiService ltiService;
 
     private final ParticipationService participationService;
@@ -45,10 +41,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService,
             WebsocketMessagingService messagingService, LtiService ltiService, ParticipationService participationService) {
-        super(authCheckService, userService, exerciseService, programmingSubmissionService, programmingAssessmentService, resultRepository, examService);
+        super(authCheckService, userService, exerciseService, programmingSubmissionService, programmingAssessmentService, resultRepository, examService, messagingService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.messagingService = messagingService;
         this.ltiService = ltiService;
         this.participationService = participationService;
     }
@@ -120,13 +115,12 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        Optional<Result> latestExistingResult = participation.getResults().stream().filter(result -> result.isManualResult()).findFirst();
-        if (latestExistingResult.isPresent()) {
-            // prevent that tutors create multiple manual results
-            newResult.setId(latestExistingResult.get().getId());
-            // load assessor
-            latestExistingResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(latestExistingResult.get().getId());
-        }
+        Result manualResult = participation.getResults().stream().filter(Result::isManualResult).findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Manual result for participation with id " + participationId + " does not exist"));
+        // prevent that tutors create multiple manual results
+        newResult.setId(manualResult.getId());
+        // load assessor
+        manualResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(manualResult.getId()).get();
 
         // make sure that the participation cannot be manipulated on the client side
         newResult.setParticipation(participation);
@@ -135,7 +129,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         checkAuthorization(exercise, user);
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(latestExistingResult.orElse(null), exercise, participation, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(manualResult, exercise, participation, user, isAtLeastInstructor)) {
             log.debug("The user " + user.getLogin() + " is not allowed to override the assessment for the participation " + participation.getId() + " for User " + user.getLogin());
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
@@ -168,15 +162,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("In case feedback is present, a feedback must contain points.", ENTITY_NAME, "feedbackCreditsNull");
         }
 
-        ProgrammingSubmission submission;
-        if (latestExistingResult.isEmpty()) {
-            // Create manual submission with last commit hash and current time stamp.
-            submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
-                    SubmissionType.MANUAL);
-        }
-        else {
-            submission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(latestExistingResult.get().getSubmission().getId());
-        }
+        // make sure that the submission cannot be manipulated on the client side
+        ProgrammingSubmission submission = (ProgrammingSubmission) manualResult.getSubmission();
+        newResult.setSubmission(submission);
 
         Result result = programmingAssessmentService.saveManualAssessment(newResult);
 
@@ -189,9 +177,10 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         if (!isAtLeastInstructor) {
             ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
         }
+        // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
+        ltiService.onNewResult((StudentParticipation) result.getParticipation());
         if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
                 || result.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
-            ltiService.onNewResult((ProgrammingExerciseStudentParticipation) result.getParticipation());
             messagingService.broadcastNewResult(result.getParticipation(), result);
         }
         return ResponseEntity.ok(result);

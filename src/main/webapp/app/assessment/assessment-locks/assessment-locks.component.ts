@@ -7,16 +7,19 @@ import { Submission, SubmissionExerciseType } from 'app/entities/submission.mode
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
-import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 
 @Component({
     selector: 'jhi-assessment-locks',
     templateUrl: './assessment-locks.component.html',
 })
 export class AssessmentLocksComponent implements OnInit {
+    PROGRAMMING_EXERCISE = ExerciseType.PROGRAMMING;
+
     course: Course;
     courseId: number;
     tutorId: number;
@@ -35,6 +38,7 @@ export class AssessmentLocksComponent implements OnInit {
         private modelingAssessmentService: ModelingAssessmentService,
         private textAssessmentsService: TextAssessmentsService,
         private fileUploadAssessmentsService: FileUploadAssessmentsService,
+        private programmingAssessmentService: ProgrammingAssessmentManualResultService,
         translateService: TranslateService,
         private location: Location,
         private courseService: CourseManagementService,
@@ -83,18 +87,14 @@ export class AssessmentLocksComponent implements OnInit {
                 case SubmissionExerciseType.FILE_UPLOAD:
                     this.fileUploadAssessmentsService.cancelAssessment(canceledSubmission.id!).subscribe();
                     break;
+                case SubmissionExerciseType.PROGRAMMING:
+                    this.programmingAssessmentService.cancelAssessment(canceledSubmission.id!).subscribe();
+                    break;
                 default:
                     break;
             }
             this.submissions = this.submissions.filter((submission) => submission !== canceledSubmission);
         }
-    }
-
-    /**
-     * Navigates back in browser.
-     */
-    back() {
-        this.location.back();
     }
 
     /**

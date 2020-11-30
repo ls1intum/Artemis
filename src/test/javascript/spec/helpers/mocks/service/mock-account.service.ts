@@ -2,6 +2,7 @@ import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { IAccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 export class MockAccountService implements IAccountService {
     identity = () => Promise.resolve({ id: 99 } as User);
@@ -14,6 +15,8 @@ export class MockAccountService implements IAccountService {
     getImageUrl = () => 'blob';
     hasAuthority = (authority: string) => Promise.resolve(true);
     isAtLeastTutorInCourse = (course: Course) => true;
+    isAtLeastTutorForExercise = (exercise?: Exercise) => true;
+    isAtLeastInstructorForExercise = (exercise?: Exercise) => true;
     isAuthenticated = () => true;
     isOwnerOfParticipation = () => true;
     isAdmin = () => true;

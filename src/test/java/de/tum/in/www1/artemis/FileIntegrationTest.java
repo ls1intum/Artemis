@@ -224,7 +224,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
         String responsePath = response.get("path").asText();
         // move file from temp folder to correct folder
-        String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getLectureAttachmentFilepath() + lecture.getId() + '/',
+        String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getLectureAttachmentFilepath() + lecture.getId() + File.separator,
                 lecture.getId(), true);
 
         attachment.setLink(attachmentPath);

@@ -25,6 +25,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -67,6 +68,12 @@ public class FileService implements DisposableBean {
         else {
             return null;
         }
+    }
+
+    @CacheEvict(value = "files", key = "#path")
+    public void resetOnPath(String path) {
+        log.info("Invalidate files cache for " + path);
+        // Intentionally blank
     }
 
     /**
@@ -225,7 +232,7 @@ public class FileService implements DisposableBean {
                 exerciseId = Long.parseLong(shouldBeExerciseId);
             }
             catch (IllegalArgumentException e) {
-                throw new FilePathParsingException("Unexpected String in upload file path. Course ID should be present here: " + actualPath);
+                throw new FilePathParsingException("Unexpected String in upload file path. Exercise ID should be present here: " + actualPath);
             }
             return "/api/files/file-upload-exercises/" + exerciseId + "/submissions/" + id + "/" + filename;
         }

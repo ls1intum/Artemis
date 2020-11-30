@@ -12,6 +12,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
+import { Participation } from 'app/entities/participation/participation.model';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -548,9 +549,20 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * Returns next programming submission without assessment from the server
      * @param exerciseId the id of the exercise
      */
-    getProgrammingSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<ProgrammingSubmission> {
-        const url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
+    getProgrammingSubmissionForExerciseWithoutAssessment(exerciseId: number, lock = false): Observable<ProgrammingSubmission> {
+        let url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
+        if (lock) {
+            url += '?lock=true';
+        }
         return this.http.get<ProgrammingSubmission>(url);
+    }
+
+    /**
+     * Locks the submission of the participation for the user
+     * @param participationId
+     */
+    lockAndGetProgrammingSubmissionParticipation(participationId: number): Observable<Participation> {
+        return this.http.get<Participation>(`api/programming-submissions/${participationId}/lock`);
     }
 
     private convertArrayResponse(res: HttpResponse<ProgrammingSubmission[]>): HttpResponse<ProgrammingSubmission[]> {

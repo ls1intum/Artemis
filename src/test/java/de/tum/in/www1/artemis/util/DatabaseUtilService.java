@@ -11,7 +11,8 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -118,7 +119,7 @@ import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.service.ModelingAssessmentService;
+import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
@@ -236,7 +237,7 @@ public class DatabaseUtilService {
     ModelingSubmissionService modelSubmissionService;
 
     @Autowired
-    ModelingAssessmentService modelingAssessmentService;
+    AssessmentService assessmentService;
 
     @Autowired
     ProgrammingExerciseTestRepository programmingExerciseTestRepository;
@@ -1055,7 +1056,7 @@ public class DatabaseUtilService {
      * @return eagerly loaded representation of the participation object stored in the database
      */
     public StudentParticipation createAndSaveParticipationForExercise(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
         if (storedParticipation.isEmpty()) {
             User user = getUserByLogin(login);
             StudentParticipation participation = new StudentParticipation();
@@ -1063,10 +1064,14 @@ public class DatabaseUtilService {
             participation.setParticipant(user);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
         }
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
+    }
+
+    public StudentParticipation saveStudentParticipation(StudentParticipation participation) {
+        return studentParticipationRepo.save(participation);
     }
 
     /**
@@ -1092,7 +1097,6 @@ public class DatabaseUtilService {
      */
     public TextSubmission markTextExerciseParticipationForTestRun(TextExercise exercise, String login) {
         var textSubmission = saveTextSubmissionWithResultAndAssessor(exercise, ModelFactory.generateTextSubmission("", null, false), login, login);
-        textSubmission.getResult().setScore(null);
         textSubmission.getResult().setCompletionDate(null);
         resultRepo.save(textSubmission.getResult());
         return textSubmission;
@@ -1116,7 +1120,7 @@ public class DatabaseUtilService {
      * @return eagerly loaded representation of the participation object stored in the database
      */
     public StudentParticipation addTeamParticipationForExercise(Exercise exercise, long teamId) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findByExerciseIdAndTeamId(exercise.getId(), teamId);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
         if (storedParticipation.isEmpty()) {
             Team team = teamRepo.findById(teamId).orElseThrow();
             StudentParticipation participation = new StudentParticipation();
@@ -1124,7 +1128,7 @@ public class DatabaseUtilService {
             participation.setParticipant(team);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findByExerciseIdAndTeamId(exercise.getId(), teamId);
+            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
             assertThat(storedParticipation).isPresent();
         }
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
@@ -1197,6 +1201,13 @@ public class DatabaseUtilService {
     public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
         Result result = new Result().participation(participation).resultString("x of y passed").successful(false).rated(true).score(100L).assessmentType(assessmentType)
                 .completionDate(completionDate);
+        return resultRepo.save(result);
+    }
+
+    public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation, String resultString, String assessorLogin,
+            List<Feedback> feedbacks) {
+        Result result = new Result().participation(participation).resultString(resultString).assessmentType(assessmentType).completionDate(completionDate).feedbacks(feedbacks);
+        result.setAssessor(getUserByLogin(assessorLogin));
         return resultRepo.save(result);
     }
 
@@ -1577,6 +1588,7 @@ public class DatabaseUtilService {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setGradingInstructions("Lorem Ipsum");
         programmingExercise.setTitle(title);
+        programmingExercise.setProjectType(ProjectType.ECLIPSE);
         programmingExercise.setAllowOnlineEditor(true);
         programmingExercise.setStaticCodeAnalysisEnabled(enableStaticCodeAnalysis);
         if (enableStaticCodeAnalysis) {
@@ -1588,6 +1600,7 @@ public class DatabaseUtilService {
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
         programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
+        programmingExercise.setShowTestNamesToStudents(false);
     }
 
     /**
@@ -1867,25 +1880,25 @@ public class DatabaseUtilService {
     }
 
     public ProgrammingSubmission addProgrammingSubmissionWithResultAndAssessor(ProgrammingExercise exercise, ProgrammingSubmission submission, String login, String assessorLogin,
-            AssessmentType assessmentType) {
+            AssessmentType assessmentType, boolean hasCompletionDate) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setAssessmentType(assessmentType);
         result.setScore(50L);
-        result.setCompletionDate(ZonedDateTime.now());
+        if (hasCompletionDate) {
+            result.setCompletionDate(ZonedDateTime.now());
+        }
 
         studentParticipationRepo.save(participation);
         programmingSubmissionRepo.save(submission);
 
         submission.setParticipation(participation);
         result.setParticipation(participation);
-        result = resultRepo.save(result);
 
+        result = resultRepo.save(result);
         result.setSubmission(submission);
-        // submission.setParticipation(participation);
         submission.setResult(result);
-        // submission.getParticipation().addResult(result);
         // Manual results are always rated and have a resultString which is defined in the client
         if (assessmentType.equals(AssessmentType.SEMI_AUTOMATIC)) {
             result.rated(true);
@@ -1893,6 +1906,17 @@ public class DatabaseUtilService {
         }
         submission = programmingSubmissionRepo.save(submission);
         return submission;
+    }
+
+    public ProgrammingSubmission addProgrammingSubmissionToResultAndParticipation(Result result, StudentParticipation participation, String commitHash) {
+        ProgrammingSubmission submission = createProgrammingSubmission(participation, false);
+        submission.setResult(result);
+        submission.setCommitHash(commitHash);
+        result.setSubmission(submission);
+        participation.addSubmissions(submission);
+        resultRepo.save(result);
+        studentParticipationRepo.save(participation);
+        return submissionRepository.save(submission);
     }
 
     public Submission addSubmission(Exercise exercise, Submission submission, String login) {
@@ -2045,11 +2069,17 @@ public class DatabaseUtilService {
         submission = saveTextSubmissionWithResultAndAssessor(exercise, submission, studentLogin, null, assessorLogin);
         Result result = submission.getResult();
         for (Feedback feedback : feedbacks) {
+            // Important note to prevent 'JpaSystemException: null index column for collection':
+            // 1) save the child entity (without connection to the parent entity) and make sure to re-assign the return value
+            feedback = feedbackRepo.save(feedback);
             // this also invokes feedback.setResult(result)
+            // Important note to prevent 'JpaSystemException: null index column for collection':
+            // 2) connect child and parent entity
             result.addFeedback(feedback);
-            feedbackRepo.save(feedback);
         }
         // this automatically saves the feedback because of the CascadeType.All annotation
+        // Important note to prevent 'JpaSystemException: null index column for collection':
+        // 3) save the parent entity and make sure to re-assign the return value
         result = resultRepo.save(result);
         // re-assign so that the saved feedback items are contained in the returned object
         submission.setResult(result);
@@ -2088,13 +2118,13 @@ public class DatabaseUtilService {
     }
 
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login, boolean submit) throws Exception {
-        List<Feedback> assessment = loadAssessmentFomResources(path);
-        Result result = modelingAssessmentService.saveManualAssessment(submission, assessment, exercise);
+        List<Feedback> feedbackList = loadAssessmentFomResources(path);
+        Result result = assessmentService.saveManualAssessment(submission, feedbackList);
         result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(getUserByLogin(login));
         resultRepo.save(result);
         if (submit) {
-            modelingAssessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
+            assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
         return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
     }
@@ -2116,6 +2146,9 @@ public class DatabaseUtilService {
     public void updateExerciseDueDate(long exerciseId, ZonedDateTime newDueDate) {
         Exercise exercise = exerciseRepo.findById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
         exercise.setDueDate(newDueDate);
+        if (exercise instanceof ProgrammingExercise) {
+            ((ProgrammingExercise) exercise).setBuildAndTestStudentSubmissionsAfterDueDate(newDueDate);
+        }
         exerciseRepo.save(exercise);
     }
 

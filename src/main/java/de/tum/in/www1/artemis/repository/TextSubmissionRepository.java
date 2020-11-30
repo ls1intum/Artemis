@@ -35,7 +35,7 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
      * @param submissionId the submission id we are interested in
      * @return the submission with its feedback and assessor
      */
-    @Query("select distinct s from TextSubmission s left join fetch s.results r left join fetch r.feedbacks left join fetch r.assessor left join fetch s.blocks where s.id = :#{#submissionId}")
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor", "blocks", "results.feedbacks" })
     Optional<TextSubmission> findByIdWithEagerResultFeedbackAndTextBlocks(@Param("submissionId") Long submissionId);
 
     @Query("select distinct s from TextSubmission s left join fetch s.blocks where s.id = :#{#submissionId}")
@@ -50,7 +50,7 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
     List<TextSubmission> findByParticipation_ExerciseIdAndResultsIsNullAndSubmittedIsTrue(Long exerciseId);
 
     @Query("select distinct s from TextSubmission s left join fetch s.results r left join fetch r.assessor left join fetch s.blocks where r.id = :#{#resultId}")
-    Optional<TextSubmission> findByResultId(@Param("resultId") Long resultId);
+    Optional<TextSubmission> findByResultIdWithAssessorAndBlocks(@Param("resultId") Long resultId);
 
     /**
      * Gets all TextSubmissions which are submitted and loads all blocks

@@ -12,8 +12,11 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -51,9 +54,13 @@ public class CourseService {
 
     private final ExerciseGroupService exerciseGroupService;
 
+    private final AuditEventRepository auditEventRepository;
+
+    private final UserService userService;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
-            ExerciseGroupService exerciseGroupService) {
+            ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -62,6 +69,8 @@ public class CourseService {
         this.lectureService = lectureService;
         this.notificationService = notificationService;
         this.exerciseGroupService = exerciseGroupService;
+        this.auditEventRepository = auditEventRepository;
+        this.userService = userService;
     }
 
     @Autowired
@@ -129,6 +138,16 @@ public class CourseService {
             course.setExams(examService.filterVisibleExams(course.getExams()));
         }
         return course;
+    }
+
+    /**
+     * Get all courses for the given user
+     * @param user the user entity
+     * @return the list of all courses for the user
+     */
+    public List<Course> findAllActiveForUser(User user) {
+        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()))
+                .filter(course -> isActiveCourseVisibleForUser(user, course)).collect(Collectors.toList());
     }
 
     /**
@@ -292,5 +311,19 @@ public class CourseService {
     public Set<Exercise> getInterestingExercisesForAssessmentDashboards(Set<Exercise> exercises) {
         return exercises.stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
                 || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType() != AUTOMATIC)).collect(Collectors.toSet());
+    }
+
+    /**
+     * Registers a user in a course by adding him to the student group of the course
+     *
+     * @param user The user that should get added to the course
+     * @param course The course to which the user should get added to
+     */
+    public void registerUserForCourse(User user, Course course) {
+        userService.addUserToGroup(user, course.getStudentGroupName());
+
+        final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
+        auditEventRepository.add(auditEvent);
+        log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
     }
 }

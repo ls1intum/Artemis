@@ -66,6 +66,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "sequential_test_runs")
     private Boolean sequentialTestRuns;
 
+    @Column(name = "show_test_names_to_students", table = "programming_exercise_details")
+    private boolean showTestNamesToStudents;
+
     @Nullable
     @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
     private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
@@ -436,6 +439,21 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
+     * Returns the repository url for the given repository type.
+     *
+     * @param repositoryType The repository type for which the url should be returned
+     * @return The repository url
+     */
+    @JsonIgnore
+    public URL getRepositoryURL(RepositoryType repositoryType) {
+        return switch (repositoryType) {
+            case TEMPLATE -> this.getTemplateRepositoryUrlAsUrl();
+            case SOLUTION -> this.getSolutionRepositoryUrlAsUrl();
+            case TESTS -> this.getTestRepositoryUrlAsUrl();
+        };
+    }
+
+    /**
      * Returns the project name by concatenating the course short name with the exercise title.
      *
      * @return project name of the programming exercise
@@ -477,6 +495,14 @@ public class ProgrammingExercise extends Exercise {
 
     public void setSequentialTestRuns(Boolean sequentialTestRuns) {
         this.sequentialTestRuns = sequentialTestRuns;
+    }
+
+    public Boolean getShowTestNamesToStudents() {
+        return showTestNamesToStudents;
+    }
+
+    public void setShowTestNamesToStudents(Boolean showTestNamesToStudents) {
+        this.showTestNamesToStudents = showTestNamesToStudents;
     }
 
     @Nullable

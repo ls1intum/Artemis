@@ -51,7 +51,8 @@
             "noResultDetails": "Keine weiteren Informationen verfügbar für dieses Ergebnis.",
             "chart": {
                 "points": "Punkte",
-                "deductions": "Abzüge"
+                "deductions": "Abzüge",
+                "tooltip": "Deine Punktabzüge werden begrenzt um den Einfluss von Folgefehlern durch Code-Issues abzuschwächen. Beachte, dass du gegebenenfalls mehrere Code-Issues lösen musst, bevor sich deine Punkte erhöhen."
             }
         }
     }
