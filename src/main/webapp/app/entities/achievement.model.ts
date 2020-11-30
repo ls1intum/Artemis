@@ -8,9 +8,9 @@ export enum AchievementRank {
 }
 
 export enum AchievementType {
-    POINT,
-    TIME,
-    PROGRESS,
+    POINT = 'POINT',
+    TIME = 'TIME',
+    PROGRESS = 'PROGRESSS',
 }
 
 export class Achievement implements BaseEntity {

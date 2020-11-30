@@ -34,7 +34,7 @@ import { ExerciseUnitComponent } from './course-lectures/exercise-unit/exercise-
 import { AttachmentUnitComponent } from './course-lectures/attachment-unit/attachment-unit.component';
 import { VideoUnitComponent } from './course-lectures/video-unit/video-unit.component';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
-import { AchievementsComponent } from './achievements.component';
+import { AchievementsComponent } from 'app/achievements/achievements.component';
 import { TextUnitComponent } from './course-lectures/text-unit/text-unit.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 

@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Achievement, AchievementRank } from 'app/entities/achievement.model';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-achievements',
@@ -18,11 +19,17 @@ export class AchievementsComponent implements OnInit, OnDestroy {
 
     private resourceUrl = SERVER_API_URL + 'api/courses';
 
+    private subscription: Subscription;
+
     constructor(private http: HttpClient) {}
 
     ngOnInit() {
-        this.http.get<Achievement[]>(`${this.resourceUrl}/${this.courseId}/achievements`).subscribe((loadedAchievements) => (this.achievements = loadedAchievements));
+        this.subscription = this.http
+            .get<Achievement[]>(`${this.resourceUrl}/${this.courseId}/earned-achievements`)
+            .subscribe((loadedAchievements) => (this.achievements = loadedAchievements));
     }
 
-    ngOnDestroy() {}
+    ngOnDestroy() {
+        this.subscription.unsubscribe();
+    }
 }
