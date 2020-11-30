@@ -18,47 +18,58 @@ import de.tum.in.www1.artemis.domain.User;
 @Repository
 public interface StatisticsRepository extends JpaRepository<User, Long> {
 
-    @Query("select count(distinct u.login) from User u, PersistentAuditEvent p where u.login like p.principal and p.auditEventType = 'AUTHENTICATION_SUCCESS' and u.login not like '%test%' and p.auditEventDate >= :#{#span}")
+    @Query("""
+            select count(distinct u.login)
+            from User u, PersistentAuditEvent p
+            where u.login like p.principal and p.auditEventType = 'AUTHENTICATION_SUCCESS' and u.login not like '%test%' and p.auditEventDate >= :#{#span}
+            """)
     Integer getLoggedInUsers(@Param("span") Instant span);
 
     @Query("""
             select count(distinct u.login)
             from User u, Submission s, StudentParticipation p
-            where s.participation.id = p.id and p.student.id = u.id and s.submissionDate >= :#{#span} and u.login not like '%test%'""")
+            where s.participation.id = p.id and p.student.id = u.id and s.submissionDate >= :#{#span} and u.login not like '%test%'
+            """)
     Integer getActiveUsers(@Param("span") ZonedDateTime span);
 
     @Query("""
             select count(e.id)
             from Exercise e
-            where e.releaseDate >= :#{#span} and e.releaseDate <= :#{#now}""")
+            where e.releaseDate >= :#{#span} and e.releaseDate <= :#{#now}
+            """)
     Integer getReleasedExercises(@Param("span") ZonedDateTime span, @Param("now") ZonedDateTime now);
 
     @Query("""
             select count(e.id)
             from Exercise e
-            where e.dueDate >= :#{#span} and e.dueDate <= :#{#now}""")
+            where e.dueDate >= :#{#span} and e.dueDate <= :#{#now}
+            """)
     Integer getExerciseDeadlines(@Param("span") ZonedDateTime span, @Param("now") ZonedDateTime now);
 
     @Query("""
-            select count(e.id) from Exam e where e.endDate >= :#{#span} and e.endDate <= :#{#now}""")
+            select count(e.id) from Exam e where e.endDate >= :#{#span} and e.endDate <= :#{#now}
+            """)
     Integer getConductedExams(@Param("span") ZonedDateTime span, @Param("now") ZonedDateTime now);
 
     @Query("""
             select count(se.id)
             from StudentExam se, Exam e
-            where se.submitted = true and se.exam = e and e.endDate >= :#{#span}""")
+            where se.submitted = true and se.exam = e and e.endDate >= :#{#span}
+            """)
     Integer getExamParticipations(@Param("span") ZonedDateTime span);
 
     @Query("""
             select sum(e.registeredUsers.size)
             from Exam e
-            where e.endDate >= :#{#span} and e.endDate <= :#{#now}""")
+            where e.endDate >= :#{#span} and e.endDate <= :#{#now}
+            """)
     Integer getExamRegistrations(@Param("span") ZonedDateTime span, @Param("now") ZonedDateTime now);
 
     @Query("""
             select count(distinct r.assessor.id)
             from Result r
-            where (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI-AUTOMATIC') and r.completionDate >= :#{#span}""")
+            where (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI-AUTOMATIC') and r.completionDate >= :#{#span}
+            """)
     Integer getActiveTutors(@Param("span") ZonedDateTime span);
 
     @Query("""
