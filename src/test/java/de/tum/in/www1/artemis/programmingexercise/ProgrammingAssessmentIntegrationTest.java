@@ -361,7 +361,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         submission.setResult(result);
         programmingSubmissionRepository.save(submission);
 
-        Long id = result.getId();
+        Long id = response.getId();
 
         Result newResponse = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
                 HttpStatus.OK);
