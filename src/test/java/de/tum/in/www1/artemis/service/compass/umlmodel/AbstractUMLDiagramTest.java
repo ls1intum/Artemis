@@ -26,8 +26,8 @@ public abstract class AbstractUMLDiagramTest {
 
         var comparisonResult = modelingPlagiarismDetectionService.compareSubmissions(List.of(modelingSubmission1, modelingSubmission2), minimumSimilarity, 1, 0);
         assertThat(comparisonResult).isNotNull();
-        assertThat(comparisonResult).hasSize(1);
-        assertThat(comparisonResult.get(0).getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.01));
+        assertThat(comparisonResult.getComparisons()).hasSize(1);
+        assertThat(comparisonResult.getComparisons().get(0).getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.01));
     }
 
     protected UMLComponent getComponent(UMLComponentDiagram componentDiagram, String name) {
