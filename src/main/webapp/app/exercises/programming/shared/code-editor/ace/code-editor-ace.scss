@@ -49,4 +49,9 @@ Ace Editor
             width: 100%;
         }
     }
+    .myMarker {
+        position:absolute;
+        background:rgba(100,200,100,0.5);
+        z-index:20
+    }
 }

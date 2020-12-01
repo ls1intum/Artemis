@@ -15,7 +15,7 @@ import 'brace/theme/dreamweaver';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, of, Subscription } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, tap, switchMap } from 'rxjs/operators';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
@@ -24,6 +24,7 @@ import { TextChange } from 'app/entities/text-change.model';
 import { LocalStorageService } from 'ngx-webstorage';
 import { fromPairs, pickBy } from 'lodash';
 import { Feedback } from 'app/entities/feedback.model';
+import { diff_match_patch } from 'diff-match-patch';
 
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };
 
@@ -66,12 +67,17 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     readonly aceModeList = ace.acequire('ace/ext/modelist');
     // Line widgets for inline feedback
     readonly LineWidgets = ace.acequire('ace/line_widgets').LineWidgets;
+
+    readonly Range = ace.acequire('ace/range').Range;
+    readonly dmp = new diff_match_patch();
+
     /** Ace Editor Options **/
     editorMode: string; // String or mode object
     isLoading = false;
     annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
+    templateFileSession: { [fileName: string]: { code: string } } = {};
     // Inline feedback variables
     fileFeedbacks: Feedback[];
     lineCounter: any[] = [];
@@ -200,6 +206,37 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     // It is possible that the selected file has changed - in this case don't update the editor.
                     if (this.selectedFile === fileName) {
                         this.initEditorAfterFileChange();
+                    }
+                }),
+                switchMap(() => {
+                    if (this.isTutorAssessment) {
+                        return this.repositoryFileService.getTemplateFile(fileName);
+                    } else {
+                        return of(undefined);
+                    }
+                }),
+                tap((templateFileObj) => {
+                    if (templateFileObj) {
+                        this.templateFileSession[fileName] = { code: templateFileObj.fileContent };
+                        console.log(this.editor.getEditor().getSession().getValue(), this.templateFileSession[fileName].code);
+                        const d = this.dmp.diff_main(this.editor.getEditor().getSession().getValue(), this.templateFileSession[fileName].code);
+                        console.log(d);
+                        this.dmp.diff_cleanupEfficiency(d);
+                        console.log(d, 'after cleanup');
+                        const lineChange = {};
+                        let counter = 0;
+                        d.forEach((a) => {
+                            if (a[0] === 0) {
+                                const lines = a[1].split(/\r?\n/);
+                                counter += lines.length - 1;
+                            }
+                            if (a[0] === -1) {
+                                lineChange[counter] = true;
+                                this.editor.getEditor().getSession().addMarker(new this.Range(counter, 0, counter, 1), 'myMarker', 'fullLine');
+                                counter++;
+                            }
+                        });
+                        console.log(lineChange);
                     }
                 }),
                 catchError(() => {

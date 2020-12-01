@@ -1715,6 +1715,11 @@
   dependencies:
     moment "^2.10.2"
 
+"@types/diff-match-patch@^1.0.32":
+  version "1.0.32"
+  resolved "https://registry.yarnpkg.com/@types/diff-match-patch/-/diff-match-patch-1.0.32.tgz#d9c3b8c914aa8229485351db4865328337a3d09f"
+  integrity sha512-bPYT5ECFiblzsVzyURaNhljBH2Gh1t9LowgUwciMrNAhFewLkHT2H0Mto07Y4/3KCOGZHRQll3CTtQZ0X11D/A==
+
 "@types/dompurify@2.0.4":
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/@types/dompurify/-/dompurify-2.0.4.tgz#25fce15f1f4b1bc0df0ad957040cf226416ac2d7"
@@ -4520,6 +4525,11 @@ dev-ip@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/dev-ip/-/dev-ip-1.0.1.tgz#a76a3ed1855be7a012bb8ac16cb80f3c00dc28f0"
   integrity sha1-p2o+0YVb56ASu4rBbLgPPADcKPA=
+
+diff-match-patch@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/diff-match-patch/-/diff-match-patch-1.0.5.tgz#abb584d5f10cd1196dfc55aa03701592ae3f7b37"
+  integrity sha512-IayShXAgj/QMXgB0IWmKx+rOPuGMhqm5w6jvFxmVenXKIzRqTAAsbBPT3kWQeGANj3jGgvcvv4yK6SxqYmikgw==
 
 diff-sequences@^26.6.2:
   version "26.6.2"

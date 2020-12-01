@@ -164,6 +164,13 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         );
     };
 
+    getTemplateFile = (fileName: string) => {
+        return this.http.get(`${this.restResourceUrl}/template-file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
+            map((data) => ({ fileContent: data })),
+            handleErrorResponse<{ fileContent: string }>(this.conflictService),
+        );
+    };
+
     createFile = (fileName: string) => {
         return this.http
             .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
