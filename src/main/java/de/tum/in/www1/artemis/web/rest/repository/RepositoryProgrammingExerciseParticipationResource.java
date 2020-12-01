@@ -22,8 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -61,21 +60,26 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
         }
+        ProgrammingExerciseParticipation programmingParticipation = (ProgrammingExerciseParticipation) participation;
         // Error case 2: The user does not have permissions to push into the repository.
-        boolean hasPermissions = participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
+        boolean hasPermissions = participationService.canAccessParticipation(programmingParticipation);
         if (!hasPermissions) {
             throw new IllegalAccessException();
         }
         // Error case 3: The user's participation repository is locked.
-        if (repositoryAction == RepositoryActionType.WRITE && programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseParticipation) participation)) {
+        if (repositoryAction == RepositoryActionType.WRITE && programmingExerciseService.isParticipationRepositoryLocked(programmingParticipation)) {
             throw new IllegalAccessException();
         }
         // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise()) && !examSubmissionService.isAllowedToSubmit(participation.getExercise(), user)) {
+        var programmingExercise = programmingParticipation.getProgrammingExercise();
+        // This must be a student participation as hasPermissions would have been false and an error already thrown
+        var isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
+        if (isStudentParticipation && !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)
+                && !examSubmissionService.isAllowedToSubmit(programmingExercise, user)) {
             throw new IllegalAccessException();
         }
-        URL repositoryUrl = ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
+        URL repositoryUrl = programmingParticipation.getRepositoryUrlAsUrl();
         return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
     }
 

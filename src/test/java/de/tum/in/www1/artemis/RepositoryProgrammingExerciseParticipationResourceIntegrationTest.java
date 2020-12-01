@@ -239,6 +239,38 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetFiles_solutionParticipation() throws Exception {
+        // Create template repo
+        var solutionRepository = new LocalRepository();
+        solutionRepository.configureRepos("solutionLocalRepo", "solutionOriginRepo");
+
+        // add file to the template repo folder
+        var solutionFilePath = Paths.get(solutionRepository.localRepoFile + "/" + currentLocalFileName);
+        var solutionFile = Files.createFile(solutionFilePath).toFile();
+
+        // write content to the created file
+        FileUtils.write(solutionFile, currentLocalFileContent, Charset.defaultCharset());
+
+        // add folder to the template repo folder
+        Path solutionFolderPath = Paths.get(solutionRepository.localRepoFile + "/" + currentLocalFolderName);
+        Files.createDirectory(solutionFolderPath).toFile();
+
+        programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
+
+        doReturn(gitService.getRepositoryByLocalPath(solutionRepository.localRepoFile.toPath())).when(gitService)
+                .getOrCheckoutRepository(programmingExercise.getSolutionParticipation().getRepositoryUrlAsUrl(), true);
+
+        var files = request.getMap(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+
+        // Check if all files exist
+        for (String key : files.keySet()) {
+            assertThat(Files.exists(Paths.get(solutionRepository.localRepoFile + "/" + key))).isTrue();
+        }
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetFile() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
