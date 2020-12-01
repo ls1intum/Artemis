@@ -83,5 +83,5 @@
             </div>
         </div>
     </ng-template>
-    <jhi-achievements [courseId]="this.course?.id"></jhi-achievements>
+    <jhi-achievements *ngIf="course.achievementsEnabled" [courseId]="this.course?.id"></jhi-achievements>
 </div>
