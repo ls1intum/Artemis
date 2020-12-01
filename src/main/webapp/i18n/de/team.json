@@ -63,7 +63,9 @@
             "errors": {
                 "studentAlreadyAssignedToTeam": "Student mit Login {{ studentLogin }} ist bereits in Team mit Id {{ teamId }.",
                 "registrationNumbersNotFound": "Studierende mit folgenden Matrikelnummern konnten nicht gefunden werden: {{ registrationNumbers }}",
-                "studentsWithoutRegistrationNumbers": "Folgende Studenten haben keine Matrikelnummern: {{ students }}"
+                "loginsNotFound": "Studierende mit folgenden Benutzernamen konnten nicht gefunden werden: {{ logins }}",
+                "studentsWithoutRegistrationNumbers": "Folgende Studenten haben keine Matrikelnummern: {{ students }}",
+                "studentsAppearMultipleTimes": "Folgende Studenten erscheinen mehrmals in importierten Teams: {{ students }}"
             },
             "selectOwnerForTeam": "Tutor auswählen (nach Login oder Name suchen)",
             "ownerSearch": {

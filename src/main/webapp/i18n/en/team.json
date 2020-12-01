@@ -62,7 +62,9 @@
             "errors": {
                 "studentAlreadyAssignedToTeam": "Student with login {{ studentLogin }} is already assigned to team with id {{ teamId }.",
                 "registrationNumbersNotFound": "Students with following registration numbers could not be found: {{ registrationNumbers }}",
-                "studentsWithoutRegistrationNumbers": "Following students do not have registration numbers: {{ students }}"
+                "loginsNotFound": "Students with following usernames could not be found: {{ logins }}",
+                "studentsWithoutRegistrationNumbers": "Following students do not have registration numbers: {{ students }}",
+                "studentsAppearMultipleTimes": "Following students appear multiple times in imported teams: {{ students }}"
             },
             "selectOwnerForTeam": "Select tutor (by searching for login or name)",
             "ownerSearch": {

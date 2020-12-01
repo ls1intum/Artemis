@@ -239,14 +239,16 @@ export class TeamService implements ITeamService {
         teams!.forEach((team) => {
             if (team.students) {
                 team.students.forEach((student) => {
-                    const exportStudent = new StudentWithTeam();
-                    exportStudent.Name = student.firstName ?? '';
-                    exportStudent.Surname = student.lastName ?? '';
-                    exportStudent['Team Name'] = team.name ?? '';
+                    const exportStudent = {
+                        name: student.firstName ?? '',
+                        surname: student.lastName ?? '',
+                        teamName: team.name ?? '',
+                        registrationNumber: student.visibleRegistrationNumber ?? '',
+                        username: student.login ?? '',
+                    } as StudentWithTeam;
                     if (!student.visibleRegistrationNumber) {
-                        studentsWithoutRegistrationNumbers.push({ login: student.login ?? '', name: `${exportStudent.Name} ${exportStudent.Surname}` });
+                        studentsWithoutRegistrationNumbers.push({ login: student.login ?? '', name: `${exportStudent.name} ${exportStudent.surname}` });
                     }
-                    exportStudent['Registration Number'] = student.visibleRegistrationNumber ?? '';
                     exportedTeams.students.push(exportStudent);
                 });
             }

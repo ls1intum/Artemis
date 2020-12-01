@@ -79,9 +79,10 @@ export const mockShortNames = {
 
 export const mockFileStudents = {
     students: [
-        { Name: 'Jack', Surname: 'Doe', 'Registration Number': '23456', 'Team Name': 'File Team 1' } as StudentWithTeam,
-        { Name: 'Jackie', Surname: 'Doen', 'Registration Number': '23457', 'Team Name': 'File Team 1' } as StudentWithTeam,
-        { Name: 'Alyson', Surname: 'Smithson', 'Registration Number': '23458', 'Team Name': 'File Team 2' } as StudentWithTeam,
+        { name: 'Jack', surname: 'Doe', username: 'jack_doe', teamName: 'File Team 1' } as StudentWithTeam,
+        { name: 'Jackie', surname: 'Doen', username: 'jackie_doen', teamName: 'File Team 1' } as StudentWithTeam,
+        { name: 'Alyson', surname: 'Smithson', registrationNumber: '23458', teamName: 'File Team 2' } as StudentWithTeam,
+        { name: 'Alysia', surname: 'Smith', registrationNumber: '23459', teamName: 'File Team 2' } as StudentWithTeam,
     ],
 };
 
@@ -91,15 +92,18 @@ export const mockFileTeamsConverted: Team[] = [
         name: 'File Team 1',
         shortName: 'fileteam1',
         students: [
-            { ...new User(), firstName: 'Jack', lastName: 'Doe', visibleRegistrationNumber: '23456', name: 'Jack Doe' } as User,
-            { ...new User(), firstName: 'Jackie', lastName: 'Doen', visibleRegistrationNumber: '23457', name: 'Jackie Doen' } as User,
+            { ...new User(), firstName: 'Jack', lastName: 'Doe', username: 'jack_doe', name: 'Jack Doe' } as User,
+            { ...new User(), firstName: 'Jackie', lastName: 'Doen', username: 'jackie_doe', name: 'Jackie Doen' } as User,
         ],
     } as Team,
     {
         ...new Team(),
         name: 'File Team 2',
         shortName: 'fileteam2',
-        students: [{ ...new User(), firstName: 'Alyson', lastName: 'Smithson', visibleRegistrationNumber: '23458', name: 'Alyson Smithson' } as User],
+        students: [
+            { ...new User(), firstName: 'Alyson', lastName: 'Smithson', visibleRegistrationNumber: '23458', name: 'Alyson Smithson' } as User,
+            { ...new User(), firstName: 'Alysia', lastName: 'Smith', visibleRegistrationNumber: '23459', name: 'Alysia Smith' } as User,
+        ],
     } as Team,
 ];
 

@@ -1,6 +1,7 @@
 export class StudentWithTeam {
-    public Name: string;
-    public Surname: string;
-    public 'Registration Number': string;
-    public 'Team Name': string;
+    public name: string;
+    public surname: string;
+    public registrationNumber?: string;
+    public teamName: string;
+    public username?: string;
 }

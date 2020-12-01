@@ -77,15 +77,20 @@ export class TeamsImportFromFileFormComponent {
         const teams: Team[] = [];
         importTeam.students!.forEach((student) => {
             const newStudent = new User();
-            newStudent.firstName = student.Name;
-            newStudent.lastName = student.Surname;
-            newStudent.visibleRegistrationNumber = student['Registration Number'];
-            newStudent.name = `${student.Name} ${student.Surname}`;
-            const index = teams.findIndex((team) => team.name === student['Team Name']);
+            newStudent.firstName = student.name;
+            newStudent.lastName = student.surname;
+            newStudent.visibleRegistrationNumber = student.registrationNumber;
+            newStudent.login = student.username;
+
+            if (!student.username && !student.registrationNumber) {
+                throw new Error('Students must have either username or registration number');
+            }
+            newStudent.name = `${student.name} ${student.surname}`;
+            const index = teams.findIndex((team) => team.name === student.teamName);
             if (index === -1) {
                 const newTeam = new Team();
-                newTeam.name = student['Team Name'];
-                newTeam.shortName = student['Team Name'].replace(/[^0-9a-z]/gi, '').toLowerCase();
+                newTeam.name = student.teamName;
+                newTeam.shortName = student.teamName.replace(/[^0-9a-z]/gi, '').toLowerCase();
                 newTeam.students = [newStudent];
                 teams.push(newTeam);
             } else {

@@ -238,10 +238,10 @@ describe('TeamsImportDialogComponent', () => {
             expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).to.equal(true);
         });
 
-        it('Import from file: returns true if one of the students login is in already existing students', () => {
+        it('Import from file: returns false if one of the students login is in already existing students', () => {
             comp.studentLoginsAlreadyExistingInExercise = [mockTeamStudents[0].login!];
             comp.showImportFromExercise = false;
-            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).to.equal(true);
+            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).to.equal(false);
         });
 
         it('Import from exercise: returns true if one of the students registration number is in already existing students', () => {
@@ -631,13 +631,15 @@ describe('TeamsImportDialogComponent', () => {
             expect(comp.isImporting).to.equal(false);
             expect(alertServiceStub).to.have.been.calledWith('artemisApp.team.importError');
         });
-        it('call alert service if registration numbers not found', () => {
+        it('call alert service if students not found', () => {
             const registrationNumbers = ['1', '2', '3'];
-            response = new HttpErrorResponse({ error: { errorKey: 'registrationNumbersNotFound', params: { registrationNumbers } } });
+            const logins = ['l1', 'l2', 'l3'];
+            response = new HttpErrorResponse({ error: { errorKey: 'studentsNotFound', params: { registrationNumbers, logins } } });
             comp.isImporting = true;
             comp.onSaveError(response);
             expect(comp.isImporting).to.equal(false);
             expect(alertServiceStub).to.have.been.calledWithExactly('artemisApp.team.errors.registrationNumbersNotFound', { registrationNumbers });
+            expect(alertServiceStub).to.have.been.calledWithExactly('artemisApp.team.errors.loginsNotFound', { logins });
         });
     });
 

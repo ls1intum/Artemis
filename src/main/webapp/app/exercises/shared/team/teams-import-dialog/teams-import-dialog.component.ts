@@ -49,6 +49,8 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     studentRegistrationNumbersAlreadyExistingInOtherTeams: string[] = [];
     studentRegistrationNumbersAlreadyExistingInExercise: string[] = [];
     notFoundRegistrationNumbers: string[] = [];
+    notFoundLogins: string[] = [];
+    studentLoginsAlreadyExistingInOtherTeams: string[] = [];
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -146,26 +148,24 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
             return false;
         }
         // One of the students of the source team is already part of a team in the destination exercise
-        if (this.showImportFromExercise && sourceTeam.students!.some((student) => this.studentLoginsAlreadyExistingInExercise.includes(student.login!))) {
+        if (sourceTeam.students!.some((student) => this.studentLoginsAlreadyExistingInExercise.includes(student.login!))) {
             return false;
         }
 
-        // One of the students of the source team is already part of a team in the destination exercise
-        if (
-            !this.showImportFromExercise &&
-            sourceTeam.students!.some((student) => this.studentRegistrationNumbersAlreadyExistingInExercise.includes(student.visibleRegistrationNumber || ''))
-        ) {
-            return false;
-        }
-
-        if (
-            !this.showImportFromExercise &&
-            sourceTeam.students?.some(
-                (sourceStudent) =>
-                    sourceStudent.visibleRegistrationNumber && this.studentRegistrationNumbersAlreadyExistingInOtherTeams.includes(sourceStudent.visibleRegistrationNumber),
-            )
-        ) {
-            return false;
+        // One of the students of the source team is already part of a team in the destination exercise or of another imported team
+        if (!this.showImportFromExercise) {
+            if (
+                sourceTeam.students!.some((student) => {
+                    return (
+                        (student.visibleRegistrationNumber &&
+                            (this.studentRegistrationNumbersAlreadyExistingInExercise.includes(student.visibleRegistrationNumber) ||
+                                this.studentRegistrationNumbersAlreadyExistingInOtherTeams.includes(student.visibleRegistrationNumber))) ||
+                        (student.login && this.studentLoginsAlreadyExistingInOtherTeams.includes(student.login))
+                    );
+                })
+            ) {
+                return false;
+            }
         }
 
         // This source team can be imported without any issues
@@ -234,7 +234,9 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
             return this.sourceExercise !== undefined && this.sourceTeams !== undefined && this.sourceTeams.length > 0 && Boolean(this.importStrategy);
         }
         return (
-            this.studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0 || (this.sourceTeams !== undefined && this.sourceTeams.length > 0 && Boolean(this.importStrategy))
+            this.studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0 ||
+            this.studentLoginsAlreadyExistingInOtherTeams.length > 0 ||
+            (this.sourceTeams !== undefined && this.sourceTeams.length > 0 && Boolean(this.importStrategy))
         );
     }
 
@@ -257,7 +259,8 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
             this.sourceTeams.length === 0 ||
             !this.importStrategy ||
             !this.numberOfTeamsToBeImported ||
-            this.studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0
+            this.studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0 ||
+            this.studentLoginsAlreadyExistingInOtherTeams.length > 0
         );
     }
 
@@ -307,22 +310,31 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         this.sourceTeams = fileTeams;
         this.studentRegistrationNumbersAlreadyExistingInOtherTeams = [];
         this.notFoundRegistrationNumbers = [];
-        fileTeams.forEach((team) => {
-            if (team.students) {
-                team.students.forEach((sourceStudent) => {
-                    const fk = flatMap(fileTeams, (fileTeam) =>
-                        fileTeam.students?.map((student) => sourceStudent.visibleRegistrationNumber === student.visibleRegistrationNumber),
-                    ).filter((fileTeam) => fileTeam);
-                    if (
-                        fk.length > 1 &&
-                        sourceStudent.visibleRegistrationNumber &&
-                        !this.studentRegistrationNumbersAlreadyExistingInOtherTeams.includes(sourceStudent.visibleRegistrationNumber)
-                    ) {
-                        this.studentRegistrationNumbersAlreadyExistingInOtherTeams.push(sourceStudent.visibleRegistrationNumber);
-                    }
-                });
+        const students: User[] = flatMap(fileTeams, (fileTeam) => fileTeam.students ?? []);
+        const loginHistogram = students.reduce(function (map, student) {
+            const login: string | undefined = student.login;
+            if (login) {
+                if (map[login]) {
+                    map[login] += 1;
+                } else {
+                    map[login] = 1;
+                }
             }
-        });
+            return map;
+        }, {});
+        const registrationNumberHistogram = students.reduce(function (map, student) {
+            const registrationNumber: string | undefined = student.visibleRegistrationNumber;
+            if (registrationNumber) {
+                if (map[registrationNumber]) {
+                    map[registrationNumber] += 1;
+                } else {
+                    map[registrationNumber] = 1;
+                }
+            }
+            return map;
+        }, {});
+        this.studentLoginsAlreadyExistingInOtherTeams = Object.keys(loginHistogram).filter((key) => loginHistogram[key] > 1);
+        this.studentRegistrationNumbersAlreadyExistingInOtherTeams = Object.keys(registrationNumberHistogram).filter((key) => registrationNumberHistogram[key] > 1);
         this.computeSourceTeamsFreeOfConflicts();
     }
 
@@ -345,11 +357,20 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      */
     onSaveError(httpErrorResponse: HttpErrorResponse) {
         const { errorKey, params } = httpErrorResponse.error;
-
+        let studentsAppearMultipleTimes = [];
+        type Pair = { first: string; second: string };
         switch (errorKey) {
-            case 'registrationNumbersNotFound':
-                const { registrationNumbers } = params;
+            case 'studentsNotFound':
+                const { registrationNumbers, logins } = params;
                 this.notFoundRegistrationNumbers = registrationNumbers;
+                this.notFoundLogins = logins;
+                break;
+            case 'studentsAppearMultipleTimes':
+                const { students } = params;
+                studentsAppearMultipleTimes = students;
+
+                this.studentLoginsAlreadyExistingInOtherTeams = studentsAppearMultipleTimes.map((student: Pair) => student.first);
+                this.studentRegistrationNumbersAlreadyExistingInOtherTeams = studentsAppearMultipleTimes.map((student: Pair) => student.second);
                 break;
             default:
                 break;
@@ -357,8 +378,18 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
         if (this.notFoundRegistrationNumbers.length > 0) {
             this.jhiAlertService.error('artemisApp.team.errors.registrationNumbersNotFound', { registrationNumbers: this.notFoundRegistrationNumbers });
-        } else {
+        }
+        if (this.notFoundLogins.length > 0) {
+            this.jhiAlertService.error('artemisApp.team.errors.loginsNotFound', { logins: this.notFoundLogins });
+        }
+        if (this.notFoundLogins.length === 0 && this.notFoundRegistrationNumbers.length === 0) {
             this.jhiAlertService.error('artemisApp.team.importError');
+        }
+
+        if (studentsAppearMultipleTimes.length > 0) {
+            this.jhiAlertService.error('artemisApp.team.errors.studentsAppearMultipleTimes', {
+                students: studentsAppearMultipleTimes.map((student: Pair) => `${student.first}:${student.second}`).join(','),
+            });
         }
 
         this.isImporting = false;
@@ -376,6 +407,8 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         this.isImporting = false;
         this.studentRegistrationNumbersAlreadyExistingInOtherTeams = [];
         this.notFoundRegistrationNumbers = [];
+        this.notFoundLogins = [];
+        this.studentLoginsAlreadyExistingInOtherTeams = [];
     }
 
     /**
@@ -405,5 +438,9 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
                 ...this.studentRegistrationNumbersAlreadyExistingInExercise,
             ]),
         ];
+    }
+
+    get problematicLogins() {
+        return [...new Set([...this.notFoundLogins, ...this.studentLoginsAlreadyExistingInOtherTeams, ...this.studentLoginsAlreadyExistingInExercise])];
     }
 }

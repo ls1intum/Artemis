@@ -80,10 +80,26 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("""
             select user
-            from User user
-            where :#{#groupName} member of user.groups and user.registrationNumber in :#{#registrationNumbers}
+                from User user
+                where :#{#groupName} member of user.groups and user.registrationNumber in :#{#registrationNumbers}
             """)
-    List<User> getByRegistrationNumbersInGroup(@Param("groupName") String groupName, @Param("registrationNumbers") Set<String> registrationNumbers);
+    List<User> findAllByRegistrationNumbersInGroup(@Param("groupName") String groupName, @Param("registrationNumbers") Set<String> registrationNumbers);
+
+    /**
+     * Gets users in a group by their login.
+     *
+     * @param groupName           Name of group in which to search for users
+     * @param logins Logins of users
+     * @return found users that match the criteria
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+            select user
+                from User user
+                where :#{#groupName} member of user.groups and user.login in :#{#logins}
+            """)
+    List<User> findAllByLoginsInGroup(@Param("groupName") String groupName, @Param("logins") Set<String> logins);
+
 
     /**
      * Searches for users by their login or full name.
