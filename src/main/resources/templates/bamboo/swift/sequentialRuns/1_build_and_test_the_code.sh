@@ -1,5 +1,5 @@
-# mv assignment to root
-mv assignment/Sources .
+# copy assignment to root
+cp -R assignment/Sources .
 
 echo "---------- swift build ----------"
 swift build

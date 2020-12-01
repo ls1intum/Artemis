@@ -1,6 +1,6 @@
 echo "---------- execute static code analysis ----------"
 mkdir target
-swiftlint > target/checkstyle-result.xml
+swiftlint lint assignment > target/checkstyle-result.xml
 
 cd target
 echo " -- old checkstyle --"
