@@ -91,7 +91,7 @@ public class ExampleSubmissionService {
     }
 
     public Optional<ExampleSubmission> getWithEagerExercise(Long exampleSubmissionId) {
-        return exampleSubmissionRepository.findByIdWithEagerExercise(exampleSubmissionId);
+        return exampleSubmissionRepository.findWithEagerExerciseById(exampleSubmissionId);
     }
 
     /**
