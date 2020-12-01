@@ -33,7 +33,7 @@ public class ExampleSubmissionService {
     }
 
     public Optional<ExampleSubmission> findByIdWithEagerTutorParticipations(Long exampleSubmissionId) {
-        return exampleSubmissionRepository.findByIdWithEagerTutorParticipations(exampleSubmissionId);
+        return exampleSubmissionRepository.findByIdWithEagerResultsAndTutorParticipations(exampleSubmissionId);
     }
 
     /**
@@ -63,7 +63,7 @@ public class ExampleSubmissionService {
      * @return list of feedback for an example submission
      */
     public List<Feedback> getFeedbackForExampleSubmission(Long exampleSubmissionId) {
-        Optional<ExampleSubmission> exampleSubmission = this.exampleSubmissionRepository.findByIdWithEagerResultAndFeedback(exampleSubmissionId);
+        Optional<ExampleSubmission> exampleSubmission = this.exampleSubmissionRepository.findByIdWithEagerResultsAndFeedback(exampleSubmissionId);
         Submission submission = exampleSubmission.get().getSubmission();
 
         if (submission == null) {
@@ -81,12 +81,12 @@ public class ExampleSubmissionService {
     }
 
     public ExampleSubmission findOneWithEagerResult(Long exampleSubmissionId) {
-        return exampleSubmissionRepository.findByIdWithEagerResultAndFeedback(exampleSubmissionId)
+        return exampleSubmissionRepository.findByIdWithEagerResultsAndFeedback(exampleSubmissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Example submission with id \"" + exampleSubmissionId + "\" does not exist"));
     }
 
     public ExampleSubmission findOneBySubmissionId(Long submissionId) {
-        return exampleSubmissionRepository.findBySubmissionId(submissionId)
+        return exampleSubmissionRepository.findWithEagerResultsBySubmissionId(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Example submission for submission with id \"" + submissionId + "\" does not exist"));
     }
 
@@ -100,7 +100,7 @@ public class ExampleSubmissionService {
      */
     @Transactional // ok
     public void deleteById(long exampleSubmissionId) {
-        Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findByIdWithEagerTutorParticipations(exampleSubmissionId);
+        Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultsAndTutorParticipations(exampleSubmissionId);
 
         if (optionalExampleSubmission.isPresent()) {
             ExampleSubmission exampleSubmission = optionalExampleSubmission.get();
