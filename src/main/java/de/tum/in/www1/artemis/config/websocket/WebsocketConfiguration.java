@@ -78,11 +78,11 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private ParticipationService participationService;
 
-    private AuthorizationCheckService authorizationCheckService;
+    private final AuthorizationCheckService authorizationCheckService;
 
-    private UserService userService;
+    private final UserService userService;
 
-    private ExerciseService exerciseService;
+    private final ExerciseService exerciseService;
 
     private static final int LOGGING_DELAY_SECONDS = 10;
 
@@ -107,6 +107,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         this.userService = userService;
     }
 
+    // Break the cycle
     @Autowired
     public void setParticipationService(ParticipationService participationService) {
         this.participationService = participationService;
