@@ -570,7 +570,7 @@ public class BambooService implements ContinuousIntegrationService {
             // Do not remove this save, otherwise Hibernate will throw an order column index null exception on saving the build logs
             programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
 
-            // todo wip, save currently necessary, because of relationship between result and submission
+            // save result to create entry in DB before establishing relation with submission for ordering
             result = resultRepository.save(result);
 
             var buildLogs = extractAndPrepareBuildLogs(buildResult, programmingSubmission);

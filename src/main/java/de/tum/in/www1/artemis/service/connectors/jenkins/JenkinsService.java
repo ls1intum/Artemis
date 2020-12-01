@@ -322,13 +322,13 @@ public class JenkinsService implements ContinuousIntegrationService {
                     final var commitHash = getCommitHash(report, submission.getType());
                     return commitHash.isPresent() && submission.getCommitHash().equals(commitHash.get());
                 }).findFirst();
-        final var result = createResultFromBuildResult(report, (Participation) participation);
+        var result = createResultFromBuildResult(report, (Participation) participation);
         final ProgrammingSubmission submission;
         submission = latestPendingSubmission.orElseGet(() -> createFallbackSubmission(participation, report));
         submission.setBuildFailed(result.getResultString().equals("No tests found"));
 
-        // todo wip, save currently necessary, because of relationship between result and submission
-        resultRepository.save(result);
+        // save result to create entry in DB before establishing relation with submission for ordering
+        result = resultRepository.save(result);
 
         result.setSubmission(submission);
         submission.setResult(result);
