@@ -11,6 +11,9 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
  */
 public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement> {
 
+    public TextPlagiarismResult() {
+    }
+
     public TextPlagiarismResult(JPlagResult result) {
         this.duration = result.getDuration();
         this.similarityDistribution = result.getSimilarityDistribution();
