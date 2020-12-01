@@ -20,7 +20,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     savedExercises = 0;
     failedExercises: string[] = [];
     private translationBasePath = 'artemisApp.programmingExercise.';
-    notificationText: string | null;
+    notificationText: string | undefined;
 
     constructor(
         private activeModal: NgbActiveModal,
