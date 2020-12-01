@@ -97,6 +97,11 @@ public abstract class Submission extends DomainObject {
     }
 
     // TODO: double check Jackson and client compatibility, maybe refactoring to getLatestResult
+    /**
+     * Is used as a workaround for objects that expect submission to have 1 result
+     *
+     * @return the latest result
+     */
     @Nullable
     @JsonProperty(value = "result", access = JsonProperty.Access.READ_ONLY)
     public Result getResult() {
@@ -109,6 +114,11 @@ public abstract class Submission extends DomainObject {
     }
 
     // TODO: refactoring addResult
+    /**
+     * currently not used
+     *
+     * @return the first Result of the Submission
+     */
     @Nullable
     @JsonIgnore
     public Result getFirstResult() {

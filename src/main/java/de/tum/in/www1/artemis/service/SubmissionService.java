@@ -296,8 +296,11 @@ public class SubmissionService {
     }
 
     /**
-     * todo wip
-     * currently used to fix issues with saving / assigning results to submissions
+     * todo wip: currently used to fix issues with saving / assigning results to submissions
+     *
+     * @param submission
+     * @param result
+     * @return the result with correctly persistet relationship to its submission
      */
     public Result setOrderedResult(Submission submission, Result result) {
         result.setSubmission(null);
