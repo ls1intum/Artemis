@@ -172,7 +172,6 @@ public class ExerciseResource {
             return badRequest();
         }
 
-        // TODO CZ: load results of submissions eagerly to prevent additional database calls
         Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exerciseId);
         // Do not provide example submissions without any assessment
         exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getResult() == null);
