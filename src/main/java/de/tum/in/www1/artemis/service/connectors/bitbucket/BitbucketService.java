@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.bitbucket;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -61,6 +62,9 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Value("${artemis.git.name}")
     private String artemisGitName;
+
+    @Value("${artemis.repo-download-clone-path}")
+    private String REPO_DOWNLOAD_CLONE_PATH;
 
     private final UserService userService;
 
@@ -276,17 +280,19 @@ public class BitbucketService extends AbstractVersionControlService {
         try {
             var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepositoryName.toLowerCase());
             URL sourceRepositoryUrlAsUrl = new URL(sourceRepoUrl.toString());
-            // checkout the source repo
-            Repository sourceRepo = gitService.getOrCheckoutRepository(sourceRepositoryUrlAsUrl, true);
+            // checkout the source repo to a different folder than the default one. This avoids a possible conflict state.
+            Repository sourceRepo = gitService.getOrCheckoutRepository(sourceRepositoryUrlAsUrl, true, REPO_DOWNLOAD_CLONE_PATH);
             // create target repo
             createRepository(targetProjectKey, targetRepoSlug);
             var targetRepoUrl = getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
             URL targetRepoUrlAsUrl = new URL(targetRepoUrl.toString());
             // copy by pushing the source's content to the target's repo
             gitService.pushSourceToTargetRepo(sourceRepo, targetRepoUrlAsUrl);
+            // delete the source repo which is not needed anymore
+            gitService.deleteLocalRepository(sourceRepo);
 
         }
-        catch (InterruptedException | GitAPIException | MalformedURLException e) {
+        catch (InterruptedException | GitAPIException | IOException e) {
             throw new BitbucketException("Error while pushing the source repo to the target repo", e);
         }
 
