@@ -41,6 +41,12 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
      */
     private Long score;
 
+    /**
+     * Create a new PlagiarismSubmission instance from an existing JPlag Submission
+     *
+     * @param jplagSubmission the JPlag Submission to create the PlagiarismSubmission from
+     * @return a new PlagiarismSubmission instance
+     */
     public static PlagiarismSubmission<TextSubmissionElement> fromJPlagSubmission(Submission jplagSubmission) {
         PlagiarismSubmission<TextSubmissionElement> submission = new PlagiarismSubmission<>();
 
@@ -58,6 +64,12 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
         return submission;
     }
 
+    /**
+     * Create a new PlagiarismSubmission instance from an existing Modeling Submission
+     *
+     * @param modelingSubmission the Modeling Submission to create the PlagiarismSubmission from
+     * @return a new PlagiarismSubmission instance
+     */
     public static PlagiarismSubmission<ModelingSubmissionElement> fromModelingSubmission(ModelingSubmission modelingSubmission) {
         PlagiarismSubmission<ModelingSubmissionElement> submission = new PlagiarismSubmission<>();
 

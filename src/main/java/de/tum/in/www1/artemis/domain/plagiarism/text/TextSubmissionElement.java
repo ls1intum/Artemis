@@ -15,6 +15,12 @@ public class TextSubmissionElement extends PlagiarismSubmissionElement {
 
     private int length;
 
+    /**
+     * Create a new TextSubmissionElement instance from an existing JPlag Token
+     *
+     * @param token the JPlag Token to create the TextSubmissionElement from
+     * @return a new TextSubmissionElement instance
+     */
     public static TextSubmissionElement fromJPlagToken(Token token) {
         TextSubmissionElement textSubmissionElement = new TextSubmissionElement();
 

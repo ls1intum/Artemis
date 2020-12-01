@@ -22,6 +22,12 @@ public class PlagiarismMatch {
      */
     private int length;
 
+    /**
+     * Create a new PlagiarismMatch instance from an existing JPlag Match
+     *
+     * @param jplagMatch the JPlag Match to create the PlagiarismMatch from
+     * @return a new PlagiarismMatch instance
+     */
     public static PlagiarismMatch fromJPlagMatch(Match jplagMatch) {
         PlagiarismMatch match = new PlagiarismMatch();
 

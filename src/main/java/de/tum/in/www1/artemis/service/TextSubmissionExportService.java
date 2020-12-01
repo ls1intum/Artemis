@@ -36,10 +36,9 @@ public class TextSubmissionExportService extends SubmissionExportService {
     /**
      * Save the content of the given TextSubmission to a file.
      *
-     * @param exercise the submission belongs to
-     * @param submission that will be saved to a file
+     * @param submission            that will be saved to a file
+     * @param studentLogin          of the given submission
      * @param submissionsFolderName base folder name to save the file to
-     * @throws IOException
      */
     public void saveSubmissionToFile(TextSubmission submission, String studentLogin, String submissionsFolderName) throws IOException {
         String submissionFileName = String.format("%s-%s%s", submission.getId(), studentLogin, this.getFileEndingForSubmission(submission));

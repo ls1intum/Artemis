@@ -7,6 +7,12 @@ public class ModelingSubmissionElement extends PlagiarismSubmissionElement {
 
     private String modelElementId;
 
+    /**
+     * Create a new ModelingSubmissionElement instance from an existing UMLElement
+     *
+     * @param umlElement the UMLElement to create the ModelingSubmissionElement from
+     * @return a new ModelingSubmissionElement instance
+     */
     public static ModelingSubmissionElement fromUMLElement(UMLElement umlElement) {
         ModelingSubmissionElement element = new ModelingSubmissionElement();
 
