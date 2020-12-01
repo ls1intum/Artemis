@@ -91,7 +91,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse, exerciseTitle?: string | undefined) {
-        exerciseTitle = exerciseTitle == undefined ? 'undefined exercise' : exerciseTitle;
+        exerciseTitle = exerciseTitle ?? 'undefined exercise';
         this.failedExercises.push(exerciseTitle);
         this.savedExercises++;
         if (this.savedExercises === this.selectedProgrammingExercises.length) {
