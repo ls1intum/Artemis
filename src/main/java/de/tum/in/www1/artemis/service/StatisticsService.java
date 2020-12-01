@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -39,8 +40,22 @@ public class StatisticsService {
         ZonedDateTime border;
         List<Map<String, Object>> outcome;
         switch (span) {
-            case DAY: // result = this.statisticsRepository.getTotalSubmissionsDay(ZonedDateTime.now().minusDays(7));
-                return null;
+            case DAY:
+                result = new Integer[24];
+                Arrays.fill(result, 0);
+                border = ZonedDateTime.now().minusDays(1).withHour(0).withMinute(0).withSecond(0);
+                ZonedDateTime intervalEnd = ZonedDateTime.now().withHour(0).withMinute(0).withSecond(0);
+                outcome = this.statisticsRepository.getTotalSubmissionsYesterday(border, intervalEnd);
+                for (Map<String, Object> map : outcome) {
+                    ZonedDateTime date = (ZonedDateTime) map.get("day");
+                    Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+                    for (int i = 0; i < 24; i++) {
+                        if (date.getHour() == intervalEnd.minusHours(1 + i).getHour()) {
+                            result[23 - i] += amount;
+                        }
+                    }
+                }
+                return result;
             case WEEK:
                 result = new Integer[7];
                 Arrays.fill(result, 0);
@@ -57,9 +72,35 @@ public class StatisticsService {
                 }
                 return result;
             case MONTH:
-                return null;
+                result = new Integer[LocalDate.now().minusMonths(1).lengthOfMonth()];
+                Arrays.fill(result, 0);
+                border = ZonedDateTime.now().minusMonths(1).plusDays(1).withHour(0).withMinute(0).withSecond(0);
+                outcome = this.statisticsRepository.getTotalSubmissions(border);
+                for (Map<String, Object> map : outcome) {
+                    ZonedDateTime date = (ZonedDateTime) map.get("day");
+                    Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+                    for (int i = 0; i < result.length; i++) {
+                        if (date.getDayOfMonth() == ZonedDateTime.now().minusDays(i).getDayOfMonth()) {
+                            result[result.length - 1 - i] += amount;
+                        }
+                    }
+                }
+                return result;
             case YEAR:
-                return null;
+                result = new Integer[12];
+                Arrays.fill(result, 0);
+                border = ZonedDateTime.now().minusYears(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+                outcome = this.statisticsRepository.getTotalSubmissions(border);
+                for (Map<String, Object> map : outcome) {
+                    ZonedDateTime date = (ZonedDateTime) map.get("day");
+                    Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+                    for (int i = 0; i < 12; i++) {
+                        if (date.getMonth() == ZonedDateTime.now().minusMonths(i).getMonth()) {
+                            result[11 - i] += amount;
+                        }
+                    }
+                }
+                return result;
             default:
                 return null;
         }

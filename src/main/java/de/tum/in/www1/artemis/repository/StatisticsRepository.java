@@ -97,4 +97,13 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             """)
     List<Map<String, Object>> getTotalSubmissions(ZonedDateTime startDate);
 
+    @Query("""
+            select s.submissionDate as day, count(s.id) as amount
+            from Submission s
+            where s.submissionDate > :#{#startDate} and s.submissionDate < :#{#endDate}
+            group by s.submissionDate
+            order by s.submissionDate asc
+            """)
+    List<Map<String, Object>> getTotalSubmissionsYesterday(ZonedDateTime startDate, ZonedDateTime endDate);
+
 }

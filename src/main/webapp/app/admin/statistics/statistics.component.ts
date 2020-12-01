@@ -1,4 +1,4 @@
-import { Component, OnInit, OnChanges, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { StatisticsService } from 'app/admin/statistics/statistics.service';
 import { SPAN_PATTERN } from 'app/app.constants';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
@@ -12,74 +12,63 @@ import { SpanType } from 'app/entities/statistics.model';
     selector: 'jhi-statistics',
     templateUrl: './statistics.component.html',
 })
-export class StatisticsComponent implements OnInit, OnChanges {
+export class StatisticsComponent implements OnInit {
     spanPattern = SPAN_PATTERN;
+    DAY = SpanType.DAY;
+    WEEK = SpanType.WEEK;
+    MONTH = SpanType.MONTH;
+    YEAR = SpanType.YEAR;
     span: SpanType = SpanType.WEEK;
 
     // Histogram related properties
-    public histogramData: number[] = [];
     public barChartOptions: ChartOptions = {};
     public barChartLabels: Label[] = [];
     public barChartType: ChartType = 'bar';
     public barChartLegend = true;
-    public UserLoginChartData: ChartDataSets[] = [];
     public SubmissionsChartData: ChartDataSets[] = [];
+    public amountOfStudents: string;
+    public submissionsForSpanType: number[];
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
     constructor(private service: StatisticsService, private translateService: TranslateService) {}
 
-    async ngOnInit() {
-        await this.setBinWidth();
-        await this.createChart();
+    ngOnInit() {
+        this.amountOfStudents = this.translateService.instant('statistics.amountOfStudents');
+        this.initializeChart();
     }
-
-    async ngOnChanges() {}
-
-    private async setBinWidth(): Promise<void> {
-        switch (this.span) {
-            case SpanType.DAY:
-                this.histogramData = Array(24).fill(0);
-                break;
-            case SpanType.WEEK:
-                this.histogramData = Array(7).fill(0);
-                break;
-            case SpanType.MONTH:
-                this.histogramData = Array(moment().daysInMonth()).fill(0);
-                break;
-            case SpanType.YEAR:
-                this.histogramData = Array(12).fill(0);
-                break;
-        }
-    }
-
-    async getSubmissions(): Promise<number[]> {
-        return new Promise<number[]>((resolve, reject) => {
-            this.service.getTotalSubmissions(this.span).subscribe((res: number[]) => {
-                if (res !== null) {
-                    resolve(res);
-                } else {
-                    reject('Submissions could not get fetched');
-                }
-            });
+    private initializeChart(): void {
+        this.setBinWidth();
+        this.service.getTotalSubmissions(this.span).subscribe((res: number[]) => {
+            this.submissionsForSpanType = res;
+            this.createChart();
         });
     }
 
-    onTabChanged(span: string): void {
-        switch (span) {
-            case 'Day':
-                this.span = SpanType.DAY;
+    private setBinWidth(): void {
+        switch (this.span) {
+            case SpanType.DAY:
+                for (let i = 0; i < 24; i++) {
+                    this.barChartLabels[i] = `${i}:00-${i + 1}:00`;
+                }
                 break;
-            case 'Week':
-                this.span = SpanType.WEEK;
+            case SpanType.WEEK:
+                this.barChartLabels = this.getWeekdays();
                 break;
-            case 'Month':
-                this.span = SpanType.MONTH;
+            case SpanType.MONTH:
+                const daysInMonth = moment().diff(moment().subtract(1, 'months'), 'days');
+                this.barChartLabels = this.getLabelsForMonth(daysInMonth);
                 break;
-            case 'Year':
-                this.span = SpanType.YEAR;
+            case SpanType.YEAR:
+                this.barChartLabels = this.getMonths();
                 break;
         }
+    }
+
+    onTabChanged(span: SpanType): void {
+        this.span = span;
+        this.barChartLabels = [];
+        this.initializeChart();
     }
     private getMonths(): string[] {
         const currentMonth = moment().month();
@@ -102,13 +91,13 @@ export class StatisticsComponent implements OnInit, OnChanges {
         return back.concat(front);
     }
 
-    private getDaysInMonth(): string[] {
+    private getLabelsForMonth(daysInMonth: number): string[] {
         const days: string[] = [];
 
-        for (let i = 0; i < this.histogramData.length; i++) {
+        for (let i = 0; i < daysInMonth; i++) {
             days.push(
                 moment()
-                    .subtract(this.histogramData.length - 1 - i, 'days')
+                    .subtract(daysInMonth - 1 - i, 'days')
                     .format('DD.MM'),
             );
         }
@@ -131,44 +120,11 @@ export class StatisticsComponent implements OnInit, OnChanges {
         return back.concat(front);
     }
 
-    private createLabels(): string[] {
-        let labels: string[] = [];
-        switch (this.span) {
-            case SpanType.DAY:
-                for (let i = 0; i < this.histogramData.length; i++) {
-                    labels[i] = `${i}:00,${i + 1}:00`;
-                }
-                break;
-            case SpanType.WEEK:
-                labels = this.getWeekdays();
-                break;
-            case SpanType.MONTH:
-                for (let i = 0; i < this.histogramData.length; i++) {
-                    labels[i] = i + 1 + '';
-                }
-                break;
-            case SpanType.YEAR:
-                labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                break;
-        }
-        return labels;
-    }
-
-    private async createChart() {
-        this.barChartLabels = this.createLabels();
-        this.UserLoginChartData = [
-            {
-                label: this.translateService.instant('statistics.amountOfStudents'),
-                data: await this.getSubmissions(),
-                backgroundColor: 'rgba(53,61,71,1)',
-                borderColor: 'rgba(53,61,71,1)',
-                hoverBackgroundColor: 'rgba(53,61,71,1)',
-            },
-        ];
+    private createChart() {
         this.SubmissionsChartData = [
             {
-                label: await this.translateService.instant('statistics.amountOfStudents'),
-                data: await this.getSubmissions(),
+                label: this.amountOfStudents,
+                data: this.submissionsForSpanType,
                 backgroundColor: 'rgba(53,61,71,1)',
                 borderColor: 'rgba(53,61,71,1)',
                 hoverBackgroundColor: 'rgba(53,61,71,1)',
