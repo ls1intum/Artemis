@@ -574,14 +574,12 @@ public class BambooService implements ContinuousIntegrationService {
             result = resultRepository.save(result);
 
             var buildLogs = extractAndPrepareBuildLogs(buildResult, programmingSubmission);
-            // Set the received logs in order to avoid duplicate entries (this removes existing logs)
+            programmingSubmission = programmingSubmissionRepository.findWithEagerResultsAndBuildLogEntriesById(programmingSubmission.getId()).get();
             result.setSubmission(programmingSubmission);
             programmingSubmission.setResult(result);
-            programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
-            // programmingSubmission needs to be saved again before setting the buildLogEntries
+            // Set the received logs in order to avoid duplicate entries (this removes existing logs)
             programmingSubmission.setBuildLogEntries(buildLogs);
             programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
-            result.setSubmission(programmingSubmission);
             result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
             // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
             // This seems like a bug in Hibernate/JPA: https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection.
