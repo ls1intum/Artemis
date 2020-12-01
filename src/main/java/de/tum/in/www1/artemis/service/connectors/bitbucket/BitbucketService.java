@@ -281,7 +281,7 @@ public class BitbucketService extends AbstractVersionControlService {
             var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepositoryName.toLowerCase());
             URL sourceRepositoryUrlAsUrl = new URL(sourceRepoUrl.toString());
             // checkout the source repo to a different folder than the default one. This avoids a possible conflict state.
-            Repository sourceRepo = gitService.getOrCheckoutRepository(sourceRepositoryUrlAsUrl, true);
+            Repository sourceRepo = gitService.getOrCheckoutRepository(sourceRepositoryUrlAsUrl, true, REPO_DOWNLOAD_CLONE_PATH);
             // create target repo
             createRepository(targetProjectKey, targetRepoSlug);
             var targetRepoUrl = getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
@@ -289,6 +289,7 @@ public class BitbucketService extends AbstractVersionControlService {
             // copy by pushing the source's content to the target's repo
             gitService.pushSourceToTargetRepo(sourceRepo, targetRepoUrlAsUrl);
             // delete the source repo which is not needed anymore
+            gitService.deleteLocalRepository(sourceRepo);
         }
         catch (InterruptedException | GitAPIException | IOException e) {
             throw new BitbucketException("Error while pushing the source repo to the target repo", e);
