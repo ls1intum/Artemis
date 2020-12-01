@@ -9,7 +9,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -185,15 +184,7 @@ public class ModelingExerciseResource {
             return responseFailure;
         }
 
-        // As persisting is cascaded for example submissions we have to set the reference to the exercise in the
-        // example submissions. Otherwise the connection between exercise and example submissions would be lost.
-        if (modelingExercise.getExampleSubmissions() != null) {
-            modelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(modelingExercise));
-        }
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
-
-        Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithEagerResultByExerciseId(modelingExercise.getId());
-        result.setExampleSubmissions(exampleSubmissions);
 
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(modelingExercise, notificationText);
