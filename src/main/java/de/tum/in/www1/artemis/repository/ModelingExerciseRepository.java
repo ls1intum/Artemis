@@ -26,7 +26,7 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
     @Query("SELECT e FROM ModelingExercise e WHERE e.course.id = :#{#courseId}")
     List<ModelingExercise> findByCourseId(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories" })
+    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "exampleSubmissions.submission.results" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsById(@Param("exerciseId") Long exerciseId);
 
     Page<ModelingExercise> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContainingOrExerciseGroup_Exam_TitleIgnoreCaseContainingOrExerciseGroup_Exam_Course_TitleIgnoreCaseContaining(
