@@ -162,7 +162,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/time").permitAll()
         .and()
             .apply(securityConfigurerAdapter());
-
     }
 
     private JWTConfigurer securityConfigurerAdapter() {
