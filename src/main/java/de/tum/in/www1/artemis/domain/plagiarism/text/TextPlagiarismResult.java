@@ -11,6 +11,9 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
  */
 public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement> {
 
+    /**
+     * Empty constructor required.
+     */
     public TextPlagiarismResult() {
     }
 
