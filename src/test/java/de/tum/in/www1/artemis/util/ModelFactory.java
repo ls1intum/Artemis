@@ -260,7 +260,8 @@ public class ModelFactory {
      * @param registrationPrefix prefix that will be added in front of every student's registration number
      * @return team that was generated
      */
-    public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String creatorLogin, String registrationPrefix) {
+    public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String creatorLogin,
+            String registrationPrefix) {
         List<User> students = generateActivatedUsersWithRegistrationNumber(shortName + loginPrefix, new String[] { "tumuser", "testgroup" },
                 Set.of(new Authority(AuthoritiesConstants.USER)), numberOfStudents, shortName + registrationPrefix);
 
@@ -290,7 +291,7 @@ public class ModelFactory {
      * @return team that was generated
      */
     public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents, User owner) {
-        return generateTeamForExercise(exercise, name, shortName, "student", numberOfStudents, owner, null,"R");
+        return generateTeamForExercise(exercise, name, shortName, "student", numberOfStudents, owner, null, "R");
     }
 
     /**
@@ -305,7 +306,7 @@ public class ModelFactory {
      * @return teams that were generated
      */
     public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin) {
-        return generateTeamsForExercise(exercise,shortNamePrefix,loginPrefix,numberOfTeams,owner,creatorLogin,"R");
+        return generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner, creatorLogin, "R");
     }
 
     /**
@@ -320,11 +321,12 @@ public class ModelFactory {
      * @param registrationPrefix prefix that will be added in front of every student's registration number
      * @return teams that were generated
      */
-    public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin, String registrationPrefix) {
+    public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin,
+            String registrationPrefix) {
         List<Team> teams = new ArrayList<>();
         for (int i = 1; i <= numberOfTeams; i++) {
             int numberOfStudents = new Random().nextInt(4) + 1; // range: 1-4 students
-            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, numberOfStudents, owner, creatorLogin,registrationPrefix));
+            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, numberOfStudents, owner, creatorLogin, registrationPrefix));
         }
         return teams;
     }

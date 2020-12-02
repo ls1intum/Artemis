@@ -100,7 +100,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
             """)
     List<User> findAllByLoginsInGroup(@Param("groupName") String groupName, @Param("logins") Set<String> logins);
 
-
     /**
      * Searches for users by their login or full name.
      *

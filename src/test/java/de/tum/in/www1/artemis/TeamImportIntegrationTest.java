@@ -100,7 +100,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         sourceExercise = exerciseRepo.save(sourceExercise.mode(ExerciseMode.TEAM));
         destinationExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
         destinationExercise = exerciseRepo.save(destinationExercise.mode(ExerciseMode.TEAM));
-        Pair<List<Team>,List<Team>> importedTeamsWithBody = getImportedTeamsAndBody("import","student","R");
+        Pair<List<Team>, List<Team>> importedTeamsWithBody = getImportedTeamsAndBody("import", "student", "R");
         importedTeams = importedTeamsWithBody.getFirst();
         importedTeamsBody = importedTeamsWithBody.getSecond();
         // Select a tutor for the teams
@@ -198,7 +198,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testImportFromListIntoExerciseWithConflictsUsingPurgeExistingStrategy() throws Exception {
-        Pair<List<Team>,List<Team>> importedTeamsWithBody = getImportedTeamsAndBody("sameShortName","other","O");
+        Pair<List<Team>, List<Team>> importedTeamsWithBody = getImportedTeamsAndBody("sameShortName", "other", "O");
         importedTeams = importedTeamsWithBody.getFirst();
         importedTeamsBody = importedTeamsWithBody.getSecond();
         testImportTeamsIntoExerciseWithConflictsUsingPurgeExistingStrategy(ImportType.FROM_LIST, importedTeamsBody, importedTeams);
@@ -222,10 +222,10 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testImportFromListIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy() throws Exception {
-        Pair<List<Team>,List<Team>> importedTeamsWithConflictAndBody = getImportedTeamsAndBody("sameShortName","other","O");
+        Pair<List<Team>, List<Team>> importedTeamsWithConflictAndBody = getImportedTeamsAndBody("sameShortName", "other", "O");
         List<Team> importedTeamsWithConflictBody = importedTeamsWithConflictAndBody.getSecond();
-        testImportTeamsIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy(ImportType.FROM_LIST,
-                addLists(importedTeamsWithConflictBody, importedTeamsBody), importedTeams);
+        testImportTeamsIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy(ImportType.FROM_LIST, addLists(importedTeamsWithConflictBody, importedTeamsBody),
+                importedTeams);
     }
 
     private void testImportTeamsIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy(ImportType type, List<Team> body, List<Team> teamsWithoutConflict,
@@ -249,12 +249,12 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testImportTeamsFromListIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy() throws Exception {
-        Pair<List<Team>,List<Team>> importedTeamsWithStudentConflictAndBody = getImportedTeamsAndBody("withConflict","import","R");
+        Pair<List<Team>, List<Team>> importedTeamsWithStudentConflictAndBody = getImportedTeamsAndBody("withConflict", "import", "R");
         List<Team> importedTeamsWithStudentConflict = importedTeamsWithStudentConflictAndBody.getFirst();
         List<Team> importedTeamsWithStudentConflictBody = importedTeamsWithStudentConflictAndBody.getSecond();
         // destination teams before + conflict-free imported teams = destination teams after
-        testImportTeamsIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy(ImportType.FROM_LIST,
-                addLists(importedTeamsWithStudentConflictBody, importedTeamsBody), importedTeams, importedTeamsWithStudentConflict);
+        testImportTeamsIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy(ImportType.FROM_LIST, addLists(importedTeamsWithStudentConflictBody, importedTeamsBody),
+                importedTeams, importedTeamsWithStudentConflict);
     }
 
     @Test
@@ -293,11 +293,11 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         request.put(importWithRegistrationNumberUrl(), getTeamsIntoLoginOnlyTeams(teams), HttpStatus.BAD_REQUEST);
 
         // If user does not have an identifier: registration number or login, the request should fail
-        request.put(importWithRegistrationNumberUrl(), getTeamsIntoOneIdentifierTeams(teams,null), HttpStatus.BAD_REQUEST);
+        request.put(importWithRegistrationNumberUrl(), getTeamsIntoOneIdentifierTeams(teams, null), HttpStatus.BAD_REQUEST);
 
         // If user's registration number points to same user with a login in request, it should fail
         userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
-        request.put(importWithRegistrationNumberUrl(), addLists(getTeamsIntoLoginOnlyTeams(teams),getTeamsIntoRegistrationNumberOnlyTeams(teams)), HttpStatus.BAD_REQUEST);
+        request.put(importWithRegistrationNumberUrl(), addLists(getTeamsIntoLoginOnlyTeams(teams), getTeamsIntoRegistrationNumberOnlyTeams(teams)), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -350,24 +350,24 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         return Stream.of(a, b).flatMap(Collection::stream).collect(Collectors.toList());
     }
 
-    private Pair<List<Team>,List<Team>> getImportedTeamsAndBody(String shortNamePrefix, String loginPrefix, String registrationPrefix){
-        List<Team> generatedTeams = ModelFactory.generateTeamsForExercise(destinationExercise, shortNamePrefix, loginPrefix, 3, null, "instructor1",registrationPrefix);
+    private Pair<List<Team>, List<Team>> getImportedTeamsAndBody(String shortNamePrefix, String loginPrefix, String registrationPrefix) {
+        List<Team> generatedTeams = ModelFactory.generateTeamsForExercise(destinationExercise, shortNamePrefix, loginPrefix, 3, null, "instructor1", registrationPrefix);
         userRepo.saveAll(generatedTeams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
-        List<Team> teamsWithLogins = getTeamsIntoLoginOnlyTeams(generatedTeams.subList(0,2));
-        List<Team> teamsWithRegistrationNumbers = getTeamsIntoRegistrationNumberOnlyTeams(generatedTeams.subList(2,3));
-        List<Team> body = Stream.concat(teamsWithLogins.stream(),teamsWithRegistrationNumbers.stream()).collect(Collectors.toList());
-        return Pair.of(generatedTeams,body);
+        List<Team> teamsWithLogins = getTeamsIntoLoginOnlyTeams(generatedTeams.subList(0, 2));
+        List<Team> teamsWithRegistrationNumbers = getTeamsIntoRegistrationNumberOnlyTeams(generatedTeams.subList(2, 3));
+        List<Team> body = Stream.concat(teamsWithLogins.stream(), teamsWithRegistrationNumbers.stream()).collect(Collectors.toList());
+        return Pair.of(generatedTeams, body);
     }
 
-    private List<Team> getTeamsIntoLoginOnlyTeams(List<Team> teams){
-        return getTeamsIntoOneIdentifierTeams(teams,"login");
+    private List<Team> getTeamsIntoLoginOnlyTeams(List<Team> teams) {
+        return getTeamsIntoOneIdentifierTeams(teams, "login");
     }
 
-    private List<Team> getTeamsIntoRegistrationNumberOnlyTeams(List<Team> teams){
+    private List<Team> getTeamsIntoRegistrationNumberOnlyTeams(List<Team> teams) {
         return getTeamsIntoOneIdentifierTeams(teams, "registrationNumber");
     }
 
-    private List<Team> getTeamsIntoOneIdentifierTeams(List<Team> teams,String identifier) {
+    private List<Team> getTeamsIntoOneIdentifierTeams(List<Team> teams, String identifier) {
         return teams.stream().map(team -> {
             Team newTeam = new Team();
             newTeam.setName(team.getName());
@@ -377,9 +377,10 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
                 User newStudent = new User();
                 newStudent.setFirstName(student.getFirstName());
                 newStudent.setLastName(student.getLastName());
-                if(identifier=="login"){
+                if (identifier == "login") {
                     newStudent.setLogin(student.getLogin());
-                }else if(identifier=="registrationNumber"){
+                }
+                else if (identifier == "registrationNumber") {
                     newStudent.setVisibleRegistrationNumber(student.getRegistrationNumber());
                 }
                 return newStudent;

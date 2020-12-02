@@ -22,12 +22,12 @@ public class StudentsAppearMultipleTimesException extends BadRequestAlertExcepti
 
     public StudentsAppearMultipleTimesException(List<User> students) {
         super(ErrorConstants.STUDENTS_APPEAR_MULTIPLE_TIMES_TYPE, "Students appear multiple times in team import request.", TeamResource.ENTITY_NAME, ERROR_KEY,
-            getParameters(students));
+                getParameters(students));
     }
 
     private static Map<String, Object> getParameters(List<User> students) {
-        Map<String, List<Pair<String,String>>> params = new HashMap<>();
-        params.put("students", students.stream().map(student-> Pair.of(student.getLogin(),student.getRegistrationNumber())).collect(Collectors.toList()));
+        Map<String, List<Pair<String, String>>> params = new HashMap<>();
+        params.put("students", students.stream().map(student -> Pair.of(student.getLogin(), student.getRegistrationNumber())).collect(Collectors.toList()));
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("skipAlert", true);
         parameters.put("message", "team.errors." + ERROR_KEY);
@@ -35,4 +35,3 @@ public class StudentsAppearMultipleTimesException extends BadRequestAlertExcepti
         return parameters;
     }
 }
-

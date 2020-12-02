@@ -16,15 +16,15 @@ public class StudentsNotFoundException extends BadRequestAlertException {
 
     private static final String ERROR_KEY = "studentsNotFound";
 
-    public StudentsNotFoundException(List<String> registrationNumbers,List<String> logins) {
+    public StudentsNotFoundException(List<String> registrationNumbers, List<String> logins) {
         super(ErrorConstants.REGISTRATION_NUMBER_NOT_FOUND_TYPE, "Users with registration numbers could not be found.", TeamResource.ENTITY_NAME, ERROR_KEY,
-                getParameters(registrationNumbers,logins));
+                getParameters(registrationNumbers, logins));
     }
 
-    private static Map<String, Object> getParameters(List<String> registrationNumbers,List<String> logins) {
+    private static Map<String, Object> getParameters(List<String> registrationNumbers, List<String> logins) {
         Map<String, Object> params = new HashMap<>();
         params.put("registrationNumbers", registrationNumbers);
-        params.put("logins",logins);
+        params.put("logins", logins);
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("skipAlert", true);
         parameters.put("message", "team.errors." + ERROR_KEY);

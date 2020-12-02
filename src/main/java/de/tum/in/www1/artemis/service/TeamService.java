@@ -5,10 +5,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.web.rest.TeamResource;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.StudentsAppearMultipleTimesException;
-import de.tum.in.www1.artemis.web.rest.errors.StudentsNotFoundException;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +21,11 @@ import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.service.team.TeamImportStrategy;
 import de.tum.in.www1.artemis.service.team.strategies.CreateOnlyStrategy;
 import de.tum.in.www1.artemis.service.team.strategies.PurgeExistingStrategy;
+import de.tum.in.www1.artemis.web.rest.TeamResource;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsAlreadyAssignedException;
+import de.tum.in.www1.artemis.web.rest.errors.StudentsAppearMultipleTimesException;
+import de.tum.in.www1.artemis.web.rest.errors.StudentsNotFoundException;
 
 @Service
 public class TeamService {
@@ -232,56 +232,63 @@ public class TeamService {
      * @return list of all teams that now have registered users
      */
     public List<Team> convertTeamsStudentsWithRegistrationNumbersToAlreadyRegisteredUsers(Course course, List<Team> teamsWithRegistrationNumber) {
-        List<User> students = teamsWithRegistrationNumber.stream().flatMap(team-> team.getStudents().stream()).collect(Collectors.toList());
-        List<String> logins = students.stream().filter(student->student.getLogin()!=null).map(User::getLogin).collect(Collectors.toList());
-        List<String> registrationNumbers = students.stream().filter(student->student.getLogin()==null && student.getVisibleRegistrationNumber()!=null).map(User::getVisibleRegistrationNumber).collect(Collectors.toList());
-        if(students.stream().count()!=logins.stream().count()+registrationNumbers.stream().count()){
-            throw new BadRequestAlertException("Students do not have an identifier",TeamResource.ENTITY_NAME,"studentIdentifierNotFound",true);
+        List<User> students = teamsWithRegistrationNumber.stream().flatMap(team -> team.getStudents().stream()).collect(Collectors.toList());
+        List<String> logins = students.stream().filter(student -> student.getLogin() != null).map(User::getLogin).collect(Collectors.toList());
+        List<String> registrationNumbers = students.stream().filter(student -> student.getLogin() == null && student.getVisibleRegistrationNumber() != null)
+                .map(User::getVisibleRegistrationNumber).collect(Collectors.toList());
+        if (students.stream().count() != logins.stream().count() + registrationNumbers.stream().count()) {
+            throw new BadRequestAlertException("Students do not have an identifier", TeamResource.ENTITY_NAME, "studentIdentifierNotFound", true);
         }
 
         List<User> existingStudentsWithLogin = new ArrayList<>();
         List<String> notFoundLogins = new ArrayList<>();
-        if(!logins.isEmpty()){
-            existingStudentsWithLogin = userRepository.findAllByLoginsInGroup(course.getStudentGroupName(),new HashSet<>(logins));
+        if (!logins.isEmpty()) {
+            existingStudentsWithLogin = userRepository.findAllByLoginsInGroup(course.getStudentGroupName(), new HashSet<>(logins));
             List<String> existingLogins = existingStudentsWithLogin.stream().map(User::getLogin).collect(Collectors.toList());
-            notFoundLogins = logins.stream().filter(login->!existingLogins.contains(login)).collect(Collectors.toList());
+            notFoundLogins = logins.stream().filter(login -> !existingLogins.contains(login)).collect(Collectors.toList());
         }
 
         List<User> existingStudentsWithRegistrationNumber = new ArrayList<>();
         List<String> notFoundRegistrationNumbers = new ArrayList<>();
-        if(!registrationNumbers.isEmpty()){
+        if (!registrationNumbers.isEmpty()) {
             existingStudentsWithRegistrationNumber = userRepository.findAllByRegistrationNumbersInGroup(course.getStudentGroupName(), new HashSet<>(registrationNumbers));
-            List<User> usersWhoAppearsMoreThanOnce = existingStudentsWithRegistrationNumber.stream().filter(student-> (logins.contains(student.getLogin()))).collect(Collectors.toList());
-            if(!usersWhoAppearsMoreThanOnce.isEmpty()){
+            List<User> usersWhoAppearsMoreThanOnce = existingStudentsWithRegistrationNumber.stream().filter(student -> (logins.contains(student.getLogin())))
+                    .collect(Collectors.toList());
+            if (!usersWhoAppearsMoreThanOnce.isEmpty()) {
                 throw new StudentsAppearMultipleTimesException(usersWhoAppearsMoreThanOnce);
             }
-            List<String> existingRegistrationNumbers = existingStudentsWithRegistrationNumber.stream().map(User::getRegistrationNumber).collect(Collectors.toList());;
-            notFoundRegistrationNumbers = registrationNumbers.stream().filter(registrationNumber-> !existingRegistrationNumbers.contains(registrationNumber)).collect(Collectors.toList());
+            List<String> existingRegistrationNumbers = existingStudentsWithRegistrationNumber.stream().map(User::getRegistrationNumber).collect(Collectors.toList());
+            ;
+            notFoundRegistrationNumbers = registrationNumbers.stream().filter(registrationNumber -> !existingRegistrationNumbers.contains(registrationNumber))
+                    .collect(Collectors.toList());
         }
 
-        if(!notFoundLogins.isEmpty() || !notFoundRegistrationNumbers.isEmpty()){
-            throw new StudentsNotFoundException(notFoundRegistrationNumbers,notFoundLogins);
+        if (!notFoundLogins.isEmpty() || !notFoundRegistrationNumbers.isEmpty()) {
+            throw new StudentsNotFoundException(notFoundRegistrationNumbers, notFoundLogins);
         }
 
         Map<String, User> studentsWithLogin = existingStudentsWithLogin.stream().collect(Collectors.toMap(User::getLogin, Function.identity()));
-        Map<String, User> studentsWithRegistrationNumber = existingStudentsWithRegistrationNumber.stream().collect(Collectors.toMap(User::getRegistrationNumber, Function.identity()));
+        Map<String, User> studentsWithRegistrationNumber = existingStudentsWithRegistrationNumber.stream()
+                .collect(Collectors.toMap(User::getRegistrationNumber, Function.identity()));
 
         List<Team> convertedTeams = new ArrayList<>();
 
         teamsWithRegistrationNumber.forEach(team -> {
             Set<User> newStudents = new HashSet<>();
             team.getStudents().forEach(student -> {
-                if(student.getLogin()!=null){
+                if (student.getLogin() != null) {
                     User foundStudent = studentsWithLogin.get(student.getLogin());
-                    if(foundStudent!=null){
+                    if (foundStudent != null) {
                         newStudents.add(foundStudent);
                     }
-                }else if(student.getVisibleRegistrationNumber()!=null){
+                }
+                else if (student.getVisibleRegistrationNumber() != null) {
                     User foundStudent = studentsWithRegistrationNumber.get(student.getVisibleRegistrationNumber());
-                    if(foundStudent!=null){
+                    if (foundStudent != null) {
                         newStudents.add(foundStudent);
                     }
-                }});
+                }
+            });
             team.students(newStudents);
             convertedTeams.add(team);
         });
