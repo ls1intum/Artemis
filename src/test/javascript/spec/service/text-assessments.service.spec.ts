@@ -4,7 +4,6 @@ import { take } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { SERVER_API_URL } from 'app/app.constants';
-import { expect } from '../helpers/jest.fix';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';

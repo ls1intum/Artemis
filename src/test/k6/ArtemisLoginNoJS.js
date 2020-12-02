@@ -65,7 +65,7 @@ export default function () {
         req = [
             {
                 method: 'get',
-                url: baseUrl + '/#/',
+                url: baseUrl + '/',
                 params: {
                     headers: {
                         Host: host,
@@ -78,7 +78,7 @@ export default function () {
                         Pragma: 'no-cache',
                         'Cache-Control': 'no-cache',
                     },
-                    tags: { name: baseUrl + '/#/' },
+                    tags: { name: baseUrl + '/' },
                 },
             },
         ];

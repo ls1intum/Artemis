@@ -637,6 +637,21 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
+     * Get the programming submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it.
+     *
+     * @param submissionId the id of the programming submission
+     * @return the locked programming submission
+     */
+    public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId) {
+        ProgrammingSubmission programmingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
+
+        var manualResult = lockSubmission(programmingSubmission);
+        programmingSubmission = (ProgrammingSubmission) manualResult.getSubmission();
+
+        return programmingSubmission;
+    }
+
+    /**
      * Get a programming submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
      *
      * @param exercise the exercise the submission should belong to
@@ -673,5 +688,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // Make sure that submission is set back after saving
         newResult.setSubmission(newSubmission);
         return newResult;
+    }
+
+    private ProgrammingSubmission findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
+        return programmingSubmissionRepository.findWithEagerResultAssessorFeedbackById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
     }
 }

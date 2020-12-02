@@ -67,7 +67,7 @@ describe('ProgrammingExercise Management Component', () => {
 
         // THEN
         expect(service.findAllProgrammingExercisesForCourse).toHaveBeenCalled();
-        expect(comp.programmingExercises[0]).toEqual(jasmine.objectContaining({ id: programmingExercise.id }));
+        expect(comp.programmingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
     });
 
     describe('ProgrammingExercise Select Exercises', () => {

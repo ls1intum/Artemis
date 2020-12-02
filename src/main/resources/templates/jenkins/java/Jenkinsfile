@@ -1,6 +1,9 @@
 // ARTEMIS: JenkinsPipeline
 
 pipeline {
+        options {
+            timeout(time: #jenkinsTimeout, unit: 'MINUTES')
+        }
         agent {
             docker {
                 image '#dockerImage'

@@ -68,6 +68,10 @@
                 "title": "Build Pläne neu erstellen",
                 "description": "Durch Aktivierung dieser Option werden die Build Pläne neu erstellt und nicht von der importierten Aufgabe kopiert. Neu erstellte Build Pläne unterstützen standardmäßig die neuesten Features der Artemis Aufgabenvorlagen."
             },
+            "updateTemplate": {
+                "title": "Aktualisiere Template",
+                "description": "Durch Aktivierung dieser Option werden die Template Dateien in den Repositories aktualisiert. Dies ist sinnvoll, wenn die importierte Aufgabe veraltete Abhängigkeiten enthält. Für Java ersetzt Artemis JUnit4 durch Ares (enthält JUnit5) und aktualisiert die Abhängigkeiten und Plugins mit den Versionen aus dem neusten Template. Danach musst du wahrscheinlich die Testcases anpassen."
+            },
             "programmingLanguage": "Programmiersprache",
             "projectType": "Projekt Typ",
             "packageName": "Package Name",

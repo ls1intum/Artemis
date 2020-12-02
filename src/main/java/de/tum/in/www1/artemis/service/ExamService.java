@@ -188,7 +188,8 @@ public class ExamService {
     }
 
     /**
-     * Get all exams that are held today and/or in the future.
+     * Get all exams that are held today and/or in the future
+     * (does not return exams belonging to test courses).
      *
      * @return the list of all exams
      */
