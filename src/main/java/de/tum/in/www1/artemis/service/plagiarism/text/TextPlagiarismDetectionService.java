@@ -24,25 +24,17 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
-import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.TextSubmissionExportService;
-import de.tum.in.www1.artemis.service.ZipFileService;
 
 @Service
 public class TextPlagiarismDetectionService {
 
     private final Logger log = LoggerFactory.getLogger(TextPlagiarismDetectionService.class);
 
-    private final FileService fileService;
-
     private final TextSubmissionExportService textSubmissionExportService;
 
-    private final ZipFileService zipFileService;
-
-    public TextPlagiarismDetectionService(FileService fileService, TextSubmissionExportService textSubmissionExportService, ZipFileService zipFileService) {
-        this.fileService = fileService;
+    public TextPlagiarismDetectionService(TextSubmissionExportService textSubmissionExportService) {
         this.textSubmissionExportService = textSubmissionExportService;
-        this.zipFileService = zipFileService;
     }
 
     /**
