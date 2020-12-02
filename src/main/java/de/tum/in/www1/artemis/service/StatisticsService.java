@@ -41,12 +41,12 @@ public class StatisticsService {
         List<Map<String, Object>> outcome;
         ZonedDateTime now = ZonedDateTime.now();
         Integer lengthOfMonth = YearMonth.of(now.getYear(), now.minusMonths(1).getMonth()).lengthOfMonth();
-        Map<SpanType, Integer> SpanMap = new HashMap<>();
-        SpanMap.put(SpanType.DAY, 24);
-        SpanMap.put(SpanType.WEEK, 7);
-        SpanMap.put(SpanType.MONTH, lengthOfMonth);
-        SpanMap.put(SpanType.YEAR, 12);
-        Integer[] result = new Integer[SpanMap.get(span)];
+        Map<SpanType, Integer> spanMap = new HashMap<>();
+        spanMap.put(SpanType.DAY, 24);
+        spanMap.put(SpanType.WEEK, 7);
+        spanMap.put(SpanType.MONTH, lengthOfMonth);
+        spanMap.put(SpanType.YEAR, 12);
+        Integer[] result = new Integer[spanMap.get(span)];
         Arrays.fill(result, 0);
         switch (span) {
             case DAY:
