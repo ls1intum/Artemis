@@ -15,6 +15,7 @@ public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement
      * Empty constructor required.
      */
     public TextPlagiarismResult() {
+        // Intentionally left empty.
     }
 
     public TextPlagiarismResult(JPlagResult result) {
