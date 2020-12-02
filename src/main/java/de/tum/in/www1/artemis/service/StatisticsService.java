@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,66 +37,65 @@ public class StatisticsService {
      * @return a array, containing the values for each bar in the graph
      */
     public Integer[] getTotalSubmissions(SpanType span) {
-        Integer[] result;
         ZonedDateTime border;
         List<Map<String, Object>> outcome;
+        ZonedDateTime now = ZonedDateTime.now();
+        Integer lengthOfMonth = YearMonth.of(now.getYear(), now.minusMonths(1).getMonth()).lengthOfMonth();
+        Map<SpanType, Integer> SpanMap = new HashMap<>();
+        SpanMap.put(SpanType.DAY, 24);
+        SpanMap.put(SpanType.WEEK, 7);
+        SpanMap.put(SpanType.MONTH, lengthOfMonth);
+        SpanMap.put(SpanType.YEAR, 12);
+        Integer[] result = new Integer[SpanMap.get(span)];
+        Arrays.fill(result, 0);
         switch (span) {
             case DAY:
-                result = new Integer[24];
-                Arrays.fill(result, 0);
-                border = ZonedDateTime.now().minusDays(1).withHour(0).withMinute(0).withSecond(0);
-                ZonedDateTime intervalEnd = ZonedDateTime.now().withHour(0).withMinute(0).withSecond(0);
-                outcome = this.statisticsRepository.getTotalSubmissionsYesterday(border, intervalEnd);
+                border = now.withHour(0).withMinute(0).withSecond(0);
+                outcome = this.statisticsRepository.getTotalSubmissions(border);
                 for (Map<String, Object> map : outcome) {
                     ZonedDateTime date = (ZonedDateTime) map.get("day");
                     Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
                     for (int i = 0; i < 24; i++) {
-                        if (date.getHour() == intervalEnd.minusHours(1 + i).getHour()) {
-                            result[23 - i] += amount;
+                        if (date.getHour() == now.minusHours(i).getHour()) {
+                            result[now.getHour() - i] += amount;
                         }
                     }
                 }
                 return result;
             case WEEK:
-                result = new Integer[7];
-                Arrays.fill(result, 0);
-                border = ZonedDateTime.now().minusDays(6).withHour(0).withMinute(0).withSecond(0);
+                border = now.minusDays(6).withHour(0).withMinute(0).withSecond(0);
                 outcome = this.statisticsRepository.getTotalSubmissions(border);
                 for (Map<String, Object> map : outcome) {
                     ZonedDateTime date = (ZonedDateTime) map.get("day");
                     Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
                     for (int i = 0; i < 7; i++) {
-                        if (date.getDayOfMonth() == ZonedDateTime.now().minusDays(i).getDayOfMonth()) {
+                        if (date.getDayOfMonth() == now.minusDays(i).getDayOfMonth()) {
                             result[6 - i] += amount;
                         }
                     }
                 }
                 return result;
             case MONTH:
-                result = new Integer[LocalDate.now().minusMonths(1).lengthOfMonth()];
-                Arrays.fill(result, 0);
-                border = ZonedDateTime.now().minusMonths(1).plusDays(1).withHour(0).withMinute(0).withSecond(0);
+                border = now.minusMonths(1).plusDays(1).withHour(0).withMinute(0).withSecond(0);
                 outcome = this.statisticsRepository.getTotalSubmissions(border);
                 for (Map<String, Object> map : outcome) {
                     ZonedDateTime date = (ZonedDateTime) map.get("day");
                     Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
                     for (int i = 0; i < result.length; i++) {
-                        if (date.getDayOfMonth() == ZonedDateTime.now().minusDays(i).getDayOfMonth()) {
+                        if (date.getDayOfMonth() == now.minusDays(i).getDayOfMonth()) {
                             result[result.length - 1 - i] += amount;
                         }
                     }
                 }
                 return result;
             case YEAR:
-                result = new Integer[12];
-                Arrays.fill(result, 0);
-                border = ZonedDateTime.now().minusYears(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+                border = now.minusYears(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
                 outcome = this.statisticsRepository.getTotalSubmissions(border);
                 for (Map<String, Object> map : outcome) {
                     ZonedDateTime date = (ZonedDateTime) map.get("day");
                     Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
                     for (int i = 0; i < 12; i++) {
-                        if (date.getMonth() == ZonedDateTime.now().minusMonths(i).getMonth()) {
+                        if (date.getMonth() == now.minusMonths(i).getMonth()) {
                             result[11 - i] += amount;
                         }
                     }

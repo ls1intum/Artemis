@@ -150,6 +150,16 @@ export class StatisticsComponent implements OnInit {
                     });
                 },
             },
+            scales: {
+                yAxes: [
+                    {
+                        ticks: {
+                            beginAtZero: true,
+                            min: 0,
+                        },
+                    },
+                ],
+            },
         };
     }
 }
