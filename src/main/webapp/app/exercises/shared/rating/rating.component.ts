@@ -19,11 +19,11 @@ export class RatingComponent implements OnInit {
     constructor(private ratingService: RatingService, private accountService: AccountService) {}
 
     ngOnInit(): void {
-        if (!this.result || !this.result.participation || !this.accountService.isOwnerOfParticipation(this.result.participation as StudentParticipation)) {
+        if (!this.result || !this.result.id || !this.result.participation || !this.accountService.isOwnerOfParticipation(this.result.participation as StudentParticipation)) {
             return;
         }
 
-        this.ratingService.getRating(this.result.id!).subscribe((rating) => {
+        this.ratingService.getRating(this.result.id).subscribe((rating) => {
             if (rating) {
                 this.rating = rating;
             } else {
@@ -45,7 +45,9 @@ export class RatingComponent implements OnInit {
         // update feedback locally
         this.rating.rating = $event.newValue;
         // Delete participation to avoid circular dependency
-        this.rating.result!.participation = undefined;
+        if (this.rating.result) {
+            this.rating.result.participation = undefined;
+        }
 
         // set/update feedback on the server
         if (this.rating.id) {
