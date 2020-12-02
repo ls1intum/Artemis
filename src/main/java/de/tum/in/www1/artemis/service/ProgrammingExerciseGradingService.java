@@ -7,9 +7,12 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.config.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -52,10 +55,12 @@ public class ProgrammingExerciseGradingService {
 
     private final ResultService resultService;
 
+    private final AuditEventRepository auditEventRepository;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
-            ResultService resultService) {
+            ResultService resultService, AuditEventRepository auditEventRepository) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.participationService = participationService;
@@ -65,6 +70,7 @@ public class ProgrammingExerciseGradingService {
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.programmingAssessmentService = programmingAssessmentService;
         this.resultService = resultService;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -236,6 +242,18 @@ public class ProgrammingExerciseGradingService {
         }
 
         return updatedResults;
+    }
+
+    public void logReEvaluate(User user, ProgrammingExercise exercise, Course course, List<Result> results) {
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.RE_EVALUATE_RESULTS, "exercise=" + exercise.getTitle(), "course=" + course.getTitle(), "results=" + results.size());
+        auditEventRepository.add(auditEvent);
+        log.info("User " + user.getLogin() + " triggered a re-evaluation of {} results for exercise {} with id {}", results.size(), exercise.getTitle(), exercise.getId());
+    }
+
+    public void logResetGrading(User user, ProgrammingExercise exercise, Course course) {
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_GRADING, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
+        auditEventRepository.add(auditEvent);
+        log.info("User " + user.getLogin() + " requested to reset the grading configuration for exercise {} with id {}", exercise.getTitle(), exercise.getId());
     }
 
     private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCases) {

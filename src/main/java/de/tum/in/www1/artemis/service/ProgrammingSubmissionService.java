@@ -9,11 +9,14 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
+import de.tum.in.www1.artemis.config.Constants;
 import org.apache.http.HttpException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
@@ -66,12 +69,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final AuditEventRepository auditEventRepository;
+
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GroupNotificationService groupNotificationService, SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService,
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
-            CourseService courseService, ExamService examService, FeedbackRepository feedbackRepository) {
+            CourseService courseService, ExamService examService, FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository) {
         super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -85,6 +90,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.feedbackRepository = feedbackRepository;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -233,7 +239,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
         }
         var programmingExercise = optionalProgrammingExercise.get();
-        log.info("Trigger instructor build for all participations in exercise {} with id {}", programmingExercise.getTitle(), programmingExercise.getId());
 
         // Let the instructor know that a build run was triggered.
         notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
@@ -259,6 +264,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
         setTestCasesChanged(programmingExercise.getId(), false);
         // Let the instructor know that the build run is finished.
         notifyInstructorAboutCompletedExerciseBuildRun(programmingExercise);
+    }
+
+    public void logTriggerInstructorBuild(User user, Exercise exercise, Course course) {
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.TRIGGER_INSTRUCTOR_BUILD, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
+        auditEventRepository.add(auditEvent);
+        log.info("User " + user.getLogin() + " triggered an instructor build for all participations in exercise {} with id {}", exercise.getTitle(), exercise.getId());
     }
 
     private void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
