@@ -1,6 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { StatisticsService } from 'app/admin/statistics/statistics.service';
-import { SPAN_PATTERN } from 'app/app.constants';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
@@ -13,7 +12,6 @@ import { SpanType } from 'app/entities/statistics.model';
     templateUrl: './statistics.component.html',
 })
 export class StatisticsComponent implements OnInit {
-    spanPattern = SPAN_PATTERN;
     DAY = SpanType.DAY;
     WEEK = SpanType.WEEK;
     MONTH = SpanType.MONTH;
