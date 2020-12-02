@@ -217,6 +217,17 @@
                 [result]="currentResult"
             >
             </jhi-complaint-interactions>
+            <div
+                class="row"
+                *ngIf="
+                    exercise?.type === PROGRAMMING &&
+                    studentParticipation &&
+                    currentResult &&
+                    (currentResult.assessmentType === AssessmentType.MANUAL || currentResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
+                "
+            >
+                <jhi-rating class="mt-2 alert alert-info" [result]="currentResult"></jhi-rating>
+            </div>
         </div>
         <router-outlet *ngIf="exercise.course && exercise.course.studentQuestionsEnabled" class="ml-3" (activate)="onChildActivate($event)"></router-outlet>
     </div>
