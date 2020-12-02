@@ -298,21 +298,21 @@ public class SubmissionService {
     /**
      * used to assign and save results to submissions
      *
-     * @param submission
-     * @param result
+     * @param submission the parent submission of the result
+     * @param result the result which we want to save and order
      * @return the result with correctly persistet relationship to its submission
      */
-    public Result saveOrderedResultBySubmission(Submission submission, Result result) {
+    public Result saveOrderedResultBySubmission(final Submission submission, final Result result) {
         result.setSubmission(null);
         submission.setResultsList(new ArrayList<>());
         if (result.getParticipation() == null) {
             result.setParticipation(submission.getParticipation());
         }
-        result = resultRepository.save(result);
-        result.setSubmission(submission);
-        submission.setResult(result);
+        var savedResult = resultRepository.save(result);
+        savedResult.setSubmission(submission);
+        submission.setResult(savedResult);
         submissionRepository.save(submission);
-        return result;
+        return savedResult;
     }
 
     /**

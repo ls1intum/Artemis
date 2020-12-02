@@ -1247,7 +1247,7 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
-    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, String resultString, Long score, boolean rated,
+    public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, String resultString, Long score, boolean rated,
             ZonedDateTime completionDate) {
         Result result = new Result().participation(submission.getParticipation()).assessmentType(assessmentType).resultString(resultString).score(score).rated(rated)
                 .completionDate(completionDate);
@@ -1255,8 +1255,8 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setResult(result);
-        submission = submissionRepository.save(submission);
-        return submissionRepository.findWithEagerResultsById(submission.getId()).orElseThrow();
+        var savedSubmission = submissionRepository.save(submission);
+        return submissionRepository.findWithEagerResultsById(savedSubmission.getId()).orElseThrow();
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
