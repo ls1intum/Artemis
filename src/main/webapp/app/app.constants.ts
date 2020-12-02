@@ -12,7 +12,6 @@ export const MIN_POINTS_ORANGE = 40;
 
 export const MAX_SCORE_PATTERN = '^[0-9]{0,4}$'; // make sure max score is a positive natural integer (or 0)and not too large
 export const SCORE_PATTERN = '^[0-9]{1,2}$|^100$';
-export const SPAN_PATTERN = '^[0-9]{0,4}$';
 
 export const ARTEMIS_DEFAULT_COLOR = '#3E8ACC';
 
