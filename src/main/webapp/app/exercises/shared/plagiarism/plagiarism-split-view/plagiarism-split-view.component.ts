@@ -25,7 +25,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnInit {
 
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
-    private split: Split.Instance;
+    public split: Split.Instance;
 
     /**
      * Initialize third party libs inside this lifecycle hook.
