@@ -170,7 +170,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // set dates to UTC and round to milliseconds for comparison
         textSubmission.setSubmissionDate(ZonedDateTime.ofInstant(textSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(textSubmission, "result", "blocks");
+        assertThat(storedSubmission).as("submission was found").isEqualTo(textSubmission);
         assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);

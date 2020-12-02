@@ -61,7 +61,7 @@ public class TextExerciseService {
      * @param exerciseId the id of the text exercise in question
      * @return text exercise with eagerly fetched Student Participations and Submissions.
      */
-    public Optional<TextExercise> findOneWithParticipationsAndSubmissions(long exerciseId) {
+    public Optional<TextExercise> findOneWithParticipationsAndSubmissionsAndResults(long exerciseId) {
         return textExerciseRepository.findWithEagerStudentParticipationAndSubmissionsById(exerciseId);
     }
 
