@@ -69,7 +69,6 @@ describe('TeamsImportFromFileFormComponent', () => {
     describe('onFileLoadImport', () => {
         let convertTeamsStub: SinonStub;
         let teams: Team[];
-        let generateFileReaderStub: SinonStub;
         let reader: FileReader;
         let getElementStub: SinonStub;
         const element = document.createElement('input');
@@ -79,7 +78,6 @@ describe('TeamsImportFromFileFormComponent', () => {
             convertTeamsStub = stub(comp, 'convertTeams').returns(mockFileTeamsConverted);
             comp.teamsChanged.subscribe((value: Team[]) => (teams = value));
             reader = { ...reader, result: JSON.stringify(mockFileStudents), onload: null };
-            generateFileReaderStub = stub(comp, 'generateFileReader').returns(reader);
             comp.importFile = new File([''], 'file.txt', { type: 'text/plain' });
             comp.importFileName = 'file.txt';
             getElementStub = stub(document, 'getElementById').returns(control);
@@ -90,6 +88,7 @@ describe('TeamsImportFromFileFormComponent', () => {
         it('should parse file and send converted teams', () => {
             expect(control.value).to.equal('test');
             comp.onFileLoadImport(reader);
+            expect(convertTeamsStub).to.have.been.called;
             expect(comp.importedTeams).to.deep.equal(mockFileStudents);
             expect(comp.sourceTeams).to.deep.equal(mockFileTeamsConverted);
             expect(teams).to.deep.equal(mockFileTeamsConverted);

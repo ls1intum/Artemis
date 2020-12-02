@@ -31,7 +31,6 @@ const expect = chai.expect;
 describe('TeamsImportDialogComponent', () => {
     let comp: TeamsImportDialogComponent;
     let fixture: ComponentFixture<TeamsImportDialogComponent>;
-    let debugElement: DebugElement;
     let ngbActiveModal: NgbActiveModal;
     let alertService: JhiAlertService;
     let teamService: TeamService;
@@ -82,7 +81,6 @@ describe('TeamsImportDialogComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(TeamsImportDialogComponent);
         comp = fixture.componentInstance;
-        debugElement = fixture.debugElement;
         ngbActiveModal = TestBed.inject(NgbActiveModal);
         alertService = TestBed.inject(JhiAlertService);
         teamService = TestBed.inject(TeamService);
@@ -395,58 +393,57 @@ describe('TeamsImportDialogComponent', () => {
     });
 
     describe('showImportPreviewNumbers', () => {
-        beforeEach(() => {
-            resetComponent();
-            comp.sourceExercise = mockSourceExercise;
-            comp.sourceTeams = mockSourceTeams;
-            comp.importStrategy = TeamImportStrategyType.CREATE_ONLY;
+        describe('import from exercise', () => {
+            beforeEach(() => {
+                resetComponent();
+                comp.sourceExercise = undefined;
+                comp.importStrategy = TeamImportStrategyType.CREATE_ONLY;
+            });
+            it('Import from exercise: should return false if there is no sourceExercise', () => {
+                expect(comp.showImportPreviewNumbers).to.equal(false);
+            });
+            it('Import from exercise: should return true if there is a sourceExercise and source team', () => {
+                comp.sourceExercise = mockSourceExercise;
+                comp.sourceTeams = mockSourceTeams;
+                expect(comp.showImportPreviewNumbers).to.equal(true);
+            });
+            it('should return false if there is no source team', () => {
+                expect(comp.showImportPreviewNumbers).to.equal(false);
+            });
+            it('Import from exercise: should return false if there is no import strategy', () => {
+                expect(comp.showImportPreviewNumbers).to.equal(false);
+            });
         });
-        it('Import from exercise: should return false if there is no sourceExercise', () => {
-            comp.sourceExercise = undefined;
-            expect(comp.showImportPreviewNumbers).to.equal(false);
-        });
-        it('Import from exercise: should return true if there is a sourceExercise and source team', () => {
-            expect(comp.showImportPreviewNumbers).to.equal(true);
-        });
-        it('should return false if there is no source team', () => {
-            comp.sourceTeams = undefined;
-            expect(comp.showImportPreviewNumbers).to.equal(false);
-        });
-        it('Import from exercise: should return false if there is no import strategy', () => {
-            comp.importStrategy = undefined;
-            expect(comp.showImportPreviewNumbers).to.equal(false);
-        });
-        it('Import from file: should return false if there is no import strategy', () => {
-            comp.importStrategy = undefined;
-            expect(comp.showImportPreviewNumbers).to.equal(false);
-        });
-        it('Import from file: should return false if studentRegistrationNumbersAlreadyExistingInOtherTeams has registration numbers and no import strategy', () => {
-            comp.studentRegistrationNumbersAlreadyExistingInOtherTeams = [];
-            comp.showImportFromExercise = false;
-            comp.importStrategy = undefined;
-            comp.sourceTeams = undefined;
-            expect(comp.showImportPreviewNumbers).to.equal(false);
-        });
-        it('Import from file: should return true if studentRegistrationNumbersAlreadyExistingInOtherTeams does not have registration numbers', () => {
-            comp.studentRegistrationNumbersAlreadyExistingInOtherTeams = ['1', '2'];
-            comp.showImportFromExercise = false;
-            comp.importStrategy = undefined;
-            comp.sourceTeams = undefined;
-            expect(comp.showImportPreviewNumbers).to.equal(true);
-        });
-        it('Import from file: should return false if studentLoginsAlreadyExistingInOtherTeams has registration numbers and no import strategy', () => {
-            comp.studentLoginsAlreadyExistingInOtherTeams = [];
-            comp.showImportFromExercise = false;
-            comp.importStrategy = undefined;
-            comp.sourceTeams = undefined;
-            expect(comp.showImportPreviewNumbers).to.equal(false);
-        });
-        it('Import from file: should return true if studentLoginsAlreadyExistingInOtherTeams does not have registration numbers', () => {
-            comp.studentLoginsAlreadyExistingInOtherTeams = ['1', '2'];
-            comp.showImportFromExercise = false;
-            comp.importStrategy = undefined;
-            comp.sourceTeams = undefined;
-            expect(comp.showImportPreviewNumbers).to.equal(true);
+        describe('import from exercise', () => {
+            beforeEach(() => {
+                resetComponent();
+                comp.sourceExercise = undefined;
+                comp.importStrategy = TeamImportStrategyType.CREATE_ONLY;
+                comp.showImportFromExercise = false;
+            });
+            it('Import from file: should return false if there is no import strategy', () => {
+                expect(comp.showImportPreviewNumbers).to.equal(false);
+            });
+            it('Import from file: should return false if studentRegistrationNumbersAlreadyExistingInOtherTeams has registration numbers and no import strategy', () => {
+                comp.studentRegistrationNumbersAlreadyExistingInOtherTeams = [];
+                comp.importStrategy = undefined;
+                expect(comp.showImportPreviewNumbers).to.equal(false);
+            });
+            it('Import from file: should return true if studentRegistrationNumbersAlreadyExistingInOtherTeams does not have registration numbers', () => {
+                comp.studentRegistrationNumbersAlreadyExistingInOtherTeams = ['1', '2'];
+                comp.importStrategy = undefined;
+                expect(comp.showImportPreviewNumbers).to.equal(true);
+            });
+            it('Import from file: should return false if studentLoginsAlreadyExistingInOtherTeams has registration numbers and no import strategy', () => {
+                comp.studentLoginsAlreadyExistingInOtherTeams = [];
+                comp.importStrategy = undefined;
+                expect(comp.showImportPreviewNumbers).to.equal(false);
+            });
+            it('Import from file: should return true if studentLoginsAlreadyExistingInOtherTeams does not have registration numbers', () => {
+                comp.studentLoginsAlreadyExistingInOtherTeams = ['l1', 'l2'];
+                comp.importStrategy = undefined;
+                expect(comp.showImportPreviewNumbers).to.equal(true);
+            });
         });
     });
 
