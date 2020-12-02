@@ -228,15 +228,15 @@ public class TeamService {
      * Converts teams' students with only registration numbers to students on database
      *
      * @param course Course in which the users will be searched
-     * @param teamsWithRegistrationNumber Teams that students are described only by visible registration number
+     * @param teams Teams that students are described only by login or visible registration number
      * @return list of all teams that now have registered users
      */
-    public List<Team> convertTeamsStudentsWithRegistrationNumbersToAlreadyRegisteredUsers(Course course, List<Team> teamsWithRegistrationNumber) {
-        List<User> students = teamsWithRegistrationNumber.stream().flatMap(team -> team.getStudents().stream()).collect(Collectors.toList());
+    public List<Team> convertTeamsStudentsWithOnlyLoginOrRegistrationNumberToAlreadyRegisteredUsers(Course course, List<Team> teams) {
+        List<User> students = teams.stream().flatMap(team -> team.getStudents().stream()).collect(Collectors.toList());
         List<String> logins = students.stream().filter(student -> student.getLogin() != null).map(User::getLogin).collect(Collectors.toList());
         List<String> registrationNumbers = students.stream().filter(student -> student.getLogin() == null && student.getVisibleRegistrationNumber() != null)
                 .map(User::getVisibleRegistrationNumber).collect(Collectors.toList());
-        if (students.stream().count() != logins.stream().count() + registrationNumbers.stream().count()) {
+        if (students.stream().count() != (logins.stream().count() + registrationNumbers.stream().count())) {
             throw new BadRequestAlertException("Students do not have an identifier", TeamResource.ENTITY_NAME, "studentIdentifierNotFound", true);
         }
 
@@ -252,13 +252,12 @@ public class TeamService {
         List<String> notFoundRegistrationNumbers = new ArrayList<>();
         if (!registrationNumbers.isEmpty()) {
             existingStudentsWithRegistrationNumber = userRepository.findAllByRegistrationNumbersInGroup(course.getStudentGroupName(), new HashSet<>(registrationNumbers));
-            List<User> usersWhoAppearsMoreThanOnce = existingStudentsWithRegistrationNumber.stream().filter(student -> (logins.contains(student.getLogin())))
+            List<User> usersWhoAppearsMoreThanOnce = existingStudentsWithRegistrationNumber.stream().filter(student -> logins.contains(student.getLogin()))
                     .collect(Collectors.toList());
             if (!usersWhoAppearsMoreThanOnce.isEmpty()) {
                 throw new StudentsAppearMultipleTimesException(usersWhoAppearsMoreThanOnce);
             }
             List<String> existingRegistrationNumbers = existingStudentsWithRegistrationNumber.stream().map(User::getRegistrationNumber).collect(Collectors.toList());
-            ;
             notFoundRegistrationNumbers = registrationNumbers.stream().filter(registrationNumber -> !existingRegistrationNumbers.contains(registrationNumber))
                     .collect(Collectors.toList());
         }
@@ -273,7 +272,7 @@ public class TeamService {
 
         List<Team> convertedTeams = new ArrayList<>();
 
-        teamsWithRegistrationNumber.forEach(team -> {
+        teams.forEach(team -> {
             Set<User> newStudents = new HashSet<>();
             team.getStudents().forEach(student -> {
                 if (student.getLogin() != null) {

@@ -78,16 +78,16 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         return importFromSourceExerciseUrl(TeamImportStrategyType.CREATE_ONLY);
     }
 
-    private String withRegistrationNumberEndpointUrl() {
-        return "/api/exercises/" + destinationExercise.getId() + "/teams/import-with-registration-numbers";
+    private String fromListEndpointUrl() {
+        return "/api/exercises/" + destinationExercise.getId() + "/teams/import-from-list";
     }
 
-    private String importWithRegistrationNumberUrl(TeamImportStrategyType importStrategyType) {
-        return withRegistrationNumberEndpointUrl() + "?importStrategyType=" + importStrategyType;
+    private String importFromListUrl(TeamImportStrategyType importStrategyType) {
+        return fromListEndpointUrl() + "?importStrategyType=" + importStrategyType;
     }
 
-    private String importWithRegistrationNumberUrl() {
-        return withRegistrationNumberEndpointUrl() + "?importStrategyType=" + TeamImportStrategyType.CREATE_ONLY;
+    private String importFromListUrl() {
+        return fromListEndpointUrl() + "?importStrategyType=" + TeamImportStrategyType.CREATE_ONLY;
     }
 
     @BeforeEach
@@ -119,7 +119,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         }
         String url = importFromSourceExerciseUrl(importStrategy);
         if (type == ImportType.FROM_LIST) {
-            url = importWithRegistrationNumberUrl(importStrategy);
+            url = importFromListUrl(importStrategy);
         }
         List<Team> destinationTeamsAfter = request.putWithResponseBodyList(url, body, Team.class, HttpStatus.OK);
         assertCorrectnessOfImport(addedTeams, destinationTeamsAfter);
@@ -279,7 +279,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
     public void testImportTeamsFromListBadRequests() throws Exception {
         // If the destination exercise is not a team exercise, the request should fail
         exerciseRepo.save(destinationExercise.mode(ExerciseMode.INDIVIDUAL));
-        request.put(importWithRegistrationNumberUrl(), importedTeamsBody, HttpStatus.BAD_REQUEST);
+        request.put(importFromListUrl(), importedTeamsBody, HttpStatus.BAD_REQUEST);
         exerciseRepo.save(destinationExercise.mode(ExerciseMode.TEAM));
 
         // If user with given registration number does not exist, the request should fail
@@ -287,17 +287,17 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         Team team = ModelFactory.generateTeamForExercise(destinationExercise, "failTeam", "fail", 1, null);
         // If students not added with user repo then they do not exist so it should fail
         teams.add(team);
-        request.put(importWithRegistrationNumberUrl(), getTeamsIntoRegistrationNumberOnlyTeams(teams), HttpStatus.BAD_REQUEST);
+        request.put(importFromListUrl(), getTeamsIntoRegistrationNumberOnlyTeams(teams), HttpStatus.BAD_REQUEST);
 
         // If user with given login does not exist, the request should fail
-        request.put(importWithRegistrationNumberUrl(), getTeamsIntoLoginOnlyTeams(teams), HttpStatus.BAD_REQUEST);
+        request.put(importFromListUrl(), getTeamsIntoLoginOnlyTeams(teams), HttpStatus.BAD_REQUEST);
 
         // If user does not have an identifier: registration number or login, the request should fail
-        request.put(importWithRegistrationNumberUrl(), getTeamsIntoOneIdentifierTeams(teams, null), HttpStatus.BAD_REQUEST);
+        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
+        request.put(importFromListUrl(), getTeamsIntoOneIdentifierTeams(teams, null), HttpStatus.BAD_REQUEST);
 
         // If user's registration number points to same user with a login in request, it should fail
-        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
-        request.put(importWithRegistrationNumberUrl(), addLists(getTeamsIntoLoginOnlyTeams(teams), getTeamsIntoRegistrationNumberOnlyTeams(teams)), HttpStatus.BAD_REQUEST);
+        request.put(importFromListUrl(), addLists(getTeamsIntoLoginOnlyTeams(teams), getTeamsIntoRegistrationNumberOnlyTeams(teams)), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -309,7 +309,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testImportTeamsFromListForbiddenAsTutor() throws Exception {
-        request.put(importWithRegistrationNumberUrl(), importedTeamsBody, HttpStatus.FORBIDDEN);
+        request.put(importFromListUrl(), importedTeamsBody, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -329,7 +329,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         course.setInstructorGroupName("Different group name");
         courseRepo.save(course);
 
-        request.put(importWithRegistrationNumberUrl(), importedTeamsBody, HttpStatus.FORBIDDEN);
+        request.put(importFromListUrl(), importedTeamsBody, HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -377,11 +377,13 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
                 User newStudent = new User();
                 newStudent.setFirstName(student.getFirstName());
                 newStudent.setLastName(student.getLastName());
-                if (identifier == "login") {
-                    newStudent.setLogin(student.getLogin());
-                }
-                else if (identifier == "registrationNumber") {
-                    newStudent.setVisibleRegistrationNumber(student.getRegistrationNumber());
+                if (identifier != null) {
+                    if (identifier.equals("login")) {
+                        newStudent.setLogin(student.getLogin());
+                    }
+                    else if (identifier.equals("registrationNumber")) {
+                        newStudent.setVisibleRegistrationNumber(student.getRegistrationNumber());
+                    }
                 }
                 return newStudent;
             }).collect(Collectors.toList());

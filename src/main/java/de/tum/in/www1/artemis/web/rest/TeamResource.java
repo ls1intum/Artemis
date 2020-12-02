@@ -324,14 +324,13 @@ public class TeamResource {
      * PUT /exercises/:destinationExerciseId/teams/import-from-file : add given teams into exercise
      *
      * @param exerciseId         the exercise id of the exercise for which to import teams
-     * @param teams              teams whose students have registration numbers as identifiers
+     * @param teams              teams whose students have login or registration number as identifiers
      * @param importStrategyType the import strategy to use when importing the teams
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
-    @PutMapping("/exercises/{exerciseId}/teams/import-with-registration-numbers")
+    @PutMapping("/exercises/{exerciseId}/teams/import-from-list")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Team>> importTeamsWithRegistrationNumbers(@PathVariable long exerciseId, @RequestBody List<Team> teams,
-            @RequestParam TeamImportStrategyType importStrategyType) {
+    public ResponseEntity<List<Team>> importTeamsFromList(@PathVariable long exerciseId, @RequestBody List<Team> teams, @RequestParam TeamImportStrategyType importStrategyType) {
         log.debug("REST request import given teams into destination exercise with id {}", exerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -345,10 +344,11 @@ public class TeamResource {
             throw new BadRequestAlertException("The exercise must be a team-based exercise.", ENTITY_NAME, "destinationExerciseNotTeamBased");
         }
 
-        List<Team> filledTeams = teamService.convertTeamsStudentsWithRegistrationNumbersToAlreadyRegisteredUsers(exercise.getCourseViaExerciseGroupOrCourseMember(), teams);
+        List<Team> filledTeams = teamService.convertTeamsStudentsWithOnlyLoginOrRegistrationNumberToAlreadyRegisteredUsers(exercise.getCourseViaExerciseGroupOrCourseMember(),
+                teams);
 
         // Create audit event for team import action
-        var logMessage = "Import teams with registration numbers into exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ") ";
+        var logMessage = "Import teams from team list into exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ") ";
         var auditEvent = new AuditEvent(user.getLogin(), Constants.IMPORT_TEAMS, logMessage);
         auditEventRepository.add(auditEvent);
 

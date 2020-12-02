@@ -92,8 +92,8 @@ export const mockFileTeamsConverted: Team[] = [
         name: 'File Team 1',
         shortName: 'fileteam1',
         students: [
-            { ...new User(), firstName: 'Jack', lastName: 'Doe', username: 'jack_doe', name: 'Jack Doe' } as User,
-            { ...new User(), firstName: 'Jackie', lastName: 'Doen', username: 'jackie_doe', name: 'Jackie Doen' } as User,
+            { ...new User(), firstName: 'Jack', lastName: 'Doe', login: 'jack_doe', name: 'Jack Doe', visibleRegistrationNumber: undefined } as User,
+            { ...new User(), firstName: 'Jackie', lastName: 'Doen', login: 'jackie_doen', name: 'Jackie Doen', visibleRegistrationNumber: undefined } as User,
         ],
     } as Team,
     {
@@ -101,8 +101,8 @@ export const mockFileTeamsConverted: Team[] = [
         name: 'File Team 2',
         shortName: 'fileteam2',
         students: [
-            { ...new User(), firstName: 'Alyson', lastName: 'Smithson', visibleRegistrationNumber: '23458', name: 'Alyson Smithson' } as User,
-            { ...new User(), firstName: 'Alysia', lastName: 'Smith', visibleRegistrationNumber: '23459', name: 'Alysia Smith' } as User,
+            { ...new User(), firstName: 'Alyson', lastName: 'Smithson', login: undefined, visibleRegistrationNumber: '23458', name: 'Alyson Smithson' } as User,
+            { ...new User(), firstName: 'Alysia', lastName: 'Smith', login: undefined, visibleRegistrationNumber: '23459', name: 'Alysia Smith' } as User,
         ],
     } as Team,
 ];
