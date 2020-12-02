@@ -569,37 +569,35 @@ public class QuizScheduleService {
                 participation.setInitializationState(InitializationState.FINISHED);
 
                 // create participation
-                quizSubmission = quizSubmissionRepository.save(quizSubmission);
-                participation.addSubmissions(quizSubmission);
                 participation = studentParticipationRepository.save(participation);
+                quizSubmission.setParticipation(participation);
+                quizSubmission = quizSubmissionRepository.save(quizSubmission);
+                participation.setSubmissions(Set.of(quizSubmission));
+                var savedQuizSubmission = quizSubmissionRepository.findById(quizSubmission.getId()).get();
 
                 // create new result
                 Result result = new Result().participation(participation);
                 result.setRated(true);
                 result.setAssessmentType(AssessmentType.AUTOMATIC);
-                result.setCompletionDate(quizSubmission.getSubmissionDate());
+                result.setCompletionDate(savedQuizSubmission.getSubmissionDate());
                 result = resultRepository.save(result);
 
                 // set submission, calculate scores and update result and submission accordingly
-                quizSubmission.calculateAndUpdateScores(quizExercise);
-                result.setSubmission(quizSubmission);
-                quizSubmission.setParticipation(participation);
+                result.setSubmission(savedQuizSubmission);
+                savedQuizSubmission.calculateAndUpdateScores(quizExercise);
                 result.evaluateSubmission();
 
-                // add result to participation and submission
-                participation.addResult(result);
-                quizSubmission.setResult(result);
-
-                // NOTE: we save participation submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
+                // add result to submission
+                savedQuizSubmission.setResultsList(List.of(result));
                 // save submission to set result index column
-                quizSubmissionRepository.save(quizSubmission);
-                participation = studentParticipationRepository.save(participation);
+                savedQuizSubmission = quizSubmissionRepository.save(savedQuizSubmission);
                 result = resultRepository.save(result);
+                // NOTE: we save submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
 
                 // reconnect entities after save
-                participation.setSubmissions(Set.of(quizSubmission));
+                participation.setSubmissions(Set.of(savedQuizSubmission));
                 participation.setResults(Set.of(result));
-                result.setSubmission(quizSubmission);
+                result.setSubmission(savedQuizSubmission);
                 result.setParticipation(participation);
 
                 // add the participation to the participationHashMap for the send out at the end of the quiz
