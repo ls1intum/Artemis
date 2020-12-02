@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Output } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { Team, TeamList } from 'app/entities/team.model';
 
@@ -31,12 +31,11 @@ export class TeamsImportFromFileFormComponent {
      */
     onFileLoadImport(fileReader: FileReader) {
         try {
-            // Read the file and get list of questions from the file
+            // Read the file and get list of teams from the file
             this.importedTeams = JSON.parse(fileReader.result as string) as TeamList;
             this.sourceTeams = this.convertTeams(this.importedTeams);
             this.teamsChanged.emit(this.sourceTeams);
             this.loading = false;
-            // this.verifyAndImportQuestions(questions);
             // Clearing html elements,
             this.importFile = undefined;
             this.importFileName = '';

@@ -248,7 +248,8 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * 3. Source teams have not been loaded yet
      * 4. No import strategy has been chosen yet
      * 5. There are no (conflict-free depending on strategy) source teams to be imported
-     * 6. Student's registration number appears just once
+     * 6. Student's registration number appears more than once
+     * 6. Student's login appears more than once
      */
     get isSubmitDisabled(): boolean {
         if (this.showImportFromExercise) {

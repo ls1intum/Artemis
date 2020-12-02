@@ -225,7 +225,7 @@ public class TeamService {
     }
 
     /**
-     * Converts teams' students with only registration numbers to students on database
+     * Converts teams' students with only login or registration number to students on database
      *
      * @param course Course in which the users will be searched
      * @param teams Teams that students are described only by login or visible registration number

@@ -1,13 +1,13 @@
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Team } from 'app/entities/team.model';
-import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component.ts';
 import * as chai from 'chai';
-import { MockComponent, MockProvider } from 'ng-mocks';
-import { restore, SinonStub, stub } from 'sinon';
+import { MockComponent } from 'ng-mocks';
+import { restore, SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { mockFileStudents, mockFileTeamsConverted } from '../../helpers/mocks/service/mock-team.service';
 
@@ -33,7 +33,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             TestBed.configureTestingModule({
                 imports: [],
                 declarations: [TeamsImportFromFileFormComponent, MockComponent(HelpIconComponent), MockComponent(FaIconComponent)],
-                providers: [MockProvider(TeamService)],
+                providers: [],
             }).compileComponents();
         }),
     );
@@ -43,7 +43,20 @@ describe('TeamsImportFromFileFormComponent', () => {
         debugElement = fixture.debugElement;
         changeDetector = debugElement.injector.get(ChangeDetectorRef);
     });
-
+    describe('importing file', () => {
+        beforeEach(() => {
+            resetComponent();
+        });
+        afterEach(() => {
+            restore();
+        });
+        it('should convert and call teamsChanged with converted teams', () => {
+            const setImportStub: SinonSpy = spy(comp, 'setImportFile');
+            const inputElement = debugElement.query(By.css('input')).nativeElement;
+            inputElement.dispatchEvent(new Event('change'));
+            expect(setImportStub).to.have.been.called;
+        });
+    });
     describe('generateFileReader', () => {
         beforeEach(() => {
             resetComponent();
