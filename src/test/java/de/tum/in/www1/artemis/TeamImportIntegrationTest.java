@@ -377,13 +377,11 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
                 User newStudent = new User();
                 newStudent.setFirstName(student.getFirstName());
                 newStudent.setLastName(student.getLastName());
-                if (identifier != null) {
-                    if (identifier.equals("login")) {
-                        newStudent.setLogin(student.getLogin());
-                    }
-                    else if (identifier.equals("registrationNumber")) {
-                        newStudent.setVisibleRegistrationNumber(student.getRegistrationNumber());
-                    }
+                if ("login".equals(identifier)) {
+                    newStudent.setLogin(student.getLogin());
+                }
+                else if ("registrationNumber".equals(identifier)) {
+                    newStudent.setVisibleRegistrationNumber(student.getRegistrationNumber());
                 }
                 return newStudent;
             }).collect(Collectors.toList());

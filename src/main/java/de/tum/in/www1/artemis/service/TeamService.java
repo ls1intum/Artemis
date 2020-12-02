@@ -236,7 +236,7 @@ public class TeamService {
         List<String> logins = students.stream().filter(student -> student.getLogin() != null).map(User::getLogin).collect(Collectors.toList());
         List<String> registrationNumbers = students.stream().filter(student -> student.getLogin() == null && student.getVisibleRegistrationNumber() != null)
                 .map(User::getVisibleRegistrationNumber).collect(Collectors.toList());
-        if (students.stream().count() != (logins.stream().count() + registrationNumbers.stream().count())) {
+        if (students.stream().count() != logins.stream().count() + registrationNumbers.stream().count()) {
             throw new BadRequestAlertException("Students do not have an identifier", TeamResource.ENTITY_NAME, "studentIdentifierNotFound", true);
         }
 
