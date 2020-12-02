@@ -96,7 +96,7 @@ public abstract class Submission extends DomainObject {
         return Duration.between(initilizationDate, submissionDate).toMinutes();
     }
 
-    // TODO: double check Jackson and client compatibility, maybe refactoring to getLatestResult
+    // TODO Ruscher, Entholzer: Refactor to getLatestResult
     /**
      * Is used as a workaround for objects that expect submission to have 1 result
      *
@@ -113,7 +113,6 @@ public abstract class Submission extends DomainObject {
         return null;
     }
 
-    // TODO: refactoring addResult
     /**
      * currently not used
      *
@@ -129,20 +128,20 @@ public abstract class Submission extends DomainObject {
         return null;
     }
 
-    // TODO: remove redundant setter after relationship change on client. Currently we need two deserializing setters for "result" (client) and "results" (server)
+    // TODO NR, SE: remove redundant setter after relationship change on client. Currently we need two deserializing setters for "result" (client) and "results" (server)
     @JsonProperty(value = "result", access = JsonProperty.Access.WRITE_ONLY)
     public void setResult(Result result) {
         this.setResults(result);
     }
 
-    // TODO: WIP consider during refactoring : addResult
+    // TODO Ruscher, Entholzer: refactor to addResult
     @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
     public void setResults(Result result) {
         // addResult
         this.results.add(result);
     }
 
-    // todo: WIP consider during refactoring : setResults
+    // TODO Ruscher, Entholzer: refactor to setResults
     @JsonIgnore()
     public void setResultsList(List<Result> results) {
         this.results = results;
