@@ -336,7 +336,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      */
     compressTree(node: any): any {
         if (node.children && node.children.length === 1 && node.children[0].children) {
-            return this.compressTree({ ...node.children[0], text: node.text + '/' + node.childred[0].text });
+            return this.compressTree({ ...node.children[0], text: node.text + '/' + node.children[0].text });
         } else if (node.children) {
             return { ...node, children: node.children.map(this.compressTree.bind(this)) };
         } else {
