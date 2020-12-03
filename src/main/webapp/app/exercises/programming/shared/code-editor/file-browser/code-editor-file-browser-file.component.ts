@@ -11,4 +11,5 @@ export class CodeEditorFileBrowserFileComponent extends CodeEditorFileBrowserNod
     @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
 
     @Input() disableActions: boolean;
+    @Input() hasChanges = false;
 }

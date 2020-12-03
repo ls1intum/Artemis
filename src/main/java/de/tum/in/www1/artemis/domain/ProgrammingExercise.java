@@ -129,7 +129,7 @@ public class ProgrammingExercise extends Exercise {
         return null;
     }
 
-    private void setTemplateRepositoryUrl(String templateRepositoryUrl) {
+    public void setTemplateRepositoryUrl(String templateRepositoryUrl) {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
             this.templateParticipation.setRepositoryUrl(templateRepositoryUrl);
         }

@@ -33,11 +33,11 @@ public class ExampleSubmissionService {
     }
 
     public Optional<ExampleSubmission> findByIdWithEagerTutorParticipations(Long exampleSubmissionId) {
-        return exampleSubmissionRepository.findByIdWithEagerTutorParticipations(exampleSubmissionId);
+        return exampleSubmissionRepository.findByIdWithEagerResultsAndTutorParticipations(exampleSubmissionId);
     }
 
     /**
-     * First saves the corresponding modeling submission with the exampleSubmission flag. Then the example submission itself is saved. Rolls back if inserting fails - occurs for
+     * First saves the corresponding submission with the exampleSubmission flag. Then the example submission itself is saved. Rolls back if inserting fails - occurs for
      * concurrent createExampleSubmission() calls.
      *
      * @param exampleSubmission the example submission to save
@@ -63,7 +63,7 @@ public class ExampleSubmissionService {
      * @return list of feedback for an example submission
      */
     public List<Feedback> getFeedbackForExampleSubmission(Long exampleSubmissionId) {
-        Optional<ExampleSubmission> exampleSubmission = this.exampleSubmissionRepository.findByIdWithEagerResultAndFeedback(exampleSubmissionId);
+        Optional<ExampleSubmission> exampleSubmission = this.exampleSubmissionRepository.findByIdWithEagerResultsAndFeedback(exampleSubmissionId);
         Submission submission = exampleSubmission.get().getSubmission();
 
         if (submission == null) {
@@ -81,17 +81,17 @@ public class ExampleSubmissionService {
     }
 
     public ExampleSubmission findOneWithEagerResult(Long exampleSubmissionId) {
-        return exampleSubmissionRepository.findByIdWithEagerResultAndFeedback(exampleSubmissionId)
+        return exampleSubmissionRepository.findByIdWithEagerResultsAndFeedback(exampleSubmissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Example submission with id \"" + exampleSubmissionId + "\" does not exist"));
     }
 
     public ExampleSubmission findOneBySubmissionId(Long submissionId) {
-        return exampleSubmissionRepository.findBySubmissionId(submissionId)
+        return exampleSubmissionRepository.findWithEagerResultsBySubmissionId(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Example submission for submission with id \"" + submissionId + "\" does not exist"));
     }
 
     public Optional<ExampleSubmission> getWithEagerExercise(Long exampleSubmissionId) {
-        return exampleSubmissionRepository.findByIdWithEagerExercise(exampleSubmissionId);
+        return exampleSubmissionRepository.findWithEagerExerciseById(exampleSubmissionId);
     }
 
     /**
@@ -100,7 +100,7 @@ public class ExampleSubmissionService {
      */
     @Transactional // ok
     public void deleteById(long exampleSubmissionId) {
-        Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findByIdWithEagerTutorParticipations(exampleSubmissionId);
+        Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultsAndTutorParticipations(exampleSubmissionId);
 
         if (optionalExampleSubmission.isPresent()) {
             ExampleSubmission exampleSubmission = optionalExampleSubmission.get();

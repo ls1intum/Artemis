@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -76,6 +77,8 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     LocalRepository studentRepository = new LocalRepository();
 
+    LocalRepository templateRepository = new LocalRepository();
+
     List<BuildLogEntry> logs = new ArrayList<>();
 
     BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Checkout to revision e65aa77cc0380aeb9567ccceb78aca416d86085b has failed.");
@@ -94,11 +97,13 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     Logger logger;
 
-    Path filePath;
+    Path studentFilePath;
+
+    File studentFile;
 
     @BeforeEach
     public void setup() throws Exception {
-        database.addUsers(1, 0, 1);
+        database.addUsers(1, 1, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
@@ -106,11 +111,11 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo");
 
         // add file to the repository folder
-        filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
-        var file = Files.createFile(filePath).toFile();
+        studentFilePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
+        studentFile = Files.createFile(studentFilePath).toFile();
 
         // write content to the created file
-        FileUtils.write(file, currentLocalFileContent, Charset.defaultCharset());
+        FileUtils.write(studentFile, currentLocalFileContent, Charset.defaultCharset());
 
         // add folder to the repository folder
         Path folderPath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFolderName);
@@ -120,11 +125,34 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURL());
         participation = studentParticipationRepository.findAll().get(0);
         programmingExercise.setTestRepositoryUrl(localRepoUrl.toString());
+
+        // Create template repo
+        templateRepository = new LocalRepository();
+        templateRepository.configureRepos("templateLocalRepo", "templateOriginRepo");
+
+        // add file to the template repo folder
+        var templateFilePath = Paths.get(templateRepository.localRepoFile + "/" + currentLocalFileName);
+        var templateFile = Files.createFile(templateFilePath).toFile();
+
+        // write content to the created file
+        FileUtils.write(templateFile, currentLocalFileContent, Charset.defaultCharset());
+
+        // add folder to the template repo folder
+        Path templateFolderPath = Paths.get(templateRepository.localRepoFile + "/" + currentLocalFolderName);
+        Files.createDirectory(templateFolderPath).toFile();
+
+        programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
+
+        doReturn(gitService.getRepositoryByLocalPath(templateRepository.localRepoFile.toPath())).when(gitService)
+                .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl(), true);
+
         doReturn(gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath())).when(gitService)
                 .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl(), true);
 
         doReturn(gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath())).when(gitService)
                 .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl(), false);
+
         doReturn(gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath())).when(gitService)
                 .getOrCheckoutRepository((ProgrammingExerciseParticipation) participation);
 
@@ -159,6 +187,86 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         // Check if all files exist
         for (String key : files.keySet()) {
             assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + key))).isTrue();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetFilesWithInfoAboutChange_noChange() throws Exception {
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-change", HttpStatus.OK, String.class, Boolean.class);
+        assertThat(files).isNotEmpty();
+
+        // Check if all files exist
+        for (String key : files.keySet()) {
+            assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + key))).isTrue();
+            assertThat(files.get(key)).isFalse();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetFilesWithInfoAboutChange_withChange() throws Exception {
+        FileUtils.write(studentFile, "newContent123", Charset.defaultCharset());
+
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-change", HttpStatus.OK, String.class, Boolean.class);
+        assertThat(files).isNotEmpty();
+
+        // Check if all files exist
+        for (String key : files.keySet()) {
+            assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + key))).isTrue();
+            assertThat(files.get(key)).isTrue();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetFilesWithInfoAboutChange_withNewFile() throws Exception {
+        FileUtils.write(studentFile, "newContent123", Charset.defaultCharset());
+
+        Path newPath = Paths.get(studentRepository.localRepoFile + "/newFile");
+        var file2 = Files.createFile(newPath).toFile();
+        // write content to the created file
+        FileUtils.write(file2, currentLocalFileContent + "test1", Charset.defaultCharset());
+
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-change", HttpStatus.OK, String.class, Boolean.class);
+        assertThat(files).isNotEmpty();
+
+        // Check if all files exist
+        for (String key : files.keySet()) {
+            assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + key))).isTrue();
+            assertThat(files.get(key)).isTrue();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetFiles_solutionParticipation() throws Exception {
+        // Create template repo
+        var solutionRepository = new LocalRepository();
+        solutionRepository.configureRepos("solutionLocalRepo", "solutionOriginRepo");
+
+        // add file to the template repo folder
+        var solutionFilePath = Paths.get(solutionRepository.localRepoFile + "/" + currentLocalFileName);
+        var solutionFile = Files.createFile(solutionFilePath).toFile();
+
+        // write content to the created file
+        FileUtils.write(solutionFile, currentLocalFileContent, Charset.defaultCharset());
+
+        // add folder to the template repo folder
+        Path solutionFolderPath = Paths.get(solutionRepository.localRepoFile + "/" + currentLocalFolderName);
+        Files.createDirectory(solutionFolderPath).toFile();
+
+        programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
+
+        doReturn(gitService.getRepositoryByLocalPath(solutionRepository.localRepoFile.toPath())).when(gitService)
+                .getOrCheckoutRepository(programmingExercise.getSolutionParticipation().getRepositoryUrlAsUrl(), true);
+
+        var files = request.getMap(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+
+        // Check if all files exist
+        for (String key : files.keySet()) {
+            assertThat(Files.exists(Paths.get(solutionRepository.localRepoFile + "/" + key))).isTrue();
         }
     }
 
@@ -246,7 +354,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     public void testSaveFiles() throws Exception {
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
-        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
+        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
     }
 
     @Test
@@ -262,7 +370,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
 
-        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
+        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
 
         var testRepoCommits = studentRepository.getAllLocalCommits();
         assertThat(testRepoCommits.size() == 1).isTrue();
@@ -487,7 +595,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         // Stash changes
         gitService.stashChanges(localRepo);
         // Local repo has no unsubmitted changes
-        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
     }
 
     @Test
@@ -512,7 +620,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         // Stash changes using service
         programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
-        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
     }
 
     @Test
@@ -686,11 +794,11 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         // Do initial commit
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", getFileSubmissions("initial commit"), expectedStatus);
         // Check repo
-        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
+        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
 
         // Save file, without commit
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), expectedStatus);
         // Check repo
-        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
+        assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
     }
 }
