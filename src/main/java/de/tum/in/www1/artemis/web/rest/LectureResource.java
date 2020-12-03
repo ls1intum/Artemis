@@ -213,7 +213,7 @@ public class LectureResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        Optional<Lecture> optionalLecture = lectureRepository.findById(id);
+        Optional<Lecture> optionalLecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(id);
         if (optionalLecture.isEmpty()) {
             return ResponseEntity.notFound().build();
         }

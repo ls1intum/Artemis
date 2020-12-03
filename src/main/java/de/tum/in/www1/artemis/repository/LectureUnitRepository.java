@@ -23,4 +23,13 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
             """)
     Optional<LectureUnit> findByIdWithLearningGoals(@Param("lectureUnitId") Long lectureUnitId);
 
+    @Query("""
+            SELECT lectureUnit
+            FROM LectureUnit lectureUnit
+            LEFT JOIN FETCH lectureUnit.learningGoals lg
+            LEFT JOIN FETCH lg.lectureUnits
+            WHERE lectureUnit.id = :#{#lectureUnitId}
+            """)
+    Optional<LectureUnit> findByIdWithLearningGoalsBidirectional(@Param("lectureUnitId") Long lectureUnitId);
+
 }

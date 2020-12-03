@@ -7,11 +7,11 @@ import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Attachment;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 
 @Service
 public class LectureService {
@@ -20,9 +20,16 @@ public class LectureService {
 
     private final AuthorizationCheckService authCheckService;
 
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService) {
+    private final LearningGoalRepository learningGoalRepository;
+
+    private final LectureUnitRepository lectureUnitRepository;
+
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, LearningGoalRepository learningGoalRepository,
+            LectureUnitRepository lectureUnitRepository) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
+        this.learningGoalRepository = learningGoalRepository;
+        this.lectureUnitRepository = lectureUnitRepository;
     }
 
     public Lecture save(Lecture lecture) {
@@ -91,10 +98,22 @@ public class LectureService {
 
     /**
      * Deletes the given lecture.
-     * Attachments are not explicitly deleted, as the delete operation is cascaded by the database.
+     * Attachments and Lecture Units are not explicitly deleted, as the delete operation is cascaded by the database.
      * @param lecture the lecture to be deleted
      */
     public void delete(Lecture lecture) {
+
+        // update associated learning goals
+        for (LectureUnit lectureUnit : lecture.getLectureUnits()) {
+            LectureUnit lectureUnitFromDb = lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnit.getId()).get();
+            Set<LearningGoal> associatedLearningGoals = new HashSet<>(lectureUnitFromDb.getLearningGoals());
+            for (LearningGoal learningGoal : associatedLearningGoals) {
+                LearningGoal learningGoalFromDb = learningGoalRepository.findById(learningGoal.getId()).get();
+                learningGoalFromDb.removeLectureUnit(lectureUnitFromDb);
+                learningGoalRepository.save(learningGoalFromDb);
+            }
+        }
+
         lectureRepository.delete(lecture);
     }
 
