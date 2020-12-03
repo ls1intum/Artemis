@@ -99,10 +99,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         );
     }
 
-    previousState() {
-        window.history.back();
-    }
-
     /**
      * Returns the route for editing the exercise. Exam and course exercises have different routes.
      */
@@ -189,7 +185,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     content: 'Deleted a programming exercise',
                 });
                 this.dialogErrorSource.next('');
-                this.previousState();
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
