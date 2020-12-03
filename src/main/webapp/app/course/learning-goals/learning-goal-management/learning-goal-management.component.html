@@ -6,11 +6,41 @@
     </div>
 </div>
 
-<div *ngIf="!isLoading" class="container">
-    <!-- Lecture Unit Rows-->
-    <div class="row">
-        <div class="col-4" *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify">
-            <jhi-learning-goal-card [learningGoal]="learningGoal"></jhi-learning-goal-card>
+<div *ngIf="!isLoading">
+    <div class="container">
+        <div class="row">
+            <div class="col-6 offset-3 my-auto">
+                <h3 class="text-center">{{ 'artemisApp.learningGoal.manageLearningGoals.title' | translate }}</h3>
+            </div>
+            <div class="col-3 align-self-start">
+                <button class="btn btn-primary btn-circle grow" [routerLink]="['/course-management', courseId, 'goals', 'create']">
+                    <fa-icon [icon]="'plus'"></fa-icon>
+                </button>
+            </div>
         </div>
+    </div>
+    <hr [hidden]="!learningGoals || learningGoals.length === 0" />
+    <div class="card-deck">
+        <jhi-learning-goal-card class="mx-auto" *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify" [learningGoal]="learningGoal">
+            <button
+                *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
+                jhiDeleteButton
+                [entityTitle]="learningGoal.title"
+                [deleteQuestion]="'artemisApp.learningGoal.learningGoalCard.delete.question'"
+                [deleteConfirmationText]="'artemisApp.learningGoal.learningGoalCard.delete.typeNameToConfirm'"
+                (delete)="deleteLearningGoal(learningGoal.id)"
+                [dialogError]="dialogError$"
+            >
+                <fa-icon [icon]="'times'"></fa-icon>
+            </button>
+            <button
+                *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
+                class="btn btn-sm btn-primary"
+                [routerLink]="['/course-management', courseId, 'goals', learningGoal.id, 'edit']"
+            >
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
+            </button>
+        </jhi-learning-goal-card>
     </div>
 </div>

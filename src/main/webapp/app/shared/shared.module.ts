@@ -18,11 +18,13 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 import { DebounceClickDirective } from 'app/shared/directives/DebounceClickDirective';
 import { ChartComponent } from 'app/shared/chart/chart.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
+import { CircularProgressBarComponent } from 'app/shared/circular-progress-bar/circular-progress-bar.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
     declarations: [
         ArtemisDatePipe,
+        CircularProgressBarComponent,
         ArtemisDurationFromSecondsPipe,
         HasAnyAuthorityDirective,
         SecuredImageComponent,
@@ -40,6 +42,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
         ArtemisDatePipe,
         ArtemisDurationFromSecondsPipe,
         ArtemisSharedLibsModule,
+        CircularProgressBarComponent,
         FindLanguageFromKeyPipe,
         AlertComponent,
         AlertErrorComponent,

@@ -5,8 +5,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
-import { finalize } from 'rxjs/operators';
+import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
+import { LectureService } from 'app/lecture/lecture.service';
+import { Lecture } from 'app/entities/lecture.model';
 
 @Component({
     selector: 'jhi-create-learning-goal',
@@ -17,14 +19,44 @@ export class CreateLearningGoalComponent implements OnInit {
     learningGoalToCreate: LearningGoal = new LearningGoal();
     isLoading: boolean;
     courseId: number;
+    lecturesWithLectureUnits: Lecture[] = [];
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private learningGoalService: LearningGoalService, private alertService: JhiAlertService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+        private learningGoalService: LearningGoalService,
+        private alertService: JhiAlertService,
+        private lectureService: LectureService,
+    ) {}
 
     ngOnInit(): void {
-        this.activatedRoute.paramMap.subscribe((params) => {
-            this.courseId = Number(params.get('courseId'));
-        });
         this.learningGoalToCreate = new LearningGoal();
+        this.isLoading = true;
+        this.activatedRoute.paramMap
+            .pipe(
+                take(1),
+                switchMap((params) => {
+                    this.courseId = Number(params.get('courseId'));
+                    return this.lectureService.findAllByCourseId(this.courseId, true);
+                }),
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe(
+                (lectureResult) => {
+                    if (lectureResult.body) {
+                        this.lecturesWithLectureUnits = lectureResult.body;
+                        for (const lecture of this.lecturesWithLectureUnits) {
+                            // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
+                            if (!lecture.lectureUnits) {
+                                lecture.lectureUnits = [];
+                            }
+                        }
+                    }
+                },
+                (res: HttpErrorResponse) => onError(this.alertService, res),
+            );
     }
 
     createLearningGoal(formData: LearningGoalFormData) {
@@ -32,10 +64,11 @@ export class CreateLearningGoalComponent implements OnInit {
             return;
         }
 
-        const { title, description } = formData;
+        const { title, description, connectedLectureUnits } = formData;
 
         this.learningGoalToCreate.title = title;
         this.learningGoalToCreate.description = description;
+        this.learningGoalToCreate.lectureUnits = connectedLectureUnits;
 
         this.isLoading = true;
 
@@ -48,8 +81,8 @@ export class CreateLearningGoalComponent implements OnInit {
             )
             .subscribe(
                 () => {
-                    // ToDo change to correct path
-                    this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                    // currently at /course-management/{courseId}/goals/create, going back to /course-management/{courseId}/goal-management/
+                    this.router.navigate(['../../goal-management'], { relativeTo: this.activatedRoute });
                 },
                 (res: HttpErrorResponse) => onError(this.alertService, res),
             );

@@ -1,0 +1,62 @@
+<div class="modal-header">
+    <h4 class="modal-title">{{ learningGoal.title }}</h4>
+    <button type="button" class="close" (click)="activeModal.close()">
+        <span>&times;</span>
+    </button>
+</div>
+<div class="modal-body">
+    <p>{{ learningGoal.description }}</p>
+    <div>
+        <h5>{{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnits' | translate }}</h5>
+        <p>
+            {{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnitsExplanation' | translate }}
+        </p>
+        <table class="table table-bordered">
+            <thead class="thead-dark">
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
+                    <th jhiSortBy="id">
+                        id
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="type">
+                        {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.type' | translate }}
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th>
+                        {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.name' | translate }}
+                    </th>
+                    <th>
+                        {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.releaseDate' | translate }}
+                    </th>
+                    <th jhiSortBy="lecture.title">
+                        {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.lecture' | translate }}
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let lectureUnit of learningGoal.lectureUnits">
+                    <td>{{ lectureUnit.id ? lectureUnit.id : '' }}</td>
+                    <td>{{ lectureUnit.type ? lectureUnit.type : '' }}</td>
+                    <td>
+                        <a [routerLink]="['/courses', learningGoal?.course?.id, 'lectures', lectureUnit.lecture?.id]">
+                            {{ lectureUnitService.getLectureUnitName(lectureUnit) ? lectureUnitService.getLectureUnitName(lectureUnit) : '' }}
+                        </a>
+                    </td>
+                    <td>
+                        {{
+                            lectureUnitService.getLectureUnitReleaseDate(lectureUnit)
+                                ? lectureUnitService.getLectureUnitReleaseDate(lectureUnit)!.format('MMM DD YYYY, HH:mm:ss')
+                                : ''
+                        }}
+                    </td>
+                    <td>
+                        <a [routerLink]="['/courses', learningGoal?.course?.id, 'lectures', lectureUnit.lecture?.id]"
+                            >{{ lectureUnit.lecture?.title ? lectureUnit.lecture?.title : '' }}
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

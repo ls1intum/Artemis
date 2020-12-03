@@ -30,11 +30,25 @@ public class LectureService {
     }
 
     public Optional<Lecture> findByIdWithStudentQuestionsAndLectureModules(Long lectureId) {
-        return lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lectureId);
+        return lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lectureId);
     }
 
-    public Set<Lecture> findAllByCourseId(Long courseId) {
-        return lectureRepository.findAllByCourseId(courseId);
+    /**
+     * Finds all lectures connected to a course with the associated attachments
+     * @param courseId if of the course
+     * @return set of lectures connected to the course with associated attachments
+     */
+    public Set<Lecture> findAllByCourseIdWithAttachments(Long courseId) {
+        return lectureRepository.findAllByCourseIdWithAttachments(courseId);
+    }
+
+    /**
+     * Finds all lectures connected to a course with the associated lecture units and attachments
+     * @param courseId id of the course
+     * @return set of lectures connected to the course with associated lecture units and attachments
+     */
+    public Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(Long courseId) {
+        return lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
     }
 
     /**

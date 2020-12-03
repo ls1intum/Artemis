@@ -9,7 +9,14 @@
 <div *ngIf="!isLoading" class="container">
     <!-- Lecture Unit Rows-->
     <div class="row mb-4" *ngFor="let lectureUnit of lectureUnits; index as i; trackBy: identify">
-        <div class="col-10 col-md-8 offset-md-2" [ngSwitch]="lectureUnit.type">
+        <div class="col-1 my-auto mx-auto">
+            <jhi-learning-goals-popover
+                [courseId]="lecture!.course!.id"
+                [learningGoals]="lectureUnit.learningGoals"
+                [navigateTo]="'learningGoalManagement'"
+            ></jhi-learning-goals-popover>
+        </div>
+        <div class="col-9 mx-auto col-md-7 offset-md-2" [ngSwitch]="lectureUnit.type">
             <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture?.course"></jhi-exercise-unit>
             <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
             <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit"></jhi-video-unit>

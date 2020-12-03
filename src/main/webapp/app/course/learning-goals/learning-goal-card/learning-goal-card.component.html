@@ -1,12 +1,11 @@
-<div class="card learning-goal-card">
-    <div class="card-header learning-goal-header bg-primary text-white text-center">
-        {{ learningGoal.title }}
+<div class="card course-goal-card grow" (click)="openLearningGoalDetailsModal()">
+    <div class="card-header text-center course-goal-card-header container">
+        <span class="font-weight-bold">{{ learningGoal.title }}</span>
     </div>
     <div class="card-body">
-        <p class="card-text">{{ descriptionShown }}</p>
-        <button class="btn btn-sm btn-primary" *ngIf="truncatedDescription" (click)="expandCollapseDescription()">
-            <span *ngIf="descriptionShown === truncatedDescription; else elseBlock">Expand</span>
-            <ng-template #elseBlock>Collapse</ng-template>
-        </button>
+        <jhi-circular-progress-bar [progressInPercent]="50" [progressText]="progressText"></jhi-circular-progress-bar>
+    </div>
+    <div class="card-footer course-goal-card-footer" (click)="$event.stopPropagation()">
+        <ng-content></ng-content>
     </div>
 </div>

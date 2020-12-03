@@ -1,39 +1,39 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
 import { LearningGoal } from 'app/entities/learningGoal.model';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { LearningGoalDetailModalComponent } from 'app/course/learning-goals/learning-goal-detail-modal/learning-goal-detail-modal.component';
 
 @Component({
     selector: 'jhi-learning-goal-card',
     templateUrl: './learning-goal-card.component.html',
     styleUrls: ['./learning-goal-card.component.scss'],
 })
-export class LearningGoalCardComponent implements OnInit, OnChanges {
+export class LearningGoalCardComponent implements OnInit, OnDestroy {
     @Input()
     learningGoal: LearningGoal;
-    descriptionShown: string | undefined;
-    truncatedDescription: string | undefined = undefined;
-    noOfCharactersBeforeTruncating = 280;
 
-    constructor() {}
+    public predicate = 'id';
+    public reverse = false;
+    public progressText = '';
 
-    ngOnInit(): void {}
+    constructor(private modalService: NgbModal, public lectureUnitService: LectureUnitService, public translateService: TranslateService) {}
 
-    ngOnChanges(): void {
-        if (this.learningGoal && this.learningGoal.description) {
-            if (this.learningGoal.description.length > this.noOfCharactersBeforeTruncating) {
-                this.truncatedDescription = this.learningGoal.description.substr(0, this.noOfCharactersBeforeTruncating - 1) + '\u2026';
-                this.descriptionShown = this.truncatedDescription;
-            } else {
-                this.truncatedDescription = undefined;
-                this.descriptionShown = this.learningGoal.description;
-            }
+    ngOnInit(): void {
+        this.progressText = this.translateService.instant('artemisApp.learningGoal.learningGoalCard.achieved');
+    }
+
+    ngOnDestroy(): void {
+        if (this.modalService.hasOpenModals()) {
+            this.modalService.dismissAll();
         }
     }
 
-    expandCollapseDescription() {
-        if (this.descriptionShown === this.truncatedDescription) {
-            this.descriptionShown = this.learningGoal.description;
-        } else {
-            this.descriptionShown = this.truncatedDescription;
-        }
+    openLearningGoalDetailsModal() {
+        const modalRef = this.modalService.open(LearningGoalDetailModalComponent, {
+            size: 'xl',
+        });
+        modalRef.componentInstance.learningGoal = this.learningGoal;
     }
 }

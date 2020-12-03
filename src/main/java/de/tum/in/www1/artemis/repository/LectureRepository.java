@@ -17,16 +17,31 @@ import de.tum.in.www1.artemis.domain.Lecture;
 @Repository
 public interface LectureRepository extends JpaRepository<Lecture, Long> {
 
-    @Query("select lecture from Lecture lecture left join fetch lecture.attachments WHERE lecture.course.id = :#{#courseId}")
-    Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+            LEFT JOIN FETCH lecture.attachments
+            WHERE lecture.course.id = :#{#courseId}
+            """)
+    Set<Lecture> findAllByCourseIdWithAttachments(@Param("courseId") Long courseId);
+
+    @Query("""
+                        SELECT lecture
+                        FROM Lecture lecture
+                        LEFT JOIN FETCH lecture.attachments
+                        LEFT JOIN FETCH lecture.lectureUnits
+                        WHERE lecture.course.id = :#{#courseId}
+            """)
+    Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT lecture
             FROM Lecture lecture
             LEFT JOIN FETCH lecture.studentQuestions
-            LEFT JOIN FETCH lecture.lectureUnits
+            LEFT JOIN FETCH lecture.lectureUnits lu
+            LEFT JOIN FETCH lu.learningGoals
             WHERE lecture.id = :#{#lectureId}
             """)
-    Optional<Lecture> findByIdWithStudentQuestionsAndLectureUnits(@Param("lectureId") Long lectureId);
+    Optional<Lecture> findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(@Param("lectureId") Long lectureId);
 
 }

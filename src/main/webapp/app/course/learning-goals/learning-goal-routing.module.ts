@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { CreateLearningGoalComponent } from 'app/course/learning-goals/create-learning-goal/create-learning-goal.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { LearningGoalManagementComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-management.component';
+import { EditLearningGoalComponent } from 'app/course/learning-goals/edit-learning-goal/edit-learning-goal.component';
 
 const routes: Routes = [
     {
@@ -15,8 +16,8 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/goals/:goalId/edit',
-        component: CreateLearningGoalComponent,
+        path: ':courseId/goals/:learningGoalId/edit',
+        component: EditLearningGoalComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR'],
             pageTitle: 'artemisApp.learningGoal.editLearningGoal.title',

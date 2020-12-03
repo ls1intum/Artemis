@@ -1,4 +1,4 @@
-<form class="row">
+<div class="row">
     <div class="col-12">
         <form *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
             <div class="form-group">
@@ -37,13 +37,64 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-12">
-                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                        <span>{{ 'entity.action.submit' | translate }}</span>
+            <div>
+                <label> {{ 'artemisApp.learningGoal.createLearningGoal.connectWithLectureUnits' | translate }}</label>
+                <div ngbDropdown class="mb-2">
+                    <button class="btn btn-outline-primary" ngbDropdownToggle type="button">
+                        {{
+                            selectedLectureInDropdown
+                                ? getLectureTitleForDropdown(selectedLectureInDropdown)
+                                : ('artemisApp.learningGoal.createLearningGoal.selectLecture' | translate)
+                        }}
                     </button>
+                    <div ngbDropdownMenu>
+                        <button ngbDropdownItem type="button" *ngFor="let lecture of lecturesOfCourseWithLectureUnits" (click)="selectLectureInDropdown(lecture)">
+                            {{ getLectureTitleForDropdown(lecture) }}
+                        </button>
+                    </div>
                 </div>
+                <div class="table-responsive" *ngIf="selectedLectureInDropdown">
+                    <table class="table table-bordered">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>id</th>
+                                <th>
+                                    {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.type' | translate }}
+                                </th>
+                                <th>
+                                    {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.name' | translate }}
+                                </th>
+                                <th>
+                                    {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.releaseDate' | translate }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                *ngFor="let lectureUnit of selectedLectureInDropdown.lectureUnits"
+                                (click)="selectLectureUnitInTable(lectureUnit)"
+                                [class.table-primary]="isLectureUnitAlreadySelectedInTable(lectureUnit)"
+                            >
+                                <td>{{ lectureUnit.id ? lectureUnit.id : '' }}</td>
+                                <td>{{ lectureUnit.type ? lectureUnit.type : '' }}</td>
+                                <td>{{ lectureUnitService.getLectureUnitName(lectureUnit) ? lectureUnitService.getLectureUnitName(lectureUnit) : '' }}</td>
+                                <td>
+                                    {{
+                                        lectureUnitService.getLectureUnitReleaseDate(lectureUnit)
+                                            ? lectureUnitService.getLectureUnitReleaseDate(lectureUnit)!.format('MMM DD YYYY, HH:mm:ss')
+                                            : ''
+                                    }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div>
+                <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                    <span>{{ 'entity.action.submit' | translate }}</span>
+                </button>
             </div>
         </form>
     </div>
-</form>
+</div>

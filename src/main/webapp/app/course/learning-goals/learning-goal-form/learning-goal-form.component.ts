@@ -3,15 +3,23 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
+import { Lecture } from 'app/entities/lecture.model';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { TranslateService } from '@ngx-translate/core';
+import * as _ from 'lodash';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 
 /**
  * Async Validator to make sure that a learning goal title is unique within a course
  */
-export const titleUniqueValidator = (learningGoalService: LearningGoalService, courseId: number) => {
+export const titleUniqueValidator = (learningGoalService: LearningGoalService, courseId: number, initialTitle?: string) => {
     return (learningGoalTitleControl: FormControl) => {
         return of(learningGoalTitleControl.value).pipe(
             delay(250),
             switchMap((title) => {
+                if (initialTitle && title === initialTitle) {
+                    return of(null);
+                }
                 return learningGoalService.getAllForCourse(courseId).pipe(
                     map((res) => {
                         let learningGoalTitles: string[] = [];
@@ -36,31 +44,42 @@ export const titleUniqueValidator = (learningGoalService: LearningGoalService, c
 export interface LearningGoalFormData {
     title?: string;
     description?: string;
+    connectedLectureUnits?: LectureUnit[];
 }
 
 @Component({
     selector: 'jhi-learning-goal-form',
     templateUrl: './learning-goal-form.component.html',
-    styles: [],
+    styleUrls: ['./learning-goal-form.component.scss'],
 })
 export class LearningGoalFormComponent implements OnInit, OnChanges {
     @Input()
     formData: LearningGoalFormData = {
         title: undefined,
         description: undefined,
+        connectedLectureUnits: undefined,
     };
 
     @Input()
     isEditMode = false;
     @Input()
     courseId: number;
+    @Input()
+    lecturesOfCourseWithLectureUnits: Lecture[] = [];
 
     @Output()
     formSubmitted: EventEmitter<LearningGoalFormData> = new EventEmitter<LearningGoalFormData>();
 
     form: FormGroup;
+    selectedLectureInDropdown: Lecture;
+    selectedLectureUnitsInTable: LectureUnit[] = [];
 
-    constructor(private fb: FormBuilder, private learningGoalService: LearningGoalService) {}
+    constructor(
+        private fb: FormBuilder,
+        private learningGoalService: LearningGoalService,
+        private translateService: TranslateService,
+        public lectureUnitService: LectureUnitService,
+    ) {}
 
     get titleControl() {
         return this.form.get('title');
@@ -85,22 +104,62 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         if (this.form) {
             return;
         }
+        let initialTitle: string | undefined = undefined;
+        if (this.isEditMode && this.formData.title) {
+            initialTitle = this.formData.title;
+        }
         this.form = this.fb.group({
-            title: [undefined, [Validators.required, Validators.maxLength(255)], [titleUniqueValidator(this.learningGoalService, this.courseId)]],
+            title: [undefined, [Validators.required, Validators.maxLength(255)], [titleUniqueValidator(this.learningGoalService, this.courseId, initialTitle)]],
             description: [undefined, [Validators.maxLength(10000)]],
         });
+        this.selectedLectureUnitsInTable = [];
     }
 
     private setFormValues(formData: LearningGoalFormData) {
         this.form.patchValue(formData);
+        if (formData.connectedLectureUnits) {
+            this.selectedLectureUnitsInTable = formData.connectedLectureUnits;
+        }
     }
 
     submitForm() {
         const learningGoalFormData: LearningGoalFormData = { ...this.form.value };
+        learningGoalFormData.connectedLectureUnits = this.selectedLectureUnitsInTable;
         this.formSubmitted.emit(learningGoalFormData);
     }
 
     get isSubmitPossible() {
         return !this.form.invalid;
+    }
+
+    selectLectureInDropdown(lecture: Lecture) {
+        this.selectedLectureInDropdown = lecture;
+    }
+
+    selectLectureUnitInTable(lectureUnit: LectureUnit) {
+        if (this.isLectureUnitAlreadySelectedInTable(lectureUnit)) {
+            this.selectedLectureUnitsInTable.forEach((selectedLectureUnit, index) => {
+                if (selectedLectureUnit.id === lectureUnit.id) {
+                    this.selectedLectureUnitsInTable.splice(index, 1);
+                }
+            });
+        } else {
+            this.selectedLectureUnitsInTable.push(lectureUnit);
+        }
+    }
+
+    isLectureUnitAlreadySelectedInTable(lectureUnit: LectureUnit) {
+        return this.selectedLectureUnitsInTable.map((selectedLectureUnit) => selectedLectureUnit.id).includes(lectureUnit.id);
+    }
+
+    getLectureTitleForDropdown(lecture: Lecture) {
+        const noOfSelectedUnitsInLecture = _.intersection(
+            this.selectedLectureUnitsInTable.map((u) => u.id),
+            lecture.lectureUnits?.map((u) => u.id),
+        ).length;
+        return this.translateService.instant('artemisApp.learningGoal.createLearningGoal.dropdown', {
+            lectureTitle: lecture.title,
+            noOfConnectedUnits: noOfSelectedUnitsInLecture,
+        });
     }
 }

@@ -5,5 +5,11 @@
 </div>
 
 <div *ngIf="!isLoading" class="container">
-    <jhi-learning-goal-form [isEditMode]="false" (formSubmitted)="createLearningGoal($event)" [courseId]="courseId"></jhi-learning-goal-form>
+    <h3>{{ 'artemisApp.learningGoal.createLearningGoal.title' | translate }}</h3>
+    <jhi-learning-goal-form
+        [isEditMode]="false"
+        (formSubmitted)="createLearningGoal($event)"
+        [courseId]="courseId"
+        [lecturesOfCourseWithLectureUnits]="lecturesWithLectureUnits"
+    ></jhi-learning-goal-form>
 </div>
