@@ -119,7 +119,7 @@ import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.service.ModelingAssessmentService;
+import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
@@ -237,7 +237,7 @@ public class DatabaseUtilService {
     ModelingSubmissionService modelSubmissionService;
 
     @Autowired
-    ModelingAssessmentService modelingAssessmentService;
+    AssessmentService assessmentService;
 
     @Autowired
     ProgrammingExerciseTestRepository programmingExerciseTestRepository;
@@ -1037,7 +1037,7 @@ public class DatabaseUtilService {
      * @return eagerly loaded representation of the participation object stored in the database
      */
     public StudentParticipation createAndSaveParticipationForExercise(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
         if (storedParticipation.isEmpty()) {
             User user = getUserByLogin(login);
             StudentParticipation participation = new StudentParticipation();
@@ -1045,7 +1045,7 @@ public class DatabaseUtilService {
             participation.setParticipant(user);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
         }
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
@@ -1078,7 +1078,6 @@ public class DatabaseUtilService {
      */
     public TextSubmission markTextExerciseParticipationForTestRun(TextExercise exercise, String login) {
         var textSubmission = saveTextSubmissionWithResultAndAssessor(exercise, ModelFactory.generateTextSubmission("", null, false), login, login);
-        textSubmission.getResult().setScore(null);
         textSubmission.getResult().setCompletionDate(null);
         resultRepo.save(textSubmission.getResult());
         return textSubmission;
@@ -1102,7 +1101,7 @@ public class DatabaseUtilService {
      * @return eagerly loaded representation of the participation object stored in the database
      */
     public StudentParticipation addTeamParticipationForExercise(Exercise exercise, long teamId) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findByExerciseIdAndTeamId(exercise.getId(), teamId);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
         if (storedParticipation.isEmpty()) {
             Team team = teamRepo.findById(teamId).orElseThrow();
             StudentParticipation participation = new StudentParticipation();
@@ -1110,7 +1109,7 @@ public class DatabaseUtilService {
             participation.setParticipant(team);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findByExerciseIdAndTeamId(exercise.getId(), teamId);
+            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
             assertThat(storedParticipation).isPresent();
         }
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
@@ -2065,13 +2064,13 @@ public class DatabaseUtilService {
     }
 
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login, boolean submit) throws Exception {
-        List<Feedback> assessment = loadAssessmentFomResources(path);
-        Result result = modelingAssessmentService.saveManualAssessment(submission, assessment, exercise);
+        List<Feedback> feedbackList = loadAssessmentFomResources(path);
+        Result result = assessmentService.saveManualAssessment(submission, feedbackList);
         result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(getUserByLogin(login));
         resultRepo.save(result);
         if (submit) {
-            modelingAssessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
+            assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
         return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
     }

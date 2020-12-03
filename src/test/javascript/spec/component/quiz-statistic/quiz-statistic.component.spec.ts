@@ -15,6 +15,7 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { QuizStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { SinonStub, stub } from 'sinon';
 
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
@@ -30,9 +31,9 @@ describe('QuizExercise Statistic Component', () => {
     let fixture: ComponentFixture<QuizStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy: jasmine.Spy;
+    let accountSpy: SinonStub;
     let router: Router;
-    let quizServiceFindSpy: jasmine.Spy;
+    let quizServiceFindSpy: SinonStub;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -55,33 +56,33 @@ describe('QuizExercise Statistic Component', () => {
                 quizService = fixture.debugElement.injector.get(QuizExerciseService);
                 accountService = fixture.debugElement.injector.get(AccountService);
                 router = fixture.debugElement.injector.get(Router);
-                quizServiceFindSpy = spyOn(quizService, 'find').and.returnValue(of(new HttpResponse({ body: quizExercise })));
+                quizServiceFindSpy = stub(quizService, 'find').returns(of(new HttpResponse({ body: quizExercise })));
             });
     });
 
     afterEach(() => {
         comp.ngOnDestroy();
         quizExercise = { id: 42, started: true, course, quizQuestions: [question] } as QuizExercise;
-        quizServiceFindSpy.calls.reset();
+        quizServiceFindSpy.reset();
     });
 
     describe('OnInit', function () {
-        let loadQuizSuccessSpy: jasmine.Spy;
-        let loadDataSpy: jasmine.Spy;
+        let loadQuizSuccessSpy: SinonStub;
+        let loadDataSpy: SinonStub;
 
         beforeEach(() => {
-            loadQuizSuccessSpy = loadQuizSuccessSpy = spyOn(comp, 'loadQuizSuccess');
-            loadDataSpy = spyOn(comp, 'loadData');
+            loadQuizSuccessSpy = loadQuizSuccessSpy = stub(comp, 'loadQuizSuccess');
+            loadDataSpy = stub(comp, 'loadData');
         });
 
         afterEach(() => {
-            loadQuizSuccessSpy.calls.reset();
-            loadDataSpy.calls.reset();
+            loadQuizSuccessSpy.resetHistory();
+            loadDataSpy.resetHistory();
         });
 
         it('should call functions on Init', fakeAsync(() => {
             // setup
-            accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
+            accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(true);
 
             // call
             comp.ngOnInit();
@@ -95,7 +96,7 @@ describe('QuizExercise Statistic Component', () => {
 
         it('should not load QuizSuccess if not authorised', fakeAsync(() => {
             // setup
-            accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(false);
+            accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(false);
 
             // call
             comp.ngOnInit();
@@ -109,22 +110,22 @@ describe('QuizExercise Statistic Component', () => {
     });
 
     describe('loadQuizSuccess', function () {
-        let calculateMaxScoreSpy: jasmine.Spy;
-        let loadDataSpy: jasmine.Spy;
+        let calculateMaxScoreSpy: SinonStub;
+        let loadDataSpy: SinonStub;
 
         beforeEach(() => {
-            calculateMaxScoreSpy = spyOn(comp, 'calculateMaxScore').and.returnValue(32);
-            loadDataSpy = spyOn(comp, 'loadData');
+            calculateMaxScoreSpy = stub(comp, 'calculateMaxScore').returns(32);
+            loadDataSpy = stub(comp, 'loadData');
         });
 
         afterEach(() => {
-            calculateMaxScoreSpy.calls.reset();
-            loadDataSpy.calls.reset();
+            calculateMaxScoreSpy.resetHistory();
+            loadDataSpy.resetHistory();
         });
 
         it('should set data', () => {
             // setup
-            accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(true);
+            accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(true);
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -138,7 +139,7 @@ describe('QuizExercise Statistic Component', () => {
 
         it('should call navigate to courses if called by student', () => {
             // setup
-            accountSpy = spyOn(accountService, 'hasAnyAuthorityDirect').and.returnValue(false);
+            accountSpy = stub(accountService, 'hasAnyAuthorityDirect').returns(false);
             const routerSpy = spyOn(router, 'navigate');
 
             // call

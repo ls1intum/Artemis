@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
@@ -140,6 +141,8 @@ public class GitService {
 
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         Repository repository = getRepositoryByLocalPath(localPath);
+        // TODO: in case the actual git repository in the file system was deleted (e.g. by accident or through some administrator), we will get an exception here
+        // so we should basically check if the folder localPath still includes a valid git repository or not and potentially fix this situation then.
         if (repository != null) {
             if (pullOnGet) {
                 pull(repository);
@@ -491,6 +494,7 @@ public class GitService {
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
+    @NotNull
     public Collection<File> listFiles(Repository repo) {
         // Check if list of files is already cached
         if (repo.getFiles() == null) {

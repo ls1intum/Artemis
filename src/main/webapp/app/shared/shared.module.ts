@@ -15,7 +15,6 @@ import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { DebounceClickDirective } from 'app/shared/directives/DebounceClickDirective';
 import { ChartComponent } from 'app/shared/chart/chart.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { CircularProgressBarComponent } from 'app/shared/circular-progress-bar/circular-progress-bar.component';
@@ -35,7 +34,6 @@ import { CircularProgressBarComponent } from 'app/shared/circular-progress-bar/c
         SlideToggleComponent,
         JhiConnectionStatusComponent,
         ChartComponent,
-        DebounceClickDirective,
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -56,7 +54,6 @@ import { CircularProgressBarComponent } from 'app/shared/circular-progress-bar/c
         SecureLinkDirective,
         SlideToggleComponent,
         JhiConnectionStatusComponent,
-        DebounceClickDirective,
         ChartComponent,
     ],
 })

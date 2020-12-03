@@ -3,20 +3,15 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>${packageName}</groupId>
     <artifactId>${exerciseNamePomXml}-Tests</artifactId>
-    %non-sequential-start%
-    <packaging>jar</packaging>
-    %non-sequential-stop%
-    %sequential-start%
-    <packaging>pom</packaging>
-    %sequential-stop%
+    <packaging>${packaging}</packaging>
     <version>1.0</version>
     <name>${exerciseName} Tests</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        %static-code-analysis-start%
+        <!--%static-code-analysis-start%-->
         <scaConfigDirectory>${project.basedir}/staticCodeAnalysisConfig</scaConfigDirectory>
         <analyzeTests>false</analyzeTests>
-        %static-code-analysis-stop%
+        <!--%static-code-analysis-stop%-->
     </properties>
     <dependencies>
         <dependency>
@@ -33,14 +28,14 @@
     </dependencies>
     <build>
         <sourceDirectory>${project.basedir}${studentWorkingDirectory}</sourceDirectory>
-        %non-sequential-start%
+        <!--%non-sequential-start%-->
         <testSourceDirectory>${project.basedir}/test</testSourceDirectory>
         <testResources>
             <testResource>
                 <directory>${project.basedir}/test</directory>
             </testResource>
         </testResources>
-        %non-sequential-stop%
+        <!--%non-sequential-stop%-->
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -59,7 +54,7 @@
                     <argLine>-Dfile.encoding=UTF-8</argLine>
                 </configuration>
             </plugin>
-            %static-code-analysis-start%
+            <!--%static-code-analysis-start%-->
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
@@ -137,7 +132,7 @@
                     <ignoreIdentifiers>false</ignoreIdentifiers>
                 </configuration>
             </plugin>
-            %static-code-analysis-stop%
+            <!--%static-code-analysis-stop%-->
         </plugins>
     </build>
 </project>
