@@ -51,7 +51,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             hideStudentNameInZippedFolder: false,
         };
         this.isRepoExportForMultipleExercises = this.selectedProgrammingExercises.length > 0;
-        if (this.isRepoExportForMultipleExercises) {
+        if (!this.isRepoExportForMultipleExercises) {
             this.exerciseService
                 .find(this.exerciseId)
                 .pipe(
