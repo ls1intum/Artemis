@@ -51,6 +51,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     get commitState() {
         return this.commitStateValue;
     }
+    @Input()
+    isTutorAssessment = false;
     @Output()
     onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight?: number }>();
     @Output()
@@ -66,6 +68,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     selectedFileValue?: string;
     commitStateValue: CommitState;
     repositoryFiles: { [fileName: string]: FileType };
+    repositoryFilesWithInformationAboutChange: { [fileName: string]: boolean } | undefined;
     filesTreeViewItem: TreeviewItem[];
     compressFolders = true;
     compressedTreeItems: string[];
@@ -171,9 +174,19 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     return this.loadFiles();
                 }),
                 tap((files) => {
-                    this.isLoadingFiles = false;
                     this.repositoryFiles = files;
                     this.unsavedFiles = [];
+                }),
+                switchMap(() => {
+                    if (this.isTutorAssessment) {
+                        return this.loadFilesWithInformationAboutChange();
+                    } else {
+                        return Observable.of(undefined);
+                    }
+                }),
+                tap((filesWithInfoAboutChange) => {
+                    this.repositoryFilesWithInformationAboutChange = filesWithInfoAboutChange;
+                    this.isLoadingFiles = false;
                     this.setupTreeview();
                 }),
             )
@@ -490,6 +503,26 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             catchError(() => throwError('couldNotBeRetrieved')),
         );
     };
+
+    loadFilesWithInformationAboutChange(): Observable<{ [fileName: string]: boolean }> {
+        return this.repositoryFileService.getFilesWithInformationAboutChange().pipe(
+            rxMap((files) =>
+                compose(
+                    fromPairs,
+                    // Filter Readme file that was historically in the student's assignment repo
+                    filter(([value]) => !value.includes('README.md')),
+                    // Remove binary files as they can't be displayed in an editor
+                    filter(([filename]) => {
+                        const fileSplit = filename.split('.');
+                        // Either the file has no ending or the file ending is allowed
+                        return fileSplit.length === 1 || textFileExtensions.includes(fileSplit.pop()!);
+                    }),
+                    toPairs,
+                )(files),
+            ),
+            catchError(() => throwError('couldNotBeRetrieved')),
+        );
+    }
 
     renameFile = (filePath: string, fileName: string): Observable<void> => {
         return this.repositoryFileService.renameFile(filePath, fileName);

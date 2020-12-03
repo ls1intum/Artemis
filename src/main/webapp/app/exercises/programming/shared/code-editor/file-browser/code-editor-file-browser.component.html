@@ -84,6 +84,7 @@
     <jhi-code-editor-file-browser-file
         *ngIf="repositoryFiles[item.value] === FileType.FILE"
         [item]="item"
+        [hasChanges]="repositoryFilesWithInformationAboutChange ? repositoryFilesWithInformationAboutChange[item.value] : false"
         [isBeingRenamed]="renamingFile && renamingFile[0] === item.value"
         [hasUnsavedChanges]="unsavedFiles && unsavedFiles.includes(item.value)"
         [hasError]="errorFiles && errorFiles.includes(item.value)"
