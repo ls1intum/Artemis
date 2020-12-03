@@ -63,6 +63,8 @@
 
 <!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand" let-onCheckedChange="onCheckedChange">
+    {{ item }}
+    {{ repositoryFiles[item.value] }}
     <!--file-->
     <jhi-code-editor-file-browser-folder
         *ngIf="repositoryFiles[item.value] === FileType.FOLDER"
