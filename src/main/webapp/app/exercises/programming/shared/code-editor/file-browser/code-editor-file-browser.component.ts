@@ -68,7 +68,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     repositoryFiles: { [fileName: string]: FileType };
     filesTreeViewItem: TreeviewItem[];
     compressFolders = true;
-    compressedTreeItems: string[];
 
     @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
     @ViewChild('creatingInput', { static: false }) creatingInput: ElementRef;
@@ -254,7 +253,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     setupTreeview() {
         let tree = this.buildTree(Object.keys(this.repositoryFiles).sort());
         if (this.compressFolders) {
-            this.compressedTreeItems = [];
             tree = this.compressTree(tree);
         }
         this.filesTreeViewItem = this.transformTreeToTreeViewItem(tree);
@@ -344,8 +342,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 node.children = this.compressTree(node.children[0].children);
                 if (node.children[0].children) {
                     return this.compressTree(tree);
-                } else {
-                    this.compressedTreeItems.push(node.text);
                 }
             } else if (node.children) {
                 node.children = this.compressTree(node.children);
