@@ -1,8 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject } from 'rxjs';
 import { PlagiarismHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-header/plagiarism-header.component';
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
+import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
+import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 
 describe('Plagiarism Header Component', () => {
     let comp: PlagiarismHeaderComponent;
@@ -17,34 +21,31 @@ describe('Plagiarism Header Component', () => {
 
         fixture = TestBed.createComponent(PlagiarismHeaderComponent);
         comp = fixture.componentInstance;
+
+        comp.comparison = {
+            submissionA: { studentLogin: 'studentA' },
+            submissionB: { studentLogin: 'studentB' },
+        } as PlagiarismComparison<ModelingSubmissionElement>;
+        comp.splitControlSubject = new Subject<string>();
     });
 
-    it('should emit when confirming a plagiarism', () => {
-        spyOn(comp.plagiarismStatusChange, 'emit');
+    it('should confirm a plagiarism', () => {
+        comp.comparison = { status: PlagiarismStatus.NONE } as PlagiarismComparison<ModelingSubmissionElement>;
+        comp.confirmPlagiarism();
 
-        const nativeElement = fixture.nativeElement;
-        const confirmButton = nativeElement.querySelector("[data-qa='confirm-plagiarism-button']");
-        confirmButton.dispatchEvent(new Event('click'));
-
-        fixture.detectChanges();
-
-        expect(comp.plagiarismStatusChange.emit).toHaveBeenCalledWith(true);
+        expect(comp.comparison.status).toEqual(PlagiarismStatus.CONFIRMED);
     });
 
-    it('should emit when denying a plagiarism', () => {
-        spyOn(comp.plagiarismStatusChange, 'emit');
+    it('should deny a plagiarism', () => {
+        comp.comparison = { status: PlagiarismStatus.NONE } as PlagiarismComparison<ModelingSubmissionElement>;
+        comp.denyPlagiarism();
 
-        const nativeElement = fixture.nativeElement;
-        const denyButton = nativeElement.querySelector("[data-qa='deny-plagiarism-button']");
-        denyButton.dispatchEvent(new Event('click'));
-
-        fixture.detectChanges();
-
-        expect(comp.plagiarismStatusChange.emit).toHaveBeenCalledWith(false);
+        expect(comp.comparison.status).toEqual(PlagiarismStatus.DENIED);
     });
 
-    it('should emit when toggling split view on the left', () => {
-        spyOn(comp.splitViewChange, 'emit');
+    it('should emit when expanding left split view pane', () => {
+        comp.splitControlSubject = new Subject<string>();
+        spyOn(comp.splitControlSubject, 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitLeftButton = nativeElement.querySelector("[data-qa='split-view-left']");
@@ -52,11 +53,12 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.splitViewChange.emit).toHaveBeenCalledWith('left');
+        expect(comp.splitControlSubject.next).toHaveBeenCalledWith('left');
     });
 
-    it('should emit when toggling split view on the right', () => {
-        spyOn(comp.splitViewChange, 'emit');
+    it('should emit when expanding right split view pane', () => {
+        comp.splitControlSubject = new Subject<string>();
+        spyOn(comp.splitControlSubject, 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitRightButton = nativeElement.querySelector("[data-qa='split-view-right']");
@@ -64,11 +66,12 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.splitViewChange.emit).toHaveBeenCalledWith('right');
+        expect(comp.splitControlSubject.next).toHaveBeenCalledWith('right');
     });
 
-    it('should emit when toggling split view evenly', () => {
-        spyOn(comp.splitViewChange, 'emit');
+    it('should emit when resetting the split panes', () => {
+        comp.splitControlSubject = new Subject<string>();
+        spyOn(comp.splitControlSubject, 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitHalfButton = nativeElement.querySelector("[data-qa='split-view-even']");
@@ -76,6 +79,6 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.splitViewChange.emit).toHaveBeenCalledWith('even');
+        expect(comp.splitControlSubject.next).toHaveBeenCalledWith('even');
     });
 });

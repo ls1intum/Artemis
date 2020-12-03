@@ -80,13 +80,6 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Returns to previous state (same behaviour as back button in the browser)
-     */
-    previousState() {
-        window.history.back();
-    }
-
-    /**
      * Unsubscribes on component destruction
      */
     ngOnDestroy() {

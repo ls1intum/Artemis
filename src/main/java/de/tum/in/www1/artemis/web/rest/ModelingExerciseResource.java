@@ -10,7 +10,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
@@ -26,12 +25,12 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
-import de.tum.in.www1.artemis.web.rest.dto.ModelingSubmissionComparisonDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
@@ -415,20 +414,24 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * GET /check-plagiarism : Run similarity check pair-wise against all submissions of a given exercises.
-     * This can be used with human intelligence to identify suspicious similar submissions which might be a sign for plagiarism.
+     * GET /check-plagiarism : Run similarity check pair-wise against all submissions of a given
+     * exercises. This can be used with human intelligence to identify suspicious similar
+     * submissions which might be a sign for plagiarism.
      *
      * @param exerciseId for which all submission should be checked
-     * @return the ResponseEntity with status 200 (OK) and the list of pair-wise submission similarities above a threshold of 80%.
+     * @return the ResponseEntity with status 200 (OK) and the list of pair-wise submission
+     * similarities above a threshold of 80%.
      */
     @GetMapping("/modeling-exercises/{exerciseId}/check-plagiarism")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Stream<ModelingSubmissionComparisonDTO>> plagiarismChecks(@PathVariable long exerciseId) {
+    public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId) {
         Optional<ModelingExercise> optionalModelingExercise = modelingExerciseService.findOneWithParticipationsSubmissionsResults(exerciseId);
+
         if (optionalModelingExercise.isEmpty()) {
             return notFound();
         }
-        var modelingExercise = optionalModelingExercise.get();
+
+        ModelingExercise modelingExercise = optionalModelingExercise.get();
 
         if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
             return forbidden();
@@ -438,7 +441,9 @@ public class ModelingExerciseResource {
         var minimumSimilarity = 0.8;
         var minimumModelSize = 5;
         var minimumScore = 0;
-        var comparisonResult = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, minimumSimilarity, minimumModelSize, minimumScore);
-        return ResponseEntity.ok(comparisonResult.stream().sorted());
+
+        ModelingPlagiarismResult result = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, minimumSimilarity, minimumModelSize, minimumScore);
+
+        return ResponseEntity.ok(result);
     }
 }
