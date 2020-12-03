@@ -135,10 +135,21 @@ public abstract class Submission extends DomainObject {
     }
 
     // TODO Ruscher, Entholzer: refactor to addResult
+    /**
+     * custom setter that supports the migration from 1...1 to 1...* in the submission->result(s) relationship
+     * Will be refactore in the future
+     * @param result the result that should be added, in case this is null, an empty list will be used instead
+     */
     @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
     public void setResults(Result result) {
-        // addResult
-        this.results.add(result);
+        if (result == null) {
+            // clear the list of results
+            this.results = new ArrayList<>();
+        }
+        else {
+            // addResult
+            this.results.add(result);
+        }
     }
 
     // TODO Ruscher, Entholzer: refactor to setResults

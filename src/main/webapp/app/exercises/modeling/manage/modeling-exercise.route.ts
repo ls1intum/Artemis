@@ -92,8 +92,12 @@ export const routes: Routes = [
     {
         path: ':courseId/modeling-exercises/:exerciseId/plagiarism',
         component: PlagiarismInspectorComponent,
+        resolve: {
+            exercise: ModelingExerciseResolver,
+        },
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
         },
         canActivate: [UserRouteAccessService],
     },
