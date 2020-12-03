@@ -17,7 +17,6 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 export class AssessmentLayoutComponent {
     @HostBinding('class.assessment-container') readonly assessmentContainerClass = true;
 
-    @Input() hideBackButton = false;
     @Output() navigateBack = new EventEmitter<void>();
 
     @Input() isLoading: boolean;

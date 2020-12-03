@@ -1112,8 +1112,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 // Create results
                 var result = new Result().score(resultScore).rated(true).resultString("Good").completionDate(ZonedDateTime.now().minusMinutes(5));
                 result.setParticipation(participation);
+                result = resultRepository.save(result);
                 result.setSubmission(submission);
-                resultRepository.save(result);
+                submission.setResult(result);
+                submissionRepository.save(submission);
             }
         }
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();

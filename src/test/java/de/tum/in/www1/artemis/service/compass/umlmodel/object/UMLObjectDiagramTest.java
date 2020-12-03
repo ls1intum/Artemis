@@ -15,13 +15,13 @@ public class UMLObjectDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityObjectDiagram_EqualModels() {
-        compareSubmissions(modelingSubmission(UMLObjectDiagrams.OBJECT_MODEL_1), modelingSubmission(UMLObjectDiagrams.OBJECT_MODEL_1), 0.8, 1.0);
-        compareSubmissions(modelingSubmission(UMLObjectDiagrams.OBJECT_MODEL_2), modelingSubmission(UMLObjectDiagrams.OBJECT_MODEL_2), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(UMLObjectDiagrams.OBJECT_MODEL_1), modelingSubmission(UMLObjectDiagrams.OBJECT_MODEL_1), 0.8, 100.0);
+        compareSubmissions(modelingSubmission(UMLObjectDiagrams.OBJECT_MODEL_2), modelingSubmission(UMLObjectDiagrams.OBJECT_MODEL_2), 0.8, 100.0);
     }
 
     @Test
     void similarityObjectDiagram_DifferentModels() {
-        compareSubmissions(modelingSubmission(UMLObjectDiagrams.OBJECT_MODEL_1), modelingSubmission(UMLObjectDiagrams.OBJECT_MODEL_2), 0.0, 0.0999);
+        compareSubmissions(modelingSubmission(UMLObjectDiagrams.OBJECT_MODEL_1), modelingSubmission(UMLObjectDiagrams.OBJECT_MODEL_2), 0.0, 9.99);
     }
 
     @Test
