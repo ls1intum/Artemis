@@ -328,8 +328,4 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     formatDate(date: Moment | Date | undefined) {
         return date ? moment(date).format('MMM DD YYYY, HH:mm:ss') : '';
     }
-
-    isManualResult(result: Result) {
-        return Result.isManualResult(result);
-    }
 }

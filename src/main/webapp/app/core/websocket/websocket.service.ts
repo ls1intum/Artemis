@@ -143,9 +143,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         if (!this.connectedPromise) {
             this.connection = this.createConnection();
         }
-        // building absolute path so that websocket doesn't fail when deploying with a context path
-        const loc = window.location;
-        let url = '//' + loc.host + loc.pathname + 'websocket/tracker';
+        let url = `//${window.location.host}/websocket/tracker`;
         const authToken = this.authServerProvider.getToken();
         if (authToken) {
             url += '?access_token=' + authToken;

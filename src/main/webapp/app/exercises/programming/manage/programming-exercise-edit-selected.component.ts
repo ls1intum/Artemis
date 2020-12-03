@@ -21,7 +21,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     failedExercises: string[] = [];
     failureOccurred = false;
     private translationBasePath = 'artemisApp.programmingExercise.';
-    notificationText: string | null;
+    notificationText: string | undefined;
 
     constructor(
         private activeModal: NgbActiveModal,
@@ -92,7 +92,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse, exerciseTitle?: string | undefined) {
-        exerciseTitle = exerciseTitle == undefined ? 'undefined exercise' : exerciseTitle;
+        exerciseTitle = exerciseTitle ?? 'undefined exercise';
         this.failureOccurred = true;
         this.failedExercises.push(exerciseTitle);
         this.savedExercises++;

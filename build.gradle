@@ -190,7 +190,7 @@ dependencies {
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
     implementation "io.micrometer:micrometer-registry-prometheus:1.6.1"
-    implementation "net.logstash.logback:logstash-logback-encoder:6.4"
+    implementation "net.logstash.logback:logstash-logback-encoder:6.5"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:${fasterxml_version}"
@@ -253,6 +253,7 @@ dependencies {
     implementation "com.ibm.icu:icu4j:68.1"
     implementation "com.github.seancfoley:ipaddress:5.3.3"
     implementation "info.debatty:java-string-similarity:2.0.0"
+    implementation "org.apache.maven:maven-model:3.6.3"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"

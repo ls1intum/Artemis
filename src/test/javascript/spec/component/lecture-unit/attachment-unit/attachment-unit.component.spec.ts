@@ -7,7 +7,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslatePipe } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
@@ -28,7 +28,14 @@ describe('AttachmentUnitComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [AttachmentUnitComponent, MockComponent(FaIconComponent), MockPipe(TranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(NgbTooltip)],
+            declarations: [
+                AttachmentUnitComponent,
+                MockDirective(NgbCollapse),
+                MockComponent(FaIconComponent),
+                MockPipe(TranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockDirective(NgbTooltip),
+            ],
             providers: [MockProvider(FileService)],
             schemas: [],
         })
@@ -80,9 +87,9 @@ describe('AttachmentUnitComponent', () => {
     it('should download attachment when clicked', () => {
         const fileService = TestBed.inject(FileService);
         const downloadFileStub = sandbox.stub(fileService, 'downloadFileWithAccessToken');
-        const container = attachmentUnitComponentFixture.debugElement.nativeElement.querySelector('.row');
-        expect(container).to.be.ok;
-        container.click();
+        const downloadButton = attachmentUnitComponentFixture.debugElement.nativeElement.querySelector('#downloadButton');
+        expect(downloadButton).to.be.ok;
+        downloadButton.click();
         expect(downloadFileStub).to.have.been.calledOnce;
     });
 });

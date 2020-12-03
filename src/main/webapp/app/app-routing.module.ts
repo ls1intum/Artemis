@@ -66,7 +66,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./feature-overview/feature-overview.module').then((m) => m.FeatureOverviewModule),
                 },
             ],
-            { useHash: true, enableTracing: false, onSameUrlNavigation: 'reload' },
+            { enableTracing: false, onSameUrlNavigation: 'reload' },
         ),
     ],
     exports: [RouterModule],

@@ -9,7 +9,6 @@ import { Course } from 'app/entities/course.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../test.module';
-import { expect } from '../helpers/jest.fix';
 
 describe('QuizExercise Service', () => {
     let injector: TestBed;

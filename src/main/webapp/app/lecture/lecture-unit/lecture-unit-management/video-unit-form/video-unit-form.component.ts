@@ -95,7 +95,7 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
         }
         this.form = this.fb.group({
             name: [undefined, [Validators.required, Validators.maxLength(255)]],
-            description: [undefined, [Validators.maxLength(255)]],
+            description: [undefined, [Validators.maxLength(1000)]],
             releaseDate: [undefined],
             source: [undefined, [Validators.required, this.urlValidator]],
             urlHelper: [undefined, this.videoUrlValidator],

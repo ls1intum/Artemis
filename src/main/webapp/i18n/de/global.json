@@ -178,7 +178,7 @@
             "dashboard": "Dashboard",
             "units": "Einheiten",
             "edit": "Bearbeiten",
-            "editSelected": "Bearbeite Ausgewählte",
+            "editSelected": "Ausgewählte bearbeiten",
             "editInEditor": "In Editor bearbeiten",
             "editInIntelliJ": "In IntelliJ bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
