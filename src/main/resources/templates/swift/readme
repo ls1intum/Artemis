@@ -82,6 +82,8 @@ Context -right-> SortStrategy : sortAlgorithm
 Client .down.> Policy
 Client .down.> Context
 
+hide empty members
+
 @enduml
 
 

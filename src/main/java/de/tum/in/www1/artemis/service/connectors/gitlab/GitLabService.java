@@ -335,7 +335,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName)
+    public VcsRepositoryUrl forkRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName)
             throws VersionControlException {
         final var originalNamespace = sourceProjectKey + "%2F" + sourceRepositoryName.toLowerCase();
         final var targetRepoSlug = (targetProjectKey + "-" + targetRepositoryName).toLowerCase();
@@ -355,6 +355,12 @@ public class GitLabService extends AbstractVersionControlService {
         }
 
         return new GitLabRepositoryUrl(targetProjectKey, targetRepoSlug);
+    }
+
+    @Override
+    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName)
+            throws VersionControlException {
+        return forkRepository(sourceProjectKey, sourceRepositoryName, targetProjectKey, targetRepositoryName);
     }
 
     @Override

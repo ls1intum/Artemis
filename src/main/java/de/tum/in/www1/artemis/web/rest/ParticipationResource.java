@@ -484,7 +484,7 @@ public class ParticipationResource {
             }
             for (Result result : participation.getResults()) {
                 if (result.getSubmission() != null) {
-                    result.getSubmission().setResult(null);
+                    result.getSubmission().setResultsList(null);
                     result.getSubmission().setParticipation(null);
                 }
             }
