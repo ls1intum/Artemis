@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -58,9 +59,11 @@ public class CourseService {
 
     private final UserService userService;
 
+    private final LearningGoalRepository learningGoalRepository;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
-            ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService) {
+            ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -71,6 +74,7 @@ public class CourseService {
         this.exerciseGroupService = exerciseGroupService;
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
+        this.learningGoalRepository = learningGoalRepository;
     }
 
     @Autowired
@@ -223,6 +227,11 @@ public class CourseService {
         return courseRepository.findWithEagerExercisesAndLecturesById(courseId);
     }
 
+    public Course findOneWithExercisesAndLecturesAndLearningGoals(long courseId) {
+        log.debug("Request to get Course : {}", courseId);
+        return courseRepository.findWithEagerExercisesAndLecturesAndLearningGoalsById(courseId);
+    }
+
     /**
      * Deletes all elements associated with the course including:
      * <ul>
@@ -239,6 +248,11 @@ public class CourseService {
      */
     public void delete(Course course) {
         log.debug("Request to delete Course : {}", course.getTitle());
+
+        for (LearningGoal learningGoal : course.getLearningGoals()) {
+            learningGoalRepository.deleteById(learningGoal.getId());
+        }
+
         for (Exercise exercise : course.getExercises()) {
             exerciseService.delete(exercise.getId(), true, true);
         }
