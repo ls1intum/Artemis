@@ -75,6 +75,7 @@
                 </div>
             </div>
         </div>
+        <jhi-achievements [course]="course"></jhi-achievements>
     </div>
     <ng-template #noStatistics>
         <div class="row">
@@ -83,5 +84,4 @@
             </div>
         </div>
     </ng-template>
-    <jhi-achievements *ngIf="course.achievementsEnabled" [courseId]="this.course?.id"></jhi-achievements>
 </div>

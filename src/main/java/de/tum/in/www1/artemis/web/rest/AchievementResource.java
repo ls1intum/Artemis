@@ -45,7 +45,7 @@ public class AchievementResource {
     public ResponseEntity<Set<Achievement>> getEarnedAchievementsForUserInCourse(@PathVariable Long courseId) {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get earned achievements for user : {} in course : {}", user.getLogin(), courseId);
-        // IGNORE THE FOLLOWING CHANGES AS THEY ARE ONLY FOR TESTING PURPOSES
+        // IGNORE THE FOLLOWING CHANGES AS THEY ARE ONLY FOR CLIENT TESTING PURPOSES
         // Set<Achievement> achievements = achievementService.findAllByUserIdAndCourseId(user.getId(), courseId);
         // achievementService.prepareForClient(achievements);
         var achievements = new HashSet<Achievement>();

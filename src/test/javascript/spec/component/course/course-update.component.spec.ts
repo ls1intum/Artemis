@@ -53,6 +53,7 @@ describe('Course Management Update Component', () => {
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
                 isAtLeastInstructor: new FormControl(entity.isAtLeastInstructor),
+                achievementsEnabled: new FormControl(entity.achievementsEnabled),
             });
             // WHEN
             comp.save();
@@ -81,6 +82,7 @@ describe('Course Management Update Component', () => {
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
                 isAtLeastInstructor: new FormControl(entity.isAtLeastInstructor),
+                achievementsEnabled: new FormControl(entity.achievementsEnabled),
             }); // mocking reactive form
             // WHEN
             comp.save();

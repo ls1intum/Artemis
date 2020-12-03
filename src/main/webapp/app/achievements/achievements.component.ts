@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Achievement, AchievementRank } from 'app/entities/achievement.model';
+import { Course } from 'app/entities/course.model';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -11,7 +12,7 @@ import { Subscription } from 'rxjs';
 })
 export class AchievementsComponent implements OnInit, OnDestroy {
     @Input()
-    public courseId: number;
+    public course: Course;
 
     public achievements: Achievement[];
 
@@ -24,9 +25,11 @@ export class AchievementsComponent implements OnInit, OnDestroy {
     constructor(private http: HttpClient) {}
 
     ngOnInit() {
-        this.subscription = this.http
-            .get<Achievement[]>(`${this.resourceUrl}/${this.courseId}/earned-achievements`)
-            .subscribe((loadedAchievements) => (this.achievements = loadedAchievements));
+        if (this.course.achievementsEnabled) {
+            this.subscription = this.http
+                .get<Achievement[]>(`${this.resourceUrl}/${this.course.id}/earned-achievements`)
+                .subscribe((loadedAchievements) => (this.achievements = loadedAchievements));
+        }
     }
 
     ngOnDestroy() {
