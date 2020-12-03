@@ -15,13 +15,13 @@ public class UMLUseCaseDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityUseCaseDiagram_EqualModels() {
-        compareSubmissions(modelingSubmission(UMLUseCaseDiagrams.USE_CASE_MODEL_1), modelingSubmission(UMLUseCaseDiagrams.USE_CASE_MODEL_1), 0.8, 1.0);
-        compareSubmissions(modelingSubmission(UMLUseCaseDiagrams.USE_CASE_MODEL_2), modelingSubmission(UMLUseCaseDiagrams.USE_CASE_MODEL_2), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(UMLUseCaseDiagrams.USE_CASE_MODEL_1), modelingSubmission(UMLUseCaseDiagrams.USE_CASE_MODEL_1), 0.8, 100.0);
+        compareSubmissions(modelingSubmission(UMLUseCaseDiagrams.USE_CASE_MODEL_2), modelingSubmission(UMLUseCaseDiagrams.USE_CASE_MODEL_2), 0.8, 100.0);
     }
 
     @Test
     void similarityUseCaseDiagram_DifferentModels() {
-        compareSubmissions(modelingSubmission(UMLUseCaseDiagrams.USE_CASE_MODEL_1), modelingSubmission(UMLUseCaseDiagrams.USE_CASE_MODEL_2), 0.0, 0.1844);
+        compareSubmissions(modelingSubmission(UMLUseCaseDiagrams.USE_CASE_MODEL_1), modelingSubmission(UMLUseCaseDiagrams.USE_CASE_MODEL_2), 0.0, 18.44);
     }
 
     @Test
