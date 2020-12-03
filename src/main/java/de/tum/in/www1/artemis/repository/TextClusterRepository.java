@@ -21,10 +21,10 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 @Repository
 public interface TextClusterRepository extends JpaRepository<TextCluster, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = "blocks")
+    @EntityGraph(type = LOAD, attributePaths = { "blocks", "blocks.submission", "blocks.submission.results" })
     List<TextCluster> findAllByExercise(TextExercise exercise);
 
-    @Query("SELECT distinct cluster FROM TextCluster cluster LEFT JOIN FETCH cluster.blocks WHERE cluster.id IN :#{#clusterIds}")
+    @Query("SELECT distinct cluster FROM TextCluster cluster LEFT JOIN FETCH cluster.blocks b LEFT JOIN FETCH b.submission blocksub LEFT JOIN FETCH blocksub.results WHERE cluster.id IN :#{#clusterIds}")
     List<TextCluster> findAllByIdsWithEagerTextBlocks(@Param("clusterIds") Set<Long> clusterIds);
 
 }

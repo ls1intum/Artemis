@@ -22,8 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -61,21 +60,26 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
         }
+        ProgrammingExerciseParticipation programmingParticipation = (ProgrammingExerciseParticipation) participation;
         // Error case 2: The user does not have permissions to push into the repository.
-        boolean hasPermissions = participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
+        boolean hasPermissions = participationService.canAccessParticipation(programmingParticipation);
         if (!hasPermissions) {
             throw new IllegalAccessException();
         }
         // Error case 3: The user's participation repository is locked.
-        if (repositoryAction == RepositoryActionType.WRITE && programmingExerciseService.isParticipationRepositoryLocked((ProgrammingExerciseParticipation) participation)) {
+        if (repositoryAction == RepositoryActionType.WRITE && programmingExerciseService.isParticipationRepositoryLocked(programmingParticipation)) {
             throw new IllegalAccessException();
         }
         // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise()) && !examSubmissionService.isAllowedToSubmit(participation.getExercise(), user)) {
+        var programmingExercise = programmingParticipation.getProgrammingExercise();
+        // This must be a student participation as hasPermissions would have been false and an error already thrown
+        var isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
+        if (isStudentParticipation && !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)
+                && !examSubmissionService.isAllowedToSubmit(programmingExercise, user)) {
             throw new IllegalAccessException();
         }
-        URL repositoryUrl = ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
+        URL repositoryUrl = programmingParticipation.getRepositoryUrlAsUrl();
         return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
     }
 
@@ -101,6 +105,28 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long participationId) {
         return super.getFiles(participationId);
+    }
+
+    /**
+     * GET /repository/{participationId}/files-change
+     *
+     * Gets the files of the repository and checks whether they were changed during a student participation with respect to the initial template
+     *
+     * @param participationId participation of the student
+     * @return the ResponseEntity with status 200 (OK) and a map of files with the information if they were changed/are new.
+     */
+    @GetMapping(value = "/repository/{participationId}/files-change", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Map<String, Boolean>> getFilesWithInformationAboutChange(@PathVariable Long participationId) {
+        return super.executeAndCheckForExceptions(() -> {
+            Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
+            var participation = participationService.findParticipation(participationId);
+            var exercise = super.programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(participation.getExercise().getId());
+
+            Repository templateRepository = getRepository(exercise.getTemplateParticipation().getId(), RepositoryActionType.READ, true);
+            var filesWithInformationAboutChange = super.repositoryService.getFilesWithInformationAboutChange(repository, templateRepository);
+            return new ResponseEntity<>(filesWithInformationAboutChange, HttpStatus.OK);
+        });
     }
 
     @Override

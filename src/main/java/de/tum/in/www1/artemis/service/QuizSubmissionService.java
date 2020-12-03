@@ -85,27 +85,33 @@ public class QuizSubmissionService {
         quizSubmission.setSubmitted(true);
         quizSubmission.setType(SubmissionType.MANUAL);
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
-
         // calculate scores
         quizSubmission.calculateAndUpdateScores(quizExercise);
+        // save parent submission object
+        quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
-        // create and save result
+        // create result
         Result result = new Result().participation(participation);
-        result = resultRepository.save(result);
-        result.setSubmission(quizSubmission);
         result.setRated(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
-        // calculate score and update result accordingly
-        result.evaluateSubmission();
         // save result
-        quizSubmission.setResult(result);
-        quizSubmission.setParticipation(participation);
-        quizSubmissionRepository.save(quizSubmission);
         result = resultRepository.save(result);
 
-        // result.submission and result.participation.exercise.quizQuestions turn into proxy objects after saving, so we need to set it again to prevent problems later on
+        // setup result - submission relation
         result.setSubmission(quizSubmission);
+        // calculate score and update result accordingly
+        result.evaluateSubmission();
+        quizSubmission.setResult(result);
+        quizSubmission.setParticipation(participation);
+
+        // save submission to set result index column
+        quizSubmissionRepository.save(quizSubmission);
+
+        // save result to store score
+        resultRepository.save(result);
+
+        // result.participation.exercise.quizQuestions turn into proxy objects after saving, so we need to set it again to prevent problems later on
         result.setParticipation(participation);
 
         // add result to statistics

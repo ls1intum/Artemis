@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -56,15 +57,16 @@ public abstract class Submission extends DomainObject {
     @JsonIgnore
     @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    // TODO use Set here instead of List
     private List<SubmissionVersion> versions = new ArrayList<>();
 
     /**
-     * A submission can have a result and therefore, results are persisted and removed with a submission.
+     * A submission can have multiple results, therefore, results are persisted and removed with a submission.
      */
-    @OneToOne(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderColumn
     @JsonIgnoreProperties({ "submission", "participation" })
-    @JoinColumn(unique = true)
-    private Result result;
+    private List<Result> results = new ArrayList<>();
 
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
@@ -94,12 +96,66 @@ public abstract class Submission extends DomainObject {
         return Duration.between(initilizationDate, submissionDate).toMinutes();
     }
 
+    // TODO Ruscher, Entholzer: Refactor to getLatestResult
+    /**
+     * Is used as a workaround for objects that expect submission to have 1 result
+     *
+     * @return the latest result
+     */
+    @Nullable
+    @JsonProperty(value = "result", access = JsonProperty.Access.READ_ONLY)
     public Result getResult() {
-        return result;
+        // in all cases (except 2nd, 3rd correction, etc.) we would like to have the latest result
+        // getLatestResult
+        if (!results.isEmpty()) {
+            return results.get(results.size() - 1);
+        }
+        return null;
     }
 
+    /**
+     * currently not used
+     *
+     * @return the first Result of the Submission
+     */
+    @Nullable
+    @JsonIgnore
+    public Result getFirstResult() {
+        // getLatestResult
+        if (!results.isEmpty()) {
+            return results.get(0);
+        }
+        return null;
+    }
+
+    // TODO NR, SE: remove redundant setter after relationship change on client. Currently we need two deserializing setters for "result" (client) and "results" (server)
+    @JsonProperty(value = "result", access = JsonProperty.Access.WRITE_ONLY)
     public void setResult(Result result) {
-        this.result = result;
+        this.setResults(result);
+    }
+
+    // TODO Ruscher, Entholzer: refactor to addResult
+    /**
+     * custom setter that supports the migration from 1...1 to 1...* in the submission->result(s) relationship
+     * Will be refactore in the future
+     * @param result the result that should be added, in case this is null, an empty list will be used instead
+     */
+    @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
+    public void setResults(Result result) {
+        if (result == null) {
+            // clear the list of results
+            this.results = new ArrayList<>();
+        }
+        else {
+            // addResult
+            this.results.add(result);
+        }
+    }
+
+    // TODO Ruscher, Entholzer: refactor to setResults
+    @JsonIgnore()
+    public void setResultsList(List<Result> results) {
+        this.results = results;
     }
 
     public Participation getParticipation() {
