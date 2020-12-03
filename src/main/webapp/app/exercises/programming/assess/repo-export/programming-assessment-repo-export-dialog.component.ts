@@ -30,6 +30,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     exportInProgress: boolean;
     repositoryExportOptions: RepositoryExportOptions;
     isLoading = false;
+    isRepoExportForMultipleExercises: boolean;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -49,7 +50,8 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             normalizeCodeStyle: false, // disabled by default because it is rather unstable
             hideStudentNameInZippedFolder: false,
         };
-        if (this.selectedProgrammingExercises.length <= 0) {
+        this.isRepoExportForMultipleExercises = this.selectedProgrammingExercises.length > 0;
+        if (this.isRepoExportForMultipleExercises) {
             this.exerciseService
                 .find(this.exerciseId)
                 .pipe(

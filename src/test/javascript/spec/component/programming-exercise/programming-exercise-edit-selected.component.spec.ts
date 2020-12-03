@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import * as moment from 'moment';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -13,18 +13,12 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 
 describe('ProgrammingExercise Edit Selected Component', () => {
     let comp: ProgrammingExerciseEditSelectedComponent;
     let fixture: ComponentFixture<ProgrammingExerciseEditSelectedComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
-    let courseService: CourseManagementService;
-    let exerciseGroupService: ExerciseGroupService;
-    let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -43,9 +37,6 @@ describe('ProgrammingExercise Edit Selected Component', () => {
         fixture = TestBed.createComponent(ProgrammingExerciseEditSelectedComponent);
         comp = fixture.componentInstance;
         programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-        courseService = fixture.debugElement.injector.get(CourseManagementService);
-        exerciseGroupService = fixture.debugElement.injector.get(ExerciseGroupService);
-        programmingExerciseFeatureService = fixture.debugElement.injector.get(ProgrammingLanguageFeatureService);
     });
 
     describe('saveAll', () => {
@@ -96,7 +87,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             comp.selectedProgrammingExercises = selectedProgrammingExercises;
             comp.newProgrammingExercise = newProgrammingExercise;
 
-            spyOn(programmingExerciseService, 'update').and.returnValue(of(new HttpErrorResponse({ error: 'Internal Server Error' })));
+            spyOn(programmingExerciseService, 'update').and.returnValue(Observable.throwError(new HttpErrorResponse({ status: 500 })));
             spyOn(comp, 'closeModal');
             // WHEN
             comp.saveAll();
@@ -104,7 +95,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
 
             // THEN
             expect(programmingExerciseService.update).toHaveBeenCalledWith(entityOne, {});
-            // expect(comp.failedExercises.length).toBeGreaterThan(0);
+            expect(comp.failureOccurred).toEqual(true);
             expect(comp.isSaving).toEqual(false);
             expect(comp.closeModal).toHaveBeenCalledTimes(0);
         }));

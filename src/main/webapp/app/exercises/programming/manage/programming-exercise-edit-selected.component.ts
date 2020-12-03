@@ -19,6 +19,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     isSaving = false;
     savedExercises = 0;
     failedExercises: string[] = [];
+    failureOccurred = false;
     private translationBasePath = 'artemisApp.programmingExercise.';
     notificationText: string | null;
 
@@ -84,7 +85,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
         this.savedExercises++;
         if (this.savedExercises === this.selectedProgrammingExercises.length) {
             this.isSaving = false;
-            if (this.failedExercises.length <= 0) {
+            if (!this.failureOccurred) {
                 this.activeModal.close();
             }
         }
@@ -92,6 +93,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
 
     private onSaveError(error: HttpErrorResponse, exerciseTitle?: string | undefined) {
         exerciseTitle = exerciseTitle == undefined ? 'undefined exercise' : exerciseTitle;
+        this.failureOccurred = true;
         this.failedExercises.push(exerciseTitle);
         this.savedExercises++;
         if (this.savedExercises === this.selectedProgrammingExercises.length) {

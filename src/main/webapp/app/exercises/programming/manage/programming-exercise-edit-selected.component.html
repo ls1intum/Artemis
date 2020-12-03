@@ -8,7 +8,7 @@
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
         </div>
-        <div *ngIf="failedExercises.length > 0" class="row justify-content-center">
+        <div *ngIf="failureOccurred" class="row justify-content-center">
             <span class="mb-1" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorOccurred">The following exercises could not be updated:</span>
             <div class="table-responsive m-2 p-1">
                 <table class="table table-striped">
@@ -21,7 +21,7 @@
             </div>
             <button type="button" class="btn ml-2 btn-primary" (click)="closeModal()" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorReadButton">Ok</button>
         </div>
-        <div *ngIf="failedExercises.length <= 0" class="row justify-content-center">
+        <div *ngIf="!failureOccurred" class="row justify-content-center">
             <div class="col-lg-8 col-sm-12">
                 <span style="font-weight: bold" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.currentlyEdited">You are editing the following exercises:</span>
                 <div class="table-responsive m-2 p-1">
