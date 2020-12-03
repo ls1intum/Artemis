@@ -137,8 +137,14 @@ public abstract class Submission extends DomainObject {
     // TODO Ruscher, Entholzer: refactor to addResult
     @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
     public void setResults(Result result) {
-        // addResult
-        this.results.add(result);
+        if (result == null) {
+            // clear the list of results
+            this.results = new ArrayList<>();
+        }
+        else {
+            // addResult
+            this.results.add(result);
+        }
     }
 
     // TODO Ruscher, Entholzer: refactor to setResults
