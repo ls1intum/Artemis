@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
@@ -14,6 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,8 +86,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
-        bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username, status);
+    public void mockForkRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
+        bitbucketRequestMockProvider.mockForkRepositoryForParticipation(exercise, username, status);
     }
 
     @Override
@@ -172,10 +174,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public List<Verifiable> mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans)
-            throws IOException, URISyntaxException {
+            throws IOException, URISyntaxException, GitAPIException {
         final var verifications = new ArrayList<Verifiable>();
         final var projectKey = exerciseToBeImported.getProjectKey();
-        final var sourceProjectKey = sourceExercise.getProjectKey();
         final var templateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
         final var testsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
@@ -186,15 +187,17 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
         bitbucketRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
-        bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, sourceExercise.getTemplateRepositoryName(), templateRepoName);
-        bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, sourceExercise.getSolutionRepositoryName(), solutionRepoName);
-        bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, sourceExercise.getTestRepositoryName(), testsRepoName);
+        bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, templateRepoName);
+        bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, solutionRepoName);
+        bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, testsRepoName);
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, templateRepoName);
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, templateRepoName, artemisTemplateHookPath);
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, solutionRepoName);
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, solutionRepoName, artemisSolutionHookPath);
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, testsRepoName);
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, testsRepoName, artemisTestsHookPath);
+
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
 
         bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
         if (!recreateBuildPlans) {

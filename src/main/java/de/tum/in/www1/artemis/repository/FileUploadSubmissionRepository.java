@@ -22,14 +22,14 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @param submissionId the submission id we are interested in
      * @return the submission with its feedback and assessor
      */
-    @Query("select distinct submission from FileUploadSubmission submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
+    @Query("select distinct submission from FileUploadSubmission submission left join fetch submission.results r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
     Optional<FileUploadSubmission> findByIdWithEagerResultAndFeedback(@Param("submissionId") Long submissionId);
 
     /**
      * @param submissionId the submission id we are interested in
      * @return the submission with its assessor
      */
-    @Query("select distinct submission from FileUploadSubmission submission left join fetch submission.result r left join fetch r.assessor where submission.id = :#{#submissionId}")
+    @Query("select distinct submission from FileUploadSubmission submission left join fetch submission.results r left join fetch r.assessor where submission.id = :#{#submissionId}")
     Optional<FileUploadSubmission> findByIdWithEagerResult(@Param("submissionId") Long submissionId);
 
     /**
@@ -39,6 +39,6 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @param submissionId the id of the file upload submission that should be loaded from the database
      * @return the file upload submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
-    @EntityGraph(type = LOAD, attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "participation", "participation.results" })
     Optional<FileUploadSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(Long submissionId);
 }
