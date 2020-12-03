@@ -5,6 +5,7 @@
 </div>
 
 <div *ngIf="!isLoading" class="container">
+    <h3>{{ 'artemisApp.learningGoal.editLearningGoal.title' | translate }}</h3>
     <jhi-learning-goal-form
         [isEditMode]="true"
         [formData]="formData"
