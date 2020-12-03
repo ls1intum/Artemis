@@ -206,9 +206,15 @@ public class TutorParticipationService {
             existingTutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         }
 
+        // keep example submission set reference with loaded submission.results to reconnect after save response from DB
+        var exampleSubmissionSet = existingTutorParticipation.getTrainedExampleSubmissions();
+
         existingTutorParticipation = existingTutorParticipation.addTrainedExampleSubmissions(originalExampleSubmission);
         exampleSubmissionService.save(originalExampleSubmission);
         existingTutorParticipation = save(existingTutorParticipation);
+
+        existingTutorParticipation.setTrainedExampleSubmissions(exampleSubmissionSet);
+        existingTutorParticipation.getTrainedExampleSubmissions().add(originalExampleSubmission);
 
         return existingTutorParticipation;
     }
