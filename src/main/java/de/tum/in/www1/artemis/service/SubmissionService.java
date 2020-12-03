@@ -129,7 +129,7 @@ public class SubmissionService {
      * @return number of locked submissions for the current user in the given course
      */
     public List<Submission> getLockedSubmissions(long courseId) {
-        return submissionRepository.getLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
     }
 
     /**
@@ -190,14 +190,14 @@ public class SubmissionService {
     }
 
     /**
-     * Get the submission with the given id from the database. The submission is loaded together with its result and the assessor. Throws an EntityNotFoundException if no
+     * Get the submission with the given id from the database. The submission is loaded together with its results and the assessors. Throws an EntityNotFoundException if no
      * submission could be found for the given id.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the submission with the given id
      */
-    public Submission findOneWithEagerResult(long submissionId) {
-        return submissionRepository.findWithEagerResultById(submissionId)
+    public Submission findOneWithEagerResults(long submissionId) {
+        return submissionRepository.findWithEagerResultsById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
 
@@ -287,12 +287,32 @@ public class SubmissionService {
      */
     public Result setNewResult(Submission submission) {
         Result result = new Result();
-        result.setSubmission(submission);
-        submission.setResult(result);
         result.setParticipation(submission.getParticipation());
         result = resultRepository.save(result);
+        result.setSubmission(submission);
+        submission.setResult(result);
         submissionRepository.save(submission);
         return result;
+    }
+
+    /**
+     * used to assign and save results to submissions
+     *
+     * @param submission the parent submission of the result
+     * @param result the result which we want to save and order
+     * @return the result with correctly persistet relationship to its submission
+     */
+    public Result saveOrderedResultBySubmission(final Submission submission, final Result result) {
+        result.setSubmission(null);
+        submission.setResultsList(new ArrayList<>());
+        if (result.getParticipation() == null) {
+            result.setParticipation(submission.getParticipation());
+        }
+        var savedResult = resultRepository.save(result);
+        savedResult.setSubmission(submission);
+        submission.setResult(savedResult);
+        submissionRepository.save(submission);
+        return savedResult;
     }
 
     /**
