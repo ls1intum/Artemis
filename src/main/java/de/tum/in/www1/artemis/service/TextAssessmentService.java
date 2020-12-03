@@ -61,20 +61,22 @@ public class TextAssessmentService extends AssessmentService {
             if (assessments.isEmpty() && computeFeedbackSuggestions) {
                 automaticTextFeedbackService.get().suggestFeedback(result);
             }
+            result.setSubmission(textSubmission); // make sure this is not a Hibernate Proxy
         }
         else {
             // We are the first ones to open assess this submission, we want to lock it.
             result = new Result();
             result.setParticipation(participation);
-            result.setSubmission(textSubmission);
+
             resultService.createNewRatedManualResult(result, false);
             result.setCompletionDate(null);
             result = resultRepository.save(result);
+            result.setSubmission(textSubmission);
             textSubmission.setResult(result);
+            submissionRepository.save(textSubmission);
 
             // If enabled, we want to compute feedback suggestions using Athene.
             if (computeFeedbackSuggestions) {
-                result.setSubmission(textSubmission); // make sure this is not a Hibernate Proxy
                 automaticTextFeedbackService.get().suggestFeedback(result);
             }
         }
@@ -89,6 +91,9 @@ public class TextAssessmentService extends AssessmentService {
         if (textSubmission.getBlocks() == null || !isInitialized(textSubmission.getBlocks()) || textSubmission.getBlocks().isEmpty()) {
             textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
+
+        // Remove participation after storing in database because submission already has the participation set
+        result.setParticipation(null);
     }
 
     private List<Feedback> getAssessmentsForResultWithConflicts(Result result) {

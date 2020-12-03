@@ -98,8 +98,11 @@ public class ProgrammingExerciseGradingService {
                 extractTestCasesFromResult(programmingExercise, result);
             }
             result = updateResult(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
-            result = resultRepository.save(result);
+
             // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
+            Submission tmpSubmission = result.getSubmission();
+            result = resultRepository.save(result);
+            result.setSubmission(tmpSubmission);
 
             // If the solution participation was updated, also trigger the template participation build.
             if (isSolutionParticipation) {

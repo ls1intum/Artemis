@@ -47,7 +47,7 @@ You can find information on how to set up user registration [here](docs/admin/re
 
 ### Contributing 
 
-Please read the guid on [how to contribute](/CONTRIBUTING.md) to Artemis.
+Please read the guide on [how to contribute](/CONTRIBUTING.md) to Artemis.
 
 ### Building for production
 
