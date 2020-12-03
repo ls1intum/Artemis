@@ -12,11 +12,8 @@ import { SpanType } from 'app/entities/statistics.model';
     templateUrl: './statistics.component.html',
 })
 export class StatisticsComponent implements OnInit {
-    DAY = SpanType.DAY;
-    WEEK = SpanType.WEEK;
-    MONTH = SpanType.MONTH;
-    YEAR = SpanType.YEAR;
-    span: SpanType = SpanType.WEEK;
+    SpanType = SpanType;
+    currentSpan: SpanType = SpanType.WEEK;
 
     // Histogram related properties
     public barChartOptions: ChartOptions = {};
@@ -37,14 +34,14 @@ export class StatisticsComponent implements OnInit {
     }
     private initializeChart(): void {
         this.setBinWidth();
-        this.service.getTotalSubmissions(this.span).subscribe((res: number[]) => {
+        this.service.getTotalSubmissions(this.currentSpan).subscribe((res: number[]) => {
             this.submissionsForSpanType = res;
             this.createChart();
         });
     }
 
     private setBinWidth(): void {
-        switch (this.span) {
+        switch (this.currentSpan) {
             case SpanType.DAY:
                 for (let i = 0; i < 24; i++) {
                     this.barChartLabels[i] = `${i}:00-${i + 1}:00`;
@@ -64,7 +61,7 @@ export class StatisticsComponent implements OnInit {
     }
 
     onTabChanged(span: SpanType): void {
-        this.span = span;
+        this.currentSpan = span;
         this.barChartLabels = [];
         this.initializeChart();
     }

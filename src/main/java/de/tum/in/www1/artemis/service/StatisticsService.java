@@ -41,6 +41,8 @@ public class StatisticsService {
         List<Map<String, Object>> outcome;
         ZonedDateTime now = ZonedDateTime.now();
         Integer lengthOfMonth = YearMonth.of(now.getYear(), now.minusMonths(1).getMonth()).lengthOfMonth();
+
+        // A map to manage the spanTypes and the corresponding array length of the result
         Map<SpanType, Integer> spanMap = new HashMap<>();
         spanMap.put(SpanType.DAY, 24);
         spanMap.put(SpanType.WEEK, 7);
@@ -52,58 +54,110 @@ public class StatisticsService {
             case DAY:
                 border = now.withHour(0).withMinute(0).withSecond(0);
                 outcome = this.statisticsRepository.getTotalSubmissions(border);
-                for (Map<String, Object> map : outcome) {
-                    ZonedDateTime date = (ZonedDateTime) map.get("day");
-                    Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
-                    for (int i = 0; i < 24; i++) {
-                        if (date.getHour() == now.minusHours(i).getHour()) {
-                            result[now.getHour() - i] += amount;
-                        }
-                    }
-                }
-                return result;
+                return createSubmissionCountArrayForDay(outcome, result, now);
             case WEEK:
                 border = now.minusDays(6).withHour(0).withMinute(0).withSecond(0);
                 outcome = this.statisticsRepository.getTotalSubmissions(border);
-                for (Map<String, Object> map : outcome) {
-                    ZonedDateTime date = (ZonedDateTime) map.get("day");
-                    Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
-                    for (int i = 0; i < 7; i++) {
-                        if (date.getDayOfMonth() == now.minusDays(i).getDayOfMonth()) {
-                            result[6 - i] += amount;
-                        }
-                    }
-                }
-                return result;
+                return createSubmissionCountArrayForWeek(outcome, result, now);
             case MONTH:
                 border = now.minusMonths(1).plusDays(1).withHour(0).withMinute(0).withSecond(0);
                 outcome = this.statisticsRepository.getTotalSubmissions(border);
-                for (Map<String, Object> map : outcome) {
-                    ZonedDateTime date = (ZonedDateTime) map.get("day");
-                    Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
-                    for (int i = 0; i < result.length; i++) {
-                        if (date.getDayOfMonth() == now.minusDays(i).getDayOfMonth()) {
-                            result[result.length - 1 - i] += amount;
-                        }
-                    }
-                }
-                return result;
+                return createSubmissionCountArrayForMonth(outcome, result, now);
             case YEAR:
                 border = now.minusYears(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
                 outcome = this.statisticsRepository.getTotalSubmissions(border);
-                for (Map<String, Object> map : outcome) {
-                    ZonedDateTime date = (ZonedDateTime) map.get("day");
-                    Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
-                    for (int i = 0; i < 12; i++) {
-                        if (date.getMonth() == now.minusMonths(i).getMonth()) {
-                            result[11 - i] += amount;
-                        }
-                    }
-                }
-                return result;
+                return createSubmissionCountArrayForYear(outcome, result, now);
             default:
                 return null;
         }
+    }
+
+    /**
+     * Gets a List of Maps, each Map describing an entry in the database. The Map has the two keys "day" and "amount",
+     * which map to the date and the amount of submissions. This Method handles the spanType DAY
+     *
+     * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
+     * @param result the array in which the converted outcome should be inserted
+     * @param currentDate the current time
+     * @return a array, containing the values for each bar in the graph
+     */
+    private Integer[] createSubmissionCountArrayForDay(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime currentDate) {
+        for (Map<String, Object> map : outcome) {
+            ZonedDateTime date = (ZonedDateTime) map.get("day");
+            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+            for (int i = 0; i < 24; i++) {
+                if (date.getHour() == currentDate.minusHours(i).getHour()) {
+                    result[currentDate.getHour() - i] += amount;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Gets a List of Maps, each Map describing an entry in the database. The Map has the two keys "day" and "amount",
+     * which map to the date and the amount of submissions. This Method handles the spanType WEEK
+     *
+     * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
+     * @param result the array in which the converted outcome should be inserted
+     * @param currentDate the current time
+     * @return a array, containing the values for each bar in the graph
+     */
+    private Integer[] createSubmissionCountArrayForWeek(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime currentDate) {
+        for (Map<String, Object> map : outcome) {
+            ZonedDateTime date = (ZonedDateTime) map.get("day");
+            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+            for (int i = 0; i < 7; i++) {
+                if (date.getDayOfMonth() == currentDate.minusDays(i).getDayOfMonth()) {
+                    result[6 - i] += amount;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Gets a List of Maps, each Map describing an entry in the database. The Map has the two keys "day" and "amount",
+     * which map to the date and the amount of submissions. This Method handles the spanType MONTH
+     *
+     * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
+     * @param result the array in which the converted outcome should be inserted
+     * @param currentDate the current time
+     * @return a array, containing the values for each bar in the graph
+     */
+    private Integer[] createSubmissionCountArrayForMonth(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime currentDate) {
+        for (Map<String, Object> map : outcome) {
+            ZonedDateTime date = (ZonedDateTime) map.get("day");
+            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+            for (int i = 0; i < result.length; i++) {
+                if (date.getDayOfMonth() == currentDate.minusDays(i).getDayOfMonth()) {
+                    result[result.length - 1 - i] += amount;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Gets a List of Maps, each Map describing an entry in the database. The Map has the two keys "day" and "amount",
+     * which map to the date and the amount of submissions. This Method handles the spanType YEAR
+     *
+     * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
+     * @param result the array in which the converted outcome should be inserted
+     * @param currentDate the current time
+     * @return a array, containing the values for each bar in the graph
+     */
+    private Integer[] createSubmissionCountArrayForYear(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime currentDate) {
+        for (Map<String, Object> map : outcome) {
+            ZonedDateTime date = (ZonedDateTime) map.get("day");
+            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+            for (int i = 0; i < 12; i++) {
+                if (date.getMonth() == currentDate.minusMonths(i).getMonth() && date.getYear() == currentDate.minusMonths(i).getYear()) {
+                    result[11 - i] += amount;
+                }
+            }
+        }
+        return result;
     }
 
     public Integer getReleasedExercises(Long span) {
