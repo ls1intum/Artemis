@@ -10,7 +10,7 @@ import { AdminFeatureToggleComponent } from 'app/admin/features/admin-feature-to
 import { HealthComponent } from 'app/admin/health/health.component';
 import { LogsComponent } from 'app/admin/logs/logs.component';
 import { JhiMetricsMonitoringComponent } from 'app/admin/metrics/metrics.component';
-import { JhiTrackerComponent } from 'app/admin/tracker/tracker.component';
+import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 
 export const adminState: Routes = [
     {
@@ -64,10 +64,10 @@ export const adminState: Routes = [
                 },
             },
             {
-                path: 'jhi-tracker',
-                component: JhiTrackerComponent,
+                path: 'user-statistics',
+                component: StatisticsComponent,
                 data: {
-                    pageTitle: 'tracker.title',
+                    pageTitle: 'statistics.title',
                 },
             },
             userMgmtRoute,
