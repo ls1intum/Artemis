@@ -5,120 +5,53 @@ $navbar-height: 57px;
 $footer-height: 31px;
 
 .plagiarism-inspector {
+    display: flex;
+    flex-direction: column;
     height: calc(100vh - 2 * #{$card-body-padding} - #{$navbar-height} - #{$footer-height});
     // JHipster's .card-body has default padding of 1.25
     margin: -1.25rem;
 
-    .plagiarism-sidebar {
-        border-right: 1px solid $body-bg;
-        bottom: 0;
-        display: flex;
-        flex-direction: column;
-        left: 0;
-        position: absolute;
-        top: 0;
-        width: 200px;
+    .plagiarism-header {
+        background-color: $artemis-dark;
+        color: white;
+        flex-shrink: 0;
+        padding: 1.5rem;
 
-        &-header {
-            border-bottom: 1px solid $body-bg;
-            flex-shrink: 0;
-            padding: 0.75rem;
-
-            .btn-link {
-                border: none;
-                padding: 0;
-            }
-
-            h6 {
-                margin: 0;
-            }
+        .plagiarism-page-title {
+            margin-bottom: 1rem;
         }
 
-        &-body {
-            flex-grow: 1;
-            overflow-y: auto;
+        .plagiarism-buttons {
+            display: flex;
 
-            .plagiarism-list {
-                height: 100%;
-                list-style: none;
-                margin: 0;
-                overflow-y: auto;
-                padding: 0;
-
-                &-item {
-                    align-items: center;
-                    cursor: pointer;
-                    display: flex;
-                    justify-content: space-between;
-                    padding: 0.75rem;
-
-                    &-students {
-                        color: grey;
-                        font-size: 10px;
-                    }
-
-                    &-content {
-                        align-items: center;
-                        display: flex;
-                    }
-
-                    &-info {
-                        display: flex;
-                        flex-direction: column;
-                    }
-
-                    .plagiarism-indicator {
-                        background-color: $body-bg;
-                        border-radius: 50%;
-                        height: 8px;
-                        margin-right: 0.75rem;
-                        width: 8px;
-
-                        &.confirmed {
-                            background-color: green;
-                        }
-
-                        &.denied {
-                            background-color: red;
-                        }
-                    }
-
-                    &:hover {
-                        background-color: lightskyblue;
-                    }
-
-                    &.selected .plagiarism-name {
-                        font-weight: bold;
-                    }
-                }
+            .check-plagiarism {
+                margin-right: 1rem;
             }
-        }
-
-        &-footer {
-            border-top: 1px solid $body-bg;
-            flex-shrink: 0;
-            padding: 0.75rem;
         }
     }
 
-    .plagiarism-main {
+    .plagiarism-body {
         display: flex;
         flex-direction: column;
-        height: 100%;
-        margin-left: 200px;
+        flex-grow: 1;
+        padding-left: 240px;
+        position: relative;
+
+        .plagiarism-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
     }
 
     .plagiarism-empty {
         align-items: center;
         display: flex;
-        height: 100%;
+        flex-grow: 1;
         justify-content: center;
-        opacity: 0.5;
-    }
 
-    .plagiarism-content {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
+        &-label {
+            opacity: 0.5;
+        }
     }
 }

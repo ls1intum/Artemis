@@ -19,15 +19,15 @@ public class SyntaxTreeTest extends AbstractUMLDiagramTest {
 
     @Test
     void similaritySyntaxTree_equalModels() {
-        compareSubmissions(modelingSubmission(SYNTAX_TREE_MODEL_1A), modelingSubmission(SYNTAX_TREE_MODEL_1A), 0.8, 1.0);
-        compareSubmissions(modelingSubmission(SYNTAX_TREE_MODEL_2), modelingSubmission(SYNTAX_TREE_MODEL_2), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(SYNTAX_TREE_MODEL_1A), modelingSubmission(SYNTAX_TREE_MODEL_1A), 0.8, 100.0);
+        compareSubmissions(modelingSubmission(SYNTAX_TREE_MODEL_2), modelingSubmission(SYNTAX_TREE_MODEL_2), 0.8, 100.0);
 
-        compareSubmissions(modelingSubmission(SYNTAX_TREE_MODEL_1A), modelingSubmission(SYNTAX_TREE_MODEL_1B), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(SYNTAX_TREE_MODEL_1A), modelingSubmission(SYNTAX_TREE_MODEL_1B), 0.8, 100.0);
     }
 
     @Test
     void similaritySyntaxTree_differentModels() {
-        compareSubmissions(modelingSubmission(SYNTAX_TREE_MODEL_1A), modelingSubmission(SYNTAX_TREE_MODEL_2), 0.0, 0.39166);
+        compareSubmissions(modelingSubmission(SYNTAX_TREE_MODEL_1A), modelingSubmission(SYNTAX_TREE_MODEL_2), 0.0, 39.166);
     }
 
     @Test
