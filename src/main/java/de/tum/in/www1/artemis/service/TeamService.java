@@ -230,8 +230,11 @@ public class TeamService {
      * @param course Course in which the users will be searched
      * @param teams Teams that students are described only by login or visible registration number
      * @return list of all teams that now have registered users
+     * @throws BadRequestAlertException if there is any student without login and registration number
+     * @throws StudentsNotFoundException if there is any student does not exist in course's students
+     * @throws StudentsAppearMultipleTimesException if a student appears in multiple teams
      */
-    public List<Team> convertTeamsStudentsWithOnlyLoginOrRegistrationNumberToAlreadyRegisteredUsers(Course course, List<Team> teams) {
+    public List<Team> convertTeamsStudentsToUsersInDatabase(Course course, List<Team> teams) {
         List<User> students = teams.stream().flatMap(team -> team.getStudents().stream()).collect(Collectors.toList());
         List<String> logins = students.stream().filter(student -> student.getLogin() != null).map(User::getLogin).collect(Collectors.toList());
         List<String> registrationNumbers = students.stream().filter(student -> student.getLogin() == null && student.getVisibleRegistrationNumber() != null)
@@ -240,18 +243,58 @@ public class TeamService {
             throw new BadRequestAlertException("Students do not have an identifier", TeamResource.ENTITY_NAME, "studentIdentifierNotFound", true);
         }
 
+        Pair<List<User>, List<String>> existingStudentsAndNotFoundLoginsPair = getUsersFromLogins(logins, course.getStudentGroupName());
+        List<User> existingStudentsWithLogin = existingStudentsAndNotFoundLoginsPair.getFirst();
+        List<String> notFoundLogins = existingStudentsAndNotFoundLoginsPair.getSecond();
+
+        Pair<List<User>, List<String>> existingStudentsAndNotFoundRegistrationNumbersPair = getUsersFromRegistrationNumbers(registrationNumbers, logins,
+                course.getStudentGroupName());
+        List<User> existingStudentsWithRegistrationNumber = existingStudentsAndNotFoundRegistrationNumbersPair.getFirst();
+        List<String> notFoundRegistrationNumbers = existingStudentsAndNotFoundRegistrationNumbersPair.getSecond();
+        if (!notFoundLogins.isEmpty() || !notFoundRegistrationNumbers.isEmpty()) {
+            throw new StudentsNotFoundException(notFoundRegistrationNumbers, notFoundLogins);
+        }
+
+        Map<String, User> studentsWithLogin = existingStudentsWithLogin.stream().collect(Collectors.toMap(User::getLogin, Function.identity()));
+        Map<String, User> studentsWithRegistrationNumber = existingStudentsWithRegistrationNumber.stream()
+                .collect(Collectors.toMap(User::getRegistrationNumber, Function.identity()));
+
+        List<Team> convertedTeams = convertTeamsStudentsToUsersInMaps(teams, studentsWithLogin, studentsWithRegistrationNumber);
+        return convertedTeams;
+    }
+
+    /**
+     * Returns students in database that has given logins
+     *
+     * @param logins Logins to find users with
+     * @param groupName Group in which users will be searched
+     * @return list of users with given logins
+     */
+    private Pair<List<User>, List<String>> getUsersFromLogins(List<String> logins, String groupName) {
         List<User> existingStudentsWithLogin = new ArrayList<>();
         List<String> notFoundLogins = new ArrayList<>();
-        if (!logins.isEmpty()) {
-            existingStudentsWithLogin = userRepository.findAllByLoginsInGroup(course.getStudentGroupName(), new HashSet<>(logins));
+        if (groupName != null && logins != null && !logins.isEmpty()) {
+            existingStudentsWithLogin = userRepository.findAllByLoginsInGroup(groupName, new HashSet<>(logins));
             List<String> existingLogins = existingStudentsWithLogin.stream().map(User::getLogin).collect(Collectors.toList());
             notFoundLogins = logins.stream().filter(login -> !existingLogins.contains(login)).collect(Collectors.toList());
         }
+        return Pair.of(existingStudentsWithLogin, notFoundLogins);
+    }
 
+    /**
+     * Returns students in database that has given registration numbers
+     *
+     * @param registrationNumbers Registration numbers to find users with
+     * @param logins Logins to find if there is any users with given login found, throws error if there is any
+     * @param groupName Group in which users will be searched
+     * @return list of users with given registration numbers
+     * @throws StudentsAppearMultipleTimesException if any user has one of the given logins
+     */
+    private Pair<List<User>, List<String>> getUsersFromRegistrationNumbers(List<String> registrationNumbers, List<String> logins, String groupName) {
         List<User> existingStudentsWithRegistrationNumber = new ArrayList<>();
         List<String> notFoundRegistrationNumbers = new ArrayList<>();
-        if (!registrationNumbers.isEmpty()) {
-            existingStudentsWithRegistrationNumber = userRepository.findAllByRegistrationNumbersInGroup(course.getStudentGroupName(), new HashSet<>(registrationNumbers));
+        if (groupName != null && logins != null && registrationNumbers != null && !registrationNumbers.isEmpty()) {
+            existingStudentsWithRegistrationNumber = userRepository.findAllByRegistrationNumbersInGroup(groupName, new HashSet<>(registrationNumbers));
             List<User> usersWhoAppearsMoreThanOnce = existingStudentsWithRegistrationNumber.stream().filter(student -> logins.contains(student.getLogin()))
                     .collect(Collectors.toList());
             if (!usersWhoAppearsMoreThanOnce.isEmpty()) {
@@ -261,15 +304,18 @@ public class TeamService {
             notFoundRegistrationNumbers = registrationNumbers.stream().filter(registrationNumber -> !existingRegistrationNumbers.contains(registrationNumber))
                     .collect(Collectors.toList());
         }
+        return Pair.of(existingStudentsWithRegistrationNumber, notFoundRegistrationNumbers);
+    }
 
-        if (!notFoundLogins.isEmpty() || !notFoundRegistrationNumbers.isEmpty()) {
-            throw new StudentsNotFoundException(notFoundRegistrationNumbers, notFoundLogins);
-        }
-
-        Map<String, User> studentsWithLogin = existingStudentsWithLogin.stream().collect(Collectors.toMap(User::getLogin, Function.identity()));
-        Map<String, User> studentsWithRegistrationNumber = existingStudentsWithRegistrationNumber.stream()
-                .collect(Collectors.toMap(User::getRegistrationNumber, Function.identity()));
-
+    /**
+     * Converts teams' students with only login or registration number to students on given maps
+     *
+     * @param teams Course in which the users will be searched
+     * @param studentsWithLogin A map that contains logins as keys and users as values
+     * @param studentsWithRegistrationNumber A map that contains registration numbers as keys and users as values
+     * @return list of teams that now contains students in given maps
+     */
+    private List<Team> convertTeamsStudentsToUsersInMaps(List<Team> teams, Map<String, User> studentsWithLogin, Map<String, User> studentsWithRegistrationNumber) {
         List<Team> convertedTeams = new ArrayList<>();
 
         teams.forEach(team -> {

@@ -344,8 +344,7 @@ public class TeamResource {
             throw new BadRequestAlertException("The exercise must be a team-based exercise.", ENTITY_NAME, "destinationExerciseNotTeamBased");
         }
 
-        List<Team> filledTeams = teamService.convertTeamsStudentsWithOnlyLoginOrRegistrationNumberToAlreadyRegisteredUsers(exercise.getCourseViaExerciseGroupOrCourseMember(),
-                teams);
+        List<Team> filledTeams = teamService.convertTeamsStudentsToUsersInDatabase(exercise.getCourseViaExerciseGroupOrCourseMember(), teams);
 
         // Create audit event for team import action
         var logMessage = "Import teams from team list into exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ") ";

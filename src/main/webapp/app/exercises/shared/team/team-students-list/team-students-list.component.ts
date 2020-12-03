@@ -12,4 +12,11 @@ export class TeamStudentsListComponent {
     @Input() renderLinks = false;
     @Input() withRegistrationNumber = false;
     @Input() errorStudentRegistrationNumbers: string[] = [];
+
+    hasError(student: User) {
+        return (
+            (student.login && this.errorStudentLogins.includes(student.login)) ||
+            (this.withRegistrationNumber && student.visibleRegistrationNumber && this.errorStudentRegistrationNumbers.includes(student.visibleRegistrationNumber))
+        );
+    }
 }
