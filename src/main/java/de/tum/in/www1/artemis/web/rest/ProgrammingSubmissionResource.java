@@ -59,8 +59,8 @@ public class ProgrammingSubmissionResource {
 
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
             ProgrammingExerciseService programmingExerciseService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService,
-            UserService userService, Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService, UserService userService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
@@ -211,7 +211,7 @@ public class ProgrammingSubmissionResource {
             Exercise exercise = exerciseService.findOne(exerciseId);
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
             User user = userService.getUserWithGroupsAndAuthorities();
-            
+
             if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
                 return forbidden();
             }
