@@ -1,0 +1,7 @@
+<jhi-modeling-editor *ngIf="!loading" [umlModel]="submission?.model" [diagramType]="exercise.diagramType" [readOnly]="true"></jhi-modeling-editor>
+
+<div class="plagiarism-submission-loader" *ngIf="loading">
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+</div>

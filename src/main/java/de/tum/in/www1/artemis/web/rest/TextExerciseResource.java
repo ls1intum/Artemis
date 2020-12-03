@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
@@ -46,7 +47,9 @@ import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
-/** REST controller for managing TextExercise. */
+/**
+ * REST controller for managing TextExercise.
+ */
 @RestController
 @RequestMapping("/api")
 public class TextExerciseResource {
@@ -124,7 +127,8 @@ public class TextExerciseResource {
      * POST /text-exercises : Create a new textExercise.
      *
      * @param textExercise the textExercise to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new textExercise, or with status 400 (Bad Request) if the textExercise has already an ID
+     * @return the ResponseEntity with status 201 (Created) and with body the new textExercise, or
+     * with status 400 (Bad Request) if the textExercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/text-exercises")
@@ -176,10 +180,12 @@ public class TextExerciseResource {
     /**
      * PUT /text-exercises : Updates an existing textExercise.
      *
-     * @param textExercise the textExercise to update
-     * @param notificationText about the text exercise update that should be displayed for the student group
-     * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or with status 400 (Bad Request) if the textExercise is not valid, or with status 500
-     *         (Internal Server Error) if the textExercise couldn't be updated
+     * @param textExercise     the textExercise to update
+     * @param notificationText about the text exercise update that should be displayed for the
+     *                         student group
+     * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or
+     * with status 400 (Bad Request) if the textExercise is not valid, or with status 500 (Internal
+     * Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/text-exercises")
@@ -215,6 +221,8 @@ public class TextExerciseResource {
 
         // Avoid recursions
         if (textExercise.getExampleSubmissions().size() != 0) {
+            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithEagerResultByExerciseId(textExercise.getId());
+            result.setExampleSubmissions(exampleSubmissionsWithResults);
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
@@ -257,7 +265,8 @@ public class TextExerciseResource {
      * GET /text-exercises/:id : get the "id" textExercise.
      *
      * @param exerciseId the id of the textExercise to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the textExercise, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the textExercise, or with
+     * status 404 (Not Found)
      */
     @GetMapping("/text-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -287,7 +296,7 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        Set<ExampleSubmission> exampleSubmissions = new HashSet<>(this.exampleSubmissionRepository.findAllByExerciseId(exerciseId));
+        Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         textExercise.setGradingCriteria(gradingCriteria);
         textExercise.setExampleSubmissions(exampleSubmissions);
@@ -333,8 +342,8 @@ public class TextExerciseResource {
     }
 
     /**
-     * Returns the data needed for the text editor, which includes the participation, textSubmission with answer if existing and the assessments if the submission was already
-     * submitted.
+     * Returns the data needed for the text editor, which includes the participation, textSubmission
+     * with answer if existing and the assessments if the submission was already submitted.
      *
      * @param participationId the participationId for which to find the data for the text editor
      * @return the ResponseEntity with the participation as body
@@ -418,10 +427,12 @@ public class TextExerciseResource {
     }
 
     /**
-     * POST /text-exercises/{exerciseId}/trigger-automatic-assessment: trigger automatic assessment (clustering task) for given exercise id
-     * As the clustering can be performed on a different node, this will always return 200, despite an error could occur on the other node.
+     * POST /text-exercises/{exerciseId}/trigger-automatic-assessment: trigger automatic assessment
+     * (clustering task) for given exercise id As the clustering can be performed on a different
+     * node, this will always return 200, despite an error could occur on the other node.
      *
-     * @param exerciseId id of the exercised that for which the automatic assessment should be triggered
+     * @param exerciseId id of the exercised that for which the automatic assessment should be
+     *                   triggered
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("/text-exercises/{exerciseId}/trigger-automatic-assessment")
@@ -432,8 +443,8 @@ public class TextExerciseResource {
     }
 
     /**
-     * Search for all text exercises by title and course title. The result is pageable since there might be hundreds
-     * of exercises in the DB.
+     * Search for all text exercises by title and course title. The result is pageable since there
+     * might be hundreds of exercises in the DB.
      *
      * @param search The pageable search containing the page size, page number and query string
      * @return The desired page, sorted and matching the given query
@@ -447,17 +458,17 @@ public class TextExerciseResource {
 
     /**
      * POST /text-exercises/import: Imports an existing text exercise into an existing course
-     *
-     * This will import the whole exercise except for the participations and Dates.
-     * Referenced entities will get cloned and assigned a new id.
-     * See{@link ExerciseImportService#importExercise(Exercise, Exercise)}
+     * <p>
+     * This will import the whole exercise except for the participations and Dates. Referenced
+     * entities will get cloned and assigned a new id. See{@link ExerciseImportService#importExercise(Exercise,
+     * Exercise)}
      *
      * @param sourceExerciseId The ID of the original exercise which should get imported
-     * @param importedExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @param importedExercise The new exercise containing values that should get overwritten in the
+     *                         imported exercise, s.a. the title or difficulty
+     * @return The imported exercise (200), a not found error (404) if the template does not exist,
+     * or a forbidden error (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
-     *
-     * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
-     *         (403) if the user is not at least an instructor in the target course.
      */
     @PostMapping("/text-exercises/import/{sourceExerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -513,7 +524,7 @@ public class TextExerciseResource {
     /**
      * POST /text-exercises/:exerciseId/export-submissions : sends exercise submissions as zip
      *
-     * @param exerciseId the id of the exercise to get the repos from
+     * @param exerciseId              the id of the exercise to get the repos from
      * @param submissionExportOptions the options that should be used for the export
      * @return ResponseEntity with status
      */
@@ -557,8 +568,9 @@ public class TextExerciseResource {
     }
 
     /**
-     * GET /check-plagiarism : Run comparison metrics pair-wise against all submissions of a given exercises.
-     * This can be used with human intelligence to identify suspicious similar submissions which might be a sign for plagiarism.
+     * GET /check-plagiarism : Run comparison metrics pair-wise against all submissions of a given
+     * exercises. This can be used with human intelligence to identify suspicious similar
+     * submissions which might be a sign for plagiarism.
      *
      * @param exerciseId for which all submission should be checked
      * @return the ResponseEntity with status 200 (OK) and the list of pair-wise metrics.
@@ -566,7 +578,7 @@ public class TextExerciseResource {
     @GetMapping("/text-exercises/{exerciseId}/check-plagiarism")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Stream<SubmissionComparisonDTO>> checkPlagiarism(@PathVariable long exerciseId) {
-        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissions(exerciseId);
+        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissionsAndResults(exerciseId);
 
         if (optionalTextExercise.isEmpty()) {
             return notFound();
@@ -603,13 +615,13 @@ public class TextExerciseResource {
     /**
      * GET /check-plagiarism : Use JPlag to detect plagiarism in text exercises
      *
-     * @param exerciseId for which all submission should be checked
-     * @return the JPlag result directory as zip file
+     * @param exerciseId ID of the exercise for which to detect plagiarism
+     * @return the result of the JPlag plagiarism detection
      */
     @GetMapping(value = "/text-exercises/{exerciseId}/check-plagiarism", params = { "strategy=JPlag" })
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Resource> checkPlagiarismJPlag(@PathVariable long exerciseId) throws ExitException, IOException {
-        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissions(exerciseId);
+    public ResponseEntity<TextPlagiarismResult> checkPlagiarismJPlag(@PathVariable long exerciseId) throws ExitException {
+        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissionsAndResults(exerciseId);
 
         if (optionalTextExercise.isEmpty()) {
             return notFound();
@@ -621,16 +633,9 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        File zipFile = textPlagiarismDetectionService.checkPlagiarism(textExercise);
+        TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise);
 
-        if (zipFile == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
-        }
-
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+        return ResponseEntity.ok(result);
     }
 
 }
