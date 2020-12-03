@@ -9,13 +9,10 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 @Component
 public class JenkinsBuildPlanCreatorProvider {
 
-    private final JavaJenkinsBuildPlanCreator javaJenkinsBuildPlanCreator;
+    private final JenkinsBuildPlanCreator jenkinsBuildPlanCreator;
 
-    private final BaseJenkinsBuildPlanCreator baseJenkinsBuildPlanCreator;
-
-    public JenkinsBuildPlanCreatorProvider(JavaJenkinsBuildPlanCreator javaJenkinsBuildPlanCreator, BaseJenkinsBuildPlanCreator defaultJenkinsBuildPlanCreator) {
-        this.javaJenkinsBuildPlanCreator = javaJenkinsBuildPlanCreator;
-        this.baseJenkinsBuildPlanCreator = defaultJenkinsBuildPlanCreator;
+    public JenkinsBuildPlanCreatorProvider(JenkinsBuildPlanCreator jenkinsBuildPlanCreator) {
+        this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
     }
 
     /**
@@ -27,8 +24,8 @@ public class JenkinsBuildPlanCreatorProvider {
      */
     public JenkinsXmlConfigBuilder builderFor(ProgrammingLanguage programmingLanguage) {
         return switch (programmingLanguage) {
-            case JAVA, KOTLIN -> javaJenkinsBuildPlanCreator;
-            case PYTHON, C, HASKELL -> baseJenkinsBuildPlanCreator;
+            case JAVA, KOTLIN -> jenkinsBuildPlanCreator;
+            case PYTHON, C, HASKELL -> jenkinsBuildPlanCreator;
             case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
             case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
             case SWIFT -> throw new UnsupportedOperationException("Swift templates are not available for Jenkins.");
