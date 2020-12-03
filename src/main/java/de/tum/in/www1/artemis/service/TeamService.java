@@ -259,8 +259,7 @@ public class TeamService {
         Map<String, User> studentsWithRegistrationNumber = existingStudentsWithRegistrationNumber.stream()
                 .collect(Collectors.toMap(User::getRegistrationNumber, Function.identity()));
 
-        List<Team> convertedTeams = convertTeamsStudentsToUsersInMaps(teams, studentsWithLogin, studentsWithRegistrationNumber);
-        return convertedTeams;
+        return convertTeamsStudentsToUsersInMaps(teams, studentsWithLogin, studentsWithRegistrationNumber);
     }
 
     /**
