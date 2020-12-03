@@ -16,6 +16,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
+import { OrionModule } from 'app/shared/orion/orion.module';
 
 @NgModule({
     imports: [
@@ -34,6 +35,7 @@ import { AssessmentInstructionsModule } from 'app/assessment/assessment-instruct
         FeatureToggleModule,
         ExerciseDetailsModule,
         AssessmentInstructionsModule,
+        OrionModule,
     ],
     declarations: [ProgrammingExerciseDetailComponent, ProgrammingExerciseImportComponent],
 })
