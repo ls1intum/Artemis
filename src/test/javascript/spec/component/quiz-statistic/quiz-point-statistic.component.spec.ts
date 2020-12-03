@@ -15,7 +15,7 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { QuizPointStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-point-statistic/quiz-point-statistic.component';
-import moment = require('moment');
+import * as moment from 'moment';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { SinonStub, stub } from 'sinon';
 

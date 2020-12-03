@@ -37,8 +37,9 @@ public class ProgrammingAssessmentService extends AssessmentService {
      */
     public Result saveManualAssessment(Result result) {
         result.setHasFeedback(!result.getFeedbacks().isEmpty());
-
+        var participation = result.getParticipation();
         User user = userService.getUserWithGroupsAndAuthorities();
+
         result.setHasComplaint(false);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(user);
@@ -46,15 +47,19 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
         // Avoid hibernate exception
         List<Feedback> savedFeedbacks = new ArrayList<>();
-        result.getFeedbacks().forEach(feedback -> {
-            feedback.setResult(null);
-            feedback = feedbackRepository.save(feedback);
-            feedback.setResult(result);
-            savedFeedbacks.add(feedback);
+        result.getFeedbacks().forEach(f -> {
+            f.setResult(null);
+            f = feedbackRepository.save(f);
+            f.setResult(result);
+            savedFeedbacks.add(f);
         });
-        result.setFeedbacks(savedFeedbacks);
+
+        Result finalResult = result;
+        finalResult.setFeedbacks(savedFeedbacks);
         // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
-        return resultRepository.save(result);
+        finalResult = resultRepository.save(finalResult);
+        finalResult.setParticipation(participation);
+        return finalResult;
     }
 
     /**

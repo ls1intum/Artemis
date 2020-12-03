@@ -219,7 +219,7 @@ public class ParticipationService {
         // specific to programming exercises
         if (exercise instanceof ProgrammingExercise) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
-            programmingExerciseStudentParticipation = copyRepository(programmingExerciseStudentParticipation);
+            programmingExerciseStudentParticipation = forkRepository(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = configureRepository((ProgrammingExercise) exercise, programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = copyBuildPlan(programmingExerciseStudentParticipation);
             // Restore programming exercise that got removed due to saving the programmingExerciseStudentParticipation
@@ -269,25 +269,28 @@ public class ParticipationService {
             if (participation instanceof ProgrammingExerciseParticipation) {
                 Set<Submission> programmingSubmissions = new HashSet<>(submissionRepository.findAllByParticipationId(participation.getId()));
                 participation.setSubmissions(programmingSubmissions);
-                initializeSubmission(participation, exercise, null);
+                if (programmingSubmissions.isEmpty()) {
+                    submission = initializeSubmission(participation, exercise, null).get();
+                    // required so that the assessment dashboard statistics are calculated correctly
+                    submission.setSubmitted(true);
+                }
                 submission = participation.getSubmissions().iterator().next();
-                // required so that the assessment dashboard statistics are calculated correctly
-                submission.setSubmitted(true);
+
             }
             else {
                 submission = participation.getSubmissions().iterator().next();
             }
             submission.setSubmissionDate(ZonedDateTime.now());
             // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
+            submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
             if (submission.getResult() == null) {
                 Result result = new Result();
+                result.setParticipation(submission.getParticipation());
+                result.setAssessor(participation.getStudent().get());
+                result.setAssessmentType(AssessmentType.TEST_RUN);
+                result = resultRepository.save(result);
                 result.setSubmission(submission);
                 submission.setResult(result);
-                result.setParticipation(submission.getParticipation());
-                submission.getResult().setAssessor(participation.getStudent().get());
-                submission.getResult().setAssessmentType(AssessmentType.TEST_RUN);
-
-                resultRepository.save(result);
                 submissionRepository.save(submission);
             }
             save(participation);
@@ -331,7 +334,7 @@ public class ParticipationService {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
             // Note: we need a repository, otherwise the student cannot click resume.
-            programmingParticipation = copyRepository(programmingParticipation);
+            programmingParticipation = forkRepository(programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
             programmingParticipation = configureRepositoryWebHook(programmingParticipation);
             participation = programmingParticipation;
@@ -472,7 +475,7 @@ public class ParticipationService {
      * @return List<submission>
      */
     public List<Submission> getSubmissionsWithParticipationId(long participationId) {
-        return submissionRepository.findAllByParticipationId(participationId);
+        return submissionRepository.findAllWithResultsByParticipationId(participationId);
     }
 
     /**
@@ -494,7 +497,7 @@ public class ParticipationService {
         return save(participation);
     }
 
-    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExerciseStudentParticipation participation) {
+    private ProgrammingExerciseStudentParticipation forkRepository(ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository url is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getRepositoryUrlAsUrl() == null) {
             final var programmingExercise = participation.getProgrammingExercise();
@@ -503,7 +506,7 @@ public class ParticipationService {
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
-            var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, projectKey, participantIdentifier);
+            var newRepoUrl = versionControlService.get().forkRepository(projectKey, templateRepoName, projectKey, participantIdentifier);
             // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)
             if (participation.getStudent().isPresent()) {
                 newRepoUrl = newRepoUrl.withUser(participantIdentifier);

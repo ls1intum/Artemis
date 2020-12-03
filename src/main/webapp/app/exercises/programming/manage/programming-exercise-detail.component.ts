@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of, Subject } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -15,11 +15,13 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
+import { JhiEventManager } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
     templateUrl: './programming-exercise-detail.component.html',
     styleUrls: ['./programming-exercise-detail.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ActionType = ActionType;
@@ -45,6 +47,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+        private eventManager: JhiEventManager,
     ) {}
 
     ngOnInit() {
@@ -162,11 +165,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     /**
      * Cleans up programming exercise
-     * @param programmingExerciseId the id of the programming exercise that we want to delete
      * @param $event contains additional checks from the dialog
      */
-    cleanupProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
-        return this.exerciseService.cleanup(programmingExerciseId, $event.deleteRepositories).subscribe(
+    cleanupProgrammingExercise($event: { [key: string]: boolean }) {
+        return this.exerciseService.cleanup(this.programmingExercise.id!, $event.deleteRepositories).subscribe(
             () => {
                 if ($event.deleteRepositories) {
                     this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessageWithRepositories');
@@ -174,6 +176,20 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessage');
                 }
                 this.dialogErrorSource.next('');
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
+    }
+
+    public deleteProgrammingExercise($event: { [key: string]: boolean }) {
+        this.programmingExerciseService.delete(this.programmingExercise.id!, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'programmingExerciseListModification',
+                    content: 'Deleted a programming exercise',
+                });
+                this.dialogErrorSource.next('');
+                this.previousState();
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
