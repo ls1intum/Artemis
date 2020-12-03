@@ -87,13 +87,6 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Go back.
-     */
-    previousState() {
-        window.history.back();
-    }
-
-    /**
      * Unsubscribe from changes of text exercise on destruction of component.
      */
     ngOnDestroy() {
