@@ -60,6 +60,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures" })
     Course findWithEagerExercisesAndLecturesById(long courseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals" })
+    Course findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
+
     @Query("select distinct course from Course course where (course.startDate is null or course.startDate <= :#{#now}) and (course.endDate is null or course.endDate >= :#{#now}) and course.onlineCourse = false and course.registrationEnabled = true")
     List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabled(@Param("now") ZonedDateTime now);
 

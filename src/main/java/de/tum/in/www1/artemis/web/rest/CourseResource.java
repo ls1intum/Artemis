@@ -780,7 +780,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
-        Course course = courseService.findOneWithExercisesAndLecturesAndLearningGoals(courseId);
+        Course course = courseService.findOneWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (course == null) {
             return notFound();
