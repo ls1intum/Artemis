@@ -124,12 +124,12 @@ class UMLActivityDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityActivityDiagram_EqualModels() {
-        compareSubmissions(modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_1), modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_1), 0.8, 1.0);
-        compareSubmissions(modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_2), modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_2), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_1), modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_1), 0.8, 100.0);
+        compareSubmissions(modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_2), modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_2), 0.8, 100.0);
     }
 
     @Test
     void similarityActivityDiagram_DifferentModels() {
-        compareSubmissions(modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_1), modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_2), 0.0, 0.5708);
+        compareSubmissions(modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_1), modelingSubmission(UMLActivityDiagrams.ACTIVITY_MODEL_2), 0.0, 57.08);
     }
 }

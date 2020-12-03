@@ -51,8 +51,6 @@ public class ProgrammingSubmissionResource {
 
     private final ParticipationService participationService;
 
-    private final ResultService resultService;
-
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
@@ -61,14 +59,13 @@ public class ProgrammingSubmissionResource {
 
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
             ProgrammingExerciseService programmingExerciseService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultService resultService, Optional<VersionControlService> versionControlService,
-            UserService userService, Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService, UserService userService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
         this.authCheckService = authCheckService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.resultService = resultService;
         this.versionControlService = versionControlService;
         this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -212,9 +209,14 @@ public class ProgrammingSubmissionResource {
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
         try {
             Exercise exercise = exerciseService.findOne(exerciseId);
-            if (!authCheckService.isAtLeastInstructorForExercise(exercise, null)) {
+            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            User user = userService.getUserWithGroupsAndAuthorities();
+
+            if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
                 return forbidden();
             }
+
+            programmingSubmissionService.logTriggerInstructorBuild(user, exercise, course);
             programmingSubmissionService.triggerInstructorBuildForExercise(exerciseId);
             return ResponseEntity.ok().build();
         }

@@ -75,7 +75,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Value("${jenkins.use-crumb:#{true}}")
     private boolean useCrumb;
 
-    private final JenkinsBuildPlanCreatorProvider buildPlanCreatorProvider;
+    private final JenkinsBuildPlanCreator jenkinsBuildPlanCreator;
 
     private final RestTemplate restTemplate;
 
@@ -90,9 +90,9 @@ public class JenkinsService implements ContinuousIntegrationService {
     // Pattern of the DateTime that is included in the logs received from Jenkins
     private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
-    public JenkinsService(JenkinsBuildPlanCreatorProvider buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
+    public JenkinsService(JenkinsBuildPlanCreator jenkinsBuildPlanCreator, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
             ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackService feedbackService, ResultRepository resultRepository) {
-        this.buildPlanCreatorProvider = buildPlanCreatorFactory;
+        this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -104,7 +104,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL, URL solutionRepositoryURL) {
         try {
             // TODO support sequential test runs
-            final var configBuilder = buildPlanCreatorProvider.builderFor(exercise.getProgrammingLanguage());
+            final var configBuilder = builderFor(exercise.getProgrammingLanguage());
             Document jobConfig = configBuilder.buildBasicConfig(exercise.getProgrammingLanguage(), testRepositoryURL, repositoryURL,
                     Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
             planKey = exercise.getProjectKey() + "-" + planKey;
@@ -116,6 +116,22 @@ public class JenkinsService implements ContinuousIntegrationService {
             log.error(e.getMessage(), e);
             throw new JenkinsException("Unable to create new build plan :" + planKey, e);
         }
+    }
+
+    /**
+     * Gives a Jenkins plan builder, that is able to build plan configurations for the specified programming language
+     *
+     * @param programmingLanguage The programming language for which a build plan should get created
+     * @return The configuration builder for the specified language
+     * @see JenkinsBuildPlanCreator
+     */
+    private JenkinsXmlConfigBuilder builderFor(ProgrammingLanguage programmingLanguage) {
+        return switch (programmingLanguage) {
+            case JAVA, KOTLIN, PYTHON, C, HASKELL -> jenkinsBuildPlanCreator;
+            case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
+            case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
+            case SWIFT -> throw new UnsupportedOperationException("Swift templates are not available for Jenkins.");
+        };
     }
 
     @Override

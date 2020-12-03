@@ -1,0 +1,51 @@
+{
+    "statistics": {
+        "amountOfStudents": "# of students",
+        "span": {
+            "day": "Day",
+            "week": "Week",
+            "month": "Month",
+            "year": "Year"
+        },
+        "title": "User statistics",
+        "days": " days",
+        "loggedInUsers": "Amount of logins of distinct users in the last ",
+        "activeUsers": "Amount of logins of active users in the last ",
+        "totalSubmissions": "Total amount of submissions in the last ",
+        "exercises": {
+            "released": "Total amount of released exercises in the last ",
+            "due": "Total amount of exercise deadlines in the last "
+        },
+        "conductedExams": "Total amount of conducted exams in the last ",
+        "examParticipation": " -> amount of student who participated: ",
+        "examRegistrations": " -> with the amount of students being registered in these exam: ",
+        "activeTutors": "Total amount of tutors which have created an assessment in the last ",
+        "results": "Total amount of results created in the last ",
+        "resultFeedbacks": "-> feedback count: ",
+        "userLogins": "User Logins",
+        "submissions": "Submissions"
+    },
+    "weekdays": {
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday"
+    },
+    "months": {
+        "january": "January",
+        "february": "February",
+        "march": "March",
+        "april": "April",
+        "may": "May",
+        "june": "June",
+        "july": "July",
+        "august": "August",
+        "september": "September",
+        "october": "October",
+        "november": "November",
+        "december": "December"
+    }
+}
