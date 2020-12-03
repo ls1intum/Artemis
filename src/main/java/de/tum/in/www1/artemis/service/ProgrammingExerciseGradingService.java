@@ -132,30 +132,18 @@ public class ProgrammingExerciseGradingService {
                         newResult.addFeedback(newFeedback);
                     }
 
-                    double manualPoints = 0;
-
                     for (Feedback feedback : manualResult.getFeedbacks()) {
                         if (feedback != null && feedback.getType() != FeedbackType.AUTOMATIC) {
                             Feedback newFeedback = feedback.copyProgrammingAutomaticFeedbackForManualResult();
                             newResult.addFeedback(newFeedback);
-                            manualPoints += newFeedback.getCredits();
                         }
                     }
 
-                    double maxPoints = getMaxScoreRespectingZeroPointExercises(programmingExercise);
-                    double points = result.getScore() / 100.0 * maxPoints + manualPoints;
-                    double maxPointsWithBonus = maxPoints + Objects.requireNonNullElse(programmingExercise.getBonusPoints(), 0.0);
+                    double maxScore = getMaxScoreRespectingZeroPointExercises(programmingExercise);
+                    double points = programmingAssessmentService.calculateTotalScore(newResult);
+                    newResult.setScore(points, maxScore);
 
-                    if (points > maxPointsWithBonus) {
-                        points = maxPointsWithBonus;
-                    }
-                    else if (points < 0) {
-                        points = 0;
-                    }
-
-                    newResult.setScore(Math.round(points / maxPoints));
-
-                    String resultString = result.getResultString() + ", " + Math.round(points) + " of " + Math.round(maxPoints) + " points";
+                    String resultString = result.getResultString() + ", " + newResult.createResultString(points, maxScore);
                     newResult.setResultString(resultString);
 
                     newResult = resultRepository.save(newResult);
