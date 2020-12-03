@@ -21,7 +21,6 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -267,7 +266,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     public void logTriggerInstructorBuild(User user, Exercise exercise, Course course) {
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.TRIGGER_INSTRUCTOR_BUILD, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
+        var auditEvent = new AuditEvent(user.getLogin(), TRIGGER_INSTRUCTOR_BUILD, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " triggered an instructor build for all participations in exercise {} with id {}", exercise.getTitle(), exercise.getId());
     }
