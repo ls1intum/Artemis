@@ -47,11 +47,11 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
         // Avoid hibernate exception
         List<Feedback> savedFeedbacks = new ArrayList<>();
-        result.getFeedbacks().forEach(f -> {
-            f.setResult(null);
-            f = feedbackRepository.save(f);
-            f.setResult(result);
-            savedFeedbacks.add(f);
+        result.getFeedbacks().forEach(feedback -> {
+            feedback.setResult(null);
+            feedback = feedbackRepository.save(feedback);
+            feedback.setResult(result);
+            savedFeedbacks.add(feedback);
         });
 
         Result finalResult = result;
