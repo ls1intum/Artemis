@@ -7,7 +7,7 @@ import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute, MockRouter } from '../../helpers/mocks/service/mock-route.service';
-import { ActivatedRoute, Router, RouterModule, RouterEvent } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { of } from 'rxjs';
@@ -16,7 +16,6 @@ describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
     let fixture: ComponentFixture<UserManagementComponent>;
     let service: UserService;
-    let mockActivatedRoute: MockActivatedRoute;
 
     const route = ({
         params: of({ courseId: 123, sort: 'id,desc' }),
@@ -43,7 +42,6 @@ describe('UserManagementComponent', () => {
                 fixture = TestBed.createComponent(UserManagementComponent);
                 comp = fixture.componentInstance;
                 service = fixture.debugElement.injector.get(UserService);
-                mockActivatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
             });
     });
 
