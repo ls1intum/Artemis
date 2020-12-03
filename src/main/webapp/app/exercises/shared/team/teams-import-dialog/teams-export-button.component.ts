@@ -31,10 +31,6 @@ export class TeamsExportButtonComponent {
      */
     exportTeams(event: MouseEvent) {
         event.stopPropagation();
-        try {
-            this.teamService.exportTeams(this.teams);
-        } catch (e) {
-            this.jhiAlertService.error('artemisApp.team.errors.studentsWithoutRegistrationNumbers', { students: e.message });
-        }
+        this.teamService.exportTeams(this.teams);
     }
 }

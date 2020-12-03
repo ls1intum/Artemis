@@ -60,12 +60,5 @@ describe('TeamsExportButtonComponent', () => {
             button.click();
             expect(exportTeamsStub).to.have.been.called;
         });
-        it('should call alert service if team service fails', () => {
-            exportTeamsStub.throws({ message: 'test message' });
-            const button = debugElement.nativeElement.querySelector('button');
-            button.click();
-            expect(exportTeamsStub).to.have.been.called;
-            expect(alertServiceStub).to.have.been.calledWith('artemisApp.team.errors.studentsWithoutRegistrationNumbers', { students: 'test message' });
-        });
     });
 });

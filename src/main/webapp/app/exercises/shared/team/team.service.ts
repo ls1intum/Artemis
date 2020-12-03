@@ -235,7 +235,6 @@ export class TeamService implements ITeamService {
     exportTeams(teams: Team[]) {
         // Make list of teams which we need to export,
         const exportedTeams: TeamList = { students: [] };
-        const studentsWithoutRegistrationNumbers: { login: string; name: string }[] = [];
         teams!.forEach((team) => {
             if (team.students) {
                 team.students.forEach((student) => {
@@ -243,19 +242,15 @@ export class TeamService implements ITeamService {
                         name: student.firstName ?? '',
                         surname: student.lastName ?? '',
                         teamName: team.name ?? '',
-                        registrationNumber: student.visibleRegistrationNumber ?? '',
                         username: student.login ?? '',
                     } as StudentWithTeam;
-                    if (!student.visibleRegistrationNumber) {
-                        studentsWithoutRegistrationNumbers.push({ login: student.login ?? '', name: `${exportStudent.name} ${exportStudent.surname}` });
+                    if (student.visibleRegistrationNumber) {
+                        exportStudent.registrationNumber = student.visibleRegistrationNumber;
                     }
                     exportedTeams.students.push(exportStudent);
                 });
             }
         });
-        if (studentsWithoutRegistrationNumbers.length > 0) {
-            throw new Error(studentsWithoutRegistrationNumbers.map((student) => `${student.login} ${student.name}`).join(', '));
-        }
         // Make blob from the list of teams and download the file,
         const teamJson = JSON.stringify(exportedTeams);
         const blob = new Blob([teamJson], { type: 'application/json' });
