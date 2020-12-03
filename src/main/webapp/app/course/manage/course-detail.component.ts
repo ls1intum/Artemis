@@ -64,13 +64,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Go back to the previous page.
-     */
-    previousState() {
-        window.history.back();
-    }
-
-    /**
      * On destroy unsubscribe all subscriptions.
      */
     ngOnDestroy() {
