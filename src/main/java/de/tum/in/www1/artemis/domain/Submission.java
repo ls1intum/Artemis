@@ -135,6 +135,11 @@ public abstract class Submission extends DomainObject {
     }
 
     // TODO Ruscher, Entholzer: refactor to addResult
+    /**
+     * set the Result list
+     *
+     * @param result
+     */
     @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
     public void setResults(Result result) {
         if (result == null) {
