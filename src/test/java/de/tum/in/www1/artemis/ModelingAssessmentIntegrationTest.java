@@ -171,7 +171,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment", feedbacks, HttpStatus.OK);
 
-        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentNotFinished(storedResult, assessor);
@@ -198,7 +198,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
-        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
@@ -214,7 +214,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-activity-assessment.json");
         request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
-        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
@@ -230,7 +230,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/object-assessment.json");
         request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
-        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
@@ -245,7 +245,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/use-case-assessment.json");
         request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
-        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
@@ -261,7 +261,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment", feedbacks, HttpStatus.OK);
 
-        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentNotFinished(storedResult, assessor);
@@ -269,7 +269,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.v2.json");
         request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
-        storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
@@ -288,7 +288,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
         request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
-        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
 
         assertThat(storedResult.getScore()).isEqualTo(105);
@@ -297,7 +297,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         feedbacks.add(new Feedback().credits(20.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
         request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
 
-        storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
 
         assertThat(storedResult.getScore()).isEqualTo(110);

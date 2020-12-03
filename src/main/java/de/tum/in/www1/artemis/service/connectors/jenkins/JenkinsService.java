@@ -51,6 +51,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -80,6 +81,8 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final ResultRepository resultRepository;
+
     private final JenkinsServer jenkinsServer;
 
     private final FeedbackService feedbackService;
@@ -88,12 +91,13 @@ public class JenkinsService implements ContinuousIntegrationService {
     private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
     public JenkinsService(JenkinsBuildPlanCreatorProvider buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackService feedbackService) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackService feedbackService, ResultRepository resultRepository) {
         this.buildPlanCreatorProvider = buildPlanCreatorFactory;
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.feedbackService = feedbackService;
+        this.resultRepository = resultRepository;
     }
 
     @Override
@@ -313,16 +317,21 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) {
         final var report = TestResultsDTO.convert(requestBody);
-        final var latestPendingSubmission = programmingSubmissionRepository.findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(participation.getId()).stream()
+        final var latestPendingSubmission = programmingSubmissionRepository.findByParticipationIdAndResultsIsNullOrderBySubmissionDateDesc(participation.getId()).stream()
                 .filter(submission -> {
                     final var commitHash = getCommitHash(report, submission.getType());
                     return commitHash.isPresent() && submission.getCommitHash().equals(commitHash.get());
                 }).findFirst();
-        final var result = createResultFromBuildResult(report, (Participation) participation);
+        var result = createResultFromBuildResult(report, (Participation) participation);
         final ProgrammingSubmission submission;
         submission = latestPendingSubmission.orElseGet(() -> createFallbackSubmission(participation, report));
         submission.setBuildFailed(result.getResultString().equals("No tests found"));
+
+        // save result to create entry in DB before establishing relation with submission for ordering
+        result = resultRepository.save(result);
+
         result.setSubmission(submission);
+        submission.setResult(result);
         result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), submission);
         programmingSubmissionRepository.save(submission);
         // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
