@@ -253,7 +253,6 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
         final Result result = submissionWithoutAssessment.getResult();
-
         assertThat(result).as("saved result found").isNotNull();
         assertThat(((StudentParticipation) submissionWithoutAssessment.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
         assertThat(result.getParticipation()).isNull();
@@ -669,8 +668,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         textSubmission2 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, "student2", "tutor1", Collections.singletonList(feedback));
 
         // refetch the database objects to avoid lazy exceptions
-        textSubmission1 = textSubmissionRepository.findByIdWithEagerResultFeedbackAndTextBlocks(textSubmission1.getId()).get();
-        textSubmission2 = textSubmissionRepository.findByIdWithEagerResultFeedbackAndTextBlocks(textSubmission2.getId()).get();
+        textSubmission1 = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission1.getId()).get();
+        textSubmission2 = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission2.getId()).get();
         return asList(textSubmission1, textSubmission2);
     }
 

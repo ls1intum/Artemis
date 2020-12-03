@@ -6,13 +6,9 @@ import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { SubmissionComparisonDTO, TextExerciseService } from './text-exercise.service';
+import { TextExerciseService } from './text-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { downloadFile, downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { ExportToCsv } from 'export-to-csv';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
@@ -110,72 +106,5 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
      */
     registerChangeInTextExercises() {
         this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', () => this.load(this.textExercise.id!));
-    }
-
-    checkPlagiarismJson() {
-        this.checkPlagiarism((data) => {
-            const json = JSON.stringify(data);
-            const blob = new Blob([json], { type: 'application/json' });
-            downloadFile(blob, `check-plagiarism-text-exercise_${this.textExercise.id}.json`);
-        });
-    }
-
-    checkPlagiarismJPlag() {
-        this.checkPlagiarismInProgress = true;
-        this.textExerciseService.checkPlagiarismJPlag(this.textExercise.id!).subscribe(
-            (response: HttpResponse<Blob>) => {
-                this.checkPlagiarismInProgress = false;
-                downloadZipFileFromResponse(response);
-            },
-            () => (this.checkPlagiarismInProgress = false),
-        );
-    }
-
-    checkPlagiarismCsv() {
-        this.checkPlagiarism((data) => {
-            if (data.length > 0) {
-                const csvExporter = new ExportToCsv({
-                    fieldSeparator: ';',
-                    quoteStrings: '"',
-                    decimalSeparator: 'locale',
-                    showLabels: true,
-                    title: `Plagiarism Check for Text Exercise ${this.textExercise.id}: ${this.textExercise.title}`,
-                    filename: `check-plagiarism-textExercise_${this.textExercise.id}`,
-                    useTextFile: false,
-                    useBom: true,
-                    headers: ['Student A', 'Submission A', 'Student B', 'Submission B', ...Object.keys(data[0].distanceMetrics)],
-                });
-
-                const fullname = (student: User): string => `${student.firstName || ''} ${student.lastName || ''}`.trim();
-                const csvData = data.map((dto) => {
-                    const submissionA = dto.submissions[0];
-                    const submissionB = dto.submissions[1];
-                    const studentA = (submissionA.participation as StudentParticipation).student!;
-                    const studentB = (submissionB.participation as StudentParticipation).student!;
-                    return Object.assign(
-                        {
-                            'Student A': fullname(studentA),
-                            'Submission A': submissionA.text,
-                            'Student B': fullname(studentB),
-                            'Submission B': submissionB.text,
-                        },
-                        dto.distanceMetrics,
-                    );
-                });
-
-                csvExporter.generateCsv(csvData);
-            }
-        });
-    }
-
-    private checkPlagiarism(completionHandler: (data: Array<SubmissionComparisonDTO>) => void) {
-        this.checkPlagiarismInProgress = true;
-        this.textExerciseService.checkPlagiarism(this.textExercise.id!).subscribe(
-            (response: HttpResponse<Array<SubmissionComparisonDTO>>) => {
-                this.checkPlagiarismInProgress = false;
-                completionHandler(response.body!);
-            },
-            () => (this.checkPlagiarismInProgress = false),
-        );
     }
 }
