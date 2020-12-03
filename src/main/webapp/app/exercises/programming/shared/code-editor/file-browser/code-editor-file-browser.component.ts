@@ -253,7 +253,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     setupTreeview() {
         let tree = this.buildTree(Object.keys(this.repositoryFiles).sort());
         if (this.compressFolders) {
-            tree = this.compressTree(tree);
+            tree = tree.map(this.compressTree.bind(this));
         }
         this.filesTreeViewItem = this.transformTreeToTreeViewItem(tree);
     }
@@ -332,22 +332,16 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     /**
      * @function compressTree
      * @desc Compresses the tree obtained by buildTree() to not contain nodes with only one directory child node
-     * @param tree {array of objects} Tree structure
+     * @param node Tree node
      */
-    compressTree(tree: any): any {
-        for (const node of tree) {
-            if (node.children && node.children.length === 1 && node.children[0].children) {
-                node.text = node.text + '/' + node.children[0].text;
-                node.value = node.text;
-                node.children = this.compressTree(node.children[0].children);
-                if (node.children[0].children) {
-                    return this.compressTree(tree);
-                }
-            } else if (node.children) {
-                node.children = this.compressTree(node.children);
-            }
+    compressTree(node: any): any {
+        if (node.children && node.children.length === 1 && node.children[0].children) {
+            return this.compressTree({ ...node.children[0], text: node.text + '/' + node.childred[0].text });
+        } else if (node.children) {
+            return { ...node, children: node.children.map(this.compressTree.bind(this)) };
+        } else {
+            return node;
         }
-        return tree;
     }
 
     /**
