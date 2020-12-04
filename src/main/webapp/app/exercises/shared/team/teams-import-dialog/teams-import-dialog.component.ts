@@ -285,9 +285,9 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Update source teams to given teams
-     * Find logins and registration numbers which appears multiple times
-     * Reset current state of arrays of registration numbers and logins
+     * Updates source teams to given teams
+     * Finds logins and registration numbers which appears multiple times
+     * Resets current state of arrays of registration numbers and logins
      * @param {Team[]} fileTeams - Teams which its students only have visible registration number
      */
     onTeamsChanged(fileTeams: Team[]) {
@@ -295,8 +295,8 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         this.sourceTeams = fileTeams;
         this.resetConflictingSets();
         const students: User[] = flatMap(fileTeams, (fileTeam) => fileTeam.students ?? []);
-        const studentLoginsAlreadyExistingInOtherTeams = this.findIdentifiersWhoAppearsMultipleTimes(students, 'login');
-        const studentRegistrationNumbersAlreadyExistingInOtherTeams = this.findIdentifiersWhoAppearsMultipleTimes(students, 'visibleRegistrationNumber');
+        const studentLoginsAlreadyExistingInOtherTeams = this.findIdentifiersWhichAppearsMultipleTimes(students, 'login');
+        const studentRegistrationNumbersAlreadyExistingInOtherTeams = this.findIdentifiersWhichAppearsMultipleTimes(students, 'visibleRegistrationNumber');
         this.studentsAppearInMultipleTeams = studentLoginsAlreadyExistingInOtherTeams.length > 0 || studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0;
         this.conflictingRegistrationNumbersSet = this.addArrayToSet(this.conflictingRegistrationNumbersSet, studentRegistrationNumbersAlreadyExistingInOtherTeams);
         this.conflictingLoginsSet = this.addArrayToSet(this.conflictingLoginsSet, studentLoginsAlreadyExistingInOtherTeams);
@@ -309,7 +309,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * @param identifier Which identifier to use when searching for multiple occurrences
      * @returns Identifiers which appeared multiple times in user array
      */
-    private findIdentifiersWhoAppearsMultipleTimes(users: User[], identifier: 'login' | 'visibleRegistrationNumber') {
+    private findIdentifiersWhichAppearsMultipleTimes(users: User[], identifier: 'login' | 'visibleRegistrationNumber') {
         const occurrenceMap = new Map();
         users.forEach((user) => {
             const identifierValue = user[identifier];
