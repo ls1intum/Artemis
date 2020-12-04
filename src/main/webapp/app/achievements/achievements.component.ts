@@ -11,8 +11,7 @@ import { Subscription } from 'rxjs';
     styleUrls: ['./achievements.scss'],
 })
 export class AchievementsComponent implements OnInit, OnDestroy {
-    @Input()
-    public course: Course;
+    @Input() course: Course;
 
     public achievements: Achievement[];
 
