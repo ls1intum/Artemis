@@ -21,7 +21,6 @@ describe('TeamsExportButtonComponent', () => {
     let fixture: ComponentFixture<TeamsExportButtonComponent>;
     let debugElement: DebugElement;
     let teamService: TeamService;
-    let alertService: JhiAlertService;
 
     function resetComponent() {
         comp.teams = mockTeams;
@@ -41,16 +40,13 @@ describe('TeamsExportButtonComponent', () => {
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
         teamService = TestBed.inject(TeamService);
-        alertService = TestBed.inject(JhiAlertService);
     });
 
     describe('exportTeams', () => {
         let exportTeamsStub: SinonStub;
-        let alertServiceStub: SinonStub;
         beforeEach(() => {
             resetComponent();
             exportTeamsStub = stub(teamService, 'exportTeams');
-            alertServiceStub = stub(alertService, 'error');
         });
         afterEach(() => {
             restore();

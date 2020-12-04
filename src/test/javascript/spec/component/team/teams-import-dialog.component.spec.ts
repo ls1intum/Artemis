@@ -1,5 +1,4 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -644,14 +643,14 @@ describe('TeamsImportDialogComponent', () => {
             expect(alertServiceStub).to.have.been.calledWith('artemisApp.team.importError');
         });
         it('call alert service if students not found', () => {
-            const registrationNumbers = ['1', '2', '3'];
-            const logins = ['l1', 'l2', 'l3'];
-            response = new HttpErrorResponse({ error: { errorKey: 'studentsNotFound', params: { registrationNumbers, logins } } });
+            const notFoundRegistrationNumbers = ['1', '2', '3'];
+            const notFoundLogins = ['l1', 'l2', 'l3'];
+            response = new HttpErrorResponse({ error: { errorKey: 'studentsNotFound', params: { registrationNumbers: notFoundRegistrationNumbers, logins: notFoundLogins } } });
             comp.isImporting = true;
             comp.onSaveError(response);
             expect(comp.isImporting).to.equal(false);
-            expect(alertServiceStub).to.have.been.calledWithExactly('artemisApp.team.errors.registrationNumbersNotFound', { registrationNumbers });
-            expect(alertServiceStub).to.have.been.calledWithExactly('artemisApp.team.errors.loginsNotFound', { logins });
+            expect(alertServiceStub).to.have.been.calledWithExactly('artemisApp.team.errors.registrationNumbersNotFound', { registrationNumbers: notFoundRegistrationNumbers });
+            expect(alertServiceStub).to.have.been.calledWithExactly('artemisApp.team.errors.loginsNotFound', { logins: notFoundLogins });
         });
         it('call alert service if students appear multiple times', () => {
             const students = [
@@ -748,9 +747,9 @@ describe('TeamsImportDialogComponent', () => {
             resetComponent();
         });
         it('should return union of registration number arrays', () => {
-            const registrationNumbers = ['1', '2', '3'];
-            comp.conflictingRegistrationNumbersSet = new Set(registrationNumbers);
-            expect(comp.problematicRegistrationNumbers).to.deep.equal(registrationNumbers);
+            const conflictingRegistrationNumbers = ['1', '2', '3'];
+            comp.conflictingRegistrationNumbersSet = new Set(conflictingRegistrationNumbers);
+            expect(comp.problematicRegistrationNumbers).to.deep.equal(conflictingRegistrationNumbers);
         });
     });
 
@@ -759,9 +758,9 @@ describe('TeamsImportDialogComponent', () => {
             resetComponent();
         });
         it('should return array of conflicting logins set', () => {
-            const logins = ['l1', 'l2', 'l3'];
-            comp.conflictingLoginsSet = new Set(logins);
-            expect(comp.problematicLogins).to.deep.equal(logins);
+            const conflictingLogins = ['l1', 'l2', 'l3'];
+            comp.conflictingLoginsSet = new Set(conflictingLogins);
+            expect(comp.problematicLogins).to.deep.equal(conflictingLogins);
         });
     });
 });
