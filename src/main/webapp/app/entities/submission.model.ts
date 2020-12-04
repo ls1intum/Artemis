@@ -29,7 +29,7 @@ export abstract class Submission implements BaseEntity {
     public submissionExerciseType?: SubmissionExerciseType;
     public durationInMinutes?: number;
 
-    public result?: Result;
+    public results?: Result[];
     public participation?: Participation;
 
     // only used for exam to check if it is saved to server
@@ -38,5 +38,23 @@ export abstract class Submission implements BaseEntity {
     protected constructor(submissionExerciseType: SubmissionExerciseType) {
         this.submissionExerciseType = submissionExerciseType;
         this.submitted = false; // default value
+    }
+}
+
+export function getLatestResult(submission: Submission | undefined): Result | undefined {
+    if (submission?.results) {
+        const length = submission.results.length;
+        if (length > 0) {
+            return submission.results[length - 1];
+        }
+    }
+}
+
+export function getFirstResult(submission: Submission | undefined): Result | undefined {
+    if (submission?.results) {
+        const length = submission.results.length;
+        if (length > 0) {
+            return submission.results[0];
+        }
     }
 }
