@@ -67,6 +67,8 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     @Input()
     lecturesOfCourseWithLectureUnits: Lecture[] = [];
 
+    titleUniqueValidator = titleUniqueValidator;
+
     @Output()
     formSubmitted: EventEmitter<LearningGoalFormData> = new EventEmitter<LearningGoalFormData>();
 
@@ -109,7 +111,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             initialTitle = this.formData.title;
         }
         this.form = this.fb.group({
-            title: [undefined, [Validators.required, Validators.maxLength(255)], [titleUniqueValidator(this.learningGoalService, this.courseId, initialTitle)]],
+            title: [undefined, [Validators.required, Validators.maxLength(255)], [this.titleUniqueValidator(this.learningGoalService, this.courseId, initialTitle)]],
             description: [undefined, [Validators.maxLength(10000)]],
         });
         this.selectedLectureUnitsInTable = [];

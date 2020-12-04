@@ -71,6 +71,7 @@
                         </thead>
                         <tbody>
                             <tr
+                                class="lectureUnitRow"
                                 *ngFor="let lectureUnit of selectedLectureInDropdown.lectureUnits"
                                 (click)="selectLectureUnitInTable(lectureUnit)"
                                 [class.table-primary]="isLectureUnitAlreadySelectedInTable(lectureUnit)"
