@@ -24,6 +24,7 @@ const expect = chai.expect;
 
 @Component({ selector: 'jhi-learning-goal-form', template: '' })
 class LearningGoalFormStubComponent {
+    @Input() formData: LearningGoalFormData;
     @Input() courseId: number;
     @Input() isEditMode = false;
     @Input()
