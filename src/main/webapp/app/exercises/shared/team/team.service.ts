@@ -1,20 +1,19 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { SERVER_API_URL } from 'app/app.constants';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Course } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { StudentWithTeam } from 'app/entities/team.model';
+import { TeamSearchUser } from 'app/entities/team-search-user.model';
+import { Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/entities/team.model';
+import { downloadFile } from 'app/shared/util/download.util';
+import { createRequestOption } from 'app/shared/util/request-util';
+import * as moment from 'moment';
 import { Observable, Subscription } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
-import * as moment from 'moment';
-
-import { SERVER_API_URL } from 'app/app.constants';
-import { Team, TeamAssignmentPayload, TeamImportStrategyType, TeamList } from 'app/entities/team.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
-import { TeamSearchUser } from 'app/entities/team-search-user.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { User } from 'app/core/user/user.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { createRequestOption } from 'app/shared/util/request-util';
-import { StudentWithTeam } from 'app/entities/student-with-team.model';
-import { downloadFile } from 'app/shared/util/download.util';
 
 export type TeamResponse = HttpResponse<Team>;
 export type TeamArrayResponse = HttpResponse<Team[]>;
@@ -234,20 +233,24 @@ export class TeamService implements ITeamService {
      */
     exportTeams(teams: Team[]) {
         // Make list of teams which we need to export,
-        const exportedTeams: TeamList = { students: [] };
+        const exportedTeams: StudentWithTeam[] = [];
         teams!.forEach((team) => {
             if (team.students) {
                 team.students.forEach((student) => {
                     const exportStudent = {
-                        name: student.firstName ?? '',
-                        surname: student.lastName ?? '',
                         teamName: team.name ?? '',
                         username: student.login ?? '',
                     } as StudentWithTeam;
+                    if (student.firstName) {
+                        exportStudent.firstName = student.firstName;
+                    }
+                    if (student.lastName) {
+                        exportStudent.lastName = student.lastName;
+                    }
                     if (student.visibleRegistrationNumber) {
                         exportStudent.registrationNumber = student.visibleRegistrationNumber;
                     }
-                    exportedTeams.students.push(exportStudent);
+                    exportedTeams.push(exportStudent);
                 });
             }
         });

@@ -204,7 +204,7 @@
     </div>
     <div class="modal-footer">
         <div *ngIf="showImportPreviewNumbers && sourceTeams" class="flex-shrink-0 mr-2 d-flex">
-            <div *ngIf="studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0; else elseBlock">
+            <div *ngIf="studentsAppearInMultipleTeams; else elseBlock">
                 <strong>{{ 'artemisApp.team.importPreview.studentsInMultipleTeams' | translate }}</strong>
             </div>
             <ng-template #elseBlock>

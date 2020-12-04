@@ -22,7 +22,7 @@ describe('TeamsImportFromFileFormComponent', () => {
 
     function resetComponent() {
         comp.sourceTeams = undefined;
-        comp.importedTeams = { students: [] };
+        comp.importedTeams = [];
         comp.importFile = undefined;
         comp.importFileName = '';
         comp.loading = false;

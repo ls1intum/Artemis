@@ -36,6 +36,8 @@ describe('TeamsImportDialogComponent', () => {
     let teamService: TeamService;
 
     const teams: Team[] = mockTeams;
+    const logins = flatMap(mockTeams, (team) => team.students?.map((student) => student.login));
+    const registrationNumbers = flatMap(mockTeams, (team) => team.students?.map((student) => student.visibleRegistrationNumber));
     const exercise: Exercise = mockExercise;
 
     function resetComponent() {
@@ -50,13 +52,12 @@ describe('TeamsImportDialogComponent', () => {
         comp.isImporting = false;
         comp.showImportFromExercise = true;
         comp.teamShortNamesAlreadyExistingInExercise = [];
-        comp.studentLoginsAlreadyExistingInExercise = [];
         comp.sourceTeamsFreeOfConflicts = [];
-        comp.studentRegistrationNumbersAlreadyExistingInOtherTeams = [];
-        comp.studentRegistrationNumbersAlreadyExistingInExercise = [];
-        comp.notFoundLogins = [];
         comp.sourceTeams = undefined;
         comp.sourceExercise = undefined;
+        comp.studentsAppearInMultipleTeams = false;
+        comp.conflictingLoginsSet = new Set();
+        comp.conflictingRegistrationNumbersSet = new Set();
     }
 
     beforeEach(
@@ -184,10 +185,8 @@ describe('TeamsImportDialogComponent', () => {
             comp.computePotentialConflictsBasedOnExistingTeams();
             const shortNames = teams.map((team) => team.shortName);
             expect(comp.teamShortNamesAlreadyExistingInExercise).to.deep.equal(shortNames);
-            const logins = flatMap(teams, (team) => team.students?.map((student) => student.login));
-            expect(comp.studentLoginsAlreadyExistingInExercise).to.deep.equal(logins);
-            const registrationNumbers = flatMap(teams, (team) => team.students?.map((student) => student.visibleRegistrationNumber));
-            expect(comp.studentRegistrationNumbersAlreadyExistingInExercise).to.deep.equal(registrationNumbers);
+            expect(comp.conflictingLoginsSet).to.deep.equal(new Set(logins));
+            expect(comp.conflictingRegistrationNumbersSet).to.deep.equal(new Set(registrationNumbers));
         });
     });
 
@@ -227,63 +226,52 @@ describe('TeamsImportDialogComponent', () => {
         });
 
         it('Import from exercise: returns false if one of the students login is in already existing students', () => {
-            comp.studentLoginsAlreadyExistingInExercise = [mockTeamStudents[0].login!];
+            comp.conflictingLoginsSet = new Set([mockTeamStudents[0].login!]);
             expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).to.equal(false);
         });
 
         it('Import from exercise: returns true if none of the students login is in already existing students', () => {
-            comp.studentLoginsAlreadyExistingInExercise = [];
             expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).to.equal(true);
         });
 
         it('Import from file: returns false if one of the students login is in already existing students', () => {
-            comp.studentLoginsAlreadyExistingInExercise = [mockTeamStudents[0].login!];
+            comp.conflictingLoginsSet = new Set([mockTeamStudents[0].login!]);
             comp.showImportFromExercise = false;
             expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).to.equal(false);
         });
 
         it('Import from exercise: returns true if one of the students registration number is in already existing students', () => {
-            comp.studentRegistrationNumbersAlreadyExistingInExercise = [mockTeamStudents[0].visibleRegistrationNumber!];
+            comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].visibleRegistrationNumber!]);
             expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).to.equal(true);
         });
 
         it('Import from file: returns false if one of the students registration number is in already existing students', () => {
-            comp.studentRegistrationNumbersAlreadyExistingInExercise = [mockTeamStudents[0].visibleRegistrationNumber!];
+            comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].visibleRegistrationNumber!]);
             comp.showImportFromExercise = false;
             expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).to.equal(false);
         });
 
-        it('Import from file: returns true if none of the students registration number is in already existing students', () => {
-            comp.studentRegistrationNumbersAlreadyExistingInExercise = [];
-            comp.showImportFromExercise = false;
-            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).to.equal(true);
-        });
-
         it('Import from exercise: returns true if one of the students registration number is in already other source teams', () => {
-            comp.studentRegistrationNumbersAlreadyExistingInOtherTeams = [mockTeamStudents[0].visibleRegistrationNumber!];
+            comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].visibleRegistrationNumber!]);
+            comp.studentsAppearInMultipleTeams = true;
             expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).to.equal(true);
         });
 
         it('Import from file: returns false if one of the students registration number is in already other source teams', () => {
-            comp.studentRegistrationNumbersAlreadyExistingInOtherTeams = [mockTeamStudents[0].visibleRegistrationNumber!];
+            comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].visibleRegistrationNumber!]);
+            comp.studentsAppearInMultipleTeams = true;
             comp.showImportFromExercise = false;
             expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).to.equal(false);
-        });
-
-        it('Import from file: returns true if none of the students registration number is in already other source teams', () => {
-            comp.studentRegistrationNumbersAlreadyExistingInOtherTeams = [];
-            comp.showImportFromExercise = false;
-            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).to.equal(true);
         });
 
         it('Import from file: returns false if one of the students login is in already other source teams', () => {
-            comp.studentLoginsAlreadyExistingInOtherTeams = [mockTeamStudents[0].login!];
+            comp.conflictingLoginsSet = new Set([mockTeamStudents[0].login!]);
+            comp.studentsAppearInMultipleTeams = true;
             comp.showImportFromExercise = false;
             expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).to.equal(false);
         });
 
-        it('Import from file: returns true if none of the students login is in already other source teams', () => {
-            comp.studentLoginsAlreadyExistingInOtherTeams = [];
+        it('Import from file: returns true if no student is in multiple teams', () => {
             comp.showImportFromExercise = false;
             expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).to.equal(true);
         });
@@ -424,23 +412,19 @@ describe('TeamsImportDialogComponent', () => {
             it('Import from file: should return false if there is no import strategy', () => {
                 expect(comp.showImportPreviewNumbers).to.equal(false);
             });
-            it('Import from file: should return false if studentRegistrationNumbersAlreadyExistingInOtherTeams has registration numbers and no import strategy', () => {
-                comp.studentRegistrationNumbersAlreadyExistingInOtherTeams = [];
+            it('Import from file: should return false if no students in multiple teams and no import strategy', () => {
                 comp.importStrategy = undefined;
                 expect(comp.showImportPreviewNumbers).to.equal(false);
             });
-            it('Import from file: should return true if studentRegistrationNumbersAlreadyExistingInOtherTeams does not have registration numbers', () => {
-                comp.studentRegistrationNumbersAlreadyExistingInOtherTeams = ['1', '2'];
+            it('Import from file: should return true if there are students appear in multiple teams and conflicting registration numbers', () => {
+                comp.conflictingRegistrationNumbersSet = new Set(['1', '2']);
+                comp.studentsAppearInMultipleTeams = true;
                 comp.importStrategy = undefined;
                 expect(comp.showImportPreviewNumbers).to.equal(true);
             });
-            it('Import from file: should return false if studentLoginsAlreadyExistingInOtherTeams has registration numbers and no import strategy', () => {
-                comp.studentLoginsAlreadyExistingInOtherTeams = [];
-                comp.importStrategy = undefined;
-                expect(comp.showImportPreviewNumbers).to.equal(false);
-            });
-            it('Import from file: should return true if studentLoginsAlreadyExistingInOtherTeams does not have registration numbers', () => {
-                comp.studentLoginsAlreadyExistingInOtherTeams = ['l1', 'l2'];
+            it('Import from file: should return true if there are students appear in multiple teams and conflicting logins', () => {
+                comp.conflictingLoginsSet = new Set(['l1', 'l2']);
+                comp.studentsAppearInMultipleTeams = true;
                 comp.importStrategy = undefined;
                 expect(comp.showImportPreviewNumbers).to.equal(true);
             });
@@ -494,7 +478,8 @@ describe('TeamsImportDialogComponent', () => {
             expect(comp.isSubmitDisabled).to.equal(true);
         });
         it('Import from file: should return true if there same registration number is in two teams', () => {
-            comp.studentRegistrationNumbersAlreadyExistingInOtherTeams = ['1', '2'];
+            comp.conflictingRegistrationNumbersSet = new Set(['1', '2']);
+            comp.studentsAppearInMultipleTeams = true;
             comp.showImportFromExercise = false;
             expect(comp.isSubmitDisabled).to.equal(true);
         });
@@ -610,19 +595,17 @@ describe('TeamsImportDialogComponent', () => {
             comp.onTeamsChanged(mockSourceTeams);
             expect(initImportStub).to.have.been.called;
             expect(comp.sourceTeams).to.deep.equal(mockSourceTeams);
-            expect(comp.studentRegistrationNumbersAlreadyExistingInOtherTeams).to.deep.equal([]);
-            expect(comp.studentLoginsAlreadyExistingInOtherTeams).to.deep.equal([]);
-            expect(comp.notFoundRegistrationNumbers).to.deep.equal([]);
-            expect(comp.notFoundLogins).to.deep.equal([]);
+            expect(comp.conflictingRegistrationNumbersSet).to.deep.equal(new Set(registrationNumbers));
+            expect(comp.conflictingLoginsSet).to.deep.equal(new Set(logins));
             expect(computeSourceFreeOfConflictsStub).to.have.been.called;
         });
         it('adds registration number if a student is in two or more teams', () => {
             comp.onTeamsChanged([...mockSourceTeams, ...mockSourceTeams]);
-            expect(comp.studentRegistrationNumbersAlreadyExistingInOtherTeams).to.deep.equal(mockSourceTeamStudents.map((student) => student.visibleRegistrationNumber));
+            expect(comp.problematicRegistrationNumbers).to.deep.equal([...mockSourceTeamStudents.map((student) => student.visibleRegistrationNumber), ...registrationNumbers]);
         });
         it('adds login if a student is in two or more teams', () => {
             comp.onTeamsChanged([...mockSourceTeams, ...mockSourceTeams]);
-            expect(comp.studentLoginsAlreadyExistingInOtherTeams).to.deep.equal(mockSourceTeamStudents.map((student) => student.login));
+            expect(comp.problematicLogins).to.deep.equal([...mockSourceTeamStudents.map((student) => student.login), ...logins]);
         });
     });
 
@@ -691,10 +674,8 @@ describe('TeamsImportDialogComponent', () => {
             expect(comp.sourceTeams).to.equal(undefined);
             expect(comp.sourceExercise).to.equal(undefined);
             expect(comp.isImporting).to.equal(false);
-            expect(comp.studentRegistrationNumbersAlreadyExistingInOtherTeams).to.deep.equal([]);
-            expect(comp.notFoundRegistrationNumbers).to.deep.equal([]);
-            expect(comp.studentLoginsAlreadyExistingInOtherTeams).to.deep.equal([]);
-            expect(comp.notFoundLogins).to.deep.equal([]);
+            expect(comp.conflictingLoginsSet).to.deep.equal(new Set(logins));
+            expect(comp.conflictingRegistrationNumbersSet).to.deep.equal(new Set(registrationNumbers));
             expect(initImportStrategyStub).to.have.been.called;
         };
         beforeEach(() => {
@@ -703,10 +684,9 @@ describe('TeamsImportDialogComponent', () => {
             comp.sourceTeams = mockSourceTeams;
             comp.sourceExercise = mockSourceExercise;
             comp.isImporting = true;
-            comp.studentRegistrationNumbersAlreadyExistingInOtherTeams = ['1'];
-            comp.notFoundRegistrationNumbers = [];
-            comp.studentLoginsAlreadyExistingInOtherTeams = ['l1'];
-            comp.notFoundLogins = [];
+            comp.studentsAppearInMultipleTeams = true;
+            comp.conflictingRegistrationNumbersSet = new Set(['1']);
+            comp.conflictingLoginsSet = new Set(['l1']);
         });
         afterEach(() => {
             restore();
@@ -768,10 +748,9 @@ describe('TeamsImportDialogComponent', () => {
             resetComponent();
         });
         it('should return union of registration number arrays', () => {
-            comp.notFoundRegistrationNumbers = ['1', '2', '3'];
-            comp.studentRegistrationNumbersAlreadyExistingInOtherTeams = ['2', '4'];
-            comp.studentRegistrationNumbersAlreadyExistingInExercise = ['3', '5'];
-            expect(comp.problematicRegistrationNumbers).to.deep.equal(['1', '2', '3', '4', '5']);
+            const registrationNumbers = ['1', '2', '3'];
+            comp.conflictingRegistrationNumbersSet = new Set(registrationNumbers);
+            expect(comp.problematicRegistrationNumbers).to.deep.equal(registrationNumbers);
         });
     });
 
@@ -779,11 +758,10 @@ describe('TeamsImportDialogComponent', () => {
         beforeEach(() => {
             resetComponent();
         });
-        it('should return union of login arrays', () => {
-            comp.notFoundLogins = ['1', '2', '3'];
-            comp.studentLoginsAlreadyExistingInOtherTeams = ['2', '4'];
-            comp.studentLoginsAlreadyExistingInExercise = ['3', '5'];
-            expect(comp.problematicLogins).to.deep.equal(['1', '2', '3', '4', '5']);
+        it('should return array of conflicting logins set', () => {
+            const logins = ['l1', 'l2', 'l3'];
+            comp.conflictingLoginsSet = new Set(logins);
+            expect(comp.problematicLogins).to.deep.equal(logins);
         });
     });
 });

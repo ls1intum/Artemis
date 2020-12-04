@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, EventEmitter, Output } from '@angular/core';
 import { User } from 'app/core/user/user.model';
-import { Team, TeamList } from 'app/entities/team.model';
+import { StudentWithTeam } from 'app/entities/team.model';
+import { Team } from 'app/entities/team.model';
 
 @Component({
     selector: 'jhi-teams-import-from-file-form',
@@ -10,7 +11,7 @@ import { Team, TeamList } from 'app/entities/team.model';
 export class TeamsImportFromFileFormComponent {
     @Output() teamsChanged = new EventEmitter<Team[]>();
     sourceTeams?: Team[];
-    importedTeams: TeamList = { students: [] };
+    importedTeams: StudentWithTeam[] = [];
     importFile?: Blob;
     importFileName: string;
     loading: boolean;
@@ -32,7 +33,7 @@ export class TeamsImportFromFileFormComponent {
     onFileLoadImport(fileReader: FileReader) {
         try {
             // Read the file and get list of teams from the file
-            this.importedTeams = JSON.parse(fileReader.result as string) as TeamList;
+            this.importedTeams = JSON.parse(fileReader.result as string) as StudentWithTeam[];
             this.sourceTeams = this.convertTeams(this.importedTeams);
             this.teamsChanged.emit(this.sourceTeams);
             this.loading = false;
@@ -72,19 +73,19 @@ export class TeamsImportFromFileFormComponent {
     /**
      * Convert imported team list to normal teams
      */
-    convertTeams(importTeam: TeamList): Team[] {
+    convertTeams(importTeam: StudentWithTeam[]): Team[] {
         const teams: Team[] = [];
-        importTeam.students!.forEach((student) => {
+        importTeam.forEach((student) => {
             const newStudent = new User();
-            newStudent.firstName = student.name;
-            newStudent.lastName = student.surname;
+            newStudent.firstName = student.firstName ?? '';
+            newStudent.lastName = student.lastName ?? '';
             newStudent.visibleRegistrationNumber = student.registrationNumber;
             newStudent.login = student.username;
 
             if (!student.username && !student.registrationNumber) {
                 throw new Error('Students must have either username or registration number');
             }
-            newStudent.name = `${student.name} ${student.surname}`;
+            newStudent.name = `${newStudent.firstName} ${newStudent.lastName}`;
             const index = teams.findIndex((team) => team.name === student.teamName);
             if (index === -1) {
                 const newTeam = new Team();

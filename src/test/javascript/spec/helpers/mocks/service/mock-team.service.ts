@@ -3,7 +3,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ITeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team, TeamImportStrategyType } from 'app/entities/team.model';
-import { StudentWithTeam } from 'app/entities/student-with-team.model';
+import { StudentWithTeam } from 'app/entities/team.model';
 import { Course } from 'app/entities/course.model';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { User } from 'app/core/user/user.model';
@@ -77,14 +77,12 @@ export const mockShortNames = {
     nonExisting: 'team2',
 };
 
-export const mockFileStudents = {
-    students: [
-        { name: 'Jack', surname: 'Doe', username: 'jack_doe', teamName: 'File Team 1' } as StudentWithTeam,
-        { name: 'Jackie', surname: 'Doen', username: 'jackie_doen', teamName: 'File Team 1' } as StudentWithTeam,
-        { name: 'Alyson', surname: 'Smithson', registrationNumber: '23458', teamName: 'File Team 2' } as StudentWithTeam,
-        { name: 'Alysia', surname: 'Smith', registrationNumber: '23459', teamName: 'File Team 2' } as StudentWithTeam,
-    ],
-};
+export const mockFileStudents = [
+    { firstName: 'Jack', lastName: 'Doe', username: 'jack_doe', teamName: 'File Team 1' } as StudentWithTeam,
+    { firstName: 'Jackie', lastName: 'Doen', username: 'jackie_doen', teamName: 'File Team 1' } as StudentWithTeam,
+    { firstName: 'Alyson', lastName: 'Smithson', registrationNumber: '23458', teamName: 'File Team 2' } as StudentWithTeam,
+    { firstName: 'Alysia', lastName: 'Smith', registrationNumber: '23459', teamName: 'File Team 2' } as StudentWithTeam,
+];
 
 export const mockFileTeamsConverted: Team[] = [
     {

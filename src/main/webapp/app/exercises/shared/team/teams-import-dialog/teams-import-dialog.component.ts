@@ -44,13 +44,13 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
     // computed properties
     teamShortNamesAlreadyExistingInExercise: string[] = [];
-    studentLoginsAlreadyExistingInExercise: string[] = [];
     sourceTeamsFreeOfConflicts: Team[] = [];
-    studentRegistrationNumbersAlreadyExistingInOtherTeams: string[] = [];
-    studentRegistrationNumbersAlreadyExistingInExercise: string[] = [];
-    notFoundRegistrationNumbers: string[] = [];
-    notFoundLogins: string[] = [];
-    studentLoginsAlreadyExistingInOtherTeams: string[] = [];
+
+    conflictingRegistrationNumbersSet: Set<string> = new Set<string>();
+
+    conflictingLoginsSet: Set<string> = new Set<string>();
+
+    studentsAppearInMultipleTeams = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -121,8 +121,10 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      */
     computePotentialConflictsBasedOnExistingTeams() {
         this.teamShortNamesAlreadyExistingInExercise = this.teams.map((team) => team.shortName!);
-        this.studentLoginsAlreadyExistingInExercise = flatMap(this.teams, (team) => team.students!.map((student) => student.login!));
-        this.studentRegistrationNumbersAlreadyExistingInExercise = flatMap(this.teams, (team) => team.students!.map((student) => student.visibleRegistrationNumber || ''));
+        const studentLoginsAlreadyExistingInExercise = flatMap(this.teams, (team) => team.students!.map((student) => student.login!));
+        const studentRegistrationNumbersAlreadyExistingInExercise = flatMap(this.teams, (team) => team.students!.map((student) => student.visibleRegistrationNumber || ''));
+        this.conflictingRegistrationNumbersSet = this.addArrayToSet(this.conflictingRegistrationNumbersSet, studentRegistrationNumbersAlreadyExistingInExercise);
+        this.conflictingLoginsSet = this.addArrayToSet(this.conflictingLoginsSet, studentLoginsAlreadyExistingInExercise);
     }
 
     /**
@@ -148,22 +150,13 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
             return false;
         }
         // One of the students of the source team is already part of a team in the destination exercise
-        if (sourceTeam.students!.some((student) => this.studentLoginsAlreadyExistingInExercise.includes(student.login!))) {
+        if (sourceTeam.students!.some((student) => student.login && this.conflictingLoginsSet.has(student.login))) {
             return false;
         }
 
         // One of the students of the source team is already part of a team in the destination exercise or of another imported team
         if (!this.showImportFromExercise) {
-            if (
-                sourceTeam.students!.some((student) => {
-                    return (
-                        (student.visibleRegistrationNumber &&
-                            (this.studentRegistrationNumbersAlreadyExistingInExercise.includes(student.visibleRegistrationNumber) ||
-                                this.studentRegistrationNumbersAlreadyExistingInOtherTeams.includes(student.visibleRegistrationNumber))) ||
-                        (student.login && this.studentLoginsAlreadyExistingInOtherTeams.includes(student.login))
-                    );
-                })
-            ) {
+            if (sourceTeam.students!.some((student) => student.visibleRegistrationNumber && this.conflictingRegistrationNumbersSet.has(student.visibleRegistrationNumber))) {
                 return false;
             }
         }
@@ -233,11 +226,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         if (this.showImportFromExercise) {
             return this.sourceExercise !== undefined && this.sourceTeams !== undefined && this.sourceTeams.length > 0 && Boolean(this.importStrategy);
         }
-        return (
-            this.studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0 ||
-            this.studentLoginsAlreadyExistingInOtherTeams.length > 0 ||
-            (this.sourceTeams !== undefined && this.sourceTeams.length > 0 && Boolean(this.importStrategy))
-        );
+        return this.studentsAppearInMultipleTeams || (this.sourceTeams !== undefined && this.sourceTeams.length > 0 && Boolean(this.importStrategy));
     }
 
     /**
@@ -255,14 +244,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         if (this.showImportFromExercise) {
             return this.isImporting || !this.sourceExercise || !this.sourceTeams || !this.importStrategy || !this.numberOfTeamsToBeImported;
         }
-        return (
-            !this.sourceTeams ||
-            this.sourceTeams.length === 0 ||
-            !this.importStrategy ||
-            !this.numberOfTeamsToBeImported ||
-            this.studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0 ||
-            this.studentLoginsAlreadyExistingInOtherTeams.length > 0
-        );
+        return !this.sourceTeams || this.sourceTeams.length === 0 || !this.importStrategy || !this.numberOfTeamsToBeImported || this.studentsAppearInMultipleTeams;
     }
 
     /**
@@ -294,7 +276,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
                 (error) => this.onSaveError(error),
             );
         } else if (this.sourceTeams) {
-            this.notFoundRegistrationNumbers = [];
+            this.resetConflictingSets();
             this.teamService.importTeams(this.exercise, this.sourceTeams, this.importStrategy!).subscribe(
                 (res) => this.onSaveSuccess(res),
                 (error) => this.onSaveError(error),
@@ -304,39 +286,42 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
     /**
      * Update source teams to given teams
+     * Find logins and registration numbers which appears multiple times
+     * Reset current state of arrays of registration numbers and logins
      * @param {Team[]} fileTeams - Teams which its students only have visible registration number
      */
     onTeamsChanged(fileTeams: Team[]) {
         this.initImportStrategy();
         this.sourceTeams = fileTeams;
-        this.studentRegistrationNumbersAlreadyExistingInOtherTeams = [];
-        this.notFoundRegistrationNumbers = [];
+        this.resetConflictingSets();
         const students: User[] = flatMap(fileTeams, (fileTeam) => fileTeam.students ?? []);
-        const loginHistogram = students.reduce(function (map, student) {
-            const login: string | undefined = student.login;
-            if (login) {
-                if (map[login]) {
-                    map[login] += 1;
-                } else {
-                    map[login] = 1;
-                }
-            }
-            return map;
-        }, {});
-        const registrationNumberHistogram = students.reduce(function (map, student) {
-            const registrationNumber: string | undefined = student.visibleRegistrationNumber;
-            if (registrationNumber) {
-                if (map[registrationNumber]) {
-                    map[registrationNumber] += 1;
-                } else {
-                    map[registrationNumber] = 1;
-                }
-            }
-            return map;
-        }, {});
-        this.studentLoginsAlreadyExistingInOtherTeams = Object.keys(loginHistogram).filter((key) => loginHistogram[key] > 1);
-        this.studentRegistrationNumbersAlreadyExistingInOtherTeams = Object.keys(registrationNumberHistogram).filter((key) => registrationNumberHistogram[key] > 1);
+        const studentLoginsAlreadyExistingInOtherTeams = this.findIdentifiersWhoAppearsMultipleTimes(students, 'login');
+        const studentRegistrationNumbersAlreadyExistingInOtherTeams = this.findIdentifiersWhoAppearsMultipleTimes(students, 'visibleRegistrationNumber');
+        this.studentsAppearInMultipleTeams = studentLoginsAlreadyExistingInOtherTeams.length > 0 || studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0;
+        this.conflictingRegistrationNumbersSet = this.addArrayToSet(this.conflictingRegistrationNumbersSet, studentRegistrationNumbersAlreadyExistingInOtherTeams);
+        this.conflictingLoginsSet = this.addArrayToSet(this.conflictingLoginsSet, studentLoginsAlreadyExistingInOtherTeams);
         this.computeSourceTeamsFreeOfConflicts();
+    }
+
+    /**
+     * Calculates which identifier appeared how many times and returns those appear more than once
+     * @param users Users array to find identifiers that appears multiple times in
+     * @param identifier Which identifier to use when searching for multiple occurrences
+     * @returns Identifiers which appeared multiple times in user array
+     */
+    private findIdentifiersWhoAppearsMultipleTimes(users: User[], identifier: 'login' | 'visibleRegistrationNumber') {
+        const occurrenceMap = new Map();
+        users.forEach((user) => {
+            const identifierValue = user[identifier];
+            if (identifierValue) {
+                if (occurrenceMap.get(identifierValue)) {
+                    occurrenceMap.set(identifierValue, occurrenceMap.get(identifierValue) + 1);
+                } else {
+                    occurrenceMap.set(identifierValue, 1);
+                }
+            }
+        });
+        return [...occurrenceMap.keys()].filter((key) => occurrenceMap.get(key) > 1);
     }
 
     /**
@@ -354,46 +339,65 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
     /**
      * Hook to indicate an error on save
+     * Handles studentsNotFound and studentsAppearMultipleTimes errors
+     * Shows generic import error message if error is not one of the above
      * @param {HttpErrorResponse} httpErrorResponse - The occurred error
      */
     onSaveError(httpErrorResponse: HttpErrorResponse) {
         const { errorKey, params } = httpErrorResponse.error;
-        let studentsAppearMultipleTimes = [];
-        type Pair = { first: string; second: string };
         switch (errorKey) {
             case 'studentsNotFound':
                 const { registrationNumbers, logins } = params;
-                this.notFoundRegistrationNumbers = registrationNumbers;
-                this.notFoundLogins = logins;
+                this.onStudentsNotFoundError(registrationNumbers, logins);
                 break;
             case 'studentsAppearMultipleTimes':
                 const { students } = params;
-                studentsAppearMultipleTimes = students;
-
-                this.studentLoginsAlreadyExistingInOtherTeams = studentsAppearMultipleTimes.map((student: Pair) => student.first);
-                this.studentRegistrationNumbersAlreadyExistingInOtherTeams = studentsAppearMultipleTimes.map((student: Pair) => student.second);
+                this.onStudentsAppearMultipleTimesError(students);
                 break;
             default:
+                this.jhiAlertService.error('artemisApp.team.importError');
                 break;
         }
+        this.isImporting = false;
+    }
 
-        if (this.notFoundRegistrationNumbers.length > 0) {
-            this.jhiAlertService.error('artemisApp.team.errors.registrationNumbersNotFound', { registrationNumbers: this.notFoundRegistrationNumbers });
+    /**
+     * Gets not found registration numbers and logins
+     * Assigns them to appropriate array on the class
+     * Shows user which registration numbers and logins could not be found
+     * @param registrationNumbers with which a student could not be found
+     * @param logins with which a student could not be found
+     */
+    private onStudentsNotFoundError(registrationNumbers: string[], logins: string[]) {
+        const notFoundRegistrationNumbers = registrationNumbers;
+        const notFoundLogins = logins;
+        if (notFoundRegistrationNumbers.length > 0) {
+            this.jhiAlertService.error('artemisApp.team.errors.registrationNumbersNotFound', { registrationNumbers: notFoundRegistrationNumbers });
+            this.conflictingRegistrationNumbersSet = this.addArrayToSet(this.conflictingRegistrationNumbersSet, notFoundRegistrationNumbers);
         }
-        if (this.notFoundLogins.length > 0) {
-            this.jhiAlertService.error('artemisApp.team.errors.loginsNotFound', { logins: this.notFoundLogins });
+        if (notFoundLogins.length > 0) {
+            this.jhiAlertService.error('artemisApp.team.errors.loginsNotFound', { logins: notFoundLogins });
+            this.conflictingLoginsSet = this.addArrayToSet(this.conflictingLoginsSet, notFoundLogins);
         }
-        if (this.notFoundLogins.length === 0 && this.notFoundRegistrationNumbers.length === 0) {
-            this.jhiAlertService.error('artemisApp.team.importError');
-        }
+    }
 
+    /**
+     * Gets pairs of login-registration number of students which could not be found
+     * Assigns them to appropriate array on the class
+     * Shows user which students could not be found
+     * @param studentsAppearMultipleTimes login-registration number pairs of students which could not be found
+     */
+    private onStudentsAppearMultipleTimesError(studentsAppearMultipleTimes: { first: string; second: string }[]) {
         if (studentsAppearMultipleTimes.length > 0) {
+            this.studentsAppearInMultipleTeams = true;
+            const studentLoginsAlreadyExistingInOtherTeams = studentsAppearMultipleTimes.map((student) => student.first);
+            this.conflictingLoginsSet = this.addArrayToSet(this.conflictingLoginsSet, studentLoginsAlreadyExistingInOtherTeams);
+            const studentRegistrationNumbersAlreadyExistingInOtherTeams = studentsAppearMultipleTimes.map((student) => student.second);
+            this.conflictingRegistrationNumbersSet = this.addArrayToSet(this.conflictingRegistrationNumbersSet, studentRegistrationNumbersAlreadyExistingInOtherTeams);
             this.jhiAlertService.error('artemisApp.team.errors.studentsAppearMultipleTimes', {
-                students: studentsAppearMultipleTimes.map((student: Pair) => `${student.first}:${student.second}`).join(','),
+                students: studentsAppearMultipleTimes.map((student) => `${student.first}:${student.second}`).join(','),
             });
         }
-
-        this.isImporting = false;
     }
 
     /**
@@ -406,14 +410,11 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         this.sourceExercise = undefined;
         this.initImportStrategy();
         this.isImporting = false;
-        this.studentRegistrationNumbersAlreadyExistingInOtherTeams = [];
-        this.notFoundRegistrationNumbers = [];
-        this.notFoundLogins = [];
-        this.studentLoginsAlreadyExistingInOtherTeams = [];
+        this.resetConflictingSets();
     }
 
     /**
-     * Returns a sample team that can be used to render the different conflict states in the legend below the source teams
+     * @returns A sample team that can be used to render the different conflict states in the legend below the source teams
      */
     get sampleTeamForLegend() {
         const team = new Team();
@@ -432,16 +433,32 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     }
 
     get problematicRegistrationNumbers() {
-        return [
-            ...new Set([
-                ...this.notFoundRegistrationNumbers,
-                ...this.studentRegistrationNumbersAlreadyExistingInOtherTeams,
-                ...this.studentRegistrationNumbersAlreadyExistingInExercise,
-            ]),
-        ];
+        return [...this.conflictingRegistrationNumbersSet];
     }
 
     get problematicLogins() {
-        return [...new Set([...this.notFoundLogins, ...this.studentLoginsAlreadyExistingInOtherTeams, ...this.studentLoginsAlreadyExistingInExercise])];
+        return [...this.conflictingLoginsSet];
+    }
+
+    /**
+     * Adds given array to given set and returns a new set
+     * @param set to add array to
+     * @param array that will be added to set
+     * @returns A set that has values of both given set and array
+     */
+    private addArrayToSet(set: Set<string>, array: string[]) {
+        return new Set([...array, ...set.values()]);
+    }
+
+    /**
+     * Reset conflicting logins and registration numbers set
+     * Sets students appear in multiple teams to false
+     * Recomputes potential conflicts
+     */
+    private resetConflictingSets() {
+        this.conflictingLoginsSet = new Set();
+        this.conflictingRegistrationNumbersSet = new Set();
+        this.studentsAppearInMultipleTeams = false;
+        this.computePotentialConflictsBasedOnExistingTeams();
     }
 }
