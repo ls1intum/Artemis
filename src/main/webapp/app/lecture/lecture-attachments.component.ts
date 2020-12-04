@@ -65,10 +65,6 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.unsubscribe();
     }
 
-    previousState() {
-        window.history.back();
-    }
-
     addAttachment() {
         const newAttachment = new Attachment();
         newAttachment.lecture = this.lecture;

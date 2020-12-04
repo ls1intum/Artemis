@@ -71,6 +71,8 @@ public class ProgrammingExerciseGradingResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
+
+        programmingExerciseGradingService.logResetGrading(user, programmingExercise, course);
         List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(exerciseId);
         return ResponseEntity.ok(testCases);
     }
@@ -94,6 +96,8 @@ public class ProgrammingExerciseGradingResource {
         }
 
         List<Result> updatedResults = programmingExerciseGradingService.updateAllResults(programmingExercise);
+
+        programmingExerciseGradingService.logReEvaluate(user, programmingExercise, course, updatedResults);
         resultRepository.saveAll(updatedResults);
         return ResponseEntity.ok(updatedResults.size());
     }
