@@ -19,7 +19,8 @@ class Junit:
         # Ensure nobody can edit our results:
         chmod(outputPath, 0o744)
 
-    def createOutputPath(self, outputPath: str):
+    @staticmethod
+    def createOutputPath(outputPath: str):
         paths: Tuple[str, str] = path.split(outputPath)
         if paths[0] and not path.exists(paths[0]):
             # Prevent others from writing in this folder:

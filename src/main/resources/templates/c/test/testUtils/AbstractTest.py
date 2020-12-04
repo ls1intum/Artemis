@@ -67,8 +67,8 @@ class AbstractTest(ABC):
 
         # Check if all test requirements (other tests) are fulfilled:
         if not self.__checkTestRequirements(testResults):
-            printTester("Skipping test case '{}' not all requirements ({}) are fulfilled".format(self.name, str(self.requirements)))
-            self.case.message = "Test requires other test cases to succeed first ({})".format(str(self.requirements))
+            printTester(f"Skipping test case '{self.name}' not all requirements ({str(self.requirements)}) are fulfilled")
+            self.case.message = f"Test requires other test cases to succeed first ({str(self.requirements)})"
             self.case.result = Result.SKIPPED
             self.case.stdout = ""
             self.case.stderr = ""
@@ -86,11 +86,11 @@ class AbstractTest(ABC):
                 try:
                     self._run()
                 except TestFailedError:
-                    printTester("'{}' failed.".format(self.name))
+                    printTester(f"'{self.name}' failed.")
                 except TimeoutError:
                     self._timeout()
                 except Exception as e:
-                    self.__markAsFailed("'{}' had an internal error. {}.\nPlease report this on Moodle (Detailfragen zu Programmieraufgaben)!".format(self.name, str(e)))
+                    self.__markAsFailed(f"'{self.name}' had an internal error. {str(e)}.\nPlease report this on Moodle (Detailfragen zu Programmieraufgaben)!")
                     print_exc()
                     self._onFailed()
         else:
@@ -98,9 +98,9 @@ class AbstractTest(ABC):
             try:
                 self._run()
             except TestFailedError:
-                printTester("'{}' failed.".format(self.name))
+                printTester(f"'{self.name}' failed.")
             except Exception as e:
-                self.__markAsFailed("'{}' had an internal error. {}.\nPlease report this on Moodle (Detailfragen zu Programmieraufgaben)!".format(self.name, str(e)))
+                self.__markAsFailed(f"'{self.name}' had an internal error. {str(e)}.\nPlease report this on Moodle (Detailfragen zu Programmieraufgaben)!")
                 print_exc()
                 self._onFailed()
 
@@ -145,7 +145,7 @@ class AbstractTest(ABC):
 
         self.__markAsFailed(msg)
         self._onFailed()
-        raise TestFailedError("{} failed.".format(self.name))
+        raise TestFailedError(f"{self.name} failed.")
 
     def __markAsFailed(self, msg: str):
         """
@@ -156,7 +156,7 @@ class AbstractTest(ABC):
         self.case.result = Result.FAILURE
         self.case.stdout = self._loadFullStdout()
         self.case.stderr = self._loadFullStderr()
-        printTester("Test {} failed with: {}".format(self.name, msg))
+        printTester(f"Test {self.name} failed with: {msg}")
 
     def _timeout(self, msg: str = ""):
         """
@@ -166,7 +166,7 @@ class AbstractTest(ABC):
         """
 
         if msg:
-            self.__markAsFailed("timeout ({})".format(msg))
+            self.__markAsFailed(f"timeout ({msg})")
         else:
             self.__markAsFailed("timeout")
 
@@ -246,7 +246,7 @@ class AbstractTest(ABC):
             self._failWith("File not found for execution. Did compiling fail?")
         except NotADirectoryError as de:
             printTester(str(de))
-            self._failWith("Directory '{}' does not exist.".format(pWrap.cwd))
+            self._failWith(f"Directory '{pWrap.cwd}' does not exist.")
         except PermissionError as pe:
             printTester(str(pe))
             self._failWith("Missing file execution permission. Make sure it has execute rights (chmod +x <FILE_NAME>).")
