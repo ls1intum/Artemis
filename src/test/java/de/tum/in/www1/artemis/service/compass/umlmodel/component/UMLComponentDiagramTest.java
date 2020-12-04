@@ -18,19 +18,14 @@ public class UMLComponentDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityComponentDiagram_EqualModels() {
-        compareSubmissions(modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_1), modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_1), 0.8, 1.0);
-        compareSubmissions(modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_2), modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_2), 0.8, 1.0);
-        compareSubmissions(modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_3), modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_3), 0.8, 1.0);
-    }
-
-    @Test
-    void similarityComponentDiagram_SimilarModels() {
-        compareSubmissions(modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_1), modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_2), 0.0, 0.64);
+        compareSubmissions(modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_1), modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_1), 0.8, 100.0);
+        compareSubmissions(modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_2), modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_2), 0.8, 100.0);
+        compareSubmissions(modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_3), modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_3), 0.8, 100.0);
     }
 
     @Test
     void similarityComponentDiagram_DifferentModels() {
-        compareSubmissions(modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_1), modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_3), 0.0, 0.13);
+        compareSubmissions(modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_1), modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_3), 0.0, 13.35);
     }
 
     @Test

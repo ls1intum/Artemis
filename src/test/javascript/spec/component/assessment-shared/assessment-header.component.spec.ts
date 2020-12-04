@@ -63,29 +63,6 @@ describe('AssessmentHeaderComponent', () => {
         expect(alertComponent).toBeTruthy();
     });
 
-    it('should show or hide a back button', () => {
-        component.hideBackButton = false;
-        fixture.detectChanges();
-        let backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
-        expect(backButton).toBeTruthy();
-
-        component.hideBackButton = true;
-        fixture.detectChanges();
-        backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
-        expect(backButton).toBeFalsy();
-    });
-
-    it('should emit event on back button', () => {
-        spyOn(component.navigateBack, 'emit');
-        component.hideBackButton = false;
-        fixture.detectChanges();
-
-        const backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
-
-        backButton.nativeElement.click();
-        expect(component.navigateBack.emit).toHaveBeenCalledTimes(1);
-    });
-
     it('should hide right side row-container if loading', () => {
         component.isLoading = false;
         fixture.detectChanges();
