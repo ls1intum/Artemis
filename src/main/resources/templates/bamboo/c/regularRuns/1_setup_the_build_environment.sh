@@ -5,19 +5,27 @@
 # Build and run all tests
 # ------------------------------
 
+echo "--------------------setup-------------------"
+echo "User:"
+whoami
+echo "Updating assignment and test-reports ownership..."
+sudo chown artemis_user:artemis_user assignment/ -R
+sudo mkdir test-reports
+sudo chown artemis_user:artemis_user test-reports/ -R
+echo "--------------------setup-------------------"
 echo "--------------------info--------------------"
 python3 --version
 pip3 --version
+gcc --version
 # Generic debug infos:
-# whoami
 # tree
 echo "--------------------info--------------------"
-echo "--------------------tests--------------------"
+echo "--------------------tests-------------------"
 ls -la tests
-echo "--------------------tests--------------------"
-echo "--------------------assignment--------------------"
+echo "--------------------tests-------------------"
+echo "--------------------assignment--------------"
 ls -la assignment
-echo "--------------------assignment--------------------"
+echo "--------------------assignment--------------"
 
 cd tests
 REQ_FILE=requirements.txt
