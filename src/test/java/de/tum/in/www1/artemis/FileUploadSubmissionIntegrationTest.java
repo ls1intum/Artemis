@@ -278,7 +278,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment?lock=true",
                 HttpStatus.OK, FileUploadSubmission.class);
 
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "result", "submissionDate", "fileService");
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "results", "submissionDate", "fileService");
         assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
         checkDetailsHidden(storedSubmission, false);
     }

@@ -1,9 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ExportToCsv } from 'export-to-csv';
-import { ModelingExerciseService, ModelingSubmissionComparisonDTO } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { PlagiarismHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-header/plagiarism-header.component';
@@ -12,6 +11,15 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { downloadFile } from 'app/shared/util/download.util';
+import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
+import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
+import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
+import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
+import { PlagiarismDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-details/plagiarism-details.component';
+import { ModelingSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
+import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -29,100 +37,99 @@ describe('Plagiarism Inspector Component', () => {
     let comp: PlagiarismInspectorComponent;
     let fixture: ComponentFixture<PlagiarismInspectorComponent>;
     let modelingExerciseService: ModelingExerciseService;
+    let textExerciseService: TextExerciseService;
 
-    const modelingComparisons = [
-        {
-            similarity: 0.5,
-            element1: {
-                studentLogin: 'ab10cde',
-                submissionId: 1,
-                score: 10,
-                size: 5,
-            },
-            element2: {
-                studentLogin: 'ab20cde',
-                submissionId: 2,
-                score: 10,
-                size: 6,
-            },
-        } as ModelingSubmissionComparisonDTO,
-        { similarity: 0.9 } as ModelingSubmissionComparisonDTO,
-        { similarity: 0.8 } as ModelingSubmissionComparisonDTO,
-    ];
-    const modelingExercise = { id: 123 } as ModelingExercise;
+    const modelingExercise = { id: 123, type: ExerciseType.MODELING } as ModelingExercise;
+    const textExercise = { id: 234, type: ExerciseType.TEXT } as TextExercise;
     const activatedRoute = {
-        params: of({ exerciseId: modelingExercise.id }),
+        data: of({ exercise: modelingExercise }),
     };
+    const plagiarismResult = {
+        comparisons: [
+            {
+                submissionA: { studentLogin: 'student1A' },
+                submissionB: { studentLogin: 'student1B' },
+                similarity: 0.5,
+                status: PlagiarismStatus.NONE,
+            },
+            {
+                submissionA: { studentLogin: 'student2A' },
+                submissionB: { studentLogin: 'student2B' },
+                similarity: 0.8,
+                status: PlagiarismStatus.NONE,
+            },
+            {
+                submissionA: { studentLogin: 'student3A' },
+                submissionB: { studentLogin: 'student3B' },
+                similarity: 0.7,
+                status: PlagiarismStatus.NONE,
+            },
+        ],
+    } as ModelingPlagiarismResult;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisModelingEditorModule, TranslateTestingModule],
-            declarations: [PlagiarismInspectorComponent, PlagiarismHeaderComponent, PlagiarismSplitViewComponent],
+            declarations: [
+                PlagiarismInspectorComponent,
+                PlagiarismDetailsComponent,
+                PlagiarismHeaderComponent,
+                PlagiarismSidebarComponent,
+                PlagiarismSplitViewComponent,
+                ModelingSubmissionViewerComponent,
+                TextSubmissionViewerComponent,
+            ],
             providers: [{ provide: ActivatedRoute, useValue: activatedRoute }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PlagiarismInspectorComponent);
         comp = fixture.componentInstance;
         modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
+        textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
     });
 
-    it("should make a call to 'fetchModelingExercise' on initialization", () => {
-        spyOn(comp, 'fetchModelingExercise');
-
-        comp.ngOnInit();
-
-        expect(comp.fetchModelingExercise).toHaveBeenCalledWith(modelingExercise.id!);
-    });
-
-    it('should load the modeling exercise', () => {
-        const mockResponse = new HttpResponse({ body: modelingExercise });
-        spyOn(modelingExerciseService, 'find').and.returnValue(of(mockResponse));
-
-        comp.fetchModelingExercise(modelingExercise.id!);
-
-        expect(modelingExerciseService.find).toHaveBeenCalled();
-        expect(comp.modelingExercise).toEqual(modelingExercise);
-    });
-
-    it('should update the status of a plagiarism', () => {
-        const selectedPlagiarismIndex = 0;
-
-        comp.modelingSubmissionComparisons = modelingComparisons;
-        comp.selectedPlagiarismIndex = selectedPlagiarismIndex;
-
-        comp.handlePlagiarismStatusChange(true);
-
-        expect(comp.modelingSubmissionComparisons[selectedPlagiarismIndex].confirmed).toEqual(true);
-    });
-
-    it('should publish split view updates', () => {
-        spyOn(comp.splitControlSubject, 'next');
-
-        comp.handleSplitViewChange('left');
-
-        expect(comp.splitControlSubject.next).toHaveBeenCalledWith('left');
-    });
-
-    it('should fetch the plagiarism detection results', () => {
-        comp.modelingExercise = modelingExercise;
-        spyOn(modelingExerciseService, 'checkPlagiarism').and.returnValue(of(modelingComparisons.slice()));
+    it('should fetch the plagiarism detection results for modeling exercises', () => {
+        comp.exercise = modelingExercise;
+        spyOn(modelingExerciseService, 'checkPlagiarism').and.returnValue(of(plagiarismResult));
 
         comp.checkPlagiarism();
 
-        expect(comp.modelingSubmissionComparisons.length).toEqual(modelingComparisons.length);
+        expect(modelingExerciseService.checkPlagiarism).toHaveBeenCalled();
+    });
+
+    it('should fetch the plagiarism detection results for text exercises', () => {
+        comp.exercise = textExercise;
+        spyOn(textExerciseService, 'checkPlagiarismJPlag').and.returnValue(of(plagiarismResult));
+
+        comp.checkPlagiarism();
+
+        expect(textExerciseService.checkPlagiarismJPlag).toHaveBeenCalled();
+    });
+
+    it('should comparisons by similarity', () => {
+        comp.sortComparisonsForResult(plagiarismResult);
+
+        expect(plagiarismResult.comparisons[0].similarity).toEqual(0.8);
+    });
+
+    it('should select a comparison at the given index', () => {
+        comp.selectedComparisonIndex = 0;
+        comp.selectComparisonAtIndex(1);
+
+        expect(comp.selectedComparisonIndex).toEqual(1);
     });
 
     it('should download the plagiarism detection results as JSON', () => {
-        comp.modelingExercise = modelingExercise;
-        comp.modelingSubmissionComparisons = modelingComparisons;
+        comp.exercise = modelingExercise;
+        comp.plagiarismResult = plagiarismResult;
         comp.downloadPlagiarismResultsJson();
 
         expect(downloadFile).toHaveBeenCalled();
     });
 
     it('should download the plagiarism detection results as CSV', () => {
-        comp.modelingExercise = modelingExercise;
-        comp.modelingSubmissionComparisons = modelingComparisons.slice(0, 1);
+        comp.exercise = modelingExercise;
+        comp.plagiarismResult = plagiarismResult;
         comp.downloadPlagiarismResultsCsv();
 
         expect(ExportToCsv).toHaveBeenCalled();

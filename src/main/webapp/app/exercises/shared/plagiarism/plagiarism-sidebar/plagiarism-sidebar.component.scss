@@ -1,0 +1,68 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+.plagiarism-sidebar {
+    border-right: 1px solid $body-bg;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    top: 0;
+    width: 240px;
+    overflow-y: auto;
+
+    .plagiarism-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+
+        &-item {
+            align-items: center;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem;
+
+            &-students {
+                color: grey;
+                font-size: 10px;
+            }
+
+            &-content {
+                align-items: center;
+                display: flex;
+            }
+
+            &-info {
+                display: flex;
+                flex-direction: column;
+            }
+
+            &.selected {
+                background-color: transparentize(lightskyblue, 0.5);
+
+                .plagiarism-name {
+                    font-weight: bold;
+                }
+            }
+
+            &:hover {
+                background-color: lightskyblue;
+            }
+        }
+    }
+
+    .plagiarism-status-indicator {
+        background-color: $body-bg;
+        border-radius: 50%;
+        height: 8px;
+        margin-right: 0.75rem;
+        width: 8px;
+
+        &.confirmed {
+            background-color: green;
+        }
+
+        &.denied {
+            background-color: red;
+        }
+    }
+}

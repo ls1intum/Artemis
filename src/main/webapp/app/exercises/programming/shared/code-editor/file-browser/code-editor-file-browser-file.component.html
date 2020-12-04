@@ -1,5 +1,11 @@
 <!--File-->
-<li (click)="onNodeSelect.emit(item)" class="list-group-item file-item" [class.node-selected]="item.checked" [class.text-danger]="!item.checked && hasError">
+<li
+    (click)="onNodeSelect.emit(item)"
+    class="list-group-item file-item"
+    [class.node-selected]="item.checked"
+    [class.text-danger]="!item.checked && hasError"
+    [class.bg-warning]="hasChanges"
+>
     <fa-icon aria-hidden="true" [icon]="'file'" [fixedWidth]="true"></fa-icon>
     <fa-icon
         *ngIf="hasUnsavedChanges"

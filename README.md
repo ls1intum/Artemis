@@ -3,7 +3,8 @@
 [![Build Status](https://github.com/ls1intum/Artemis/workflows/Build/badge.svg)](https://github.com/ls1intum/Artemis/actions?query=branch%3Adevelop+workflow%3ABuild)
 [![Test Status](https://github.com/ls1intum/Artemis/workflows/Test/badge.svg)](https://github.com/ls1intum/Artemis/actions?query=branch%3Adevelop+workflow%3ATest)
 [![Documentation Status](https://readthedocs.org/projects/artemis-platform/badge/?version=latest)](https://artemis-platform.readthedocs.io/en/latest/?badge=latest)
-[![Dependency Status](https://img.shields.io/librariesio/github/ls1intum/Artemis)](https://libraries.io/github/ls1intum/Artemis)
+[![Dependency Status](https://img.shields.io/david/ls1intum/Artemis)](package.json)
+[![Dev Dependency Status](https://img.shields.io/david/dev/ls1intum/Artemis)](package.json)
 [![Code Quality Status](https://app.codacy.com/project/badge/Grade/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ls1intum/Artemis&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://app.codacy.com/project/badge/Coverage/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&utm_medium=referral&utm_content=ls1intum/Artemis&utm_campaign=Badge_Coverage)
 
@@ -47,7 +48,7 @@ You can find information on how to set up user registration [here](docs/admin/re
 
 ### Contributing 
 
-Please read the guid on [how to contribute](/CONTRIBUTING.md) to Artemis.
+Please read the guide on [how to contribute](/CONTRIBUTING.md) to Artemis.
 
 ### Building for production
 

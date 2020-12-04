@@ -20,15 +20,31 @@ import de.tum.in.www1.artemis.domain.User;
 @Repository
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "result", "result.assessor" })
-    Optional<Submission> findWithEagerResultById(Long submissionId);
+    /**
+     * Load submission with eager Results
+     * @param submissionId the submissionId
+     * @return optional submission
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor" })
+    Optional<Submission> findWithEagerResultsById(Long submissionId);
 
-    @Query("select distinct submission from Submission submission left join fetch submission.result r left join fetch r.feedbacks where submission.exampleSubmission = true and submission.id = :#{#submissionId}")
+    @Query("select distinct submission from Submission submission left join fetch submission.results r left join fetch r.feedbacks where submission.exampleSubmission = true and submission.id = :#{#submissionId}")
     Optional<Submission> findExampleSubmissionByIdWithEagerResult(long submissionId);
 
-    /* Get all submissions from a participation_id and load result at the same time */
-    @EntityGraph(type = LOAD, attributePaths = { "result" })
-    List<Submission> findAllByParticipationId(Long participationId);
+    /**
+     * Get all submissions of a participation
+     * @param participationId the id of the participation
+     * @return a list of the participation's submissions
+     */
+    List<Submission> findAllByParticipationId(long participationId);
+
+    /**
+     * Get all submissions of a participation and eagerly load results
+     * @param participationId the id of the participation
+     * @return a list of the participation's submissions
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "results" })
+    List<Submission> findAllWithResultsByParticipationId(Long participationId);
 
     /**
      * Get the number of currently locked submissions for a specific user in the given course. These are all submissions for which the user started, but has not yet finished the
@@ -38,7 +54,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @param courseId the id of the course
      * @return the number of currently locked submissions for a specific user in the given course
      */
-    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE submission.result.assessor.id = :#{#userId} AND submission.result.completionDate is null AND submission.participation.exercise.course.id = :#{#courseId}")
+    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE EXISTS (select r1.assessor.id from submission.results r1 where r1.assessor.id = :#{#userId}) AND NOT EXISTS (select r2.completionDate from submission.results r2 where r2.completionDate is not null) AND submission.participation.exercise.course.id = :#{#courseId}")
     long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
@@ -49,8 +65,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @param courseId the id of the course
      * @return currently locked submissions for a specific user in the given course
      */
-    @Query("SELECT DISTINCT submission FROM Submission submission WHERE submission.result.assessor.id = :#{#userId} AND submission.result.completionDate is null AND submission.participation.exercise.course.id = :#{#courseId}")
-    List<Submission> getLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+    @Query("SELECT DISTINCT submission FROM Submission submission LEFT JOIN FETCH submission.results WHERE EXISTS (select r1.assessor.id from submission.results r1 where r1.assessor.id = :#{#userId}) AND NOT EXISTS (select r2.completionDate from submission.results r2 where r2.completionDate is not null) AND submission.participation.exercise.course.id = :#{#courseId}")
+    List<Submission> getLockedSubmissionsAndResultsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
      * Checks if a submission for the given participation exists.
@@ -59,8 +75,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return true if a submission for the given participation exists, false otherwise
      */
     boolean existsByParticipationId(long participationId);
-
-    List<Submission> findByParticipationId(long participationId);
 
     /**
      * @param courseId the course id we are interested in
@@ -109,12 +123,13 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @param <T> the type of the submission
      * @return the submissions belonging to the exercise id, which have been assessed by the given assessor
      */
+    @Query("SELECT DISTINCT submission FROM Submission submission left join fetch submission.results r left join fetch r.assessor a WHERE submission.participation.exercise.id = :#{#exerciseId} AND :#{#assessor} = a")
     <T extends Submission> List<T> findAllByParticipationExerciseIdAndResultAssessor(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 
     /**
      * @param submissionId the submission id we are interested in
      * @return the submission with its feedback and assessor
      */
-    @Query("select distinct submission from Submission submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
+    @Query("select distinct submission from Submission submission left join fetch submission.results r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
     Optional<Submission> findWithEagerResultAndFeedbackById(long submissionId);
 }
