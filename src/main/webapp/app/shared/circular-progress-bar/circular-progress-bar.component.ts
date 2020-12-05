@@ -20,6 +20,9 @@ export class CircularProgressBarComponent implements OnInit {
         return hex.length < 2 ? '0' + hex : hex;
     }
 
+    /**
+     * Provides a smooth transition from red, yellow to finally green depending on the progress bar percentage
+     */
     get circleColor() {
         let value = Math.min(Math.max(0, this.progressInPercent / 100.0), 1) * 510;
         let redValue;
