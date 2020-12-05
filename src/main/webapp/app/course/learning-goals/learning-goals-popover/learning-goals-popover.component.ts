@@ -1,10 +1,11 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 
 @Component({
     selector: 'jhi-learning-goals-popover',
     templateUrl: './learning-goals-popover.component.html',
     styleUrls: ['./learning-goals-popover.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class LearningGoalsPopoverComponent implements OnInit {
     @Input()

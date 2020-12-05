@@ -14,6 +14,6 @@
         <a [routerLink]="navigationArray">{{ 'artemisApp.learningGoal.learningGoalPopover.noLearningGoals' | translate }}</a>
     </ng-template>
 </ng-template>
-<button type="button" class="btn btn-primary btn-circle" [ngbPopover]="popContent" [popoverTitle]="popTitle" container="body">
+<button type="button" class="btn btn-primary learning-goal-button" [ngbPopover]="popContent" [popoverTitle]="popTitle" container="body" popoverClass="learning-goal-popover">
     <fa-icon [icon]="'flag'" [fixedWidth]="true" [size]="'lg'"></fa-icon>
 </button>
