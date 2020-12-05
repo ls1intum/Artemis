@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { map } from 'rxjs/operators';
-import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-performance-dtos.model';
+import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-progress-dtos.model';
 
 type EntityResponseType = HttpResponse<LearningGoal>;
 type EntityArrayResponseType = HttpResponse<LearningGoal[]>;

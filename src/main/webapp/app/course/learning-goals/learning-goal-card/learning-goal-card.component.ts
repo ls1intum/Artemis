@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { LearningGoalDetailModalComponent } from 'app/course/learning-goals/learning-goal-detail-modal/learning-goal-detail-modal.component';
-import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-performance-dtos.model';
+import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-progress-dtos.model';
 
 @Component({
     selector: 'jhi-learning-goal-card',

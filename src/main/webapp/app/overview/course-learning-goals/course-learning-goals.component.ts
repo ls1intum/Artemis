@@ -7,7 +7,7 @@ import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { forkJoin } from 'rxjs';
-import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-performance-dtos.model';
+import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-progress-dtos.model';
 
 @Component({
     selector: 'jhi-course-learning-goals',

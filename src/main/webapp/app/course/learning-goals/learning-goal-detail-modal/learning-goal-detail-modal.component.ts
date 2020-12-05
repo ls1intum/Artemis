@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-performance-dtos.model';
+import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-progress-dtos.model';
 
 @Component({
     selector: 'jhi-learning-goal-detail-modal',
