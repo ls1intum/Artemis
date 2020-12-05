@@ -136,9 +136,12 @@ public class LectureUnitResource {
         // update associated learning goals
         Set<LearningGoal> associatedLearningGoals = new HashSet<>(lectureUnit.getLearningGoals());
         for (LearningGoal learningGoal : associatedLearningGoals) {
-            LearningGoal learningGoalFromDb = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoal.getId()).get();
-            learningGoalFromDb.removeLectureUnit(lectureUnit);
-            learningGoalRepository.save(learningGoalFromDb);
+            Optional<LearningGoal> learningGoalFromDbOptional = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoal.getId());
+            if (learningGoalFromDbOptional.isPresent()) {
+                LearningGoal learningGoalFromDb = learningGoalFromDbOptional.get();
+                learningGoalFromDb.removeLectureUnit(lectureUnit);
+                learningGoalRepository.save(learningGoalFromDb);
+            }
         }
 
         List<LectureUnit> filteredLectureUnits = lecture.getLectureUnits();
