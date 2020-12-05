@@ -24,7 +24,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "2.6.0"
+    id "com.google.cloud.tools.jib" version "2.7.0"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.8.0"
+version = "4.8.1"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -141,10 +141,16 @@ jacocoTestCoverageVerification {
     violationRules {
         rule {
             limit {
-                counter = "LINE"
+                counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.90
-                minimum = 0.81
+                minimum = 0.80
+            }
+            limit {
+                counter = "CLASS"
+                value = "MISSEDCOUNT"
+                // TODO: in the future the following value should become less than 50
+                maximum = 150
             }
         }
     }
@@ -207,7 +213,7 @@ dependencies {
     implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
     implementation "org.hibernate.validator:hibernate-validator:6.1.6.Final"
-    implementation "org.liquibase:liquibase-core:4.2.0"
+    implementation "org.liquibase:liquibase-core:4.2.1"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
