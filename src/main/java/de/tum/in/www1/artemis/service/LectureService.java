@@ -105,12 +105,17 @@ public class LectureService {
 
         // update associated learning goals
         for (LectureUnit lectureUnit : lecture.getLectureUnits()) {
-            LectureUnit lectureUnitFromDb = lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnit.getId()).get();
-            Set<LearningGoal> associatedLearningGoals = new HashSet<>(lectureUnitFromDb.getLearningGoals());
-            for (LearningGoal learningGoal : associatedLearningGoals) {
-                LearningGoal learningGoalFromDb = learningGoalRepository.findById(learningGoal.getId()).get();
-                learningGoalFromDb.removeLectureUnit(lectureUnitFromDb);
-                learningGoalRepository.save(learningGoalFromDb);
+            Optional<LectureUnit> lectureUnitFromDbOptional = lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnit.getId());
+
+            if (!lectureUnitFromDbOptional.isEmpty()) {
+
+                LectureUnit lectureUnitFromDb = lectureUnitFromDbOptional.get();
+                Set<LearningGoal> associatedLearningGoals = new HashSet<>(lectureUnitFromDb.getLearningGoals());
+                for (LearningGoal learningGoal : associatedLearningGoals) {
+                    LearningGoal learningGoalFromDb = learningGoalRepository.findById(learningGoal.getId()).get();
+                    learningGoalFromDb.removeLectureUnit(lectureUnitFromDb);
+                    learningGoalRepository.save(learningGoalFromDb);
+                }
             }
         }
 

@@ -25,7 +25,9 @@
                     "type": "Type",
                     "name": "Name",
                     "releaseDate": "Release Date",
-                    "lecture": "Lecture"
+                    "lecture": "Lecture",
+                    "pointsAchievedByStudent": "Points achieved",
+                    "totalPointsAchievable": "Total Points achievable"
                 }
             },
             "editLearningGoal": {
@@ -34,12 +36,18 @@
             "learningGoalCard": {
                 "connectedLectureUnits": "Connected Lecture Units",
                 "connectedLectureUnitsExplanation": "The following lecture units are connected to this learning goal: ",
+                "lectureUnitsForCalculation": "Lecture Units Used in Progress Calculation",
+                "lectureUnitsForCalculationExplanation": "The following lecture units are used to calculate your progress in this learning goal",
                 "delete": {
                     "question": "Do you really want to delete the learning goal <strong>{{ title }}</strong>? You can not undo this action!",
                     "typeNameToConfirm": "Please enter the name of the learning goal for confirmation.",
                     "buttonText": "Delete"
                 },
-                "achieved": "achieved"
+                "achieved": "achieved",
+                "progressUnavailable": "Progress calculation is currently only available for learning goals connected to exercise units.",
+                "totalPointsAchievedExplanation": "Overall you achieved <strong>{{ points }}</strong> points",
+                "totalPointsAchievableExplanation": "You could have achieved a maximum of <strong>{{ points }}</strong> points",
+                "progressExplanation": "Therefore your progress is about <strong>{{ progress }}%</strong>"
             },
             "learningGoalPopover": {
                 "connectedLearningGoals": "Connected Learning Goals",

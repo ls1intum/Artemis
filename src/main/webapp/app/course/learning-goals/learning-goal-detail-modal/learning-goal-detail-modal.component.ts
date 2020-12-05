@@ -3,6 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { SortService } from 'app/shared/service/sort.service';
+import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-performance-dtos.model';
 
 @Component({
     selector: 'jhi-learning-goal-detail-modal',
@@ -11,16 +12,39 @@ import { SortService } from 'app/shared/service/sort.service';
 export class LearningGoalDetailModalComponent implements OnInit {
     @Input()
     learningGoal: LearningGoal;
-    public predicate = 'id';
-    public reverse = false;
+    @Input()
+    learningGoalProgress: LearningGoalProgress;
+
+    public progressInPercent = 0;
+    public connectedLectureUnitsPredicate = 'id';
+    public connectedLectureUnitsReverse = false;
+
+    public connectedLectureUnitsForCalculationPredicate = 'id';
+    public connectedLectureUnitsForCalculationReverse = false;
 
     constructor(public activeModal: NgbActiveModal, public lectureUnitService: LectureUnitService, public sortService: SortService) {}
 
-    ngOnInit(): void {}
+    ngOnInit(): void {
+        if (!this.learningGoalProgress || this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal > 0) {
+            this.progressInPercent = Math.round(
+                (this.learningGoalProgress.pointsAchievedByStudentInLearningGoal / this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal) * 100,
+            );
+        }
+    }
 
-    sortRows() {
+    sortConnectedLectureUnits() {
         if (this.learningGoal.lectureUnits) {
-            this.sortService.sortByProperty(this.learningGoal.lectureUnits, this.predicate, this.reverse);
+            this.sortService.sortByProperty(this.learningGoal.lectureUnits, this.connectedLectureUnitsPredicate, this.connectedLectureUnitsReverse);
+        }
+    }
+
+    sortConnectedLectureUnitsForCalculation() {
+        if (this.learningGoalProgress.progressInLectureUnits) {
+            this.sortService.sortByProperty(
+                this.learningGoalProgress.progressInLectureUnits,
+                this.connectedLectureUnitsForCalculationPredicate,
+                this.connectedLectureUnitsForCalculationReverse,
+            );
         }
     }
 }

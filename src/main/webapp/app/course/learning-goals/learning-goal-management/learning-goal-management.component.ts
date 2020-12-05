@@ -3,10 +3,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { LearningGoal } from 'app/entities/learningGoal.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { finalize, map } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
+import { finalize } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject } from 'rxjs';
+import { forkJoin, Subject } from 'rxjs';
+import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-performance-dtos.model';
 
 @Component({
     selector: 'jhi-learning-goal-management',
@@ -17,9 +18,9 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     courseId: number;
     isLoading = false;
     learningGoals: LearningGoal[] = [];
+    learningGoalIdToLearningGoalProgress = new Map<number, LearningGoalProgress>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
     constructor(private activatedRoute: ActivatedRoute, private router: Router, private learningGoalService: LearningGoalService, private alertService: JhiAlertService) {}
 
     ngOnDestroy(): void {
@@ -49,20 +50,33 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         );
     }
 
+    getLearningGoalProgress(learningGoal: LearningGoal) {
+        return this.learningGoalIdToLearningGoalProgress.get(learningGoal.id!);
+    }
+
     loadData() {
         this.isLoading = true;
         this.learningGoalService
             .getAllForCourse(this.courseId)
+            .switchMap((res) => {
+                this.learningGoals = res.body!;
+
+                const progressObservable = this.learningGoals.map((lg) => {
+                    return this.learningGoalService.getProgress(lg.id!, this.courseId);
+                });
+
+                return forkJoin(progressObservable);
+            })
             .pipe(
-                map((response: HttpResponse<LearningGoal[]>) => response.body!),
                 finalize(() => {
                     this.isLoading = false;
                 }),
             )
             .subscribe(
-                (learningGoals) => {
-                    if (learningGoals) {
-                        this.learningGoals = learningGoals;
+                (learningGoalProgressResponses) => {
+                    for (const learningGoalProgressResponse of learningGoalProgressResponses) {
+                        const learningGoalProgress = learningGoalProgressResponse.body!;
+                        this.learningGoalIdToLearningGoalProgress.set(learningGoalProgress.learningGoalId, learningGoalProgress);
                     }
                 },
                 (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),

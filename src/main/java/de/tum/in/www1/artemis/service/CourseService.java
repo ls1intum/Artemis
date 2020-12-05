@@ -227,9 +227,9 @@ public class CourseService {
         return courseRepository.findWithEagerExercisesAndLecturesById(courseId);
     }
 
-    public Course findOneWithExercisesAndLecturesAndLearningGoals(long courseId) {
+    public Course findOneWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(long courseId) {
         log.debug("Request to get Course : {}", courseId);
-        return courseRepository.findWithEagerExercisesAndLecturesAndLearningGoalsById(courseId);
+        return courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(courseId);
     }
 
     /**

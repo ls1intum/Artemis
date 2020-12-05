@@ -24,7 +24,9 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.LearningGoalService;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.web.rest.dto.LearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -48,13 +50,46 @@ public class LearningGoalResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final LearningGoalService learningGoalService;
+
     public LearningGoalResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserService userService,
-            LearningGoalRepository learningGoalRepository, LectureUnitRepository lectureUnitRepository) {
+            LearningGoalRepository learningGoalRepository, LectureUnitRepository lectureUnitRepository, LearningGoalService learningGoalService) {
         this.courseRepository = courseRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userService = userService;
         this.learningGoalRepository = learningGoalRepository;
+        this.learningGoalService = learningGoalService;
+    }
+
+    /**
+     * GET /courses/:courseId/goals/:learningGoalId/progress  gets the learning goal progress for the logged in user
+     * @param courseId the id of the course to which the learning goal belongs
+     * @param learningGoalId the id of the learning goal for which to get the progress
+     * @return the ResponseEntity with status 200 (OK) and with the learning goal performance in the body
+     */
+    @GetMapping("/courses/{courseId}/goals/{learningGoalId}/progress")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<LearningGoalProgress> getLearningGoalProgress(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
+        log.debug("REST request to get performance for LearningGoal : {}", learningGoalId);
+        Optional<LearningGoal> optionalLearningGoal = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoalId);
+        if (optionalLearningGoal.isEmpty()) {
+            return notFound();
+        }
+        LearningGoal learningGoal = optionalLearningGoal.get();
+        if (learningGoal.getCourse() == null) {
+            return conflict();
+        }
+        if (!learningGoal.getCourse().getId().equals(courseId)) {
+            return conflict();
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastStudentInCourse(learningGoal.getCourse(), user)) {
+            return forbidden();
+        }
+
+        LearningGoalProgress learningGoalProgress = learningGoalService.getLearningGoalPerformance(learningGoal, user);
+        return ResponseEntity.ok(learningGoalProgress);
     }
 
     /**

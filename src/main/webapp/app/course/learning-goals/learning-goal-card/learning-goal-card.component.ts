@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { LearningGoalDetailModalComponent } from 'app/course/learning-goals/learning-goal-detail-modal/learning-goal-detail-modal.component';
+import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-performance-dtos.model';
 
 @Component({
     selector: 'jhi-learning-goal-card',
@@ -13,15 +14,27 @@ import { LearningGoalDetailModalComponent } from 'app/course/learning-goals/lear
 export class LearningGoalCardComponent implements OnInit, OnDestroy {
     @Input()
     learningGoal: LearningGoal;
+    @Input()
+    learningGoalProgress: LearningGoalProgress;
 
     public predicate = 'id';
     public reverse = false;
     public progressText = '';
+    public progressInPercent = 0;
+    public isProgressAvailable = false;
 
     constructor(private modalService: NgbModal, public lectureUnitService: LectureUnitService, public translateService: TranslateService) {}
 
     ngOnInit(): void {
-        this.progressText = this.translateService.instant('artemisApp.learningGoal.learningGoalCard.achieved');
+        if (!this.learningGoalProgress || this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal === 0) {
+            this.isProgressAvailable = false;
+        } else {
+            this.isProgressAvailable = true;
+            this.progressText = this.translateService.instant('artemisApp.learningGoal.learningGoalCard.achieved');
+            this.progressInPercent = Math.round(
+                (this.learningGoalProgress.pointsAchievedByStudentInLearningGoal / this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal) * 100,
+            );
+        }
     }
 
     ngOnDestroy(): void {
@@ -29,11 +42,11 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
             this.modalService.dismissAll();
         }
     }
-
     openLearningGoalDetailsModal() {
         const modalRef = this.modalService.open(LearningGoalDetailModalComponent, {
             size: 'xl',
         });
         modalRef.componentInstance.learningGoal = this.learningGoal;
+        modalRef.componentInstance.learningGoalProgress = this.learningGoalProgress;
     }
 }

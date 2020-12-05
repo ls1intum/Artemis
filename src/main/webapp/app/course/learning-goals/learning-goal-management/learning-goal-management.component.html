@@ -21,7 +21,12 @@
     </div>
     <hr [hidden]="!learningGoals || learningGoals.length === 0" />
     <div class="card-deck">
-        <jhi-learning-goal-card class="mx-auto" *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify" [learningGoal]="learningGoal">
+        <jhi-learning-goal-card
+            class="mx-auto"
+            *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
+            [learningGoal]="learningGoal"
+            [learningGoalProgress]="getLearningGoalProgress(learningGoal)"
+        >
             <button
                 *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                 jhiDeleteButton
