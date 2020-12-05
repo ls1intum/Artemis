@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -21,9 +22,9 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, ExamService examService, UserService userService, GradingCriterionService gradingCriterionService) {
+            SubmissionRepository submissionRepository, ExamService examService, UserService userService, GradingCriterionService gradingCriterionService, LtiService ltiService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examService, gradingCriterionService, userService);
+                submissionRepository, examService, gradingCriterionService, userService, ltiService);
         this.userService = userService;
     }
 
@@ -36,8 +37,9 @@ public class ProgrammingAssessmentService extends AssessmentService {
      */
     public Result saveManualAssessment(Result result) {
         result.setHasFeedback(!result.getFeedbacks().isEmpty());
-
+        var participation = result.getParticipation();
         User user = userService.getUserWithGroupsAndAuthorities();
+
         result.setHasComplaint(false);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(user);
@@ -51,9 +53,13 @@ public class ProgrammingAssessmentService extends AssessmentService {
             feedback.setResult(result);
             savedFeedbacks.add(feedback);
         });
-        result.setFeedbacks(savedFeedbacks);
+
+        Result finalResult = result;
+        finalResult.setFeedbacks(savedFeedbacks);
         // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
-        return resultRepository.save(result);
+        finalResult = resultRepository.save(finalResult);
+        finalResult.setParticipation(participation);
+        return finalResult;
     }
 
     /**

@@ -8,11 +8,13 @@ import { AssessmentInstructionsModule } from 'app/assessment/assessment-instruct
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 
 import { exercisePopupRoute } from 'app/exercises/shared/exercise/exercise.route';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 
 const ENTITY_STATES = [...exercisePopupRoute];
 
 @NgModule({
     imports: [
+        ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisExerciseModule,
         ArtemisSharedModule,
         ArtemisSharedComponentModule,

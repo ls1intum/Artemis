@@ -139,10 +139,14 @@ public class AutomaticTextAssessmentConflictService {
         List<FeedbackConflict> feedbackConflicts = this.feedbackConflictRepository.findAllWithEagerFeedbackResultAndSubmissionByFeedbackId(feedbackId);
         Set<TextSubmission> textSubmissionSet = feedbackConflicts.stream().map(conflict -> {
             if (conflict.getFirstFeedback().getId() == feedbackId) {
-                return (TextSubmission) conflict.getSecondFeedback().getResult().getSubmission();
+                TextSubmission textSubmission = (TextSubmission) conflict.getSecondFeedback().getResult().getSubmission();
+                textSubmission.setResultsList(List.of(conflict.getSecondFeedback().getResult()));
+                return textSubmission;
             }
             else {
-                return (TextSubmission) conflict.getFirstFeedback().getResult().getSubmission();
+                TextSubmission textSubmission = (TextSubmission) conflict.getFirstFeedback().getResult().getSubmission();
+                textSubmission.setResultsList(List.of(conflict.getFirstFeedback().getResult()));
+                return textSubmission;
             }
         }).collect(toSet());
         final var allTextBlocks = textBlockRepository.findAllBySubmissionIdIn(textSubmissionSet.stream().map(TextSubmission::getId).collect(toSet()));

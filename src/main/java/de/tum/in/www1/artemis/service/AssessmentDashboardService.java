@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -71,10 +70,11 @@ public class AssessmentDashboardService {
 
             exerciseService.calculateNrOfOpenComplaints(exercise, examMode);
 
-            List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
+            Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exercise.getId());
+
             // Do not provide example submissions without any assessment
             exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getResult() == null);
-            exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
+            exercise.setExampleSubmissions(exampleSubmissions);
 
             TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
                     .findFirst().orElseGet(() -> {

@@ -133,6 +133,12 @@ public final class Constants {
 
     public static final String IMPORT_TEAMS = "IMPORT_TEAMS";
 
+    public static final String RE_EVALUATE_RESULTS = "RE_EVALUATE_RESULTS";
+
+    public static final String RESET_GRADING = "RESET_GRADING";
+
+    public static final String TRIGGER_INSTRUCTOR_BUILD = "TRIGGER_INSTRUCTOR_BUILD";
+
     public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";
 
     public static final String INFO_SSH_CLONE_URL_DETAIL = "sshCloneURLTemplate";

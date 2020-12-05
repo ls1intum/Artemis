@@ -20,7 +20,6 @@ public class JenkinsBuildPlanLinkInfoContributor implements InfoContributor {
     @Override
     public void contribute(Info.Builder builder) {
         final var buildPlanURLTemplate = JENKINS_SERVER_URL + "/job/{projectKey}/job/{buildPlanId}";
-
         builder.withDetail(Constants.INFO_BUILD_PLAN_URL_DETAIL, buildPlanURLTemplate);
     }
 }

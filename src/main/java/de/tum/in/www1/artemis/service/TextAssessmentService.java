@@ -11,29 +11,24 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 
 @Service
 public class TextAssessmentService extends AssessmentService {
 
-    private final TextSubmissionRepository textSubmissionRepository;
-
     private final TextBlockService textBlockService;
-
-    private final UserService userService;
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
     private final FeedbackConflictRepository feedbackConflictRepository;
 
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
-            FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionRepository submissionRepository,
-            TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ExamService examService,
-            FeedbackConflictRepository feedbackConflictRepository, GradingCriterionService gradingCriterionService, SubmissionService submissionService) {
+            FeedbackRepository feedbackRepository, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
+            SubmissionRepository submissionRepository, TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService,
+            ExamService examService, FeedbackConflictRepository feedbackConflictRepository, GradingCriterionService gradingCriterionService, SubmissionService submissionService,
+            LtiService ltiService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examService, gradingCriterionService, userService);
-        this.textSubmissionRepository = textSubmissionRepository;
-        this.userService = userService;
+                submissionRepository, examService, gradingCriterionService, userService, ltiService);
         this.textBlockService = textBlockService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
         this.feedbackConflictRepository = feedbackConflictRepository;
@@ -66,20 +61,22 @@ public class TextAssessmentService extends AssessmentService {
             if (assessments.isEmpty() && computeFeedbackSuggestions) {
                 automaticTextFeedbackService.get().suggestFeedback(result);
             }
+            result.setSubmission(textSubmission); // make sure this is not a Hibernate Proxy
         }
         else {
             // We are the first ones to open assess this submission, we want to lock it.
             result = new Result();
             result.setParticipation(participation);
-            result.setSubmission(textSubmission);
+
             resultService.createNewRatedManualResult(result, false);
             result.setCompletionDate(null);
             result = resultRepository.save(result);
+            result.setSubmission(textSubmission);
             textSubmission.setResult(result);
+            submissionRepository.save(textSubmission);
 
             // If enabled, we want to compute feedback suggestions using Athene.
             if (computeFeedbackSuggestions) {
-                result.setSubmission(textSubmission); // make sure this is not a Hibernate Proxy
                 automaticTextFeedbackService.get().suggestFeedback(result);
             }
         }
@@ -94,6 +91,9 @@ public class TextAssessmentService extends AssessmentService {
         if (textSubmission.getBlocks() == null || !isInitialized(textSubmission.getBlocks()) || textSubmission.getBlocks().isEmpty()) {
             textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
+
+        // Remove participation after storing in database because submission already has the participation set
+        result.setParticipation(null);
     }
 
     private List<Feedback> getAssessmentsForResultWithConflicts(Result result) {

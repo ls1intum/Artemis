@@ -46,6 +46,6 @@ describe('ExerciseHint Management Component', () => {
 
         // THEN
         expect(service.findByExerciseId).toHaveBeenCalled();
-        expect(comp.exerciseHints[0]).toEqual(jasmine.objectContaining({ id: 123 }));
+        expect(comp.exerciseHints[0]).toEqual(expect.objectContaining({ id: 123 }));
     });
 });

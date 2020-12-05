@@ -9,7 +9,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -23,16 +23,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
-import de.tum.in.www1.artemis.web.rest.dto.ModelingSubmissionComparisonDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
@@ -75,10 +73,13 @@ public class ModelingExerciseResource {
 
     private final ModelingPlagiarismDetectionService modelingPlagiarismDetectionService;
 
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, ModelingExerciseService modelingExerciseService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService, CompassService compassService,
-            ExerciseService exerciseService, GradingCriterionService gradingCriterionService, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService) {
+            ExerciseService exerciseService, GradingCriterionService gradingCriterionService, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
+            ExampleSubmissionRepository exampleSubmissionRepository) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.modelingExerciseImportService = modelingExerciseImportService;
@@ -91,6 +92,7 @@ public class ModelingExerciseResource {
         this.exerciseService = exerciseService;
         this.gradingCriterionService = gradingCriterionService;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -182,17 +184,21 @@ public class ModelingExerciseResource {
             return responseFailure;
         }
 
-        // As persisting is cascaded for example submissions we have to set the reference to the exercise in the
-        // example submissions. Otherwise the connection between exercise and example submissions would be lost.
-        if (modelingExercise.getExampleSubmissions() != null) {
-            modelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(modelingExercise));
+        ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
+
+        // Avoid recursions
+        if (updatedModelingExercise.getExampleSubmissions().size() != 0) {
+            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithEagerResultByExerciseId(updatedModelingExercise.getId());
+            updatedModelingExercise.setExampleSubmissions(exampleSubmissionsWithResults);
+            updatedModelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
+            updatedModelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
-        ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(modelingExercise, notificationText);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString()))
+                .body(updatedModelingExercise);
     }
 
     /**
@@ -408,20 +414,24 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * GET /check-plagiarism : Run similarity check pair-wise against all submissions of a given exercises.
-     * This can be used with human intelligence to identify suspicious similar submissions which might be a sign for plagiarism.
+     * GET /check-plagiarism : Run similarity check pair-wise against all submissions of a given
+     * exercises. This can be used with human intelligence to identify suspicious similar
+     * submissions which might be a sign for plagiarism.
      *
      * @param exerciseId for which all submission should be checked
-     * @return the ResponseEntity with status 200 (OK) and the list of pair-wise submission similarities above a threshold of 80%.
+     * @return the ResponseEntity with status 200 (OK) and the list of pair-wise submission
+     * similarities above a threshold of 80%.
      */
     @GetMapping("/modeling-exercises/{exerciseId}/check-plagiarism")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Stream<ModelingSubmissionComparisonDTO>> plagiarismChecks(@PathVariable long exerciseId) {
+    public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId) {
         Optional<ModelingExercise> optionalModelingExercise = modelingExerciseService.findOneWithParticipationsSubmissionsResults(exerciseId);
+
         if (optionalModelingExercise.isEmpty()) {
             return notFound();
         }
-        var modelingExercise = optionalModelingExercise.get();
+
+        ModelingExercise modelingExercise = optionalModelingExercise.get();
 
         if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
             return forbidden();
@@ -431,7 +441,9 @@ public class ModelingExerciseResource {
         var minimumSimilarity = 0.8;
         var minimumModelSize = 5;
         var minimumScore = 0;
-        var comparisonResult = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, minimumSimilarity, minimumModelSize, minimumScore);
-        return ResponseEntity.ok(comparisonResult.stream().sorted());
+
+        ModelingPlagiarismResult result = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, minimumSimilarity, minimumModelSize, minimumScore);
+
+        return ResponseEntity.ok(result);
     }
 }

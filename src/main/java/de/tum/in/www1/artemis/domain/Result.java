@@ -79,9 +79,9 @@ public class Result extends DomainObject {
     @Column(name = "hasFeedback")
     private Boolean hasFeedback;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonView(QuizView.Before.class)
+    // TODO: rename ignored property to "results" after change in client
     @JsonIgnoreProperties({ "result", "participation" })
     private Submission submission;
 
