@@ -121,8 +121,7 @@ public class LectureService {
                 }
             }
         }
-
-        lectureRepository.delete(lecture);
+        lectureRepository.deleteById(lecture.getId());
     }
 
 }
