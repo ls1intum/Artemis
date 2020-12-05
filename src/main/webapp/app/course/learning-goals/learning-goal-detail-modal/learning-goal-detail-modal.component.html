@@ -5,9 +5,10 @@
     </button>
 </div>
 <div class="modal-body">
-    <p>{{ learningGoal.description }}</p>
+    <p *ngIf="learningGoal.description">{{ learningGoal.description }}</p>
     <!-- Table for connected lecture units -->
-    <div>
+    <ng-template #elseBlock>{{ 'artemisApp.learningGoal.learningGoalCard.noUnitsConnected' | translate }}</ng-template>
+    <div *ngIf="learningGoal.lectureUnits && learningGoal.lectureUnits.length > 0; else elseBlock">
         <h5>{{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnits' | translate }}</h5>
         <p>
             {{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnitsExplanation' | translate }}
@@ -48,7 +49,7 @@
         </div>
     </div>
     <!-- Table for lecture units progress calculation-->
-    <div>
+    <div *ngIf="isProgressAvailable">
         <h5>{{ 'artemisApp.learningGoal.learningGoalCard.lectureUnitsForCalculation' | translate }}</h5>
         <p>
             {{ 'artemisApp.learningGoal.learningGoalCard.lectureUnitsForCalculationExplanation' | translate }}
@@ -98,14 +99,14 @@
                 </tbody>
             </table>
         </div>
+        <div
+            [jhiTranslate]="'artemisApp.learningGoal.learningGoalCard.totalPointsAchievedExplanation'"
+            [translateValues]="{ points: learningGoalProgress.pointsAchievedByStudentInLearningGoal }"
+        ></div>
+        <div
+            [jhiTranslate]="'artemisApp.learningGoal.learningGoalCard.totalPointsAchievableExplanation'"
+            [translateValues]="{ points: learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal }"
+        ></div>
+        <div [jhiTranslate]="'artemisApp.learningGoal.learningGoalCard.progressExplanation'" [translateValues]="{ progress: progressInPercent }"></div>
     </div>
-    <div
-        [jhiTranslate]="'artemisApp.learningGoal.learningGoalCard.totalPointsAchievedExplanation'"
-        [translateValues]="{ points: learningGoalProgress.pointsAchievedByStudentInLearningGoal }"
-    ></div>
-    <div
-        [jhiTranslate]="'artemisApp.learningGoal.learningGoalCard.totalPointsAchievableExplanation'"
-        [translateValues]="{ points: learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal }"
-    ></div>
-    <div [jhiTranslate]="'artemisApp.learningGoal.learningGoalCard.progressExplanation'" [translateValues]="{ progress: progressInPercent }"></div>
 </div>

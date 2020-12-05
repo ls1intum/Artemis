@@ -45,6 +45,7 @@
                 },
                 "achieved": "achieved",
                 "progressUnavailable": "Progress calculation is currently only available for learning goals connected to exercise units.",
+                "noUnitsConnected": "This learning goal is not connected to any lecture units",
                 "totalPointsAchievedExplanation": "Overall you achieved <strong>{{ points }}</strong> points",
                 "totalPointsAchievableExplanation": "You could have achieved a maximum of <strong>{{ points }}</strong> points",
                 "progressExplanation": "Therefore your progress is about <strong>{{ progress }}%</strong>"

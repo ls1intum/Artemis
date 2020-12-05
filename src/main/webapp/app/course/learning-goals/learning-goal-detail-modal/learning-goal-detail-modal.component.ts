@@ -14,6 +14,7 @@ export class LearningGoalDetailModalComponent implements OnInit {
     learningGoal: LearningGoal;
     @Input()
     learningGoalProgress: LearningGoalProgress;
+    public isProgressAvailable = false;
 
     public progressInPercent = 0;
     public connectedLectureUnitsPredicate = 'id';
@@ -26,6 +27,7 @@ export class LearningGoalDetailModalComponent implements OnInit {
 
     ngOnInit(): void {
         if (!this.learningGoalProgress || this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal > 0) {
+            this.isProgressAvailable = true;
             this.progressInPercent = Math.round(
                 (this.learningGoalProgress.pointsAchievedByStudentInLearningGoal / this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal) * 100,
             );
