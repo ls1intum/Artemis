@@ -26,7 +26,7 @@ export class LearningGoalDetailModalComponent implements OnInit {
     constructor(public activeModal: NgbActiveModal, public lectureUnitService: LectureUnitService, public sortService: SortService) {}
 
     ngOnInit(): void {
-        if (!this.learningGoalProgress || this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal > 0) {
+        if (this.learningGoalProgress && this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal > 0) {
             this.isProgressAvailable = true;
             this.progressInPercent = Math.round(
                 (this.learningGoalProgress.pointsAchievedByStudentInLearningGoal / this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal) * 100,
