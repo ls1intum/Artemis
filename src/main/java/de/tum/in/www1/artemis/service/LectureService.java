@@ -111,7 +111,7 @@ public class LectureService {
                 LectureUnit lectureUnitFromDb = lectureUnitFromDbOptional.get();
                 Set<LearningGoal> associatedLearningGoals = new HashSet<>(lectureUnitFromDb.getLearningGoals());
                 for (LearningGoal learningGoal : associatedLearningGoals) {
-                    Optional<LearningGoal> learningGoalFromDbOptional = learningGoalRepository.findById(learningGoal.getId());
+                    Optional<LearningGoal> learningGoalFromDbOptional = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoal.getId());
                     if (learningGoalFromDbOptional.isPresent()) {
                         LearningGoal learningGoalFromDb = learningGoalFromDbOptional.get();
                         learningGoalFromDb.removeLectureUnit(lectureUnitFromDb);
