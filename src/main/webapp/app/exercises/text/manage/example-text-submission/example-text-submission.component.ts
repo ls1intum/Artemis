@@ -399,7 +399,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
 
         const exampleSubmission = Object.assign({}, this.exampleSubmission);
         if (exampleSubmission.submission) {
-            var result = getLatestSubmissionResult(exampleSubmission.submission);
+            const result = getLatestSubmissionResult(exampleSubmission.submission);
             if (result) {
                 exampleSubmission.submission.results![result.result_order] = new Result();
             } else {

@@ -18,7 +18,7 @@ export class Result implements BaseEntity {
     public hasComplaint?: boolean;
     public exampleResult?: boolean;
     public result_order: number;
-    //TODO: Entholzer, Ruscher: serverside change: remove result_order from json
+    // TODO: Entholzer, Ruscher: serverside change: remove result_order from json
     public submission?: Submission;
     public assessor?: User;
     public feedbacks?: Feedback[];

@@ -131,7 +131,7 @@ export class ExamParticipationService {
                         for (const submission of participation.submissions) {
                             delete submission.participation;
                             if (!!getLatestSubmissionResult(submission)) {
-                                let result = getLatestSubmissionResult(submission)!;
+                                const result = getLatestSubmissionResult(submission)!;
                                 delete result.participation;
                                 delete result.submission;
                             }

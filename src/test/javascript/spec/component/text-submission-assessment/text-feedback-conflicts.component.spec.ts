@@ -21,7 +21,7 @@ import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess-new/
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/textblock-feedback-editor/textblock-feedback-editor.component';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess-new/manual-textblock-selection/manual-textblock-selection.component';
 import { TextFeedbackConflictsHeaderComponent } from 'app/exercises/text/assess-new/conflicts/conflicts-header/text-feedback-conflicts-header.component';
-import { getLatestSubmissionResult, Submission, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';

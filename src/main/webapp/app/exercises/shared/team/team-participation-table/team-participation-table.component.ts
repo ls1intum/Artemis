@@ -79,7 +79,7 @@ export class TeamParticipationTableComponent implements OnInit {
             exercise.participation = participation;
             exercise.submission = get(exercise, 'participation.submissions[0]', null); // only exists for instructor and team tutor
             if (exercise.submission) {
-                let tmpResult = getLatestSubmissionResult(exercise.submission)!;
+                const tmpResult = getLatestSubmissionResult(exercise.submission)!;
                 exercise.submission.results![tmpResult?.result_order] = get(exercise, 'participation.results[0]', null);
                 // assign this value so that it can be used later on in the view hierarchy (e.g. when updating a result, i.e. overriding an assessment
                 if (exercise.submission.results) {

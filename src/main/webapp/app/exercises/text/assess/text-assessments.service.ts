@@ -101,7 +101,7 @@ export class TextAssessmentsService {
                     const submission = participation.submissions![0];
                     submission.participation = participation;
                     const result = participation.results![0];
-                    let tmpResult = getLatestSubmissionResult(submission)!;
+                    const tmpResult = getLatestSubmissionResult(submission)!;
                     submission.results![tmpResult?.result_order] = result;
                     result.submission = submission;
                     result.participation = participation;

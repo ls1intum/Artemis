@@ -126,7 +126,7 @@ describe('FileUploadAssessmentComponent', () => {
         comp.result.assessmentType = AssessmentType.MANUAL;
         comp.result.exampleResult = false;
         comp.result.hasComplaint = false;
-        let tmpResult = getLatestSubmissionResult(comp.submission);
+        const tmpResult = getLatestSubmissionResult(comp.submission);
         if (tmpResult) {
             comp.submission.results![tmpResult.result_order] = comp.result;
         } else {

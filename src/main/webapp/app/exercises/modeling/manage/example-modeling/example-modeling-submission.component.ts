@@ -350,9 +350,9 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
         const exampleSubmission = Object.assign({}, this.exampleSubmission);
 
-        let tmpResult = getLatestSubmissionResult(exampleSubmission.submission);
-        //get index of result if it exists
-        let index = tmpResult ? tmpResult.result_order : 0;
+        const tmpResult = getLatestSubmissionResult(exampleSubmission.submission);
+        // get index of result if it exists
+        const index = tmpResult ? tmpResult.result_order : 0;
         exampleSubmission.submission!.results![index] = new Result();
         exampleSubmission.submission!.results![index].feedbacks = this.feedbacks;
 
