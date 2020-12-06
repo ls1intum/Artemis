@@ -68,7 +68,7 @@
                                 (submission.optimal && !(getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.assessor)) ||
                                 (getLatestSubmissionResult(submission) &&
                                     getLatestSubmissionResult(submission)!.assessor &&
-                                    getLatestSubmissionResult(submission)!.assessor.id === userId) ||
+                                    getLatestSubmissionResult(submission)!.assessor!.id === userId) ||
                                 canOverrideAssessments
                             "
                             [routerLink]="[
@@ -172,7 +172,7 @@
                     <td>{{ getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.assessmentType }}</td>
                     <td>
                         <span *ngIf="getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.assessor">{{
-                            getLatestSubmissionResult(submission)!.assessor.name
+                            getLatestSubmissionResult(submission)!.assessor!.name
                         }}</span>
                     </td>
                     <td>
