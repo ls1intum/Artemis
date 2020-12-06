@@ -59,7 +59,7 @@
                     <td>{{ submission.participation.participantName }}</td>
                     <td>
                         <span *ngIf="getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.assessor"
-                            >{{ getLatestSubmissionResult(submission)!.assessor.name }} (lock)</span
+                            >{{ getLatestSubmissionResult(submission)!.assessor!.name }} (lock)</span
                         >
                     </td>
                     <td>
