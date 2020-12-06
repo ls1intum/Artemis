@@ -130,6 +130,7 @@ describe('FileUploadAssessmentComponent', () => {
         if (tmpResult) {
             comp.submission.results![tmpResult.result_order] = comp.result;
         } else {
+            comp.submission.results = [];
             comp.submission.results![0] = comp.result;
         }
         comp.submission.participation!.submissions = [comp.submission];
