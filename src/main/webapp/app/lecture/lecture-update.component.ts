@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, combineLatest } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
 import { LectureService } from './lecture.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
@@ -18,7 +18,6 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 export class LectureUpdateComponent implements OnInit {
     EditorMode = EditorMode;
     lecture: Lecture;
-    course: Course;
     isSaving: boolean;
 
     courses: Course[];
@@ -39,17 +38,10 @@ export class LectureUpdateComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
-        this.activatedRoute.data.subscribe(({ lecture }) => {
-            this.lecture = lecture;
-            if (this.course) {
-                this.lecture.course = this.course;
-            }
-        });
-        this.activatedRoute.parent!.data.subscribe(({ course }) => {
-            this.course = course;
-            if (this.lecture) {
-                this.lecture.course = course;
-            }
+        // Wait for both subscriptions to load
+        combineLatest(this.activatedRoute.data, this.activatedRoute.parent!.data).subscribe(([routeData, parentRouteData]) => {
+            this.lecture = routeData['lecture'];
+            this.lecture.course = parentRouteData['course'];
         });
     }
 
