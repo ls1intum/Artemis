@@ -67,7 +67,7 @@ export class ResultDetailComponent implements OnInit {
      *
      */
     ngOnInit(): void {
-        // TODO: SEEME: feedback message
+        // TODO: rene: feedback message
         this.isLoading = true;
         of(this.result.feedbacks)
             .pipe(

@@ -296,8 +296,6 @@ only_rules:
     # Delegates should be weak to avoid reference cycles.
   - xctfail_message
     # An XCTFail call should include a description of the assertion.
-  - yoda_condition
-    # The variable should be placed on the left, the constant on the right of a comparison operator.
 
 excluded: # paths to ignore during linting. Takes precedence over `included`.
   - Carthage

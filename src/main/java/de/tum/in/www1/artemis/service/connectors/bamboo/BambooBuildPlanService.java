@@ -189,17 +189,14 @@ public class BambooBuildPlanService {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "**/result.xml");
             }
             case SWIFT -> {
-                // TODO: add swiftlint
-                // return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/tests.xml");
                 final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/tests.xml");
                 var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns, false);
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask);
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
                     // Create artifacts and a final task for the execution of static code analysis
-                    List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA); // TODO: change to SWIFT
-                                                                                                                                                            // -> requires change in
-                                                                                                                                                            // sca-parser
+                    // TODO: change to SWIFT -> requires change in sca-parser
+                    List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.SWIFT);
                     Artifact[] artifacts = staticCodeAnalysisTools.stream()
                             .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
                     defaultJob.artifacts(artifacts);

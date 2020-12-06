@@ -65,7 +65,6 @@ public class StaticCodeAnalysisService {
      */
     public void createDefaultCategories(ProgrammingExercise programmingExercise) {
         // Retrieve the default configuration for a specific programming language
-        // TODO: SEEME: getting default configuration
         List<StaticCodeAnalysisDefaultCategory> defaultConfiguration = staticCodeAnalysisDefaultConfigurations.get(programmingExercise.getProgrammingLanguage());
         if (defaultConfiguration == null) {
             log.debug("Could not create default static code analysis categories for exercise " + programmingExercise.getId() + ". Default configuration not available.");
@@ -154,7 +153,7 @@ public class StaticCodeAnalysisService {
      * @return The filtered list of feedback objects
      */
     public List<Feedback> categorizeScaFeedback(Result result, List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
-        // TODO: SEEME: default sca categories
+        // TODO: rene: default sca categories
         var categoryPairs = getCategoriesWithMappingForExercise(programmingExercise);
 
         return staticCodeAnalysisFeedback.stream().filter(feedback -> {

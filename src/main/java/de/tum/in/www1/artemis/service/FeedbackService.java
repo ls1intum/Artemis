@@ -74,6 +74,7 @@ public class FeedbackService {
      * @param reports Static code analysis reports to be transformed
      * @return Feedback objects representing the static code analysis findings
      */
+    // TODO: rene: create sca feedback
     public List<Feedback> createFeedbackFromStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> reports) {
         ObjectMapper mapper = new ObjectMapper();
         List<Feedback> feedbackList = new ArrayList<>();

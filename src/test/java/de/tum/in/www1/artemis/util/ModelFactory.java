@@ -788,7 +788,7 @@ public class ModelFactory {
             case PMD -> "Best Practices";
             case CHECKSTYLE -> "coding";
             case PMD_CPD -> "Copy/Paste Detection";
-            case SWIFTLINT -> "SwiftLint"; // TODO: set better value
+            case SWIFTLINT -> "swiftLint"; // TODO: rene: set better value
         };
 
         var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();

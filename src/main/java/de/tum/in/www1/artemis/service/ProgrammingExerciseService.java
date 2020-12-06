@@ -453,8 +453,14 @@ public class ProgrammingExerciseService {
                 // Copy static code analysis config files
                 if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                     String staticCodeAnalysisConfigPath = templatePath + "/staticCodeAnalysisConfig/**/*.*";
-                    Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
-                    fileService.copyResources(staticCodeAnalysisResources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
+                    try {
+                        Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
+                        fileService.copyResources(staticCodeAnalysisResources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
+                    }
+                    catch (FileNotFoundException ignored) {
+                        // TODO: rene: SWIFT - if we keep the parent folder, we need to enable showing the hidden .swiftlint.yml file otherwise the OE shows an empty folder
+                        // ignore for Swift
+                    }
                 }
             }
             else {
