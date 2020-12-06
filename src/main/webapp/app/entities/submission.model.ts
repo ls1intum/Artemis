@@ -63,7 +63,7 @@ export function getFirstResult(submission: Submission | undefined): Result | und
 
 //todo NR: remove this function once PR can be merged into develop
 function checkForResultsLength(submission: Submission | undefined) {
-    if (submission!.results!.length > 1) {
+    if (submission!.results?.length > 1) {
         console.error('Multiple results for submission ' + 'are currently not supported! Submission.results: ', submission?.results);
     }
 }
