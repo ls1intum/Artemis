@@ -5,7 +5,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Result } from 'app/entities/result.model';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -66,11 +66,11 @@ export class TextAssessmentDashboardComponent implements OnInit {
             .getTextSubmissionsForExercise(this.exercise.id!, { submittedOnly: true })
             .map((response: HttpResponse<TextSubmission[]>) =>
                 response.body!.map((submission: TextSubmission) => {
-                    if (submission.result) {
+                    if (getLatestSubmissionResult(submission)) {
                         // reconnect some associations
-                        submission.result.submission = submission;
-                        submission.result.participation = submission.participation;
-                        submission.participation!.results = [submission.result];
+                        getLatestSubmissionResult(submission)!.submission = submission;
+                        getLatestSubmissionResult(submission)!.participation = submission.participation;
+                        submission.participation!.results = [getLatestSubmissionResult(submission)!];
                     }
 
                     return submission;
