@@ -14,7 +14,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
-import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -323,11 +323,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     private reconnectEntities = (submissions: Submission[]) => {
         return submissions.map((submission: Submission) => {
-            if (submission.result) {
+            if (getLatestSubmissionResult(submission)) {
                 // reconnect some associations
-                submission.result.submission = submission;
-                submission.result.participation = submission.participation;
-                submission.participation!.results = [submission.result];
+                getLatestSubmissionResult(submission)!.submission = submission;
+                getLatestSubmissionResult(submission)!.participation = submission.participation;
+                submission.participation!.results = [getLatestSubmissionResult(submission)!];
             }
             return submission;
         });
@@ -401,7 +401,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      * @param submission Submission which to check
      */
     calculateStatus(submission: Submission) {
-        if (submission.result && submission.result.completionDate && Result.isManualResult(submission.result)) {
+        if (getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.completionDate && Result.isManualResult(getLatestSubmissionResult(submission)!)) {
             return 'DONE';
         }
         return 'DRAFT';
