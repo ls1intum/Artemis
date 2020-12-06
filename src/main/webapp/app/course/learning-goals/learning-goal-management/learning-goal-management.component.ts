@@ -21,6 +21,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     learningGoalIdToLearningGoalProgress = new Map<number, LearningGoalProgress>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
     constructor(private activatedRoute: ActivatedRoute, private router: Router, private learningGoalService: LearningGoalService, private alertService: JhiAlertService) {}
 
     ngOnDestroy(): void {
