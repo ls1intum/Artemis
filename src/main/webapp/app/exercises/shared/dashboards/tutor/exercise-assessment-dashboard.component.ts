@@ -110,6 +110,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     tutor?: User;
 
     exerciseForGuidedTour?: Exercise;
+    getLatestSubmissionResult = getLatestSubmissionResult;
 
     constructor(
         private exerciseService: ExerciseService,

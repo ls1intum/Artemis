@@ -24,6 +24,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
     reverse = false;
 
     private cancelConfirmationText: string;
+    getLatestSubmissionResult = getLatestSubmissionResult;
 
     constructor(
         private route: ActivatedRoute,

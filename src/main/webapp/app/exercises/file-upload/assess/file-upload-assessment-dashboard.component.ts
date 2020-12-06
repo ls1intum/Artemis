@@ -23,6 +23,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     busy = false;
     predicate = 'id';
     reverse = false;
+    getLatestSubmissionResult = getLatestSubmissionResult;
 
     private cancelConfirmationText: string;
 

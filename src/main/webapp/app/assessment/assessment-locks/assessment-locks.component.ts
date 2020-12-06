@@ -26,6 +26,7 @@ export class AssessmentLocksComponent implements OnInit {
     exercises: Exercise[] = [];
 
     submissions: Submission[] = [];
+    getLatestSubmissionResult = getLatestSubmissionResult;
 
     private cancelConfirmationText: string;
 

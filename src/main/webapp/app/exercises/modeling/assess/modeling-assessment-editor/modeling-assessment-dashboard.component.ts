@@ -37,6 +37,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
     nextOptimalSubmissionIds: number[] = [];
+    getLatestSubmissionResult = getLatestSubmissionResult;
 
     private cancelConfirmationText: string;
 
