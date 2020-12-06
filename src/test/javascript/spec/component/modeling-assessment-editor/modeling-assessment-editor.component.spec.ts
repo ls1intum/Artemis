@@ -98,7 +98,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                 text: 'Test\n\nTest\n\nTest',
                 participation: ({
                     type: ParticipationType.SOLUTION,
-                    results: [],
                     exercise: ({
                         id: 1,
                         problemStatement: 'problemo',
@@ -112,21 +111,24 @@ describe('ModelingAssessmentEditorComponent', () => {
                         } as unknown) as ExerciseGroup,
                     } as unknown) as Exercise,
                 } as unknown) as Participation,
-                result: ({
-                    id: 2374,
-                    resultString: '1 of 12 points',
-                    score: 8,
-                    rated: true,
-                    hasFeedback: true,
-                    hasComplaint: true,
-                    feedbacks: [
-                        {
-                            id: 2,
-                            detailText: 'Feedback',
-                            credits: 1,
-                        } as Feedback,
-                    ],
-                } as unknown) as Result,
+                results: [
+                    ({
+                        id: 2374,
+                        resultString: '1 of 12 points',
+                        score: 8,
+                        rated: true,
+                        hasFeedback: true,
+                        hasComplaint: true,
+                        feedbacks: [
+                            {
+                                id: 2,
+                                detailText: 'Feedback',
+                                credits: 1,
+                            } as Feedback,
+                        ],
+                    } as unknown) as Result,
+                ],
+                result_order: 0,
             } as unknown) as ModelingSubmission;
 
             modelingSubmissionStub.returns(of(submission));
@@ -254,6 +256,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 rated: true,
                 hasFeedback: true,
                 hasComplaint: false,
+                result_order: 0,
             } as unknown) as Result,
         ];
         getLatestSubmissionResult(component.submission)!.feedbacks = [
@@ -299,6 +302,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 rated: true,
                 hasFeedback: true,
                 hasComplaint: false,
+                result_order: 0,
             } as unknown) as Result,
         ];
         getLatestSubmissionResult(component.submission)!.feedbacks = [
@@ -335,7 +339,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             text: 'Test\n\nTest\n\nTest',
         } as unknown) as ModelingSubmission;
 
-        const result = ({
+        const comp_result = ({
             id: 2374,
             resultString: '1 of 12 points',
             score: 8,
@@ -348,7 +352,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             } as unknown) as Participation,
         } as unknown) as Result;
 
-        const fake = sinon.fake.returns(of({ body: result }));
+        const fake = sinon.fake.returns(of({ body: comp_result }));
         sinon.replace(service, 'updateAssessmentAfterComplaint', fake);
 
         component.ngOnInit();
@@ -356,7 +360,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         component.onUpdateAssessmentAfterComplaint(complaintResponse);
         expect(fake).to.have.been.calledOnce;
-        expect(component.result?.participation?.results).to.deep.equal([result]);
+        expect(component.result?.participation?.results).to.deep.equal([comp_result]);
     }));
 
     it('should cancel the current assessment', fakeAsync(() => {
