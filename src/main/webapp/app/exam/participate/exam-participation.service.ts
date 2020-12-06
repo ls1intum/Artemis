@@ -9,6 +9,7 @@ import { catchError, map } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -129,9 +130,10 @@ export class ExamParticipationService {
                     if (!!participation.submissions) {
                         for (const submission of participation.submissions) {
                             delete submission.participation;
-                            if (!!submission.result) {
-                                delete submission.result.participation;
-                                delete submission.result.submission;
+                            if (!!getLatestSubmissionResult(submission)) {
+                                let result = getLatestSubmissionResult(submission)!;
+                                delete result.participation;
+                                delete result.submission;
                             }
                         }
                     }

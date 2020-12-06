@@ -41,7 +41,7 @@ export abstract class Submission implements BaseEntity {
     }
 }
 
-export function getLatestResult(submission: Submission | undefined): Result | undefined {
+export function getLatestSubmissionResult(submission: Submission | undefined): Result | undefined {
     if (submission?.results) {
         const length = submission.results.length;
         if (length > 0) {

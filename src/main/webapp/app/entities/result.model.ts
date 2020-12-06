@@ -17,6 +17,7 @@ export class Result implements BaseEntity {
     public rated?: boolean;
     public hasComplaint?: boolean;
     public exampleResult?: boolean;
+    public result_order: number;
 
     public submission?: Submission;
     public assessor?: User;
