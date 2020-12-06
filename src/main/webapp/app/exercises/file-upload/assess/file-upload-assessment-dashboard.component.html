@@ -53,7 +53,7 @@
                         </ng-container>
                     </td>
                     <td>
-                        <span *ngIf="getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission).score != null"
+                        <span *ngIf="getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.score != null"
                             >{{ getLatestSubmissionResult(submission)!.score }} %</span
                         >
                     </td>

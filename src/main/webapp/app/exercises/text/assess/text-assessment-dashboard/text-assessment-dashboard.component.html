@@ -70,7 +70,7 @@
                     <td>{{ assessmentTypeTranslationKey(getLatestSubmissionResult(submission)) | translate }}</td>
                     <td>
                         <span *ngIf="getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.assessor">{{
-                            getLatestSubmissionResult(submission)!.assessor.name
+                            getLatestSubmissionResult(submission)!.assessor!.name
                         }}</span>
                     </td>
                     <td>
