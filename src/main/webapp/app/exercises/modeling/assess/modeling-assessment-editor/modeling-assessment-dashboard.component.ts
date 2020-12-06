@@ -10,7 +10,7 @@ import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/entities/submission.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -116,20 +116,18 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                 // the server should have filtered these submissions already
                 this.submissions = res.body!.filter((submission) => submission.submitted);
                 this.submissions.forEach((submission) => {
-                    if (getLatestSubmissionResult(submission)) {
+                    if (submission.result) {
                         // reconnect some associations
-                        getLatestSubmissionResult(submission)!.submission = submission;
-                        getLatestSubmissionResult(submission)!.participation = submission.participation;
+                        submission.result.submission = submission;
+                        submission.result.participation = submission.participation;
                         if (submission.participation) {
-                            submission.participation.results = [getLatestSubmissionResult(submission)!];
+                            submission.participation.results = [submission.result];
                         }
                     }
                 });
                 this.filteredSubmissions = this.submissions;
                 this.filterSubmissions(forceReload);
-                this.assessedSubmissions = this.submissions.filter(
-                    (submission) => getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.completionDate && getLatestSubmissionResult(submission)!.score,
-                ).length;
+                this.assessedSubmissions = this.submissions.filter((submission) => submission.result && submission.result.completionDate && submission.result.score).length;
             });
     }
 
@@ -167,10 +165,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.submissions.forEach((submission) => {
             submission.optimal =
                 this.nextOptimalSubmissionIds.includes(submission.id!) &&
-                (!(getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.assessor) ||
-                    (getLatestSubmissionResult(submission) &&
-                        getLatestSubmissionResult(submission)!.assessor &&
-                        getLatestSubmissionResult(submission)!.assessor!.id === this.userId));
+                (!(submission.result && submission.result.assessor) || (submission.result && submission.result.assessor && submission.result.assessor.id === this.userId));
         });
         this.optimalSubmissions = this.filteredSubmissions.filter((submission) => {
             return submission.optimal;

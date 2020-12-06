@@ -9,7 +9,7 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { get } from 'lodash';
 import { HttpErrorResponse } from '@angular/common/http';
-import { getLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
@@ -79,11 +79,10 @@ export class TeamParticipationTableComponent implements OnInit {
             exercise.participation = participation;
             exercise.submission = get(exercise, 'participation.submissions[0]', null); // only exists for instructor and team tutor
             if (exercise.submission) {
-                let tmpResult = getLatestSubmissionResult(exercise.submission)!;
-                exercise.submission.results![tmpResult?.result_order] = get(exercise, 'participation.results[0]', null);
+                exercise.submission.result = get(exercise, 'participation.results[0]', null);
                 // assign this value so that it can be used later on in the view hierarchy (e.g. when updating a result, i.e. overriding an assessment
-                if (exercise.submission.results) {
-                    getLatestSubmissionResult(exercise.submission)!.participation = participation;
+                if (exercise.submission.result) {
+                    exercise.submission.result.participation = participation;
                 }
             }
             return exercise;
@@ -113,7 +112,7 @@ export class TeamParticipationTableComponent implements OnInit {
             if (isFirstAssessment) {
                 submission = 'new';
             }
-            const participationURLParameter: number | 'new' = submission === 'new' ? 'new' : getLatestSubmissionResult(submission)?.participation?.id!;
+            const participationURLParameter: number | 'new' = submission === 'new' ? 'new' : submission.result?.participation?.id!;
             route = `/course-management/${this.course.id}/${exercise.type}-exercises/${exercise.id}/code-editor/${participationURLParameter}/assessment`;
         } else {
             route = `/course-management/${this.course.id}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionUrlParameter}/assessment`;
@@ -128,11 +127,11 @@ export class TeamParticipationTableComponent implements OnInit {
     assessmentAction(submission?: Submission): AssessmentAction {
         if (
             !submission ||
-            !getLatestSubmissionResult(submission) ||
-            (submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && getLatestSubmissionResult(submission)!.assessmentType === AssessmentType.AUTOMATIC)
+            !submission.result ||
+            (submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && submission.result.assessmentType === AssessmentType.AUTOMATIC)
         ) {
             return AssessmentAction.START;
-        } else if (!getLatestSubmissionResult(submission)!.completionDate) {
+        } else if (!submission.result.completionDate) {
             return AssessmentAction.CONTINUE;
         }
         return AssessmentAction.OPEN;
