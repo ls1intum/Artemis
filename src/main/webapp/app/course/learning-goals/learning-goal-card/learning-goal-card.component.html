@@ -1,6 +1,6 @@
 <div class="card course-goal-card grow" (click)="openLearningGoalDetailsModal()">
     <div class="card-header text-center course-goal-card-header container">
-        <span class="font-weight-bold">{{ learningGoal.title }}</span>
+        <span class="font-weight-bold">{{ learningGoal?.title }}</span>
     </div>
     <div class="card-body">
         <div *ngIf="isProgressAvailable; else elseBlock">

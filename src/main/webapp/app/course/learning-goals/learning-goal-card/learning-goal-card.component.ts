@@ -22,6 +22,7 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     public progressText = '';
     public progressInPercent = 0;
     public isProgressAvailable = false;
+    public ModalComponent = LearningGoalDetailModalComponent;
 
     constructor(private modalService: NgbModal, public lectureUnitService: LectureUnitService, public translateService: TranslateService) {}
 
@@ -43,10 +44,12 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
         }
     }
     openLearningGoalDetailsModal() {
-        const modalRef = this.modalService.open(LearningGoalDetailModalComponent, {
+        const modalRef = this.modalService.open(this.ModalComponent, {
             size: 'xl',
         });
-        modalRef.componentInstance.learningGoal = this.learningGoal;
-        modalRef.componentInstance.learningGoalProgress = this.learningGoalProgress;
+        if (modalRef) {
+            modalRef.componentInstance.learningGoal = this.learningGoal;
+            modalRef.componentInstance.learningGoalProgress = this.learningGoalProgress;
+        }
     }
 }
