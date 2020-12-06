@@ -126,9 +126,14 @@ describe('FileUploadAssessmentComponent', () => {
         comp.result.assessmentType = AssessmentType.MANUAL;
         comp.result.exampleResult = false;
         comp.result.hasComplaint = false;
-        comp.submission.results = comp.result;
+        let tmpResult = getLatestSubmissionResult(comp.submission);
+        if (tmpResult) {
+            comp.submission.results![tmpResult.result_order] = comp.result;
+        } else {
+            comp.submission.results![0] = comp.result;
+        }
         comp.submission.participation!.submissions = [comp.submission];
-        comp.submission.participation!.results = [comp.submission.result];
+        comp.submission.participation!.results = [getLatestSubmissionResult(comp.submission)!];
         comp.isAssessor = true;
         comp.isAtLeastInstructor = true;
         comp.assessmentsAreValid = true;
