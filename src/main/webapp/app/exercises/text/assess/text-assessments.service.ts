@@ -13,6 +13,7 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { cloneDeep } from 'lodash';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 type EntityResponseType = HttpResponse<Result>;
 type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
@@ -100,7 +101,8 @@ export class TextAssessmentsService {
                     const submission = participation.submissions![0];
                     submission.participation = participation;
                     const result = participation.results![0];
-                    submission.result = result;
+                    let tmpResult = getLatestSubmissionResult(submission)!;
+                    submission.results![tmpResult?.result_order] = result;
                     result.submission = submission;
                     result.participation = participation;
                     // Make sure Feedbacks Array is initialized

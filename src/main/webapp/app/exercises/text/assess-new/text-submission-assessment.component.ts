@@ -239,7 +239,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             newFeedback.conflictingTextAssessments = this.result?.feedbacks?.find((feedback) => feedback.id === newFeedback.id)?.conflictingTextAssessments;
         });
         this.result = response.body!;
-        this.submission!.results![this.result?.result_order] = this.result;
+        this.submission!.results![this.result!.result_order] = this.result;
         this.saveBusy = this.submitBusy = false;
     }
 
@@ -268,11 +268,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     async navigateToConflictingSubmissions(feedbackId: number): Promise<void> {
         const tempSubmission = this.submission!;
-        //todo remove NR: soll das hier dann für alle results gesetzt werden? getLatestSubmissionResult
-        // ist hier vielleicht falls wenn tmp weggeschickt wird und noch altes zeug drin ist
-        tempSubmission!.result!.completionDate = undefined;
-        tempSubmission!.result!.submission = undefined;
-        tempSubmission!.result!.participation = undefined;
+        getLatestSubmissionResult(tempSubmission)!.completionDate = undefined;
+        getLatestSubmissionResult(tempSubmission)!.submission = undefined;
+        getLatestSubmissionResult(tempSubmission)!.participation = undefined;
         const navigationExtras: NavigationExtras = { state: { submission: tempSubmission } };
         await this.router.navigate(
             ['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'text-feedback-conflict', feedbackId],
