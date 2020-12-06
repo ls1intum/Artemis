@@ -21,7 +21,7 @@ import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess-new/
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/textblock-feedback-editor/textblock-feedback-editor.component';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess-new/manual-textblock-selection/manual-textblock-selection.component';
 import { TextFeedbackConflictsHeaderComponent } from 'app/exercises/text/assess-new/conflicts/conflicts-header/text-feedback-conflicts-header.component';
-import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, Submission, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -60,18 +60,21 @@ describe('TextFeedbackConflictsComponent', () => {
         text: 'First text. Second text.',
         participation,
     } as unknown) as TextSubmission;
-    textSubmission.result = ({
-        id: 2374,
-        resultString: '1 of 12 points',
-        completionDate: moment('2019-07-09T11:51:23.251Z'),
-        successful: false,
-        score: 8,
-        rated: true,
-        hasFeedback: true,
-        hasComplaint: false,
-        textSubmission,
-    } as unknown) as Result;
-    textSubmission.result.feedbacks = [
+    textSubmission.results = [
+        ({
+            id: 2374,
+            resultString: '1 of 12 points',
+            completionDate: moment('2019-07-09T11:51:23.251Z'),
+            successful: false,
+            score: 8,
+            rated: true,
+            hasFeedback: true,
+            hasComplaint: false,
+            textSubmission,
+        } as unknown) as Result,
+    ];
+
+    getLatestSubmissionResult(textSubmission)!.feedbacks = [
         {
             id: 1,
             detailText: 'First Feedback',
@@ -95,7 +98,7 @@ describe('TextFeedbackConflictsComponent', () => {
             textSubmission,
         } as unknown) as TextBlock,
     ];
-    textSubmission.result.feedbacks[0].conflictingTextAssessments = [
+    getLatestSubmissionResult(textSubmission)!.feedbacks![0].conflictingTextAssessments = [
         {
             id: 1,
             conflict: true,
@@ -114,17 +117,19 @@ describe('TextFeedbackConflictsComponent', () => {
         submissionDate: moment('2019-07-09T10:47:33.244Z'),
         text: 'First Conflicting Submission Text.',
     } as unknown) as TextSubmission;
-    conflictingSubmission.result = ({
-        id: 2375,
-        completionDate: moment('2020-02-10T11:51:23.251Z'),
-        successful: false,
-        score: 3,
-        rated: true,
-        hasFeedback: true,
-        hasComplaint: false,
-        conflictingSubmission,
-    } as unknown) as Result;
-    conflictingSubmission.result.feedbacks = [
+    conflictingSubmission.results = [
+        ({
+            id: 2375,
+            completionDate: moment('2020-02-10T11:51:23.251Z'),
+            successful: false,
+            score: 3,
+            rated: true,
+            hasFeedback: true,
+            hasComplaint: false,
+            conflictingSubmission,
+        } as unknown) as Result,
+    ];
+    getLatestSubmissionResult(conflictingSubmission)!.feedbacks = [
         {
             id: 5,
             detailText: 'Conflicting feedback',
@@ -203,8 +208,8 @@ describe('TextFeedbackConflictsComponent', () => {
         fixture.detectChanges();
         expect(component.rightSubmission).toBe(conflictingSubmission);
         expect(component.rightTotalScore).toBe(1.5);
-        expect(component.feedbackConflicts).toBe(textSubmission.result!.feedbacks![0].conflictingTextAssessments!);
-        expect(component.rightTextBlockRefs[0].feedback).toBe(conflictingSubmission.result!.feedbacks![0]);
+        expect(component.feedbackConflicts).toBe(getLatestSubmissionResult(textSubmission)!.feedbacks![0].conflictingTextAssessments!);
+        expect(component.rightTextBlockRefs[0].feedback).toBe(getLatestSubmissionResult(conflictingSubmission)!.feedbacks![0]);
     });
 
     it('should use jhi-text-assessment-area', () => {
@@ -234,14 +239,14 @@ describe('TextFeedbackConflictsComponent', () => {
         spyOn(textAssessmentsService, 'submit').and.returnValue(
             of(
                 new HttpResponse({
-                    body: component.leftSubmission!.result,
+                    body: getLatestSubmissionResult(component.leftSubmission!),
                 }),
             ),
         );
         component.overrideLeftSubmission();
         expect(textAssessmentsService.submit).toHaveBeenCalledWith(
             exercise.id!,
-            textSubmission.result!.id!,
+            getLatestSubmissionResult(textSubmission)!.id!,
             [component.leftTextBlockRefs[0].feedback!],
             [component.leftTextBlockRefs[0].block!],
         );
@@ -260,7 +265,7 @@ describe('TextFeedbackConflictsComponent', () => {
         });
 
         expect(component.selectedRightFeedbackId).toBeTruthy();
-        expect(component.selectedRightFeedbackId).toBe(conflictingSubmission.result!.feedbacks![0].id);
+        expect(component.selectedRightFeedbackId).toBe(getLatestSubmissionResult(conflictingSubmission)!.feedbacks![0].id);
     });
 
     it('should be able to un-select conflicting feedback', () => {
@@ -304,9 +309,9 @@ describe('TextFeedbackConflictsComponent', () => {
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
 
-        component.didSelectConflictingFeedback(conflictingSubmission.result!.feedbacks![0].id!);
+        component.didSelectConflictingFeedback(getLatestSubmissionResult(conflictingSubmission)!.feedbacks![0].id!);
 
-        const feedbackConflict = textSubmission.result!.feedbacks![0].conflictingTextAssessments![0];
+        const feedbackConflict = getLatestSubmissionResult(textSubmission)!.feedbacks![0].conflictingTextAssessments![0];
         feedbackConflict.conflict = false;
         feedbackConflict.discard = true;
         spyOn(textAssessmentsService, 'solveFeedbackConflict').and.returnValue(
@@ -323,8 +328,8 @@ describe('TextFeedbackConflictsComponent', () => {
     it('should switch submissions when it changed in the header', () => {
         const secondConflictingSubmission = Object.assign({}, conflictingSubmission);
         secondConflictingSubmission.id! += 1;
-        secondConflictingSubmission.result!.id! += 1;
-        secondConflictingSubmission.result!.feedbacks![0].id! += 1;
+        getLatestSubmissionResult(secondConflictingSubmission)!.feedbacks![0].id! += 1;
+        getLatestSubmissionResult(secondConflictingSubmission)!.id! += 1;
 
         component['setPropertiesFromServerResponse']([conflictingSubmission, secondConflictingSubmission]);
         fixture.detectChanges();
