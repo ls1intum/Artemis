@@ -14,6 +14,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 const expect = chai.expect;
 
@@ -53,15 +54,17 @@ describe('Example Submission Service', () => {
             type: 'AUTOMATIC',
             text: 'Test\n\nTest\n\nTest',
         } as unknown) as TextSubmission;
-        elemDefault.submission.result = ({
-            id: 2374,
-            resultString: '1 of 12 points',
-            score: 8,
-            rated: true,
-            hasFeedback: true,
-            hasComplaint: false,
-        } as unknown) as Result;
-        elemDefault.submission.result.feedbacks = [
+        elemDefault.submission.results = [
+            ({
+                id: 2374,
+                resultString: '1 of 12 points',
+                score: 8,
+                rated: true,
+                hasFeedback: true,
+                hasComplaint: false,
+            } as unknown) as Result,
+        ];
+        getLatestSubmissionResult(elemDefault.submission)!.feedbacks = [
             {
                 id: 2,
                 detailText: 'Feedback',

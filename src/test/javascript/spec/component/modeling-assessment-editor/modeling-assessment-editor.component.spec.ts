@@ -41,6 +41,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { User } from 'app/core/user/user.model';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -245,22 +246,24 @@ describe('ModelingAssessmentEditorComponent', () => {
             type: 'MANUAL',
             text: 'Test\n\nTest\n\nTest',
         } as unknown) as ModelingSubmission;
-        component.submission.result = ({
-            id: 2374,
-            resultString: '1 of 12 points',
-            score: 8,
-            rated: true,
-            hasFeedback: true,
-            hasComplaint: false,
-        } as unknown) as Result;
-        component.submission.result.feedbacks = [
+        component.submission.results = [
+            ({
+                id: 2374,
+                resultString: '1 of 12 points',
+                score: 8,
+                rated: true,
+                hasFeedback: true,
+                hasComplaint: false,
+            } as unknown) as Result,
+        ];
+        getLatestSubmissionResult(component.submission)!.feedbacks = [
             {
                 id: 2,
                 detailText: 'Feedback',
                 credits: 1,
             } as Feedback,
         ];
-        const fake = sinon.fake.returns(of(component.submission.result));
+        const fake = sinon.fake.returns(of(getLatestSubmissionResult(component.submission)));
         sinon.replace(service, 'saveAssessment', fake);
 
         component.ngOnInit();
@@ -288,22 +291,24 @@ describe('ModelingAssessmentEditorComponent', () => {
             type: 'MANUAL',
             text: 'Test\n\nTest\n\nTest',
         } as unknown) as ModelingSubmission;
-        component.submission.result = ({
-            id: 2374,
-            resultString: '1 of 12 points',
-            score: 8,
-            rated: true,
-            hasFeedback: true,
-            hasComplaint: false,
-        } as unknown) as Result;
-        component.submission.result.feedbacks = [
+        component.submission.results = [
+            ({
+                id: 2374,
+                resultString: '1 of 12 points',
+                score: 8,
+                rated: true,
+                hasFeedback: true,
+                hasComplaint: false,
+            } as unknown) as Result,
+        ];
+        getLatestSubmissionResult(component.submission)!.feedbacks = [
             {
                 id: 2,
                 detailText: 'Feedback',
                 credits: 1,
             } as Feedback,
         ];
-        const fake = sinon.fake.returns(of(component.submission.result));
+        const fake = sinon.fake.returns(of(getLatestSubmissionResult(component.submission)));
         sinon.replace(service, 'saveAssessment', fake);
 
         const secondFake = sinon.fake.returns(false);
