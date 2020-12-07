@@ -475,15 +475,18 @@ public class TeamResource {
     }
 
     /**
-     * Sends team assignments updates
+     * Sends students in each team an update about their assignments to the teams
+     * Along with participation if they have any
      *
      * @param exercise Exercise which students will receive team update
      * @param teams    Teams of exercise
      */
     private void sendTeamAssignmentUpdates(Exercise exercise, List<Team> teams) {
-        // Send out team assignment update via websockets
+        // Get participation to given exercise into a map which participation identifiers as key and a lists of all participation with that identifier as value
         Map<String, List<StudentParticipation>> participationsMap = participationService.findByExerciseIdWithEagerSubmissionsResult(exercise.getId()).stream()
                 .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).collect(Collectors.toList())));
+
+        // Send out team assignment update via websockets to each team
         teams.forEach(team -> teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, team, participationsMap.getOrDefault(team.getParticipantIdentifier(), List.of())));
     }
 }

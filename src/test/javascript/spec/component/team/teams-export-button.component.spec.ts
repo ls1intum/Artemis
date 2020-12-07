@@ -7,7 +7,7 @@ import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-impo
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import * as chai from 'chai';
-import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
+import { NgJhipsterModule } from 'ng-jhipster';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { restore, SinonStub, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';

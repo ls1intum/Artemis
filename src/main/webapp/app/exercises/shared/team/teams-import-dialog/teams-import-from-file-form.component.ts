@@ -82,9 +82,14 @@ export class TeamsImportFromFileFormComponent {
             newStudent.visibleRegistrationNumber = student.registrationNumber;
             newStudent.login = student.username;
 
-            if (!student.username && !student.registrationNumber) {
+            if ((!student.username || !student.username.trim()) && (!student.registrationNumber || !student.registrationNumber.trim())) {
                 throw new Error('Students must have either username or registration number');
             }
+
+            if (!student.teamName || !student.teamName.trim()) {
+                throw new Error('Team name must be provided for each student');
+            }
+
             newStudent.name = `${newStudent.firstName} ${newStudent.lastName}`;
             const index = teams.findIndex((team) => team.name === student.teamName);
             if (index === -1) {

@@ -80,8 +80,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("""
             select user
-                from User user
-                where :#{#groupName} member of user.groups and user.registrationNumber in :#{#registrationNumbers}
+            from User user
+            where :#{#groupName} member of user.groups and user.registrationNumber in :#{#registrationNumbers}
             """)
     List<User> findAllByRegistrationNumbersInGroup(@Param("groupName") String groupName, @Param("registrationNumbers") Set<String> registrationNumbers);
 
@@ -95,8 +95,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("""
             select user
-                from User user
-                where :#{#groupName} member of user.groups and user.login in :#{#logins}
+            from User user
+            where :#{#groupName} member of user.groups and user.login in :#{#logins}
             """)
     List<User> findAllByLoginsInGroup(@Param("groupName") String groupName, @Param("logins") Set<String> logins);
 
