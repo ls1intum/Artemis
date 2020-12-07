@@ -82,11 +82,11 @@ export class TeamsImportFromFileFormComponent {
             newStudent.visibleRegistrationNumber = student.registrationNumber;
             newStudent.login = student.username;
 
-            if ((!student.username || !student.username.trim()) && (!student.registrationNumber || !student.registrationNumber.trim())) {
+            if ((typeof student.username !== 'string' || !student.username.trim()) && (typeof student.registrationNumber !== 'string' || !student.registrationNumber.trim())) {
                 throw new Error('Students must have either username or registration number');
             }
 
-            if (!student.teamName || !student.teamName.trim()) {
+            if (typeof student.teamName !== 'string' || !student.teamName.trim()) {
                 throw new Error('Team name must be provided for each student');
             }
 
