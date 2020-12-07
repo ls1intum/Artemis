@@ -21,14 +21,6 @@ public class StatisticsService {
         this.statisticsRepository = statisticsRepository;
     }
 
-    public Integer getLoggedInUsers(Long span) {
-        return this.statisticsRepository.getLoggedInUsers(ZonedDateTime.now().minusDays(span).toInstant());
-    }
-
-    public Integer getActiveUsers(Long span) {
-        return this.statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(span));
-    }
-
     /**
      * Forwards the request to the repository, which returns a List<Map<String, Object>>, with String being the column name, "day" and "amount" and Object being the value,
      * either the date or the amount of submissions. It then collects the amounts in an array, depending on the span value, and returns it
@@ -56,23 +48,23 @@ public class StatisticsService {
                 startDate = now.minusDays(-periodIndex).withHour(0).withMinute(0).withSecond(0);
                 endDate = now.minusDays(-periodIndex).withHour(23).withMinute(59).withSecond(59);
                 outcome = this.statisticsRepository.getTotalSubmissions(startDate, endDate);
-                return createSubmissionCountArrayForDay(outcome, result, now);
+                return createSubmissionCountArrayForDay(outcome, result, endDate);
             case WEEK:
                 startDate = now.minusWeeks(-periodIndex).minusDays(6).withHour(0).withMinute(0).withSecond(0);
                 endDate = now.minusWeeks(-periodIndex).withHour(23).withMinute(59).withSecond(59);
                 outcome = this.statisticsRepository.getTotalSubmissions(startDate, endDate);
-                return createSubmissionCountArrayForWeek(outcome, result, now);
+                return createSubmissionCountArrayForWeek(outcome, result, endDate);
             case MONTH:
                 startDate = now.minusMonths(1 - periodIndex).plusDays(1).withHour(0).withMinute(0).withSecond(0);
                 endDate = now.minusMonths(-periodIndex).withHour(23).withMinute(59).withSecond(59);
                 outcome = this.statisticsRepository.getTotalSubmissions(startDate, endDate);
-                return createSubmissionCountArrayForMonth(outcome, result, now);
+                return createSubmissionCountArrayForMonth(outcome, result, endDate);
             case YEAR:
                 startDate = now.minusYears(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
                 lengthOfMonth = YearMonth.of(now.minusYears(-periodIndex).getYear(), now.minusYears(-periodIndex).getMonth()).lengthOfMonth();
                 endDate = now.minusYears(-periodIndex).withDayOfMonth(lengthOfMonth).withHour(23).withMinute(59).withSecond(59);
                 outcome = this.statisticsRepository.getTotalSubmissions(startDate, endDate);
-                return createSubmissionCountArrayForYear(outcome, result, now);
+                return createSubmissionCountArrayForYear(outcome, result, endDate);
             default:
                 return null;
         }
@@ -164,37 +156,5 @@ public class StatisticsService {
             }
         }
         return result;
-    }
-
-    public Integer getReleasedExercises(Long span) {
-        return this.statisticsRepository.getReleasedExercises(ZonedDateTime.now().minusDays(span), ZonedDateTime.now());
-    }
-
-    public Integer getExerciseDeadlines(Long span) {
-        return this.statisticsRepository.getExerciseDeadlines(ZonedDateTime.now().minusDays(span), ZonedDateTime.now());
-    }
-
-    public Integer getConductedExams(Long span) {
-        return this.statisticsRepository.getConductedExams(ZonedDateTime.now().minusDays(span), ZonedDateTime.now());
-    }
-
-    public Integer getExamParticipations(Long span) {
-        return this.statisticsRepository.getExamParticipations(ZonedDateTime.now().minusDays(span));
-    }
-
-    public Integer getExamRegistrations(Long span) {
-        return this.statisticsRepository.getExamRegistrations(ZonedDateTime.now().minusDays(span), ZonedDateTime.now());
-    }
-
-    public Integer getActiveTutors(Long span) {
-        return this.statisticsRepository.getActiveTutors(ZonedDateTime.now().minusDays(span));
-    }
-
-    public Integer getCreatedResults(Long span) {
-        return this.statisticsRepository.getCreatedResults(ZonedDateTime.now().minusDays(span));
-    }
-
-    public Integer getResultFeedbacks(Long span) {
-        return this.statisticsRepository.getResultFeedbacks(ZonedDateTime.now().minusDays(span));
     }
 }

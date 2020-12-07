@@ -38,7 +38,7 @@ export class StatisticsComponent implements OnInit {
     }
     private initializeChart(): void {
         this.createLabels();
-        this.service.getTotalSubmissions(this.span, this.currentSubmissionPeriod).subscribe((res: number[]) => {
+        this.service.getTotalSubmissions(this.currentSpan, this.currentSubmissionPeriod).subscribe((res: number[]) => {
             this.submissionsForSpanType = res;
             this.createChart();
         });
@@ -69,6 +69,7 @@ export class StatisticsComponent implements OnInit {
     onTabChanged(span: SpanType): void {
         this.currentSpan = span;
         this.barChartLabels = [];
+        this.currentSubmissionPeriod = 0;
         this.initializeChart();
     }
     private getMonths(): string[] {
