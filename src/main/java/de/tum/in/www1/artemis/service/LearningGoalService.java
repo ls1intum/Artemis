@@ -98,6 +98,9 @@ public class LearningGoalService {
                     else {
                         Result latestResult = latestResultOptional.get();
                         lectureUnitProgress.pointsAchievedByStudentInLectureUnit = latestResult.getScore() / 100.0 * exercise.getMaxScore();
+                        // rounding
+                        lectureUnitProgress.pointsAchievedByStudentInLectureUnit = Math.round(lectureUnitProgress.pointsAchievedByStudentInLectureUnit * 100.0) / 100.0;
+
                     }
                 }
                 // updating learningGoalPerformance
@@ -106,7 +109,6 @@ public class LearningGoalService {
                 learningGoalProgress.progressInLectureUnits.add(lectureUnitProgress);
             }
         }
-
         return learningGoalProgress;
 
     }
