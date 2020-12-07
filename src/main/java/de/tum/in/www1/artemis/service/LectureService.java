@@ -102,9 +102,14 @@ public class LectureService {
      * @param lecture the lecture to be deleted
      */
     public void delete(Lecture lecture) {
+        Optional<Lecture> lectureToDeleteOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId());
+        if (lectureToDeleteOptional.isEmpty()) {
+            return;
+        }
+        Lecture lectureToDelete = lectureToDeleteOptional.get();
 
         // update associated learning goals
-        for (LectureUnit lectureUnit : lecture.getLectureUnits()) {
+        for (LectureUnit lectureUnit : lectureToDelete.getLectureUnits()) {
             Optional<LectureUnit> lectureUnitFromDbOptional = lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnit.getId());
 
             if (lectureUnitFromDbOptional.isPresent()) {
@@ -121,7 +126,12 @@ public class LectureService {
                 }
             }
         }
-        lectureRepository.deleteById(lecture.getId());
+        Optional<Lecture> lectureToDeleteUpdatedOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId());
+        if (lectureToDeleteUpdatedOptional.isEmpty()) {
+            return;
+        }
+
+        lectureRepository.delete(lectureToDeleteUpdatedOptional.get());
     }
 
 }

@@ -188,7 +188,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         idOfExerciseUnitModelingOfLectureTwo = modelingExerciseUnit.getId();
 
         List<LectureUnit> lectureUnitsOfLectureTwo = List.of(textUnit, textExerciseUnit, modelingExerciseUnit);
-        Lecture lectureTwo = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(idOfLectureOne).get();
+        Lecture lectureTwo = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(idOfLectureTwo).get();
         for (LectureUnit lectureUnit : lectureUnitsOfLectureTwo) {
             lectureTwo.addLectureUnit(lectureUnit);
         }
@@ -230,12 +230,16 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         textSubmission.setParticipation(textParticipation);
         textSubmission = submissionRepository.save(textSubmission);
         idOfTextExerciseSubmission = textSubmission.getId();
+
         // result
         Result textResult = ModelFactory.generateResult(true, 50);
         textResult.setParticipation(textParticipation);
-        textResult.setSubmission(textSubmission);
         textResult = resultRepository.save(textResult);
         idOfTextExerciseResult = textResult.getId();
+
+        textSubmission.setResult(textResult);
+        textResult.setSubmission(textSubmission);
+        submissionRepository.save(textSubmission);
     }
 
     private void createModelingExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
@@ -260,9 +264,13 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         // result
         Result modelingResult = ModelFactory.generateResult(true, 50);
         modelingResult.setParticipation(modelingParticipation);
-        modelingResult.setSubmission(modelingSubmission);
         modelingResult = resultRepository.save(modelingResult);
         idOfModelingExerciseResult = modelingResult.getId();
+
+        modelingSubmission.setResult(modelingResult);
+        modelingResult.setSubmission(modelingSubmission);
+        submissionRepository.save(modelingSubmission);
+
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -322,6 +330,36 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
     public void deleteLearningGoal_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void deleteCourse_asAdmin_shouldAlsoDeleteLearningGoal() throws Exception {
+        request.delete("/api/courses/" + idOfCourse, HttpStatus.OK);
+        request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.NOT_FOUND, LearningGoal.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteLecture_asInstructor_shouldUpdateLearningGoal() throws Exception {
+        request.delete("/api/lectures/" + idOfLectureTwo, HttpStatus.OK);
+        LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
+        assertThat(learningGoal.getLectureUnits().stream().map(DomainObject::getId))
+                .containsAll(Set.of(idOfTextUnitOfLectureOne, idOfExerciseUnitTextOfLectureOne, idOfExerciseUnitModelingOfLectureOne));
+        assertThat(learningGoal.getLectureUnits().stream().map(DomainObject::getId))
+                .doesNotContainAnyElementsOf(Set.of(idOfTextUnitOfLectureTwo, idOfExerciseUnitTextOfLectureTwo, idOfExerciseUnitModelingOfLectureTwo));
+
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteLectureUnit_asInstructor_shouldUpdateLearningGoal() throws Exception {
+        request.delete("/api/lectures/" + idOfLectureTwo + "/lecture-units/" + idOfTextUnitOfLectureTwo, HttpStatus.OK);
+        LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
+        assertThat(learningGoal.getLectureUnits().stream().map(DomainObject::getId)).containsAll(Set.of(idOfTextUnitOfLectureOne, idOfExerciseUnitTextOfLectureOne,
+                idOfExerciseUnitModelingOfLectureOne, idOfExerciseUnitTextOfLectureTwo, idOfExerciseUnitModelingOfLectureTwo));
+        assertThat(learningGoal.getLectureUnits().stream().map(DomainObject::getId)).doesNotContainAnyElementsOf(Set.of(idOfTextUnitOfLectureTwo));
+
     }
 
     @Test
