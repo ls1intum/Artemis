@@ -1,0 +1,60 @@
+{
+    "artemisApp": {
+        "learningGoal": {
+            "created": "Lernziel erstellt",
+            "deleted": "Lernziel gelöscht",
+            "updated": "Lernziel bearbeitet",
+            "learningGoalButton": "Lern<br>ziele",
+            "title": "Lernziele",
+            "description": "Beschreibung",
+            "manageLearningGoals": {
+                "title": "Lernzielmanagement"
+            },
+            "createLearningGoal": {
+                "title": "Erstelle ein neues Lernziel",
+                "titlePlaceholder": "Gib dem Lernziel einen Titel",
+                "titleRequiredValidationError": "Ein Lernziel braucht einen Titel",
+                "titleMaxLengthValidationError": "Der Titel eines Lernziels ist auf maximal 255 Symbole beschraenkt",
+                "titleUniqueValidationError": "Es gibt bereits ein Lernziel mit diesem Titel in dem Kurs",
+                "descriptionPlaceholder": "Beschreibe das Lernziel. Was sollen die Studenten lernen?",
+                "descriptionMaxLengthValidationError": "Die Beschreibung eines Lernziels ist auf maximal 10 000 Symbole beschraenkt",
+                "connectWithLectureUnits": "Verbinde das Lernziel mit Vorlesungseinheiten",
+                "selectLecture": "Wähle eine Vorlesung aus",
+                "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} Vorlesungseinheiten verbunden)",
+                "lectureUnitTable": {
+                    "type": "Typ",
+                    "name": "Name",
+                    "releaseDate": "Veröffentlichungsdatum",
+                    "lecture": "Vorlesung",
+                    "pointsAchievedByStudent": "Punkte erreicht",
+                    "totalPointsAchievable": "Maximal erreichbare Punkte"
+                }
+            },
+            "editLearningGoal": {
+                "title": "Bearbeite ein Lernziel"
+            },
+            "learningGoalCard": {
+                "connectedLectureUnits": "Verbundene Vorlesungseinheiten",
+                "connectedLectureUnitsExplanation": "Die folgenden Vorlesungseinheiten sind mit dem Lernziel verbunden: ",
+                "lectureUnitsForCalculation": "Vorlesungseinheiten für Fortschrittsberechnung",
+                "lectureUnitsForCalculationExplanation": "Die folgenden Vorlesungseinheiten wurden für die Berechnung deines Fortschritts verwendet",
+                "delete": {
+                    "question": "Willst du wirklich das Lernziel <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                    "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen des Lernziels ein.",
+                    "buttonText": "Löschen"
+                },
+                "achieved": "erreicht",
+                "progressUnavailable": "Die Fortschrittsberechnung ist momentan nur verfügbar für Lernziele, welche mit Aufgabeneinheiten verbunden sind.",
+                "noUnitsConnected": "Das Lernziel ist mit keinen Vorlesungseinheiten verbunden",
+                "totalPointsAchievedExplanation": "Insgesamt hast du <strong>{{ points }}</strong> Punkte erreicht",
+                "totalPointsAchievableExplanation": "Du hättest maximal <strong>{{ points }}</strong> Punkte erreichen können",
+                "progressExplanation": "Dein berechneter Fortschritt ist also etwa <strong>{{ progress }}%</strong>"
+            },
+            "learningGoalPopover": {
+                "connectedLearningGoals": "Verbundene Lernziele",
+                "explanation": "Diese Vorlesungseinheit hilft dir bei der Erreichung der folgenden Lernziele: ",
+                "noLearningGoals": "Keine Lernziele verbunden mit dieser Vorlesungseinheit! "
+            }
+        }
+    }
+}
