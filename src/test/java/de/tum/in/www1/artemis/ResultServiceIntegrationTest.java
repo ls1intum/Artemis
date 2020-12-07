@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -142,7 +143,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         // 1. Test that paths not containing the Constant.STUDENT_WORKING_DIRECTORY are not shortened
         String pathWithoutWorkingDir = "Path/Without/StudentWorkingDirectory/Constant";
 
-        var resultNotification1 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
+        var resultNotification1 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
+                ProgrammingLanguage.JAVA);
         for (var reports : resultNotification1.getBuild().getJobs().iterator().next().getStaticCodeAnalysisReports()) {
             for (var issue : reports.getIssues()) {
                 issue.setFilePath(pathWithoutWorkingDir);
@@ -157,7 +159,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         }
 
         // 2. Test that null or empty paths default to FeedbackService.DEFAULT_FILEPATH
-        var resultNotification2 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
+        var resultNotification2 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
+                ProgrammingLanguage.JAVA);
         var reports2 = resultNotification2.getBuild().getJobs().iterator().next().getStaticCodeAnalysisReports();
         for (int i = 0; i < reports2.size(); i++) {
             var report = reports2.get(i);

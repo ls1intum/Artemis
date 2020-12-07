@@ -10,6 +10,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ProgrammingExerciseResultTestService;
 
@@ -37,8 +38,16 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport() {
-        var notification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
+    public void shouldStoreFeedbackForResultWithJavaStaticCodeAnalysisReport() {
+        var notification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
+                ProgrammingLanguage.JAVA);
+        programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification);
+    }
+
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldStoreFeedbackForResultWithSwiftStaticCodeAnalysisReport() {
+        var notification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
+                ProgrammingLanguage.SWIFT);
         programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification);
     }
 

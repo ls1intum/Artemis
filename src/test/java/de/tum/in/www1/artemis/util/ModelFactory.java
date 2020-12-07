@@ -763,9 +763,9 @@ public class ModelFactory {
     }
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
-            List<String> failedTestNames) {
+            List<String> failedTestNames, ProgrammingLanguage programmingLanguage) {
         var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
-        var reports = generateStaticCodeAnalysisReports(ProgrammingLanguage.JAVA);
+        var reports = generateStaticCodeAnalysisReports(programmingLanguage);
         notification.getBuild().getJobs().get(0).setStaticCodeAnalysisReports(reports);
         return notification;
     }
