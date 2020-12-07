@@ -125,7 +125,7 @@ Due to the split circle of progress-left and progress right, we must use the ani
     @if $i > ($howManySteps/2) {
         .progress-circle[data-percentage='#{$stepName}'] {
             .progress-right .progress-bar-circle {
-                animation: loading-# {($howManySteps/2)} $animationTime linear forwards; //set the animation to longest animation
+                animation: loading-#{($howManySteps/2)} $animationTime linear forwards; //set the animation to longest animation
             }
 
             .progress-left .progress-bar-circle {
