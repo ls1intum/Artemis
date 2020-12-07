@@ -87,12 +87,12 @@ describe('CourseLectures', () => {
             ],
             providers: [
                 MockProvider(CourseManagementService, {
-                    getCourseUpdates: (courseId: number) => {
+                    getCourseUpdates: () => {
                         return of(course);
                     },
                 }),
                 MockProvider(CourseScoreCalculationService, {
-                    getCourse: (courseId: number) => {
+                    getCourse: () => {
                         return course;
                     },
                 }),
