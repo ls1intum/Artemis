@@ -33,6 +33,6 @@ import { StructuredGradingCriterionModule } from 'app/exercises/shared/structure
         ProgrammingExercisePlansAndRepositoriesPreviewComponent,
         ProgrammingExerciseUpdateComponent,
     ],
-    exports: [ProgrammingExerciseUpdateComponent],
+    exports: [ProgrammingExerciseUpdateComponent, ProgrammingExerciseLifecycleComponent],
 })
 export class ArtemisProgrammingExerciseUpdateModule {}

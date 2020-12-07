@@ -1,0 +1,51 @@
+{
+    "statistics": {
+        "amountOfStudents": "# an Studenten",
+        "span": {
+            "day": "Tag",
+            "week": "Woche",
+            "month": "Monat",
+            "year": "Jahr"
+        },
+        "title": "Benutzer Statistiken",
+        "days": " Tagen",
+        "loggedInUsers": "Anzahl an Anmeldungen unterschiedlicher Benutzer in den letzten ",
+        "activeUsers": "Anzahl an Anmeldungen aktiver Benutzer in den letzten ",
+        "totalSubmissions": "Anzahl an Abgaben in den letzten ",
+        "exercises": {
+            "released": "Anzahl an veröffentlichten Aufgaben in den letzten ",
+            "due": "Anzahl an Aufgaben mit einer Deadline in den letzten "
+        },
+        "conductedExams": "Anzahl an abgehaltenen Klausuen in den letzten ",
+        "examParticipation": " -> und Anzahl Studenten, die daran teilgenommen haben: ",
+        "examRegistrations": " -> Die Anzahl an Studenten mit einer Registrierung für die Klausur: ",
+        "activeTutors": "Anzahl der Tutoren, die eine Bewertung erstellt haben in den letzten ",
+        "results": "Anzahl erstellter Resultate in den letzten ",
+        "resultFeedbacks": "-> mit der absoluten Feedbackanzahl: ",
+        "userLogins": "Benutzer Anmeldungen",
+        "submissions": "Abgaben"
+    },
+    "weekdays": {
+        "monday": "Montag",
+        "tuesday": "Dienstag",
+        "wednesday": "Mittwoch",
+        "thursday": "Donnerstag",
+        "friday": "Freitag",
+        "saturday": "Samstag",
+        "sunday": "Sonntag"
+    },
+    "months": {
+        "january": "Januar",
+        "february": "Februar",
+        "march": "März",
+        "april": "April",
+        "may": "Mai",
+        "june": "Juni",
+        "july": "Juli",
+        "august": "August",
+        "september": "September",
+        "october": "Oktober",
+        "november": "November",
+        "december": "Dezember"
+    }
+}

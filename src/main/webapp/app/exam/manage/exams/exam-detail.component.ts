@@ -34,13 +34,6 @@ export class ExamDetailComponent implements OnInit {
     }
 
     /**
-     * Go back.
-     */
-    previousState() {
-        window.history.back();
-    }
-
-    /**
      * Returns the route for editing the exam.
      */
     getEditRoute() {

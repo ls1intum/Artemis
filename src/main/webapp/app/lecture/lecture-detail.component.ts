@@ -19,11 +19,4 @@ export class LectureDetailComponent implements OnInit {
             this.lecture = lecture;
         });
     }
-
-    /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
-     */
-    previousState() {
-        window.history.back();
-    }
 }

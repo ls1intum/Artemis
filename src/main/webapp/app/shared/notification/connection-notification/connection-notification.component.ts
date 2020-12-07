@@ -7,6 +7,7 @@ import { ConnectionNotification, ConnectionNotificationType } from 'app/shared/n
 @Component({
     selector: 'jhi-connection-notification',
     templateUrl: './connection-notification.component.html',
+    styleUrls: ['connection-notification.scss'],
 })
 export class ConnectionNotificationComponent implements OnInit, OnDestroy {
     notification = new ConnectionNotification();

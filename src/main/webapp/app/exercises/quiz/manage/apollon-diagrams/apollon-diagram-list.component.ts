@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 import { ApollonDiagramCreateFormComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-create-form.component';
@@ -25,7 +25,6 @@ export class ApollonDiagramListComponent implements OnInit {
         private modalService: NgbModal,
         private sortService: SortService,
         private route: ActivatedRoute,
-        private router: Router,
     ) {
         this.predicate = 'id';
         this.reverse = true;
@@ -93,12 +92,5 @@ export class ApollonDiagramListComponent implements OnInit {
 
     sortRows() {
         this.sortService.sortByProperty(this.apollonDiagrams, this.predicate, this.reverse);
-    }
-
-    /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
-     */
-    previousState() {
-        window.history.back();
     }
 }

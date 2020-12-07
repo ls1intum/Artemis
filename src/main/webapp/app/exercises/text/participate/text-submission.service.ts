@@ -31,6 +31,14 @@ export class TextSubmissionService {
             .pipe(map((res: EntityResponseType) => TextSubmissionService.convertResponse(res)));
     }
 
+    getTextSubmission(submissionId: number): Observable<TextSubmission> {
+        return this.http
+            .get<TextSubmission>(`api/text-submissions/${submissionId}`, {
+                observe: 'response',
+            })
+            .pipe(map((res: HttpResponse<TextSubmission>) => res.body!));
+    }
+
     getTextSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<TextSubmission[]>> {
         const options = createRequestOption(req);
         return this.http
