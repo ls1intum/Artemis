@@ -34,6 +34,7 @@ describe('CircularProgressBarComponent', () => {
 
     it('should be completely green when progress is 100%', () => {
         circularProgressBarComponent.progressInPercent = 100;
+        circularProgressBarComponent.ngOnChanges();
         circularProgressBarComponentFixture.detectChanges();
         const leftSideCircle = circularProgressBarComponentFixture.debugElement.nativeElement.querySelector('.progress-left > .progress-bar-circle');
         const rightSideCircle = circularProgressBarComponentFixture.debugElement.nativeElement.querySelector('.progress-right > .progress-bar-circle');
@@ -45,6 +46,7 @@ describe('CircularProgressBarComponent', () => {
 
     it('should be completely red when progress is 0%', () => {
         circularProgressBarComponent.progressInPercent = 0;
+        circularProgressBarComponent.ngOnChanges();
         circularProgressBarComponentFixture.detectChanges();
         const leftSideCircle = circularProgressBarComponentFixture.debugElement.nativeElement.querySelector('.progress-left > .progress-bar-circle');
         const rightSideCircle = circularProgressBarComponentFixture.debugElement.nativeElement.querySelector('.progress-right > .progress-bar-circle');
@@ -56,6 +58,7 @@ describe('CircularProgressBarComponent', () => {
 
     it('should be yellow when progress is 50%', () => {
         circularProgressBarComponent.progressInPercent = 50;
+        circularProgressBarComponent.ngOnChanges();
         circularProgressBarComponentFixture.detectChanges();
         const leftSideCircle = circularProgressBarComponentFixture.debugElement.nativeElement.querySelector('.progress-left > .progress-bar-circle');
         const rightSideCircle = circularProgressBarComponentFixture.debugElement.nativeElement.querySelector('.progress-right > .progress-bar-circle');

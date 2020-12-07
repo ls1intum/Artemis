@@ -1,19 +1,22 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 
 @Component({
     selector: 'jhi-circular-progress-bar',
     templateUrl: './circular-progress-bar.component.html',
     styleUrls: ['./circular-progress-bar.component.scss'],
 })
-export class CircularProgressBarComponent implements OnInit {
+export class CircularProgressBarComponent implements OnChanges {
     @Input()
     progressInPercent = 0;
     @Input()
     progressText = 'Completed';
+    circleColor = '#000000';
 
     constructor() {}
 
-    ngOnInit(): void {}
+    ngOnChanges() {
+        this.circleColor = this.calculateCircleColor();
+    }
 
     intToTwoDigitHex(i: any) {
         const hex = parseInt(i, undefined).toString(16);
@@ -23,7 +26,7 @@ export class CircularProgressBarComponent implements OnInit {
     /**
      * Provides a smooth transition from red, yellow to finally green depending on the progress bar percentage
      */
-    get circleColor() {
+    calculateCircleColor() {
         let value = Math.min(Math.max(0, this.progressInPercent / 100.0), 1) * 510;
         let redValue;
         let greenValue;
