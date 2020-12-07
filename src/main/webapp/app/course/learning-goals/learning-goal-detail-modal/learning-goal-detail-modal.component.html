@@ -93,8 +93,14 @@
                                 >{{ lectureUnitProgress.lectureUnitTitle ? lectureUnitProgress.lectureUnitTitle : '' }}
                             </a>
                         </td>
-                        <td>{{ lectureUnitProgress.pointsAchievedByStudentInLectureUnit ? lectureUnitProgress.pointsAchievedByStudentInLectureUnit : '' }}</td>
-                        <td>{{ lectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit ? lectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit : '' }}</td>
+                        <td>{{ lectureUnitProgress.pointsAchievedByStudentInLectureUnit === undefined ? ' ' : lectureUnitProgress.pointsAchievedByStudentInLectureUnit }}</td>
+                        <td>
+                            {{
+                                lectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit === undefined
+                                    ? ''
+                                    : lectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit
+                            }}
+                        </td>
                     </tr>
                 </tbody>
             </table>
