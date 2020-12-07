@@ -8,8 +8,10 @@ import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -121,6 +123,13 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     // var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/earned-achievements", HttpStatus.OK, Set.class);
     // assertThat(achievementsFirstCourse.size()).as("User got three achievements").isEqualTo(3);
     // }
+
+    // FAKE TEST THAT IS ALSO GOING TO BE REMOVED AGAIN ONCE THE CLIENT IS SUCCESSFULLY TESTED
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void fakeTest() {
+        assertThat(true).isTrue();
+    }
 
     private void initTest() throws Exception {
         var allAchievements = achievementRepository.findAllByCourseId(firstCourse.getId());
