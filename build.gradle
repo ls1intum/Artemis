@@ -262,7 +262,9 @@ dependencies {
     implementation "org.apache.maven:maven-model:3.6.3"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
-    annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
+    annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
+        exclude group: "javax.ws.rs", module: "jsr311-api"
+    }
     annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
