@@ -97,6 +97,7 @@
                     "forbidden": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten."
                 }
             },
+            "courseDashboard": "Kurs Dashboard",
             "instructorDashboard": "Dozenten Kurs Dashboard",
             "presentationScoreEnabled": {
                 "title": "Präsentationsbewertung aktiviert",
@@ -115,7 +116,12 @@
                 "removeFromGroup": {
                     "modalQuestion": "Soll der Nutzer mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Kurs-Gruppe entfernt werden?"
                 }
-            }
+            },
+            "statistics": "Statistiken",
+            "averageScore": "Punkte im Schnitt",
+            "futureExercises": "Kommende Übungen",
+            "currentExercises": "Derzeitige Übungen",
+            "pastExercises": "Vergangene Übungen"
         }
     }
 }

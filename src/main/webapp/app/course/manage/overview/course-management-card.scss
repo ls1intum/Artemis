@@ -1,0 +1,61 @@
+@import '../../../overview/_overview-vars.scss';
+
+.card {
+    min-height: 100%;
+    .card-heading {
+        display: flex;
+        cursor: pointer;
+        .container-padding {
+            padding: 20px;
+        }
+    }
+    .section-card {
+        padding: 20px;
+        border: 1px solid $light-border-color;
+        border-radius: 0.1rem;
+        min-width: 30%;
+        .collapsed {
+            margin-top: 2px;
+        }
+    }
+    .section-header {
+        height: 40px;
+        background-color: $primary;
+        border-radius: 0.1rem;
+        cursor: pointer;
+        .text-center {
+            line-height: 2;
+        }
+    }
+    .section-content {
+        overflow: auto;
+        max-height: 500px;
+    }
+    .control-label {
+        cursor: pointer;
+        background-color: $light-border-color;
+    }
+    .control-icon {
+        padding-left: 1rem;
+        padding-right: 0.5rem;
+    }
+    .card-footer {
+        background-color: $light-primary-background-color;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        .float-right {
+            float: right;
+        }
+    }
+    .header-right {
+        float: right;
+        text-align: right;
+    }
+    .container {
+        max-width: inherit;
+    }
+    .flex-container {
+        flex: 1;
+    }
+}

@@ -3,7 +3,6 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import * as moment from 'moment';
 import { filter, map, tap } from 'rxjs/operators';
-
 import { SERVER_API_URL } from 'app/app.constants';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -22,6 +21,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exercise-statistics-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -230,6 +230,14 @@ export class CourseManagementService {
      */
     getStatsForInstructors(courseId: number): Observable<HttpResponse<StatsForDashboard>> {
         return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-instructor-dashboard`, { observe: 'response' });
+    }
+
+    /**
+     * returns the stats of the course with the provided unique identifier for the courses management dashboard
+     * @param courseId - the id of the course
+     */
+    getStatsForManagementOverview(courseId: number): Observable<HttpResponse<CourseExerciseStatisticsDTO[]>> {
+        return this.http.get<CourseExerciseStatisticsDTO[]>(`${this.resourceUrl}/${courseId}/stats-for-management-overview`, { observe: 'response' });
     }
 
     /**

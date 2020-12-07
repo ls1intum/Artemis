@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
@@ -781,6 +782,27 @@ public class CourseResource {
 
         log.info("Finished /courses/" + courseId + "/stats-for-instructor-dashboard call in " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * GET /courses/:courseId/stats-for-management-overview :
+     *
+     * @param courseId course to get the stats for
+     * @return ResponseEntity with status
+     */
+    @GetMapping(value = "/courses/{courseId}/stats-for-management-overview")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<CourseExerciseStatisticsDTO>> getExerciseStatsForCourseOverview(@PathVariable Long courseId) {
+        log.debug("REST request to get exercise stats for Course : {}", courseId);
+
+        final Course course = courseService.findOneWithExercises(courseId);
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        final List<Long> exerciseIds = course.getExercises().stream().map(Exercise::getId).distinct().collect(Collectors.toList());
+        return ResponseEntity.ok(exerciseService.calculateExerciseStatistics(exerciseIds));
     }
 
     /**
