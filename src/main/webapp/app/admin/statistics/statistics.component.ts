@@ -15,11 +15,8 @@ export class StatisticsComponent implements OnInit {
     // html properties
     LEFT = false;
     RIGHT = true;
-    DAY = SpanType.DAY;
-    WEEK = SpanType.WEEK;
-    MONTH = SpanType.MONTH;
-    YEAR = SpanType.YEAR;
-    span: SpanType = SpanType.WEEK;
+    SpanType = SpanType;
+    currentSpan: SpanType = SpanType.WEEK;
 
     // Histogram related properties
     public barChartOptions: ChartOptions = {};
@@ -48,7 +45,7 @@ export class StatisticsComponent implements OnInit {
     }
 
     private createLabels(): void {
-        switch (this.span) {
+        switch (this.currentSpan) {
             case SpanType.DAY:
                 for (let i = 0; i < 24; i++) {
                     this.barChartLabels[i] = `${i}:00-${i + 1}:00`;
@@ -70,7 +67,7 @@ export class StatisticsComponent implements OnInit {
     }
 
     onTabChanged(span: SpanType): void {
-        this.span = span;
+        this.currentSpan = span;
         this.barChartLabels = [];
         this.initializeChart();
     }

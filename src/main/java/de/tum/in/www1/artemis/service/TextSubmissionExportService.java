@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 
@@ -37,13 +36,12 @@ public class TextSubmissionExportService extends SubmissionExportService {
     /**
      * Save the content of the given TextSubmission to a file.
      *
-     * @param exercise the submission belongs to
-     * @param submission that will be saved to a file
+     * @param submission            that will be saved to a file
+     * @param studentLogin          of the given submission
      * @param submissionsFolderName base folder name to save the file to
-     * @throws IOException
      */
-    public void saveSubmissionToFile(TextExercise exercise, TextSubmission submission, String submissionsFolderName) throws IOException {
-        String submissionFileName = String.format("%s-Submission-%s%s", exercise.getTitle(), submission.getId(), this.getFileEndingForSubmission(submission));
+    public void saveSubmissionToFile(TextSubmission submission, String studentLogin, String submissionsFolderName) throws IOException {
+        String submissionFileName = String.format("%s-%s%s", submission.getId(), studentLogin, this.getFileEndingForSubmission(submission));
 
         File submissionExportFile = new File(submissionsFolderName, submissionFileName);
 

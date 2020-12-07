@@ -269,25 +269,28 @@ public class ParticipationService {
             if (participation instanceof ProgrammingExerciseParticipation) {
                 Set<Submission> programmingSubmissions = new HashSet<>(submissionRepository.findAllByParticipationId(participation.getId()));
                 participation.setSubmissions(programmingSubmissions);
-                initializeSubmission(participation, exercise, null);
+                if (programmingSubmissions.isEmpty()) {
+                    submission = initializeSubmission(participation, exercise, null).get();
+                    // required so that the assessment dashboard statistics are calculated correctly
+                    submission.setSubmitted(true);
+                }
                 submission = participation.getSubmissions().iterator().next();
-                // required so that the assessment dashboard statistics are calculated correctly
-                submission.setSubmitted(true);
+
             }
             else {
                 submission = participation.getSubmissions().iterator().next();
             }
             submission.setSubmissionDate(ZonedDateTime.now());
             // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
+            submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
             if (submission.getResult() == null) {
                 Result result = new Result();
+                result.setParticipation(submission.getParticipation());
+                result.setAssessor(participation.getStudent().get());
+                result.setAssessmentType(AssessmentType.TEST_RUN);
+                result = resultRepository.save(result);
                 result.setSubmission(submission);
                 submission.setResult(result);
-                result.setParticipation(submission.getParticipation());
-                submission.getResult().setAssessor(participation.getStudent().get());
-                submission.getResult().setAssessmentType(AssessmentType.TEST_RUN);
-
-                resultRepository.save(result);
                 submissionRepository.save(submission);
             }
             save(participation);
@@ -472,7 +475,7 @@ public class ParticipationService {
      * @return List<submission>
      */
     public List<Submission> getSubmissionsWithParticipationId(long participationId) {
-        return submissionRepository.findAllByParticipationId(participationId);
+        return submissionRepository.findAllWithResultsByParticipationId(participationId);
     }
 
     /**

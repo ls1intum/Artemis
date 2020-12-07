@@ -7,6 +7,7 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Exercise } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 
@@ -22,11 +23,14 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     @Input() participationIdList: number[];
     @Input() participantIdentifierList: string; // TODO: Should be a list and not a comma separated string.
     @Input() singleParticipantMode = false;
+    // In case of exporting multiple exercises, a list of the selected exercises must be passed
+    selectedProgrammingExercises: ProgrammingExercise[] = [];
     readonly FeatureToggle = FeatureToggle;
     exercise: Exercise;
     exportInProgress: boolean;
     repositoryExportOptions: RepositoryExportOptions;
     isLoading = false;
+    isRepoExportForMultipleExercises: boolean;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -46,21 +50,26 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             normalizeCodeStyle: false, // disabled by default because it is rather unstable
             hideStudentNameInZippedFolder: false,
         };
-        this.exerciseService
-            .find(this.exerciseId)
-            .pipe(
-                tap(({ body: exercise }) => {
-                    this.exercise = exercise!;
-                }),
-                catchError((err) => {
-                    this.jhiAlertService.error(err);
-                    this.clear();
-                    return of(undefined);
-                }),
-            )
-            .subscribe(() => {
-                this.isLoading = false;
-            });
+        this.isRepoExportForMultipleExercises = this.selectedProgrammingExercises.length > 0;
+        if (!this.isRepoExportForMultipleExercises) {
+            this.exerciseService
+                .find(this.exerciseId)
+                .pipe(
+                    tap(({ body: exercise }) => {
+                        this.exercise = exercise!;
+                    }),
+                    catchError((err) => {
+                        this.jhiAlertService.error(err);
+                        this.clear();
+                        return of(undefined);
+                    }),
+                )
+                .subscribe(() => {
+                    this.isLoading = false;
+                });
+        } else {
+            this.isLoading = false;
+        }
     }
 
     clear() {
@@ -90,6 +99,13 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             .subscribe(this.handleExportRepoResponse, () => {
                 this.exportInProgress = false;
             });
+    }
+
+    bulkExportRepos() {
+        this.repositoryExportOptions.exportAllParticipants = true;
+        this.selectedProgrammingExercises.forEach((programmingExercise) => {
+            this.exportRepos(programmingExercise.id);
+        });
     }
 
     handleExportRepoResponse = (response: HttpResponse<Blob>) => {

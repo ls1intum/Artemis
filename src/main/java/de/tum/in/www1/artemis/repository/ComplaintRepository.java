@@ -85,7 +85,17 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @param complaintType - complaint type we want to filter by
      * @return  number of complaints associated to exercise exerciseId without test runs
      */
-    @Query("SELECT COUNT (DISTINCT p) FROM StudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (Select s FROM p.submissions s where s.result Is not null and exists (select c from Complaint c where c.result.id = s.result.id and c.complaintType = :#{#complaintType})) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
+    @Query("""
+            SELECT COUNT (DISTINCT p) FROM StudentParticipation p
+            WHERE p.exercise.id = :#{#exerciseId}
+            AND EXISTS (SELECT s FROM p.submissions s
+                        WHERE s.results IS NOT EMPTY
+                        AND EXISTS (SELECT c FROM Complaint c
+                            WHERE EXISTS (SELECT r.id FROM s.results r WHERE r.id = c.result.id)
+                            AND c.complaintType = :#{#complaintType}))
+            AND NOT EXISTS (SELECT prs FROM p.results prs
+                        WHERE prs.assessor.id = p.student.id)
+            """)
     long countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(Long exerciseId, ComplaintType complaintType);
 
     /**

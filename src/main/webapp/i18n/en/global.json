@@ -179,6 +179,7 @@
             "confirm": "Confirm",
             "download": "Download",
             "edit": "Edit",
+            "editSelected": "Edit selected",
             "editInEditor": "Edit in editor",
             "editInIntelliJ": "Edit in IntelliJ",
             "editEntity": "Edit {{entity}}",

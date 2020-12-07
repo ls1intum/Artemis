@@ -1,11 +1,17 @@
-.repository-status-icon {
-    font-size: 2.5em;
-}
+.programming-exercise-detail-wrapper-class {
+    button {
+        margin-bottom: 10px;
+    }
 
-.custom-tag {
-    margin-right: 5px;
-    padding: 0 0.45rem;
-    background: #cccccc;
-    border-radius: 0.25rem;
-    color: white;
+    .repository-status-icon {
+        font-size: 2.5em;
+    }
+
+    .custom-tag {
+        margin-right: 5px;
+        padding: 0 0.45rem;
+        background: #cccccc;
+        border-radius: 0.25rem;
+        color: white;
+    }
 }
