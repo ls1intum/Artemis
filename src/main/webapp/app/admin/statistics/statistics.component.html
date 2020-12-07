@@ -18,7 +18,12 @@
     </div>
 
     <div class="row">
-        <h3 class="col-md-2" jhiTranslate="statistics.submissions">Submissions</h3>
+        <div class="col-md-2 d-flex">
+            <div class="row flex-grow-1">
+                <h3 class="col-md-8 d-flex" jhiTranslate="statistics.submissions">Submissions</h3>
+                <fa-icon [icon]="'arrow-left'" size="3x" class="col-md-4 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
+            </div>
+        </div>
         <canvas
             class="col-md-9"
             baseChart
@@ -30,5 +35,6 @@
             [legend]="barChartLegend"
             [chartType]="barChartType"
         ></canvas>
+        <fa-icon [icon]="'arrow-right'" size="3x" class="col-md-1 d-flex justify-content-start align-items-center" role="button" (click)="switchTimeSpan(RIGHT)"></fa-icon>
     </div>
 </div>

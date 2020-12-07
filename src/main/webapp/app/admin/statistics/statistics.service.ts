@@ -29,8 +29,8 @@ export class StatisticsService {
     /**
      * Sends a GET request to retrieve the amount of submissions made in the last *span* days
      */
-    getTotalSubmissions(span: SpanType): Observable<number[]> {
-        const params = new HttpParams().set('span', '' + span);
+    getTotalSubmissions(span: SpanType, periodIndex: number): Observable<number[]> {
+        const params = new HttpParams().set('span', '' + span).set('periodIndex', '' + periodIndex);
         return this.http.get<number[]>(`${this.resourceUrl}submissions`, { params });
     }
 

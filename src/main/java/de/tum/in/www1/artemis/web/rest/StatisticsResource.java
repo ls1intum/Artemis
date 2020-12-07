@@ -60,9 +60,9 @@ public class StatisticsResource {
      */
     @GetMapping("management/statistics/submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Integer[]> getTotalSubmissions(@RequestParam SpanType span) {
+    public ResponseEntity<Integer[]> getTotalSubmissions(@RequestParam SpanType span, @RequestParam Integer periodIndex) {
         log.debug("REST request to get amount of submission in the last {} days", span);
-        return ResponseEntity.ok(this.service.getTotalSubmissions(span));
+        return ResponseEntity.ok(this.service.getTotalSubmissions(span, periodIndex));
     }
 
     /**

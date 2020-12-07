@@ -12,6 +12,9 @@ import { SpanType } from 'app/entities/statistics.model';
     templateUrl: './statistics.component.html',
 })
 export class StatisticsComponent implements OnInit {
+    // html properties
+    LEFT = false;
+    RIGHT = true;
     DAY = SpanType.DAY;
     WEEK = SpanType.WEEK;
     MONTH = SpanType.MONTH;
@@ -26,6 +29,7 @@ export class StatisticsComponent implements OnInit {
     public SubmissionsChartData: ChartDataSets[] = [];
     public amountOfStudents: string;
     public submissionsForSpanType: number[];
+    private currentSubmissionPeriod = 0; // left arrow -> decrease, right arrow -> increase
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
@@ -36,14 +40,14 @@ export class StatisticsComponent implements OnInit {
         this.initializeChart();
     }
     private initializeChart(): void {
-        this.setBinWidth();
-        this.service.getTotalSubmissions(this.span).subscribe((res: number[]) => {
+        this.createLabels();
+        this.service.getTotalSubmissions(this.span, this.currentSubmissionPeriod).subscribe((res: number[]) => {
             this.submissionsForSpanType = res;
             this.createChart();
         });
     }
 
-    private setBinWidth(): void {
+    private createLabels(): void {
         switch (this.span) {
             case SpanType.DAY:
                 for (let i = 0; i < 24; i++) {
@@ -54,7 +58,9 @@ export class StatisticsComponent implements OnInit {
                 this.barChartLabels = this.getWeekdays();
                 break;
             case SpanType.MONTH:
-                const daysInMonth = moment().diff(moment().subtract(1, 'months'), 'days');
+                const startDate = moment().subtract(1 - this.currentSubmissionPeriod, 'months');
+                const endDate = moment().subtract(-this.currentSubmissionPeriod, 'months');
+                const daysInMonth = endDate.diff(startDate, 'days');
                 this.barChartLabels = this.getLabelsForMonth(daysInMonth);
                 break;
             case SpanType.YEAR:
@@ -95,6 +101,7 @@ export class StatisticsComponent implements OnInit {
         for (let i = 0; i < daysInMonth; i++) {
             days.push(
                 moment()
+                    .subtract(-this.currentSubmissionPeriod, 'months')
                     .subtract(daysInMonth - 1 - i, 'days')
                     .format('DD.MM'),
             );
@@ -161,5 +168,11 @@ export class StatisticsComponent implements OnInit {
                 ],
             },
         };
+    }
+
+    public switchTimeSpan(index: boolean): void {
+        // eslint-disable-next-line chai-friendly/no-unused-expressions
+        index ? (this.currentSubmissionPeriod += 1) : (this.currentSubmissionPeriod -= 1);
+        this.initializeChart();
     }
 }
