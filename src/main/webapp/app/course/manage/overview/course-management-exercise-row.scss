@@ -1,0 +1,31 @@
+@import '../../../overview/_overview-vars.scss';
+
+.course-item {
+    padding: 5px;
+    border: 1px solid $blue-border-color;
+    background-color: $light-background-color;
+    border-radius: 0.1rem;
+    display: block ruby;
+    overflow: hidden;
+    .exercise-icon {
+        margin-top: 10px;
+    }
+    .item-title {
+        margin-top: 10px;
+        margin-left: 15px;
+    }
+    .btn {
+        margin-top: 5px;
+        float: right;
+        height: 40px;
+        width: 40px;
+    }
+    .row-flex {
+        display: inline-flex;
+        flex-direction: row;
+    }
+    .exercise-date {
+        padding-left: 15px;
+        padding-top: 10px;
+    }
+}

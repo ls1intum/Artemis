@@ -1,0 +1,134 @@
+<div class="card">
+    <div class="card-heading text-white" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
+        <div class="container container-padding" [routerLink]="['/course-management', course.id]">
+            <div class="row">
+                <div class="col">
+                    <div>
+                        <span>{{ 'artemisApp.course.semester' | translate }}: </span>
+                        <span *ngIf="course.semester">{{ course.semester }}</span>
+                        <span *ngIf="!course.semester">{{ 'global.generic.unset' | translate }}</span>
+                        <br />
+                        <span *ngIf="course.startDate">{{ 'artemisApp.course.startDate' | translate }}: {{ course.startDate | artemisDate }}</span>
+                        <br />
+                        <span *ngIf="course.endDate">{{ 'artemisApp.course.endDate' | translate }}: {{ course.endDate | artemisDate }}</span>
+                    </div>
+                </div>
+                <div class="col">
+                    <h5 class="card-title text-center">{{ course.title }}</h5>
+                    <div class="text-center">{{ course.shortName }}</div>
+                </div>
+                <div class="col">
+                    <div class="header-right">
+                        {{ 'artemisApp.course.onlineCourse.title' | translate }}:
+                        <span *ngIf="course.onlineCourse">{{ 'global.generic.yes' | translate }}</span>
+                        <span *ngIf="!course.onlineCourse">{{ 'global.generic.no' | translate }}</span>
+                        <br />
+                        {{ 'artemisApp.course.presentationScoreEnabled.title' | translate }}:
+                        <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | translate }}</span>
+                        <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | translate }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container flex-container">
+        <div class="row">
+            <div class="col-6 section-card">
+                <div class="col section-header" [routerLink]="['/course-management', course.id, 'exercises']">
+                    <h5 class="text-white text-center">{{ 'entity.action.exercise' | translate }}</h5>
+                </div>
+                <div class="section-content">
+                    <div *ngIf="futureExercises && futureExercises.length > 0">
+                        <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
+                            <fa-icon class="control-icon" [icon]="showFutureExercises ? 'angle-down' : 'angle-up'"></fa-icon>
+                            <strong>{{ 'artemisApp.course.futureExercises' | translate }}</strong>
+                        </div>
+                        <div *ngIf="showFutureExercises">
+                            <jhi-course-management-exercise-row
+                                *ngFor="let exercise of futureExercises"
+                                [course]="course"
+                                [exercise]="exercise"
+                                [rowType]="exerciseRowType.FUTURE"
+                                [statistic]="getStatisticForExercise(exercise)"
+                            ></jhi-course-management-exercise-row>
+                        </div>
+                        <div *ngIf="!showFutureExercises" class="collapsed"></div>
+                    </div>
+                    <div *ngIf="currentExercises && currentExercises.length > 0">
+                        <div class="control-label" (click)="showCurrentExercises = !showCurrentExercises">
+                            <fa-icon class="control-icon" [icon]="showCurrentExercises ? 'angle-down' : 'angle-up'"></fa-icon>
+                            <strong>{{ 'artemisApp.course.currentExercises' | translate }}</strong>
+                        </div>
+                        <div *ngIf="showCurrentExercises">
+                            <jhi-course-management-exercise-row
+                                *ngFor="let exercise of currentExercises"
+                                [course]="course"
+                                [exercise]="exercise"
+                                [rowType]="exerciseRowType.CURRENT"
+                                [statistic]="getStatisticForExercise(exercise)"
+                            ></jhi-course-management-exercise-row>
+                        </div>
+                        <div *ngIf="!showCurrentExercises" class="collapsed"></div>
+                    </div>
+                    <div *ngIf="pastExercises && pastExercises.length > 0">
+                        <div class="control-label" (click)="showPastExercises = !showPastExercises">
+                            <fa-icon class="control-icon" [icon]="showPastExercises ? 'angle-down' : 'angle-up'"></fa-icon>
+                            <strong>{{ 'artemisApp.course.pastExercises' | translate }}</strong>
+                        </div>
+                        <div *ngIf="showPastExercises">
+                            <jhi-course-management-exercise-row
+                                *ngFor="let exercise of pastExercises"
+                                [course]="course"
+                                [exercise]="exercise"
+                                [rowType]="exerciseRowType.PAST"
+                                [statistic]="getStatisticForExercise(exercise)"
+                            ></jhi-course-management-exercise-row>
+                        </div>
+                        <div *ngIf="!showPastExercises" class="collapsed"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 section-card">
+                <div class="col section-header" [routerLink]="['/course-management', course.id]">
+                    <h5 class="text-white text-center">{{ 'artemisApp.course.statistics' | translate }}</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-footer">
+        <button type="submit" *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'scores']" class="btn btn-info mr-1 mb-1">
+            <fa-icon [icon]="'eye'"></fa-icon>
+            <span class="d-none d-md-inline">{{ 'entity.action.scores' | translate }}</span>
+        </button>
+        <button type="submit" *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'lectures']" class="btn btn-info mr-1 mb-1">
+            <fa-icon [icon]="'list-alt'"></fa-icon>
+            <span class="d-none d-md-inline">{{ 'entity.action.lecture' | translate }}</span>
+        </button>
+        <button type="submit" *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'exams']" class="btn btn-info mr-1 mb-1">
+            <fa-icon [icon]="'list-alt'"></fa-icon>
+            <span class="d-none d-md-inline">{{ 'entity.action.exams' | translate }}</span>
+        </button>
+        <button type="submit" *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id]" class="btn btn-info mr-1 mb-1">
+            <fa-icon [icon]="'th-list'"></fa-icon>
+            <span class="d-none d-md-inline">{{ 'artemisApp.course.courseDashboard' | translate }}</span>
+        </button>
+        <button type="submit" *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'tutor-dashboard']" class="btn btn-info mr-1 mb-1">
+            <fa-icon [icon]="'th-list'"></fa-icon>
+            <span class="d-none d-md-inline">{{ 'entity.action.assessmentDashboard' | translate }}</span>
+        </button>
+        <button type="submit" *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="btn btn-info mr-1 mb-1">
+            <fa-icon [icon]="'th-list'"></fa-icon>
+            <span class="d-none d-md-inline">{{ 'artemisApp.course.instructorDashboard' | translate }}</span>
+        </button>
+        <div *ngIf="course.isAtLeastInstructor" class="float-right">
+            <span class="bold">{{ 'artemisApp.course.students' | translate }}:</span>
+            <a [routerLink]="['/course-management', course.id, 'groups', 'students']"> {{ course.studentGroupName }} ({{ course.numberOfStudents }}) </a>
+            <span class="bold">{{ 'artemisApp.course.tutors' | translate }}:</span>
+            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']"> {{ course.teachingAssistantGroupName }} ({{ course.numberOfTeachingAssistants }}) </a>
+            <span class="bold">{{ 'artemisApp.course.instructors' | translate }}:</span>
+            <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']"> {{ course.instructorGroupName }} ({{ course.numberOfInstructors }}) </a>
+        </div>
+    </div>
+</div>

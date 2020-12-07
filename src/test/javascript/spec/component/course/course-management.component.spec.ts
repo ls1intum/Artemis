@@ -21,6 +21,7 @@ import { JhiSortDirective, JhiSortByDirective } from 'ng-jhipster';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MomentModule } from 'ngx-moment';
+import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -44,6 +45,7 @@ describe('CourseManagementComponent', () => {
                 MockDirective(JhiSortDirective),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
+                MockDirective(CourseManagementCardComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

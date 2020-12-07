@@ -4,13 +4,14 @@ import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
-import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { JhiAlertService } from 'ng-jhipster';
 import { SortService } from 'app/shared/service/sort.service';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { LectureService } from 'app/lecture/lecture.service';
 
 @Component({
     selector: 'jhi-course',
@@ -22,22 +23,23 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     predicate: string;
     reverse: boolean;
     showOnlyActive = true;
-    showExamButton = true;
 
     courses: Course[];
     courseSemesters: string[];
     semesterCollapsed: { [key: string]: boolean };
+    coursesBySemester: { [key: string]: Course[] };
     eventSubscriber: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-
     courseForGuidedTour?: Course;
 
     constructor(
         private courseService: CourseManagementService,
+        private examService: ExamManagementService,
+        private lectureService: LectureService,
+        private courseManagementService: CourseManagementService,
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private guidedTourService: GuidedTourService,
@@ -78,16 +80,20 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                         // if years are the same, sort WS over SS
                         return a.substr(0, 2) === 'WS' ? -1 : 1;
                     });
+
                 this.semesterCollapsed = {};
+                this.coursesBySemester = {};
                 let firstUncollapsed = false;
                 for (const semester of this.courseSemesters) {
                     this.semesterCollapsed[semester] = firstUncollapsed;
                     firstUncollapsed = true;
+                    this.coursesBySemester[semester] = this.courses.filter((c) => !c.testCourse && (c.semester ?? '') === semester);
                 }
                 // add an extra category for test courses
                 if (this.courses.find((c) => c.testCourse) !== null) {
                     this.courseSemesters[this.courseSemesters.length] = 'test';
                     this.semesterCollapsed['test'] = false;
+                    this.coursesBySemester['test'] = this.courses.filter((c) => c.testCourse);
                 }
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res),

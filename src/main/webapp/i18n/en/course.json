@@ -97,6 +97,7 @@
                     "forbidden": "Short Name must start with a letter and cannot contain special characters."
                 }
             },
+            "courseDashboard": "Course Dashboard",
             "instructorDashboard": "Instructor Course Dashboard",
             "presentationScoreEnabled": {
                 "title": "Presentation Score",
@@ -115,7 +116,12 @@
                 "removeFromGroup": {
                     "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this course group?"
                 }
-            }
+            },
+            "statistics": "Statistics",
+            "averageScore": "Average Score",
+            "futureExercises": "Future Exercises",
+            "currentExercises": "Current Exercises",
+            "pastExercises": "Past Exercises"
         }
     }
 }
