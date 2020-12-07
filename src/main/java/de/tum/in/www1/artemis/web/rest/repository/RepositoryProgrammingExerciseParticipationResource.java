@@ -107,6 +107,28 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.getFiles(participationId);
     }
 
+    /**
+     * GET /repository/{participationId}/files-change
+     *
+     * Gets the files of the repository and checks whether they were changed during a student participation with respect to the initial template
+     *
+     * @param participationId participation of the student
+     * @return the ResponseEntity with status 200 (OK) and a map of files with the information if they were changed/are new.
+     */
+    @GetMapping(value = "/repository/{participationId}/files-change", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Map<String, Boolean>> getFilesWithInformationAboutChange(@PathVariable Long participationId) {
+        return super.executeAndCheckForExceptions(() -> {
+            Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
+            var participation = participationService.findParticipation(participationId);
+            var exercise = super.programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(participation.getExercise().getId());
+
+            Repository templateRepository = getRepository(exercise.getTemplateParticipation().getId(), RepositoryActionType.READ, true);
+            var filesWithInformationAboutChange = super.repositoryService.getFilesWithInformationAboutChange(repository, templateRepository);
+            return new ResponseEntity<>(filesWithInformationAboutChange, HttpStatus.OK);
+        });
+    }
+
     @Override
     @GetMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<byte[]> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) {

@@ -1,4 +1,4 @@
-<div class="alert mt-4" *ngIf="notification" [ngClass]="alertClass">
+<div class="alert mt-4 system-notification-panel" *ngIf="notification" [ngClass]="alertClass">
     <fa-icon class="mr-2" [icon]="alertIcon"></fa-icon>
     <strong>{{ notification.title }}<span *ngIf="notification.text">:</span></strong>
     {{ notification.text }}

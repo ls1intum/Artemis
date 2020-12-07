@@ -157,6 +157,15 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
     };
 
+    /**
+     * Gets the files of the repository and checks whether they were changed during a student participation.
+     */
+    getFilesWithInformationAboutChange = () => {
+        return this.http
+            .get<{ [fileName: string]: boolean }>(`${this.restResourceUrl}/files-change`)
+            .pipe(handleErrorResponse<{ [fileName: string]: boolean }>(this.conflictService));
+    };
+
     getFile = (fileName: string) => {
         return this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
             map((data) => ({ fileContent: data })),

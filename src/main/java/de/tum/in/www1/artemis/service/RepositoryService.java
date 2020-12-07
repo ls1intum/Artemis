@@ -13,9 +13,12 @@ import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -35,6 +38,8 @@ public class RepositoryService {
     private UserService userService;
 
     private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
     public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserService userService, ParticipationService participationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
@@ -80,6 +85,47 @@ public class RepositoryService {
         byte[] fileInBytes = org.apache.commons.io.IOUtils.toByteArray(inputStream);
         inputStream.close();
         return fileInBytes;
+    }
+
+    /**
+     * Gets the files of the repository and checks whether they were changed during a student participation.
+     * Compares the files from the students repository with the files of the template repository.
+     *
+     * @param repository the students repository with possibly new files and changed files
+     * @param templateRepository the template repository with default files on which the student started working on
+     * @return a map of files with the information if they were changed/are new.
+     */
+    public Map<String, Boolean> getFilesWithInformationAboutChange(Repository repository, Repository templateRepository) {
+        Map<String, Boolean> filesWithInformationAboutChange = new HashMap<>();
+
+        var repoFiles = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        Map<String, File> templateRepoFiles = gitService.listFilesAndFolders(templateRepository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE)
+                .collect(Collectors.toMap(entry -> entry.getKey().toString(), entry -> entry.getKey()));
+
+        repoFiles.forEach(file -> {
+            String fileName = file.toString();
+
+            if (templateRepoFiles.get(fileName) == null) {
+                filesWithInformationAboutChange.put(fileName, true);
+            }
+            else {
+                File templateFile = templateRepoFiles.get(fileName);
+                try {
+                    if (FileUtils.contentEquals(file, templateFile)) {
+                        filesWithInformationAboutChange.put(fileName, false);
+                    }
+                    else {
+                        filesWithInformationAboutChange.put(fileName, true);
+                    }
+                }
+                catch (IOException e) {
+                    log.error("Comparing file1 " + fileName + " with file2 " + templateFile.toString() + " throws in following error: " + e.getMessage());
+                }
+            }
+        });
+        return filesWithInformationAboutChange;
     }
 
     /**

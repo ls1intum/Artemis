@@ -195,7 +195,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         // Participation should now exist.
         assertThat(participationRepo.existsById(participationId)).isTrue();
         // There should be a submission and result assigned to the participation.
-        assertThat(submissionRepository.findByParticipationId(participationId)).hasSize(2);
+        assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(2);
         assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(1);
 
         request.delete("/api/participations/" + participationId, HttpStatus.OK);
@@ -203,7 +203,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         // Participation should now be gone.
         assertThat(participation.isPresent()).isFalse();
         // Make sure that also the submission and result were deleted.
-        assertThat(submissionRepository.findByParticipationId(participationId)).hasSize(0);
+        assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(0);
         assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(0);
     }
 
@@ -218,7 +218,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(participationRepo.existsById(participationId)).isTrue();
 
         // There should be a submission and no result assigned to the participation.
-        assertThat(submissionRepository.findByParticipationId(participationId)).hasSize(1);
+        assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(1);
         assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(0);
 
         request.delete("/api/participations/" + participationId, HttpStatus.OK);
@@ -226,7 +226,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         // Participation should now be gone.
         assertThat(participation.isPresent()).isFalse();
         // Make sure that the submission is deleted.
-        assertThat(submissionRepository.findByParticipationId(participationId)).hasSize(0);
+        assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(0);
     }
 
     @Test
@@ -240,7 +240,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(participationRepo.existsById(participationId)).isTrue();
 
         // There should be a submission and no result assigned to the participation.
-        assertThat(submissionRepository.findByParticipationId(participationId)).hasSize(0);
+        assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(0);
         assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(1);
 
         request.delete("/api/participations/" + participationId, HttpStatus.OK);

@@ -61,18 +61,6 @@ describe('AssessmentLayoutComponent', () => {
         expect(complaintsForTutorComponent).toBeTruthy();
     });
 
-    it('should show or hide a back button', () => {
-        component.hideBackButton = false;
-        fixture.detectChanges();
-        let backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
-        expect(backButton).toBeTruthy();
-
-        component.hideBackButton = true;
-        fixture.detectChanges();
-        backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
-        expect(backButton).toBeFalsy();
-    });
-
     it('Assessors should be allowed to respond if test run ', () => {
         component.complaint = new Complaint();
         component.isTestRun = true;

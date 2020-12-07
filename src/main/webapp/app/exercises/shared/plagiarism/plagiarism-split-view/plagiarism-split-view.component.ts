@@ -1,11 +1,12 @@
-import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
 // @ts-ignore
 import Split from 'split.js';
-import { Observable } from 'rxjs';
-import { ModelingSubmissionComparisonDTO } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { Subject } from 'rxjs';
+import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
+import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
@@ -17,19 +18,14 @@ export class SplitPaneDirective {
     styleUrls: ['./plagiarism-split-view.component.scss'],
     templateUrl: './plagiarism-split-view.component.html',
 })
-export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit {
-    @Input() diagramType: UMLDiagramType;
-    @Input() splitControl: Observable<string>;
-    @Input() comparison: ModelingSubmissionComparisonDTO;
-
-    submission1: ModelingSubmission;
-    submission2: ModelingSubmission;
+export class PlagiarismSplitViewComponent implements AfterViewInit, OnInit {
+    @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+    @Input() exercise: Exercise;
+    @Input() splitControlSubject: Subject<string>;
 
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
-    private split: Split.Instance;
-
-    constructor(private submissionService: ModelingSubmissionService) {}
+    public split: Split.Instance;
 
     /**
      * Initialize third party libs inside this lifecycle hook.
@@ -45,23 +41,31 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     }
 
     ngOnInit(): void {
-        this.splitControl.subscribe((pane: string) => this.handleSplitControl(pane));
+        this.splitControlSubject.subscribe((pane: string) => this.handleSplitControl(pane));
     }
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.comparison) {
-            const comp: ModelingSubmissionComparisonDTO = changes.comparison.currentValue;
+    isModelingExercise() {
+        return this.exercise.type === ExerciseType.MODELING;
+    }
 
-            this.submissionService.getSubmission(comp.element1.submissionId).subscribe((submission: ModelingSubmission) => {
-                submission.model = JSON.parse(submission.model!);
-                this.submission1 = submission;
-            });
+    isTextOrProgrammingExercise() {
+        return this.exercise.type === ExerciseType.TEXT || this.exercise.type === ExerciseType.PROGRAMMING;
+    }
 
-            this.submissionService.getSubmission(comp.element2.submissionId).subscribe((submission) => {
-                submission.model = JSON.parse(submission.model!);
-                this.submission2 = submission;
-            });
-        }
+    getModelingSubmissionA() {
+        return this.comparison.submissionA as PlagiarismSubmission<ModelingSubmissionElement>;
+    }
+
+    getModelingSubmissionB() {
+        return this.comparison.submissionB as PlagiarismSubmission<ModelingSubmissionElement>;
+    }
+
+    getTextSubmissionA() {
+        return this.comparison.submissionA as PlagiarismSubmission<TextSubmissionElement>;
+    }
+
+    getTextSubmissionB() {
+        return this.comparison.submissionB as PlagiarismSubmission<TextSubmissionElement>;
     }
 
     handleSplitControl(pane: string) {

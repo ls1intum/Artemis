@@ -82,6 +82,9 @@ Context -right-> SortStrategy #testsColor(testAttributes[Context]): sortAlgorith
 Client .down.> Policy
 Client .down.> Context
 
+hide empty members
+hide empty methods
+
 @enduml
 
 
