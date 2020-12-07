@@ -39,11 +39,4 @@ export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
             this.paramSub.unsubscribe();
         }
     }
-
-    /**
-     * Navigates back one step in the browser history
-     */
-    previousState() {
-        window.history.back();
-    }
 }

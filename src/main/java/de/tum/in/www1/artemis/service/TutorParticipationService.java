@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +74,7 @@ public class TutorParticipationService {
      * @return a tutor participation object for the pair (exercise, tutor) passed as argument
      */
     public TutorParticipation findByExerciseAndTutor(Exercise exercise, User tutor) {
-        TutorParticipation participation = tutorParticipationRepository.findByAssessedExerciseAndTutor(exercise, tutor);
+        TutorParticipation participation = tutorParticipationRepository.findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(exercise, tutor);
 
         if (participation == null) {
             participation = new TutorParticipation();
@@ -190,7 +191,7 @@ public class TutorParticipationService {
             return existingTutorParticipation;
         }
 
-        long numberOfExampleSubmissionsForTutor = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId()).stream()
+        long numberOfExampleSubmissionsForTutor = this.exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exercise.getId()).stream()
                 // We are only interested in example submissions with an assessment as these are the ones that can be reviewed/assessed by tutors.
                 // Otherwise, the tutor could not reach the total number of example submissions, if there are example submissions without assessment.
                 // In this case the tutor could not reach status "TRAINED" in the if statement below and would not be allowed
@@ -205,15 +206,21 @@ public class TutorParticipationService {
             existingTutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         }
 
+        // keep example submission set reference with loaded submission.results to reconnect after save response from DB
+        var exampleSubmissionSet = existingTutorParticipation.getTrainedExampleSubmissions();
+
         existingTutorParticipation = existingTutorParticipation.addTrainedExampleSubmissions(originalExampleSubmission);
         exampleSubmissionService.save(originalExampleSubmission);
         existingTutorParticipation = save(existingTutorParticipation);
+
+        existingTutorParticipation.setTrainedExampleSubmissions(exampleSubmissionSet);
+        existingTutorParticipation.getTrainedExampleSubmissions().add(originalExampleSubmission);
 
         return existingTutorParticipation;
     }
 
     /**
-     * This method emoves the tutor participation for the example submission of an exercise
+     * This method removes the tutor participation for the example submission of an exercise
      * @param exercise  the exercise to which the example submission and tutor participation are linked to
      * @param user  the user for which the tutor participation should be removed
      */
@@ -222,11 +229,12 @@ public class TutorParticipationService {
             return;
         }
 
-        List<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
-        TutorParticipation tutorParticipation = tutorParticipationRepository.findWithEagerExampleSubmissionByAssessedExerciseAndTutor(exercise, user);
+        Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
+        TutorParticipation tutorParticipation = tutorParticipationRepository.findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(exercise, user);
 
         for (ExampleSubmission exampleSubmission : exampleSubmissions) {
-            Optional<ExampleSubmission> exampleSubmissionWithTutorParticipation = exampleSubmissionRepository.findByIdWithEagerTutorParticipations(exampleSubmission.getId());
+            Optional<ExampleSubmission> exampleSubmissionWithTutorParticipation = exampleSubmissionRepository
+                    .findByIdWithEagerResultsAndTutorParticipations(exampleSubmission.getId());
             if (exampleSubmissionWithTutorParticipation.isPresent()) {
                 exampleSubmissionWithTutorParticipation.get().removeTutorParticipations(tutorParticipation);
                 tutorParticipationRepository.delete(tutorParticipation);

@@ -33,7 +33,7 @@ describe('ExerciseHint Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(comp.exerciseHint).toEqual(jasmine.objectContaining({ id: 123 }));
+            expect(comp.exerciseHint).toEqual(expect.objectContaining({ id: 123 }));
         });
     });
 });

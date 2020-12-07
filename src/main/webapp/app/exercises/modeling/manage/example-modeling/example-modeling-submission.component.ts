@@ -16,6 +16,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
+import { concatMap, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -231,11 +232,27 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             this.jhiAlertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return;
         }
+        if (this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation && this.feedbacks) {
+            this.updateAssessmentExplanationAndExampleAssessment();
+        } else if (this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation) {
+            this.updateAssessmentExplanation();
+        } else if (this.feedbacks) {
+            this.updateExampleAssessment();
+        }
+    }
 
-        this.updateAssessmentExplanation();
-
-        if (this.feedbacks) {
-            this.modelingAssessmentService.saveExampleAssessment(this.feedbacks, this.exampleSubmissionId).subscribe(
+    private updateAssessmentExplanationAndExampleAssessment() {
+        this.exampleSubmission.assessmentExplanation = this.assessmentExplanation;
+        this.exampleSubmissionService
+            .update(this.exampleSubmission, this.exerciseId)
+            .pipe(
+                tap((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+                    this.exampleSubmission = exampleSubmissionResponse.body!;
+                    this.assessmentExplanation = this.exampleSubmission.assessmentExplanation!;
+                }),
+                concatMap(() => this.modelingAssessmentService.saveExampleAssessment(this.feedbacks, this.exampleSubmissionId)),
+            )
+            .subscribe(
                 (result: Result) => {
                     this.result = result;
                     if (this.result) {
@@ -247,20 +264,32 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                     this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed');
                 },
             );
-        }
     }
 
     /**
      * Updates the example submission with the assessment explanation text from the input field if it is different from the explanation already saved with the example submission.
      */
     private updateAssessmentExplanation() {
-        if (this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation) {
-            this.exampleSubmission.assessmentExplanation = this.assessmentExplanation;
-            this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body!;
-                this.assessmentExplanation = this.exampleSubmission.assessmentExplanation!;
-            });
-        }
+        this.exampleSubmission.assessmentExplanation = this.assessmentExplanation;
+        this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+            this.exampleSubmission = exampleSubmissionResponse.body!;
+            this.assessmentExplanation = this.exampleSubmission.assessmentExplanation!;
+        });
+    }
+
+    private updateExampleAssessment() {
+        this.modelingAssessmentService.saveExampleAssessment(this.feedbacks, this.exampleSubmissionId).subscribe(
+            (result: Result) => {
+                this.result = result;
+                if (this.result) {
+                    this.feedbacks = this.result.feedbacks!;
+                }
+                this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
+            },
+            () => {
+                this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed');
+            },
+        );
     }
 
     /**

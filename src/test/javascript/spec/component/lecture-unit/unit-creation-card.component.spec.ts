@@ -1,12 +1,11 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { TranslatePipe } from '@ngx-translate/core';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DebounceClickDirective } from 'app/shared/directives/DebounceClickDirective';
 import { By } from '@angular/platform-browser';
 
 chai.use(sinonChai);
@@ -17,7 +16,7 @@ describe('UnitCreationCardComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [UnitCreationCardComponent, MockPipe(TranslatePipe), MockComponent(FaIconComponent), DebounceClickDirective],
+            declarations: [UnitCreationCardComponent, MockPipe(TranslatePipe), MockComponent(FaIconComponent)],
             providers: [],
             schemas: [],
         })
@@ -47,7 +46,6 @@ describe('UnitCreationCardComponent', () => {
         spies.push(sinon.spy(unitCreationCardComponent.createVideoUnit, 'emit'));
         for (const button of buttons) {
             button.nativeElement.click();
-            tick(500); // debounceClick
         }
         for (const spy of spies) {
             expect(spy).to.have.been.calledOnce;

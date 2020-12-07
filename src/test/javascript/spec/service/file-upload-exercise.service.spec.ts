@@ -10,7 +10,6 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
-import { expect } from '../helpers/jest.fix';
 
 describe('FileUploadExercise Service', () => {
     let injector: TestBed;

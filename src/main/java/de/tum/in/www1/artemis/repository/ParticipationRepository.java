@@ -18,7 +18,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     @Query("select distinct p from Participation p left join fetch p.submissions left join fetch p.results where p.id = :#{#participationId}")
     Participation getOneWithEagerSubmissionsAndResults(@Param("participationId") Long participationId);
 
-    @Query("select p from Participation p left join fetch p.submissions s left join fetch s.result r where p.id = :participationId and (s.id = (select max(id) from p.submissions) or s.id = null)")
+    @Query("select p from Participation p left join fetch p.submissions s left join fetch s.results r where p.id = :participationId and (s.id = (select max(id) from p.submissions) or s.id = null)")
     Optional<Participation> findByIdWithLatestSubmissionAndResult(@Param("participationId") Long participationId);
 
     /**

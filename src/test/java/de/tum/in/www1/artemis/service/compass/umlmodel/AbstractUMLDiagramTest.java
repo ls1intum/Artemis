@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.assertj.core.data.Offset;
@@ -24,10 +25,14 @@ public abstract class AbstractUMLDiagramTest {
         modelingSubmission1.setId(1L);
         modelingSubmission2.setId(2L);
 
-        var comparisonResult = modelingPlagiarismDetectionService.compareSubmissions(List.of(modelingSubmission1, modelingSubmission2), minimumSimilarity, 1, 0);
+        List<ModelingSubmission> submissions = new ArrayList<>();
+        submissions.add(modelingSubmission1);
+        submissions.add(modelingSubmission2);
+
+        var comparisonResult = modelingPlagiarismDetectionService.compareSubmissions(submissions, minimumSimilarity, 1, 0);
         assertThat(comparisonResult).isNotNull();
-        assertThat(comparisonResult).hasSize(1);
-        assertThat(comparisonResult.get(0).getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.01));
+        assertThat(comparisonResult.getComparisons()).hasSize(1);
+        assertThat(comparisonResult.getComparisons().get(0).getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.01));
     }
 
     protected UMLComponent getComponent(UMLComponentDiagram componentDiagram, String name) {

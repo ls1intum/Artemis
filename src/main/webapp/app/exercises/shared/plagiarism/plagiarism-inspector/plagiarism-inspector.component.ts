@@ -1,11 +1,16 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject } from 'rxjs';
-import { ModelingExerciseService, ModelingSubmissionComparisonDTO } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
+import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { downloadFile } from 'app/shared/util/download.util';
+import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
+import { PlagiarismResult } from 'app/exercises/shared/plagiarism/types/PlagiarismResult';
 import { ExportToCsv } from 'export-to-csv';
+import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
+import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
+import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 
 @Component({
     selector: 'jhi-plagiarism-inspector',
@@ -16,152 +21,129 @@ export class PlagiarismInspectorComponent implements OnInit {
     /**
      * The modeling exercise for which plagiarism is to be detected.
      */
-    modelingExercise: ModelingExercise;
+    exercise: Exercise;
 
     /**
-     * Results of the plagiarism detection.
+     * Result of the automated plagiarism detection
      */
-    modelingSubmissionComparisons: Array<ModelingSubmissionComparisonDTO>;
+    plagiarismResult?: TextPlagiarismResult | ModelingPlagiarismResult;
 
     /**
-     * Flag to indicate whether the plagiarism detection is currently in progress.
+     * True, if an automated plagiarism detection is running; false otherwise.
      */
-    plagiarismDetectionInProgress: boolean;
+    detectionInProgress: boolean;
 
     /**
-     * Index of the currently selected plagiarism.
+     * Index of the currently selected comparison.
      */
-    selectedPlagiarismIndex: number;
+    selectedComparisonIndex: number;
 
-    /**
-     * Subject to be passed into PlagiarismSplitViewComponent to control the split view.
-     */
-    splitControlSubject: Subject<string> = new Subject<string>();
-
-    constructor(private route: ActivatedRoute, private router: Router, private modelingExerciseService: ModelingExerciseService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private router: Router,
+        private modelingExerciseService: ModelingExerciseService,
+        private textExerciseService: TextExerciseService,
+    ) {}
 
     ngOnInit() {
-        this.route.params.subscribe((params) => {
-            this.fetchModelingExercise(params['exerciseId']);
+        this.route.data.subscribe(({ exercise }) => {
+            this.exercise = exercise;
         });
     }
 
-    /**
-     * Fetch the modeling exercise with the given id.
-     *
-     * @param modelingExerciseId
-     */
-    fetchModelingExercise(modelingExerciseId: number) {
-        this.modelingExerciseService.find(modelingExerciseId).subscribe((response: HttpResponse<ModelingExercise>) => {
-            this.modelingExercise = response.body!;
-        });
+    checkPlagiarism() {
+        if (this.exercise.type === ExerciseType.MODELING) {
+            this.checkPlagiarismModeling();
+        } else {
+            this.checkPlagiarismJPlag();
+        }
     }
 
-    /**
-     * Handle the 'plagiarismStatusChange' event emitted by PlagiarismHeaderComponent.
-     *
-     * @param confirmed
-     */
-    handlePlagiarismStatusChange(confirmed: boolean) {
-        this.modelingSubmissionComparisons[this.selectedPlagiarismIndex].confirmed = confirmed;
-    }
-
-    /**
-     * Handle the 'splitViewChange' event emitted by PlagiarismHeaderComponent.
-     *
-     * @param pane
-     */
-    handleSplitViewChange(pane: string) {
-        this.splitControlSubject.next(pane);
+    selectComparisonAtIndex(index: number) {
+        this.selectedComparisonIndex = index;
     }
 
     /**
      * Trigger the server-side plagiarism detection and fetch its result.
      */
-    checkPlagiarism() {
-        this.plagiarismDetectionInProgress = true;
+    checkPlagiarismJPlag() {
+        this.detectionInProgress = true;
 
-        this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id!).subscribe(
-            (comparisons: Array<ModelingSubmissionComparisonDTO>) => {
-                this.plagiarismDetectionInProgress = false;
-                this.modelingSubmissionComparisons = comparisons.sort((c1, c2) => c2.similarity - c1.similarity);
+        this.textExerciseService.checkPlagiarismJPlag(this.exercise.id!).subscribe(
+            (result: TextPlagiarismResult) => {
+                this.detectionInProgress = false;
+
+                this.sortComparisonsForResult(result);
+
+                this.plagiarismResult = result;
+                this.selectedComparisonIndex = 0;
             },
-            () => (this.plagiarismDetectionInProgress = false),
+            () => (this.detectionInProgress = false),
         );
+    }
+
+    /**
+     * Trigger the server-side plagiarism detection and fetch its result.
+     */
+    checkPlagiarismModeling() {
+        this.detectionInProgress = true;
+
+        this.modelingExerciseService.checkPlagiarism(this.exercise.id!).subscribe(
+            (result: ModelingPlagiarismResult) => {
+                this.detectionInProgress = false;
+
+                this.sortComparisonsForResult(result);
+
+                this.plagiarismResult = result;
+                this.selectedComparisonIndex = 0;
+            },
+            () => (this.detectionInProgress = false),
+        );
+    }
+
+    sortComparisonsForResult(result: PlagiarismResult<any>) {
+        result.comparisons = result.comparisons.sort((a, b) => b.similarity - a.similarity);
     }
 
     /**
      * Download plagiarism detection results as JSON document.
      */
     downloadPlagiarismResultsJson() {
-        const json = JSON.stringify(this.modelingSubmissionComparisons);
+        const json = JSON.stringify(this.plagiarismResult);
         const blob = new Blob([json], { type: 'application/json' });
 
-        downloadFile(blob, `check-plagiarism-modeling-exercise_${this.modelingExercise.id}.json`);
+        downloadFile(blob, `plagiarism-result_${this.exercise.type}-exercise-${this.exercise.id}.json`);
     }
 
     /**
      * Download plagiarism detection results as CSV document.
      */
     downloadPlagiarismResultsCsv() {
-        if (this.modelingSubmissionComparisons.length > 0) {
+        if (this.plagiarismResult && this.plagiarismResult.comparisons.length > 0) {
             const csvExporter = new ExportToCsv({
                 fieldSeparator: ';',
                 quoteStrings: '"',
                 decimalSeparator: 'locale',
                 showLabels: true,
-                title: `Plagiarism Check for Modeling Exercise ${this.modelingExercise.id}: ${this.modelingExercise.title}`,
-                filename: `check-plagiarism-modeling-exercise-${this.modelingExercise.id}-${this.modelingExercise.title}`,
+                title: `Plagiarism Check for Exercise ${this.exercise.id}: ${this.exercise.title}`,
+                filename: `plagiarism-result_${this.exercise.type}-exercise-${this.exercise.id}`,
                 useTextFile: false,
                 useBom: true,
-                headers: [
-                    'Similarity',
-                    'Confirmed',
-                    'Participant 1',
-                    'Submission 1',
-                    'Score 1',
-                    'Size 1',
-                    'Link 1',
-                    'Participant 2',
-                    'Submission 2',
-                    'Score 2',
-                    'Size 2',
-                    'Link 2',
-                ],
+                headers: ['Similarity', 'Status', 'Participant 1', 'Submission 1', 'Score 1', 'Size 1', 'Participant 2', 'Submission 2', 'Score 2', 'Size 2'],
             });
 
-            const courseId = this.modelingExercise.course ? this.modelingExercise.course.id : this.modelingExercise.exerciseGroup?.exam?.course?.id;
-
-            const baseUrl = location.origin + '/#/course-management/';
-
-            const csvData = this.modelingSubmissionComparisons.map((comparisonResult) => {
+            const csvData = (this.plagiarismResult.comparisons as PlagiarismComparison<ModelingSubmissionElement | TextSubmissionElement>[]).map((comparison) => {
                 return Object.assign({
-                    Similarity: comparisonResult.similarity,
-                    Confirmed: comparisonResult.confirmed ?? '',
-                    'Participant 1': comparisonResult.element1.studentLogin,
-                    'Submission 1': comparisonResult.element1.submissionId,
-                    'Score 1': comparisonResult.element1.score,
-                    'Size 1': comparisonResult.element1.size,
-                    'Link 1':
-                        baseUrl +
-                        courseId +
-                        '/modeling-exercises/' +
-                        this.modelingExercise.id +
-                        '/submissions/' +
-                        comparisonResult.element1.submissionId +
-                        '/assessment?optimal=false&hideBackButton=true',
-                    'Participant 2': comparisonResult.element2.studentLogin,
-                    'Submission 2': comparisonResult.element2.submissionId,
-                    'Score 2': comparisonResult.element2.score,
-                    'Size 2': comparisonResult.element2.size,
-                    'Link 2':
-                        baseUrl +
-                        courseId +
-                        '/modeling-exercises/' +
-                        this.modelingExercise.id +
-                        '/submissions/' +
-                        comparisonResult.element2.submissionId +
-                        '/assessment?optimal=false&hideBackButton=true',
+                    Similarity: comparison.similarity,
+                    Status: comparison.status,
+                    'Participant 1': comparison.submissionA.studentLogin,
+                    'Submission 1': comparison.submissionA.submissionId,
+                    'Score 1': comparison.submissionA.score,
+                    'Size 1': comparison.submissionA.size,
+                    'Participant 2': comparison.submissionB.studentLogin,
+                    'Submission 2': comparison.submissionB.submissionId,
+                    'Score 2': comparison.submissionB.score,
+                    'Size 2': comparison.submissionB.size,
                 });
             });
 

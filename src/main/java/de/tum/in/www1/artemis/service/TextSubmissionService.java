@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -19,6 +18,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -163,7 +163,6 @@ public class TextSubmissionService extends SubmissionService {
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    @Transactional(readOnly = true)
     public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean skipAssessmentQueue, boolean examMode) {
         if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent() && !skipAssessmentQueue) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
@@ -184,7 +183,7 @@ public class TextSubmissionService extends SubmissionService {
      *
      */
     public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
-        final List<TextSubmission> submissions = textSubmissionRepository.findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(exercise.getId());
+        final List<TextSubmission> submissions = textSubmissionRepository.findByParticipation_ExerciseIdAndResultsIsNullAndSubmittedIsTrue(exercise.getId());
 
         final Set<Long> clusterIds = submissions.stream().flatMap(submission -> submission.getBlocks().stream()).map(TextBlock::getCluster).filter(Objects::nonNull)
                 .map(TextCluster::getId).collect(toSet());
@@ -256,6 +255,11 @@ public class TextSubmissionService extends SubmissionService {
         return textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exerciseId);
     }
 
+    public TextSubmission getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(Long resultId) {
+        return textSubmissionRepository.findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(resultId)
+                .orElseThrow(() -> new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound"));
+    }
+
     public List<TextSubmission> getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(Long exerciseId, Language language) {
         return textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrueAndLanguage(exerciseId, language);
     }
@@ -275,7 +279,6 @@ public class TextSubmissionService extends SubmissionService {
     }
 
     public TextSubmission findOneWithEagerResultFeedbackAndTextBlocks(Long submissionId) {
-        return textSubmissionRepository.findByIdWithEagerResultFeedbackAndTextBlocks(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
+        return textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(submissionId).get();
     }
 }

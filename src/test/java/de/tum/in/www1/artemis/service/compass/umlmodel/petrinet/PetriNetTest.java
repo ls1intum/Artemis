@@ -19,15 +19,15 @@ public class PetriNetTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityPetriNet_equalModels() {
-        compareSubmissions(modelingSubmission(PETRI_NET_MODEL_1A), modelingSubmission(PETRI_NET_MODEL_1A), 0.8, 1.0);
-        compareSubmissions(modelingSubmission(PETRI_NET_MODEL_2), modelingSubmission(PETRI_NET_MODEL_2), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(PETRI_NET_MODEL_1A), modelingSubmission(PETRI_NET_MODEL_1A), 0.8, 100.0);
+        compareSubmissions(modelingSubmission(PETRI_NET_MODEL_2), modelingSubmission(PETRI_NET_MODEL_2), 0.8, 100.0);
 
-        compareSubmissions(modelingSubmission(PETRI_NET_MODEL_1A), modelingSubmission(PETRI_NET_MODEL_1B), 0.8, 0.9375);
+        compareSubmissions(modelingSubmission(PETRI_NET_MODEL_1A), modelingSubmission(PETRI_NET_MODEL_1B), 0.8, 93.75);
     }
 
     @Test
     void similarityPetriNet_differentModels() {
-        compareSubmissions(modelingSubmission(PETRI_NET_MODEL_1A), modelingSubmission(PETRI_NET_MODEL_2), 0.0, 0.435625);
+        compareSubmissions(modelingSubmission(PETRI_NET_MODEL_1A), modelingSubmission(PETRI_NET_MODEL_2), 0.0, 43.5625);
     }
 
     @Test

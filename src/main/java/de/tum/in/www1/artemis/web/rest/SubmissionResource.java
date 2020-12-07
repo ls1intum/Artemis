@@ -38,7 +38,7 @@ public class SubmissionResource {
 
     private final ParticipationService participationService;
 
-    private final AuthorizationCheckService authorizationCheckServiceCheckService;
+    private final AuthorizationCheckService authCheckService;
 
     private final UserService userService;
 
@@ -50,7 +50,7 @@ public class SubmissionResource {
         this.resultService = resultService;
         this.exerciseService = exerciseService;
         this.participationService = participationService;
-        this.authorizationCheckServiceCheckService = authCheckService;
+        this.authCheckService = authCheckService;
         this.userService = userService;
     }
 
@@ -65,7 +65,7 @@ public class SubmissionResource {
     public ResponseEntity<Void> deleteSubmission(@PathVariable Long id) {
         log.debug("REST request to delete Submission : {}", id);
 
-        Optional<Submission> submission = submissionRepository.findById(id);
+        Optional<Submission> submission = submissionRepository.findWithEagerResultsById(id);
 
         if (submission.isEmpty()) {
             log.error("Submission with id: " + id + " cannot be deleted");
@@ -97,7 +97,7 @@ public class SubmissionResource {
         if (!exercise.hasExerciseGroup()) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        if (!authorizationCheckServiceCheckService.isAtLeastInstructorForExercise(exercise)) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -113,7 +113,7 @@ public class SubmissionResource {
         Course course = findCourseFromSubmission(submission);
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authorizationCheckServiceCheckService.isAtLeastInstructorInCourse(course, user)) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }
@@ -124,6 +124,6 @@ public class SubmissionResource {
             return studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
 
-        return participationService.findOneWithEagerCourse(submission.getParticipation().getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        return participationService.findOneWithEagerCourseAndExercise(studentParticipation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
     }
 }

@@ -176,6 +176,17 @@ public class StaticCodeAnalysisService {
                     }
                 }
 
+                if (category.isPresent()) {
+                    if (category.get().getState() == CategoryState.GRADED) {
+                        // update the penalty of the issue
+                        issue.setPenalty(category.get().getPenalty());
+                    }
+                    else if (issue.getPenalty() != null) {
+                        // remove the penalty of the issue
+                        issue.setPenalty(null);
+                    }
+                    feedback.setDetailText(mapper.writeValueAsString(issue));
+                }
             }
             catch (JsonProcessingException exception) {
                 log.debug("Error occurred parsing feedback " + feedback + " to static code analysis issue: " + exception.getMessage());

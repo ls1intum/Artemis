@@ -299,7 +299,7 @@ public abstract class RepositoryResource {
      * @param executor lambda function to execute.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
-    private <T> ResponseEntity<T> executeAndCheckForExceptions(RepositoryExecutor<T> executor) {
+    protected <T> ResponseEntity<T> executeAndCheckForExceptions(RepositoryExecutor<T> executor) {
         ResponseEntity<T> responseEntitySuccess;
         try {
             responseEntitySuccess = executor.exec();

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
@@ -32,6 +34,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -140,6 +143,8 @@ public class GitService {
 
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         Repository repository = getRepositoryByLocalPath(localPath);
+        // TODO: in case the actual git repository in the file system was deleted (e.g. by accident or through some administrator), we will get an exception here
+        // so we should basically check if the folder localPath still includes a valid git repository or not and potentially fix this situation then.
         if (repository != null) {
             if (pullOnGet) {
                 pull(repository);
@@ -252,6 +257,28 @@ public class GitService {
         git.commit().setMessage(message).setAllowEmpty(true).setCommitter(name, email).call();
         git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
         git.close();
+    }
+
+    /**
+     * The target's repo is added as a remote to the source's repo. The content to be copied then gets pushed to the new remote.
+     * Afterwards we delete the target remote.
+     *
+     * @param sourceRepo    Local source repo
+     * @param targetRepoUrl URI of targets repo
+     * @throws GitAPIException if the repo could not be pushed
+     */
+    public void pushSourceToTargetRepo(Repository sourceRepo, URL targetRepoUrl) throws GitAPIException {
+        Git git = new Git(sourceRepo);
+        var targetUri = targetRepoUrl.toString();
+        try {
+            git.remoteAdd().setName("target").setUri(new URIish(targetUri)).call();
+            git.push().setRemote("target").setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+            git.remoteRemove().setRemoteName("target").call();
+            git.close();
+        }
+        catch (URISyntaxException e) {
+            log.error("Error while pushing to remote target: ", e);
+        }
     }
 
     /**
@@ -503,6 +530,7 @@ public class GitService {
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
+    @NotNull
     public Collection<File> listFiles(Repository repo) {
         // Check if list of files is already cached
         if (repo.getFiles() == null) {

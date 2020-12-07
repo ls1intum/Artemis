@@ -68,6 +68,10 @@
                 "title": "Build Pläne neu erstellen",
                 "description": "Durch Aktivierung dieser Option werden die Build Pläne neu erstellt und nicht von der importierten Aufgabe kopiert. Neu erstellte Build Pläne unterstützen standardmäßig die neuesten Features der Artemis Aufgabenvorlagen."
             },
+            "updateTemplate": {
+                "title": "Aktualisiere Template",
+                "description": "Durch Aktivierung dieser Option werden die Template Dateien in den Repositories aktualisiert. Dies ist sinnvoll, wenn die importierte Aufgabe veraltete Abhängigkeiten enthält. Für Java ersetzt Artemis JUnit4 durch Ares (enthält JUnit5) und aktualisiert die Abhängigkeiten und Plugins mit den Versionen aus dem neusten Template. Danach musst du wahrscheinlich die Testcases anpassen."
+            },
             "programmingLanguage": "Programmiersprache",
             "projectType": "Projekt Typ",
             "packageName": "Package Name",
@@ -162,6 +166,7 @@
                 "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Einreichungsfrist der Aufgabe)",
                 "addStudentName": "Namen der Studenten zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
                 "addTeamName": "Namen der Teams zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
+                "addTeamOrStudentName": "Namen der Teams/Studenten zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
                 "combineStudentCommits": "Alle Änderungen des Studenten in einem Commit zusammenfassen (um das Review zu vereinfachen)",
                 "normalizeCodeStyle": "Code-Style normalisieren (Zeilenumbrüche, Kodierung)",
                 "successMessage": "Die Repositories wurden erfolgreich exportiert. Die generierte Zip-Datei wird jetzt heruntergeladen."
@@ -223,7 +228,12 @@
             "reEvaluate": "Alle erneut bewerten",
             "reEvaluateTooltip": "Neubewertung der letzten automatischen Ergebnisse aller Teilnahmen. Manuelle Bewertungen sind davon nicht betroffen.",
             "reEvaluateSuccessful": "{{number}} automatischen Ergebnisse wurden erfolgreich aktualisiert, einschließlich der Vorlage und der Lösung.",
-            "reEvaluateFailed": "Die Neubewertung ist fehlgeschlagen: {{message}}"
+            "reEvaluateFailed": "Die Neubewertung ist fehlgeschlagen: {{message}}",
+            "editSelectedModal": {
+                "currentlyEdited": "Sie bearbeiten die folgenden Übungen:",
+                "errorReadButton": "Ok",
+                "errorOccurred": "Die folgende Aufgaben konnten nicht bearbeitet werden:"
+            }
         },
         "error": {
             "noparticipations": "Kein existierender User wurde angegeben oder es existieren keine Abgaben."
