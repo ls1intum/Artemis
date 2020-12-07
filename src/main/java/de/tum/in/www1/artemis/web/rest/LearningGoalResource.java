@@ -4,9 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -124,7 +122,7 @@ public class LearningGoalResource {
      */
     @GetMapping("/courses/{courseId}/goals")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<LearningGoal>> getLearningGoals(@PathVariable Long courseId) {
+    public ResponseEntity<List<LearningGoal>> getLearningGoals(@PathVariable Long courseId) {
         log.debug("REST request to get learning goals for course with id: {}", courseId);
         Optional<Course> courseOptional = courseRepository.findById(courseId);
         if (courseOptional.isEmpty()) {
@@ -146,7 +144,7 @@ public class LearningGoalResource {
             }
         }
 
-        return ResponseEntity.ok(learningGoals);
+        return ResponseEntity.ok(new ArrayList<>(learningGoals));
     }
 
     /**
