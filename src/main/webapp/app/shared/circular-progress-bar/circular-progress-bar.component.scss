@@ -17,9 +17,9 @@ $howManySteps: 100; //this needs to be even.
     height: $size;
     line-height: $size;
     background: none;
-    margin: 0 auto;
     box-shadow: none;
     position: relative;
+    margin: 0 auto 1em;
 
     &::after {
         content: '';
@@ -125,7 +125,7 @@ Due to the split circle of progress-left and progress right, we must use the ani
     @if $i > ($howManySteps/2) {
         .progress-circle[data-percentage='#{$stepName}'] {
             .progress-right .progress-bar-circle {
-                animation: loading-#{($howManySteps/2)} $animationTime linear forwards; //set the animation to longest animation
+                animation: loading-# {($howManySteps/2)} $animationTime linear forwards; //set the animation to longest animation
             }
 
             .progress-left .progress-bar-circle {
@@ -151,9 +151,4 @@ Due to the split circle of progress-left and progress right, we must use the ani
             transform: rotate(#{$degrees}deg);
         }
     }
-}
-
-//additional styling
-.progress-circle {
-    margin-bottom: 1em;
 }
