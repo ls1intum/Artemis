@@ -153,7 +153,6 @@ public class StaticCodeAnalysisService {
      * @return The filtered list of feedback objects
      */
     public List<Feedback> categorizeScaFeedback(Result result, List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
-        // TODO: rene: default sca categories
         var categoryPairs = getCategoriesWithMappingForExercise(programmingExercise);
 
         return staticCodeAnalysisFeedback.stream().filter(feedback -> {
