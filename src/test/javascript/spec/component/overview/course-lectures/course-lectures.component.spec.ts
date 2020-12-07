@@ -4,17 +4,11 @@ import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { Observable, of } from 'rxjs';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
-import { LearningGoalProgress, LectureUnitProgress } from 'app/course/learning-goals/learning-goal-progress-dtos.model';
+import { JhiTranslateDirective } from 'ng-jhipster';
 import { Component, Input } from '@angular/core';
-import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
-import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -143,44 +137,4 @@ describe('CourseLectures', () => {
             expect(lectures).to.have.lengthOf(3);
         });
     }));
-
-    //
-    // it('should load learning goal and associated progress and display a card for each of them', () => {
-    //     const learningGoalService = TestBed.inject(LearningGoalService);
-    //     const learningGoal = new LearningGoal();
-    //     const textUnit = new TextUnit();
-    //     learningGoal.id = 1;
-    //     learningGoal.description = 'test';
-    //     learningGoal.lectureUnits = [textUnit];
-    //     const learningUnitProgress = new LectureUnitProgress();
-    //     learningUnitProgress.lectureUnitId = 1;
-    //     learningUnitProgress.lectureId = 1;
-    //     learningUnitProgress.pointsAchievedByStudentInLectureUnit = 5;
-    //     learningUnitProgress.totalPointsAchievableByStudentsInLectureUnit = 10;
-    //     const learningGoalProgress = new LearningGoalProgress();
-    //     learningGoalProgress.learningGoalId = 1;
-    //     learningGoalProgress.learningGoalTitle = 'test';
-    //     learningGoalProgress.pointsAchievedByStudentInLearningGoal = 5;
-    //     learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = 10;
-    //     learningGoalProgress.progressInLectureUnits = [learningUnitProgress];
-    //
-    //     const learningGoalsOfCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
-    //         body: [learningGoal, new LearningGoal()],
-    //         status: 200,
-    //     });
-    //     const learningGoalProgressResponse: HttpResponse<LearningGoalProgress> = new HttpResponse({
-    //         body: learningGoalProgress,
-    //         status: 200,
-    //     });
-    //
-    //     const getAllForCourseStub = sinon.stub(learningGoalService, 'getAllForCourse').returns(of(learningGoalsOfCourseResponse));
-    //     const getProgressStub = sinon.stub(learningGoalService, 'getProgress').returns(of(learningGoalProgressResponse));
-    //
-    //     courseLecturesComponentFixture.detectChanges();
-    //
-    //     const learningGoalCards = courseLecturesComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
-    //     expect(learningGoalCards).to.have.lengthOf(2);
-    //     expect(getAllForCourseStub).to.have.been.calledOnce;
-    //     expect(getProgressStub).to.have.been.calledTwice;
-    // });
 });
