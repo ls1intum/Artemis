@@ -26,11 +26,11 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     Set<Lecture> findAllByCourseIdWithAttachments(@Param("courseId") Long courseId);
 
     @Query("""
-                        SELECT lecture
-                        FROM Lecture lecture
-                        LEFT JOIN FETCH lecture.attachments
-                        LEFT JOIN FETCH lecture.lectureUnits
-                        WHERE lecture.course.id = :#{#courseId}
+            SELECT lecture
+            FROM Lecture lecture
+            LEFT JOIN FETCH lecture.attachments
+            LEFT JOIN FETCH lecture.lectureUnits
+            WHERE lecture.course.id = :#{#courseId}
             """)
     Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
 
