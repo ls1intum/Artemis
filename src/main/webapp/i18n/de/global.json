@@ -298,5 +298,6 @@
         "connected": "Verbunden",
         "disconnected": "Verbindung getrennt"
     },
-    "loading": "Lädt..."
+    "loading": "Lädt...",
+    "completed": "erledigt"
 }
