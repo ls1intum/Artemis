@@ -4,14 +4,11 @@ LABEL description="Bamboo pre-configured for Artemis"
 
 USER root
 ENV DEBIAN_FRONTEND noninteractive
-# Adapted from norionomura/swift
-ENV SWIFT_BRANCH swift-5.3.1-release
-ENV SWIFT_PLATFORM ubuntu18.04
-ENV SWIFT_VERSION 5.3.1-RELEASE
 
-RUN apt-get update
-RUN apt-get install -y maven
-RUN apt-get install -y software-properties-common apt-utils
+RUN apt-get update && apt-get install -y \
+    maven \
+    software-properties-common \
+    apt-utils
 RUN add-apt-repository -y ppa:linuxuprising/java
 RUN echo debconf shared/accepted-oracle-license-v1-2 select true | debconf-set-selections && echo debconf shared/accepted-oracle-license-v1-2 seen true | debconf-set-selections
 RUN apt-get install -y oracle-java15-installer
@@ -21,7 +18,15 @@ RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/jav
 RUN mkdir /artemis && mkdir /artemis/bin && printf '#!/bin/bash\nJAVA_HOME=/usr/lib/jvm/java-15-oracle /usr/bin/mvn "$@"\n' > /artemis/bin/mvn && chmod 777 /artemis/bin/mvn
 
 # Adapted from norionomura/swift and norionomura/swiftlint
-RUN apt-get install -y gnupg2
+ENV SWIFT_BRANCH swift-5.3.1-release
+ENV SWIFT_PLATFORM ubuntu18.04
+ENV SWIFT_VERSION 5.3.1-RELEASE
+# install Swift and SwiftLint
+RUN apt-get install -y \
+    gnupg2 \
+    libcurl4-openssl-dev \
+    libxml2-dev \
+    && rm -r /var/lib/apt/lists/*
 # Install Swift keys
 RUN curl https://swift.org/keys/all-keys.asc | gpg2 --import -
 # Install Swift toolchain
@@ -34,13 +39,11 @@ RUN SWIFT_ARCHIVE_NAME=swift-$SWIFT_VERSION-$SWIFT_PLATFORM && \
     tar -xvzf $SWIFT_ARCHIVE_NAME.tar.gz --directory / --strip-components=1 && \
     rm -rf $SWIFT_ARCHIVE_NAME* /tmp/* /var/tmp/* && \
     chmod -R o+r /usr/lib/swift
-
-# install SwiftLint
-RUN apt-get install -y libcurl4-openssl-dev libxml2-dev && rm -r /var/lib/apt/lists/*
+# Install SwiftLint
 RUN git clone --branch master https://github.com/realm/SwiftLint.git && \
     cd SwiftLint && \
     swift build --configuration release -Xswiftc -static-stdlib && \
-    mv `swift build --configuration release -Xswiftc -static-stdlib --show-bin-path`/swiftlint /usr/bin && \
+    mv $(swift build --configuration release -Xswiftc -static-stdlib --show-bin-path)/swiftlint /usr/bin && \
     cd .. && \
     rm -rf SwiftLint
 
