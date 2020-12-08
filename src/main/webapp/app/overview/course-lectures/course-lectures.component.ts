@@ -73,7 +73,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         this.weeklyIndexKeys = [];
         const groupedLectures = {};
         const indexKeys: string[] = [];
-        const courseLectures = this.course!.lectures ? [...this.course!.lectures] : [];
+        const courseLectures = this.course?.lectures ? [...this.course!.lectures] : [];
         const sortedLectures = this.sortLectures(courseLectures, selectedOrder);
         const notAssociatedLectures: Lecture[] = [];
         sortedLectures.forEach((lecture) => {

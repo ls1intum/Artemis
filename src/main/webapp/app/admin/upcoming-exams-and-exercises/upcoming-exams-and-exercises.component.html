@@ -1,0 +1,89 @@
+<div>
+    <div class="row">
+        <div class="col-12 col-sm">
+            <h4 jhiTranslate="artemisApp.upcomingExamsAndExercises.upcomingExercises">Upcoming Exercises</h4>
+        </div>
+    </div>
+    <div class="table-responsive" *ngIf="upcomingExercises">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th class="d-none d-md-table-cell">
+                        <span>{{ 'artemisApp.upcomingExamsAndExercises.exercise' | translate }}</span>
+                    </th>
+                    <th class="d-none d-md-table-cell">
+                        <span>{{ 'artemisApp.upcomingExamsAndExercises.course' | translate }}</span>
+                    </th>
+                    <th class="d-none d-md-table-cell">
+                        <span>{{ 'artemisApp.upcomingExamsAndExercises.releaseDate' | translate }}</span>
+                    </th>
+                    <th class="d-none d-md-table-cell">
+                        <span>{{ 'artemisApp.upcomingExamsAndExercises.dueDate' | translate }}</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let exercise of upcomingExercises; trackBy: trackByExercise">
+                    <td>
+                        <span class="bold">{{ exercise.title }}</span>
+                    </td>
+                    <td *ngIf="exercise.course as course; else noExerciseCourse">
+                        <span class="bold">
+                            <a [routerLink]="['/course-management', course.id]">{{ course.title }}</a>
+                        </span>
+                    </td>
+                    <ng-template #noExerciseCourse><td>-</td></ng-template>
+                    <td *ngIf="exercise.releaseDate as exerciseReleaseDate; else noExerciseReleaseDate">{{ exerciseReleaseDate.format(DATE_FORMAT) }}</td>
+                    <ng-template #noExerciseReleaseDate><td>-</td></ng-template>
+                    <td *ngIf="exercise.dueDate as exerciseDueDate; else noExerciseDueDate">{{ exerciseDueDate.format(DATE_FORMAT) }}</td>
+                    <ng-template #noExerciseDueDate><td>-</td></ng-template>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <br />
+    <div>
+        <div class="row">
+            <div class="col-12 col-sm">
+                <h4 jhiTranslate="artemisApp.upcomingExamsAndExercises.upcomingExams">Upcoming Exams</h4>
+            </div>
+        </div>
+        <div class="table-responsive" *ngIf="upcomingExams">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th class="d-none d-md-table-cell">
+                            <span>{{ 'artemisApp.upcomingExamsAndExercises.exam' | translate }}</span>
+                        </th>
+                        <th class="d-none d-md-table-cell">
+                            <span>{{ 'artemisApp.upcomingExamsAndExercises.course' | translate }}</span>
+                        </th>
+                        <th class="d-none d-md-table-cell">
+                            <span>{{ 'artemisApp.upcomingExamsAndExercises.startDate' | translate }}</span>
+                        </th>
+                        <th class="d-none d-md-table-cell">
+                            <span>{{ 'artemisApp.upcomingExamsAndExercises.endDate' | translate }}</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let exam of upcomingExams; trackBy: trackByExam">
+                        <td>
+                            <span class="bold">{{ exam.title }}</span>
+                        </td>
+                        <td *ngIf="exam.course as course; else noExamCourse">
+                            <span class="bold">
+                                <a [routerLink]="['/course-management', course.id]">{{ course.title }}</a>
+                            </span>
+                        </td>
+                        <ng-template #noExamCourse><td>-</td></ng-template>
+                        <td *ngIf="exam.startDate as examStartDate; else noExamStartDate">{{ examStartDate.format(DATE_FORMAT) }}</td>
+                        <ng-template #noExamStartDate><td>-</td></ng-template>
+                        <td *ngIf="exam.endDate as examEndDate; else noExamEndDate">{{ examEndDate.format(DATE_FORMAT) }}</td>
+                        <ng-template #noExamEndDate><td>-</td></ng-template>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

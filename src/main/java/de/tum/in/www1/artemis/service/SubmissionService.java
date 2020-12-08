@@ -5,10 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toList;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -132,7 +129,7 @@ public class SubmissionService {
      * @return number of locked submissions for the current user in the given course
      */
     public List<Submission> getLockedSubmissions(long courseId) {
-        return submissionRepository.getLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
     }
 
     /**
@@ -141,13 +138,15 @@ public class SubmissionService {
      * @param exerciseId - the id of the exercise we are looking for
      * @param tutor - the tutor we are interested in
      * @param examMode - flag should be set to ignore the test run submissions
+     * @param <T> the submission type
      * @return a list of Submissions
      */
-    protected List<Submission> getAllSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor, boolean examMode) {
-        List<Submission> submissions;
+    public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor, boolean examMode) {
+        List<T> submissions;
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
-            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).collect(toList());
+            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
+                    .collect(toList());
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
@@ -191,14 +190,26 @@ public class SubmissionService {
     }
 
     /**
-     * Get the submission with the given id from the database. The submission is loaded together with its result and the assessor. Throws an EntityNotFoundException if no
+     * Get the submission with the given id from the database. The submission is loaded together with its results and the assessors. Throws an EntityNotFoundException if no
      * submission could be found for the given id.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the submission with the given id
      */
-    public Submission findOneWithEagerResult(long submissionId) {
-        return submissionRepository.findWithEagerResultById(submissionId)
+    public Submission findOneWithEagerResults(long submissionId) {
+        return submissionRepository.findWithEagerResultsById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+    }
+
+    /**
+     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
+     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the submission with the given id
+     */
+    public Submission findOneWithEagerResultAndFeedback(long submissionId) {
+        return submissionRepository.findWithEagerResultAndFeedbackById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
 
@@ -276,12 +287,32 @@ public class SubmissionService {
      */
     public Result setNewResult(Submission submission) {
         Result result = new Result();
-        result.setSubmission(submission);
-        submission.setResult(result);
         result.setParticipation(submission.getParticipation());
         result = resultRepository.save(result);
+        result.setSubmission(submission);
+        submission.setResult(result);
         submissionRepository.save(submission);
         return result;
+    }
+
+    /**
+     * used to assign and save results to submissions
+     *
+     * @param submission the parent submission of the result
+     * @param result the result which we want to save and order
+     * @return the result with correctly persistet relationship to its submission
+     */
+    public Result saveOrderedResultBySubmission(final Submission submission, final Result result) {
+        result.setSubmission(null);
+        submission.setResultsList(new ArrayList<>());
+        if (result.getParticipation() == null) {
+            result.setParticipation(submission.getParticipation());
+        }
+        var savedResult = resultRepository.save(result);
+        savedResult.setSubmission(submission);
+        submission.setResult(savedResult);
+        submissionRepository.save(submission);
+        return savedResult;
     }
 
     /**
@@ -378,5 +409,30 @@ public class SubmissionService {
             }
         }
         return true;
+    }
+
+    /**
+     * Given an exerciseId, returns all the submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
+     * submissions
+     *
+     * @param exerciseId    - the id of the exercise we are interested into
+     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
+     * @param examMode - set flag to ignore exam test run submissions
+     * @param <T> the submission type
+     * @return a list of modeling submissions for the given exercise id
+     */
+    public <T extends Submission> List<T> getAllSubmissionsForExercise(Long exerciseId, boolean submittedOnly, boolean examMode) {
+        List<StudentParticipation> participations;
+        if (examMode) {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+        }
+        else {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+        }
+        List<T> submissions = new ArrayList<>();
+        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
+                // filter out non submitted submissions if the flag is set to true
+                .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted())).forEach(submission -> submissions.add((T) submission.get()));
+        return submissions;
     }
 }

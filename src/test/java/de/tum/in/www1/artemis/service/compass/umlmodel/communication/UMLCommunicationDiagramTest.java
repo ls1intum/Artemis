@@ -16,13 +16,13 @@ public class UMLCommunicationDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityCommunicationDiagram_EqualModels() {
-        compareSubmissions(modelingSubmission(UMLCommunicationDiagrams.COMMUNICATION_MODEL_1), modelingSubmission(UMLCommunicationDiagrams.COMMUNICATION_MODEL_1), 0.8, 1.0);
-        compareSubmissions(modelingSubmission(UMLCommunicationDiagrams.COMMUNICATION_MODEL_2), modelingSubmission(UMLCommunicationDiagrams.COMMUNICATION_MODEL_2), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(UMLCommunicationDiagrams.COMMUNICATION_MODEL_1), modelingSubmission(UMLCommunicationDiagrams.COMMUNICATION_MODEL_1), 0.8, 100.0);
+        compareSubmissions(modelingSubmission(UMLCommunicationDiagrams.COMMUNICATION_MODEL_2), modelingSubmission(UMLCommunicationDiagrams.COMMUNICATION_MODEL_2), 0.8, 100.0);
     }
 
     @Test
     void similarityCommunicationDiagram_DifferentModels() {
-        compareSubmissions(modelingSubmission(UMLCommunicationDiagrams.COMMUNICATION_MODEL_1), modelingSubmission(UMLCommunicationDiagrams.COMMUNICATION_MODEL_2), 0.0, 0.2241);
+        compareSubmissions(modelingSubmission(UMLCommunicationDiagrams.COMMUNICATION_MODEL_1), modelingSubmission(UMLCommunicationDiagrams.COMMUNICATION_MODEL_2), 0.0, 22.41);
     }
 
     @Test

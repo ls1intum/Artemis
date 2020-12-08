@@ -111,7 +111,7 @@ public class ExamQuizService {
                 // create new result if none is existing
                 Result result;
                 if (participation.getResults().size() == 0) {
-                    result = new Result().participation(participation).submission(quizSubmission);
+                    result = new Result().participation(participation);
                 }
                 else {
                     resultExisting = true;
@@ -120,20 +120,27 @@ public class ExamQuizService {
                 result.setRated(true);
                 result.setAssessmentType(AssessmentType.AUTOMATIC);
                 result.setCompletionDate(ZonedDateTime.now());
-                result.setSubmission(quizSubmission);
 
+                // set submission to calculate scores
+                result.setSubmission(quizSubmission);
                 // calculate scores and update result and submission accordingly
                 quizSubmission.calculateAndUpdateScores(quizExercise);
                 result.evaluateSubmission();
+                // remove submission to follow save order for ordered collections
+                result.setSubmission(null);
+
+                // NOTE: we save participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
+                quizSubmissionRepository.save(quizSubmission);
+                result = resultRepository.save(result);
 
                 // add result to participation
                 participation.addResult(result);
+                studentParticipationRepository.save(participation);
 
-                // NOTE: we save participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
-                participation = studentParticipationRepository.save(participation);
+                // add result to submission
+                result.setSubmission(quizSubmission);
+                quizSubmission.setResult(result);
                 quizSubmissionRepository.save(quizSubmission);
-                result = resultRepository.save(result);
-                // result = resultRepository.findWithEagerSubmissionAndFeedbackById(result.getId()).orElse(null);
 
                 // Add result so that it can be returned (and processed later)
                 if (!resultExisting) {

@@ -21,7 +21,10 @@
                         'artemisApp.result.preliminary' | translate | uppercase
                     }}</span>
                 </span>
-                <div style="height: 100px"><jhi-chart [preset]="scoreChartPreset"></jhi-chart></div>
+                <div style="height: 100px"><jhi-chart [preset]="scoreChartPreset"> </jhi-chart></div>
+                <div *ngIf="showScoreChartTooltip" class="d-flex justify-content-center position-relative" style="margin-top: -10px">
+                    <div style="width: 250px; height: 20px; top: -15px; position: absolute" [ngbTooltip]="'artemisApp.result.chart.tooltip' | translate" placement="bottom"></div>
+                </div>
                 <hr />
             </div>
             <div class="feedback-list">

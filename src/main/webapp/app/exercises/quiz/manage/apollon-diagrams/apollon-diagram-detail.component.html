@@ -2,11 +2,6 @@
     <jhi-alert></jhi-alert>
 
     <div class="row">
-        <div class="col">
-            <button type="submit" (click)="previousState()" class="btn btn-info">
-                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
-            </button>
-        </div>
         <div class="col text-right">
             <label class="mr-1">
                 <input type="checkbox" name="keepOriginalSize" [(ngModel)]="crop" />&nbsp;<span jhiTranslate="artemisApp.apollonDiagram.detail.crop">Crop</span>

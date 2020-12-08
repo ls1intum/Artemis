@@ -71,9 +71,9 @@ describe('VideoUnitComponent', () => {
         videoUnitComponent.videoUnit = videoUnit;
         videoUnitComponentFixture.detectChanges(); // ngInit
         expect(videoUnitComponent.isCollapsed).to.be.true;
-        const handleCollapseSpy = sinon.spy(videoUnitComponent, 'handleUnitClick');
+        const handleCollapseSpy = sinon.spy(videoUnitComponent, 'handleCollapse');
 
-        const container = videoUnitComponentFixture.debugElement.nativeElement.querySelector('.row');
+        const container = videoUnitComponentFixture.debugElement.nativeElement.querySelector('.card-header');
         expect(container).to.be.ok;
         container.click();
 

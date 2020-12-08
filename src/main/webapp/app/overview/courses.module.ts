@@ -36,6 +36,7 @@ import { VideoUnitComponent } from './course-lectures/video-unit/video-unit.comp
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { TextUnitComponent } from './course-lectures/text-unit/text-unit.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 
 @NgModule({
     imports: [
@@ -56,6 +57,7 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         ProgrammingExerciseUtilsModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisTeamModule,
+        RatingModule,
     ],
     declarations: [
         CoursesComponent,

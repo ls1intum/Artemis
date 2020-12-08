@@ -4,6 +4,7 @@ import { Rating } from 'app/entities/rating.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { SortService } from 'app/shared/service/sort.service';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-rating-list',
@@ -21,7 +22,7 @@ export class RatingListComponent implements OnInit {
     constructor(private ratingService: RatingService, private route: ActivatedRoute, private location: Location, private sortService: SortService, private router: Router) {}
 
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
+        this.route.parent!.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
         });
 
@@ -39,7 +40,11 @@ export class RatingListComponent implements OnInit {
         const exercise = rating.result?.participation?.exercise;
 
         if (participation && exercise) {
-            this.router.navigate(['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', participation.id]);
+            if (exercise.type === ExerciseType.PROGRAMMING) {
+                this.router.navigate(['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'code-editor', participation.id]);
+            } else {
+                this.router.navigate(['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', participation.id]);
+            }
         }
     }
 }

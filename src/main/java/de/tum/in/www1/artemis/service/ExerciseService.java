@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -163,6 +164,16 @@ public class ExerciseService {
     }
 
     /**
+     * Finds all exercises where the due date is in the future
+     * (does not return exercises belonging to test courses).
+     *
+     * @return set of exercises
+     */
+    public Set<Exercise> findAllExercisesWithUpcomingDueDate() {
+        return exerciseRepository.findAllExercisesWithUpcomingDueDate(ZonedDateTime.now());
+    }
+
+    /**
      * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
      * NOTE: prefer #findOne if you don't need these additional details
      *
@@ -275,7 +286,7 @@ public class ExerciseService {
      * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
      * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
      */
-    @Transactional
+    @Transactional // ok
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
         final var exercise = findOne(exerciseId);
@@ -415,10 +426,10 @@ public class ExerciseService {
      * Find the participation in participations that belongs to the given exercise that includes the exercise data, plus the found participation with its most recent relevant
      * result. Filter everything else that is not relevant
      *
-     * @param exercise the exercise that should be filtered (this deletes many field values of the passed exercise object)
+     * @param exercise       the exercise that should be filtered (this deletes many field values of the passed exercise object)
      * @param participations the set of participations, wherein to search for the relevant participation
-     * @param username used to get quiz submission for the user
-     * @param isStudent defines if the current user is a student
+     * @param username       used to get quiz submission for the user
+     * @param isStudent      defines if the current user is a student
      */
     public void filterForCourseDashboard(Exercise exercise, List<StudentParticipation> participations, String username, boolean isStudent) {
         // remove the unnecessary inner course attribute

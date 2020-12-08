@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -26,6 +27,9 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("select e from Exercise e where e.course.id = :#{#courseId} and e.mode = 'TEAM'")
     Set<Exercise> findAllTeamExercisesByCourseId(@Param("courseId") Long courseId);
 
+    @Query("select e from Exercise e where e.course.testCourse = false and e.dueDate >= :#{#now} order by e.dueDate asc")
+    Set<Exercise> findAllExercisesWithUpcomingDueDate(@Param("now") ZonedDateTime now);
+
     /**
      * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)
      * @param courseId the id of the course
@@ -44,7 +48,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig" })
     Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
 
-    @Query("select distinct exercise from Exercise exercise left join fetch exercise.exampleSubmissions where exercise.id = :#{#exerciseId}")
+    @Query("select distinct exercise from Exercise exercise left join fetch exercise.exampleSubmissions examplesub left join fetch examplesub.submission exsub left join fetch exsub.results where exercise.id = :#{#exerciseId}")
     Optional<Exercise> findByIdWithEagerExampleSubmissions(@Param("exerciseId") Long exerciseId);
 
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.exerciseHints left join fetch exercise.studentQuestions left join fetch exercise.categories where exercise.id = :#{#exerciseId}")

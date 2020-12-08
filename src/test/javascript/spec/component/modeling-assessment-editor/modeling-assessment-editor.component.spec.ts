@@ -7,9 +7,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
-import { Mutable } from '../../helpers/mutable';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -168,19 +167,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             modelingSubmissionStub.restore();
             accountStub.restore();
         }));
-    });
-    it('should show or hide a back button', () => {
-        const route = fixture.debugElement.injector.get(ActivatedRoute) as Mutable<ActivatedRoute>;
-        const queryParamMap = route.queryParamMap as BehaviorSubject<ParamMap>;
-        queryParamMap.next(convertToParamMap({ hideBackButton: 'true' }));
-        fixture.detectChanges();
-        let assessmentHeaderComponent: AssessmentHeaderComponent = fixture.debugElement.query(By.directive(AssessmentHeaderComponent)).componentInstance;
-        expect(assessmentHeaderComponent.hideBackButton).to.be.true;
-
-        queryParamMap.next(convertToParamMap({ hideBackButton: undefined }));
-        fixture.detectChanges();
-        assessmentHeaderComponent = fixture.debugElement.query(By.directive(AssessmentHeaderComponent)).componentInstance;
-        expect(assessmentHeaderComponent.hideBackButton).to.be.false;
     });
 
     it('should propagate isAtLeastInstructor', fakeAsync(() => {

@@ -24,8 +24,11 @@ import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathFactory;
 
 import jplag.ExitException;
-import jplag.Program;
-import jplag.options.CommandLineOptions;
+import jplag.JPlag;
+import jplag.JPlagOptions;
+import jplag.JPlagResult;
+import jplag.options.LanguageOption;
+import jplag.reporting.Report;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -176,20 +179,25 @@ public class ProgrammingExerciseExportService {
 
         final var output = "output";
         final var projectKey = programmingExercise.getProjectKey();
-        final var outputFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey + "-" + output;
 
+        final var outputFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey + "-" + output;
         final var outputFolderFile = new File(outputFolder);
+
         outputFolderFile.mkdirs();
 
-        final var programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
-
         final var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
-        final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
-        final var args = new String[] { "-l", programmingLanguage, "-r", outputFolder, "-s", repoFolder, "-bc", templateRepoName, "-vq" };
+        final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
 
-        final var options = new CommandLineOptions(args, null);
-        final var program = new Program(options);
-        program.run();
+        final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
+
+        JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
+        options.setBaseCodeSubmissionName(templateRepoName);
+
+        JPlag jplag = new JPlag(options);
+        JPlagResult result = jplag.run();
+
+        Report jplagReport = new Report(outputFolderFile);
+        jplagReport.writeResult(result);
 
         final var zipFilePath = Paths.get(REPO_DOWNLOAD_CLONE_PATH, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
                 + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + "-Jplag-Analysis-Output.zip");
@@ -206,11 +214,11 @@ public class ProgrammingExerciseExportService {
         return new File(zipFilePath.toString());
     }
 
-    private String getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
+    private LanguageOption getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
         return switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA -> "java19";
-            case C -> "c/c++";
-            case PYTHON -> "python3";
+            case JAVA -> LanguageOption.JAVA_1_9;
+            case C -> LanguageOption.C_CPP;
+            case PYTHON -> LanguageOption.PYTHON_3;
             default -> throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
                     "ProgrammingExercise", "notSupported");
         };

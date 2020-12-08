@@ -1,9 +1,9 @@
+import { filter } from 'rxjs/operators';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
-
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
@@ -17,29 +17,27 @@ import { JhiAlertService } from 'ng-jhipster';
 export class CourseDetailComponent implements OnInit, OnDestroy {
     CachingStrategy = CachingStrategy;
     course: Course;
-    private subscription: Subscription;
+    isVisible: boolean;
     private eventSubscriber: Subscription;
 
-    constructor(private eventManager: JhiEventManager, private courseService: CourseManagementService, private route: ActivatedRoute, private jhiAlertService: JhiAlertService) {}
+    constructor(
+        private eventManager: JhiEventManager,
+        private courseService: CourseManagementService,
+        private route: ActivatedRoute,
+        private router: Router,
+        private jhiAlertService: JhiAlertService,
+    ) {}
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.
      */
     ngOnInit() {
-        this.subscription = this.route.params.subscribe((params) => {
-            this.load(params['courseId']);
+        this.route.data.subscribe(({ course }) => {
+            this.course = course;
         });
         this.registerChangeInCourses();
-    }
-
-    /**
-     * Fetch a course from the server.
-     * @param courseId ID of the course to fetch.
-     */
-    load(courseId: number) {
-        this.courseService.find(courseId).subscribe((courseResponse: HttpResponse<Course>) => {
-            this.course = courseResponse.body!;
-        });
+        this.isVisible = this.route.children.length === 0;
+        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => (this.isVisible = this.route.children.length === 0));
     }
 
     /**
@@ -64,17 +62,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Go back to the previous page.
-     */
-    previousState() {
-        window.history.back();
-    }
-
-    /**
      * On destroy unsubscribe all subscriptions.
      */
     ngOnDestroy() {
-        this.subscription.unsubscribe();
         this.eventManager.destroy(this.eventSubscriber);
     }
 
@@ -82,6 +72,10 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * Subscribe to changes in courses and reload the course after a change.
      */
     registerChangeInCourses() {
-        this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => this.load(this.course.id!));
+        this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => {
+            this.courseService.find(this.course.id!).subscribe((courseResponse: HttpResponse<Course>) => {
+                this.course = courseResponse.body!;
+            });
+        });
     }
 }

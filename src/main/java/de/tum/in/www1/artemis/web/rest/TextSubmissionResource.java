@@ -152,7 +152,7 @@ public class TextSubmissionResource {
     @GetMapping("/text-submissions/{id}")
     public ResponseEntity<TextSubmission> getTextSubmission(@PathVariable Long id) {
         log.debug("REST request to get TextSubmission : {}", id);
-        Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findById(id);
+        Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findWithEagerResultsById(id);
 
         if (optionalTextSubmission.isEmpty()) {
             return notFound();

@@ -13,9 +13,6 @@ import { Result } from 'app/entities/result.model';
     styleUrls: ['./assessment-header.component.scss'],
 })
 export class AssessmentHeaderComponent {
-    @Input() hideBackButton: boolean;
-    @Output() navigateBack = new EventEmitter<void>();
-
     @Input() isLoading: boolean;
     @Input() saveBusy: boolean;
     @Input() submitBusy: boolean;

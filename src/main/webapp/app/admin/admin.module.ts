@@ -13,12 +13,13 @@ import { HealthComponent } from 'app/admin/health/health.component';
 import { JhiConfigurationComponent } from 'app/admin/configuration/configuration.component';
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
-import { JhiTrackerComponent } from 'app/admin/tracker/tracker.component';
+import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { AuditsComponent } from 'app/admin/audits/audits.component';
 import { HealthModalComponent } from 'app/admin/health/health-modal.component';
 import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
 import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
 import { SystemNotificationManagementDetailComponent } from 'app/admin/system-notification-management/system-notification-management-detail.component';
+import { UpcomingExamsAndExercisesComponent } from './upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
 
 /* jhipster-needle-add-admin-module-import - JHipster will add admin modules imports here */
 
@@ -45,9 +46,10 @@ const ENTITY_STATES = [...adminState];
         JhiConfigurationComponent,
         HealthComponent,
         HealthModalComponent,
-        JhiTrackerComponent,
+        StatisticsComponent,
         JhiMetricsMonitoringComponent,
         AdminFeatureToggleComponent,
+        UpcomingExamsAndExercisesComponent,
     ],
     entryComponents: [HealthModalComponent],
 })

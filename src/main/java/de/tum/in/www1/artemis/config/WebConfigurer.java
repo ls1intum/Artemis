@@ -6,10 +6,7 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
-import java.util.EnumSet;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
 import javax.servlet.ServletContext;
 
 import org.slf4j.Logger;
@@ -27,7 +24,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import de.tum.in.www1.artemis.config.debug.HttpLoggingFilter;
 import io.github.jhipster.config.JHipsterProperties;
 
 /**
@@ -52,7 +48,6 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         if (env.getActiveProfiles().length != 0) {
             log.info("Web application configuration, using profiles: {}", (Object[]) env.getActiveProfiles());
         }
-        // addLoggingFilter(servletContext, disps);
         log.info("Web application fully configured");
     }
 
@@ -109,15 +104,6 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
             return "";
         }
         return extractedPath.substring(0, extractionEndIndex);
-    }
-
-    // not used at the moment
-    private void addLoggingFilter(ServletContext servletContext, EnumSet<DispatcherType> disps) {
-        log.debug("Registering Logging Filter");
-        HttpLoggingFilter httpLoggingFilter = new HttpLoggingFilter();
-        FilterRegistration.Dynamic loggingFilter = servletContext.addFilter("httpLoggingFilter", httpLoggingFilter);
-        loggingFilter.addMappingForUrlPatterns(disps, true, "/*");
-        loggingFilter.setAsyncSupported(true);
     }
 
     /**

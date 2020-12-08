@@ -52,6 +52,7 @@ export const routes: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -64,6 +65,7 @@ export const routes: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -76,6 +78,7 @@ export const routes: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.modelingExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -85,6 +88,7 @@ export const routes: Routes = [
         component: ModelingExerciseDetailComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -92,8 +96,13 @@ export const routes: Routes = [
     {
         path: ':courseId/modeling-exercises/:exerciseId/plagiarism',
         component: PlagiarismInspectorComponent,
+        resolve: {
+            exercise: ModelingExerciseResolver,
+        },
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
+            pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -102,6 +111,7 @@ export const routes: Routes = [
         component: ModelingExerciseComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],

@@ -103,6 +103,32 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
+    @WithMockUser(value = "student3")
+    public void submitFileUploadSubmissionTwiceSameFile() throws Exception {
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
+        FileUploadSubmission returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission);
+        String actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).concat("file.png");
+        String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
+        assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
+        assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
+        var fileBytes = Files.readAllBytes(Path.of(actualFilePath));
+        assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
+        checkDetailsHidden(returnedSubmission, true);
+
+        submission = ModelFactory.generateFileUploadSubmission(false);
+        returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission);
+        actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).concat("file.png");
+        publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
+        assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
+        assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
+        fileBytes = Files.readAllBytes(Path.of(actualFilePath));
+        assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
+        checkDetailsHidden(returnedSubmission, true);
+
+        // TODO: upload a real file from the file system twice with the same and with different names and test both works correctly
+    }
+
+    @Test
     @WithMockUser(value = "student1")
     public void submitFileUploadSubmission_wrongExercise() throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
@@ -234,6 +260,26 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "result", "submissionDate", "fileService");
         assertThat(storedSubmission.getResult()).as("result is not set").isNull();
+        checkDetailsHidden(storedSubmission, false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetLateSubmissionWithoutAssessmentLock() throws Exception {
+
+        database.saveFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, submittedFileUploadSubmission, "student1", "tutor1");
+        FileUploadSubmission lateSubmission = database.addFileUploadSubmission(releasedFileUploadExercise, lateFileUploadSubmission, "student1");
+
+        database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        assertThat(submittedFileUploadSubmission.getSubmissionDate()).as("first submission is in-time").isBefore(releasedFileUploadExercise.getDueDate());
+        assertThat(lateFileUploadSubmission.getSubmissionDate()).as("second submission is late").isAfter(releasedFileUploadExercise.getDueDate());
+
+        FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment?lock=true",
+                HttpStatus.OK, FileUploadSubmission.class);
+
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "results", "submissionDate", "fileService");
+        assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
         checkDetailsHidden(storedSubmission, false);
     }
 

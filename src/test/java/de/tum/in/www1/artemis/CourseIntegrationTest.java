@@ -21,41 +21,15 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.LeaderboardId;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequestsView;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessmentView;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintResponsesView;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintsView;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardMoreFeedbackRequestsView;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.CustomAuditEventRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.NotificationRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository;
-import de.tum.in.www1.artemis.repository.TutorLeaderboardAssessmentViewRepository;
-import de.tum.in.www1.artemis.repository.TutorLeaderboardComplaintResponsesViewRepository;
-import de.tum.in.www1.artemis.repository.TutorLeaderboardComplaintsViewRepository;
-import de.tum.in.www1.artemis.repository.TutorLeaderboardMoreFeedbackRequestsViewRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -221,6 +195,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
         course.setMaxComplaintTimeDays(0);
         course.setMaxComplaints(1);
+        course.setMaxTeamComplaints(0);
+        course.setMaxRequestMoreFeedbackTimeDays(0);
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
         List<Course> repoContent = courseRepo.findAll();
         assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
@@ -228,7 +204,13 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         // change configuration
         course.setMaxComplaintTimeDays(1);
         course.setMaxComplaints(0);
-        course.setMaxTeamComplaints(0);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        repoContent = courseRepo.findAll();
+        assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+
+        // change configuration again
+        course.setMaxComplaintTimeDays(0);
+        course.setMaxRequestMoreFeedbackTimeDays(-1);
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
         repoContent = courseRepo.findAll();
         assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
@@ -250,7 +232,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCreateCourseWithOptions() throws Exception {
         // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, studentQuestionsEnabled = false
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, 5, 5, 14, false);
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, 5, 5, 14, false, 0);
         jiraRequestMockProvider.enableMockingOfRequests();
         jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
         jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
@@ -261,16 +243,19 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(getFromRepo.getMaxComplaints()).as("Course has right maxComplaints Value").isEqualTo(5);
         assertThat(getFromRepo.getMaxComplaintTimeDays()).as("Course has right maxComplaintTimeDays Value").isEqualTo(14);
         assertThat(getFromRepo.getStudentQuestionsEnabled()).as("Course has right studentQuestionsEnabled Value").isFalse();
+        assertThat(getFromRepo.getRequestMoreFeedbackEnabled()).as("Course has right requestMoreFeedbackEnabled Value").isFalse();
 
         // Test edit course
         course.setId(getFromRepo.getId());
         course.setMaxComplaints(1);
         course.setMaxComplaintTimeDays(7);
         course.setStudentQuestionsEnabled(true);
+        course.setMaxRequestMoreFeedbackTimeDays(7);
         Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
         assertThat(updatedCourse.getMaxComplaints()).as("maxComplaints Value updated successfully").isEqualTo(course.getMaxComplaints());
         assertThat(updatedCourse.getMaxComplaintTimeDays()).as("maxComplaintTimeDays Value updated successfully").isEqualTo(course.getMaxComplaintTimeDays());
         assertThat(updatedCourse.getStudentQuestionsEnabled()).as("studentQuestionsEnabled Value updated successfully").isTrue();
+        assertThat(updatedCourse.getRequestMoreFeedbackEnabled()).as("Course has right requestMoreFeedbackEnabled Value").isTrue();
     }
 
     @Test

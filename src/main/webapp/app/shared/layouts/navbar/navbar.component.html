@@ -61,6 +61,12 @@
                 </a>
                 <ul class="dropdown-menu" ngbDropdownMenu>
                     <li>
+                        <a class="dropdown-item" routerLink="admin/upcoming-exams-and-exercises" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="'book-open'" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.upcomingExamsAndExercises">Upcoming Exams & Exercises</span>
+                        </a>
+                    </li>
+                    <li>
                         <a class="dropdown-item" routerLink="admin/user-management" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="'user'" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.userManagement">User management</span>
@@ -79,9 +85,9 @@
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" routerLink="admin/jhi-tracker" routerLinkActive="active" (click)="collapseNavbar()">
+                        <a class="dropdown-item" routerLink="admin/user-statistics" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="'eye'" [fixedWidth]="true"></fa-icon>
-                            <span jhiTranslate="global.menu.admin.tracker">User tracker</span>
+                            <span jhiTranslate="global.menu.admin.statistics">User statistics</span>
                         </a>
                     </li>
                     <li>
@@ -198,10 +204,15 @@
         </ul>
     </div>
 </nav>
-<div class="breadcrumb-container">
+<div class="breadcrumb-container" *ngIf="breadcrumbs && breadcrumbs.length > 0">
     <ol class="breadcrumb" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']">
         <li *ngFor="let breadcrumb of breadcrumbs" class="breadcrumb-item">
-            <a class="breadcrumb-link" [routerLink]="breadcrumb.uri" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ breadcrumb.label }}</a>
+            <a class="breadcrumb-link" [routerLink]="breadcrumb.uri" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" *ngIf="breadcrumb.translate">{{
+                breadcrumb.label | translate
+            }}</a>
+            <a class="breadcrumb-link" [routerLink]="breadcrumb.uri" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" *ngIf="!breadcrumb.translate">{{
+                breadcrumb.label
+            }}</a>
         </li>
     </ol>
 </div>

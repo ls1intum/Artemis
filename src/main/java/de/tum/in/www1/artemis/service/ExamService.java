@@ -188,6 +188,17 @@ public class ExamService {
     }
 
     /**
+     * Get all exams that are held today and/or in the future
+     * (does not return exams belonging to test courses).
+     *
+     * @return the list of all exams
+     */
+    public List<Exam> findAllCurrentAndUpcomingExams() {
+        log.debug("REST request to get all upcoming exams");
+        return examRepository.findAllByStartDateGreaterThanEqual(ZonedDateTime.now());
+    }
+
+    /**
      * Get the exam of a course with exercise groups and student exams
      * @param examId {Long} The courseId of the course which contains the exam
      * @return The exam

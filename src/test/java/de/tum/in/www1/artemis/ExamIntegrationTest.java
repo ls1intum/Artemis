@@ -553,6 +553,30 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testGetCurrentAndUpcomingExams() throws Exception {
+        request.getList("/api/courses/upcoming-exams", HttpStatus.OK, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = "USER")
+    public void testGetCurrentAndUpcomingExamsForbiddenForUser() throws Exception {
+        request.getList("/api/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetCurrentAndUpcomingExamsForbiddenForInstructor() throws Exception {
+        request.getList("/api/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCurrentAndUpcomingExamsForbiddenForTutor() throws Exception {
+        request.getList("/api/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteEmptyExam_asInstructor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
@@ -1088,8 +1112,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 // Create results
                 var result = new Result().score(resultScore).rated(true).resultString("Good").completionDate(ZonedDateTime.now().minusMinutes(5));
                 result.setParticipation(participation);
+                result = resultRepository.save(result);
                 result.setSubmission(submission);
-                resultRepository.save(result);
+                submission.setResult(result);
+                submissionRepository.save(submission);
             }
         }
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();

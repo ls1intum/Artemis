@@ -51,6 +51,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -66,17 +67,21 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
 
+    private static final String PIPELINE_SCRIPT_DETECTION_COMMENT = "// ARTEMIS: JenkinsPipeline";
+
     @Value("${artemis.continuous-integration.url}")
     private URL JENKINS_SERVER_URL;
 
     @Value("${jenkins.use-crumb:#{true}}")
     private boolean useCrumb;
 
-    private final JenkinsBuildPlanCreatorProvider buildPlanCreatorProvider;
+    private final JenkinsBuildPlanCreator jenkinsBuildPlanCreator;
 
     private final RestTemplate restTemplate;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    private final ResultRepository resultRepository;
 
     private final JenkinsServer jenkinsServer;
 
@@ -85,20 +90,21 @@ public class JenkinsService implements ContinuousIntegrationService {
     // Pattern of the DateTime that is included in the logs received from Jenkins
     private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
-    public JenkinsService(JenkinsBuildPlanCreatorProvider buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackService feedbackService) {
-        this.buildPlanCreatorProvider = buildPlanCreatorFactory;
+    public JenkinsService(JenkinsBuildPlanCreator jenkinsBuildPlanCreator, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackService feedbackService, ResultRepository resultRepository) {
+        this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.feedbackService = feedbackService;
+        this.resultRepository = resultRepository;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL, URL solutionRepositoryURL) {
         try {
             // TODO support sequential test runs
-            final var configBuilder = buildPlanCreatorProvider.builderFor(exercise.getProgrammingLanguage());
+            final var configBuilder = builderFor(exercise.getProgrammingLanguage());
             Document jobConfig = configBuilder.buildBasicConfig(exercise.getProgrammingLanguage(), testRepositoryURL, repositoryURL,
                     Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
             planKey = exercise.getProjectKey() + "-" + planKey;
@@ -110,6 +116,22 @@ public class JenkinsService implements ContinuousIntegrationService {
             log.error(e.getMessage(), e);
             throw new JenkinsException("Unable to create new build plan :" + planKey, e);
         }
+    }
+
+    /**
+     * Gives a Jenkins plan builder, that is able to build plan configurations for the specified programming language
+     *
+     * @param programmingLanguage The programming language for which a build plan should get created
+     * @return The configuration builder for the specified language
+     * @see JenkinsBuildPlanCreator
+     */
+    private JenkinsXmlConfigBuilder builderFor(ProgrammingLanguage programmingLanguage) {
+        return switch (programmingLanguage) {
+            case JAVA, KOTLIN, PYTHON, C, HASKELL -> jenkinsBuildPlanCreator;
+            case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
+            case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
+            case SWIFT -> throw new UnsupportedOperationException("Swift templates are not available for Jenkins.");
+        };
     }
 
     @Override
@@ -171,9 +193,10 @@ public class JenkinsService implements ContinuousIntegrationService {
             throw new IllegalArgumentException("Pipeline Script not found");
         }
 
-        String pipeLineScript = scriptNode.getFirstChild().getTextContent();
-        // If the script does not start with "pipeline", it is not actually a pipeline script, but a deprecated programming exercise with an old configuration
-        if (!pipeLineScript.trim().startsWith("pipeline")) {
+        String pipeLineScript = scriptNode.getFirstChild().getTextContent().trim();
+        // If the script does not start with "pipeline" or the special comment,
+        // it is not actually a pipeline script, but a deprecated programming exercise with an old configuration
+        if (!pipeLineScript.startsWith("pipeline") && !pipeLineScript.startsWith(PIPELINE_SCRIPT_DETECTION_COMMENT)) {
             log.debug("Pipeline Script not found");
             throw new IllegalArgumentException("Pipeline Script not found");
         }
@@ -310,16 +333,21 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) {
         final var report = TestResultsDTO.convert(requestBody);
-        final var latestPendingSubmission = programmingSubmissionRepository.findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(participation.getId()).stream()
+        final var latestPendingSubmission = programmingSubmissionRepository.findByParticipationIdAndResultsIsNullOrderBySubmissionDateDesc(participation.getId()).stream()
                 .filter(submission -> {
                     final var commitHash = getCommitHash(report, submission.getType());
                     return commitHash.isPresent() && submission.getCommitHash().equals(commitHash.get());
                 }).findFirst();
-        final var result = createResultFromBuildResult(report, (Participation) participation);
+        var result = createResultFromBuildResult(report, (Participation) participation);
         final ProgrammingSubmission submission;
         submission = latestPendingSubmission.orElseGet(() -> createFallbackSubmission(participation, report));
         submission.setBuildFailed(result.getResultString().equals("No tests found"));
+
+        // save result to create entry in DB before establishing relation with submission for ordering
+        result = resultRepository.save(result);
+
         result.setSubmission(submission);
+        submission.setResult(result);
         result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), submission);
         programmingSubmissionRepository.save(submission);
         // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).

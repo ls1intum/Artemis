@@ -6,7 +6,9 @@
             "yes": "Yes",
             "no": "No",
             "emptyList": "No items available",
-            "unset": "Unset"
+            "unset": "Unset",
+            "create": "Create",
+            "edit": "Edit"
         },
         "menu": {
             "home": "Home",
@@ -80,10 +82,11 @@
             },
             "admin": {
                 "main": "Server Administration",
+                "upcomingExamsAndExercises": "Upcoming exams & exercises",
                 "userManagement": "User management",
                 "systemNotifications": "System notifications",
                 "featureToggles": "Feature Toggles",
-                "tracker": "User tracker",
+                "statistics": "User statistics",
                 "metrics": "Metrics",
                 "health": "Health",
                 "configuration": "Configuration",
@@ -178,6 +181,7 @@
             "confirm": "Confirm",
             "download": "Download",
             "edit": "Edit",
+            "editSelected": "Edit selected",
             "editInEditor": "Edit in editor",
             "editInIntelliJ": "Edit in IntelliJ",
             "editEntity": "Edit {{entity}}",

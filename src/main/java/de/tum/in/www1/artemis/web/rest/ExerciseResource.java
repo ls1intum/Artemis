@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -171,11 +172,10 @@ public class ExerciseResource {
             return badRequest();
         }
 
-        // TODO CZ: load results of submissions eagerly to prevent additional database calls
-        List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exerciseId);
+        Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exerciseId);
         // Do not provide example submissions without any assessment
         exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getResult() == null);
-        exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
+        exercise.setExampleSubmissions(exampleSubmissions);
 
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
@@ -187,6 +187,24 @@ public class ExerciseResource {
         exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
 
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
+    }
+
+    /**
+     * GET /exercises/upcoming : Find all exercises that have an upcoming due date.
+     *
+     * @return the ResponseEntity with status 200 (OK) and a list of exercises.
+     */
+    @GetMapping("/exercises/upcoming")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Set<Exercise>> getUpcomingExercises() {
+        log.debug("REST request to get all upcoming exercises");
+
+        if (!authCheckService.isAdmin()) {
+            return forbidden();
+        }
+
+        Set<Exercise> upcomingExercises = exerciseService.findAllExercisesWithUpcomingDueDate();
+        return ResponseEntity.ok(upcomingExercises);
     }
 
     /**
@@ -359,30 +377,28 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        if (exercise != null) {
-            List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerResultsAndSubmissions(exercise, user.getId());
-            exercise.setStudentParticipations(new HashSet<>());
-            for (StudentParticipation participation : participations) {
+        List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerResultsAndSubmissions(exercise, user.getId());
+        exercise.setStudentParticipations(new HashSet<>());
+        for (StudentParticipation participation : participations) {
 
-                participation.setResults(exercise.findResultsFilteredForStudents(participation));
-                // By filtering the results available yet, they can become null for the exercise.
-                if (participation.getResults() != null) {
-                    participation.getResults().forEach(r -> r.setAssessor(null));
-                }
-                exercise.addParticipation(participation);
+            participation.setResults(exercise.findResultsFilteredForStudents(participation));
+            // By filtering the results available yet, they can become null for the exercise.
+            if (participation.getResults() != null) {
+                participation.getResults().forEach(r -> r.setAssessor(null));
             }
+            exercise.addParticipation(participation);
+        }
 
-            this.programmingExerciseService.checksAndSetsIfProgrammingExerciseIsLocalSimulation(exercise);
-            // TODO: we should also check that the submissions do not contain sensitive data
+        this.programmingExerciseService.checksAndSetsIfProgrammingExerciseIsLocalSimulation(exercise);
+        // TODO: we should also check that the submissions do not contain sensitive data
 
-            // remove sensitive information for students
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-                exercise.filterSensitiveInformation();
-            }
+        // remove sensitive information for students
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            exercise.filterSensitiveInformation();
         }
 
         log.debug("getResultsForCurrentUser took " + (System.currentTimeMillis() - start) + "ms");
 
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
+        return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
 }

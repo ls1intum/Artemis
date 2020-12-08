@@ -139,7 +139,7 @@ describe('Audit Component Tests', () => {
 
                 // THEN
                 expect(service.query).toHaveBeenCalled();
-                expect(comp.audits && comp.audits[0]).toEqual(jasmine.objectContaining(audit));
+                expect(comp.audits).toEqual(expect.objectContaining([audit]));
                 expect(comp.totalItems).toBe(1);
             });
         });
@@ -160,7 +160,7 @@ describe('Audit Component Tests', () => {
 
                 // THEN
                 expect(service.query).toHaveBeenCalledWith(
-                    jasmine.objectContaining({
+                    expect.objectContaining({
                         sort: ['id,desc'],
                     }),
                 );
@@ -177,7 +177,7 @@ describe('Audit Component Tests', () => {
 
                 // THEN
                 expect(service.query).toHaveBeenCalledWith(
-                    jasmine.objectContaining({
+                    expect.objectContaining({
                         sort: ['timestamp,asc', 'id'],
                     }),
                 );

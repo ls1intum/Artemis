@@ -6,7 +6,9 @@
             "yes": "Ja",
             "no": "Nein",
             "emptyList": "Keine Elemente verfügbar",
-            "unset": "Nicht gesetzt"
+            "unset": "Nicht gesetzt",
+            "create": "Erstellen",
+            "edit": "Editieren"
         },
         "menu": {
             "home": "Startseite",
@@ -80,10 +82,11 @@
             },
             "admin": {
                 "main": "Server-Administration",
+                "upcomingExamsAndExercises": "Kommende Prüfungen & Übungen",
                 "userManagement": "Benutzerverwaltung",
                 "systemNotifications": "Systemmitteilungen",
                 "featureToggles": "Feature Toggles",
-                "tracker": "Benutzer Aktivitäten",
+                "statistics": "Benutzer Statistiken",
                 "metrics": "Metriken",
                 "health": "Status",
                 "configuration": "Konfiguration",
@@ -177,6 +180,7 @@
             "dashboard": "Dashboard",
             "units": "Einheiten",
             "edit": "Bearbeiten",
+            "editSelected": "Ausgewählte bearbeiten",
             "editInEditor": "In Editor bearbeiten",
             "editInIntelliJ": "In IntelliJ bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
