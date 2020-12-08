@@ -1,0 +1,106 @@
+import * as chai from 'chai';
+import * as sinonChai from 'sinon-chai';
+import * as sinon from 'sinon';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
+import { Course } from 'app/entities/course.model';
+import { ArtemisTestModule } from '../../test.module';
+import { AccountService } from 'app/core/auth/account.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs/internal/observable/of';
+import { HttpResponse } from '@angular/common/http';
+import { User } from 'app/core/user/user.model';
+
+chai.use(sinonChai);
+const expect = chai.expect;
+
+describe('CourseRegistrationSelectorComponent', () => {
+    let fixture: ComponentFixture<CourseRegistrationSelectorComponent>;
+    let component: CourseRegistrationSelectorComponent;
+    let accountService: AccountService;
+    let courseService: CourseManagementService;
+    let profileService: ProfileService;
+    let mockRouter: any;
+    let mockActivatedRoute: any;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            declarations: [CourseRegistrationSelectorComponent],
+            providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: ActivatedRoute, useValue: mockActivatedRoute },
+                { provide: Router, useValue: mockRouter },
+            ],
+        })
+            .overrideTemplate(CourseRegistrationSelectorComponent, '')
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(CourseRegistrationSelectorComponent);
+                component = fixture.componentInstance;
+                accountService = TestBed.inject(AccountService);
+                courseService = TestBed.inject(CourseManagementService);
+                profileService = TestBed.inject(ProfileService);
+
+                mockRouter = sinon.createStubInstance(Router);
+                mockActivatedRoute = sinon.createStubInstance(ActivatedRoute);
+            });
+    });
+
+    afterEach(() => {
+        sinon.restore();
+    });
+
+    it('should initialize', fakeAsync(() => {
+        fixture.detectChanges();
+        expect(component).to.be.ok;
+    }));
+
+    it('should track course by Id', fakeAsync(() => {
+        const indexNumber = 1;
+        const course = new Course();
+        course.id = 1;
+        expect(component.trackCourseById(indexNumber, course)).to.equal(indexNumber);
+    }));
+
+    it('should cancel the registration', fakeAsync(() => {
+        component.showCourseSelection = true;
+        component.cancelRegistration();
+        expect(component.showCourseSelection).to.be.false;
+    }));
+
+    it('should show registratable courses', fakeAsync(() => {
+        const course1 = new Course();
+        course1.id = 1;
+        const course2 = new Course();
+        course2.id = 2;
+        const fake = sinon.fake.returns(of(new HttpResponse({ body: [course1] })));
+        component.courses = [course2];
+        sinon.replace(courseService, 'findAllToRegister', fake);
+
+        component.startRegistration();
+        tick();
+
+        expect(component.coursesToSelect.length).to.equal(1);
+    }));
+
+    it('should  register for course', fakeAsync(() => {
+        const course = new Course();
+        course.id = 1;
+        component.courseToRegister = course;
+
+        const fake = sinon.fake.returns(of(new HttpResponse({ body: new User() })));
+        sinon.replace(courseService, 'registerForCourse', fake);
+
+        component.registerForCourse();
+        tick();
+
+        expect(component.addedSuccessful).to.be.true;
+        flush();
+    }));
+});
