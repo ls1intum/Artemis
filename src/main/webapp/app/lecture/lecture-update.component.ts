@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, combineLatest } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
 import { LectureService } from './lecture.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
@@ -38,11 +38,10 @@ export class LectureUpdateComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
-        this.activatedRoute.data.subscribe(({ lecture }) => {
-            this.lecture = lecture;
-            this.courseService.find(Number(this.activatedRoute.snapshot.paramMap.get('courseId'))).subscribe((response: HttpResponse<Course>) => {
-                this.lecture.course = response.body!;
-            });
+        // Wait for both subscriptions to load
+        combineLatest(this.activatedRoute.data, this.activatedRoute.parent!.data).subscribe(([routeData, parentRouteData]) => {
+            this.lecture = routeData['lecture'];
+            this.lecture.course = parentRouteData['course'];
         });
     }
 

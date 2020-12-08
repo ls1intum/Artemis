@@ -1,7 +1,7 @@
 import { Component, ElementRef, EventEmitter, forwardRef, Input, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { isMoment, Moment } from 'moment';
 import * as moment from 'moment';
+import { isMoment, Moment } from 'moment';
 
 @Component({
     selector: 'jhi-date-time-picker',
@@ -42,7 +42,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() value: any;
     @Input() disabled: boolean;
     @Input() error: boolean;
-    @Input() startAt: Moment; // Default selected date.
+    @Input() startAt: Moment = moment().startOf('minutes'); // Default selected date. By default this sets it to the current time without seconds or milliseconds;
     @Input() min: Moment; // Dates before this date are not selectable.
     @Input() max: Moment; // Dates after this date are not selectable.
     @Output() valueChange = new EventEmitter();
