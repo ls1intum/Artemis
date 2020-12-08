@@ -285,7 +285,7 @@ public class SubmissionService {
      * @param submission the submission for which a new result should be created
      * @return the newly created result
      */
-    public Result setNewResult(Submission submission) {
+    public Result saveNewEmptyResult(Submission submission) {
         Result result = new Result();
         result.setParticipation(submission.getParticipation());
         result = resultRepository.save(result);
@@ -302,7 +302,7 @@ public class SubmissionService {
      * @param result the result which we want to save and order
      * @return the result with correctly persistet relationship to its submission
      */
-    public Result saveOrderedResultBySubmission(final Submission submission, final Result result) {
+    public Result saveNewResult(final Submission submission, final Result result) {
         result.setSubmission(null);
         submission.setResultsList(new ArrayList<>());
         if (result.getParticipation() == null) {
@@ -324,7 +324,7 @@ public class SubmissionService {
     protected Result lockSubmission(Submission submission) {
         Result result = submission.getResult();
         if (result == null) {
-            result = setNewResult(submission);
+            result = saveNewEmptyResult(submission);
         }
 
         if (result.getAssessor() == null) {

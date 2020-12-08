@@ -326,7 +326,7 @@ public class AssessmentService {
     public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList) {
         Result result = submission.getResult();
         if (result == null) {
-            result = submissionService.setNewResult(submission);
+            result = submissionService.saveNewEmptyResult(submission);
         }
 
         result.setHasComplaint(false);

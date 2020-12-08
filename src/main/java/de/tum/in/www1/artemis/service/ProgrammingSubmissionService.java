@@ -682,7 +682,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         ProgrammingSubmission newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);
 
-        Result newResult = setNewResult(newSubmission);
+        Result newResult = saveNewEmptyResult(newSubmission);
         newResult.setAssessor(userService.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         // Copy automatic feedbacks into the manual result
