@@ -282,10 +282,9 @@ public interface ContinuousIntegrationService {
      * Name of the docker image used for the given programming language.
      *
      * @param language The programming language for which the docker image name is requested
-     * @param isSCA Indicator if the programming language is used with static code analysis enabled
      * @return The name of the image (published on hub.docker.com)
      */
-    default String getDockerImageName(ProgrammingLanguage language, boolean isSCA) {
+    default String getDockerImageName(ProgrammingLanguage language) {
         return switch (language) {
             case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-2";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
@@ -293,7 +292,7 @@ public interface ContinuousIntegrationService {
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";
             case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
             case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
-            case SWIFT -> isSCA ? "norionomura/swiftlint:latest" : "swift:latest";
+            case SWIFT -> "norionomura/swiftlint:0.41.0_swift-5.3.1";
         };
     }
 }

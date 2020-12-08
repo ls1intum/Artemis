@@ -154,7 +154,7 @@ public class BambooBuildPlanService {
 
         // Do not run the builds in extra docker containers if the dev-profile is active
         if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-            defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage, staticCodeAnalysisEnabled));
+            defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage));
         }
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
@@ -308,8 +308,8 @@ public class BambooBuildPlanService {
         }
     }
 
-    private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage language, Boolean isSCA) {
-        var dockerImage = bambooService.getDockerImageName(language, Boolean.TRUE.equals(isSCA));
+    private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage language) {
+        var dockerImage = bambooService.getDockerImageName(language);
         return new DockerConfiguration().image(dockerImage);
     }
 }

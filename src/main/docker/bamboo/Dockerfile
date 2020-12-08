@@ -4,10 +4,10 @@ LABEL description="Bamboo pre-configured for Artemis"
 
 USER root
 ENV DEBIAN_FRONTEND noninteractive
-# adapted from norionomura/swift
-ENV SWIFT_BRANCH=swift-5.3.1-release \
-    SWIFT_PLATFORM=ubuntu18.04 \
-    SWIFT_VERSION=5.3.1-RELEASE
+# Adapted from norionomura/swift
+ENV SWIFT_BRANCH swift-5.3.1-release
+ENV SWIFT_PLATFORM ubuntu18.04
+ENV SWIFT_VERSION 5.3.1-RELEASE
 
 RUN apt-get update
 RUN apt-get install -y maven
@@ -20,7 +20,7 @@ RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/jav
 # Add file in /artemis/bin/mvn that uses the correct java version and passes all arguments to mvn
 RUN mkdir /artemis && mkdir /artemis/bin && printf '#!/bin/bash\nJAVA_HOME=/usr/lib/jvm/java-15-oracle /usr/bin/mvn "$@"\n' > /artemis/bin/mvn && chmod 777 /artemis/bin/mvn
 
-# adapted from norionomura/swift and norionomura/swiftlint
+# Adapted from norionomura/swift and norionomura/swiftlint
 RUN apt-get install -y gnupg2
 # Install Swift keys
 RUN curl https://swift.org/keys/all-keys.asc | gpg2 --import -
