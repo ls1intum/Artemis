@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
@@ -94,6 +95,12 @@ public class ProgrammingExerciseTestCaseResource {
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
+        }
+
+        // Make sure that at least one test has a weight so that students can still achieve 100% score
+        var testWeightsSum = testCaseProgrammingExerciseTestCaseDTOS.stream().mapToDouble(ProgrammingExerciseTestCaseDTO::getWeight).sum();
+        if (testWeightsSum <= 0) {
+            return badRequest();
         }
 
         try {

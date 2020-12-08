@@ -13,6 +13,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { IssuesMap, ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { Location } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
     ProgrammingExerciseGradingService,
     ProgrammingExerciseTestCaseUpdate,
@@ -332,8 +333,12 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     this.alertService.success(`artemisApp.programmingExercise.configureGrading.testCases.updated`);
                 }
             }),
-            catchError(() => {
-                this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.couldNotBeUpdated`, { testCases: testCasesToUpdate });
+            catchError((error: HttpErrorResponse) => {
+                if (error.status === 400) {
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.weightSumError`);
+                } else {
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.couldNotBeUpdated`, { testCases: testCasesToUpdate });
+                }
                 return of(null);
             }),
         );
