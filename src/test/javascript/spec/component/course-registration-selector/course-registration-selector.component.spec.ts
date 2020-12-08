@@ -6,9 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTestModule } from '../../test.module';
-import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs/internal/observable/of';
@@ -21,9 +19,7 @@ const expect = chai.expect;
 describe('CourseRegistrationSelectorComponent', () => {
     let fixture: ComponentFixture<CourseRegistrationSelectorComponent>;
     let component: CourseRegistrationSelectorComponent;
-    let accountService: AccountService;
     let courseService: CourseManagementService;
-    let profileService: ProfileService;
     let mockRouter: any;
     let mockActivatedRoute: any;
 
@@ -43,9 +39,7 @@ describe('CourseRegistrationSelectorComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseRegistrationSelectorComponent);
                 component = fixture.componentInstance;
-                accountService = TestBed.inject(AccountService);
                 courseService = TestBed.inject(CourseManagementService);
-                profileService = TestBed.inject(ProfileService);
 
                 mockRouter = sinon.createStubInstance(Router);
                 mockActivatedRoute = sinon.createStubInstance(ActivatedRoute);
