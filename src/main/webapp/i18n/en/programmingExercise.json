@@ -68,6 +68,10 @@
                 "title": "Recreate Build Plans",
                 "description": "Activate this option to create new build plans instead of copying them from the imported exercise. Newly created build plans support the latest features of the Artemis exercise templates by default."
             },
+            "updateTemplate": {
+                "title": "Update Template",
+                "description": "Activate this option to update the template files in the repositories. This can be useful if the imported exercise is old and contains outdated dependencies. For Java, Artemis replaces JUnit4 by Ares (which includes JUnit5) and updates the dependencies and plugins with the versions found in the latest template. Afterwards you might need to adapt the test cases."
+            },
             "programmingLanguage": "Programming Language",
             "projectType": "Project Type",
             "packageName": "Package Name",
@@ -162,6 +166,7 @@
                 "filterLateSubmissionsDate": "Date for filter late submissions (defaults to exercise due date if not set)",
                 "addStudentName": "Add student name to project (allows to import multiple projects into Eclipse at the same time)",
                 "addTeamName": "Add team name to project (allows to import multiple projects into Eclipse at the same time)",
+                "addTeamOrStudentName": "Add team/student name to project (allows to import multiple projects into Eclipse at the same time)",
                 "combineStudentCommits": "Combine all student changes into one commit (to simplify the review)",
                 "normalizeCodeStyle": "Normalize code style (line endings, encoding)",
                 "successMessage": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded."
@@ -223,7 +228,12 @@
             "reEvaluate": "Re-evaluate all",
             "reEvaluateTooltip": "Re-evaluate the latest automatic results of all participations. Manual results are not affected.",
             "reEvaluateSuccessful": "{{number}} automatic results were successfully updated, including the template and solution.",
-            "reEvaluateFailed": "The re-evaulation failed: {{message}}"
+            "reEvaluateFailed": "The re-evaluation failed: {{message}}",
+            "editSelectedModal": {
+                "currentlyEdited": "You are editing the following exercises:",
+                "errorReadButton": "Ok",
+                "errorOccurred": "The following exercises could not be updated:"
+            }
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists."

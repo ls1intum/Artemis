@@ -7,6 +7,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -217,7 +219,7 @@ public class ParticipationService {
         // specific to programming exercises
         if (exercise instanceof ProgrammingExercise) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
-            programmingExerciseStudentParticipation = copyRepository(programmingExerciseStudentParticipation);
+            programmingExerciseStudentParticipation = forkRepository(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = configureRepository((ProgrammingExercise) exercise, programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = copyBuildPlan(programmingExerciseStudentParticipation);
             // Restore programming exercise that got removed due to saving the programmingExerciseStudentParticipation
@@ -267,25 +269,28 @@ public class ParticipationService {
             if (participation instanceof ProgrammingExerciseParticipation) {
                 Set<Submission> programmingSubmissions = new HashSet<>(submissionRepository.findAllByParticipationId(participation.getId()));
                 participation.setSubmissions(programmingSubmissions);
-                initializeSubmission(participation, exercise, null);
+                if (programmingSubmissions.isEmpty()) {
+                    submission = initializeSubmission(participation, exercise, null).get();
+                    // required so that the assessment dashboard statistics are calculated correctly
+                    submission.setSubmitted(true);
+                }
                 submission = participation.getSubmissions().iterator().next();
-                // required so that the assessment dashboard statistics are calculated correctly
-                submission.setSubmitted(true);
+
             }
             else {
                 submission = participation.getSubmissions().iterator().next();
             }
             submission.setSubmissionDate(ZonedDateTime.now());
             // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
+            submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
             if (submission.getResult() == null) {
                 Result result = new Result();
+                result.setParticipation(submission.getParticipation());
+                result.setAssessor(participation.getStudent().get());
+                result.setAssessmentType(AssessmentType.TEST_RUN);
+                result = resultRepository.save(result);
                 result.setSubmission(submission);
                 submission.setResult(result);
-                result.setParticipation(submission.getParticipation());
-                submission.getResult().setAssessor(participation.getStudent().get());
-                submission.getResult().setAssessmentType(AssessmentType.TEST_RUN);
-
-                resultRepository.save(result);
                 submissionRepository.save(submission);
             }
             save(participation);
@@ -329,7 +334,7 @@ public class ParticipationService {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
             // Note: we need a repository, otherwise the student cannot click resume.
-            programmingParticipation = copyRepository(programmingParticipation);
+            programmingParticipation = forkRepository(programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
             programmingParticipation = configureRepositoryWebHook(programmingParticipation);
             participation = programmingParticipation;
@@ -452,18 +457,6 @@ public class ParticipationService {
         // get submission from HashMap
         QuizSubmission quizSubmission = quizScheduleService.getQuizSubmission(quizExercise.getId(), username);
 
-        // TODO: SK I guess we can delete this code, because it is unreachable as we return above in case the quiz has ended
-        if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
-            if (quizSubmission.isSubmitted()) {
-                quizSubmission.setType(SubmissionType.MANUAL);
-            }
-            else {
-                quizSubmission.setSubmitted(true);
-                quizSubmission.setType(SubmissionType.TIMEOUT);
-                quizSubmission.setSubmissionDate(ZonedDateTime.now());
-            }
-        }
-
         // construct result
         Result result = new Result().submission(quizSubmission);
 
@@ -472,19 +465,6 @@ public class ParticipationService {
         participation.setInitializationState(INITIALIZED);
         participation.setExercise(quizExercise);
         participation.addResult(result);
-
-        // TODO: SK I guess we can delete this code, because it is unreachable as we return above in case the quiz has ended
-        if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
-            // update result and participation state
-            result.setRated(true);
-            result.setAssessmentType(AssessmentType.AUTOMATIC);
-            result.setCompletionDate(ZonedDateTime.now());
-            participation.setInitializationState(InitializationState.FINISHED);
-
-            // calculate scores and update result and submission accordingly
-            quizSubmission.calculateAndUpdateScores(quizExercise);
-            result.evaluateSubmission();
-        }
 
         return participation;
     }
@@ -495,7 +475,7 @@ public class ParticipationService {
      * @return List<submission>
      */
     public List<Submission> getSubmissionsWithParticipationId(long participationId) {
-        return submissionRepository.findAllByParticipationId(participationId);
+        return submissionRepository.findAllWithResultsByParticipationId(participationId);
     }
 
     /**
@@ -517,7 +497,7 @@ public class ParticipationService {
         return save(participation);
     }
 
-    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExerciseStudentParticipation participation) {
+    private ProgrammingExerciseStudentParticipation forkRepository(ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository url is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getRepositoryUrlAsUrl() == null) {
             final var programmingExercise = participation.getProgrammingExercise();
@@ -526,7 +506,7 @@ public class ParticipationService {
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
-            var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, projectKey, participantIdentifier);
+            var newRepoUrl = versionControlService.get().forkRepository(projectKey, templateRepoName, projectKey, participantIdentifier);
             // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)
             if (participation.getStudent().isPresent()) {
                 newRepoUrl = newRepoUrl.withUser(participantIdentifier);
@@ -787,9 +767,9 @@ public class ParticipationService {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exercise.getId());
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
-            return optionalTeam.flatMap(team -> studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), team.getId()));
+            return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
-        return studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), username);
+        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**
@@ -801,7 +781,7 @@ public class ParticipationService {
      */
     public Optional<StudentParticipation> findOneByExerciseAndTeamIdAnyState(Exercise exercise, Long teamId) {
         log.debug("Request to get Participation for Team with id {} for Exercise with id: {}", teamId, exercise.getId());
-        return studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), teamId);
+        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
     }
 
     /**
@@ -1143,7 +1123,7 @@ public class ParticipationService {
      * @param deleteBuildPlan  determines whether the corresponding build plan should be deleted as well
      * @param deleteRepository determines whether the corresponding repository should be deleted as well
      */
-    @Transactional
+    @Transactional // ok
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
         StudentParticipation participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsById(participationId).get();
         log.debug("Request to delete Participation : {}", participation);
@@ -1197,7 +1177,7 @@ public class ParticipationService {
      * @param participationId the id of the participation to delete results/submissions from.
      * @return participation without submissions and results.
      */
-    @Transactional
+    @Transactional // ok
     public Participation deleteResultsAndSubmissionsOfParticipation(Long participationId) {
         Participation participation = participationRepository.getOneWithEagerSubmissionsAndResults(participationId);
         // This is the default case: We delete results and submissions from direction result -> submission. This will only delete submissions that have a result.
@@ -1232,7 +1212,7 @@ public class ParticipationService {
      * @param deleteBuildPlan specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
-    @Transactional
+    @Transactional // ok
     public void deleteAllByExerciseId(Long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
         List<StudentParticipation> participationsToDelete = findByExerciseId(exerciseId);
 
@@ -1248,7 +1228,7 @@ public class ParticipationService {
      * @param deleteBuildPlan specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
-    @Transactional
+    @Transactional // ok
     public void deleteAllByTeamId(Long teamId, boolean deleteBuildPlan, boolean deleteRepository) {
         log.info("Request to delete all participations of Team with id : {}", teamId);
 
@@ -1265,7 +1245,7 @@ public class ParticipationService {
      * @param participationId id of the participation
      * @return participation with eager course
      */
-    public StudentParticipation findOneWithEagerCourse(Long participationId) {
+    public StudentParticipation findOneWithEagerCourseAndExercise(Long participationId) {
         return studentParticipationRepository.findOneByIdWithEagerExerciseAndEagerCourse(participationId);
     }
 
@@ -1311,8 +1291,9 @@ public class ParticipationService {
      * @param planKey the id of build plan
      * @return template exercise participation belonging to build plan
      */
-    public Optional<TemplateProgrammingExerciseParticipation> findTemplateParticipationByBuildPlanId(String planKey) {
-        return templateProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey);
+    @Nullable
+    public TemplateProgrammingExerciseParticipation findTemplateParticipationByBuildPlanId(String planKey) {
+        return templateProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
     }
 
     /**
@@ -1321,8 +1302,9 @@ public class ParticipationService {
      * @param planKey the id of build plan
      * @return solution exercise participation belonging to build plan
      */
-    public Optional<SolutionProgrammingExerciseParticipation> findSolutionParticipationByBuildPlanId(String planKey) {
-        return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey);
+    @Nullable
+    public SolutionProgrammingExerciseParticipation findSolutionParticipationByBuildPlanId(String planKey) {
+        return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
     }
 
     /**

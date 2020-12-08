@@ -65,10 +65,6 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.unsubscribe();
     }
 
-    previousState() {
-        window.history.back();
-    }
-
     addAttachment() {
         const newAttachment = new Attachment();
         newAttachment.lecture = this.lecture;
@@ -110,10 +106,6 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     editAttachment(attachment: Attachment) {
         this.attachmentToBeCreated = attachment;
         this.attachmentBackup = Object.assign({}, attachment, {});
-    }
-
-    attachmentFileName(attachmentLink: string): string {
-        return attachmentLink.replace(/\/.*\//, '');
     }
 
     deleteAttachment(attachment: Attachment) {

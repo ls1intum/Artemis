@@ -67,6 +67,25 @@ describe('ProgrammingExercise Management Component', () => {
 
         // THEN
         expect(service.findAllProgrammingExercisesForCourse).toHaveBeenCalled();
-        expect(comp.programmingExercises[0]).toEqual(jasmine.objectContaining({ id: programmingExercise.id }));
+        expect(comp.programmingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
+    });
+
+    describe('ProgrammingExercise Select Exercises', () => {
+        it('Should add selected exercise to list', () => {
+            // WHEN
+            comp.toggleProgrammingExercise(programmingExercise);
+
+            // THEN
+            expect(comp.selectedProgrammingExercises[0]).toEqual(jasmine.objectContaining({ id: programmingExercise.id }));
+        });
+
+        it('Should remove selected exercise to list', () => {
+            // WHEN
+            comp.toggleProgrammingExercise(programmingExercise);
+            comp.toggleProgrammingExercise(programmingExercise);
+
+            // THEN
+            expect(comp.selectedProgrammingExercises.length).toEqual(0);
+        });
     });
 });

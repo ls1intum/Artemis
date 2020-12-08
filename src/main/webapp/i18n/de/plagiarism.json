@@ -1,14 +1,17 @@
 {
     "artemisApp": {
         "plagiarism": {
+            "plagiarism-detection": "Plagiatskontrolle",
             "confirm": "Bestätigen",
             "deny": "Ablehnen",
             "warning": "Die Bestätigung/Ablehnung eines Plagiats geht beim Neuladen der Seite verloren.",
             "inspection": "Plagiatskontrolle",
             "plagiarism": "Plagiat",
             "back": "Zurück",
+            "empty": "Es liegen keine Ergebnisse vor.",
             "not-found": "Kein Plagiat gefunden",
-            "not-selected": "Kein Plagiat ausgewählt"
+            "not-selected": "Kein Plagiat ausgewählt",
+            "unknown-student": "Unbekannt"
         }
     }
 }

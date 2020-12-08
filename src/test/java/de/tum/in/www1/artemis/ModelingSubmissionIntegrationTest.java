@@ -18,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.SubmissionVersion;
 import de.tum.in.www1.artemis.domain.Team;
@@ -112,7 +111,6 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     public void initTestCase() throws Exception {
         database.addUsers(3, 1, 1);
         course = database.addCourseWithDifferentModelingExercises();
-        List<Exercise> exercises = new ArrayList<>(course.getExercises());
         classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         activityExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
         objectExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
@@ -309,7 +307,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class);
 
-        storedSubmission = modelingSubmissionRepo.findById(storedSubmission.getId()).get();
+        database.changeUser("student1");
+        storedSubmission = modelingSubmissionRepo.findByIdWithEagerResult(storedSubmission.getId()).get();
         assertThat(storedSubmission.getResult()).as("submission still unrated").isNull();
     }
 
@@ -362,7 +361,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllSubmittedSubmissionsOfExercise() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmission(classExercise, submittedSubmission, "student1");
-        ModelingSubmission submission2 = database.addModelingSubmission(classExercise, unsubmittedSubmission, "student2");
+        database.addModelingSubmission(classExercise, unsubmittedSubmission, "student2");
         ModelingSubmission submission3 = database.addModelingSubmission(classExercise, generateSubmittedSubmission(), "student3");
 
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?submittedOnly=true", HttpStatus.OK,
@@ -466,7 +465,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         // set dates to UTC and round to milliseconds for comparison
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results");
         assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);
@@ -561,7 +560,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         // set dates to UTC and round to milliseconds for comparison
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         receivedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(receivedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(receivedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
+        assertThat(receivedSubmission).as("submission was found").isEqualTo(submission);
         assertThat(receivedSubmission.getResult()).as("result is set").isNotNull();
         assertThat(receivedSubmission.getResult().getAssessor()).as("assessor is hidden").isNull();
 

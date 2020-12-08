@@ -27,13 +27,16 @@
                     <td>
                         <span class="bold">{{ exercise.title }}</span>
                     </td>
-                    <td>
+                    <td *ngIf="exercise.course as course; else noExerciseCourse">
                         <span class="bold">
-                            <a [routerLink]="['/course-management', exercise.course.id]">{{ exercise.course.title }}</a>
+                            <a [routerLink]="['/course-management', course.id]">{{ course.title }}</a>
                         </span>
                     </td>
-                    <td>{{ exercise.releaseDate.format(DATE_FORMAT) }}</td>
-                    <td>{{ exercise.dueDate.format(DATE_FORMAT) }}</td>
+                    <ng-template #noExerciseCourse><td>-</td></ng-template>
+                    <td *ngIf="exercise.releaseDate as exerciseReleaseDate; else noExerciseReleaseDate">{{ exerciseReleaseDate.format(DATE_FORMAT) }}</td>
+                    <ng-template #noExerciseReleaseDate><td>-</td></ng-template>
+                    <td *ngIf="exercise.dueDate as exerciseDueDate; else noExerciseDueDate">{{ exerciseDueDate.format(DATE_FORMAT) }}</td>
+                    <ng-template #noExerciseDueDate><td>-</td></ng-template>
                 </tr>
             </tbody>
         </table>
@@ -68,13 +71,16 @@
                         <td>
                             <span class="bold">{{ exam.title }}</span>
                         </td>
-                        <td>
+                        <td *ngIf="exam.course as course; else noExamCourse">
                             <span class="bold">
-                                <a [routerLink]="['/course-management', exam.course.id]">{{ exam.course.title }}</a>
+                                <a [routerLink]="['/course-management', course.id]">{{ course.title }}</a>
                             </span>
                         </td>
-                        <td>{{ exam.startDate.format(DATE_FORMAT) }}</td>
-                        <td>{{ exam.endDate.format(DATE_FORMAT) }}</td>
+                        <ng-template #noExamCourse><td>-</td></ng-template>
+                        <td *ngIf="exam.startDate as examStartDate; else noExamStartDate">{{ examStartDate.format(DATE_FORMAT) }}</td>
+                        <ng-template #noExamStartDate><td>-</td></ng-template>
+                        <td *ngIf="exam.endDate as examEndDate; else noExamEndDate">{{ examEndDate.format(DATE_FORMAT) }}</td>
+                        <ng-template #noExamEndDate><td>-</td></ng-template>
                     </tr>
                 </tbody>
             </table>

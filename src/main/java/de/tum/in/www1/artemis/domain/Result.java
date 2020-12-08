@@ -76,9 +76,9 @@ public class Result extends DomainObject {
     @Column(name = "hasFeedback")
     private Boolean hasFeedback;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonView(QuizView.Before.class)
+    // TODO: rename ignored property to "results" after change in client
     @JsonIgnoreProperties({ "result", "participation" })
     private Submission submission;
 
@@ -332,6 +332,9 @@ public class Result extends DomainObject {
             }
             if (feedback.getCredits() != null) {
                 feedback.setPositive(feedback.getCredits() >= 0);
+            }
+            else {
+                feedback.setCredits(0.0);
             }
             setFeedbackType(feedback);
         }

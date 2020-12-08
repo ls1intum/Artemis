@@ -185,7 +185,7 @@ public class ResultService {
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
 
             if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation) {
-                ltiService.onNewResult((ProgrammingExerciseStudentParticipation) savedResult.getParticipation());
+                ltiService.onNewResult((StudentParticipation) savedResult.getParticipation());
             }
 
             websocketMessagingService.broadcastNewResult(savedResult.getParticipation(), savedResult);
@@ -198,7 +198,7 @@ public class ResultService {
     }
 
     /**
-     * NOTE: As we use delete methods with underscores, we need a transacational context here!
+     * NOTE: As we use delete methods with underscores, we need a transactional context here!
      * Deletes result with corresponding complaint and complaint response
      * @param resultId the id of the result
      */

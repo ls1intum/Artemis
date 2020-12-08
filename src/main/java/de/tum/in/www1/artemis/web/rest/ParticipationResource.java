@@ -484,7 +484,7 @@ public class ParticipationResource {
             }
             for (Result result : participation.getResults()) {
                 if (result.getSubmission() != null) {
-                    result.getSubmission().setResult(null);
+                    result.getSubmission().setResultsList(null);
                     result.getSubmission().setParticipation(null);
                 }
             }
@@ -616,7 +616,7 @@ public class ParticipationResource {
             return participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
 
-        return participationService.findOneWithEagerCourse(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        return participationService.findOneWithEagerCourseAndExercise(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
     }
 
     /**

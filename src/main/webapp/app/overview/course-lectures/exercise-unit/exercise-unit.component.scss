@@ -1,0 +1,15 @@
+@import 'src/main/webapp/app/overview/overview-vars';
+
+.exercise-unit {
+    .exercise-row {
+        .course-exercise-row {
+            border-radius: 8px !important;
+            border: none !important;
+            box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25) !important;
+        }
+
+        .course-exercise-row:hover {
+            box-shadow: 0 2px 4px 0 $primary !important;
+        }
+    }
+}

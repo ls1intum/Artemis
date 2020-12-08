@@ -56,7 +56,7 @@ describe('Course Management Detail Component', () => {
 
             // THEN
             expect(service.find).toHaveBeenCalled();
-            expect(comp.course).toEqual(jasmine.objectContaining({ id: course.id }));
+            expect(comp.course).toEqual(expect.objectContaining({ id: course.id }));
         });
     });
 });

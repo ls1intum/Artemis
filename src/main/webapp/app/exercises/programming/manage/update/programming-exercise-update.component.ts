@@ -85,7 +85,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public checkoutSolutionRepositoryAllowed = false;
     public sequentialTestRunsAllowed = false;
 
+    // Additional options for import
     public recreateBuildPlans = false;
+    public updateTemplate = false;
 
     public projectTypes: ProjectType[] = [];
 
@@ -304,7 +306,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.isSaving = true;
 
         if (this.isImport) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans));
+            this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans, this.updateTemplate));
         } else if (this.programmingExercise.id !== undefined) {
             const requestOptions = {} as any;
             if (this.notificationText) {

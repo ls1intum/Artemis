@@ -129,7 +129,7 @@ public class ProgrammingExercise extends Exercise {
         return null;
     }
 
-    private void setTemplateRepositoryUrl(String templateRepositoryUrl) {
+    public void setTemplateRepositoryUrl(String templateRepositoryUrl) {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
             this.templateParticipation.setRepositoryUrl(templateRepositoryUrl);
         }
@@ -436,6 +436,21 @@ public class ProgrammingExercise extends Exercise {
             log.warn("Cannot create URL for testRepositoryUrl: " + testRepositoryUrl + " due to the following error: " + e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * Returns the repository url for the given repository type.
+     *
+     * @param repositoryType The repository type for which the url should be returned
+     * @return The repository url
+     */
+    @JsonIgnore
+    public URL getRepositoryURL(RepositoryType repositoryType) {
+        return switch (repositoryType) {
+            case TEMPLATE -> this.getTemplateRepositoryUrlAsUrl();
+            case SOLUTION -> this.getSolutionRepositoryUrlAsUrl();
+            case TESTS -> this.getTestRepositoryUrlAsUrl();
+        };
     }
 
     /**

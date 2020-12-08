@@ -4,6 +4,7 @@ import { Rating } from 'app/entities/rating.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { SortService } from 'app/shared/service/sort.service';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-rating-list',
@@ -39,7 +40,11 @@ export class RatingListComponent implements OnInit {
         const exercise = rating.result?.participation?.exercise;
 
         if (participation && exercise) {
-            this.router.navigate(['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', participation.id]);
+            if (exercise.type === ExerciseType.PROGRAMMING) {
+                this.router.navigate(['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'code-editor', participation.id]);
+            } else {
+                this.router.navigate(['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', participation.id]);
+            }
         }
     }
 }

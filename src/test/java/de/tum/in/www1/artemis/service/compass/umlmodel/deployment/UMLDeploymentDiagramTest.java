@@ -16,16 +16,16 @@ public class UMLDeploymentDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityDeploymentDiagram_EqualModels() {
-        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_1), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_1), 0.8, 1.0);
-        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_2), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_2), 0.8, 1.0);
-        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_1), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_1), 0.8, 100.0);
+        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_2), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_2), 0.8, 100.0);
+        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), 0.8, 100.0);
     }
 
     @Test
     void similarityDeploymentDiagram_DifferentModels() {
-        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_1), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_2), 0.0, 0.3688);
-        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_1), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), 0.0, 0.1022);
-        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_2), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), 0.0, 0.1099);
+        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_1), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_2), 0.0, 36.88);
+        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_1), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), 0.0, 10.22);
+        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_2), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), 0.0, 10.99);
     }
 
     @Test
