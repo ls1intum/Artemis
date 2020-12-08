@@ -149,7 +149,7 @@ public abstract class Submission extends DomainObject {
         if (this.results == null) {
             this.results = new ArrayList<>();
         }
-        else if (this.results.size() > 0) {
+        else if (!this.results.isEmpty()) {
             results.set(results.size() - 1, result);
             // TODO: Make sure the deletion is saved in the database too (SE, NR)
         }
@@ -157,7 +157,7 @@ public abstract class Submission extends DomainObject {
             this.results.add(result);
         }
 
-        assert (results.size() < 2);
+        assert results.size() < 2;
     }
 
     @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
