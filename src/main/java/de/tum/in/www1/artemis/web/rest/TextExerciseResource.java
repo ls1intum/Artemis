@@ -400,7 +400,7 @@ public class TextExerciseResource {
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);
 
-            Result result = textSubmission.getResult();
+            Result result = textSubmission.getLatestResult();
             if (result != null) {
                 // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
                 final var textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());

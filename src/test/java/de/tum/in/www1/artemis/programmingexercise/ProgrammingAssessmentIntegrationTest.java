@@ -105,7 +105,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1",
                 AssessmentType.SEMI_AUTOMATIC, true);
-        Result programmingAssessment = programmingSubmission.getResult();
+        Result programmingAssessment = programmingSubmission.getLatestResult();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
@@ -130,7 +130,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         // Check that result and submission are properly connected
         var submissionFromDb = programmingSubmissionService.findByIdWithEagerResultAndFeedback(programmingSubmission.getId());
         var resultFromDb = resultRepository.findWithEagerSubmissionAndFeedbackById(programmingAssessment.getId()).get();
-        assertThat(submissionFromDb.getResult()).isEqualTo(updatedResult);
+        assertThat(submissionFromDb.getLatestResult()).isEqualTo(updatedResult);
         assertThat(resultFromDb.getSubmission()).isEqualTo(updatedResult.getSubmission());
     }
 
@@ -139,7 +139,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     public void updateAssessmentAfterComplaint_automaticAssessment_forbidden() throws Exception {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExerciseRepository.save(programmingExercise);
-        Result programmingAssessment = programmingSubmission.getResult();
+        Result programmingAssessment = programmingSubmission.getLatestResult();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
@@ -157,7 +157,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     public void updateAssessmentAfterComplaint_dueDateNotPassed_forbidden() throws Exception {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
         programmingExerciseRepository.save(programmingExercise);
-        Result programmingAssessment = programmingSubmission.getResult();
+        Result programmingAssessment = programmingSubmission.getLatestResult();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
@@ -173,7 +173,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void updateAssessmentAfterComplaint_sameAsAssessor_forbidden() throws Exception {
-        Result programmingAssessment = programmingSubmission.getResult();
+        Result programmingAssessment = programmingSubmission.getLatestResult();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
@@ -252,8 +252,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         String commitHash = submission.getCommitHash();
 
         assertThat("123".equalsIgnoreCase(commitHash));
-        assertThat(submission.getResult().getResultString()).isEqualTo(result.getResultString());
-        assertThat(submission.getResult().getScore()).isEqualTo(result.getScore());
+        assertThat(submission.getLatestResult().getResultString()).isEqualTo(result.getResultString());
+        assertThat(submission.getLatestResult().getScore()).isEqualTo(result.getScore());
     }
 
     @Test
@@ -445,7 +445,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         // Submission in response is lazy loaded therefore, we fetch submission and check if relation is correct
         ProgrammingSubmission submissionFetch = programmingSubmissionService.findByIdWithEagerResultAndFeedback(programmingSubmission.getId());
-        assertThat(response.getId().equals(submissionFetch.getResult().getId()));
+        assertThat(response.getId().equals(submissionFetch.getLatestResult().getId()));
         assertThat(submissionFetch.getId().equals(programmingSubmission.getId()));
     }
 
@@ -501,7 +501,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     private void overrideAssessment(HttpStatus httpStatus) throws Exception {
         var participation = programmingSubmission.getParticipation();
-        var result = programmingSubmission.getResult();
+        var result = programmingSubmission.getLatestResult();
         result.setScore(75L);
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
         result.setCompletionDate(ZonedDateTime.now());

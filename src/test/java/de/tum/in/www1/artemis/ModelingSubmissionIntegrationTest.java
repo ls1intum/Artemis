@@ -290,7 +290,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         assertThat(studentParticipation.getResults()).as("do not send old results to the client").isEmpty();
         assertThat(studentParticipation.getSubmissions()).as("do not send old submissions to the client").isEmpty();
         assertThat(studentParticipation.getExercise().getGradingInstructions()).as("sensitive information (grading instructions) is hidden").isNull();
-        assertThat(returnedSubmission.getResult()).as("sensitive information (exercise result) is hidden").isNull();
+        assertThat(returnedSubmission.getLatestResult()).as("sensitive information (exercise result) is hidden").isNull();
     }
 
     @Test
@@ -309,7 +309,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
         database.changeUser("student1");
         storedSubmission = modelingSubmissionRepo.findByIdWithEagerResult(storedSubmission.getId()).get();
-        assertThat(storedSubmission.getResult()).as("submission still unrated").isNull();
+        assertThat(storedSubmission.getLatestResult()).as("submission still unrated").isNull();
     }
 
     @Test
@@ -379,8 +379,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
         ModelingSubmission storedSubmission = request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.OK, ModelingSubmission.class);
 
-        assertThat(storedSubmission.getResult()).as("result has been set").isNotNull();
-        assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
+        assertThat(storedSubmission.getLatestResult()).as("result has been set").isNotNull();
+        assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);
     }
 
@@ -412,8 +412,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
         ModelingSubmission storedSubmission = request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.OK, ModelingSubmission.class);
 
-        assertThat(storedSubmission.getResult()).as("result has been set").isNotNull();
-        assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
+        assertThat(storedSubmission.getLatestResult()).as("result has been set").isNotNull();
+        assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);
     }
 
@@ -441,7 +441,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
-        assertThat(storedSubmission.getResult()).as("result is not set").isNull();
+        assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
     }
 
@@ -466,8 +466,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results");
-        assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
-        assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
+        assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
+        assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);
     }
 
@@ -561,8 +561,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         receivedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(receivedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         assertThat(receivedSubmission).as("submission was found").isEqualTo(submission);
-        assertThat(receivedSubmission.getResult()).as("result is set").isNotNull();
-        assertThat(receivedSubmission.getResult().getAssessor()).as("assessor is hidden").isNull();
+        assertThat(receivedSubmission.getLatestResult()).as("result is set").isNotNull();
+        assertThat(receivedSubmission.getLatestResult().getAssessor()).as("assessor is hidden").isNull();
 
         // students can only see their own models
         submission = ModelFactory.generateModelingSubmission(validModel, true);
@@ -676,7 +676,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
         ModelingSubmission returnedSubmission = request.get("/api/participations/" + studentParticipation.getId() + "/latest-modeling-submission", HttpStatus.OK,
                 ModelingSubmission.class);
-        assertThat(returnedSubmission.getResult()).as("the result is not sent to the client if the assessment is not finished").isNull();
+        assertThat(returnedSubmission.getLatestResult()).as("the result is not sent to the client if the assessment is not finished").isNull();
     }
 
     @Test
@@ -720,7 +720,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         assertThat(((ModelingExercise) submission.getParticipation().getExercise()).getSampleSolutionModel()).isNullOrEmpty();
         assertThat(((ModelingExercise) submission.getParticipation().getExercise()).getSampleSolutionExplanation()).isNullOrEmpty();
         if (isStudent) {
-            assertThat(submission.getResult()).isNull();
+            assertThat(submission.getLatestResult()).isNull();
         }
     }
 

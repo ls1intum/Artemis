@@ -152,7 +152,7 @@ public class SubmissionService {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
         }
 
-        submissions.forEach(submission -> submission.getResult().setSubmission(null));
+        submissions.forEach(submission -> submission.getLatestResult().setSubmission(null));
         return submissions;
     }
 
@@ -322,7 +322,7 @@ public class SubmissionService {
      * @param submission the submission to lock
      */
     protected Result lockSubmission(Submission submission) {
-        Result result = submission.getResult();
+        Result result = submission.getLatestResult();
         if (result == null) {
             result = setNewResult(submission);
         }
@@ -348,7 +348,7 @@ public class SubmissionService {
             Optional<Submission> optionalSubmission = participation.findLatestSubmission();
             if (optionalSubmission.isPresent() && (!submittedOnly || optionalSubmission.get().isSubmitted())) {
                 participation.setSubmissions(Set.of(optionalSubmission.get()));
-                Optional.ofNullable(optionalSubmission.get().getResult()).ifPresent(result -> participation.setResults(Set.of(result)));
+                Optional.ofNullable(optionalSubmission.get().getLatestResult()).ifPresent(result -> participation.setResults(Set.of(result)));
             }
             else {
                 participation.setSubmissions(Set.of());

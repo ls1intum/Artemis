@@ -831,7 +831,7 @@ public class DatabaseUtilService {
                 submission = markProgrammingParticipationForTestRun((ProgrammingExercise) exercise, instructor.getLogin());
             }
             assertThat(exercise.hasExerciseGroup()).isTrue();
-            assertThat(submission.getResult().getAssessor().getLogin()).isEqualTo(instructor.getLogin());
+            assertThat(submission.getLatestResult().getAssessor().getLogin()).isEqualTo(instructor.getLogin());
             assertThat(((StudentParticipation) submission.getParticipation()).getStudent().get().getLogin()).isEqualTo(instructor.getLogin());
         }
         return testRun;
@@ -1083,8 +1083,8 @@ public class DatabaseUtilService {
      */
     public ModelingSubmission markModelingParticipationForTestRun(ModelingExercise exercise, String login) {
         var modelingSubmission = addModelingSubmissionWithEmptyResult(exercise, "", login);
-        modelingSubmission.getResult().setAssessor(getUserByLogin(login));
-        resultRepo.save(modelingSubmission.getResult());
+        modelingSubmission.getLatestResult().setAssessor(getUserByLogin(login));
+        resultRepo.save(modelingSubmission.getLatestResult());
         return modelingSubmission;
     }
 
@@ -1097,17 +1097,17 @@ public class DatabaseUtilService {
      */
     public TextSubmission markTextExerciseParticipationForTestRun(TextExercise exercise, String login) {
         var textSubmission = saveTextSubmissionWithResultAndAssessor(exercise, ModelFactory.generateTextSubmission("", null, false), login, login);
-        textSubmission.getResult().setCompletionDate(null);
-        resultRepo.save(textSubmission.getResult());
+        textSubmission.getLatestResult().setCompletionDate(null);
+        resultRepo.save(textSubmission.getLatestResult());
         return textSubmission;
     }
 
     public ProgrammingSubmission markProgrammingParticipationForTestRun(ProgrammingExercise exercise, String login) {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submitted(true);
         submission = addProgrammingSubmissionWithResult(exercise, submission, login);
-        submission.getResult().setAssessor(getUserByLogin(login));
-        submission.getResult().setCompletionDate(null);
-        resultRepo.save(submission.getResult());
+        submission.getLatestResult().setAssessor(getUserByLogin(login));
+        submission.getLatestResult().setCompletionDate(null);
+        resultRepo.save(submission.getLatestResult());
         submissionRepository.save(submission);
         return submission;
     }
@@ -2067,7 +2067,7 @@ public class DatabaseUtilService {
     public TextSubmission addTextSubmissionWithResultAndAssessorAndFeedbacks(TextExercise exercise, TextSubmission submission, String studentLogin, String assessorLogin,
             List<Feedback> feedbacks) {
         submission = saveTextSubmissionWithResultAndAssessor(exercise, submission, studentLogin, null, assessorLogin);
-        Result result = submission.getResult();
+        Result result = submission.getLatestResult();
         for (Feedback feedback : feedbacks) {
             // Important note to prevent 'JpaSystemException: null index column for collection':
             // 1) save the child entity (without connection to the parent entity) and make sure to re-assign the return value

@@ -103,14 +103,26 @@ public abstract class Submission extends DomainObject {
      * @return the latest result
      */
     @Nullable
-    @JsonProperty(value = "result", access = JsonProperty.Access.READ_ONLY)
-    public Result getResult() {
+    // @JsonProperty(value = "result", access = JsonProperty.Access.READ_ONLY)
+    @JsonIgnore
+    public Result getLatestResult() {
         // in all cases (except 2nd, 3rd correction, etc.) we would like to have the latest result
         // getLatestResult
         if (!results.isEmpty()) {
             return results.get(results.size() - 1);
         }
         return null;
+    }
+
+    /**
+     * Is used as a workaround for objects that expect submission to have 1 result
+     *
+     * @return the latest result
+     */
+    @Nullable
+    @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
+    public List<Result> getResults() {
+        return results;
     }
 
     /**

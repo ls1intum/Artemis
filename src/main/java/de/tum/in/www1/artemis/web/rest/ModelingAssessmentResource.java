@@ -166,7 +166,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise, user);
 
-        Result result = assessmentService.updateAssessmentAfterComplaint(modelingSubmission.getResult(), modelingExercise, assessmentUpdate);
+        Result result = assessmentService.updateAssessmentAfterComplaint(modelingSubmission.getLatestResult(), modelingExercise, assessmentUpdate);
 
         if (compassService.isSupported(modelingExercise)) {
             compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());

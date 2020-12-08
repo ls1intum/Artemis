@@ -58,7 +58,7 @@ public class ModelingSubmissionService extends SubmissionService {
     public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
-        if (modelingSubmission.getResult() == null || modelingSubmission.getResult().getAssessor() == null) {
+        if (modelingSubmission.getLatestResult() == null || modelingSubmission.getLatestResult().getAssessor() == null) {
             checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
         }
@@ -211,7 +211,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return the updated modeling submission
      */
     private ModelingSubmission assignAutomaticResultToSubmission(ModelingSubmission modelingSubmission) {
-        Result existingResult = modelingSubmission.getResult();
+        Result existingResult = modelingSubmission.getLatestResult();
         if (existingResult != null && existingResult.getAssessmentType() != null && existingResult.getAssessmentType().equals(AssessmentType.MANUAL)) {
             return modelingSubmission;
         }
