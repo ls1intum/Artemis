@@ -887,10 +887,21 @@ public class BambooService implements ContinuousIntegrationService {
                 continue;
             }
 
-            // Replace some unnecessary information and hide complex details to make it easier to read the important information
-            logString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
+            // filter unnecessary Swift logs
+            if (logString.contains("Unable to find image") || logString.contains(": Pull") || logString.contains(": Waiting") || logString.contains(": Verifying")
+                    || logString.contains(": Download") || logString.startsWith("Digest:") || logString.startsWith("Status:") || logString.contains("github.com")
+                    || logString.startsWith("Linting Swift")) {
+                continue;
+            }
 
-            filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), logString, unfilteredBuildLog.getProgrammingSubmission()));
+            // Replace some unnecessary information and hide complex details to make it easier to read the important information
+            final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
+
+            // Avoid duplicate log entries
+            var existingLog = filteredBuildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
+            if (existingLog.isEmpty()) {
+                filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), shortenedLogString, unfilteredBuildLog.getProgrammingSubmission()));
+            }
         }
 
         return filteredBuildLogs;

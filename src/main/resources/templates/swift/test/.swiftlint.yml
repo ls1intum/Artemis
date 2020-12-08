@@ -340,7 +340,7 @@ line_length: # Lines should not span too many characters.
 nesting: # Types should be nested at most 2 level deep, and statements should be nested at most 5 levels deep.
   type_level:
     warning: 2 # warning - default: 1
-  statement_level:
+  function_level:
     warning: 5 # warning - default: 5
 
 trailing_closure:
