@@ -889,8 +889,7 @@ public class BambooService implements ContinuousIntegrationService {
 
             // filter unnecessary Swift logs
             if (logString.contains("Unable to find image") || logString.contains(": Pull") || logString.contains(": Waiting") || logString.contains(": Verifying")
-                    || logString.contains(": Download") || logString.startsWith("Digest:") || logString.startsWith("Status:") || logString.contains("github.com")
-                    || logString.startsWith("Linting Swift")) {
+                    || logString.contains(": Download") || logString.startsWith("Digest:") || logString.startsWith("Status:") || logString.contains("github.com")) {
                 continue;
             }
 
