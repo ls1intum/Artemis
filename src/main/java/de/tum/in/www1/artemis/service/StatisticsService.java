@@ -1,11 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.YearMonth;
-import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.*;
+import java.util.*;
 
 import org.springframework.stereotype.Service;
 
@@ -33,7 +29,7 @@ public class StatisticsService {
         ZonedDateTime endDate;
         List<Map<String, Object>> outcome;
         ZonedDateTime now = ZonedDateTime.now();
-        Integer lengthOfMonth = YearMonth.of(now.getYear(), now.minusMonths(1).getMonth()).lengthOfMonth();
+        int lengthOfMonth = YearMonth.of(now.getYear(), now.minusMonths(1).getMonth()).lengthOfMonth();
 
         // A map to manage the spanTypes and the corresponding array length of the result
         Map<SpanType, Integer> spanMap = new HashMap<>();
@@ -47,7 +43,7 @@ public class StatisticsService {
             case DAY:
                 startDate = now.minusDays(-periodIndex).withHour(0).withMinute(0).withSecond(0);
                 endDate = now.minusDays(-periodIndex).withHour(23).withMinute(59).withSecond(59);
-                outcome = this.statisticsRepository.getTotalSubmissions(startDate, endDate);
+                outcome = this.statisticsRepository.getTotalSubmissionsDay(startDate, endDate);
                 return createSubmissionCountArrayForDay(outcome, result, endDate);
             case WEEK:
                 startDate = now.minusWeeks(-periodIndex).minusDays(6).withHour(0).withMinute(0).withSecond(0);
@@ -103,7 +99,8 @@ public class StatisticsService {
      */
     private Integer[] createSubmissionCountArrayForWeek(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime currentDate) {
         for (Map<String, Object> map : outcome) {
-            ZonedDateTime date = (ZonedDateTime) map.get("day");
+            LocalDate localDate = LocalDate.parse(map.get("day").toString());
+            ZonedDateTime date = localDate.atStartOfDay(ZoneId.systemDefault());
             Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
             for (int i = 0; i < 7; i++) {
                 if (date.getDayOfMonth() == currentDate.minusDays(i).getDayOfMonth()) {
@@ -125,7 +122,8 @@ public class StatisticsService {
      */
     private Integer[] createSubmissionCountArrayForMonth(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime currentDate) {
         for (Map<String, Object> map : outcome) {
-            ZonedDateTime date = (ZonedDateTime) map.get("day");
+            LocalDate localDate = LocalDate.parse(map.get("day").toString());
+            ZonedDateTime date = localDate.atStartOfDay(ZoneId.systemDefault());
             Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
             for (int i = 0; i < result.length; i++) {
                 if (date.getDayOfMonth() == currentDate.minusDays(i).getDayOfMonth()) {
@@ -147,7 +145,8 @@ public class StatisticsService {
      */
     private Integer[] createSubmissionCountArrayForYear(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime currentDate) {
         for (Map<String, Object> map : outcome) {
-            ZonedDateTime date = (ZonedDateTime) map.get("day");
+            LocalDate localDate = LocalDate.parse(map.get("day").toString());
+            ZonedDateTime date = localDate.atStartOfDay(ZoneId.systemDefault());
             Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
             for (int i = 0; i < 12; i++) {
                 if (date.getMonth() == currentDate.minusMonths(i).getMonth() && date.getYear() == currentDate.minusMonths(i).getYear()) {
@@ -156,5 +155,47 @@ public class StatisticsService {
             }
         }
         return result;
+    }
+
+    public Integer[] getActiveUsers(SpanType span, Integer periodIndex) {
+        ZonedDateTime startDate;
+        ZonedDateTime endDate;
+        List<Map<String, Object>> outcome;
+        ZonedDateTime now = ZonedDateTime.now();
+        int lengthOfMonth = YearMonth.of(now.getYear(), now.minusMonths(1).getMonth()).lengthOfMonth();
+
+        // A map to manage the spanTypes and the corresponding array length of the result
+        Map<SpanType, Integer> spanMap = new HashMap<>();
+        spanMap.put(SpanType.DAY, 24);
+        spanMap.put(SpanType.WEEK, 7);
+        spanMap.put(SpanType.MONTH, lengthOfMonth);
+        spanMap.put(SpanType.YEAR, 12);
+        Integer[] result = new Integer[spanMap.get(span)];
+        Arrays.fill(result, 0);
+        switch (span) {
+            case DAY:
+                startDate = now.minusDays(-periodIndex).withHour(0).withMinute(0).withSecond(0);
+                endDate = now.minusDays(-periodIndex).withHour(23).withMinute(59).withSecond(59);
+                outcome = this.statisticsRepository.getActiveUsersDay(startDate, endDate);
+                return createSubmissionCountArrayForDay(outcome, result, endDate);
+            case WEEK:
+                startDate = now.minusWeeks(-periodIndex).minusDays(6).withHour(0).withMinute(0).withSecond(0);
+                endDate = now.minusWeeks(-periodIndex).withHour(23).withMinute(59).withSecond(59);
+                outcome = this.statisticsRepository.getActiveUsers(startDate, endDate);
+                return createSubmissionCountArrayForWeek(outcome, result, endDate);
+            case MONTH:
+                startDate = now.minusMonths(1 - periodIndex).plusDays(1).withHour(0).withMinute(0).withSecond(0);
+                endDate = now.minusMonths(-periodIndex).withHour(23).withMinute(59).withSecond(59);
+                outcome = this.statisticsRepository.getActiveUsers(startDate, endDate);
+                return createSubmissionCountArrayForMonth(outcome, result, endDate);
+            case YEAR:
+                startDate = now.minusYears(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+                lengthOfMonth = YearMonth.of(now.minusYears(-periodIndex).getYear(), now.minusYears(-periodIndex).getMonth()).lengthOfMonth();
+                endDate = now.minusYears(-periodIndex).withDayOfMonth(lengthOfMonth).withHour(23).withMinute(59).withSecond(59);
+                outcome = this.statisticsRepository.getActiveUsers(startDate, endDate);
+                return createSubmissionCountArrayForYear(outcome, result, endDate);
+            default:
+                return null;
+        }
     }
 }

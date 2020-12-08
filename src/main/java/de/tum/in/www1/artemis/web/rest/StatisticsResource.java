@@ -29,7 +29,8 @@ public class StatisticsResource {
     /**
      * GET management/statistics/submissions : get the amount of submissions made in the last "span" days.
      *
-     * @param span the period of which the amount should be calculated
+     * @param span the spantime of which the amount should be calculated
+     * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      * @return the ResponseEntity with status 200 (OK) and the amount of submissions in body, or status 404 (Not Found)
      */
     @GetMapping("management/statistics/submissions")
@@ -37,6 +38,20 @@ public class StatisticsResource {
     public ResponseEntity<Integer[]> getTotalSubmissions(@RequestParam SpanType span, @RequestParam Integer periodIndex) {
         log.debug("REST request to get amount of submission in the last {} days", span);
         return ResponseEntity.ok(this.service.getTotalSubmissions(span, periodIndex));
+    }
+
+    /**
+     * GET management/statistics/active-users : get the amount of active users in the last "span" days.
+     *
+     * @param span the spantime of which the amount should be calculated
+     * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
+     * @return the ResponseEntity with status 200 (OK) and the amount of active users in body, or status 404 (Not Found)
+     */
+    @GetMapping("management/statistics/active-users")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Integer[]> getActiveUsers(@RequestParam SpanType span, @RequestParam Integer periodIndex) {
+        log.debug("REST request to get amount of submission in the last {} days", span);
+        return ResponseEntity.ok(this.service.getActiveUsers(span, periodIndex));
     }
 
 }

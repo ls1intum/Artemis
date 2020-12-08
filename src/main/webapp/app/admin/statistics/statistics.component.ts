@@ -5,7 +5,7 @@ import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { SpanType } from 'app/entities/statistics.model';
+import { Graphs, SpanType } from 'app/entities/statistics.model';
 
 @Component({
     selector: 'jhi-statistics',
@@ -16,17 +16,25 @@ export class StatisticsComponent implements OnInit {
     LEFT = false;
     RIGHT = true;
     SpanType = SpanType;
+    Graphs = Graphs;
     currentSpan: SpanType = SpanType.WEEK;
 
     // Histogram related properties
     public barChartOptions: ChartOptions = {};
     public barChartLabels: Label[] = [];
     public barChartType: ChartType = 'bar';
-    public barChartLegend = true;
-    public SubmissionsChartData: ChartDataSets[] = [];
     public amountOfStudents: string;
+    public barChartLegend = true;
+    // submissions
+    public SubmissionsChartData: ChartDataSets[] = [];
     public submissionsForSpanType: number[];
-    private currentSubmissionPeriod = 0; // left arrow -> decrease, right arrow -> increase
+    // active users
+    public activeUsersChartData: ChartDataSets[] = [];
+    public activeUsersForSpanType: number[];
+
+    // left arrow -> decrease, right arrow -> increase
+    private currentSubmissionPeriod = 0;
+    private currentActiveUsersPeriod = 0;
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
@@ -38,9 +46,30 @@ export class StatisticsComponent implements OnInit {
     }
     private initializeChart(): void {
         this.createLabels();
+        this.createChart();
         this.service.getTotalSubmissions(this.currentSpan, this.currentSubmissionPeriod).subscribe((res: number[]) => {
             this.submissionsForSpanType = res;
-            this.createChart();
+            this.SubmissionsChartData = [
+                {
+                    label: this.amountOfStudents,
+                    data: this.submissionsForSpanType,
+                    backgroundColor: 'rgba(53,61,71,1)',
+                    borderColor: 'rgba(53,61,71,1)',
+                    hoverBackgroundColor: 'rgba(53,61,71,1)',
+                },
+            ];
+        });
+        this.service.getActiveUsers(this.currentSpan, this.currentActiveUsersPeriod).subscribe((res: number[]) => {
+            this.activeUsersForSpanType = res;
+            this.activeUsersChartData = [
+                {
+                    label: this.amountOfStudents,
+                    data: this.activeUsersForSpanType,
+                    backgroundColor: 'rgba(53,61,71,1)',
+                    borderColor: 'rgba(53,61,71,1)',
+                    hoverBackgroundColor: 'rgba(53,61,71,1)',
+                },
+            ];
         });
     }
 
@@ -70,6 +99,7 @@ export class StatisticsComponent implements OnInit {
         this.currentSpan = span;
         this.barChartLabels = [];
         this.currentSubmissionPeriod = 0;
+        this.currentActiveUsersPeriod = 0;
         this.initializeChart();
     }
     private getMonths(): string[] {
@@ -124,15 +154,6 @@ export class StatisticsComponent implements OnInit {
     }
 
     private createChart() {
-        this.SubmissionsChartData = [
-            {
-                label: this.amountOfStudents,
-                data: this.submissionsForSpanType,
-                backgroundColor: 'rgba(53,61,71,1)',
-                borderColor: 'rgba(53,61,71,1)',
-                hoverBackgroundColor: 'rgba(53,61,71,1)',
-            },
-        ];
         this.barChartOptions = {
             responsive: true,
             hover: {
@@ -168,9 +189,17 @@ export class StatisticsComponent implements OnInit {
         };
     }
 
-    public switchTimeSpan(index: boolean): void {
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
-        index ? (this.currentSubmissionPeriod += 1) : (this.currentSubmissionPeriod -= 1);
+    public switchTimeSpan(graph: Graphs, index: boolean): void {
+        switch (graph) {
+            case Graphs.SUBMISSIONS:
+                // eslint-disable-next-line chai-friendly/no-unused-expressions
+                index ? (this.currentSubmissionPeriod += 1) : (this.currentSubmissionPeriod -= 1);
+                break;
+            case Graphs.ACTIVEUSERS:
+                // eslint-disable-next-line chai-friendly/no-unused-expressions
+                index ? (this.currentActiveUsersPeriod += 1) : (this.currentActiveUsersPeriod -= 1);
+                break;
+        }
         this.initializeChart();
     }
 }

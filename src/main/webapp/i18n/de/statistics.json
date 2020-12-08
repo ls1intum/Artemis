@@ -10,7 +10,7 @@
         "title": "Benutzer Statistiken",
         "days": " Tagen",
         "loggedInUsers": "Anzahl an Anmeldungen unterschiedlicher Benutzer in den letzten ",
-        "activeUsers": "Anzahl an Anmeldungen aktiver Benutzer in den letzten ",
+        "activeUsers": "Aktive Nutzer",
         "totalSubmissions": "Anzahl an Abgaben in den letzten ",
         "exercises": {
             "released": "Anzahl an veröffentlichten Aufgaben in den letzten ",

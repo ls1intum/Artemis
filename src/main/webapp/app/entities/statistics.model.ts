@@ -4,3 +4,8 @@ export enum SpanType {
     MONTH = 'MONTH',
     YEAR = 'YEAR',
 }
+
+export enum Graphs {
+    SUBMISSIONS = 'SUBMISSIONS',
+    ACTIVEUSERS = 'ACTIVEUSERS',
+}

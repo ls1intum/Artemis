@@ -17,4 +17,12 @@ export class StatisticsService {
         const params = new HttpParams().set('span', '' + span).set('periodIndex', '' + periodIndex);
         return this.http.get<number[]>(`${this.resourceUrl}submissions`, { params });
     }
+
+    /**
+     * Sends a GET request to retrieve the amount of active users made in the last *span* days
+     */
+    getActiveUsers(span: SpanType, periodIndex: number): Observable<number[]> {
+        const params = new HttpParams().set('span', '' + span).set('periodIndex', '' + periodIndex);
+        return this.http.get<number[]>(`${this.resourceUrl}active-users`, { params });
+    }
 }

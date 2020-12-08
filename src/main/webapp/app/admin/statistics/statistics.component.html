@@ -21,7 +21,13 @@
         <div class="col-md-2 d-flex">
             <div class="row flex-grow-1">
                 <h3 class="col-md-8 d-flex" jhiTranslate="statistics.submissions">Submissions</h3>
-                <fa-icon [icon]="'arrow-left'" size="3x" class="col-md-4 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
+                <fa-icon
+                    [icon]="'arrow-left'"
+                    size="3x"
+                    class="col-md-4 d-flex justify-content-end align-items-center"
+                    role="button"
+                    (click)="switchTimeSpan(Graphs.SUBMISSIONS, LEFT)"
+                ></fa-icon>
             </div>
         </div>
         <canvas
@@ -35,6 +41,45 @@
             [legend]="barChartLegend"
             [chartType]="barChartType"
         ></canvas>
-        <fa-icon [icon]="'arrow-right'" size="3x" class="col-md-1 d-flex justify-content-start align-items-center" role="button" (click)="switchTimeSpan(RIGHT)"></fa-icon>
+        <fa-icon
+            [icon]="'arrow-right'"
+            size="3x"
+            class="col-md-1 d-flex justify-content-start align-items-center"
+            role="button"
+            (click)="switchTimeSpan(Graphs.SUBMISSIONS, RIGHT)"
+        ></fa-icon>
+    </div>
+
+    <div class="row">
+        <div class="col-md-2 d-flex">
+            <div class="row flex-grow-1">
+                <h3 class="col-md-8 d-flex" jhiTranslate="statistics.activeUsers">Active users</h3>
+                <fa-icon
+                    [icon]="'arrow-left'"
+                    size="3x"
+                    class="col-md-4 d-flex justify-content-end align-items-center"
+                    role="button"
+                    (click)="switchTimeSpan(Graphs.ACTIVEUSERS, LEFT)"
+                ></fa-icon>
+            </div>
+        </div>
+        <canvas
+            class="col-md-9"
+            baseChart
+            height="250"
+            width="1500"
+            [datasets]="activeUsersChartData"
+            [labels]="barChartLabels"
+            [options]="barChartOptions"
+            [legend]="barChartLegend"
+            [chartType]="barChartType"
+        ></canvas>
+        <fa-icon
+            [icon]="'arrow-right'"
+            size="3x"
+            class="col-md-1 d-flex justify-content-start align-items-center"
+            role="button"
+            (click)="switchTimeSpan(Graphs.ACTIVEUSERS, RIGHT)"
+        ></fa-icon>
     </div>
 </div>

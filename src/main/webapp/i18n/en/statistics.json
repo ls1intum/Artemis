@@ -10,7 +10,7 @@
         "title": "User statistics",
         "days": " days",
         "loggedInUsers": "Amount of logins of distinct users in the last ",
-        "activeUsers": "Amount of logins of active users in the last ",
+        "activeUsers": "Active users",
         "totalSubmissions": "Total amount of submissions in the last ",
         "exercises": {
             "released": "Total amount of released exercises in the last ",
