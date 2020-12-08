@@ -21,7 +21,8 @@ export class StatisticsComponent implements OnInit {
 
     // Histogram related properties
     public barChartOptions: ChartOptions = {};
-    public barChartLabels: Label[] = [];
+    public submissionBarChartLabels: Label[] = [];
+    public activeUsersBarChartLabels: Label[] = [];
     public barChartType: ChartType = 'bar';
     public amountOfStudents: string;
     public barChartLegend = true;
@@ -45,7 +46,8 @@ export class StatisticsComponent implements OnInit {
         this.initializeChart();
     }
     private initializeChart(): void {
-        this.createLabels();
+        this.createSubmissionLabels();
+        this.createActiveUsersLabels();
         this.createChart();
         this.service.getTotalSubmissions(this.currentSpan, this.currentSubmissionPeriod).subscribe((res: number[]) => {
             this.submissionsForSpanType = res;
@@ -73,31 +75,53 @@ export class StatisticsComponent implements OnInit {
         });
     }
 
-    private createLabels(): void {
+    private createSubmissionLabels(): void {
         switch (this.currentSpan) {
             case SpanType.DAY:
                 for (let i = 0; i < 24; i++) {
-                    this.barChartLabels[i] = `${i}:00-${i + 1}:00`;
+                    this.submissionBarChartLabels[i] = `${i}:00-${i + 1}:00`;
                 }
                 break;
             case SpanType.WEEK:
-                this.barChartLabels = this.getWeekdays();
+                this.submissionBarChartLabels = this.getWeekdays();
                 break;
             case SpanType.MONTH:
                 const startDate = moment().subtract(1 - this.currentSubmissionPeriod, 'months');
                 const endDate = moment().subtract(-this.currentSubmissionPeriod, 'months');
                 const daysInMonth = endDate.diff(startDate, 'days');
-                this.barChartLabels = this.getLabelsForMonth(daysInMonth);
+                this.submissionBarChartLabels = this.getSubmissionLabelsForMonth(daysInMonth);
                 break;
             case SpanType.YEAR:
-                this.barChartLabels = this.getMonths();
+                this.submissionBarChartLabels = this.getMonths();
+                break;
+        }
+    }
+    private createActiveUsersLabels(): void {
+        switch (this.currentSpan) {
+            case SpanType.DAY:
+                for (let i = 0; i < 24; i++) {
+                    this.activeUsersBarChartLabels[i] = `${i}:00-${i + 1}:00`;
+                }
+                break;
+            case SpanType.WEEK:
+                this.activeUsersBarChartLabels = this.getWeekdays();
+                break;
+            case SpanType.MONTH:
+                const startDate = moment().subtract(1 - this.currentActiveUsersPeriod, 'months');
+                const endDate = moment().subtract(-this.currentActiveUsersPeriod, 'months');
+                const daysInMonth = endDate.diff(startDate, 'days');
+                this.activeUsersBarChartLabels = this.getActiveUsersLabelsForMonth(daysInMonth);
+                break;
+            case SpanType.YEAR:
+                this.activeUsersBarChartLabels = this.getMonths();
                 break;
         }
     }
 
     onTabChanged(span: SpanType): void {
         this.currentSpan = span;
-        this.barChartLabels = [];
+        this.submissionBarChartLabels = [];
+        this.activeUsersBarChartLabels = [];
         this.currentSubmissionPeriod = 0;
         this.currentActiveUsersPeriod = 0;
         this.initializeChart();
@@ -123,13 +147,27 @@ export class StatisticsComponent implements OnInit {
         return back.concat(front);
     }
 
-    private getLabelsForMonth(daysInMonth: number): string[] {
+    private getSubmissionLabelsForMonth(daysInMonth: number): string[] {
         const days: string[] = [];
 
         for (let i = 0; i < daysInMonth; i++) {
             days.push(
                 moment()
                     .subtract(-this.currentSubmissionPeriod, 'months')
+                    .subtract(daysInMonth - 1 - i, 'days')
+                    .format('DD.MM'),
+            );
+        }
+        return days;
+    }
+
+    private getActiveUsersLabelsForMonth(daysInMonth: number): string[] {
+        const days: string[] = [];
+
+        for (let i = 0; i < daysInMonth; i++) {
+            days.push(
+                moment()
+                    .subtract(-this.currentActiveUsersPeriod, 'months')
                     .subtract(daysInMonth - 1 - i, 'days')
                     .format('DD.MM'),
             );

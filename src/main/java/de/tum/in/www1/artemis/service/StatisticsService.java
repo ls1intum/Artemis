@@ -29,7 +29,7 @@ public class StatisticsService {
         ZonedDateTime endDate;
         List<Map<String, Object>> outcome;
         ZonedDateTime now = ZonedDateTime.now();
-        int lengthOfMonth = YearMonth.of(now.getYear(), now.minusMonths(1).getMonth()).lengthOfMonth();
+        int lengthOfMonth = YearMonth.of(now.getYear(), now.minusMonths(1 - periodIndex).plusDays(1).getMonth()).lengthOfMonth();
 
         // A map to manage the spanTypes and the corresponding array length of the result
         Map<SpanType, Integer> spanMap = new HashMap<>();
@@ -162,7 +162,7 @@ public class StatisticsService {
         ZonedDateTime endDate;
         List<Map<String, Object>> outcome;
         ZonedDateTime now = ZonedDateTime.now();
-        int lengthOfMonth = YearMonth.of(now.getYear(), now.minusMonths(1).getMonth()).lengthOfMonth();
+        int lengthOfMonth = YearMonth.of(now.getYear(), now.minusMonths(1 - periodIndex).plusDays(1).getMonth()).lengthOfMonth();
 
         // A map to manage the spanTypes and the corresponding array length of the result
         Map<SpanType, Integer> spanMap = new HashMap<>();
