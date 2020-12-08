@@ -15,9 +15,10 @@ describe('User Management Update Component', () => {
     let fixture: ComponentFixture<UserManagementUpdateComponent>;
     let service: UserService;
     let mockLanguageHelper: any;
-    const route = ({
+    const parentRoute = ({
         data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.USER], ['admin'], undefined, undefined, undefined) }),
     } as any) as ActivatedRoute;
+    const route = ({ parent: parentRoute } as any) as ActivatedRoute;
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({

@@ -9,6 +9,7 @@ export const exampleTextSubmissionRoute: Routes = [
         component: ExampleTextSubmissionComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.exampleSubmission.home.title',
         },
         canActivate: [UserRouteAccessService],
