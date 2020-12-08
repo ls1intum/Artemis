@@ -5,7 +5,7 @@ LABEL description="Bamboo pre-configured for Artemis"
 USER root
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     maven \
     software-properties-common \
     apt-utils
@@ -22,7 +22,7 @@ ENV SWIFT_BRANCH swift-5.3.1-release
 ENV SWIFT_PLATFORM ubuntu18.04
 ENV SWIFT_VERSION 5.3.1-RELEASE
 # install Swift and SwiftLint
-RUN apt-get install -y \
+RUN apt-get install -y --no-install-recommends \
     gnupg2 \
     libcurl4-openssl-dev \
     libxml2-dev \
