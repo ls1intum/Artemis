@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -142,7 +143,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        modelingSubmission.setResult(null);
+        modelingSubmission.setResults(new ArrayList<Result>());
 
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here!

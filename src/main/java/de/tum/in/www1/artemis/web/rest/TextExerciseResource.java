@@ -9,10 +9,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 import jplag.ExitException;
@@ -593,7 +590,7 @@ public class TextExerciseResource {
         final List<TextSubmission> textSubmissions = textPlagiarismDetectionService.textSubmissionsForComparison(textExercise);
         textSubmissions.forEach(submission -> {
             submission.getParticipation().setExercise(null);
-            submission.setResult(null);
+            submission.setResults(new ArrayList<Result>());
             submission.getParticipation().setSubmissions(null);
         });
 

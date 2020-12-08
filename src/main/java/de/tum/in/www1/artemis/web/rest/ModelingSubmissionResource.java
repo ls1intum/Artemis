@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.security.Principal;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -366,7 +363,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // do not send the result to the client if the assessment is not finished
         if (modelingSubmission.getLatestResult() != null
                 && (modelingSubmission.getLatestResult().getCompletionDate() == null || modelingSubmission.getLatestResult().getAssessor() == null)) {
-            modelingSubmission.setResult(null);
+            modelingSubmission.setResults(new ArrayList<Result>());
         }
 
         if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {

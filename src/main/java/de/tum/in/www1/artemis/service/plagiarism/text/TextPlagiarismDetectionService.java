@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
@@ -117,7 +118,7 @@ public class TextPlagiarismDetectionService {
         final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise);
 
         textSubmissions.forEach(submission -> {
-            submission.setResult(null);
+            submission.setResults(new ArrayList<Result>());
 
             StudentParticipation participation = (StudentParticipation) submission.getParticipation();
             participation.setExercise(null);

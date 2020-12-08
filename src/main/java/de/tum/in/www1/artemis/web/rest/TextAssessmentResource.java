@@ -231,7 +231,7 @@ public class TextAssessmentResource extends AssessmentResource {
         participation.setResults(Set.of(result));
 
         // Remove Result from Submission, as it is send in participation.results[0]
-        textSubmission.setResult(null);
+        textSubmission.setResults(new ArrayList<Result>());
 
         // Remove Submission from Result
         result.setSubmission(null);

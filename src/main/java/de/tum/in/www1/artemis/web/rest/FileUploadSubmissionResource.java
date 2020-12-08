@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -295,7 +296,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         // do not send the result to the client if the assessment is not finished
         if (fileUploadSubmission.getLatestResult() != null
                 && (fileUploadSubmission.getLatestResult().getCompletionDate() == null || fileUploadSubmission.getLatestResult().getAssessor() == null)) {
-            fileUploadSubmission.setResult(null);
+            fileUploadSubmission.setResults(new ArrayList<Result>());
         }
 
         // do not send the assessor information to students
