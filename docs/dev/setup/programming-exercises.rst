@@ -60,3 +60,30 @@ Note that the ``Jenkinsfile`` **must** start either
 The variables `#dockerImage`, `#testRepository`, `#assignmentRepository`, `#jenkinsNotificationToken` and `#notificationsUrl` will automatically be replaced (for the normal Jenkinsfile, within the Jenkinsfile-staticCodeAnalysis, #staticCodeAnalysisScript is also replaced).
 
 You should not need to touch any of these variables, except the `#dockerImage` variable, if you want to use a different agent setup (e.g. a Kubernetes setup).
+
+
+Caching example for Maven
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Adjust the agent-args and add the environment block.
+
+
+.. code:: bash
+
+        agent {
+            docker {
+                image '#dockerImage'
+                label 'docker'
+                args '-v $HOME/maven-cache-docker:/var/maven'
+            }
+        }
+        environment {
+          JAVA_TOOL_OPTIONS = '-Duser.home=/var/maven'
+        }
+        stages {
+            stage('Checkout') {
+
+
+
+You have to add permissions to the folder (which will be located at the $HOME folder of the user that jenkins uses): ``sudo chmod 777 maven-cache-docker -R``.
+
+Note that this might allow students to access shared resources (e.g. jars used by Maven), and they might be able to overwrite them.

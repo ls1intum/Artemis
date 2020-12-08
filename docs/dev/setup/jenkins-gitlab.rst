@@ -372,33 +372,16 @@ Start Jenkins
             --restart always \
             -v jenkins_data:/var/jenkins_home \
             -v /var/run/docker.sock:/var/run/docker.sock \
+            -v /usr/bin/docker:/usr/bin/docker:ro \
             -e VIRTUAL_HOST=your.jenkins.domain -e VIRTUAL_PORT=8080 \    # Alternative 1: If you are NOT using a separate NGINX instance
             -e LETSENCRYPT_HOST=your.jenkins.domain \                     # Only needed if Alternative 1 is used
             -p <some port of your choosing>:8080 \                        # Alternative 2: If you ARE using a separate NGINX instance
-            jenkins-artemis
+            -u root \
+            jenkins/jenkins:lts
 
-    For jenkins to be able to read data from the volume you might need to allow the jenkins user to read the jenkins_data folder.
-    One way to do that is transfer the ownership to the user with id 1000 which is normally the user the jenkins process runs with.
-    ::
+    If you still need the old setup with python & maven installed locally, use `jenkins-artemis` instead of `jenkins/jenkins:lts`
 
-        sudo chown -R 1000 jenkins_data/
-
-8.  Wait until the docker container has started and Jenkins is running.
-
-9.  Run the following commands to navigate into the docker container and
-    check the Maven and JDK version
-
-    ::
-
-        sudo docker exec -it jenkins /bin/bash
-
-        mvn -version
-
-    This should print ``Maven 3.x`` as Maven version, ``Java 15`` as
-    Java version and ``/usr/lib/jvm/java-15-openjdk-amd64`` as Java
-    home.
-
-10. Open Jenkins in your browser (e.g. ``localhost:8080``) and setup the
+8. Open Jenkins in your browser (e.g. ``localhost:8080``) and setup the
     admin user account (install all suggested plugins). You can get the
     initial admin password using the following command.
 
@@ -409,7 +392,7 @@ Start Jenkins
        or alternatively
        docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
-11. Set the chosen credentials in the Artemis configuration
+9. Set the chosen credentials in the Artemis configuration
     *application-artemis.yml*
 
     .. code:: yaml
@@ -418,19 +401,6 @@ Start Jenkins
            continuous-integration:
                user: your.chosen.username
                password: your.chosen.password
-
-12. Setup JDK 15 in Jenkins Settings
-
-    Navigate in your browser into Jenkins → Manage Jenkins → Global Tool
-    Configuration → JDK. Change the existing JDK installation or click
-    on Add JDK.
-
-    Use ``OpenJDK 15`` as Name and
-    ``/usr/lib/jvm/java-15-openjdk-amd64`` as JAVA_HOME
-
-   .. figure:: jenkins-gitlab/jenkins_jdk_config.png
-      :align: center
-
 Required Jenkins Plugins
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -661,6 +631,23 @@ the following steps:
     Have a look `here <https://unix.stackexchange.com/questions/444177/how-to-disable-the-csrf-protection-in-jenkins-by-default>`__ on how you can disable CSRF protection.
 
 
+Build agents
+^^^^^^^^^^^^
+
+You can either run the builds locally (that means on the machine that hosts Jenkins) or on remote build agents.
+
+Configuring local build agents
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Go to `Manage Jenkins` > `Manage Nodes and Clouds` > `master`
+Configure your master node like this  (adjust the number of executors, if needed). Make sure to add the docker label.
+
+   .. figure:: jenkins-gitlab/jenkins_local_node.png
+      :align: center
+
+      Jenkins local node
+
+
 Installing remote build agents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 You might want to run the builds on additional Jenkins agents, especially if a large amount of students should use the system at the same time.
@@ -719,6 +706,14 @@ Prerequisites:
       Adjust Jenkins master node settings
 
 11. You are finished, the new agent should now also process builds.
+
+
+
+Caching
+-------
+
+You can configure caching for e.g. Maven repositories.
+See :doc:`programming-exercises` for more details.
 
 
 Upgrade Jenkins
