@@ -51,6 +51,28 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
     }
 }
 
+/**
+ *
+ * @param submission
+ * @param result
+ *
+ * @return the index of the latestSubmissionResult or undefined if any of the params was undefined
+ */
+export function setLatestSubmissionResult(submission: Submission | undefined, result: Result | undefined): number | undefined {
+    checkForResultsLength(submission);
+
+    if (!submission || !result) {
+        return undefined;
+    }
+
+    if (submission.results) {
+        submission.results[submission.results.length - 1] = result;
+    } else {
+        submission.results = [result];
+    }
+    return submission.results.length - 1;
+}
+
 export function getFirstResult(submission: Submission | undefined): Result | undefined {
     checkForResultsLength(submission);
     if (submission?.results) {

@@ -22,7 +22,7 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -209,7 +209,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
 
             this.assessmentsService.getExampleResult(this.exerciseId, this.textSubmission.id!).subscribe((result) => {
                 this.result = result;
-                this.assessments = this.result.feedbacks || [];
+                this.assessments = this.result?.feedbacks || [];
                 this.areNewAssessments = this.assessments.length <= 0;
                 this.checkScoreBoundaries();
             });
@@ -400,11 +400,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         const exampleSubmission = Object.assign({}, this.exampleSubmission);
         if (exampleSubmission.submission) {
             const result = getLatestSubmissionResult(exampleSubmission.submission);
-            if (result) {
-                exampleSubmission.submission.results![result.result_order] = new Result();
-            } else {
-                exampleSubmission.submission.results![0] = new Result();
-            }
+            setLatestSubmissionResult(exampleSubmission.submission, result);
             getLatestSubmissionResult(exampleSubmission.submission)!.feedbacks = this.assessments;
         }
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(

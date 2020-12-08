@@ -100,9 +100,8 @@ export class TextAssessmentsService {
                     const participation = response.body!;
                     const submission = participation.submissions![0];
                     submission.participation = participation;
-                    const result = participation.results![0];
-                    const tmpResult = getLatestSubmissionResult(submission)!;
-                    submission.results![tmpResult?.result_order] = result;
+                    submission.results = participation.results!;
+                    const result = getLatestSubmissionResult(submission)!;
                     result.submission = submission;
                     result.participation = participation;
                     // Make sure Feedbacks Array is initialized

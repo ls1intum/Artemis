@@ -9,7 +9,7 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { get } from 'lodash';
 import { HttpErrorResponse } from '@angular/common/http';
-import { getLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
@@ -79,8 +79,7 @@ export class TeamParticipationTableComponent implements OnInit {
             exercise.participation = participation;
             exercise.submission = get(exercise, 'participation.submissions[0]', null); // only exists for instructor and team tutor
             if (exercise.submission) {
-                const tmpResult = getLatestSubmissionResult(exercise.submission)!;
-                exercise.submission.results![tmpResult?.result_order] = get(exercise, 'participation.results[0]', null);
+                setLatestSubmissionResult(exercise.submission, get(exercise, 'participation.results[0]', null));
                 // assign this value so that it can be used later on in the view hierarchy (e.g. when updating a result, i.e. overriding an assessment
                 if (exercise.submission.results) {
                     getLatestSubmissionResult(exercise.submission)!.participation = participation;

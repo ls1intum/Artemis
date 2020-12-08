@@ -25,7 +25,7 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { getLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Result } from 'app/entities/result.model';
@@ -126,13 +126,8 @@ describe('FileUploadAssessmentComponent', () => {
         comp.result.assessmentType = AssessmentType.MANUAL;
         comp.result.exampleResult = false;
         comp.result.hasComplaint = false;
-        const tmpResult = getLatestSubmissionResult(comp.submission);
-        if (tmpResult) {
-            comp.submission.results![tmpResult.result_order] = comp.result;
-        } else {
-            comp.submission.results = [];
-            comp.submission.results![0] = comp.result;
-        }
+        setLatestSubmissionResult(comp.submission, comp.result);
+        getLatestSubmissionResult(comp.submission);
         comp.submission.participation!.submissions = [comp.submission];
         comp.submission.participation!.results = [getLatestSubmissionResult(comp.submission)!];
         comp.isAssessor = true;

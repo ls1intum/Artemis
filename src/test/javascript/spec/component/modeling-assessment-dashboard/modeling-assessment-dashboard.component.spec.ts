@@ -25,8 +25,8 @@ import { SortService } from 'app/shared/service/sort.service';
 const route = { params: of({ courseId: 3, exerciseId: 22 }) };
 const course = { id: 1 };
 const modelingExercise = { id: 22, course_id: course.id, type: ExerciseType.MODELING, studentAssignedTeamIdComputed: true, assessmentType: AssessmentType.SEMI_AUTOMATIC };
-const modelingSubmission = { id: 1, submitted: true, results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [] }, result_order: 0 }] };
-const modelingSubmission2 = { id: 2, submitted: true, results: [{ id: 20, assessor: { id: 30, guidedTourSettings: [] }, result_order: 0 }] };
+const modelingSubmission = { id: 1, submitted: true, results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [] } }] };
+const modelingSubmission2 = { id: 2, submitted: true, results: [{ id: 20, assessor: { id: 30, guidedTourSettings: [] } }] };
 const userId = 30;
 
 describe('ModelingAssessmentDashboardComponent', () => {

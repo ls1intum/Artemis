@@ -128,7 +128,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                         ],
                     } as unknown) as Result,
                 ],
-                result_order: 0,
             } as unknown) as ModelingSubmission;
 
             modelingSubmissionStub.returns(of(submission));
@@ -256,7 +255,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                 rated: true,
                 hasFeedback: true,
                 hasComplaint: false,
-                result_order: 0,
             } as unknown) as Result,
         ];
         getLatestSubmissionResult(component.submission)!.feedbacks = [
@@ -302,7 +300,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                 rated: true,
                 hasFeedback: true,
                 hasComplaint: false,
-                result_order: 0,
             } as unknown) as Result,
         ];
         getLatestSubmissionResult(component.submission)!.feedbacks = [

@@ -24,7 +24,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess-new/text-assessment-base.component';
 import { now } from 'moment';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -239,7 +239,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             newFeedback.conflictingTextAssessments = this.result?.feedbacks?.find((feedback) => feedback.id === newFeedback.id)?.conflictingTextAssessments;
         });
         this.result = response.body!;
-        this.submission!.results![this.result!.result_order] = this.result;
+        setLatestSubmissionResult(this.submission, this.result);
         this.saveBusy = this.submitBusy = false;
     }
 
