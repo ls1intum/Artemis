@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -41,6 +42,8 @@ public class StudentExamService {
 
     private final ExamService examService;
 
+    private final SubmissionService submissionService;
+
     private final QuizSubmissionRepository quizSubmissionRepository;
 
     private final TextSubmissionRepository textSubmissionRepository;
@@ -53,14 +56,15 @@ public class StudentExamService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    public StudentExamService(StudentExamRepository studentExamRepository, ExamService examService, UserService userService, ParticipationService participationService,
-            QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
-            SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository) {
+    public StudentExamService(StudentExamRepository studentExamRepository, ExamService examService, UserService userService, SubmissionService submissionService,
+            ParticipationService participationService, QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository,
+            ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.examService = examService;
         this.userService = userService;
+        this.submissionService = submissionService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -243,6 +247,38 @@ public class StudentExamService {
                             log.error("Submission version could not be saved: " + ex);
                         }
                     }
+                }
+            }
+        }
+    }
+
+    /**
+     * Automatically assess the modeling- and programming exercises of student exams of an exam which are not submitted with 0 points.
+     * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment,
+     * see {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation}.
+     * The assessor is current instructor who made the request.
+     *
+     * @param examId the exam id
+     */
+    public void automaticallyAssessUnsubmittedExams(final Long examId) {
+        User instructor = userService.getUser();
+        Set<StudentExam> unsubmittedStudentExams = findAllUnsubmittedStudentExams(examId);
+        Map<User, List<Exercise>> userWithExamExercises = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
+                .stream().filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
+        for (final var user : userWithExamExercises.keySet()) {
+            final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), userWithExamExercises.get(user));
+            for (final var studentParticipation : studentParticipations) {
+                if (studentParticipation.findLatestSubmission().isPresent()) {
+                    // get last submission
+                    final var latestSubmission = studentParticipation.findLatestSubmission().get();
+                    // create result with 0 points
+                    Result result = new Result();
+                    result.setParticipation(studentParticipation);
+                    result.setAssessor(instructor);
+                    result.setCompletionDate(ZonedDateTime.now());
+                    result.setScore(0L);
+                    result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+                    submissionService.saveNewResult(latestSubmission, result);
                 }
             }
         }
