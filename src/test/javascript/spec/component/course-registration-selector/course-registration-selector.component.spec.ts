@@ -89,6 +89,22 @@ describe('CourseRegistrationSelectorComponent', () => {
         expect(component.coursesToSelect.length).to.equal(1);
     }));
 
+    it('should wait until timeout', fakeAsync(() => {
+        const course1 = new Course();
+        course1.id = 1;
+        const course2 = new Course();
+        course2.id = 2;
+        const fake = sinon.fake.returns(of(new HttpResponse({ body: [course1] })));
+        component.courses = [course1, course2];
+        sinon.replace(courseService, 'findAllToRegister', fake);
+
+        component.startRegistration();
+        tick(4000);
+
+        expect(component.courseToRegister).to.be.undefined;
+        expect(component.showCourseSelection).to.be.false;
+    }));
+
     it('should  register for course', fakeAsync(() => {
         const course = new Course();
         course.id = 1;
