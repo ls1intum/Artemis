@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, Subscription, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
-import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
+import { cloneDeep, differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
@@ -315,6 +315,13 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
         const testCaseUpdates = testCasesToUpdate.map((testCase) => ProgrammingExerciseTestCaseUpdate.from(testCase));
 
+        const isSumOfWeightsOK = this.isSumOfWeightsGreaterThanZero(testCaseUpdates);
+        if (!isSumOfWeightsOK) {
+            this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.weightSumError`);
+            this.isSaving = false;
+            return;
+        }
+
         const saveTestCases = this.gradingService.updateTestCase(this.exercise.id!, testCaseUpdates).pipe(
             tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
                 // From successfully updated test cases from dirty checking list.
@@ -526,5 +533,23 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 catchError(() => of(null)),
             )
             .subscribe();
+    }
+
+    private isSumOfWeightsGreaterThanZero(testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): boolean {
+        // Copy the existing test cases and update the changed ones
+        const copyTestCases = cloneDeep(this.testCases);
+        testCaseUpdates.forEach((testCaseUpdate) => {
+            const index = copyTestCases.findIndex((testCase) => testCase.id === testCaseUpdate.id);
+            if (index !== -1) {
+                copyTestCases[index] = testCaseUpdate;
+            }
+        });
+        // Make sure that the at least one test weight is greater than 0, so that students can still reach a score of 100%
+        const sumOfWeightNewTestCases = copyTestCases.reduce((sum, testCase) => sum + (testCase.weight ?? 0), 0);
+        if (sumOfWeightNewTestCases <= 0) {
+            return false;
+        } else {
+            return true;
+        }
     }
 }
