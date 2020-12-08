@@ -139,7 +139,9 @@ public class ExamQuizService {
 
                 // add result to submission
                 result.setSubmission(quizSubmission);
-                quizSubmission.setResult(result);
+                ArrayList<Result> a = new ArrayList<Result>();
+                a.add(result);
+                quizSubmission.setResults(a);
                 quizSubmissionRepository.save(quizSubmission);
 
                 // Add result so that it can be returned (and processed later)

@@ -576,7 +576,7 @@ public class BambooService implements ContinuousIntegrationService {
             var buildLogs = extractAndPrepareBuildLogs(buildResult, programmingSubmission);
             programmingSubmission = programmingSubmissionRepository.findWithEagerResultsAndBuildLogEntriesById(programmingSubmission.getId()).get();
             result.setSubmission(programmingSubmission);
-            programmingSubmission.setResult(result);
+            programmingSubmission.replaceLatestOrIfEmptyAddResult(result);
             // Set the received logs in order to avoid duplicate entries (this removes existing logs)
             programmingSubmission.setBuildLogEntries(buildLogs);
             programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);

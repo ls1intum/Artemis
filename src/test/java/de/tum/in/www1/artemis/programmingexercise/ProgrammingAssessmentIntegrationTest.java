@@ -358,7 +358,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission = programmingSubmissionRepository.save(submission);
         result.setSubmission(submission);
-        submission.setResult(result);
+        submission.replaceLatestOrIfEmptyAddResult(result);
         programmingSubmissionRepository.save(submission);
 
         Long id = response.getId();
@@ -424,7 +424,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         result.setParticipation(participation);
         result.setSubmission(programmingSubmission);
-        programmingSubmission.setResult(result);
+        programmingSubmission.replaceLatestOrIfEmptyAddResult(result);
         programmingSubmissionRepository.save(programmingSubmission);
 
         // Result has to be manual to be updated

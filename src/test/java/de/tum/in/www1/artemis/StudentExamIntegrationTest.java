@@ -574,7 +574,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 submission = new QuizSubmission();
             }
             if (submission != null) {
-                submission.setResult(new Result());
+                submission.replaceLatestOrIfEmptyAddResult(new Result());
                 Set<Submission> submissions = new HashSet<>();
                 submissions.add(submission);
                 participation.setSubmissions(submissions);

@@ -72,7 +72,7 @@ public class TextAssessmentService extends AssessmentService {
             result.setCompletionDate(null);
             result = resultRepository.save(result);
             result.setSubmission(textSubmission);
-            textSubmission.setResult(result);
+            textSubmission.replaceLatestOrIfEmptyAddResult(result);
             submissionRepository.save(textSubmission);
 
             // If enabled, we want to compute feedback suggestions using Athene.

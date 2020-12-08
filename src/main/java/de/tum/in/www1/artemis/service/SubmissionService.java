@@ -290,7 +290,7 @@ public class SubmissionService {
         result.setParticipation(submission.getParticipation());
         result = resultRepository.save(result);
         result.setSubmission(submission);
-        submission.setResult(result);
+        submission.replaceLatestOrIfEmptyAddResult(result);
         submissionRepository.save(submission);
         return result;
     }
@@ -310,7 +310,7 @@ public class SubmissionService {
         }
         var savedResult = resultRepository.save(result);
         savedResult.setSubmission(submission);
-        submission.setResult(savedResult);
+        submission.replaceLatestOrIfEmptyAddResult(savedResult);
         submissionRepository.save(submission);
         return savedResult;
     }

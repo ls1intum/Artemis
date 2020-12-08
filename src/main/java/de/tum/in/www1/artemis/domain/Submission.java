@@ -140,31 +140,26 @@ public abstract class Submission extends DomainObject {
         return null;
     }
 
-    // TODO NR, SE: remove redundant setter after relationship change on client. Currently we need two deserializing setters for "result" (client) and "results" (server)
-    // @JsonProperty(value = "result", access = JsonProperty.Access.WRITE_ONLY)
-    public void setResult(Result result) {
-        this.setResults(result);
-    }
-
-    // TODO Ruscher, Entholzer: refactor to addResult
     /**
-     * custom setter that supports the migration from 1...1 to 1...* in the submission->result(s) relationship
-     * Will be refactore in the future
-     * @param result the result that should be added, in case this is null, an empty list will be used instead
+     *
+     * @param result
      */
-    // @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
-    public void setResults(Result result) {
-        if (result == null) {
-            // clear the list of results
+    // @JsonProperty(value = "result", access = JsonProperty.Access.WRITE_ONLY)
+    public void replaceLatestOrIfEmptyAddResult(Result result) {
+        if (this.results == null) {
             this.results = new ArrayList<>();
         }
+        else if (this.results.size() > 0) {
+            results.set(results.size() - 1, result);
+            // TODO: Make sure the deletion is saved in the database too (SE, NR)
+        }
         else {
-            // addResult
             this.results.add(result);
         }
+
+        assert (results.size() < 2);
     }
 
-    // TODO Ruscher, Entholzer: refactor to setResults
     @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
     public void setResults(List<Result> results) {
         this.results = results;

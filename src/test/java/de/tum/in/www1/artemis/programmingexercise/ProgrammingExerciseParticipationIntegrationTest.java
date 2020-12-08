@@ -225,7 +225,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
         Result result = resultRepository.save(new Result());
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
-        submission.setResult(result);
+        submission.replaceLatestOrIfEmptyAddResult(result);
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 ProgrammingSubmission.class);
         assertThat(returnedSubmission).isEqualTo(submission);
@@ -238,7 +238,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
         Result result = resultRepository.save(new Result());
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
-        submission.setResult(result);
+        submission.replaceLatestOrIfEmptyAddResult(result);
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 ProgrammingSubmission.class);
         assertThat(returnedSubmission).isEqualTo(submission);
@@ -251,7 +251,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
         Result result = resultRepository.save(new Result());
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = database.addProgrammingSubmission(programmingExercise, submission, "student1");
-        submission.setResult(result);
+        submission.replaceLatestOrIfEmptyAddResult(result);
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 ProgrammingSubmission.class);
         assertThat(returnedSubmission).isEqualTo(submission);
