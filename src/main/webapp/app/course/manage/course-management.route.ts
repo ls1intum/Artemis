@@ -34,7 +34,7 @@ export class CourseResolve implements Resolve<Course> {
     }
 }
 
-export const courseManagementRoute: Routes = [
+export const courseManagementState: Routes = [
     {
         path: '',
         component: CourseManagementComponent,
@@ -52,7 +52,7 @@ export const courseManagementRoute: Routes = [
         },
         data: {
             authorities: [Authority.ADMIN],
-            pageTitle: 'artemisApp.course.home.title',
+            pageTitle: 'global.generic.create',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -65,61 +65,46 @@ export const courseManagementRoute: Routes = [
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.course.home.title',
+            breadcrumbLabelVariable: 'course.title',
         },
         canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/exercises',
-        component: CourseManagementExercisesComponent,
-        resolve: {
-            course: CourseResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.TA, Authority.ADMIN],
-            pageTitle: 'artemisApp.course.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/edit',
-        component: CourseUpdateComponent,
-        resolve: {
-            course: CourseResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.course.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/groups/:courseGroup',
-        component: CourseGroupComponent,
-        resolve: {
-            course: CourseResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.course.detail.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/ratings',
-        component: RatingListComponent,
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.ratingList.pageTitle',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-];
-
-const COURSE_MANAGEMENT_ROUTES = [...courseManagementRoute];
-
-export const courseManagementState: Routes = [
-    {
-        path: '',
-        children: COURSE_MANAGEMENT_ROUTES,
+        children: [
+            {
+                path: 'exercises',
+                component: CourseManagementExercisesComponent,
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.TA, Authority.ADMIN],
+                    pageTitle: 'artemisApp.course.exercises',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'edit',
+                component: CourseUpdateComponent,
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.course.home.editLabel',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'groups/:courseGroup',
+                component: CourseGroupComponent,
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'userManagement.groups',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'ratings',
+                component: RatingListComponent,
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.ratingList.pageTitle',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+        ],
     },
 ];
