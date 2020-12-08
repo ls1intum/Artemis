@@ -210,6 +210,25 @@ public class ModelFactory {
         return generatedUsers;
     }
 
+    /**
+     * Generate users that has registration numbers
+     *
+     * @param loginPrefix prefix that will be added in front of every user's login
+     * @param groups groups that the users will be added
+     * @param authorities authorities that the users will have
+     * @param amount amount of users to generate
+     * @param registrationNumberPrefix prefix that will be added in front of every user
+     * @return users that were generated
+     */
+    public static List<User> generateActivatedUsersWithRegistrationNumber(String loginPrefix, String[] groups, Set<Authority> authorities, int amount,
+            String registrationNumberPrefix) {
+        List<User> generatedUsers = ModelFactory.generateActivatedUsers(loginPrefix, groups, authorities, amount);
+        for (int i = 0; i < amount; i++) {
+            generatedUsers.get(i).setRegistrationNumber(registrationNumberPrefix + "R" + i);
+        }
+        return generatedUsers;
+    }
+
     public static User generateActivatedUser(String login, String password) {
         User user = new User();
         user.setLogin(login);
@@ -228,29 +247,86 @@ public class ModelFactory {
         return generateActivatedUser(login, USER_PASSWORD);
     }
 
-    public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner) {
-        List<User> students = generateActivatedUsers(shortName + loginPrefix, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(AuthoritiesConstants.USER)),
-                numberOfStudents);
+    /**
+     * Generate a team
+     *
+     * @param exercise exercise of the team
+     * @param name name of the team
+     * @param shortName short name of the team
+     * @param loginPrefix prefix that will be added in front of every user's login
+     * @param numberOfStudents amount of users to generate for team as students
+     * @param owner owner of the team generally a tutor
+     * @param creatorLogin login of user that creates the teams
+     * @param registrationPrefix prefix that will be added in front of every student's registration number
+     * @return team that was generated
+     */
+    public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String creatorLogin,
+            String registrationPrefix) {
+        List<User> students = generateActivatedUsersWithRegistrationNumber(shortName + loginPrefix, new String[] { "tumuser", "testgroup" },
+                Set.of(new Authority(AuthoritiesConstants.USER)), numberOfStudents, shortName + registrationPrefix);
 
         Team team = new Team();
         team.setName(name);
         team.setShortName(shortName);
         team.setExercise(exercise);
         team.setStudents(new HashSet<>(students));
-        team.setOwner(owner);
-
+        if (owner != null) {
+            team.setOwner(owner);
+        }
+        if (creatorLogin != null) {
+            team.setCreatedBy(creatorLogin);
+            team.setLastModifiedBy(creatorLogin);
+        }
         return team;
     }
 
+    /**
+     * Generate a team
+     *
+     * @param exercise exercise of the team
+     * @param name name of the team
+     * @param shortName short name of the team
+     * @param numberOfStudents amount of users to generate for team as students
+     * @param owner owner of the team generally a tutor
+     * @return team that was generated
+     */
     public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents, User owner) {
-        return generateTeamForExercise(exercise, name, shortName, "student", numberOfStudents, owner);
+        return generateTeamForExercise(exercise, name, shortName, "student", numberOfStudents, owner, null, "R");
     }
 
-    public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner) {
+    /**
+     * Generate teams
+     *
+     * @param exercise exercise of the teams
+     * @param shortNamePrefix prefix that will be added in front of every team's short name
+     * @param loginPrefix prefix that will be added in front of every student's login
+     * @param numberOfTeams amount of teams to generate
+     * @param owner owner of the teams generally a tutor
+     * @param creatorLogin login of user that created the teams
+     * @return teams that were generated
+     */
+    public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin) {
+        return generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner, creatorLogin, "R");
+    }
+
+    /**
+     * Generate teams
+     *
+     * @param exercise exercise of the teams
+     * @param shortNamePrefix prefix that will be added in front of every team's short name
+     * @param loginPrefix prefix that will be added in front of every student's login
+     * @param numberOfTeams amount of teams to generate
+     * @param owner owner of the teams generally a tutor
+     * @param creatorLogin login of user that created the teams
+     * @param registrationPrefix prefix that will be added in front of every student's registration number
+     * @return teams that were generated
+     */
+    public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin,
+            String registrationPrefix) {
         List<Team> teams = new ArrayList<>();
         for (int i = 1; i <= numberOfTeams; i++) {
             int numberOfStudents = new Random().nextInt(4) + 1; // range: 1-4 students
-            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, numberOfStudents, owner));
+            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, numberOfStudents, owner, creatorLogin, registrationPrefix));
         }
         return teams;
     }
