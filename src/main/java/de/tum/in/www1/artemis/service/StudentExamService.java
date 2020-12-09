@@ -260,15 +260,16 @@ public class StudentExamService {
      *
      * @param examId the exam id
      */
-    public void automaticallyAssessUnsubmittedExams(final Long examId) {
+    public int automaticallyAssessUnsubmittedExams(final Long examId) {
+        int gradedSubmissions = 0;
         User instructor = userService.getUser();
         Set<StudentExam> unsubmittedStudentExams = findAllUnsubmittedStudentExams(examId);
-        Map<User, List<Exercise>> userWithExamExercises = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
+        Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
                 .stream().filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
-        for (final var user : userWithExamExercises.keySet()) {
-            final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), userWithExamExercises.get(user));
+        for (final var user : exercisesOfUser.keySet()) {
+            final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
-                if (studentParticipation.findLatestSubmission().isPresent()) {
+                if (studentParticipation.findLatestSubmission().isPresent() && studentParticipation.findLatestSubmission().get().getResult() == null) {
                     // get last submission
                     final var latestSubmission = studentParticipation.findLatestSubmission().get();
                     // create result with 0 points
@@ -279,9 +280,11 @@ public class StudentExamService {
                     result.setScore(0L);
                     result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
                     submissionService.saveNewResult(latestSubmission, result);
+                    gradedSubmissions++;
                 }
             }
         }
+        return gradedSubmissions;
     }
 
     private void lockStudentRepositories(User currentUser, StudentExam existingStudentExam) {

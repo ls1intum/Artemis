@@ -805,6 +805,33 @@ public class ExamService {
     }
 
     /**
+     * Returns calculates if the exam is over by checking if the latest individual exam end date plus grace period has passed.
+     * See {@link ExamService#getLatestIndiviudalExamEndDate}
+     * <p>
+     *
+     * @param examId the id of the exam
+     * @return true if the exam is over and the students cannot submit anymore
+     * @throws EntityNotFoundException if no exam with the given examId can be found
+     */
+    public boolean isExamOver(Long examId) {
+        return isExamOver(findOne(examId));
+    }
+
+    /**
+     * Returns calculates if the exam is over by checking if the latest individual exam end date plus grace period has passed.
+     * See {@link ExamService#getLatestIndiviudalExamEndDate}
+     * <p>
+     *
+     * @param exam the exam
+     * @return true if the exam is over and the students cannot submit anymore
+     * @throws EntityNotFoundException if no exam with the given examId can be found
+     */
+    public boolean isExamOver(Exam exam) {
+        var now = ZonedDateTime.now();
+        return getLatestIndiviudalExamEndDate(exam).plusSeconds(exam.getGracePeriod()).isBefore(now);
+    }
+
+    /**
      * Returns the latest individual exam end date as determined by the working time of the student exams.
      * <p>
      * If no student exams are available, the exam end date is returned.

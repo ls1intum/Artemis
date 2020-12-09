@@ -373,7 +373,7 @@ public class StudentExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/automatically-assess-unsubmitted-student-exams : Automatically assess unsubmitted student exams
+     * POST /courses/{courseId}/exams/{examId}/automatically-assess-unsubmitted-student-exams : Automatically assess unsubmitted student exams.
      *
      * Finds student exams which the students did not submit on time i.e {@link StudentExam#isSubmitted()} is false.
      * Automatically grade all modeling- and text exercises with 0 points in {@link StudentExamService#automaticallyAssessUnsubmittedExams}.
@@ -384,22 +384,23 @@ public class StudentExamResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/automatically-assess-unsubmitted-student-exams")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> automaticallyAssessUnsubmittedStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<Integer> automaticallyAssessUnsubmittedStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to automatically assess the not submitted student exams of the exam with id {}", examId);
 
         Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
-            return courseAndExamAccessFailure.get();
+            return forbidden();
         }
 
-        if (this.examService.getLatestIndiviudalExamEndDate(examId).isAfter(ZonedDateTime.now())) {
+        if (!this.examService.isExamOver(examId)) {
             // you can only grade not submitted exams if the exam is over
             return badRequest();
         }
 
-        studentExamService.automaticallyAssessUnsubmittedExams(examId);
+        Integer numberOfGradedParticipations = studentExamService.automaticallyAssessUnsubmittedExams(examId);
+        log.info("Graded {} participations for unsubmitted student exams of exam {}", numberOfGradedParticipations, examId);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(numberOfGradedParticipations);
     }
 
     /**
