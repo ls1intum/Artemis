@@ -80,7 +80,7 @@ public class ProgrammingExerciseTestCaseService {
         }
 
         // Make sure that at least one test has a weight so that students can still achieve 100% score
-        var testWeightsSum = existingTestCases.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
+        var testWeightsSum = existingTestCases.stream().mapToDouble(testCase -> Optional.ofNullable(testCase.getWeight()).orElse(0.0)).sum();
         if (testWeightsSum <= 0) {
             throw new BadRequestAlertException("The sum of all test case weights is 0 or below.", "TestCaseGrading", "weightSumError");
         }
