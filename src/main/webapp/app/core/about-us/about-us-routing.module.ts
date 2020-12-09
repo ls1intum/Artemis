@@ -5,17 +5,11 @@ import { AboutUsComponent } from 'app/core/about-us/about-us.component';
 const routes: Routes = [
     {
         path: 'about',
-        children: [
-            {
-                path: '',
-                pathMatch: 'full',
-                component: AboutUsComponent,
-                data: {
-                    authorities: [],
-                    pageTitle: 'aboutUs',
-                },
-            },
-        ],
+        component: AboutUsComponent,
+        data: {
+            authorities: [],
+            pageTitle: 'aboutUs',
+        },
     },
 ];
 
