@@ -362,7 +362,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         flush();
     }));
 
-    it('should show error alert when test case weights are less or equal zero', fakeAsync(() => {
+    it('should show error alert when test case weights are less or equal zero', () => {
         initGradingComponent({ showInactive: true });
 
         fixture.detectChanges();
@@ -404,11 +404,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         saveButton.click();
 
         expect(alertServiceSpy).to.be.calledOnce;
-
-        tick();
-        fixture.destroy();
-        flush();
-    }));
+    });
 
     it('should be able to update the value of the afterDueDate boolean', async () => {
         initGradingComponent({ showInactive: true });
