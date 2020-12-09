@@ -139,17 +139,12 @@ public abstract class Submission extends DomainObject {
      * @param result
      */
     public void replaceLatestOrIfEmptyAddResult(Result result) {
-        if (this.results == null) {
-            this.results = new ArrayList<>();
-        }
-        else if (!this.results.isEmpty()) {
-            results.set(results.size() - 1, result);
-            // TODO: Make sure the deletion is saved in the database too (SE, NR)
-        }
-        else {
+        if (this.results.isEmpty()) {
             this.results.add(result);
         }
-
+        else {
+            results.set(results.size() - 1, result);
+        }
         assert results.size() < 2;
     }
 
