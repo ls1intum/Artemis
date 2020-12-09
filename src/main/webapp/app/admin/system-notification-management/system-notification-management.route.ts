@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Route } from '@angular/router';
 import { JhiResolvePagingParams } from 'ng-jhipster';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
@@ -23,46 +23,43 @@ export class SystemNotificationManagementResolve implements Resolve<any> {
     }
 }
 
-export const systemNotificationManagementRoute: Routes = [
-    {
-        path: 'system-notification-management',
-        component: SystemNotificationManagementComponent,
-        resolve: {
-            pagingParams: JhiResolvePagingParams,
-        },
-        data: {
-            pageTitle: 'artemisApp.systemNotification.systemNotifications',
-            defaultSort: 'id,asc',
-        },
+export const systemNotificationManagementRoute: Route = {
+    path: 'system-notification-management',
+    component: SystemNotificationManagementComponent,
+    resolve: {
+        pagingParams: JhiResolvePagingParams,
     },
-    {
-        path: 'system-notification-management/new',
-        component: SystemNotificationManagementUpdateComponent,
-        resolve: {
-            notification: SystemNotificationManagementResolve,
-        },
-        data: {
-            pageTitle: 'artemisApp.systemNotification.systemNotifications',
-        },
+    data: {
+        pageTitle: 'artemisApp.systemNotification.systemNotifications',
+        defaultSort: 'id,asc',
     },
-    {
-        path: 'system-notification-management/:id',
-        component: SystemNotificationManagementDetailComponent,
-        resolve: {
-            notification: SystemNotificationManagementResolve,
+    children: [
+        {
+            path: 'new',
+            component: SystemNotificationManagementUpdateComponent,
+            data: {
+                pageTitle: 'global.generic.create',
+            },
         },
-        data: {
-            pageTitle: 'artemisApp.systemNotification.systemNotifications',
+        {
+            path: ':id',
+            component: SystemNotificationManagementDetailComponent,
+            resolve: {
+                notification: SystemNotificationManagementResolve,
+            },
+            data: {
+                pageTitle: 'artemisApp.systemNotification.systemNotifications',
+                breadcrumbLabelVariable: 'notification.body.id',
+            },
+            children: [
+                {
+                    path: 'edit',
+                    component: SystemNotificationManagementUpdateComponent,
+                    data: {
+                        pageTitle: 'global.generic.edit',
+                    },
+                },
+            ],
         },
-    },
-    {
-        path: 'system-notification-management/:id/edit',
-        component: SystemNotificationManagementUpdateComponent,
-        resolve: {
-            notification: SystemNotificationManagementResolve,
-        },
-        data: {
-            pageTitle: 'artemisApp.systemNotification.systemNotifications',
-        },
-    },
-];
+    ],
+};

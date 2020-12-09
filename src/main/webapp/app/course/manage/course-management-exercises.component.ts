@@ -22,7 +22,7 @@ export class CourseManagementExercisesComponent implements OnInit {
      * initializes courseId and course
      */
     ngOnInit(): void {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.courseId = Number(this.route.parent!.snapshot.paramMap.get('courseId'));
         this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
     }
 }
