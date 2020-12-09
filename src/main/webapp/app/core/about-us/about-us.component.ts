@@ -1,20 +1,29 @@
 import { Component, OnInit } from '@angular/core';
-import { VERSION } from 'app/app.constants';
+import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { filter, tap } from 'rxjs/operators';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { SERVER_API_URL } from 'app/app.constants';
+import { StaticContentService } from 'app/shared/service/static-content.service';
+import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
 
 @Component({
-    selector: 'jhi-footer',
-    templateUrl: './footer.component.html',
+    selector: 'jhi-about-us',
+    templateUrl: './about-us.component.html',
+    styles: [],
 })
-export class FooterComponent implements OnInit {
-    readonly releaseNotesUrl = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
-
+export class AboutUsComponent implements OnInit {
+    private readonly issueBaseUrl = 'https://github.com/ls1intum/Artemis/issues/new?projects=ls1intum/1';
+    readonly bugReportUrl = `${this.issueBaseUrl}&labels=bug&template=bug-report.md`;
+    readonly featureRequestUrl = `${this.issueBaseUrl}&labels=feature&template=feature-request.md`;
     email: string;
     imprintUrl: string;
 
-    constructor(private profileService: ProfileService) {}
+    data: AboutUsModel;
+
+    readonly SERVER_API_URL = SERVER_API_URL;
+
+    constructor(private route: ActivatedRoute, private profileService: ProfileService, private staticContentService: StaticContentService) {}
 
     ngOnInit(): void {
         this.profileService
@@ -27,6 +36,9 @@ export class FooterComponent implements OnInit {
                 }),
             )
             .subscribe();
+        this.staticContentService.getStaticJsonFromArtemisServer('/about-us.json').subscribe((data) => {
+            this.data = data;
+        });
     }
 
     set contact(mail: string) {

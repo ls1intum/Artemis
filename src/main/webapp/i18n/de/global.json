@@ -280,6 +280,7 @@
         "idnull": "Ungültige ID",
         "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}"
     },
+    "aboutUs": "Über uns",
     "contact": "Kontaktiere uns",
     "bug": "Melde einen Fehler",
     "feature": "Beantrage ein Feature",

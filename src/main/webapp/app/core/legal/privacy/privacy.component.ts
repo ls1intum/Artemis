@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
-import { StaticHtmlContentService } from 'app/shared/service/static-html-content.service';
+import { StaticContentService } from 'app/shared/service/static-content.service';
 
 const privacyStatementFile = 'privacy_statement.html';
 
@@ -15,7 +15,7 @@ const privacyStatementFile = 'privacy_statement.html';
 export class PrivacyComponent implements AfterViewInit, OnInit {
     privacyStatement: SafeHtml;
 
-    constructor(private route: ActivatedRoute, private staticContentService: StaticHtmlContentService) {}
+    constructor(private route: ActivatedRoute, private staticContentService: StaticContentService) {}
 
     /**
      * On init get the privacy statement file from the Artemis server and save it.
