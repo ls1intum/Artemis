@@ -83,6 +83,7 @@ Client .down.> Policy
 Client .down.> Context
 
 hide empty members
+hide empty methods
 
 @enduml
 

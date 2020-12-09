@@ -7,13 +7,22 @@ import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { QuizReEvaluateComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate.component';
 import { QuizParticipationComponent } from 'app/exercises/quiz/participate/quiz-participation.component';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { CourseResolve } from 'app/course/manage/course-management.route';
 
 export const quizManagementRoute: Routes = [
     {
         path: ':courseId/quiz-exercises',
         component: QuizExerciseComponent,
+        resolve: {
+            course: CourseResolve,
+        },
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            // HACK: The path is a composite, so we need to define both parts
+            breadcrumbs: [
+                { variable: 'course.title', path: 'course.id' },
+                { label: 'artemisApp.quizExercise.home.title', path: 'quiz-exercises' },
+            ],
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -23,6 +32,7 @@ export const quizManagementRoute: Routes = [
         component: QuizExerciseDetailComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -33,6 +43,7 @@ export const quizManagementRoute: Routes = [
         component: QuizReEvaluateComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -42,6 +53,7 @@ export const quizManagementRoute: Routes = [
         component: QuizExerciseDetailComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -52,6 +64,7 @@ export const quizManagementRoute: Routes = [
         component: QuizExerciseDetailComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -62,6 +75,7 @@ export const quizManagementRoute: Routes = [
         component: QuizExerciseExportComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -71,6 +85,7 @@ export const quizManagementRoute: Routes = [
         component: QuizParticipationComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'preview',
         },
@@ -81,6 +96,7 @@ export const quizManagementRoute: Routes = [
         component: QuizParticipationComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'solution',
         },

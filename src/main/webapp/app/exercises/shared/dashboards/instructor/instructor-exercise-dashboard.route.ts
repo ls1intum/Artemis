@@ -9,6 +9,7 @@ export const instructorExerciseDashboardRoute: Routes = [
         component: InstructorExerciseDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.instructorExerciseDashboard.title',
         },
         canActivate: [UserRouteAccessService],

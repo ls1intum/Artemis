@@ -10,6 +10,7 @@ const routes: Routes = [
         component: ExamScoresComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.examScores.title',
         },
         canActivate: [UserRouteAccessService],
