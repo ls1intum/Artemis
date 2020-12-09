@@ -13,7 +13,7 @@
                 <h3 class="text-center">{{ 'artemisApp.learningGoal.manageLearningGoals.title' | translate }}</h3>
             </div>
             <div class="col-3 align-self-start">
-                <button class="btn btn-primary btn-circle grow" [routerLink]="['/course-management', courseId, 'goals', 'create']">
+                <button class="btn btn-primary btn-circle grow" [routerLink]="['/course-management', courseId, 'goal-management', 'create']">
                     <fa-icon [icon]="'plus'"></fa-icon>
                 </button>
             </div>
@@ -41,7 +41,7 @@
             <button
                 *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                 class="btn btn-sm btn-primary"
-                [routerLink]="['/course-management', courseId, 'goals', learningGoal.id, 'edit']"
+                [routerLink]="['/course-management', courseId, 'goal-management', learningGoal.id, 'edit']"
             >
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                 <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>

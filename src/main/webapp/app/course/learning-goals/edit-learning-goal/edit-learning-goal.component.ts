@@ -86,8 +86,8 @@ export class EditLearningGoalComponent implements OnInit {
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
-                    // currently at /course-management/{courseId}/goals/{learninGoalId}/edit, going back to /course-management/{courseId}/goal-management/
-                    this.router.navigate(['../../../goal-management'], { relativeTo: this.activatedRoute });
+                    // currently at /course-management/{courseId}/goal-management/{learninGoalId}/edit, going back to /course-management/{courseId}/goal-management/
+                    this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                 }),
             )
             .subscribe(

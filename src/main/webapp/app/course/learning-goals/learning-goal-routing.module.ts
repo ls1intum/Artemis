@@ -17,34 +17,46 @@ const routes: Routes = [
         },
         children: [
             {
-                path: 'goals/create',
-                component: CreateLearningGoalComponent,
-                data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR'],
-                    breadcrumbLabelVariable: '',
-                    pageTitle: 'artemisApp.learningGoal.createLearningGoal.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
-            {
-                path: 'goals/:learningGoalId/edit',
-                component: EditLearningGoalComponent,
-                data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR'],
-                    breadcrumbLabelVariable: '',
-                    pageTitle: 'artemisApp.learningGoal.editLearningGoal.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
-            {
                 path: 'goal-management',
                 component: LearningGoalManagementComponent,
                 data: {
                     authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR'],
+                    // Overwrite the parent value to be empty
                     breadcrumbLabelVariable: '',
                     pageTitle: 'artemisApp.learningGoal.manageLearningGoals.title',
                 },
                 canActivate: [UserRouteAccessService],
+            },
+            {
+                // Create a new path without a component defined to prevent the LearningGoalManagementComponent from being always rendered
+                path: 'goal-management',
+                data: {
+                    // Overwrite the parent value to be empty
+                    breadcrumbLabelVariable: '',
+                    pageTitle: 'artemisApp.learningGoal.manageLearningGoals.title',
+                },
+                children: [
+                    {
+                        path: 'create',
+                        component: CreateLearningGoalComponent,
+                        data: {
+                            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR'],
+                            breadcrumbLabelVariable: '',
+                            pageTitle: 'artemisApp.learningGoal.createLearningGoal.title',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: ':learningGoalId/edit',
+                        component: EditLearningGoalComponent,
+                        data: {
+                            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR'],
+                            breadcrumbLabelVariable: '',
+                            pageTitle: 'artemisApp.learningGoal.editLearningGoal.title',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                ],
             },
         ],
     },
