@@ -39,7 +39,6 @@ import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.servi
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
