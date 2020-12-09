@@ -9,6 +9,7 @@ export const exercisePopupRoute: Routes = [
         component: ExerciseLtiConfigurationComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],

@@ -53,7 +53,7 @@ export class CourseUpdateComponent implements OnInit {
 
     ngOnInit() {
         this.isSaving = false;
-        this.activatedRoute.data.subscribe(({ course }) => {
+        this.activatedRoute.parent!.data.subscribe(({ course }) => {
             this.course = course;
             // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
             this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;
