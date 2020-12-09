@@ -96,14 +96,12 @@ public abstract class Submission extends DomainObject {
         return Duration.between(initilizationDate, submissionDate).toMinutes();
     }
 
-    // TODO Ruscher, Entholzer: Refactor to getLatestResult
     /**
      * Is used as a workaround for objects that expect submission to have 1 result
      *
      * @return the latest result
      */
     @Nullable
-    // @JsonProperty(value = "result", access = JsonProperty.Access.READ_ONLY)
     @JsonIgnore
     public Result getLatestResult() {
         // in all cases (except 2nd, 3rd correction, etc.) we would like to have the latest result
@@ -114,11 +112,6 @@ public abstract class Submission extends DomainObject {
         return null;
     }
 
-    /**
-     * Is used as a workaround for objects that expect submission to have 1 result
-     *
-     * @return the latest result
-     */
     @Nullable
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
     public List<Result> getResults() {
@@ -141,6 +134,7 @@ public abstract class Submission extends DomainObject {
     }
 
     /**
+     * Used as a setResult method, as typically the latest result is used
      *
      * @param result
      */
