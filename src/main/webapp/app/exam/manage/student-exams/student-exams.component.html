@@ -51,6 +51,16 @@
                     <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises">Evaluate Quizzes</span>
                 </button>
+                <button
+                    class="btn btn-primary ml-1"
+                    style="height: 40px"
+                    (click)="assessUnsubmittedExamModelingAndTextParticipations()"
+                    *ngIf="course?.isAtLeastInstructor"
+                    [disabled]="isLoading || !isExamOver"
+                >
+                    <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams">Assess unsubmitted student exams</span>
+                </button>
             </div>
             <jhi-student-exam-status *ngIf="!isLoading" [hasStudentsWithoutExam]="hasStudentsWithoutExam"></jhi-student-exam-status>
         </div>

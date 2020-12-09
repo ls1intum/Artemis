@@ -213,6 +213,28 @@ export class StudentExamsComponent implements OnInit {
         );
     }
 
+    assessUnsubmittedExamModelingAndTextParticipations() {
+        this.isLoading = true;
+        this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.courseId, this.examId).subscribe(
+            (res) => {
+                this.jhiAlertService.addAlert(
+                    {
+                        type: 'success',
+                        msg: 'artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess',
+                        params: { number: res?.body },
+                        timeout: 10000,
+                    },
+                    [],
+                );
+                this.isLoading = false;
+            },
+            (err: HttpErrorResponse) => {
+                this.isLoading = false;
+                this.onError(err.error);
+            },
+        );
+    }
+
     /**
      * Unlock all repositories immediately. Asks for confirmation.
      */

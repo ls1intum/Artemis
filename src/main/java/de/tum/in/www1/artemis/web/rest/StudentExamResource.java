@@ -373,7 +373,7 @@ public class StudentExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/automatically-assess-unsubmitted-student-exams : Automatically assess unsubmitted student exams.
+     * POST /courses/{courseId}/exams/{examId}/student-exams/automatically-assess-unsubmitted-student-exams : Automatically assess unsubmitted student exams.
      *
      * Finds student exams which the students did not submit on time i.e {@link StudentExam#isSubmitted()} is false.
      * Automatically grade all modeling- and text exercises with 0 points in {@link StudentExamService#automaticallyAssessUnsubmittedExams}.
@@ -382,7 +382,7 @@ public class StudentExamResource {
      * @param examId the id of the exam
      * @return {@link HttpStatus#BAD_REQUEST} if the exam is not over yet | {@link HttpStatus#FORBIDDEN} if the user is not an instructor
      */
-    @PostMapping("courses/{courseId}/exams/{examId}/automatically-assess-unsubmitted-student-exams")
+    @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/automatically-assess-unsubmitted-student-exams")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Integer> automaticallyAssessUnsubmittedStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to automatically assess the not submitted student exams of the exam with id {}", examId);

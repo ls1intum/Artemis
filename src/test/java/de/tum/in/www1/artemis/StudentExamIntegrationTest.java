@@ -557,7 +557,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2 = examRepository.save(exam2);
 
         Integer numberOfAssessedParticipations = request.postWithResponseBody(
-                "/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/automatically-assess-unsubmitted-student-exams", Optional.empty(), Integer.class, HttpStatus.OK);
+                "/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/automatically-assess-unsubmitted-student-exams", Optional.empty(), Integer.class,
+                HttpStatus.OK);
         assertThat(numberOfAssessedParticipations).isEqualTo(24);
         database.changeUser("instructor1");
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam2.getId());
@@ -582,8 +583,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2 = examRepository.save(exam2);
 
         database.changeUser("tutor1");
-        request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/automatically-assess-unsubmitted-student-exams", Optional.empty(),
-                Integer.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/automatically-assess-unsubmitted-student-exams",
+                Optional.empty(), Integer.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -592,8 +593,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         prepareStudentExamsForConduction();
         exam2 = examRepository.save(exam2);
 
-        request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/automatically-assess-unsubmitted-student-exams", Optional.empty(),
-                Integer.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/automatically-assess-unsubmitted-student-exams",
+                Optional.empty(), Integer.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
