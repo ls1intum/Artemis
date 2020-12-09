@@ -68,6 +68,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     ExerciseRepository exerciseRepository;
 
     @Autowired
+    StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
     SubmissionVersionRepository submissionVersionRepository;
 
     @Autowired
@@ -543,6 +546,54 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         database.changeUser("student2");
         request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse, HttpStatus.FORBIDDEN);
         deleteExam1WithInstructor();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGradeUnsubmittedStudentExams() throws Exception {
+        prepareStudentExamsForConduction();
+        exam2.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        exam2.setEndDate(ZonedDateTime.now().minusMinutes(8));
+        exam2 = examRepository.save(exam2);
+
+        Integer numberOfAssessedParticipations = request.postWithResponseBody(
+                "/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/automatically-assess-unsubmitted-student-exams", Optional.empty(), Integer.class, HttpStatus.OK);
+        assertThat(numberOfAssessedParticipations).isEqualTo(24);
+        database.changeUser("instructor1");
+        Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam2.getId());
+        Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
+                .stream().filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
+        for (final var user : exercisesOfUser.keySet()) {
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
+                    exercisesOfUser.get(user));
+            for (final var studentParticipation : studentParticipations) {
+                assertThat(studentParticipation.findLatestSubmission().get().getResult()).isNotNull();
+                assertThat(studentParticipation.findLatestSubmission().get().getResult().getScore()).isEqualTo(0);
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGradeUnsubmittedStudentExams_forbidden() throws Exception {
+        prepareStudentExamsForConduction();
+        exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
+        exam2.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        exam2 = examRepository.save(exam2);
+
+        database.changeUser("tutor1");
+        request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/automatically-assess-unsubmitted-student-exams", Optional.empty(),
+                Integer.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGradeUnsubmittedStudentExams_badRequest() throws Exception {
+        prepareStudentExamsForConduction();
+        exam2 = examRepository.save(exam2);
+
+        request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/automatically-assess-unsubmitted-student-exams", Optional.empty(),
+                Integer.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
