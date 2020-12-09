@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, Subscription, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
-import { cloneDeep, differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
+import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
@@ -535,21 +535,16 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             .subscribe();
     }
 
-    public isSumOfWeightsGreaterThanZero(testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): boolean {
-        // Copy the existing test cases and update the test cases that were changed
-        const copyTestCases = cloneDeep(this.testCases);
-        testCaseUpdates.forEach((testCaseUpdate) => {
-            const index = copyTestCases.findIndex((testCase) => testCase.id === testCaseUpdate.id);
+    private isSumOfWeightsGreaterThanZero(testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): boolean {
+        let weight = 0;
+        this.testCases.forEach((testCase) => {
+            const index = testCaseUpdates.findIndex((update) => testCase.id === update.id);
             if (index !== -1) {
-                copyTestCases[index] = testCaseUpdate;
+                weight += testCaseUpdates[index].weight ?? 0;
+            } else {
+                weight += testCase.weight ?? 0;
             }
         });
-        // Make sure that the at least one test weight is greater than 0, so that students can still reach a score of 100%
-        const sumOfWeightNewTestCases = copyTestCases.reduce((sum, testCase) => sum + (testCase.weight ?? 0), 0);
-        if (sumOfWeightNewTestCases <= 0) {
-            return false;
-        } else {
-            return true;
-        }
+        return weight > 0;
     }
 }
