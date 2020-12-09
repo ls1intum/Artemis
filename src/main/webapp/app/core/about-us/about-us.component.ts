@@ -17,7 +17,6 @@ export class AboutUsComponent implements OnInit {
     readonly bugReportUrl = `${this.issueBaseUrl}&labels=bug&template=bug-report.md`;
     readonly featureRequestUrl = `${this.issueBaseUrl}&labels=feature&template=feature-request.md`;
     email: string;
-    imprintUrl: string;
 
     data: AboutUsModel;
 
@@ -25,22 +24,29 @@ export class AboutUsComponent implements OnInit {
 
     constructor(private route: ActivatedRoute, private profileService: ProfileService, private staticContentService: StaticContentService) {}
 
+    /**
+     * On init get the json file from the Artemis server and save it.
+     * On init get the mail data needed for the contact
+     */
     ngOnInit(): void {
+        this.staticContentService.getStaticJsonFromArtemisServer('/about-us.json').subscribe((data) => {
+            this.data = data;
+        });
+
         this.profileService
             .getProfileInfo()
             .pipe(
                 filter(Boolean),
                 tap((info: ProfileInfo) => {
                     this.contact = info.contact;
-                    this.imprintUrl = info.imprint;
                 }),
             )
             .subscribe();
-        this.staticContentService.getStaticJsonFromArtemisServer('/about-us.json').subscribe((data) => {
-            this.data = data;
-        });
     }
 
+    /**
+     * Create the mail reference for the contact
+     */
     set contact(mail: string) {
         this.email =
             'mailto:' +

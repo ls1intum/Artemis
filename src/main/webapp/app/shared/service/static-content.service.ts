@@ -18,6 +18,10 @@ export class StaticContentService {
         return this.http.get(`${this.staticContentUrl}${filename}`, { responseType: 'text' });
     }
 
+    /**
+     * Gets the content of the file.
+     * @param filename The name of the file as a string.
+     */
     getStaticJsonFromArtemisServer(filename: string): Observable<any> {
         return this.http.get(`${this.staticContentUrl}${filename}`);
     }
