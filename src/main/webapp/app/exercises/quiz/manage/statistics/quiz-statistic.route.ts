@@ -13,6 +13,7 @@ export const quizStatisticRoute: Routes = [
         component: QuizStatisticComponent,
         data: {
             authorities: [Authority.USER],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -22,6 +23,7 @@ export const quizStatisticRoute: Routes = [
         component: QuizPointStatisticComponent,
         data: {
             authorities: [Authority.USER],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -31,6 +33,7 @@ export const quizStatisticRoute: Routes = [
         component: MultipleChoiceQuestionStatisticComponent,
         data: {
             authorities: [Authority.USER],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -40,6 +43,7 @@ export const quizStatisticRoute: Routes = [
         component: DragAndDropQuestionStatisticComponent,
         data: {
             authorities: [Authority.USER],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -49,6 +53,7 @@ export const quizStatisticRoute: Routes = [
         component: ShortAnswerQuestionStatisticComponent,
         data: {
             authorities: [Authority.USER],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],

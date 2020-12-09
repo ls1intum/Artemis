@@ -9,6 +9,7 @@ export const textAssessmentRoutes: Routes = [
         component: TextAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            usePathForBreadcrumbs: true,
             pageTitle: 'assessmentDashboard.title',
         },
         canActivate: [UserRouteAccessService],
