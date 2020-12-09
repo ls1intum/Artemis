@@ -355,7 +355,6 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             this.areNewAssessments = false;
             this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
         });
-        // this.assessmentsService.save(this.exercise.id!, this.result.id!, this.assessments, [])
     }
 
     /**
