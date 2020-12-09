@@ -39,6 +39,7 @@ import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.servi
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -356,6 +357,54 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(comp.changedTestCaseIds).to.have.lengthOf(0);
 
         fixture.detectChanges();
+
+        tick();
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should show error alert when test case weights are less or equal zero', fakeAsync(() => {
+        initGradingComponent({ showInactive: true });
+
+        fixture.detectChanges();
+
+        const orderedTests = _sortBy(testCases1, 'testName');
+
+        const table = debugElement.query(By.css(testCaseTableId));
+
+        // get all input fields
+        const editingInputs = table.queryAll(By.css(tableEditingInput));
+        expect(editingInputs).to.have.lengthOf(testCases1.length * 3);
+        // Set only the weight input fields to 0 of all test cases
+        for (let i = 0; i < editingInputs.length; i += 3) {
+            const weightInput = editingInputs[i].nativeElement;
+            expect(weightInput).to.exist;
+            weightInput.focus();
+
+            // Set new weight.
+            weightInput.value = '0';
+            weightInput.dispatchEvent(new Event('blur'));
+        }
+
+        fixture.detectChanges();
+        expect(comp.changedTestCaseIds).to.deep.equal(orderedTests.map((test) => test.id));
+
+        // Mock which should be return from update service call
+        const updateTestCases = orderedTests.map((test) => {
+            return { ...test, weight: 0, bonusMultiplier: 2, bonusPoints: 1 };
+        });
+        // Save weight.
+        updateTestCasesStub.returns(of(updateTestCases));
+
+        // Initialize spy for error alert
+        const alertService = TestBed.inject(JhiAlertService);
+        const alertServiceSpy = spy(alertService, 'error');
+
+        const saveButton = getSaveButton();
+        expectElementToBeEnabled(saveButton);
+        saveButton.click();
+
+        expect(alertServiceSpy).to.be.calledOnce;
 
         tick();
         fixture.destroy();

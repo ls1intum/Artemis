@@ -535,8 +535,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             .subscribe();
     }
 
-    private isSumOfWeightsGreaterThanZero(testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): boolean {
-        // Copy the existing test cases and update the changed ones
+    public isSumOfWeightsGreaterThanZero(testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): boolean {
+        // Copy the existing test cases and update the test cases that were changed
         const copyTestCases = cloneDeep(this.testCases);
         testCaseUpdates.forEach((testCaseUpdate) => {
             const index = copyTestCases.findIndex((testCase) => testCase.id === testCaseUpdate.id);
