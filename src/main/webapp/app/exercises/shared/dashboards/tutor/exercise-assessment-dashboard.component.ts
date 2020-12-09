@@ -110,7 +110,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     tutor?: User;
 
     exerciseForGuidedTour?: Exercise;
-    getLatestSubmissionResult = getLatestSubmissionResult;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -324,11 +323,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     private reconnectEntities = (submissions: Submission[]) => {
         return submissions.map((submission: Submission) => {
-            if (getLatestSubmissionResult(submission)) {
+            const tmpResult = getLatestSubmissionResult(submission);
+            if (tmpResult) {
                 // reconnect some associations
-                getLatestSubmissionResult(submission)!.submission = submission;
-                getLatestSubmissionResult(submission)!.participation = submission.participation;
-                submission.participation!.results = [getLatestSubmissionResult(submission)!];
+                tmpResult!.submission = submission;
+                tmpResult!.participation = submission.participation;
+                submission.participation!.results = [tmpResult!];
             }
             return submission;
         });
@@ -402,7 +402,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      * @param submission Submission which to check
      */
     calculateStatus(submission: Submission) {
-        if (getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.completionDate && Result.isManualResult(getLatestSubmissionResult(submission)!)) {
+        const tmpResult = getLatestSubmissionResult(submission);
+        if (tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!)) {
             return 'DONE';
         }
         return 'DRAFT';

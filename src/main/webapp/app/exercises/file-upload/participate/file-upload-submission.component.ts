@@ -75,8 +75,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         this.fileUploadSubmissionService.getDataForFileUploadEditor(participationId).subscribe(
             (submission: FileUploadSubmission) => {
                 // reconnect participation <--> result
-                if (getLatestSubmissionResult(submission)) {
-                    submission.participation!.results = [getLatestSubmissionResult(submission)!];
+                const tmpResult = getLatestSubmissionResult(submission);
+                if (tmpResult) {
+                    submission.participation!.results = [tmpResult!];
                 }
                 this.participation = <StudentParticipation>submission.participation;
 
@@ -84,7 +85,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.participation.submissions = [<FileUploadSubmission>omit(submission, 'participation')];
 
                 this.submission = submission;
-                this.result = getLatestSubmissionResult(submission)!;
+                this.result = tmpResult!;
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
                 this.fileUploadExercise.studentParticipations = [this.participation];
                 this.fileUploadExercise.participationStatus = participationStatus(this.fileUploadExercise);

@@ -37,7 +37,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
     nextOptimalSubmissionIds: number[] = [];
-    getLatestSubmissionResult = getLatestSubmissionResult;
 
     private cancelConfirmationText: string;
 
@@ -117,20 +116,22 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                 // the server should have filtered these submissions already
                 this.submissions = res.body!.filter((submission) => submission.submitted);
                 this.submissions.forEach((submission) => {
-                    if (getLatestSubmissionResult(submission)) {
+                    const tmpResult = getLatestSubmissionResult(submission);
+                    if (tmpResult) {
                         // reconnect some associations
-                        getLatestSubmissionResult(submission)!.submission = submission;
-                        getLatestSubmissionResult(submission)!.participation = submission.participation;
+                        tmpResult!.submission = submission;
+                        tmpResult!.participation = submission.participation;
                         if (submission.participation) {
-                            submission.participation.results = [getLatestSubmissionResult(submission)!];
+                            submission.participation.results = [tmpResult!];
                         }
                     }
                 });
                 this.filteredSubmissions = this.submissions;
                 this.filterSubmissions(forceReload);
-                this.assessedSubmissions = this.submissions.filter(
-                    (submission) => getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.completionDate && getLatestSubmissionResult(submission)!.score,
-                ).length;
+                this.assessedSubmissions = this.submissions.filter((submission) => {
+                    const result = getLatestSubmissionResult(submission);
+                    return result && result!.completionDate && result!.score;
+                }).length;
             });
     }
 
@@ -166,12 +167,10 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     applyFilter() {
         // A submission is optimal if it is part of nextOptimalSubmissionIds and (nobody is currently assessing it or you are currently assessing it)
         this.submissions.forEach((submission) => {
+            const tmpResult = getLatestSubmissionResult(submission);
             submission.optimal =
                 this.nextOptimalSubmissionIds.includes(submission.id!) &&
-                (!(getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.assessor) ||
-                    (getLatestSubmissionResult(submission) &&
-                        getLatestSubmissionResult(submission)!.assessor &&
-                        getLatestSubmissionResult(submission)!.assessor!.id === this.userId));
+                (!(tmpResult && tmpResult!.assessor) || (tmpResult && tmpResult!.assessor && tmpResult!.assessor!.id === this.userId));
         });
         this.optimalSubmissions = this.filteredSubmissions.filter((submission) => {
             return submission.optimal;

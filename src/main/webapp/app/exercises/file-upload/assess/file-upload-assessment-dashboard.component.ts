@@ -74,11 +74,12 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
                 .pipe(
                     map((response: HttpResponse<FileUploadSubmission[]>) =>
                         response.body!.map((submission: FileUploadSubmission) => {
-                            if (getLatestSubmissionResult(submission)) {
+                            const result = getLatestSubmissionResult(submission);
+                            if (result) {
                                 // reconnect some associations
-                                getLatestSubmissionResult(submission)!.submission = submission;
-                                getLatestSubmissionResult(submission)!.participation = submission.participation;
-                                submission.participation!.results = [getLatestSubmissionResult(submission)!];
+                                result!.submission = submission;
+                                result!.participation = submission.participation;
+                                submission.participation!.results = [result!];
                             }
                             return submission;
                         }),
