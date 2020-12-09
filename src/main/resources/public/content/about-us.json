@@ -24,7 +24,7 @@
         },
         {
             "fullName": "Dominik Münch",
-            "photoDirectory": "public/images/about/Dominik_Münch.jpg"
+            "photoDirectory": "public/images/about/Dominik_Muench.jpg"
         },
         {
             "fullName": "Alexander Ungar",
@@ -32,7 +32,7 @@
         },
         {
             "fullName": "Simon Leiß",
-            "photoDirectory": "public/images/about/Simon_Leiß.jpg"
+            "photoDirectory": "public/images/about/Simon_Leiss.jpg"
         },
         {
             "fullName": "Anh Montag",
@@ -64,7 +64,7 @@
         },
         {
             "fullName": "Stefan Klöss-Schuster",
-            "photoDirectory": "public/images/about/Stefan_Klöss_Schuster.jpg"
+            "photoDirectory": "public/images/about/Stefan_Kloess_Schuster.jpg"
         },
         {
             "fullName": "Sascha Beele",
@@ -132,7 +132,7 @@
         },
         {
             "fullName": "René Lalla",
-            "photoDirectory": "public/images/about/René_Lalla.png"
+            "photoDirectory": "public/images/about/Rene_Lalla.png"
         },
         {
             "fullName": "Linus Michel",
@@ -188,7 +188,7 @@
         },
         {
             "fullName": "Birtan Gültekin",
-            "photoDirectory": "public/images/about/Birtan_Gültekin.jpg"
+            "photoDirectory": "public/images/about/Birtan_Gueltekin.jpg"
         },
         {
             "fullName": "Beatris Burdeva",
@@ -216,7 +216,7 @@
         },
         {
             "fullName": "İsmet Melih Özbeyli",
-            "photoDirectory": "public/images/about/İsmet_Melih_Özbeyli.jpg"
+            "photoDirectory": "public/images/about/Ismet_Melih_Oezbeyli.jpg"
         },
         {
             "fullName": "Benedikt Fein",
@@ -240,11 +240,11 @@
         },
         {
             "fullName": "Niclas Schümann",
-            "photoDirectory": "public/images/about/Niclas_Schümann.jpg"
+            "photoDirectory": "public/images/about/Niclas_Schuemann.jpg"
         },
         {
             "fullName": "Ahmet Türkmen",
-            "photoDirectory": "public/images/about/Ahmet_Türkmen.jpg"
+            "photoDirectory": "public/images/about/Ahmet_Tuerkmen.jpg"
         },
         {
             "fullName": "Jonathan Ryan",
