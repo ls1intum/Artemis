@@ -138,7 +138,6 @@ public abstract class Submission extends DomainObject {
      *
      * @param result
      */
-    // @JsonProperty(value = "result", access = JsonProperty.Access.WRITE_ONLY)
     public void replaceLatestOrIfEmptyAddResult(Result result) {
         if (this.results == null) {
             this.results = new ArrayList<>();
