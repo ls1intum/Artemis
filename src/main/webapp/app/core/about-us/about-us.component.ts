@@ -29,7 +29,7 @@ export class AboutUsComponent implements OnInit {
      * On init get the mail data needed for the contact
      */
     ngOnInit(): void {
-        this.staticContentService.getStaticJsonFromArtemisServer('/about-us.json').subscribe((data) => {
+        this.staticContentService.getStaticJsonFromArtemisServer('about-us.json').subscribe((data) => {
             this.data = data;
         });
 
