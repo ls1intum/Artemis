@@ -237,7 +237,8 @@ dependencies {
 
     implementation "io.netty:netty-all:4.1.55.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.0.2"
-    implementation "org.springframework:spring-messaging:5.2.11.RELEASE"
+    implementation "org.springframework:spring-messaging:5.3.2"
+    implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.3.1_1"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"

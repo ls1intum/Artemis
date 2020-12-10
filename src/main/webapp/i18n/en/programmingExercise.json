@@ -133,7 +133,6 @@
                     "resetFailed": "The tests could not be reset.",
                     "updated": "The test cases were updated successfully.",
                     "couldNotBeUpdated": "The following test cases could not be updated: {{testCases}}.",
-                    "weightSumError": "The sum of all test case weights is 0 or below. Please adjust at least one test case weight to be greater than 0",
                     "runAfterDueDateDisabled": "You can't set a test case to be run after the due date, because no build and test date is defined for this exercise. Click on the button to set this date in the edit page.",
                     "showInactive": "Show inactivate test cases"
                 },

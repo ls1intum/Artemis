@@ -10,7 +10,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -78,13 +77,6 @@ public class ProgrammingExerciseTestCaseService {
             matchingTestCase.setBonusPoints(programmingExerciseTestCaseDTO.getBonusPoints());
             updatedTests.add(matchingTestCase);
         }
-
-        // Make sure that at least one test has a weight so that students can still achieve 100% score
-        var testWeightsSum = existingTestCases.stream().mapToDouble(testCase -> Optional.ofNullable(testCase.getWeight()).orElse(0.0)).sum();
-        if (testWeightsSum <= 0) {
-            throw new BadRequestAlertException("The sum of all test case weights is 0 or below.", "TestCaseGrading", "weightSumError");
-        }
-
         testCaseRepository.saveAll(updatedTests);
         // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
         programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);

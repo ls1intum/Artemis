@@ -133,7 +133,6 @@
                     "resetFailed": "Die Tests konnten nicht zurückgesetzt werden.",
                     "updated": "Die Testfälle wurden erfolgreich gespeichert.",
                     "couldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}.",
-                    "weightSumError": "Die Summe aller Testfall-Gewichte beträgt 0 oder weniger. Bitte stelle mindestens ein Testfall-Gewicht größer als 0 ein.",
                     "runAfterDueDateDisabled": "Du kannst diese Option nicht aktivieren, weil für diese Übung kein Build & Test Datum definiert ist. Klicke auf den Button, um in die Bearbeitungsmaske zu wechseln und das Datum zu setzen.",
                     "showInactive": "Inaktive Testfälle anzeigen"
                 },

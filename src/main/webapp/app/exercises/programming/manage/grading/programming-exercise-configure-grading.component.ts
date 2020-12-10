@@ -13,7 +13,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { IssuesMap, ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { Location } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import {
     ProgrammingExerciseGradingService,
     ProgrammingExerciseTestCaseUpdate,
@@ -315,13 +314,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
         const testCaseUpdates = testCasesToUpdate.map((testCase) => ProgrammingExerciseTestCaseUpdate.from(testCase));
 
-        const isSumOfWeightsOK = this.isSumOfWeightsGreaterThanZero(testCaseUpdates);
-        if (!isSumOfWeightsOK) {
-            this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.weightSumError`);
-            this.isSaving = false;
-            return;
-        }
-
         const saveTestCases = this.gradingService.updateTestCase(this.exercise.id!, testCaseUpdates).pipe(
             tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
                 // From successfully updated test cases from dirty checking list.
@@ -340,12 +332,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     this.alertService.success(`artemisApp.programmingExercise.configureGrading.testCases.updated`);
                 }
             }),
-            catchError((error: HttpErrorResponse) => {
-                if (error.status === 400) {
-                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.weightSumError`);
-                } else {
-                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.couldNotBeUpdated`, { testCases: testCasesToUpdate });
-                }
+            catchError(() => {
+                this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.couldNotBeUpdated`, { testCases: testCasesToUpdate });
                 return of(null);
             }),
         );
@@ -533,18 +521,5 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 catchError(() => of(null)),
             )
             .subscribe();
-    }
-
-    private isSumOfWeightsGreaterThanZero(testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): boolean {
-        let weight = 0;
-        this.testCases.forEach((testCase) => {
-            const index = testCaseUpdates.findIndex((update) => testCase.id === update.id);
-            if (index !== -1) {
-                weight += testCaseUpdates[index].weight ?? 0;
-            } else {
-                weight += testCase.weight ?? 0;
-            }
-        });
-        return weight > 0;
     }
 }

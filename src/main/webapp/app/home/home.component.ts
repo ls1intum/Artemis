@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 import { Router } from '@angular/router';
@@ -19,7 +19,7 @@ import { StateStorageService } from 'app/core/auth/state-storage.service';
     templateUrl: './home.component.html',
     styleUrls: ['home.scss'],
 })
-export class HomeComponent implements OnInit, AfterViewChecked {
+export class HomeComponent implements OnInit, AfterViewInit {
     authenticationError = false;
     authenticationAttempts = 0;
     account: User;
@@ -31,8 +31,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     captchaRequired = false;
     credentials: Credentials;
     isRegistrationEnabled = false;
-    loading = true;
-    inputFocused = false;
 
     // if the server is not connected to an external user management such as JIRA, we accept all valid username patterns
     usernameRegexPattern = /^[a-z0-9_-]{3,50}$/; // default, might be overridden in ngOnInit
@@ -81,11 +79,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         });
         this.accountService.identity().then((user) => {
             this.currentUserCallback(user!);
-
-            // Once this has loaded and the user is not defined, we know we need the user to log in
-            if (!user) {
-                this.loading = false;
-            }
         });
         this.registerAuthenticationSuccess();
     }
@@ -98,18 +91,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         });
     }
 
-    ngAfterViewChecked() {
-        // Only focus the username input once, not on every update
-        if (this.inputFocused || this.loading) {
-            return;
-        }
-
-        // Focus on the input as soon as it is visible
-        const input = this.renderer.selectRootElement('#username', true);
-        if (input) {
-            input.focus();
-            this.inputFocused = true;
-        }
+    ngAfterViewInit() {
+        this.renderer.selectRootElement('#username', true).focus();
     }
 
     login() {
