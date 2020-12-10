@@ -149,7 +149,7 @@ public abstract class Submission extends DomainObject {
     }
 
     @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
-    public void overwriteResults(List<Result> results) {
+    public void setResults(List<Result> results) {
         this.results = results;
     }
 

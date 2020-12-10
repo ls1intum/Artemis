@@ -265,7 +265,7 @@ public class SubmissionService {
                 // make sure that sensitive information is not sent to the client for students
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                     exercise.filterSensitiveInformation();
-                    submission.overwriteResults(new ArrayList<Result>());
+                    submission.setResults(new ArrayList<Result>());
                 }
                 // remove information about the student or team from the submission for tutors to ensure a double-blind assessment
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
@@ -304,7 +304,7 @@ public class SubmissionService {
      */
     public Result saveOrderedResultBySubmission(final Submission submission, final Result result) {
         result.setSubmission(null);
-        submission.overwriteResults(new ArrayList<>());
+        submission.setResults(new ArrayList<>());
         if (result.getParticipation() == null) {
             result.setParticipation(submission.getParticipation());
         }

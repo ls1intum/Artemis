@@ -296,7 +296,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         // do not send the result to the client if the assessment is not finished
         if (fileUploadSubmission.getLatestResult() != null
                 && (fileUploadSubmission.getLatestResult().getCompletionDate() == null || fileUploadSubmission.getLatestResult().getAssessor() == null)) {
-            fileUploadSubmission.overwriteResults(new ArrayList<Result>());
+            fileUploadSubmission.setResults(new ArrayList<Result>());
         }
 
         // do not send the assessor information to students

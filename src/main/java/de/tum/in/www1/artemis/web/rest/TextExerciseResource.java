@@ -590,7 +590,7 @@ public class TextExerciseResource {
         final List<TextSubmission> textSubmissions = textPlagiarismDetectionService.textSubmissionsForComparison(textExercise);
         textSubmissions.forEach(submission -> {
             submission.getParticipation().setExercise(null);
-            submission.overwriteResults(new ArrayList<Result>());
+            submission.setResults(new ArrayList<Result>());
             submission.getParticipation().setSubmissions(null);
         });
 
