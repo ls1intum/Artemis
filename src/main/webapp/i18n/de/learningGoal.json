@@ -38,6 +38,7 @@
                 "connectedLectureUnitsExplanation": "Die folgenden Vorlesungseinheiten sind mit dem Lernziel verbunden: ",
                 "lectureUnitsForCalculation": "Vorlesungseinheiten für Fortschrittsberechnung",
                 "lectureUnitsForCalculationExplanation": "Die folgenden Vorlesungseinheiten wurden für die Berechnung deines Fortschritts verwendet",
+                "exerciseNote": "Bitte beachte, dass wir hier immer die letzte Einreichung berücksichtigen. Auch Einreichungen nach dem Fälligkeitsdatum. Das bedeutet, dass du z. B. Deinen Fortschritt verbessern kannst, indem du ein Quiz beliebig oft erneut versuchst. Es ist daher normal, dass die Punkte hier von den Punkten, welche du offiziell in einer Übung erreicht hast, abweichen können.",
                 "delete": {
                     "question": "Willst du wirklich das Lernziel <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
                     "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen des Lernziels ein.",

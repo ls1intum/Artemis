@@ -26,6 +26,9 @@ public class LearningGoalService {
      *
      * Note: In the case of two exercise units referencing the same exercise, only the first exercise unit will be used.
      *
+     * Note: Please note that we take always the last submission into account here. Even submissions after the due date. This means for example that a student can improve his/her
+     * progress by re-trying a quiz as often as you like. It is therefore normal, that the points here might differ from the points officially achieved in an exercise.
+     *
      * @param exerciseUnits exercise units to check
      * @param user user to check for
      * @return progress of the user in the exercise units
@@ -119,6 +122,7 @@ public class LearningGoalService {
 
     /**
      * Calculate the progress in a learning goal for a specific user
+     *
      * @param learningGoal learning goal to get the progress for
      * @param user user to get the progress for
      * @return progress of the user in the learning goal

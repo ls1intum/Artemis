@@ -38,6 +38,7 @@
                 "connectedLectureUnitsExplanation": "The following lecture units are connected to this learning goal: ",
                 "lectureUnitsForCalculation": "Lecture Units Used in Progress Calculation",
                 "lectureUnitsForCalculationExplanation": "The following lecture units are used to calculate your progress in this learning goal",
+                "exerciseNote": "Please note that we take always the last submission into account here. Even submissions after the due date. This means for example that you can improve your progress by re-trying a quiz as often as you like. It is therefore normal, that the points here might differ from the points you officially achieved in an exercise.",
                 "delete": {
                     "question": "Do you really want to delete the learning goal <strong>{{ title }}</strong>? You can not undo this action!",
                     "typeNameToConfirm": "Please enter the name of the learning goal for confirmation.",
