@@ -107,8 +107,6 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     @BeforeEach
     public void setupTestScenario() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
         // creating the users student1-student10, tutor1-tutor10 and instructors1-instructor10
         this.database.addUsers(10, 10, 10);
         // Add users that are not in the course
@@ -120,8 +118,8 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         idOfCourse = course.getId();
         createLectureOne(course);
         createLectureTwo(course);
-        createTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp);
-        createModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp);
+        createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp);
+        createModelingExercise(pastTimestamp, pastTimestamp, pastTimestamp);
         creatingLectureUnitsOfLectureOne();
         creatingLectureUnitsOfLectureTwo();
         createLearningGoal();
@@ -165,7 +163,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         for (LectureUnit lectureUnit : lectureUnitsOfLectureOne) {
             lectureOne.addLectureUnit(lectureUnit);
         }
-        lectureOne = lectureRepository.save(lectureOne);
+        lectureRepository.save(lectureOne);
     }
 
     private void creatingLectureUnitsOfLectureTwo() {
@@ -192,7 +190,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         for (LectureUnit lectureUnit : lectureUnitsOfLectureTwo) {
             lectureTwo.addLectureUnit(lectureUnit);
         }
-        lectureTwo = lectureRepository.save(lectureTwo);
+        lectureRepository.save(lectureTwo);
     }
 
     private void createLectureOne(Course course) {
@@ -215,7 +213,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         Course course;
         // creating text exercise with Result
         course = courseRepository.findWithEagerExercisesById(idOfCourse);
-        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, course);
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setMaxScore(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise = exerciseRepository.save(textExercise);
@@ -246,7 +244,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         Course course;
         // creating text exercise with Result
         course = courseRepository.findWithEagerExercisesById(idOfCourse);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, pastTimestamp, DiagramType.ClassDiagram, course);
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         modelingExercise.setMaxScore(10.0);
         modelingExercise.setBonusPoints(0.0);
         modelingExercise = exerciseRepository.save(modelingExercise);
@@ -302,7 +300,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
     public void getLearningGoal_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
-        LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN, LearningGoal.class);
+        request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN, LearningGoal.class);
     }
 
     @Test
@@ -316,7 +314,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student42", roles = "USER")
     public void getLearningGoalsOfCourse_asStudentNotInCourse_shouldReturnForbidden() throws Exception {
-        List<LearningGoal> learningGoalsOfCourse = request.getList("/api/courses/" + idOfCourse + "/goals", HttpStatus.FORBIDDEN, LearningGoal.class);
+        request.getList("/api/courses/" + idOfCourse + "/goals", HttpStatus.FORBIDDEN, LearningGoal.class);
     }
 
     @Test
@@ -374,8 +372,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student42", roles = "USER")
     public void getLearningGoalProgress_asStudentNotInCourse_shouldReturnProgressTenOutOfTwenty() throws Exception {
-        LearningGoalProgress learningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/progress", HttpStatus.FORBIDDEN,
-                LearningGoalProgress.class);
+        request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/progress", HttpStatus.FORBIDDEN, LearningGoalProgress.class);
     }
 
     @Test

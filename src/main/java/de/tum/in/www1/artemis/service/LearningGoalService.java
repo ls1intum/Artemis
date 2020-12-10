@@ -115,9 +115,7 @@ public class LearningGoalService {
         List<StudentParticipation> participationsOfTeamExercises = participationService.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), teamExercises);
 
         // 3rd: merge both into one list for further processing
-        List<StudentParticipation> participations = Stream.concat(participationsOfIndividualExercises.stream(), participationsOfTeamExercises.stream())
-                .collect(Collectors.toList());
-        return participations;
+        return Stream.concat(participationsOfIndividualExercises.stream(), participationsOfTeamExercises.stream()).collect(Collectors.toList());
     }
 
     /**

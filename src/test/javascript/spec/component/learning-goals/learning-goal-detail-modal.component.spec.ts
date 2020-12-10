@@ -23,8 +23,8 @@ describe('LearningGoalDetailModalComponent', () => {
     let learningGoalDetailModalComponent: LearningGoalDetailModalComponent;
 
     const activeModalStub = {
-        close: (result?: any) => {},
-        dismiss: (reason?: any) => {},
+        close: () => {},
+        dismiss: () => {},
     };
 
     beforeEach(() => {

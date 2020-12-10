@@ -287,7 +287,7 @@ public class LearningGoalResource {
 
     private Set<LectureUnit> getLectureUnitsFromDatabase(Set<LectureUnit> lectureUnitsFromClient) throws IllegalArgumentException {
         Set<LectureUnit> lectureUnitsFromDatabase = new HashSet<>();
-        if (lectureUnitsFromClient != null && lectureUnitsFromClient.size() > 0) {
+        if (lectureUnitsFromClient != null && !lectureUnitsFromClient.isEmpty()) {
             for (LectureUnit lectureUnit : lectureUnitsFromClient) {
                 if (lectureUnit.getId() == null) {
                     throw new IllegalArgumentException();
