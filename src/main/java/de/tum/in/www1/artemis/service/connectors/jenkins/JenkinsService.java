@@ -183,6 +183,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
 
         final var errorMessage = "Error trying to configure build plan in Jenkins " + planName;
+        // TODO: inline postXml, we do not need the complex generic method if we only use it once!
         postXml(jobXmlDocument, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planName);
     }
 
@@ -628,6 +629,9 @@ public class JenkinsService implements ContinuousIntegrationService {
             final var job = jenkinsServer.getJob(projectKey);
             if (job == null) {
                 // means the project does not exist
+                return null;
+            }
+            else if (job.getUrl() == null || job.getUrl().isEmpty()) {
                 return null;
             }
             else {
