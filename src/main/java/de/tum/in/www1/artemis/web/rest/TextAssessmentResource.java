@@ -125,7 +125,6 @@ public class TextAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> saveTextExampleAssessment(@PathVariable long submissionId, @RequestBody List<Feedback> feedbacks) {
         log.debug("REST request to save text example assessment : {}", submissionId);
-        // TODO: Figure out if we need to use saveTextBlocks
         return super.saveExampleAssessment(submissionId, feedbacks);
     }
 
