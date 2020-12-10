@@ -13,7 +13,7 @@ buildscript {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
         // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-        classpath "com.github.ben-manes:gradle-versions-plugin:0.36.0"
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.35.0"
     }
 }
 
@@ -195,7 +195,7 @@ dependencies {
 
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.6.1"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.6.2"
     implementation "net.logstash.logback:logstash-logback-encoder:6.5"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -213,7 +213,7 @@ dependencies {
     implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
     implementation "org.hibernate.validator:hibernate-validator:6.1.6.Final"
-    implementation "org.liquibase:liquibase-core:4.2.1"
+    implementation "org.liquibase:liquibase-core:4.2.2"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
@@ -229,7 +229,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:2.3.3.RELEASE"
-    implementation "org.springframework.data:spring-data-ldap:2.4.1"
+    implementation "org.springframework.data:spring-data-ldap:2.4.2"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.2.6.RELEASE"
     implementation "org.springframework.cloud:spring-cloud-starter-config:2.2.6.RELEASE"
@@ -237,7 +237,7 @@ dependencies {
 
     implementation "io.netty:netty-all:4.1.55.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.0.2"
-    implementation "org.springframework:spring-messaging:5.3.1"
+    implementation "org.springframework:spring-messaging:5.3.2"
     implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.3.1_1"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
