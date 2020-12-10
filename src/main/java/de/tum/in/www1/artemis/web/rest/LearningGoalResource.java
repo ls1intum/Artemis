@@ -86,7 +86,7 @@ public class LearningGoalResource {
             return forbidden();
         }
 
-        LearningGoalProgress learningGoalProgress = learningGoalService.getLearningGoalPerformance(learningGoal, user);
+        LearningGoalProgress learningGoalProgress = learningGoalService.calculateLearningGoalProgress(learningGoal, user);
         return ResponseEntity.ok(learningGoalProgress);
     }
 
