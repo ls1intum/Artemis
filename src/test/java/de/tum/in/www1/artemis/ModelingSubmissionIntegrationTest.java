@@ -303,7 +303,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         result.setScore(100L);
         result.setRated(true);
         result.setAssessor(user);
-        submission.replaceLatestOrIfEmptyAddResult(result);
+        submission.addResult(result);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class);
 

@@ -140,7 +140,7 @@ public class ExamQuizService {
                 // add result to submission
                 // quizSubmission.replaceLatestOrIfEmptyAddResult(result);
                 result.setSubmission(quizSubmission);
-                quizSubmission.replaceLatestOrIfEmptyAddResult(result);
+                quizSubmission.addResult(result);
                 quizSubmissionRepository.save(quizSubmission);
 
                 // Add result so that it can be returned (and processed later)

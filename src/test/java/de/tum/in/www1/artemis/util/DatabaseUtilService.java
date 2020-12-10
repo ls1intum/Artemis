@@ -536,9 +536,9 @@ public class DatabaseUtilService {
             result2.setSubmission(modelingSubmission2);
             result3.setSubmission(textSubmission);
 
-            modelingSubmission1.replaceLatestOrIfEmptyAddResult(result1);
-            modelingSubmission2.replaceLatestOrIfEmptyAddResult(result2);
-            textSubmission.replaceLatestOrIfEmptyAddResult(result3);
+            modelingSubmission1.addResult(result1);
+            modelingSubmission2.addResult(result2);
+            textSubmission.addResult(result3);
 
             submissionRepository.save(modelingSubmission1);
             submissionRepository.save(modelingSubmission2);
@@ -765,15 +765,15 @@ public class DatabaseUtilService {
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
         modelingSubmission.setParticipation(participationModeling);
-        modelingSubmission.replaceLatestOrIfEmptyAddResult(resultModeling);
+        modelingSubmission.addResult(resultModeling);
         textSubmission.setParticipation(participationText);
-        textSubmission.replaceLatestOrIfEmptyAddResult(resultText);
+        textSubmission.addResult(resultText);
         fileUploadSubmission.setParticipation(participationFileUpload);
-        fileUploadSubmission.replaceLatestOrIfEmptyAddResult(resultFileUpload);
+        fileUploadSubmission.addResult(resultFileUpload);
         quizSubmission.setParticipation(participationQuiz);
-        quizSubmission.replaceLatestOrIfEmptyAddResult(resultQuiz);
+        quizSubmission.addResult(resultQuiz);
         programmingSubmission.setParticipation(participationProgramming);
-        programmingSubmission.replaceLatestOrIfEmptyAddResult(resultProgramming);
+        programmingSubmission.addResult(resultProgramming);
 
         // Save submissions
         modelingSubmission = submissionRepository.save(modelingSubmission);
@@ -1215,7 +1215,7 @@ public class DatabaseUtilService {
         Result result = new Result().participation(participation).resultString("x of y passed").successful(false).score(100L);
         result = resultRepo.save(result);
         result.setSubmission(submission);
-        submission.replaceLatestOrIfEmptyAddResult(result);
+        submission.addResult(result);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
         return result;
@@ -1254,7 +1254,7 @@ public class DatabaseUtilService {
         result.setAssessor(user);
         result = resultRepo.save(result);
         result.setSubmission(submission);
-        submission.replaceLatestOrIfEmptyAddResult(result);
+        submission.addResult(result);
         var savedSubmission = submissionRepository.save(submission);
         return submissionRepository.findWithEagerResultsById(savedSubmission.getId()).orElseThrow();
     }
@@ -1822,7 +1822,7 @@ public class DatabaseUtilService {
         Result result = new Result();
         result = resultRepo.save(result);
         result.setSubmission(submission);
-        submission.replaceLatestOrIfEmptyAddResult(result);
+        submission.addResult(result);
         participation.addResult(result);
         studentParticipationRepo.save(participation);
         modelingSubmissionRepo.save(submission);
@@ -1870,7 +1870,7 @@ public class DatabaseUtilService {
         Result result = resultRepo.save(new Result().participation(participation));
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
-        submission.replaceLatestOrIfEmptyAddResult(result);
+        submission.addResult(result);
         submission = programmingSubmissionRepo.save(submission);
         result.setSubmission(submission);
         result = resultRepo.save(result);
@@ -1898,7 +1898,7 @@ public class DatabaseUtilService {
 
         result = resultRepo.save(result);
         result.setSubmission(submission);
-        submission.replaceLatestOrIfEmptyAddResult(result);
+        submission.addResult(result);
         // Manual results are always rated and have a resultString which is defined in the client
         if (assessmentType.equals(AssessmentType.SEMI_AUTOMATIC)) {
             result.rated(true);
@@ -1910,7 +1910,7 @@ public class DatabaseUtilService {
 
     public ProgrammingSubmission addProgrammingSubmissionToResultAndParticipation(Result result, StudentParticipation participation, String commitHash) {
         ProgrammingSubmission submission = createProgrammingSubmission(participation, false);
-        submission.replaceLatestOrIfEmptyAddResult(result);
+        submission.addResult(result);
         submission.setCommitHash(commitHash);
         resultRepo.save(result);
         result.setSubmission(submission);
@@ -1953,7 +1953,7 @@ public class DatabaseUtilService {
 
         result.setSubmission(submission);
         submission.setParticipation(participation);
-        submission.replaceLatestOrIfEmptyAddResult(result);
+        submission.addResult(result);
         submission.getParticipation().addResult(result);
         submission = modelingSubmissionRepo.save(submission);
         studentParticipationRepo.save(participation);
@@ -1970,7 +1970,7 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setParticipation(participation);
-        submission.replaceLatestOrIfEmptyAddResult(result);
+        submission.addResult(result);
         submission.getParticipation().addResult(result);
         submission = modelingSubmissionRepo.save(submission);
         result = resultRepo.save(result);
@@ -2007,7 +2007,7 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         result.setSubmission(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
-        fileUploadSubmission.replaceLatestOrIfEmptyAddResult(result);
+        fileUploadSubmission.addResult(result);
         fileUploadSubmission.getParticipation().addResult(result);
         fileUploadSubmission = fileUploadSubmissionRepo.save(fileUploadSubmission);
         studentParticipationRepo.save(participation);
@@ -2046,7 +2046,7 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setParticipation(participation);
-        submission.replaceLatestOrIfEmptyAddResult(result);
+        submission.addResult(result);
         submission.getParticipation().addResult(result);
         submission = textSubmissionRepo.save(submission);
         result = resultRepo.save(result);
@@ -2082,7 +2082,7 @@ public class DatabaseUtilService {
         // 3) save the parent entity and make sure to re-assign the return value
         result = resultRepo.save(result);
         // re-assign so that the saved feedback items are contained in the returned object
-        submission.replaceLatestOrIfEmptyAddResult(result);
+        submission.addResult(result);
         return submission;
     }
 

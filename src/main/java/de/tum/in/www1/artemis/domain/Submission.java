@@ -138,7 +138,7 @@ public abstract class Submission extends DomainObject {
      *
      * @param result
      */
-    public void replaceLatestOrIfEmptyAddResult(Result result) {
+    public void addResult(Result result) {
         if (this.results.isEmpty()) {
             this.results.add(result);
         }

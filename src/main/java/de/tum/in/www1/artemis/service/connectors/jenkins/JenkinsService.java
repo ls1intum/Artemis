@@ -347,7 +347,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         result = resultRepository.save(result);
 
         result.setSubmission(submission);
-        submission.replaceLatestOrIfEmptyAddResult(result);
+        submission.addResult(result);
         result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), submission);
         programmingSubmissionRepository.save(submission);
         // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).

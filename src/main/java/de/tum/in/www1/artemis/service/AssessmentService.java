@@ -343,7 +343,7 @@ public class AssessmentService {
 
         if (result.getSubmission() == null) {
             result.setSubmission(submission);
-            submission.replaceLatestOrIfEmptyAddResult(result);
+            submission.addResult(result);
             submissionRepository.save(submission);
         }
         return resultRepository.save(result);

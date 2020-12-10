@@ -225,7 +225,7 @@ public class ModelingSubmissionService extends SubmissionService {
             automaticResult = resultRepository.save(automaticResult);
 
             automaticResult.setSubmission(modelingSubmission);
-            modelingSubmission.replaceLatestOrIfEmptyAddResult(automaticResult);
+            modelingSubmission.addResult(automaticResult);
             modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
 
             compassService.removeAutomaticResultForSubmission(modelingSubmission.getId(), exerciseId);

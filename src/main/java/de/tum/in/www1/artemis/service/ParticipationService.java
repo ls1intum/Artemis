@@ -290,7 +290,7 @@ public class ParticipationService {
                 result.setAssessmentType(AssessmentType.TEST_RUN);
                 result = resultRepository.save(result);
                 result.setSubmission(submission);
-                submission.replaceLatestOrIfEmptyAddResult(result);
+                submission.addResult(result);
                 submissionRepository.save(submission);
             }
             save(participation);
