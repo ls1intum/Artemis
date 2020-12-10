@@ -61,7 +61,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     Integer getExamParticipations(@Param("span") ZonedDateTime span);
 
     @Query("""
-            select sum(e.registeredUsers.size)
+            select sum(size(e.registeredUsers))
             from Exam e
             where e.endDate >= :#{#span} and e.endDate <= :#{#now}
             """)
@@ -82,7 +82,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     Integer getCreatedResults(@Param("span") ZonedDateTime span);
 
     @Query("""
-            select sum(r.feedbacks.size)
+            select sum(size(r.feedbacks))
             from Result r
             where r.completionDate >= :#{#span}
             """)

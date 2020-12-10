@@ -1,6 +1,6 @@
-<div *ngIf="user">
+<div *ngIf="user && isVisible">
     <h2>
-        <span jhiTranslate="userManagement.detail.title">User</span> [<b>{{ user.login }}</b
+        <span jhiTranslate="userManagement.detail.title">User </span>[<b>{{ user.login }}</b
         >]
     </h2>
     <dl class="row-md jh-entity-details">
@@ -33,5 +33,10 @@
                 </li>
             </ul>
         </dd>
+        <button type="submit" [routerLink]="['edit']" class="btn btn-warning">
+            <fa-icon [icon]="'wrench'"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+        </button>
     </dl>
 </div>
+<router-outlet></router-outlet>

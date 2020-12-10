@@ -4,7 +4,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisTestModule } from '../../test.module';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DifferencePipe } from 'ngx-moment';
@@ -22,6 +21,8 @@ describe('RatingListComponent', () => {
     let router: Router;
 
     const ratings = [{ id: 1 }, { id: 2 }, { id: 3 }];
+    const parentRoute = ({ params: of({ courseId: 123 }) } as any) as ActivatedRoute;
+    const route = ({ parent: parentRoute } as any) as ActivatedRoute;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -30,7 +31,7 @@ describe('RatingListComponent', () => {
             providers: [
                 {
                     provide: ActivatedRoute,
-                    useValue: new MockActivatedRoute({ courseId: 123 }),
+                    useValue: route,
                 },
                 DifferencePipe,
                 {

@@ -6,7 +6,9 @@
             "yes": "Yes",
             "no": "No",
             "emptyList": "No items available",
-            "unset": "Unset"
+            "unset": "Unset",
+            "create": "Create",
+            "edit": "Edit"
         },
         "menu": {
             "home": "Home",
@@ -179,6 +181,7 @@
             "confirm": "Confirm",
             "download": "Download",
             "edit": "Edit",
+            "editSelected": "Edit selected",
             "editInEditor": "Edit in editor",
             "editInIntelliJ": "Edit in IntelliJ",
             "editEntity": "Edit {{entity}}",

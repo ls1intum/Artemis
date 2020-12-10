@@ -6,7 +6,9 @@
             "yes": "Ja",
             "no": "Nein",
             "emptyList": "Keine Elemente verfügbar",
-            "unset": "Nicht gesetzt"
+            "unset": "Nicht gesetzt",
+            "create": "Erstellen",
+            "edit": "Editieren"
         },
         "menu": {
             "home": "Startseite",
@@ -178,6 +180,7 @@
             "dashboard": "Dashboard",
             "units": "Einheiten",
             "edit": "Bearbeiten",
+            "editSelected": "Ausgewählte bearbeiten",
             "editInEditor": "In Editor bearbeiten",
             "editInIntelliJ": "In IntelliJ bearbeiten",
             "editEntity": "{{entity}} bearbeiten",

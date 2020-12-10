@@ -78,7 +78,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
      */
     loadAll() {
         this.isLoading = true;
-        this.route.data.subscribe(({ course }) => {
+        this.route.parent!.data.subscribe(({ course }) => {
             this.course = course;
             this.paramSub = this.route.params.subscribe((params) => {
                 this.courseGroup = params['courseGroup'];

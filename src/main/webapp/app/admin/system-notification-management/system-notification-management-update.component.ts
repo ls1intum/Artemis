@@ -24,8 +24,12 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
-        this.route.data.subscribe(({ notification }) => {
-            this.notification = notification.body ? notification.body : notification;
+        // create a new notification, and only overwrite it if we fetch a notification to edit
+        this.notification = new SystemNotification();
+        this.route.parent!.data.subscribe(({ notification }) => {
+            if (notification) {
+                this.notification = notification.body ? notification.body : notification;
+            }
         });
     }
 

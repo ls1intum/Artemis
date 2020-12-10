@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -40,24 +42,32 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     UserRepository userRepo;
 
+    private enum ImportType {
+        FROM_EXERCISE, FROM_LIST
+    }
+
     private Course course;
 
     private Exercise sourceExercise;
 
     private Exercise destinationExercise;
 
+    private List<Team> importedTeams;
+
+    private List<Team> importedTeamsBody;
+
     private User tutor;
 
-    private String endpointUrl() {
+    private String fromExerciseEndpointUrl() {
         return "/api/exercises/" + destinationExercise.getId() + "/teams/import-from-exercise/";
     }
 
     private String importFromExerciseUrl(Exercise exercise, TeamImportStrategyType importStrategyType) {
-        return endpointUrl() + exercise.getId() + "?importStrategyType=" + importStrategyType;
+        return fromExerciseEndpointUrl() + exercise.getId() + "?importStrategyType=" + importStrategyType;
     }
 
     private String importFromExerciseUrl(Exercise exercise) {
-        return endpointUrl() + exercise.getId() + "?importStrategyType=" + TeamImportStrategyType.CREATE_ONLY;
+        return fromExerciseEndpointUrl() + exercise.getId() + "?importStrategyType=" + TeamImportStrategyType.CREATE_ONLY;
     }
 
     private String importFromSourceExerciseUrl(TeamImportStrategyType importStrategyType) {
@@ -66,6 +76,18 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     private String importFromSourceExerciseUrl() {
         return importFromSourceExerciseUrl(TeamImportStrategyType.CREATE_ONLY);
+    }
+
+    private String fromListEndpointUrl() {
+        return "/api/exercises/" + destinationExercise.getId() + "/teams/import-from-list";
+    }
+
+    private String importFromListUrl(TeamImportStrategyType importStrategyType) {
+        return fromListEndpointUrl() + "?importStrategyType=" + importStrategyType;
+    }
+
+    private String importFromListUrl() {
+        return fromListEndpointUrl() + "?importStrategyType=" + TeamImportStrategyType.CREATE_ONLY;
     }
 
     @BeforeEach
@@ -78,7 +100,9 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         sourceExercise = exerciseRepo.save(sourceExercise.mode(ExerciseMode.TEAM));
         destinationExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
         destinationExercise = exerciseRepo.save(destinationExercise.mode(ExerciseMode.TEAM));
-
+        Pair<List<Team>, List<Team>> importedTeamsWithBody = getImportedTeamsAndBody("import", "student", "R");
+        importedTeams = importedTeamsWithBody.getFirst();
+        importedTeamsBody = importedTeamsWithBody.getSecond();
         // Select a tutor for the teams
         tutor = userRepo.findOneByLogin("tutor1").orElseThrow();
     }
@@ -88,76 +112,154 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.resetDatabase();
     }
 
+    private void testImportTeamsIntoExercise(ImportType type, TeamImportStrategyType importStrategyType, List<Team> body, List<Team> addedTeams) throws Exception {
+        TeamImportStrategyType importStrategy = TeamImportStrategyType.CREATE_ONLY;
+        if (importStrategyType != null) {
+            importStrategy = importStrategyType;
+        }
+        String url = importFromSourceExerciseUrl(importStrategy);
+        if (type == ImportType.FROM_LIST) {
+            url = importFromListUrl(importStrategy);
+        }
+        List<Team> destinationTeamsAfter = request.putWithResponseBodyList(url, body, Team.class, HttpStatus.OK);
+        assertCorrectnessOfImport(addedTeams, destinationTeamsAfter);
+    }
+
     @ParameterizedTest
     @EnumSource(TeamImportStrategyType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsIntoEmptyExercise(TeamImportStrategyType importStrategyType) throws Exception {
+    public void testImportTeamsFromExerciseIntoEmptyExercise(TeamImportStrategyType importStrategyType) throws Exception {
         List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, 3, tutor);
-        List<Team> destinationTeamsAfter = request.putWithResponseBodyList(importFromSourceExerciseUrl(importStrategyType), null, Team.class, HttpStatus.OK);
-        assertCorrectnessOfImport(sourceTeams, destinationTeamsAfter);
+        testImportTeamsIntoExercise(ImportType.FROM_EXERCISE, importStrategyType, null, sourceTeams);
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(TeamImportStrategyType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsIntoExerciseWithNoConflictsUsingPurgeExistingStrategy() throws Exception {
+    public void testImportTeamsFromListIntoEmptyExercise(TeamImportStrategyType importStrategyType) throws Exception {
+        testImportTeamsIntoExercise(ImportType.FROM_LIST, importStrategyType, importedTeamsBody, importedTeams);
+    }
+
+    private void testImportTeamsIntoExerciseWithNoConflictsUsingPurgeExistingStrategy(ImportType type, List<Team> body, List<Team> addedTeams) throws Exception {
         TeamImportStrategyType strategyType = TeamImportStrategyType.PURGE_EXISTING;
-        List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, "sourceTeam", 2, tutor);
         database.addTeamsForExercise(destinationExercise, 4, tutor);
-        List<Team> destinationTeamsAfter = request.putWithResponseBodyList(importFromSourceExerciseUrl(strategyType), null, Team.class, HttpStatus.OK);
-        // imported source teams = destination teams after
-        assertCorrectnessOfImport(sourceTeams, destinationTeamsAfter);
+        testImportTeamsIntoExercise(type, strategyType, body, addedTeams);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsIntoExerciseWithNoConflictsUsingCreateOnlyStrategy() throws Exception {
+    public void testImportTeamsFromExerciseIntoExerciseWithNoConflictsUsingPurgeExistingStrategy() throws Exception {
+        List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, "sourceTeam", 2, tutor);
+        testImportTeamsIntoExerciseWithNoConflictsUsingPurgeExistingStrategy(ImportType.FROM_EXERCISE, null, sourceTeams);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportTeamsFromListWithNoConflictsUsingPurgeExistingStrategy() throws Exception {
+        testImportTeamsIntoExerciseWithNoConflictsUsingPurgeExistingStrategy(ImportType.FROM_LIST, importedTeamsBody, importedTeams);
+    }
+
+    private void testImportTeamsIntoExerciseWithNoConflictsUsingCreateOnlyStrategy(ImportType type, List<Team> body, List<Team> addedTeams) throws Exception {
         TeamImportStrategyType strategyType = TeamImportStrategyType.CREATE_ONLY;
-        List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, "sourceTeam", 3, tutor);
         List<Team> destinationTeamsBefore = database.addTeamsForExercise(destinationExercise, 1, tutor);
-        List<Team> destinationTeamsAfter = request.putWithResponseBodyList(importFromSourceExerciseUrl(strategyType), null, Team.class, HttpStatus.OK);
         // destination teams before + source teams = destination teams after
-        assertCorrectnessOfImport(addLists(destinationTeamsBefore, sourceTeams), destinationTeamsAfter);
+        testImportTeamsIntoExercise(type, strategyType, body, addLists(destinationTeamsBefore, addedTeams));
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsIntoExerciseWithConflictsUsingPurgeExistingStrategy() throws Exception {
+    public void testImportTeamsFromExerciseIntoExerciseWithNoConflictsUsingCreateOnlyStrategy() throws Exception {
+        List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, "sourceTeam", 3, tutor);
+        // destination teams before + source teams = destination teams after
+        testImportTeamsIntoExerciseWithNoConflictsUsingCreateOnlyStrategy(ImportType.FROM_EXERCISE, null, sourceTeams);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportTeamsFromListIntoExerciseWithNoConflictsUsingCreateOnlyStrategy() throws Exception {
+        // destination teams before + imported teams = destination teams after
+        testImportTeamsIntoExerciseWithNoConflictsUsingCreateOnlyStrategy(ImportType.FROM_LIST, importedTeamsBody, importedTeams);
+    }
+
+    private void testImportTeamsIntoExerciseWithConflictsUsingPurgeExistingStrategy(ImportType type, List<Team> body, List<Team> addedTeams) throws Exception {
         TeamImportStrategyType strategyType = TeamImportStrategyType.PURGE_EXISTING;
-        List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, "sameShortName", "other", 3, tutor);
         database.addTeamsForExercise(destinationExercise, "sameShortName", 2, tutor);
-        List<Team> destinationTeamsAfter = request.putWithResponseBodyList(importFromSourceExerciseUrl(strategyType), null, Team.class, HttpStatus.OK);
         // imported source teams = destination teams after
-        assertCorrectnessOfImport(sourceTeams, destinationTeamsAfter);
+        testImportTeamsIntoExercise(type, strategyType, body, addedTeams);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy() throws Exception {
+    public void testImportTeamsFromExerciseIntoExerciseWithConflictsUsingPurgeExistingStrategy() throws Exception {
+        List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, "sameShortName", "other", 3, tutor);
+        testImportTeamsIntoExerciseWithConflictsUsingPurgeExistingStrategy(ImportType.FROM_EXERCISE, null, sourceTeams);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportFromListIntoExerciseWithConflictsUsingPurgeExistingStrategy() throws Exception {
+        Pair<List<Team>, List<Team>> importedTeamsWithBody = getImportedTeamsAndBody("sameShortName", "other", "O");
+        importedTeams = importedTeamsWithBody.getFirst();
+        importedTeamsBody = importedTeamsWithBody.getSecond();
+        testImportTeamsIntoExerciseWithConflictsUsingPurgeExistingStrategy(ImportType.FROM_LIST, importedTeamsBody, importedTeams);
+    }
+
+    private void testImportTeamsIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy(ImportType type, List<Team> body, List<Team> teamsWithoutConflict) throws Exception {
         TeamImportStrategyType strategyType = TeamImportStrategyType.CREATE_ONLY;
+        List<Team> destinationTeamsBefore = database.addTeamsForExercise(destinationExercise, "sameShortName", 3, tutor);
+        // destination teams before + conflict-free source teams = destination teams after
+        testImportTeamsIntoExercise(type, strategyType, body, addLists(destinationTeamsBefore, teamsWithoutConflict));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportTeamsFromExerciseIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy() throws Exception {
         List<Team> sourceTeamsWithoutConflict = database.addTeamsForExercise(sourceExercise, "sourceTeam", 1, tutor);
         List<Team> sourceTeamsWithTeamShortNameConflict = database.addTeamsForExercise(sourceExercise, "sameShortName", "other", 2, tutor);
-        List<Team> destinationTeamsBefore = database.addTeamsForExercise(destinationExercise, "sameShortName", 3, tutor);
-        List<Team> destinationTeamsAfter = request.putWithResponseBodyList(importFromSourceExerciseUrl(strategyType), null, Team.class, HttpStatus.OK);
-        // destination teams before + conflict-free source teams = destination teams after
-        assertCorrectnessOfImport(addLists(destinationTeamsBefore, sourceTeamsWithoutConflict), destinationTeamsAfter);
+        testImportTeamsIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy(ImportType.FROM_EXERCISE, null, sourceTeamsWithoutConflict);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy() throws Exception {
+    public void testImportFromListIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy() throws Exception {
+        Pair<List<Team>, List<Team>> importedTeamsWithConflictAndBody = getImportedTeamsAndBody("sameShortName", "other", "O");
+        List<Team> importedTeamsWithConflictBody = importedTeamsWithConflictAndBody.getSecond();
+        testImportTeamsIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy(ImportType.FROM_LIST, addLists(importedTeamsWithConflictBody, importedTeamsBody),
+                importedTeams);
+    }
+
+    private void testImportTeamsIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy(ImportType type, List<Team> body, List<Team> teamsWithoutConflict,
+            List<Team> teamsWithConflicts) throws Exception {
         TeamImportStrategyType strategyType = TeamImportStrategyType.CREATE_ONLY;
+        List<Team> destinationTeamsBefore = teamRepo
+                .saveAll(teamsWithConflicts.stream().map(team -> team.exercise(destinationExercise).shortName("other" + team.getShortName())).collect(Collectors.toList()));
+        // destination teams before + conflict-free source teams = destination teams after
+        testImportTeamsIntoExercise(type, strategyType, body, addLists(destinationTeamsBefore, teamsWithoutConflict));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportTeamsFromExerciseIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy() throws Exception {
         List<Team> sourceTeamsWithoutConflict = database.addTeamsForExercise(sourceExercise, "sourceTeamOther", 1, tutor);
         List<Team> sourceTeamsWithStudentConflict = database.addTeamsForExercise(sourceExercise, "sourceTeam", 3, tutor);
-        List<Team> destinationTeamsBefore = teamRepo.saveAll(
-                sourceTeamsWithStudentConflict.stream().map(team -> team.exercise(destinationExercise).shortName("other" + team.getShortName())).collect(Collectors.toList()));
-        List<Team> destinationTeamsAfter = request.putWithResponseBodyList(importFromSourceExerciseUrl(strategyType), null, Team.class, HttpStatus.OK);
         // destination teams before + conflict-free source teams = destination teams after
-        assertCorrectnessOfImport(addLists(destinationTeamsBefore, sourceTeamsWithoutConflict), destinationTeamsAfter);
+        testImportTeamsIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy(ImportType.FROM_EXERCISE, null, sourceTeamsWithoutConflict, sourceTeamsWithStudentConflict);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeams_BadRequests() throws Exception {
+    public void testImportTeamsFromListIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy() throws Exception {
+        Pair<List<Team>, List<Team>> importedTeamsWithStudentConflictAndBody = getImportedTeamsAndBody("withConflict", "import", "R");
+        List<Team> importedTeamsWithStudentConflict = importedTeamsWithStudentConflictAndBody.getFirst();
+        List<Team> importedTeamsWithStudentConflictBody = importedTeamsWithStudentConflictAndBody.getSecond();
+        // destination teams before + conflict-free imported teams = destination teams after
+        testImportTeamsIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy(ImportType.FROM_LIST, addLists(importedTeamsWithStudentConflictBody, importedTeamsBody),
+                importedTeams, importedTeamsWithStudentConflict);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportTeamsFromExerciseBadRequests() throws Exception {
         // Specifying the destination exercise to also be the source exercise should fail
         request.put(importFromExerciseUrl(destinationExercise), null, HttpStatus.BAD_REQUEST);
 
@@ -173,19 +275,61 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportTeamsFromListBadRequests() throws Exception {
+        // If the destination exercise is not a team exercise, the request should fail
+        exerciseRepo.save(destinationExercise.mode(ExerciseMode.INDIVIDUAL));
+        request.put(importFromListUrl(), importedTeamsBody, HttpStatus.BAD_REQUEST);
+        exerciseRepo.save(destinationExercise.mode(ExerciseMode.TEAM));
+
+        // If user with given registration number does not exist, the request should fail
+        List<Team> teams = new ArrayList<>();
+        Team team = ModelFactory.generateTeamForExercise(destinationExercise, "failTeam", "fail", 1, null);
+        // If students not added with user repo then they do not exist so it should fail
+        teams.add(team);
+        request.put(importFromListUrl(), getTeamsIntoRegistrationNumberOnlyTeams(teams), HttpStatus.BAD_REQUEST);
+
+        // If user with given login does not exist, the request should fail
+        request.put(importFromListUrl(), getTeamsIntoLoginOnlyTeams(teams), HttpStatus.BAD_REQUEST);
+
+        // If user does not have an identifier: registration number or login, the request should fail
+        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
+        request.put(importFromListUrl(), getTeamsIntoOneIdentifierTeams(teams, null), HttpStatus.BAD_REQUEST);
+
+        // If user's registration number points to same user with a login in request, it should fail
+        request.put(importFromListUrl(), addLists(getTeamsIntoLoginOnlyTeams(teams), getTeamsIntoRegistrationNumberOnlyTeams(teams)), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testImportTeams_Forbidden_AsTutor() throws Exception {
+    public void testImportTeamsFromExerciseForbiddenAsTutor() throws Exception {
         request.put(importFromSourceExerciseUrl(), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testImportTeamsFromListForbiddenAsTutor() throws Exception {
+        request.put(importFromListUrl(), importedTeamsBody, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeams_Forbidden_AsInstructorOfOtherCourse() throws Exception {
+    public void testImportTeamsFromExerciseForbiddenAsInstructorOfOtherCourse() throws Exception {
         // If the instructor is not part of the correct course instructor group anymore, he should not be able to import teams
         course.setInstructorGroupName("Different group name");
         courseRepo.save(course);
 
         request.put(importFromSourceExerciseUrl(), null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportTeamsFromListForbiddenAsInstructorOfOtherCourse() throws Exception {
+        // If the instructor is not part of the correct course instructor group anymore, he should not be able to import teams
+        course.setInstructorGroupName("Different group name");
+        courseRepo.save(course);
+
+        request.put(importFromListUrl(), importedTeamsBody, HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -204,5 +348,45 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     static <T> List<T> addLists(List<T> a, List<T> b) {
         return Stream.of(a, b).flatMap(Collection::stream).collect(Collectors.toList());
+    }
+
+    private Pair<List<Team>, List<Team>> getImportedTeamsAndBody(String shortNamePrefix, String loginPrefix, String registrationPrefix) {
+        List<Team> generatedTeams = ModelFactory.generateTeamsForExercise(destinationExercise, shortNamePrefix, loginPrefix, 3, null, "instructor1", registrationPrefix);
+        userRepo.saveAll(generatedTeams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
+        List<Team> teamsWithLogins = getTeamsIntoLoginOnlyTeams(generatedTeams.subList(0, 2));
+        List<Team> teamsWithRegistrationNumbers = getTeamsIntoRegistrationNumberOnlyTeams(generatedTeams.subList(2, 3));
+        List<Team> body = Stream.concat(teamsWithLogins.stream(), teamsWithRegistrationNumbers.stream()).collect(Collectors.toList());
+        return Pair.of(generatedTeams, body);
+    }
+
+    private List<Team> getTeamsIntoLoginOnlyTeams(List<Team> teams) {
+        return getTeamsIntoOneIdentifierTeams(teams, "login");
+    }
+
+    private List<Team> getTeamsIntoRegistrationNumberOnlyTeams(List<Team> teams) {
+        return getTeamsIntoOneIdentifierTeams(teams, "registrationNumber");
+    }
+
+    private List<Team> getTeamsIntoOneIdentifierTeams(List<Team> teams, String identifier) {
+        return teams.stream().map(team -> {
+            Team newTeam = new Team();
+            newTeam.setName(team.getName());
+            newTeam.setShortName(team.getShortName());
+            newTeam.setOwner(team.getOwner());
+            List<User> newStudents = team.getStudents().stream().map(student -> {
+                User newStudent = new User();
+                newStudent.setFirstName(student.getFirstName());
+                newStudent.setLastName(student.getLastName());
+                if ("login".equals(identifier)) {
+                    newStudent.setLogin(student.getLogin());
+                }
+                else if ("registrationNumber".equals(identifier)) {
+                    newStudent.setVisibleRegistrationNumber(student.getRegistrationNumber());
+                }
+                return newStudent;
+            }).collect(Collectors.toList());
+            newTeam.setStudents(new HashSet<>(newStudents));
+            return newTeam;
+        }).collect(Collectors.toList());
     }
 }

@@ -1,8 +1,7 @@
-import { Moment } from 'moment';
 import { User } from 'app/core/user/user.model';
-import { BaseEntity } from 'app/shared/model/base-entity';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-
+import { BaseEntity } from 'app/shared/model/base-entity';
+import { Moment } from 'moment';
 export enum TeamImportStrategyType {
     PURGE_EXISTING = 'PURGE_EXISTING',
     CREATE_ONLY = 'CREATE_ONLY',
@@ -36,4 +35,17 @@ export class Team implements BaseEntity {
     constructor() {
         this.students = []; // default value
     }
+}
+
+/**
+ * This class is used for importing teams from a file
+ * Either registration number or login must be set
+ * Additionally student has teamName to identify which team he/she belongs to
+ */
+export class StudentWithTeam {
+    public firstName?: string;
+    public lastName?: string;
+    public registrationNumber?: string;
+    public teamName: string;
+    public username?: string;
 }
