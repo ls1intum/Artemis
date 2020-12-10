@@ -363,7 +363,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // do not send the result to the client if the assessment is not finished
         if (modelingSubmission.getLatestResult() != null
                 && (modelingSubmission.getLatestResult().getCompletionDate() == null || modelingSubmission.getLatestResult().getAssessor() == null)) {
-            modelingSubmission.setResults(new ArrayList<Result>());
+            modelingSubmission.overwriteResults(new ArrayList<Result>());
         }
 
         if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {

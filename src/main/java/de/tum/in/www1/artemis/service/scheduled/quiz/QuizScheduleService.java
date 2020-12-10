@@ -588,7 +588,7 @@ public class QuizScheduleService {
                 result.evaluateSubmission();
 
                 // add result to submission
-                savedQuizSubmission.setResults(List.of(result));
+                savedQuizSubmission.overwriteResults(List.of(result));
                 // save submission to set result index column
                 savedQuizSubmission = quizSubmissionRepository.save(savedQuizSubmission);
                 result = resultRepository.save(result);

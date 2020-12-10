@@ -401,7 +401,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         if (exampleSubmission.submission) {
             const result = getLatestSubmissionResult(exampleSubmission.submission);
             setLatestSubmissionResult(exampleSubmission.submission, result);
-            getLatestSubmissionResult(exampleSubmission.submission)!.feedbacks = this.assessments;
+            result!.feedbacks = this.assessments;
         }
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
             () => {

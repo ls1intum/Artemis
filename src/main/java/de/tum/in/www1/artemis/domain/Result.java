@@ -78,7 +78,6 @@ public class Result extends DomainObject {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonView(QuizView.Before.class)
-    // TODO: rename ignored property to "results" after change in client
     @JsonIgnoreProperties({ "results", "participation" })
     private Submission submission;
 

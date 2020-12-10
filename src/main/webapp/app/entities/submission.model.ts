@@ -42,7 +42,7 @@ export abstract class Submission implements BaseEntity {
 }
 
 /**
- * Used to access the correct submissions result
+ * Used to access the latest submissions result
  *
  * @param submission
  */
@@ -57,7 +57,7 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
 }
 
 /**
- * Used to set the correct submissions result
+ * Used to set the latest submissions result
  *
  * @param submission
  * @param result
@@ -71,7 +71,7 @@ export function setLatestSubmissionResult(submission: Submission | undefined, re
         return undefined;
     }
 
-    if (submission.results) {
+    if (submission!.results && submission!.results.length > 0) {
         submission.results[submission.results.length - 1] = result;
     } else {
         submission.results = [result];
@@ -91,7 +91,7 @@ export function getFirstResult(submission: Submission | undefined): Result | und
 
 // todo NR/SE: remove after PR can be merged into develop
 function checkForResultsLength(submission: Submission | undefined) {
-    if (submission!.results && submission!.results?.length > 1) {
+    if (submission?.results && submission.results?.length > 1) {
         console.error('Multiple results for submission ' + 'are currently not supported! Submission.results: ', submission?.results);
     }
 }

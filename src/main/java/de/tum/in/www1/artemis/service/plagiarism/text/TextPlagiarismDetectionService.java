@@ -118,7 +118,7 @@ public class TextPlagiarismDetectionService {
         final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise);
 
         textSubmissions.forEach(submission -> {
-            submission.setResults(new ArrayList<Result>());
+            submission.overwriteResults(new ArrayList<Result>());
 
             StudentParticipation participation = (StudentParticipation) submission.getParticipation();
             participation.setExercise(null);

@@ -99,7 +99,7 @@ public abstract class Submission extends DomainObject {
     /**
      * Is used as a workaround for objects that expect submission to have 1 result
      *
-     * @return the latest result
+     * @return the latest i.e newest result
      */
     @Nullable
     @JsonIgnore
@@ -149,7 +149,7 @@ public abstract class Submission extends DomainObject {
     }
 
     @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
-    public void setResults(List<Result> results) {
+    public void overwriteResults(List<Result> results) {
         this.results = results;
     }
 
