@@ -10,27 +10,15 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.LearningGoalRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.dto.LearningGoalProgress;
 
 @Service
 public class LearningGoalService {
 
-    private final LearningGoalRepository learningGoalRepository;
-
-    private final AuthorizationCheckService authorizationCheckService;
-
-    private final ResultRepository resultRepository;
-
     private final ParticipationService participationService;
 
-    public LearningGoalService(LearningGoalRepository learningGoalRepository, AuthorizationCheckService authorizationCheckService, ParticipationService participationService,
-            ResultRepository resultRepository) {
-        this.learningGoalRepository = learningGoalRepository;
-        this.authorizationCheckService = authorizationCheckService;
+    public LearningGoalService(ParticipationService participationService) {
         this.participationService = participationService;
-        this.resultRepository = resultRepository;
     }
 
     /**
@@ -43,8 +31,8 @@ public class LearningGoalService {
      * @return progress of the user in the exercise units
      */
     public Set<LearningGoalProgress.LectureUnitProgress> calculateExerciseUnitsProgress(Set<ExerciseUnit> exerciseUnits, User user) {
-        // This will also make sure that every exercise is only counted once
-        Map<Exercise, LearningGoalProgress.LectureUnitProgress> exerciseToExerciseUnit = exerciseUnits.stream().filter(exerciseUnit -> exerciseUnit.getExercise() != null)
+        // for each exercise unit, the exercise will be mapped to a freshly created lecture unit progress.
+        Map<Exercise, LearningGoalProgress.LectureUnitProgress> exerciseToLectureUnitProgress = exerciseUnits.stream().filter(exerciseUnit -> exerciseUnit.getExercise() != null)
                 .filter(exerciseUnit -> exerciseUnit.getExercise().isAssessmentDueDateOver()).collect(Collectors.toMap(ExerciseUnit::getExercise, exerciseUnit -> {
                     LearningGoalProgress.LectureUnitProgress lectureUnitProgress = new LearningGoalProgress.LectureUnitProgress();
                     lectureUnitProgress.lectureTitle = exerciseUnit.getLecture().getTitle();
@@ -53,11 +41,69 @@ public class LearningGoalService {
                     lectureUnitProgress.lectureUnitTitle = exerciseUnit.getExercise().getTitle();
                     lectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit = exerciseUnit.getExercise().getMaxScore();
                     return lectureUnitProgress;
-                }, (progress1, progress2) -> progress1));
+                }, (progress1, progress2) -> progress1)); // in the case of two exercises referencing the same exercise, take the first one
 
-        List<Exercise> individualExercises = exerciseToExerciseUnit.keySet().stream().filter(exercise -> !exercise.isTeamMode()).collect(Collectors.toList());
-        List<Exercise> teamExercises = exerciseToExerciseUnit.keySet().stream().filter(Exercise::isTeamMode).collect(Collectors.toList());
+        List<Exercise> individualExercises = exerciseToLectureUnitProgress.keySet().stream().filter(exercise -> !exercise.isTeamMode()).collect(Collectors.toList());
+        List<Exercise> teamExercises = exerciseToLectureUnitProgress.keySet().stream().filter(Exercise::isTeamMode).collect(Collectors.toList());
 
+        // for all relevant exercises the participations with submissions and results will be batch loaded
+        List<StudentParticipation> participationsOfTheStudent = getStudentParticipationsWithSubmissionsAndResults(user, individualExercises, teamExercises);
+
+        // exercise -> participation -> submission -> result until possibly the latest result is found for the student
+        for (Exercise exercise : exerciseToLectureUnitProgress.keySet()) {
+            Optional<Result> optionalResult = findLastResultOfExerciseInListOfParticipatons(exercise, participationsOfTheStudent);
+
+            if (optionalResult.isEmpty()) {
+                exerciseToLectureUnitProgress.get(exercise).pointsAchievedByStudentInLectureUnit = 0.0;
+            }
+            else {
+                exerciseToLectureUnitProgress.get(exercise).pointsAchievedByStudentInLectureUnit = Math
+                        .round((optionalResult.get().getScore() / 100.0 * exercise.getMaxScore()) * 100.0) / 100.0;
+            }
+
+        }
+
+        return new HashSet<>(exerciseToLectureUnitProgress.values());
+    }
+
+    /**
+     * Finds the latest result for a given exercise in a list of relevant participations
+     * @param exercise exercise to find the result for
+     * @param participationsList participations with submissions and results that should be checked
+     * @return optional containing the last result or else an empty optional
+     */
+    private Optional<Result> findLastResultOfExerciseInListOfParticipatons(Exercise exercise, List<StudentParticipation> participationsList) {
+        StudentParticipation relevantParticipation = exercise.findRelevantParticipation(participationsList);
+        if (relevantParticipation == null) {
+            return Optional.empty();
+        }
+        else {
+            Optional<Submission> latestSubmissionOptional = relevantParticipation.findLatestSubmission();
+            if (latestSubmissionOptional.isEmpty()) {
+                return Optional.empty();
+            }
+            else {
+                Submission latestSubmission = latestSubmissionOptional.get();
+                Result latestResult = latestSubmission.getResult();
+                if (latestResult == null) {
+                    return Optional.empty();
+                }
+                else {
+                    return Optional.of(latestResult);
+                }
+
+            }
+        }
+    }
+
+    /**
+     * Gets the participations of a user (including submissions and results) for specific individual or team exercises
+     * @param user user to get the participations for
+     * @param individualExercises individual exercises to get the participations for
+     * @param teamExercises team exercises to get the participations for
+     * @return list of student participations for the given exercises and user
+     */
+    private List<StudentParticipation> getStudentParticipationsWithSubmissionsAndResults(User user, List<Exercise> individualExercises, List<Exercise> teamExercises) {
         // 1st: fetch participations, submissions and results for individual exercises
         List<StudentParticipation> participationsOfIndividualExercises = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
                 individualExercises);
@@ -68,34 +114,7 @@ public class LearningGoalService {
         // 3rd: merge both into one list for further processing
         List<StudentParticipation> participations = Stream.concat(participationsOfIndividualExercises.stream(), participationsOfTeamExercises.stream())
                 .collect(Collectors.toList());
-
-        for (Exercise exercise : exerciseToExerciseUnit.keySet()) {
-            StudentParticipation relevantParticipation = exercise.findRelevantParticipation(participations);
-            if (relevantParticipation == null) {
-                exerciseToExerciseUnit.get(exercise).pointsAchievedByStudentInLectureUnit = 0.0;
-            }
-            else {
-                Optional<Submission> latestSubmissionOptional = relevantParticipation.findLatestSubmission();
-                if (latestSubmissionOptional.isEmpty()) {
-                    exerciseToExerciseUnit.get(exercise).pointsAchievedByStudentInLectureUnit = 0.0;
-                }
-                else {
-                    Submission latestSubmission = latestSubmissionOptional.get();
-                    Result latestResult = latestSubmission.getResult();
-                    if (latestResult == null) {
-                        exerciseToExerciseUnit.get(exercise).pointsAchievedByStudentInLectureUnit = 0.0;
-                    }
-                    else {
-                        exerciseToExerciseUnit.get(exercise).pointsAchievedByStudentInLectureUnit = Math.round((latestResult.getScore() / 100.0 * exercise.getMaxScore()) * 100.0)
-                                / 100.0;
-                    }
-
-                }
-            }
-
-        }
-
-        return new HashSet<>(exerciseToExerciseUnit.values());
+        return participations;
     }
 
     /**
@@ -112,12 +131,12 @@ public class LearningGoalService {
         learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = 0.0;
         learningGoalProgress.pointsAchievedByStudentInLearningGoal = 0.0;
 
-        // The progress will be calculated from a subset of the connected lecture units (currently only from exerciseUnits)
+        // The progress will be calculated from a subset of the connected lecture units (currently only from released exerciseUnits)
         Set<ExerciseUnit> exerciseUnitsUsableForProgressCalculation = learningGoal.getLectureUnits().parallelStream().filter(LectureUnit::isVisibleToStudents)
                 .filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).map(lectureUnit -> (ExerciseUnit) lectureUnit).collect(Collectors.toSet());
         Set<LearningGoalProgress.LectureUnitProgress> progressInLectureUnits = this.calculateExerciseUnitsProgress(exerciseUnitsUsableForProgressCalculation, user);
 
-        // updating learningGoalPerformance
+        // updating learningGoalPerformance by summing up the points of the individual lecture unit performances
         learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = progressInLectureUnits.stream()
                 .map(lectureUnitProgress -> lectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit).reduce(0.0, Double::sum);
 
