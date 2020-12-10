@@ -1093,6 +1093,24 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_testCaseWeightSmallerThanZero_badRequest() throws Exception {
+        final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var updates = testCases.stream().map(testCase -> {
+            final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
+            testCaseUpdate.setId(testCase.getId());
+            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setWeight(0D);
+            testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
+            testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
+            return testCaseUpdate;
+        }).collect(Collectors.toList());
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+
+        request.patchWithResponseBody(ROOT + endpoint, updates, String.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void resetTestCaseWeights_asInstructor() throws Exception {
         bambooRequestMockProvider.enableMockingOfRequests();
         programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
