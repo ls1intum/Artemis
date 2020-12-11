@@ -143,8 +143,8 @@ public abstract class Submission extends DomainObject {
         this.results.add(result);
         // At the moment only one result in results is allowed
         // TODO remove when multi-correction is implemented!
-        if (results.size() < 2) {
-            throw new InternalServerErrorException("Sbmission.addResult(result): results.size() > 1 | the Submission.results list should not contain more than one element");
+        if (results.size() > 1) {
+            throw new InternalServerErrorException("Sugbmission.addResult(result): results.size() > 1 | the Submission.results list should not contain more than one element");
         }
     }
 
