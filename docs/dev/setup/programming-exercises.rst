@@ -84,6 +84,6 @@ Adjust the agent-args and add the environment block.
 
 
 
-You have to add permissions to the folder (which will be located at the $HOME folder of the user that jenkins uses): ``sudo chmod 777 maven-cache-docker -R``.
+You have to add permissions to the folder (which will be located at the $HOME folder of the user that jenkins uses), e.g. with ``sudo chmod 777 maven-cache-docker -R``.
 
 Note that this might allow students to access shared resources (e.g. jars used by Maven), and they might be able to overwrite them.
