@@ -52,9 +52,11 @@ describe('LearningGoalManagementComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        params: of({
-                            courseId: 1,
-                        }),
+                        parent: {
+                            params: of({
+                                courseId: 1,
+                            }),
+                        },
                     },
                 },
             ],

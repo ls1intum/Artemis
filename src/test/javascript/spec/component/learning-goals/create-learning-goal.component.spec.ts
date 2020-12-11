@@ -48,14 +48,18 @@ describe('CreateLearningGoal', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        paramMap: Observable.of({
-                            get: (key: string) => {
-                                switch (key) {
-                                    case 'courseId':
-                                        return 1;
-                                }
+                        parent: {
+                            parent: {
+                                paramMap: Observable.of({
+                                    get: (key: string) => {
+                                        switch (key) {
+                                            case 'courseId':
+                                                return 1;
+                                        }
+                                    },
+                                }),
                             },
-                        }),
+                        },
                     },
                 },
             ],
