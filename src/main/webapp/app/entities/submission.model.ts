@@ -89,14 +89,6 @@ export function getFirstResult(submission: Submission | undefined): Result | und
     }
 }
 
-export function refreshLatestResultsBySubmissionMap(submissions: Submission[]): Map<Submission, Result | undefined> {
-    const map = new Map<Submission, Result | undefined>();
-    submissions.forEach((submission) => {
-        map.set(submission, getLatestSubmissionResult(submission));
-    });
-    return map;
-}
-
 // todo NR/SE: remove after PR can be merged into develop
 function checkForResultsLength(submission: Submission | undefined) {
     if (submission?.results && submission.results?.length > 1) {
