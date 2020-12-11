@@ -53,11 +53,15 @@ export class CourseUpdateComponent implements OnInit {
 
     ngOnInit() {
         this.isSaving = false;
+        // create a new course, and only overwrite it if we fetch a course to edit
+        this.course = new Course();
         this.activatedRoute.parent!.data.subscribe(({ course }) => {
-            this.course = course;
-            // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
-            this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;
-            this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
+            if (course) {
+                this.course = course;
+                // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
+                this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;
+                this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
+            }
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

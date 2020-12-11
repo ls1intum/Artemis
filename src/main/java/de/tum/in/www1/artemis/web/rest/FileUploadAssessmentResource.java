@@ -31,8 +31,9 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
     public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserService userService,
             FileUploadExerciseService fileUploadExerciseService, FileUploadSubmissionService fileUploadSubmissionService, WebsocketMessagingService messagingService,
-            ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService) {
-        super(authCheckService, userService, exerciseService, fileUploadSubmissionService, assessmentService, resultRepository, examService, messagingService);
+            ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService, ExampleSubmissionService exampleSubmissionService) {
+        super(authCheckService, userService, exerciseService, fileUploadSubmissionService, assessmentService, resultRepository, examService, messagingService,
+                exampleSubmissionService);
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
     }

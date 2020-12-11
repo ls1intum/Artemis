@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.util.List;
 import java.util.Objects;
 
@@ -45,18 +43,16 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
-    private final ExampleSubmissionService exampleSubmissionService;
-
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
             ModelingExerciseService modelingExerciseService, AssessmentService assessmentService, ModelingSubmissionService modelingSubmissionService,
             ExampleSubmissionService exampleSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository,
             ExamService examService) {
-        super(authCheckService, userService, exerciseService, modelingSubmissionService, assessmentService, resultRepository, examService, messagingService);
+        super(authCheckService, userService, exerciseService, modelingSubmissionService, assessmentService, resultRepository, examService, messagingService,
+                exampleSubmissionService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
         this.authCheckService = authCheckService;
         this.modelingSubmissionService = modelingSubmissionService;
-        this.exampleSubmissionService = exampleSubmissionService;
     }
 
     /**
@@ -80,20 +76,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @GetMapping("/exercise/{exerciseId}/modeling-submissions/{submissionId}/example-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> getExampleAssessment(@PathVariable long exerciseId, @PathVariable long submissionId) {
+    public ResponseEntity<Result> getModelingExampleAssessment(@PathVariable long exerciseId, @PathVariable long submissionId) {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneBySubmissionId(submissionId);
-
-        // It is allowed to get the example assessment, if the user is an instructor or
-        // if the user is a tutor and the submission is not used for tutorial in the assessment dashboard
-        boolean isAllowed = authCheckService.isAtLeastInstructorForExercise(modelingExercise)
-                || authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise) && !exampleSubmission.isUsedForTutorial();
-        if (!isAllowed) {
-            forbidden();
-        }
-
-        return ResponseEntity.ok(assessmentService.getExampleAssessment(submissionId));
+        return super.getExampleAssessment(exerciseId, submissionId);
     }
 
     /**
@@ -134,14 +119,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
     @PutMapping("/modeling-submissions/{submissionId}/example-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Object> saveModelingExampleAssessment(@PathVariable long submissionId, @RequestBody List<Feedback> feedbacks) {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(submissionId);
-        ModelingSubmission modelingSubmission = (ModelingSubmission) exampleSubmission.getSubmission();
-        ModelingExercise modelingExercise = (ModelingExercise) exampleSubmission.getExercise();
-        checkAuthorization(modelingExercise, user);
-        Result result = assessmentService.saveManualAssessment(modelingSubmission, feedbacks);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<Result> saveModelingExampleAssessment(@PathVariable long submissionId, @RequestBody List<Feedback> feedbacks) {
+        log.debug("REST request to save modeling example assessment : {}", submissionId);
+        return super.saveExampleAssessment(submissionId, feedbacks);
     }
 
     /**
