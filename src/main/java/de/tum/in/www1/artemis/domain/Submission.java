@@ -139,12 +139,8 @@ public abstract class Submission extends DomainObject {
      * @param result
      */
     public void addResult(Result result) {
-        if (this.results.isEmpty()) {
-            this.results.add(result);
-        }
-        else {
-            results.set(results.size() - 1, result);
-        }
+        this.results.add(result);
+        // At the moment only one result in results is allowed
         assert results.size() < 2;
     }
 

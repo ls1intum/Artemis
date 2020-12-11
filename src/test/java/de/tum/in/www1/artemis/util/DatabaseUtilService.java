@@ -2081,8 +2081,7 @@ public class DatabaseUtilService {
         // Important note to prevent 'JpaSystemException: null index column for collection':
         // 3) save the parent entity and make sure to re-assign the return value
         result = resultRepo.save(result);
-        // re-assign so that the saved feedback items are contained in the returned object
-        submission.addResult(result);
+
         return submission;
     }
 
