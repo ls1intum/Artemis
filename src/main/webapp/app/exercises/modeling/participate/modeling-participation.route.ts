@@ -11,6 +11,7 @@ export const routes: Routes = [
         component: ModelingSubmissionComponent,
         data: {
             authorities: [Authority.USER],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],

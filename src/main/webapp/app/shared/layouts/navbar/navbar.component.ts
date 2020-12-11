@@ -101,23 +101,74 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     buildBreadcrumbs(fullURI: string) {
         this.breadcrumbs = [];
+
         // Temporarily restrict routes
         if (!fullURI.startsWith('/admin') && !fullURI.startsWith('/course-management')) {
             return;
         }
+
+        // Go through all parts (children) of the route starting from the root
         let path = '';
-        let index = 0;
-        const parts = fullURI.split('/');
-        for (const part of parts) {
-            if (part === '') {
+        let child = this.route.root.firstChild;
+        while (child) {
+            if (!child.snapshot.url || child.snapshot.url.length === 0) {
+                // This child is not part of the route, skip to the next
+                child = child.firstChild;
                 continue;
             }
-            const crumb = new Breadcrumb();
-            crumb.label = part;
+
+            // Manually defined breadcrumbs take precedence
+            const staticBreadcrumbs = child.snapshot.data['breadcrumbs'];
+            if (staticBreadcrumbs && staticBreadcrumbs.length > 0) {
+                for (const crumb of staticBreadcrumbs) {
+                    if (crumb['label']) {
+                        path += crumb['path'] + '/';
+                        this.addBreadcrumb(path, crumb['label'], true);
+                    } else {
+                        const label = this.resolveObjectData(child.snapshot.data, crumb['variable'].split('.'));
+                        path += this.resolveObjectData(child.snapshot.data, crumb['path'].split('.')) + '/';
+                        this.addBreadcrumb(path, label, false);
+                    }
+                }
+                child = child.firstChild;
+                continue;
+            }
+
+            const part = child.snapshot.url.join('/').toString();
+            let previousPath = path;
             path += part + '/';
-            crumb.uri = path;
-            this.breadcrumbs[index++] = crumb;
+            if (child.snapshot.data['breadcrumbLabelVariable']) {
+                const label = this.resolveObjectData(child.snapshot.data, child.snapshot.data['breadcrumbLabelVariable'].split('.'));
+                this.addBreadcrumb(path, label, false);
+            } else if (child.snapshot.data['usePathForBreadcrumbs']) {
+                // This can be removed once all routes have been ported to use children
+                for (const urlPart of child.snapshot.url) {
+                    const label = urlPart.toString();
+                    previousPath += label + '/';
+                    this.addBreadcrumb(previousPath, label, false);
+                }
+            } else if (child.snapshot.data['pageTitle']) {
+                this.addBreadcrumb(path, child.snapshot.data['pageTitle'], true);
+            } else {
+                this.addBreadcrumb(path, part, false);
+            }
+            child = child.firstChild;
         }
+    }
+
+    addBreadcrumb(uri: string, label: string, translate: boolean) {
+        const crumb = new Breadcrumb();
+        crumb.label = label;
+        crumb.translate = translate;
+        crumb.uri = uri;
+        this.breadcrumbs[this.breadcrumbs.length] = crumb;
+    }
+
+    resolveObjectData(object: object, names: string[]): string {
+        for (const variableName of names) {
+            object = object[variableName];
+        }
+        return object.toString();
     }
 
     /**
@@ -216,4 +267,5 @@ export class NavbarComponent implements OnInit, OnDestroy {
 class Breadcrumb {
     label: string;
     uri: string;
+    translate: boolean;
 }

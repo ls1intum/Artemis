@@ -75,6 +75,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {
@@ -88,6 +89,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {
@@ -101,6 +103,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         component: TextFeedbackConflictsComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {

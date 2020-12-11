@@ -349,10 +349,10 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_resultExists() throws Exception {
-        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
-                HttpStatus.OK);
+        Result firstManualResultResponse = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result,
+                Result.class, HttpStatus.OK);
 
-        // Save result in order to force generation a new id
+        // Create a 2nd result (by saving the unsaved result again in order to force generation a new id)
         result = resultRepository.save(result);
         // Create submission for result and save
         ProgrammingSubmission submission = new ProgrammingSubmission();
@@ -361,13 +361,11 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         submission.setResult(result);
         programmingSubmissionRepository.save(submission);
 
-        Long id = response.getId();
+        Result secondManualResultResponse = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result,
+                Result.class, HttpStatus.OK);
 
-        Result newResponse = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class,
-                HttpStatus.OK);
-
-        // Make sure that the first generated manual result is always used
-        assertThat(id.equals(newResponse.getId())).isTrue();
+        // Make sure that the first generated manual result is always used (to prevent that multiple manual results are created)
+        assertThat(firstManualResultResponse.getId()).isEqualTo(secondManualResultResponse.getId());
     }
 
     @Test

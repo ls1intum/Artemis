@@ -40,6 +40,7 @@ export const exerciseHintRoute: Routes = [
         },
         data: {
             authorities: [Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.exerciseHint.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -52,6 +53,7 @@ export const exerciseHintRoute: Routes = [
         },
         data: {
             authorities: [Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.exerciseHint.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -64,6 +66,7 @@ export const exerciseHintRoute: Routes = [
         },
         data: {
             authorities: [Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.exerciseHint.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -73,6 +76,7 @@ export const exerciseHintRoute: Routes = [
         component: ExerciseHintComponent,
         data: {
             authorities: [Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.exerciseHint.home.title',
         },
         canActivate: [UserRouteAccessService],
