@@ -78,6 +78,13 @@ export class TextAssessmentsService {
             .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
+    saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<EntityResponseType> {
+        const url = `${this.resourceUrl}/text-submissions/${exampleSubmissionId}/example-assessment`;
+        return this.http
+            .put<Result>(url, feedbacks, { observe: 'response' })
+            .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
+    }
+
     /**
      * Cancels an assessment.
      * @param exerciseId id of the exercise the assessed submission was made to of type {number}

@@ -9,6 +9,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -37,8 +38,11 @@ public abstract class AssessmentResource {
 
     protected final WebsocketMessagingService messagingService;
 
+    protected final ExampleSubmissionService exampleSubmissionService;
+
     public AssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, SubmissionService submissionService,
-            AssessmentService assessmentService, ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService) {
+            AssessmentService assessmentService, ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService,
+            ExampleSubmissionService exampleSubmissionService) {
         this.authCheckService = authCheckService;
         this.userService = userService;
         this.exerciseService = exerciseService;
@@ -47,6 +51,7 @@ public abstract class AssessmentResource {
         this.resultRepository = resultRepository;
         this.examService = examService;
         this.messagingService = messagingService;
+        this.exampleSubmissionService = exampleSubmissionService;
     }
 
     abstract String getEntityName();
@@ -117,6 +122,43 @@ public abstract class AssessmentResource {
             messagingService.broadcastNewResult(result.getParticipation(), result);
         }
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * @param submissionId id of the submission
+     * @param feedbacks list of feedbacks
+     * @return result after saving example assessment
+     */
+    ResponseEntity<Result> saveExampleAssessment(long submissionId, List<Feedback> feedbacks) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(submissionId);
+        Submission submission = exampleSubmission.getSubmission();
+        Exercise exercise = exampleSubmission.getExercise();
+        checkAuthorization(exercise, user);
+        Result result = assessmentService.saveManualAssessment(submission, feedbacks);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Retrieve the result for an example submission, only if the user is an instructor or if the example submission is not used for tutorial purposes.
+     *
+     * @param exerciseId   the id of the exercise
+     * @param submissionId the id of the example submission
+     * @return the result linked to the example submission
+     */
+    ResponseEntity<Result> getExampleAssessment(long exerciseId, long submissionId) {
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneBySubmissionId(submissionId);
+
+        // It is allowed to get the example assessment, if the user is an instructor or
+        // if the user is a tutor and the submission is not used for tutorial in the assessment dashboard
+        boolean isAllowed = authCheckService.isAtLeastInstructorForExercise(exercise)
+                || authCheckService.isAtLeastTeachingAssistantForExercise(exercise) && !exampleSubmission.isUsedForTutorial();
+        if (!isAllowed) {
+            forbidden();
+        }
+
+        return ResponseEntity.ok(assessmentService.getExampleAssessment(submissionId));
     }
 
     /**

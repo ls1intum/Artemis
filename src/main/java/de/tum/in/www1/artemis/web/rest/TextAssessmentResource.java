@@ -27,7 +27,10 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 /**
  * REST controller for managing TextAssessment.
@@ -66,8 +69,10 @@ public class TextAssessmentResource extends AssessmentResource {
             TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository, UserService userService, TextSubmissionService textSubmissionService,
             WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService,
             Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
-            Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository) {
-        super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository, examService, messagingService);
+            Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository,
+            ExampleSubmissionService exampleSubmissionService) {
+        super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository, examService, messagingService,
+                exampleSubmissionService);
 
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
@@ -105,6 +110,22 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         return response;
+    }
+
+    /**
+     * PUT text-submissions/:submissionId/example-assessment : save manual example text assessment
+     *
+     * @param submissionId id of the submission
+     * @param feedbacks list of feedbacks
+     * @return result after saving example text assessment
+     */
+    @ResponseStatus(HttpStatus.OK)
+    @ApiResponses({ @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
+    @PutMapping("/text-submissions/{submissionId}/example-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> saveTextExampleAssessment(@PathVariable long submissionId, @RequestBody List<Feedback> feedbacks) {
+        log.debug("REST request to save text example assessment : {}", submissionId);
+        return super.saveExampleAssessment(submissionId, feedbacks);
     }
 
     /**
