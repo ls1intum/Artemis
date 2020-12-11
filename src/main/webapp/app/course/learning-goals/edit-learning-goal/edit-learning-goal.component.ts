@@ -8,7 +8,7 @@ import { finalize, switchMap, take } from 'rxjs/operators';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureService } from 'app/lecture/lecture.service';
-import { forkJoin } from 'rxjs';
+import { forkJoin, combineLatest } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
 
 @Component({
@@ -33,12 +33,12 @@ export class EditLearningGoalComponent implements OnInit {
 
     ngOnInit(): void {
         this.isLoading = true;
-        this.activatedRoute.paramMap
+        combineLatest(this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap)
             .pipe(
                 take(1),
-                switchMap((params) => {
+                switchMap(([params, parentParams]) => {
                     const learningGoalId = Number(params.get('learningGoalId'));
-                    this.courseId = Number(params.get('courseId'));
+                    this.courseId = Number(parentParams.get('courseId'));
 
                     const learningGoalObservable = this.learningGoalService.findById(learningGoalId, this.courseId);
                     const lecturesObservable = this.lectureService.findAllByCourseId(this.courseId, true);

@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ArtemisLearningGoalsRoutingModule } from 'app/course/learning-goals/learning-goal-routing.module';
+import { RouterModule } from '@angular/router';
 import { LearningGoalFormComponent } from './learning-goal-form/learning-goal-form.component';
 import { CreateLearningGoalComponent } from './create-learning-goal/create-learning-goal.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
@@ -13,7 +13,7 @@ import { LearningGoalDetailModalComponent } from './learning-goal-detail-modal/l
 import { LearningGoalsPopoverComponent } from './learning-goals-popover/learning-goals-popover.component';
 
 @NgModule({
-    imports: [ArtemisMarkdownEditorModule, ArtemisSharedModule, ReactiveFormsModule, ArtemisSharedComponentModule, ArtemisLearningGoalsRoutingModule],
+    imports: [ArtemisMarkdownEditorModule, ArtemisSharedModule, ReactiveFormsModule, ArtemisSharedComponentModule, RouterModule],
     declarations: [
         LearningGoalFormComponent,
         CreateLearningGoalComponent,

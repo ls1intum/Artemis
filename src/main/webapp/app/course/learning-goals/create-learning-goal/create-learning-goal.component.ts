@@ -32,8 +32,8 @@ export class CreateLearningGoalComponent implements OnInit {
     ngOnInit(): void {
         this.learningGoalToCreate = new LearningGoal();
         this.isLoading = true;
-        this.activatedRoute.paramMap
-            .pipe(
+        this.activatedRoute
+            .parent!.parent!.paramMap.pipe(
                 take(1),
                 switchMap((params) => {
                     this.courseId = Number(params.get('courseId'));

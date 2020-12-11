@@ -52,11 +52,21 @@ describe('EditLearningGoalComponent', () => {
                                 switch (key) {
                                     case 'learningGoalId':
                                         return 1;
-                                    case 'courseId':
-                                        return 1;
                                 }
                             },
                         }),
+                        parent: {
+                            parent: {
+                                paramMap: Observable.of({
+                                    get: (key: string) => {
+                                        switch (key) {
+                                            case 'courseId':
+                                                return 1;
+                                        }
+                                    },
+                                }),
+                            },
+                        },
                     },
                 },
             ],
