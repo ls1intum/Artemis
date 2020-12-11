@@ -5,7 +5,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Result } from 'app/entities/result.model';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, refreshLatestResultsBySubmissionMap, Submission } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -22,9 +22,9 @@ export class TextAssessmentDashboardComponent implements OnInit {
     busy = false;
     predicate = 'id';
     reverse = false;
+    private latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
 
     private cancelConfirmationText: string;
-    getLatestSubmissionResult = getLatestSubmissionResult;
 
     constructor(
         private route: ActivatedRoute,
@@ -67,11 +67,12 @@ export class TextAssessmentDashboardComponent implements OnInit {
             .getTextSubmissionsForExercise(this.exercise.id!, { submittedOnly: true })
             .map((response: HttpResponse<TextSubmission[]>) =>
                 response.body!.map((submission: TextSubmission) => {
-                    if (getLatestSubmissionResult(submission)) {
+                    const tmpResult = getLatestSubmissionResult(submission);
+                    if (tmpResult) {
                         // reconnect some associations
-                        getLatestSubmissionResult(submission)!.submission = submission;
-                        getLatestSubmissionResult(submission)!.participation = submission.participation;
-                        submission.participation!.results = [getLatestSubmissionResult(submission)!];
+                        tmpResult!.submission = submission;
+                        tmpResult!.participation = submission.participation;
+                        submission.participation!.results = [tmpResult!];
                     }
 
                     return submission;
@@ -79,6 +80,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
             )
             .subscribe((submissions: TextSubmission[]) => {
                 this.submissions = submissions;
+                this.latestResultsBySubmissionMap = refreshLatestResultsBySubmissionMap(this.submissions);
                 this.filteredSubmissions = submissions;
                 this.busy = false;
             });

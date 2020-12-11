@@ -37,7 +37,7 @@
                     <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
                     <td>{{ submission.participation.submissions?.length }}</td>
                     <td>
-                        <span *ngIf="getLatestSubmissionResult(submission)!.score != null">{{ getLatestSubmissionResult(submission)!.score }}%</span>
+                        <span *ngIf="latestResultsBySubmissionMap.get(submission)!.score != null">{{ latestResultsBySubmissionMap.get(submission)!.score }}%</span>
                     </td>
                     <td>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
@@ -58,7 +58,7 @@
                         </span>
                         <span>
                             <button
-                                *ngIf="!getLatestSubmissionResult(submission)!.completionDate"
+                                *ngIf="!latestResultsBySubmissionMap.get(submission)!.completionDate"
                                 (click)="cancelAssessment(submission)"
                                 class="btn btn-outline-secondary btn-sm mb-1"
                             >

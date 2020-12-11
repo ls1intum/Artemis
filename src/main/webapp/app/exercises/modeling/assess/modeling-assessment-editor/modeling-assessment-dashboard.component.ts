@@ -10,7 +10,7 @@ import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, Submission, refreshLatestResultsBySubmissionMap } from 'app/entities/submission.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -20,6 +20,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { Result } from 'app/entities/result.model';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -37,6 +38,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
     nextOptimalSubmissionIds: number[] = [];
+    private latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
 
     private cancelConfirmationText: string;
 
@@ -127,6 +129,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                     }
                 });
                 this.filteredSubmissions = this.submissions;
+                this.latestResultsBySubmissionMap = refreshLatestResultsBySubmissionMap(this.submissions);
                 this.filterSubmissions(forceReload);
                 this.assessedSubmissions = this.submissions.filter((submission) => {
                     const result = getLatestSubmissionResult(submission);
