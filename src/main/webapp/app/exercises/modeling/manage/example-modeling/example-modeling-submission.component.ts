@@ -306,7 +306,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
         const credits = this.feedbacks.map((feedback) => feedback.credits);
 
-        if (!credits.every((credit) => credit && !isNaN(credit))) {
+        if (!credits.every((credit) => credit != undefined && !isNaN(credit))) {
             this.invalidError = 'The score field must be a number and can not be empty!';
             this.assessmentsAreValid = false;
             return;
