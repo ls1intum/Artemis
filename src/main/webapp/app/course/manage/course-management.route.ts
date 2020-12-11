@@ -47,9 +47,6 @@ export const courseManagementState: Routes = [
     {
         path: 'new',
         component: CourseUpdateComponent,
-        resolve: {
-            course: CourseResolve,
-        },
         data: {
             authorities: [Authority.ADMIN],
             pageTitle: 'global.generic.create',
