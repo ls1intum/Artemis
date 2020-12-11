@@ -327,7 +327,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
 
         const credits = this.assessments.map((assessment) => assessment.credits);
 
-        if (!credits.every((credit) => credit && !isNaN(credit))) {
+        if (!credits.every((credit) => credit != undefined && !isNaN(credit))) {
             this.invalidError = 'The score field must be a number and can not be empty!';
             this.assessmentsAreValid = false;
             return;
@@ -350,8 +350,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
-
-        this.assessmentsService.save(this.exercise.id!, this.result.id!, this.assessments, []).subscribe((response) => {
+        this.assessmentsService.saveExampleAssessment(this.assessments, this.exampleSubmission.id!).subscribe((response) => {
             this.result = response.body!;
             this.areNewAssessments = false;
             this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
