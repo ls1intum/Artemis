@@ -29,7 +29,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.activatedRoute.params.subscribe((params) => {
+        this.activatedRoute.parent!.params.subscribe((params) => {
             this.courseId = +params['courseId'];
             if (this.courseId) {
                 this.loadData();
