@@ -300,7 +300,7 @@ public class SubmissionService {
      *
      * @param submission the parent submission of the result
      * @param result the result which we want to save and order
-     * @return the result with correctly persistet relationship to its submission
+     * @return the result with correctly persisted relationship to its submission
      */
     public Result saveOrderedResultBySubmission(final Submission submission, final Result result) {
         result.setSubmission(null);
