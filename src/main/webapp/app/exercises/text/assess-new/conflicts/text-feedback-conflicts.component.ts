@@ -44,7 +44,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
     selectedRightFeedbackId?: number;
 
     // todo NR SE remove after refactoring hmtl function calls
-    private getLatestSubmissionResult = getLatestSubmissionResult;
+    getLatestSubmissionResult = getLatestSubmissionResult;
 
     private get textBlocksWithFeedbackForLeftSubmission(): TextBlock[] {
         return [...this.leftTextBlockRefs, ...this.leftUnusedTextBlockRefs]

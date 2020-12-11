@@ -26,7 +26,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
     private cancelConfirmationText: string;
 
     // todo NR SE remove after refactoring hmtl function calls
-    private getLatestSubmissionResult = getLatestSubmissionResult;
+    getLatestSubmissionResult = getLatestSubmissionResult;
 
     constructor(
         private route: ActivatedRoute,

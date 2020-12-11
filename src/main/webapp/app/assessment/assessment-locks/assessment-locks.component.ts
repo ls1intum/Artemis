@@ -28,7 +28,7 @@ export class AssessmentLocksComponent implements OnInit {
     submissions: Submission[] = [];
 
     // todo NR SE remove after refactoring hmtl function calls
-    private getLatestSubmissionResult = getLatestSubmissionResult;
+    getLatestSubmissionResult = getLatestSubmissionResult;
 
     private cancelConfirmationText: string;
 

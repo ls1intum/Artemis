@@ -25,7 +25,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     reverse = false;
 
     // todo NR SE remove after refactoring hmtl function calls
-    private getLatestSubmissionResult = getLatestSubmissionResult;
+    getLatestSubmissionResult = getLatestSubmissionResult;
 
     private cancelConfirmationText: string;
 

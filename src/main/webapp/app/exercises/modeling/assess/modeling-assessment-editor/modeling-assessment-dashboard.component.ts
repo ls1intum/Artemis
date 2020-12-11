@@ -55,7 +55,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     canOverrideAssessments: boolean;
 
     // todo NR SE remove after refactoring hmtl function calls
-    private getLatestSubmissionResult = getLatestSubmissionResult;
+    getLatestSubmissionResult = getLatestSubmissionResult;
 
     constructor(
         private route: ActivatedRoute,
