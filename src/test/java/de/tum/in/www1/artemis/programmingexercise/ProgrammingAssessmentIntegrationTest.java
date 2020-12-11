@@ -250,8 +250,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         String commitHash = submission.getCommitHash();
 
         assertThat("123".equalsIgnoreCase(commitHash));
-        assertThat(submission.getLatestResult().getResultString()).isEqualTo(result.getResultString());
-        assertThat(submission.getLatestResult().getScore()).isEqualTo(result.getScore());
+        assertThat(submission.getLatestResult().getResultString()).isEqualTo(manualResult.getResultString());
+        assertThat(submission.getLatestResult().getScore()).isEqualTo(manualResult.getScore());
 
     }
 
@@ -356,8 +356,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         // Create submission for result and save
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission = programmingSubmissionRepository.save(submission);
-        result.setSubmission(submission);
-        submission.addResult(result);
+        manualResult.setSubmission(submission);
+        submission.addResult(manualResult);
 
         programmingSubmissionRepository.save(submission);
 
@@ -420,9 +420,9 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         resultRepository.save(manualResult);
 
-        result.setParticipation(participation);
-        result.setSubmission(programmingSubmission);
-        programmingSubmission.addResult(result);
+        manualResult.setParticipation(participation);
+        manualResult.setSubmission(programmingSubmission);
+        programmingSubmission.addResult(manualResult);
 
         programmingSubmissionRepository.save(programmingSubmission);
 
