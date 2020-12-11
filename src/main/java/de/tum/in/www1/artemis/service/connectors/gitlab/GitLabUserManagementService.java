@@ -46,7 +46,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         this.userRepository = userRepository;
     }
 
-    @Autowired
+    @Autowired // break the cycle
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
@@ -70,7 +70,11 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         try {
             var userApi = gitlab.getUserApi();
             final var gitlabUser = userApi.getUser(user.getLogin());
-
+            if (gitlabUser == null) {
+                // in case the user does not exist in Gitlab, we cannot update it
+                log.warn("User " + user.getLogin() + " does not exist in Gitlab and cannot be updated!");
+                return;
+            }
             if (shouldSynchronizePassword) {
                 // update the user password in Gitlab with the one stored in the Artemis database
                 userApi.updateUser(gitlabUser, userService.decryptPassword(user));
@@ -85,13 +89,12 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                         gitlab.getGroupApi().addMember(exercise.getProjectKey(), gitlabUser.getId(), accessLevel);
                     }
                     catch (GitLabApiException ex) {
-                        // if user is already member of group in GitLab, ignore the exception
-                        // to synchronize the "membership" with artemis
-                        if ("Member already exists".equalsIgnoreCase(ex.getMessage())) {
-                            continue;
+                        // if user is already member of group in GitLab, ignore the exception to synchronize the "membership" with artemis
+                        // ignore other errors
+                        if (!"Member already exists".equalsIgnoreCase(ex.getMessage())) {
+                            log.error("Gitlab Exception when adding a user " + gitlabUser.getId() + " to a group " + exercise.getProjectKey() + ": " + ex.getMessage(), ex);
                         }
                     }
-
                 }
             }
 
@@ -113,14 +116,13 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                         try {
                             gitlab.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUser.getId());
                         }
-                        catch (GitLabApiException e) {
+                        catch (GitLabApiException ex) {
                             // If user membership to group is missing on Gitlab, ignore the exception
                             // and let artemis synchronize with GitLab groups
-                            if (e.getHttpStatus() == 404) {
-                                continue;
+                            if (ex.getHttpStatus() != 404) {
+                                log.error("Gitlab Exception when removing a user " + gitlabUser.getId() + " to a group " + exercise.getProjectKey() + ": " + ex.getMessage(), ex);
                             }
                         }
-
                     }
                 }
             }
@@ -139,13 +141,12 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
         final var exercises = programmingExerciseRepository.findAllByCourse(updatedCourse);
         // All users that we already updated
-        final var processedUsers = new HashSet<User>();
 
         // Update the old instructors of the course
         final var oldInstructors = userRepository.findAllInGroup(oldInstructorGroup);
         // doUpgrade=false, because these users already are instructors.
         updateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), GUEST, false);
-        processedUsers.addAll(oldInstructors);
+        final var processedUsers = new HashSet<>(oldInstructors);
 
         // Update the old teaching assistant of the group
         final var oldTeachingAssistants = userService.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, oldInstructors);
@@ -268,7 +269,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
     }
 
-    void addUserToGroups(int userId, List<ProgrammingExercise> exercises, AccessLevel accessLevel) {
+    public void addUserToGroups(int userId, List<ProgrammingExercise> exercises, AccessLevel accessLevel) {
         for (final var exercise : exercises) {
             try {
                 gitlab.getGroupApi().addMember(exercise.getProjectKey(), userId, accessLevel);
@@ -283,7 +284,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
     }
 
-    org.gitlab4j.api.models.User importUser(User user) {
+    public org.gitlab4j.api.models.User importUser(User user) {
         final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(user.getName()).withCanCreateGroup(false)
                 .withCanCreateProject(false).withSkipConfirmation(true);
         try {
@@ -294,7 +295,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
     }
 
-    int getUserId(String username) {
+    public int getUserId(String username) {
         try {
             var gitlabUser = gitlab.getUserApi().getUser(username);
             if (gitlabUser != null) {
