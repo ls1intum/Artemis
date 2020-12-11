@@ -298,6 +298,9 @@ Jenkins Server Setup
 
 2. Create a custom docker image
 
+   This step is only required if you still use the old, deprecated setup.
+   If you use the new Dockerized setup, you can skip this step.
+
    Run the following command to get the latest jenkins LTS docker image.
 
    In order to install and use Maven with Java in the Jenkins container,
@@ -379,7 +382,8 @@ Start Jenkins
             -u root \
             jenkins/jenkins:lts
 
-    If you still need the old setup with python & maven installed locally, use `jenkins-artemis` instead of `jenkins/jenkins:lts`
+    If you still need the old setup with python & maven installed locally, use `jenkins-artemis` instead of `jenkins/jenkins:lts`.
+    Also note that you can omit the ``-u root``, ``-v /var/run/docker.sock:/var/run/docker.sock`` and ``-v /usr/bin/docker:/usr/bin/docker:ro`` parameters, if you do not want to run Docker builds on the Jenkins master (but e.g. use remote agents).
 
 8. Open Jenkins in your browser (e.g. ``localhost:8080``) and setup the
     admin user account (install all suggested plugins). You can get the
