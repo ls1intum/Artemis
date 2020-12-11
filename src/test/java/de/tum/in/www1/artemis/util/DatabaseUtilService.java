@@ -327,7 +327,7 @@ public class DatabaseUtilService {
     }
 
     public List<Team> addTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner) {
-        List<Team> teams = ModelFactory.generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner);
+        List<Team> teams = ModelFactory.generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner, null);
         userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
         return teamRepo.saveAll(teams);
     }
@@ -2130,7 +2130,13 @@ public class DatabaseUtilService {
     }
 
     public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission) {
-        modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
+        if (exampleSubmission.getSubmission() instanceof ModelingSubmission) {
+            modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
+        }
+        else {
+            textSubmissionRepo.save((TextSubmission) exampleSubmission.getSubmission());
+        }
+
         return exampleSubmissionRepo.save(exampleSubmission);
     }
 
@@ -2214,8 +2220,8 @@ public class DatabaseUtilService {
      * @param flagAsExampleSubmission true if the submission is an example submission
      * @return  created example submission
      */
-    public ExampleSubmission generateExampleSubmission(String model, Exercise exercise, boolean flagAsExampleSubmission) {
-        return generateExampleSubmission(model, exercise, flagAsExampleSubmission, false);
+    public ExampleSubmission generateExampleSubmission(String modelOrText, Exercise exercise, boolean flagAsExampleSubmission) {
+        return generateExampleSubmission(modelOrText, exercise, flagAsExampleSubmission, false);
     }
 
     /**
@@ -2226,8 +2232,14 @@ public class DatabaseUtilService {
      * @param usedForTutorial true if the example submission is used for tutorial
      * @return  created example submission
      */
-    public ExampleSubmission generateExampleSubmission(String model, Exercise exercise, boolean flagAsExampleSubmission, boolean usedForTutorial) {
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, false);
+    public ExampleSubmission generateExampleSubmission(String modelOrText, Exercise exercise, boolean flagAsExampleSubmission, boolean usedForTutorial) {
+        Submission submission;
+        if (exercise instanceof ModelingExercise) {
+            submission = ModelFactory.generateModelingSubmission(modelOrText, false);
+        }
+        else {
+            submission = ModelFactory.generateTextSubmission(modelOrText, Language.ENGLISH, false);
+        }
         submission.setExampleSubmission(flagAsExampleSubmission);
         return ModelFactory.generateExampleSubmission(submission, exercise, usedForTutorial);
     }

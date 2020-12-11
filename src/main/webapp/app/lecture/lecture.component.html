@@ -1,4 +1,4 @@
-<div>
+<div *ngIf="isVisible">
     <h2 id="page-heading">
         <span jhiTranslate="artemisApp.lecture.home.title">Lectures</span>
         <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-lecture" [routerLink]="['new']">
@@ -74,3 +74,4 @@
         </table>
     </div>
 </div>
+<router-outlet></router-outlet>

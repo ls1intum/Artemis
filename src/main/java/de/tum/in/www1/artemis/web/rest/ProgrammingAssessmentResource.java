@@ -40,8 +40,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService,
-            WebsocketMessagingService messagingService, LtiService ltiService, ParticipationService participationService) {
-        super(authCheckService, userService, exerciseService, programmingSubmissionService, programmingAssessmentService, resultRepository, examService, messagingService);
+            WebsocketMessagingService messagingService, LtiService ltiService, ParticipationService participationService, ExampleSubmissionService exampleSubmissionService) {
+        super(authCheckService, userService, exerciseService, programmingSubmissionService, programmingAssessmentService, resultRepository, examService, messagingService,
+                exampleSubmissionService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.ltiService = ltiService;
@@ -162,28 +163,30 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("In case feedback is present, a feedback must contain points.", ENTITY_NAME, "feedbackCreditsNull");
         }
 
+        // TODO: move this logic into a service
+
         // make sure that the submission cannot be manipulated on the client side
         ProgrammingSubmission submission = (ProgrammingSubmission) manualResult.getSubmission();
         newResult.setSubmission(submission);
 
-        Result result = programmingAssessmentService.saveManualAssessment(newResult);
+        newResult = programmingAssessmentService.saveManualAssessment(newResult);
 
-        result = submissionService.saveOrderedResultBySubmission(submission, result);
+        newResult = submissionService.saveOrderedResultBySubmission(submission, newResult);
 
         if (submit) {
-            result = programmingAssessmentService.submitManualAssessment(result.getId());
+            newResult = programmingAssessmentService.submitManualAssessment(newResult.getId());
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
-            ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
+            ((StudentParticipation) newResult.getParticipation()).filterSensitiveInformation();
         }
         // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
-        ltiService.onNewResult((StudentParticipation) result.getParticipation());
-        if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
-                || result.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
-            messagingService.broadcastNewResult(result.getParticipation(), result);
+        ltiService.onNewResult((StudentParticipation) newResult.getParticipation());
+        if (submit && ((newResult.getParticipation()).getExercise().getAssessmentDueDate() == null
+                || newResult.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+            messagingService.broadcastNewResult(newResult.getParticipation(), newResult);
         }
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(newResult);
     }
 
     @Override
