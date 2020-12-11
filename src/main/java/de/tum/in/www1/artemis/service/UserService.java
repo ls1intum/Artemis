@@ -413,7 +413,7 @@ public class UserService {
      * Create user only in the internal Artemis database. This is a pure service method without any logic with respect to external systems.
      *
      * @param login     user login string
-     * @param password  user password
+     * @param password  user password, if set to null, the password will be set randomly
      * @param groups The groups the user should belong to
      * @param firstName first name of user
      * @param lastName  last name of the user
