@@ -54,6 +54,9 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     userId: number;
     canOverrideAssessments: boolean;
 
+    // todo NR SE remove after refactoring hmtl function calls
+    private getLatestSubmissionResult = getLatestSubmissionResult;
+
     constructor(
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,

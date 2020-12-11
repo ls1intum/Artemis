@@ -42,7 +42,9 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
     isOverrideDisabled = true;
     isMarkingDisabled = true;
     selectedRightFeedbackId?: number;
-    getLatestSubmissionResult = getLatestSubmissionResult;
+
+    // todo NR SE remove after refactoring hmtl function calls
+    private getLatestSubmissionResult = getLatestSubmissionResult;
 
     private get textBlocksWithFeedbackForLeftSubmission(): TextBlock[] {
         return [...this.leftTextBlockRefs, ...this.leftUnusedTextBlockRefs]

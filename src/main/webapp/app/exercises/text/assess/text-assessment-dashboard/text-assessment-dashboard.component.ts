@@ -24,7 +24,9 @@ export class TextAssessmentDashboardComponent implements OnInit {
     reverse = false;
 
     private cancelConfirmationText: string;
-    getLatestSubmissionResult = getLatestSubmissionResult;
+
+    // todo NR SE remove after refactoring hmtl function calls
+    private getLatestSubmissionResult = getLatestSubmissionResult;
 
     constructor(
         private route: ActivatedRoute,
