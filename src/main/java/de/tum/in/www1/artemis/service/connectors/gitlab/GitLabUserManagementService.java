@@ -71,8 +71,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             var userApi = gitlab.getUserApi();
             final var gitlabUser = userApi.getUser(user.getLogin());
             if (gitlabUser == null) {
-                // in case the user does not exist in Gitlab, create the user
-                createUser(user);
+                // in case the user does not exist in Gitlab, we cannot update it
+                log.warn("User " + user.getLogin() + " does not exist in Gitlab and cannot be updated!");
                 return;
             }
             if (shouldSynchronizePassword) {
@@ -123,7 +123,6 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                                 log.error("Gitlab Exception when removing a user " + gitlabUser.getId() + " to a group " + exercise.getProjectKey() + ": " + ex.getMessage(), ex);
                             }
                         }
-
                     }
                 }
             }
