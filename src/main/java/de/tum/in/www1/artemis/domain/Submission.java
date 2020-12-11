@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * A Submission.
@@ -141,7 +142,10 @@ public abstract class Submission extends DomainObject {
     public void addResult(Result result) {
         this.results.add(result);
         // At the moment only one result in results is allowed
-        assert results.size() < 2;
+        // TODO remove when multi-correction is implemented!
+        if (results.size() < 2) {
+            throw new InternalServerErrorException("Sbmission.addResult(result): results.size() > 1 | the Submission.results list should not contain more than one element");
+        }
     }
 
     @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
