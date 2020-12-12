@@ -500,7 +500,7 @@ public class ProgrammingExerciseGradingService {
      */
     private static double getMaxScoreRespectingZeroPointExercises(ProgrammingExercise programmingExercise) {
         boolean hasNormalPoints = Objects.requireNonNullElse(programmingExercise.getMaxScore(), 0.0) > 0.0;
-        boolean hasBonusPoints = Objects.requireNonNullElse(programmingExercise.getMaxScore(), 0.0) > 0.0;
+        boolean hasBonusPoints = Objects.requireNonNullElse(programmingExercise.getBonusPoints(), 0.0) > 0.0;
         if (hasNormalPoints || hasBonusPoints) {
             return programmingExercise.getMaxScore();
         }
