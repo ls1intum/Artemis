@@ -283,6 +283,8 @@ export class ResultDetailComponent implements OnInit {
             return;
         }
 
+        const PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES = 100;
+
         const sumCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.credits || 0);
         const sumAppliedCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.appliedCredits || 0);
 
@@ -296,7 +298,9 @@ export class ResultDetailComponent implements OnInit {
         const exercise = this.result.participation.exercise;
 
         // cap test points
-        const maxPointsWithBonus = exercise.maxScore! + (exercise.bonusPoints || 0) || 100;
+        let maxPoints = exercise.maxScore! !== 0 || (exercise.bonusPoints || 0) !== 0 ? exercise.maxScore! : PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
+        let maxPointsWithBonus = maxPoints + (exercise.bonusPoints || 0);
+
         if (testCaseCredits > maxPointsWithBonus) {
             testCaseCredits = maxPointsWithBonus;
         }
@@ -305,7 +309,6 @@ export class ResultDetailComponent implements OnInit {
         if (exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = exercise as ProgrammingExercise;
             if (programmingExercise.staticCodeAnalysisEnabled && programmingExercise.maxStaticCodeAnalysisPenalty != undefined) {
-                const maxPoints = programmingExercise.maxScore! + (programmingExercise.bonusPoints || 0) === 0 ? 100 : programmingExercise.maxScore!;
                 const maxPenaltyCredits = (maxPoints * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
                 codeIssueCredits = Math.min(codeIssueCredits, maxPenaltyCredits);
             }
@@ -313,14 +316,20 @@ export class ResultDetailComponent implements OnInit {
 
         const appliedNegativePoints = codeIssueCredits + negativeCredits;
         const receivedNegativePoints = codeIssuePenalties + negativeCredits;
-        const positivePoints = testCaseCredits + positiveCredits;
+        let positivePoints = testCaseCredits + positiveCredits;
 
         if (appliedNegativePoints !== receivedNegativePoints) {
             this.showScoreChartTooltip = true;
         }
 
+        if (maxPoints === 0) {
+            maxPoints = PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
+            maxPointsWithBonus = maxPoints + (exercise.bonusPoints || 0);
+            positivePoints += PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
+        }
+
         // the chart preset handles the capping to the maximum score of the exercise
-        this.scoreChartPreset.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, exercise);
+        this.scoreChartPreset.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, maxPoints, maxPointsWithBonus);
     }
 
     /**
