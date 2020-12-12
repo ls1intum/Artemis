@@ -8,7 +8,6 @@ import { Graphs, SpanType } from 'app/entities/statistics.model';
 export class StatisticsComponent {
     // html properties
     SpanType = SpanType;
-    Graphs = Graphs;
     graphTypes = [Graphs.SUBMISSIONS, Graphs.ACTIVE_USERS, Graphs.RELEASED_EXERCISES];
     currentSpan: SpanType = SpanType.WEEK;
 
