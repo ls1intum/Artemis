@@ -24,6 +24,7 @@ import { Result } from 'app/entities/result.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -234,7 +235,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
                 this.textExercise.studentParticipations = [this.participation];
                 this.textExercise.participationStatus = participationStatus(this.textExercise);
-                this.result = this.submission.result!;
+                this.result = getLatestSubmissionResult(this.submission)!;
                 this.isSaving = false;
 
                 if (!this.isAllowedToSubmitAfterDeadline) {

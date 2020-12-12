@@ -58,21 +58,25 @@
                         </ng-container>
                     </td>
                     <td>
-                        <span *ngIf="submission.result && submission.result.score != null">{{ submission.result.score }} %</span>
+                        <span *ngIf="getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.score != null"
+                            >{{ getLatestSubmissionResult(submission)!.score }} %</span
+                        >
                     </td>
                     <td>{{ 'artemisApp.exerciseAssessmentDashboard.languages.' + (submission.language || 'UNKNOWN') | translate }}</td>
                     <td>
                         {{ submission.durationInMinutes }}
                         {{ 'artemisApp.assessment.dashboard.minutes' | translate }}
                     </td>
-                    <td>{{ assessmentTypeTranslationKey(submission.result) | translate }}</td>
+                    <td>{{ assessmentTypeTranslationKey(getLatestSubmissionResult(submission)) | translate }}</td>
                     <td>
-                        <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.name }}</span>
+                        <span *ngIf="getLatestSubmissionResult(submission) && getLatestSubmissionResult(submission)!.assessor">{{
+                            getLatestSubmissionResult(submission)!.assessor!.name
+                        }}</span>
                     </td>
                     <td>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
                             <button
-                                *ngIf="submission && !submission.result && exercise.course"
+                                *ngIf="submission && !getLatestSubmissionResult(submission) && exercise.course"
                                 [routerLink]="['/course-management', exercise.course?.id, 'text-exercises', exercise.id, 'submissions', submission.id, 'assessment']"
                                 [disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm mb-1"
@@ -80,7 +84,7 @@
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
                             </button>
                             <button
-                                *ngIf="submission && !submission.result && exercise.exerciseGroup"
+                                *ngIf="submission && !getLatestSubmissionResult(submission) && exercise.exerciseGroup"
                                 [routerLink]="[
                                     '/course-management',
                                     exercise.exerciseGroup?.exam.course.id,
@@ -98,7 +102,7 @@
                         </span>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
                             <button
-                                *ngIf="submission && submission.result && exercise.course"
+                                *ngIf="submission && getLatestSubmissionResult(submission) && exercise.course"
                                 [routerLink]="['/course-management', exercise.course?.id, 'text-exercises', exercise.id, 'submissions', submission.id, 'assessment']"
                                 [disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm mb-1"
@@ -106,7 +110,7 @@
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
                             </button>
                             <button
-                                *ngIf="submission && submission.result && exercise.exerciseGroup"
+                                *ngIf="submission && getLatestSubmissionResult(submission) && exercise.exerciseGroup"
                                 [routerLink]="[
                                     '/course-management',
                                     exercise.exerciseGroup?.exam.course.id,
@@ -124,7 +128,7 @@
                         </span>
                         <span *ngIf="exercise.isAtLeastInstructor">
                             <button
-                                *ngIf="submission && submission.result && !submission.result.completionDate"
+                                *ngIf="submission && getLatestSubmissionResult(submission) && !getLatestSubmissionResult(submission)!.completionDate"
                                 (click)="cancelAssessment(submission)"
                                 [disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm mb-1"
