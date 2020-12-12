@@ -21,21 +21,27 @@ export class StatisticsComponent implements OnInit {
 
     // Histogram related properties
     public barChartOptions: ChartOptions = {};
-    public submissionBarChartLabels: Label[] = [];
-    public activeUsersBarChartLabels: Label[] = [];
     public barChartType: ChartType = 'bar';
+    public lineChartType: ChartType = 'line';
     public amountOfStudents: string;
     public barChartLegend = true;
     // submissions
+    public submissionBarChartLabels: Label[] = [];
     public SubmissionsChartData: ChartDataSets[] = [];
     public submissionsForSpanType: number[];
     // active users
+    public activeUsersBarChartLabels: Label[] = [];
     public activeUsersChartData: ChartDataSets[] = [];
     public activeUsersForSpanType: number[];
+    // releasedExercises
+    public releasedExercisesBarChartLabels: Label[] = [];
+    public releasedExercisesChartData: ChartDataSets[] = [];
+    public releasedExercisesForSpanType: number[];
 
     // left arrow -> decrease, right arrow -> increase
     private currentSubmissionPeriod = 0;
     private currentActiveUsersPeriod = 0;
+    private currentReleasedExercisesPeriod = 0;
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
@@ -45,11 +51,13 @@ export class StatisticsComponent implements OnInit {
         this.amountOfStudents = this.translateService.instant('statistics.amountOfStudents');
         this.initializeChart();
     }
+
     private initializeChart(): void {
         this.createSubmissionLabels();
         this.createActiveUsersLabels();
-        this.createChart();
-        this.service.getTotalSubmissions(this.currentSpan, this.currentSubmissionPeriod).subscribe((res: number[]) => {
+        this.createReleasedExercisesLabels();
+        this.createCharts();
+        this.service.getChartData(this.currentSpan, this.currentSubmissionPeriod, this.Graphs.SUBMISSIONS).subscribe((res: number[]) => {
             this.submissionsForSpanType = res;
             this.SubmissionsChartData = [
                 {
@@ -61,7 +69,7 @@ export class StatisticsComponent implements OnInit {
                 },
             ];
         });
-        this.service.getActiveUsers(this.currentSpan, this.currentActiveUsersPeriod).subscribe((res: number[]) => {
+        this.service.getChartData(this.currentSpan, this.currentActiveUsersPeriod, this.Graphs.ACTIVE_USERS).subscribe((res: number[]) => {
             this.activeUsersForSpanType = res;
             this.activeUsersChartData = [
                 {
@@ -73,6 +81,42 @@ export class StatisticsComponent implements OnInit {
                 },
             ];
         });
+        this.service.getChartData(this.currentSpan, this.currentActiveUsersPeriod, this.Graphs.RELEASED_EXERCISES).subscribe((res: number[]) => {
+            this.releasedExercisesForSpanType = res;
+            this.releasedExercisesChartData = [
+                {
+                    label: this.amountOfStudents,
+                    data: this.releasedExercisesForSpanType,
+                    backgroundColor: 'rgba(53,61,71,1)',
+                    borderColor: 'rgba(53,61,71,1)',
+                    hoverBackgroundColor: 'rgba(53,61,71,1)',
+                },
+            ];
+        });
+    }
+
+    private createLabels(graph: Graphs): void {
+        switch (this.currentSpan) {
+            case SpanType.DAY:
+                for (let i = 0; i < 24; i++) {
+                    this.submissionBarChartLabels[i] = `${i}:00-${i + 1}:00`;
+                }
+                break;
+            case SpanType.WEEK:
+                this.submissionBarChartLabels = this.getWeekdays();
+                break;
+            case SpanType.MONTH:
+                const startDate =
+                    graph === Graphs.SUBMISSIONS ? moment().subtract(1 - this.currentSubmissionPeriod, 'months') : moment().subtract(1 - this.currentSubmissionPeriod, 'months');
+                const endDate =
+                    graph === Graphs.SUBMISSIONS ? moment().subtract(-this.currentSubmissionPeriod, 'months') : moment().subtract(-this.currentActiveUsersPeriod, 'months');
+                const daysInMonth = endDate.diff(startDate, 'days');
+                this.submissionBarChartLabels = this.getSubmissionLabelsForMonth(daysInMonth);
+                break;
+            case SpanType.YEAR:
+                this.submissionBarChartLabels = this.getMonths();
+                break;
+        }
     }
 
     private createSubmissionLabels(): void {
@@ -118,12 +162,36 @@ export class StatisticsComponent implements OnInit {
         }
     }
 
+    private createReleasedExercisesLabels(): void {
+        switch (this.currentSpan) {
+            case SpanType.DAY:
+                for (let i = 0; i < 24; i++) {
+                    this.releasedExercisesBarChartLabels[i] = `${i}:00-${i + 1}:00`;
+                }
+                break;
+            case SpanType.WEEK:
+                this.releasedExercisesBarChartLabels = this.getWeekdays();
+                break;
+            case SpanType.MONTH:
+                const startDate = moment().subtract(1 - this.currentReleasedExercisesPeriod, 'months');
+                const endDate = moment().subtract(-this.currentReleasedExercisesPeriod, 'months');
+                const daysInMonth = endDate.diff(startDate, 'days');
+                this.releasedExercisesBarChartLabels = this.getReleasedExercisesLabelsForMonth(daysInMonth);
+                break;
+            case SpanType.YEAR:
+                this.releasedExercisesBarChartLabels = this.getMonths();
+                break;
+        }
+    }
+
     onTabChanged(span: SpanType): void {
         this.currentSpan = span;
         this.submissionBarChartLabels = [];
         this.activeUsersBarChartLabels = [];
+        this.releasedExercisesBarChartLabels = [];
         this.currentSubmissionPeriod = 0;
         this.currentActiveUsersPeriod = 0;
+        this.currentReleasedExercisesPeriod = 0;
         this.initializeChart();
     }
     private getMonths(): string[] {
@@ -175,6 +243,20 @@ export class StatisticsComponent implements OnInit {
         return days;
     }
 
+    private getReleasedExercisesLabelsForMonth(daysInMonth: number): string[] {
+        const days: string[] = [];
+
+        for (let i = 0; i < daysInMonth; i++) {
+            days.push(
+                moment()
+                    .subtract(-this.currentReleasedExercisesPeriod, 'months')
+                    .subtract(daysInMonth - 1 - i, 'days')
+                    .format('DD.MM'),
+            );
+        }
+        return days;
+    }
+
     private getWeekdays(): string[] {
         const currentDay = moment().day();
         const days = [
@@ -191,7 +273,7 @@ export class StatisticsComponent implements OnInit {
         return back.concat(front);
     }
 
-    private createChart() {
+    private createCharts() {
         this.barChartOptions = {
             responsive: true,
             hover: {
@@ -233,9 +315,13 @@ export class StatisticsComponent implements OnInit {
                 // eslint-disable-next-line chai-friendly/no-unused-expressions
                 index ? (this.currentSubmissionPeriod += 1) : (this.currentSubmissionPeriod -= 1);
                 break;
-            case Graphs.ACTIVEUSERS:
+            case Graphs.ACTIVE_USERS:
                 // eslint-disable-next-line chai-friendly/no-unused-expressions
                 index ? (this.currentActiveUsersPeriod += 1) : (this.currentActiveUsersPeriod -= 1);
+                break;
+            case Graphs.RELEASED_EXERCISES:
+                // eslint-disable-next-line chai-friendly/no-unused-expressions
+                index ? (this.currentReleasedExercisesPeriod += 1) : (this.currentReleasedExercisesPeriod -= 1);
                 break;
         }
         this.initializeChart();

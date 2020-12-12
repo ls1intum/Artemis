@@ -7,5 +7,6 @@ export enum SpanType {
 
 export enum Graphs {
     SUBMISSIONS = 'SUBMISSIONS',
-    ACTIVEUSERS = 'ACTIVEUSERS',
+    ACTIVE_USERS = 'ACTIVE_USERS',
+    RELEASED_EXERCISES = 'RELEASED_EXERCISES',
 }

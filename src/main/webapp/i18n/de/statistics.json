@@ -10,12 +10,7 @@
         "title": "Benutzer Statistiken",
         "days": " Tagen",
         "loggedInUsers": "Anzahl an Anmeldungen unterschiedlicher Benutzer in den letzten ",
-        "activeUsers": "Aktive Nutzer",
         "totalSubmissions": "Anzahl an Abgaben in den letzten ",
-        "exercises": {
-            "released": "Anzahl an veröffentlichten Aufgaben in den letzten ",
-            "due": "Anzahl an Aufgaben mit einer Deadline in den letzten "
-        },
         "conductedExams": "Anzahl an abgehaltenen Klausuen in den letzten ",
         "examParticipation": " -> und Anzahl Studenten, die daran teilgenommen haben: ",
         "examRegistrations": " -> Die Anzahl an Studenten mit einer Registrierung für die Klausur: ",
@@ -23,7 +18,12 @@
         "results": "Anzahl erstellter Resultate in den letzten ",
         "resultFeedbacks": "-> mit der absoluten Feedbackanzahl: ",
         "userLogins": "Benutzer Anmeldungen",
-        "submissions": "Abgaben"
+        "submissions": "Abgaben",
+        "activeUsers": "Aktive Nutzer",
+        "exercises": {
+            "released": "Veröffentlichte Aufgaben",
+            "due": "Aufgaben mit einer Deadline"
+        }
     },
     "weekdays": {
         "monday": "Montag",
