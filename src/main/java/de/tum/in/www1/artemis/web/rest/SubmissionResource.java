@@ -74,7 +74,7 @@ public class SubmissionResource {
 
         checkAccessPermissionAtInstructor(submission.get());
 
-        Result result = submission.get().getResult();
+        Result result = submission.get().getLatestResult();
         if (result != null) {
             resultService.deleteResultWithComplaint(result.getId());
         }

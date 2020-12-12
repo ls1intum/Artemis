@@ -196,7 +196,7 @@ public class TextBlock implements Serializable {
 
     @JsonIgnore
     public boolean isAssessable() {
-        return submission.getResult() != null;
+        return submission.getLatestResult() != null;
     }
 
     public void setAddedDistance(double addedDistance) {

@@ -95,6 +95,8 @@ public class GitLabService extends AbstractVersionControlService {
         for (User user : users) {
             String username = user.getLogin();
 
+            // TODO: does it really make sense to potentially create a user here? Should we not rather create this user when the user is created in the internal Artemis database?
+
             // Automatically created users
             if ((USER_PREFIX_EDX.isPresent() && username.startsWith(USER_PREFIX_EDX.get())) || (USER_PREFIX_U4I.isPresent() && username.startsWith((USER_PREFIX_U4I.get())))) {
                 if (!userExists(username)) {

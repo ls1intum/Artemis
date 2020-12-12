@@ -70,7 +70,7 @@ public abstract class AssessmentResource {
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         Exercise exercise = participation.getExercise();
 
-        Result result = submission.getResult();
+        Result result = submission.getLatestResult();
         if (result == null) {
             return notFound();
         }
@@ -104,7 +104,7 @@ public abstract class AssessmentResource {
         checkAuthorization(exercise, user);
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(submission.getResult(), exercise, studentParticipation, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(submission.getLatestResult(), exercise, studentParticipation, user, isAtLeastInstructor)) {
             log.debug("The user " + user.getLogin() + " is not allowed to override the assessment for the submission " + submission.getId());
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
@@ -186,7 +186,7 @@ public abstract class AssessmentResource {
     protected ResponseEntity<Void> cancelAssessment(long submissionId) {
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
         Submission submission = submissionService.findOneWithEagerResults(submissionId);
-        if (submission.getResult() == null) {
+        if (submission.getLatestResult() == null) {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
@@ -196,7 +196,7 @@ public abstract class AssessmentResource {
         Exercise exercise = exerciseService.findOne(exerciseId);
         checkAuthorization(exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        if (!(isAtLeastInstructor || userService.getUser().getId().equals(submission.getResult().getAssessor().getId()))) {
+        if (!(isAtLeastInstructor || userService.getUser().getId().equals(submission.getLatestResult().getAssessor().getId()))) {
             // tutors cannot cancel the assessment of other tutors (only instructors can)
             return forbidden();
         }

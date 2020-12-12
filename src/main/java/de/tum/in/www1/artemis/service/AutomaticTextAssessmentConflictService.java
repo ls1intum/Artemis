@@ -140,12 +140,12 @@ public class AutomaticTextAssessmentConflictService {
         Set<TextSubmission> textSubmissionSet = feedbackConflicts.stream().map(conflict -> {
             if (conflict.getFirstFeedback().getId() == feedbackId) {
                 TextSubmission textSubmission = (TextSubmission) conflict.getSecondFeedback().getResult().getSubmission();
-                textSubmission.setResultsList(List.of(conflict.getSecondFeedback().getResult()));
+                textSubmission.setResults(List.of(conflict.getSecondFeedback().getResult()));
                 return textSubmission;
             }
             else {
                 TextSubmission textSubmission = (TextSubmission) conflict.getFirstFeedback().getResult().getSubmission();
-                textSubmission.setResultsList(List.of(conflict.getFirstFeedback().getResult()));
+                textSubmission.setResults(List.of(conflict.getFirstFeedback().getResult()));
                 return textSubmission;
             }
         }).collect(toSet());

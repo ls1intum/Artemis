@@ -87,6 +87,8 @@ public class BitbucketService extends AbstractVersionControlService {
         for (User user : users) {
             String username = user.getLogin();
 
+            // TODO: does it really make sense to potentially create a user here? Should we not rather create this user when the user is created in the internal Artemis database?
+
             if ((userPrefixEdx.isPresent() && username.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && username.startsWith((userPrefixU4I.get())))) {
                 // It is an automatically created user
 

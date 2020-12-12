@@ -50,7 +50,7 @@ public class TextAssessmentService extends AssessmentService {
     public void prepareSubmissionForAssessment(TextSubmission textSubmission) {
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        Result result = textSubmission.getResult();
+        Result result = textSubmission.getLatestResult();
 
         final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
 
@@ -72,7 +72,7 @@ public class TextAssessmentService extends AssessmentService {
             result.setCompletionDate(null);
             result = resultRepository.save(result);
             result.setSubmission(textSubmission);
-            textSubmission.setResult(result);
+            textSubmission.addResult(result);
             submissionRepository.save(textSubmission);
 
             // If enabled, we want to compute feedback suggestions using Athene.

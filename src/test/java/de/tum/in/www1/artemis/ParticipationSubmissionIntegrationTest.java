@@ -60,7 +60,7 @@ public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegr
         // Make sure that also the submission was deleted.
         assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(0);
         // Result is deleted.
-        assertThat(resultRepository.findById(submissionWithResult.getResult().getId()).isPresent()).isFalse();
+        assertThat(resultRepository.findById(submissionWithResult.getLatestResult().getId()).isPresent()).isFalse();
     }
 
     @Test
