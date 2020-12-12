@@ -10,7 +10,7 @@ import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
 @Component({
     selector: 'jhi-about-us',
     templateUrl: './about-us.component.html',
-    styles: [],
+    styleUrls: ['./about-us.component.scss'],
 })
 export class AboutUsComponent implements OnInit {
     private readonly issueBaseUrl = 'https://github.com/ls1intum/Artemis/issues/new?projects=ls1intum/1';

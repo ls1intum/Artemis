@@ -112,7 +112,7 @@
         },
         {
             "fullName": "Tessa Ruckstuhl",
-            "photoDirectory": "public/images/about/image-placeholder.png"
+            "photoDirectory": "public/images/about/placeholder-woman.png"
         },
         {
             "fullName": "Philipp Bauch",
@@ -140,7 +140,7 @@
         },
         {
             "fullName": "Viktoriia Bakalova",
-            "photoDirectory": "public/images/about/image-placeholder.png"
+            "photoDirectory": "public/images/about/placeholder-woman.png"
         },
         {
             "fullName": "Minh Tran",
@@ -196,11 +196,11 @@
         },
         {
             "fullName": "Fabian Sauter",
-            "photoDirectory": "public/images/about/image-placeholder.png"
+            "photoDirectory": "public/images/about/placeholder-man.png"
         },
         {
             "fullName": "Johann Rottenfusser",
-            "photoDirectory": "public/images/about/image-placeholder.png"
+            "photoDirectory": "public/images/about/placeholder-man.png"
         },
         {
             "fullName": "Roxhens Meraj",
@@ -220,11 +220,11 @@
         },
         {
             "fullName": "Benedikt Fein",
-            "photoDirectory": "public/images/about/image-placeholder.png"
+            "photoDirectory": "public/images/about/placeholder-man.png"
         },
         {
             "fullName": "Wenjie HOU",
-            "photoDirectory": "public/images/about/image-placeholder.png"
+            "photoDirectory": "public/images/about/placeholder-man.png"
         },
         {
             "fullName": "Steffen Becker",
@@ -248,7 +248,7 @@
         },
         {
             "fullName": "Jonathan Ryan",
-            "photoDirectory": "public/images/about/image-placeholder.png"
+            "photoDirectory": "public/images/about/placeholder-man.png"
         },
         {
             "fullName": "Florian Glombik",
@@ -268,11 +268,11 @@
         },
         {
             "fullName": "Ulrich Huber",
-            "photoDirectory": "public/images/about/image-placeholder.png"
+            "photoDirectory": "public/images/about/placeholder-man.png"
         },
         {
             "fullName": "Lukas Heddendorp",
-            "photoDirectory": "public/images/about/image-placeholder.png"
+            "photoDirectory": "public/images/about/placeholder-man.png"
         },
         {
             "fullName": "Adem Khachnaoui",

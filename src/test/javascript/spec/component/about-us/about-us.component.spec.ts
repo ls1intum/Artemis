@@ -17,7 +17,6 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('AboutUsComponent', () => {
-    let component: AboutUsComponent;
     let fixture: ComponentFixture<AboutUsComponent>;
     const sandbox = sinon.createSandbox();
 
@@ -32,7 +31,6 @@ describe('AboutUsComponent', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(AboutUsComponent);
-                component = fixture.componentInstance;
             });
     });
 
