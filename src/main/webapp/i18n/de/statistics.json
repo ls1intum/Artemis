@@ -18,8 +18,9 @@
         "results": "Anzahl erstellter Resultate in den letzten ",
         "resultFeedbacks": "-> mit der absoluten Feedbackanzahl: ",
         "userLogins": "Benutzer Anmeldungen",
-        "submissions": "Abgaben",
-        "activeUsers": "Aktive Nutzer",
+        "SUBMISSIONS": "Abgaben",
+        "ACTIVE_USERS": "Aktive Nutzer",
+        "RELEASED_EXERCISES": "Veröffentlichte Aufgaben",
         "exercises": {
             "released": "Veröffentlichte Aufgaben",
             "due": "Aufgaben mit einer Deadline"

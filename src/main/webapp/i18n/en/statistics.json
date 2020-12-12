@@ -18,8 +18,9 @@
         "results": "Total amount of results created in the last ",
         "resultFeedbacks": "-> feedback count: ",
         "userLogins": "User Logins",
-        "submissions": "Submissions",
-        "activeUsers": "Active users",
+        "SUBMISSIONS": "Submissions",
+        "ACTIVE_USERS": "Active users",
+        "RELEASED_EXERCISES": "Released exercises",
         "exercises": {
             "released": "Released exercises",
             "due": "Exercise deadlines"
