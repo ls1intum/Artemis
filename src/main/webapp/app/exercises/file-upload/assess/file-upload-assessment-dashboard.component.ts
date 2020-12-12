@@ -10,7 +10,7 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
-import { Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
@@ -23,6 +23,9 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     busy = false;
     predicate = 'id';
     reverse = false;
+
+    // todo NR SE remove after refactoring hmtl function calls
+    getLatestSubmissionResult = getLatestSubmissionResult;
 
     private cancelConfirmationText: string;
 
@@ -73,11 +76,12 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
                 .pipe(
                     map((response: HttpResponse<FileUploadSubmission[]>) =>
                         response.body!.map((submission: FileUploadSubmission) => {
-                            if (submission.result) {
+                            const result = getLatestSubmissionResult(submission);
+                            if (result) {
                                 // reconnect some associations
-                                submission.result.submission = submission;
-                                submission.result.participation = submission.participation;
-                                submission.participation!.results = [submission.result];
+                                result!.submission = submission;
+                                result!.participation = submission.participation;
+                                submission.participation!.results = [result!];
                             }
                             return submission;
                         }),

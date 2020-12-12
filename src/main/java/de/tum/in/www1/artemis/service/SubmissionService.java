@@ -152,7 +152,7 @@ public class SubmissionService {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
         }
 
-        submissions.forEach(submission -> submission.getResult().setSubmission(null));
+        submissions.forEach(submission -> submission.getLatestResult().setSubmission(null));
         return submissions;
     }
 
@@ -265,7 +265,7 @@ public class SubmissionService {
                 // make sure that sensitive information is not sent to the client for students
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                     exercise.filterSensitiveInformation();
-                    submission.setResult(null);
+                    submission.setResults(new ArrayList<Result>());
                 }
                 // remove information about the student or team from the submission for tutors to ensure a double-blind assessment
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
@@ -290,7 +290,7 @@ public class SubmissionService {
         result.setParticipation(submission.getParticipation());
         result = resultRepository.save(result);
         result.setSubmission(submission);
-        submission.setResult(result);
+        submission.addResult(result);
         submissionRepository.save(submission);
         return result;
     }
@@ -304,13 +304,13 @@ public class SubmissionService {
      */
     public Result saveOrderedResultBySubmission(final Submission submission, final Result result) {
         result.setSubmission(null);
-        submission.setResultsList(new ArrayList<>());
+        submission.setResults(new ArrayList<>());
         if (result.getParticipation() == null) {
             result.setParticipation(submission.getParticipation());
         }
         var savedResult = resultRepository.save(result);
         savedResult.setSubmission(submission);
-        submission.setResult(savedResult);
+        submission.addResult(savedResult);
         submissionRepository.save(submission);
         return savedResult;
     }
@@ -322,7 +322,7 @@ public class SubmissionService {
      * @param submission the submission to lock
      */
     protected Result lockSubmission(Submission submission) {
-        Result result = submission.getResult();
+        Result result = submission.getLatestResult();
         if (result == null) {
             result = setNewResult(submission);
         }
@@ -348,7 +348,7 @@ public class SubmissionService {
             Optional<Submission> optionalSubmission = participation.findLatestSubmission();
             if (optionalSubmission.isPresent() && (!submittedOnly || optionalSubmission.get().isSubmitted())) {
                 participation.setSubmissions(Set.of(optionalSubmission.get()));
-                Optional.ofNullable(optionalSubmission.get().getResult()).ifPresent(result -> participation.setResults(Set.of(result)));
+                Optional.ofNullable(optionalSubmission.get().getLatestResult()).ifPresent(result -> participation.setResults(Set.of(result)));
             }
             else {
                 participation.setSubmissions(Set.of());

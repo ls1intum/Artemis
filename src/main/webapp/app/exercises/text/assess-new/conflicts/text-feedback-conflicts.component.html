@@ -1,7 +1,7 @@
 <jhi-text-feedback-conflicts-header
     [numberOfConflicts]="conflictingSubmissions?.length"
     (didChangeConflictIndex)="didChangeConflictIndex($event)"
-    [haveRights]="canOverride(this.leftSubmission?.result)"
+    [haveRights]="canOverride(getLatestSubmissionResult(this.leftSubmission)!)"
     [overrideBusy]="overrideBusy"
     [markBusy]="markBusy"
     [isOverrideDisabled]="isOverrideDisabled"
@@ -17,11 +17,17 @@
         <div class="left card">
             <div class="card-header bg-primary text-white">
                 <div class="flew-grow-1">
-                    <span *ngIf="isAssessor(this.leftSubmission?.result); else otherAssessorLeftCard" jhiTranslate="artemisApp.textAssessment.conflict.assessor"></span>
+                    <span
+                        *ngIf="isAssessor(getLatestSubmissionResult(this.leftSubmission)!); else otherAssessorLeftCard"
+                        jhiTranslate="artemisApp.textAssessment.conflict.assessor"
+                    ></span>
                     <ng-template #otherAssessorLeftCard>
                         <span
                             jhiTranslate="artemisApp.textAssessment.conflict.otherAssessor"
-                            [translateValues]="{ otherUser: this.leftSubmission?.result?.assessor?.name + ' (' + this.leftSubmission?.result?.assessor?.login + ')' }"
+                            [translateValues]="{
+                                otherUser:
+                                    getLatestSubmissionResult(this.leftSubmission)!.assessor?.name + ' (' + getLatestSubmissionResult(this.leftSubmission)!.assessor?.login + ')'
+                            }"
                         ></span>
                     </ng-template>
                 </div>
@@ -46,11 +52,20 @@
             <div class="right card">
                 <div class="card-header bg-primary text-white">
                     <div class="flew-grow-1">
-                        <span *ngIf="isAssessor(this.rightSubmission?.result); else otherAssessorRightCard" jhiTranslate="artemisApp.textAssessment.conflict.assessor"></span>
+                        <span
+                            *ngIf="isAssessor(getLatestSubmissionResult(this.rightSubmission)!); else otherAssessorRightCard"
+                            jhiTranslate="artemisApp.textAssessment.conflict.assessor"
+                        ></span>
                         <ng-template #otherAssessorRightCard>
                             <span
                                 jhiTranslate="artemisApp.textAssessment.conflict.otherAssessor"
-                                [translateValues]="{ otherUser: this.rightSubmission?.result?.assessor?.name + ' (' + this.rightSubmission?.result?.assessor?.login + ')' }"
+                                [translateValues]="{
+                                    otherUser:
+                                        getLatestSubmissionResult(this.rightSubmission)!.assessor?.name +
+                                        ' (' +
+                                        getLatestSubmissionResult(this.rightSubmission)!.assessor?.login +
+                                        ')'
+                                }"
                             ></span>
                         </ng-template>
                     </div>
