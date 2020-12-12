@@ -3,8 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Comparator;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -120,13 +119,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         // based on the locking mechanism there must be exactly one existing manual result
         // TODO: change this as soon as we allow second corrections
-        List<Result> manualResults = participation.getResults().stream().filter(Result::isManualResult).collect(Collectors.toList());
-
-        if (manualResults.isEmpty()) {
-            throw new EntityNotFoundException("Manual result for participation with id " + participationId + " does not exist");
-        }
-
-        Result existingManualResult = manualResults.get(manualResults.size() - 1);
+        Result existingManualResult = participation.getResults().stream().filter(Result::isManualResult).max(Comparator.comparing(Result::getId))
+                .orElseThrow(() -> new EntityNotFoundException("Manual result for participation with id " + participationId + " does not exist"));
         // prevent that tutors create multiple manual results
         newManualResult.setId(existingManualResult.getId());
         // load assessor
