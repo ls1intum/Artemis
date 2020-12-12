@@ -294,7 +294,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return forbidden();
         }
 
-        Result latestResult = latestSubmission.getResult();
+        Result latestResult = latestSubmission.getLatestResult();
         // We don't try to fetch build logs for manual results (they were not created through the build but manually by an assessor)!
         if (latestResult != null && latestResult.isManualResult()) {
             // Don't throw an error here, just return an empty list.

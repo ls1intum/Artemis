@@ -165,9 +165,9 @@ public class TextSubmissionResource {
 
         // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
-        if (textSubmission.getResult() != null) {
+        if (textSubmission.getLatestResult() != null) {
             this.atheneTrackingTokenProvider
-                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getResult()));
+                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getLatestResult()));
         }
 
         return bodyBuilder.body(textSubmission);
@@ -294,9 +294,9 @@ public class TextSubmissionResource {
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
 
         // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
-        if (textSubmission.getResult() != null) {
+        if (textSubmission.getLatestResult() != null) {
             this.atheneTrackingTokenProvider
-                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getResult()));
+                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getLatestResult()));
         }
         return bodyBuilder.body(textSubmission);
     }

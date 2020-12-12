@@ -75,8 +75,8 @@ public class CompassCalculationEngine implements CalculationEngine {
      * @return true if the submission already has a completed manual assessment, false otherwise
      */
     private boolean hasCompletedManualAssessment(ModelingSubmission modelingSubmission) {
-        return modelingSubmission.getResult() != null && modelingSubmission.getResult().getCompletionDate() != null
-                && modelingSubmission.getResult().getAssessmentType().equals(AssessmentType.MANUAL);
+        return modelingSubmission.getLatestResult() != null && modelingSubmission.getLatestResult().getCompletionDate() != null
+                && modelingSubmission.getLatestResult().getAssessmentType().equals(AssessmentType.MANUAL);
     }
 
     /**
@@ -119,12 +119,12 @@ public class CompassCalculationEngine implements CalculationEngine {
     private void addManualAssessmentForSubmission(ModelingSubmission submission) {
         UMLDiagram model = modelIndex.getModelMap().get(submission.getId());
 
-        if (model == null || submission.getResult() == null || submission.getResult().getCompletionDate() == null) {
+        if (model == null || submission.getLatestResult() == null || submission.getLatestResult().getCompletionDate() == null) {
             log.error("Could not build assessment for submission {}", submission.getId());
             return;
         }
 
-        addNewManualAssessment(submission.getResult().getFeedbacks(), model);
+        addNewManualAssessment(submission.getLatestResult().getFeedbacks(), model);
 
         modelSelector.removeModelWaitingForAssessment(submission.getId());
         modelSelector.addAlreadyHandledModel(submission.getId());

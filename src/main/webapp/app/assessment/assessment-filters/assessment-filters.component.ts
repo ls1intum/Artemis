@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 
 /**
  * filters for all or only locked submissions
@@ -46,6 +46,6 @@ export class AssessmentFiltersComponent {
     };
 
     private static isSubmissionLocked(submission: Submission) {
-        return submission && submission.result && !submission.result.completionDate;
+        return submission && getLatestSubmissionResult(submission) && !getLatestSubmissionResult(submission)!.completionDate;
     }
 }

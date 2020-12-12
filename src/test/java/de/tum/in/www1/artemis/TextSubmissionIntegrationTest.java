@@ -171,8 +171,8 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         textSubmission.setSubmissionDate(ZonedDateTime.ofInstant(textSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         assertThat(storedSubmission).as("submission was found").isEqualTo(textSubmission);
-        assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
-        assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
+        assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
+        assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);
     }
 
@@ -365,7 +365,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     private void checkDetailsHidden(TextSubmission submission, boolean isStudent) {
         assertThat(submission.getParticipation().getResults()).as("results are hidden in participation").isNullOrEmpty();
         if (isStudent) {
-            assertThat(submission.getResult()).as("result is hidden").isNull();
+            assertThat(submission.getLatestResult()).as("result is hidden").isNull();
         }
         else {
             assertThat(((StudentParticipation) submission.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();

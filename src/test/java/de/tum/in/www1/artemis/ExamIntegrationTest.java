@@ -1114,7 +1114,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 result.setParticipation(participation);
                 result = resultRepository.save(result);
                 result.setSubmission(submission);
-                submission.setResult(result);
+                submission.addResult(result);
                 submissionRepository.save(submission);
             }
         }
