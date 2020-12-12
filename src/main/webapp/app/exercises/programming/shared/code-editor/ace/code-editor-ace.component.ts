@@ -77,13 +77,14 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
-    templateFileSession: { [fileName: string]: { code: string } } = {};
+    templateFileSession: { [fileName: string]: string } = {};
     // Inline feedback variables
     fileFeedbacks: Feedback[];
     lineCounter: any[] = [];
     private elementArray: Element[] = [];
     fileFeedbackPerLine: { [line: number]: Feedback } = {};
     editorSession: any;
+    markerIds: number[] = [];
 
     constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
 
@@ -141,6 +142,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     initEditorAfterFileChange() {
         // Setup editorSession for inline feedback using lineWidgets
         this.editorSession = this.editor.getEditor().getSession();
+
         if (!this.editorSession.widgetManager) {
             this.editorSession.widgetManager = new this.LineWidgets(this.editorSession);
             this.editorSession.widgetManager.attach(this.editor.getEditor());
@@ -189,6 +191,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 });
             }
         }
+        if (this.markerIds.length > 0) {
+            this.markerIds.forEach((markerId) => this.editorSession.removeMarker(markerId));
+        }
     }
 
     /**
@@ -210,33 +215,41 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 }),
                 switchMap(() => {
                     if (this.isTutorAssessment) {
-                        return this.repositoryFileService.getTemplateFile(fileName);
+                        return this.repositoryFileService.getTemplateFilesWithContent();
                     } else {
                         return of(undefined);
                     }
                 }),
-                tap((templateFileObj) => {
-                    if (templateFileObj) {
-                        this.templateFileSession[fileName] = { code: templateFileObj.fileContent };
-                        console.log(this.editor.getEditor().getSession().getValue(), this.templateFileSession[fileName].code);
-                        const d = this.dmp.diff_main(this.editor.getEditor().getSession().getValue(), this.templateFileSession[fileName].code);
-                        console.log(d);
-                        this.dmp.diff_cleanupEfficiency(d);
-                        console.log(d, 'after cleanup');
-                        const lineChange = {};
-                        let counter = 0;
-                        d.forEach((a) => {
-                            if (a[0] === 0) {
-                                const lines = a[1].split(/\r?\n/);
-                                counter += lines.length - 1;
-                            }
-                            if (a[0] === -1) {
-                                lineChange[counter] = true;
-                                this.editor.getEditor().getSession().addMarker(new this.Range(counter, 0, counter, 1), 'myMarker', 'fullLine');
-                                counter++;
-                            }
-                        });
-                        console.log(lineChange);
+                tap((templateFilesObj) => {
+                    if (templateFilesObj) {
+                        this.templateFileSession = templateFilesObj;
+                        console.log(this.editorSession.getValue(), this.templateFileSession[fileName]);
+
+                        if (!this.templateFileSession[fileName]) {
+                            console.log('undefined, every line should be green');
+                            const lastLine = this.editorSession.getLength() - 1;
+                            this.markerIds.push(this.editorSession.addMarker(new this.Range(0, 0, lastLine, 1), 'myMarker', 'fullLine'));
+                        } else {
+                            const diffArray = this.dmp.diff_main(this.templateFileSession[fileName], this.editorSession.getValue());
+                            console.log(diffArray);
+                            this.dmp.diff_cleanupEfficiency(diffArray);
+                            console.log(diffArray, 'after cleanup');
+
+                            let counter = 0;
+                            diffArray.forEach((diffElement) => {
+                                if (diffElement[0] === 0) {
+                                    const lines = diffElement[1].split(/\r?\n/);
+                                    counter += lines.length - 1;
+                                }
+                                if (diffElement[0] === 1) {
+                                    const lines = diffElement[1].split(/\r?\n/).filter(Boolean);
+                                    const firstLineToHighlight = counter;
+                                    const lastLineToHighlight = counter + lines.length - 1;
+                                    this.markerIds.push(this.editorSession.addMarker(new this.Range(firstLineToHighlight, 0, lastLineToHighlight, 1), 'diff-newLine', 'fullLine'));
+                                    counter += lines.length;
+                                }
+                            });
+                        }
                     }
                 }),
                 catchError(() => {
