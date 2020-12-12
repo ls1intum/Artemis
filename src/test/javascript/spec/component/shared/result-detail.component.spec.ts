@@ -320,7 +320,8 @@ describe('ResultDetailComponent', () => {
 
         expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
         expect(comp.showScoreChartTooltip).to.equal(true);
-        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(7, 5, 6, exercise);
+
+        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(7, 5, 6, 100, 100);
         checkChartPreset(2, 5, '7', '5 of 6');
         expect(comp.isLoading).to.be.false;
 
@@ -334,7 +335,7 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
-        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(104, 5, 6, exercise);
+        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(104, 5, 6, 100, 100);
         checkChartPreset(99, 1, '100 of 104', '1 of 6');
 
         // test negative > positive, limit at 0
@@ -349,8 +350,34 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
-        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(7, 22, 206, exercise);
+        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(7, 22, 206, 100, 100);
         checkChartPreset(0, 7, '7', '7 of 206');
+    });
+
+    it('should calculate the correct chart values for zero point exercise with bonus points', () => {
+        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems(true);
+        comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.showScoreChart = true;
+        comp.showTestDetails = true;
+        comp.result.feedbacks = feedbacks;
+        exercise.maxScore = 0;
+        exercise.bonusPoints = 5;
+
+        comp.result.participation!.exercise! = exercise;
+
+        comp.scoreChartPreset.applyTo(new ChartComponent());
+        const chartSetValuesSpy = spy(comp.scoreChartPreset, 'setValues');
+
+        comp.ngOnInit();
+
+        expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
+        expect(comp.showScoreChartTooltip).to.equal(true);
+
+        // 107 positive points, 2 applied negative points, 6 received negative points, maxPoints, maxPoints + bonusPoints
+        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(107, 2, 6, 100, 105);
+        // 105 of 107 positive points, 0 of 6 negative points after calculations -> 107 - 2 = 105
+        checkChartPreset(105, 0, '105 of 107', '0 of 6');
+        expect(comp.isLoading).to.be.false;
     });
 
     const checkChartPreset = (d1: number, d2: number, l1: string, l2: string) => {

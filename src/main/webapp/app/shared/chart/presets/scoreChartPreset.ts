@@ -1,6 +1,5 @@
 import { ChartComponent, ChartPreset } from 'app/shared/chart/chart.component';
 import { ChartDataSets, ChartLegendLabelItem } from 'chart.js';
-import { Exercise } from 'app/entities/exercise.model';
 
 export class ScoreChartPreset implements ChartPreset {
     private chart: ChartComponent;
