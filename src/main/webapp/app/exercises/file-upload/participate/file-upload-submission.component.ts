@@ -21,6 +21,7 @@ import { participationStatus } from 'app/exercises/shared/exercise/exercise-util
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -74,8 +75,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         this.fileUploadSubmissionService.getDataForFileUploadEditor(participationId).subscribe(
             (submission: FileUploadSubmission) => {
                 // reconnect participation <--> result
-                if (submission.result) {
-                    submission.participation!.results = [submission.result];
+                const tmpResult = getLatestSubmissionResult(submission);
+                if (tmpResult) {
+                    submission.participation!.results = [tmpResult!];
                 }
                 this.participation = <StudentParticipation>submission.participation;
 
@@ -83,7 +85,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.participation.submissions = [<FileUploadSubmission>omit(submission, 'participation')];
 
                 this.submission = submission;
-                this.result = submission.result!;
+                this.result = tmpResult!;
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
                 this.fileUploadExercise.studentParticipations = [this.participation];
                 this.fileUploadExercise.participationStatus = participationStatus(this.fileUploadExercise);
@@ -137,7 +139,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.participationWebsocketService.addParticipation(this.participation, this.fileUploadExercise);
                 this.fileUploadExercise.studentParticipations = [this.participation];
                 this.fileUploadExercise.participationStatus = participationStatus(this.fileUploadExercise);
-                this.result = this.submission.result!;
+                this.result = getLatestSubmissionResult(this.submission)!;
                 this.setSubmittedFile();
                 if (this.isActive) {
                     this.jhiAlertService.success('artemisApp.fileUploadExercise.submitSuccessful');

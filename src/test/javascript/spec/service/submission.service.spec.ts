@@ -13,7 +13,7 @@ import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpResponse } from '@angular/common/http';
-import { Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 const expect = chai.expect;
 
 describe('Submission Service', () => {
@@ -52,15 +52,17 @@ describe('Submission Service', () => {
             type: 'AUTOMATIC',
             text: 'Test\n\nTest\n\nTest',
         } as unknown) as TextSubmission;
-        submission.result = ({
-            id: 2374,
-            resultString: '1 of 12 points',
-            score: 8,
-            rated: true,
-            hasFeedback: true,
-            hasComplaint: false,
-        } as unknown) as Result;
-        submission.result.feedbacks = [
+        submission.results = [
+            ({
+                id: 2374,
+                resultString: '1 of 12 points',
+                score: 8,
+                rated: true,
+                hasFeedback: true,
+                hasComplaint: false,
+            } as unknown) as Result,
+        ];
+        getLatestSubmissionResult(submission)!.feedbacks = [
             {
                 id: 2,
                 detailText: 'Feedback',
@@ -86,15 +88,17 @@ describe('Submission Service', () => {
             type: 'AUTOMATIC',
             text: 'Test\n\nTest\n\nTest',
         } as unknown) as TextSubmission;
-        submission.result = ({
-            id: 2374,
-            resultString: '1 of 12 points',
-            score: 8,
-            rated: true,
-            hasFeedback: true,
-            hasComplaint: false,
-        } as unknown) as Result;
-        submission.result.feedbacks = [
+        submission.results = [
+            ({
+                id: 2374,
+                resultString: '1 of 12 points',
+                score: 8,
+                rated: true,
+                hasFeedback: true,
+                hasComplaint: false,
+            } as unknown) as Result,
+        ];
+        getLatestSubmissionResult(submission)!.feedbacks = [
             {
                 id: 2,
                 detailText: 'Feedback',
