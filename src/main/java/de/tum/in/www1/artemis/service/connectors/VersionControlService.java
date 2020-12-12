@@ -163,6 +163,24 @@ public interface VersionControlService {
     void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, Set<User> users) throws VersionControlException;
 
     /**
+     * Protects a branch from the repository.
+     *
+     * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
+     * @param branch            The name of the branch to protect (e.g "master")
+     * @throws VersionControlException      If the communication with the VCS fails.
+     */
+    void protectBranch(URL repositoryUrl, String branch) throws VersionControlException;
+
+    /**
+     * Unprotects a branch from the repository.
+     *
+     * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
+     * @param branch            The name of the branch to unprotect (e.g "master")
+     * @throws VersionControlException      If the communication with the VCS fails.
+     */
+    void unprotectBranch(URL repositoryUrl, String branch) throws VersionControlException;
+
+    /**
      * Checks if the underlying VCS server is up and running and gives some additional information about the running
      * services if available
      *
