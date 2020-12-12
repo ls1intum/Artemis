@@ -49,7 +49,6 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
 }
 
 export const textExerciseRoute: Routes = [
-    // Create New Text Exercise
     {
         path: ':courseId/text-exercises/new',
         component: TextExerciseUpdateComponent,
@@ -58,21 +57,21 @@ export const textExerciseRoute: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
-    // View Text Exercise
     {
         path: ':courseId/text-exercises/:exerciseId',
         component: TextExerciseDetailComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
-    // Edit Text Exercise
     {
         path: ':courseId/text-exercises/:exerciseId/edit',
         component: TextExerciseUpdateComponent,
@@ -81,6 +80,7 @@ export const textExerciseRoute: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -93,6 +93,7 @@ export const textExerciseRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.textExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -105,16 +106,17 @@ export const textExerciseRoute: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
         },
         canActivate: [UserRouteAccessService],
     },
-    // View list of Text Exercises for Course
     {
         path: ':courseId/text-exercises',
         component: TextExerciseComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],

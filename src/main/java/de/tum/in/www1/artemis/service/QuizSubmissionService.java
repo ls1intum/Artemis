@@ -102,7 +102,7 @@ public class QuizSubmissionService {
         result.setSubmission(quizSubmission);
         // calculate score and update result accordingly
         result.evaluateSubmission();
-        quizSubmission.setResult(result);
+        quizSubmission.addResult(result);
         quizSubmission.setParticipation(participation);
 
         // save submission to set result index column

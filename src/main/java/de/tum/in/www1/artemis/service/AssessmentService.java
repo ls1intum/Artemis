@@ -198,7 +198,7 @@ public class AssessmentService {
     public void cancelAssessmentOfSubmission(Submission submission) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerResults(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
-        Result result = submission.getResult();
+        Result result = submission.getLatestResult();
 
         /*
          * For programming exercises we need to delete the submission of the manual result as well, as for each new manual result a new submission will be generated. The
@@ -287,7 +287,7 @@ public class AssessmentService {
     public Result getExampleAssessment(long submissionId) {
         Optional<Submission> optionalSubmission = submissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId);
         Submission submission = optionalSubmission.orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
-        return submission.getResult();
+        return submission.getLatestResult();
     }
 
     /**
@@ -324,7 +324,7 @@ public class AssessmentService {
      * @return result that was saved in the database
      */
     public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList) {
-        Result result = submission.getResult();
+        Result result = submission.getLatestResult();
         if (result == null) {
             result = submissionService.setNewResult(submission);
         }
@@ -343,7 +343,7 @@ public class AssessmentService {
 
         if (result.getSubmission() == null) {
             result.setSubmission(submission);
-            submission.setResult(result);
+            submission.addResult(result);
             submissionRepository.save(submission);
         }
         return resultRepository.save(result);

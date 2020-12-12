@@ -134,6 +134,10 @@ public class ProgrammingExerciseImportService {
         final var reposToCopy = List.of(Pair.of(RepositoryType.TEMPLATE, templateExercise.getTemplateRepositoryName()),
                 Pair.of(RepositoryType.SOLUTION, templateExercise.getSolutionRepositoryName()), Pair.of(RepositoryType.TESTS, templateExercise.getTestRepositoryName()));
         reposToCopy.forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName()));
+
+        // Unprotect the master branch of the template exercise repo.
+        versionControlService.get().unprotectBranch(newExercise.getTemplateRepositoryUrlAsUrl(), "master");
+
         // Add the necessary hooks notifying Artemis about changes after commits have been pushed
         versionControlService.get().addWebHooksForExercise(newExercise);
 

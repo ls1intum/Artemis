@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -293,13 +294,14 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         participation.setResults(null);
 
         // do not send the result to the client if the assessment is not finished
-        if (fileUploadSubmission.getResult() != null && (fileUploadSubmission.getResult().getCompletionDate() == null || fileUploadSubmission.getResult().getAssessor() == null)) {
-            fileUploadSubmission.setResult(null);
+        if (fileUploadSubmission.getLatestResult() != null
+                && (fileUploadSubmission.getLatestResult().getCompletionDate() == null || fileUploadSubmission.getLatestResult().getAssessor() == null)) {
+            fileUploadSubmission.setResults(new ArrayList<Result>());
         }
 
         // do not send the assessor information to students
-        if (fileUploadSubmission.getResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
-            fileUploadSubmission.getResult().setAssessor(null);
+        if (fileUploadSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
+            fileUploadSubmission.getLatestResult().setAssessor(null);
         }
 
         return ResponseEntity.ok(fileUploadSubmission);

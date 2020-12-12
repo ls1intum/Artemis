@@ -23,7 +23,7 @@ export class UserMgmtResolve implements Resolve<any> {
     }
 }
 
-export const userMgmtRoute1: Route = {
+export const userMgmtRoute: Route = {
     path: 'user-management',
     component: UserManagementComponent,
     resolve: {
@@ -33,36 +33,36 @@ export const userMgmtRoute1: Route = {
         pageTitle: 'userManagement.home.title',
         defaultSort: 'id,asc',
     },
-};
-
-export const userMgmtRoute2: Route = {
-    path: 'user-management/new',
-    component: UserManagementUpdateComponent,
-    resolve: {
-        user: UserMgmtResolve,
-    },
-    data: {
-        pageTitle: 'userManagement.home.createLabel',
-    },
-};
-export const userMgmtRoute3: Route = {
-    path: 'user-management/:login',
-    component: UserManagementDetailComponent,
-    resolve: {
-        user: UserMgmtResolve,
-    },
-    data: {
-        pageTitle: 'userManagement.home.title',
-    },
-};
-
-export const userMgmtRoute4: Route = {
-    path: 'user-management/:login/edit',
-    component: UserManagementUpdateComponent,
-    resolve: {
-        user: UserMgmtResolve,
-    },
-    data: {
-        pageTitle: 'userManagement.home.createOrEditLabel',
-    },
+    children: [
+        {
+            path: 'new',
+            component: UserManagementUpdateComponent,
+            resolve: {
+                user: UserMgmtResolve,
+            },
+            data: {
+                pageTitle: 'userManagement.home.createLabel',
+            },
+        },
+        {
+            path: ':login',
+            component: UserManagementDetailComponent,
+            resolve: {
+                user: UserMgmtResolve,
+            },
+            data: {
+                pageTitle: 'userManagement.home.title',
+                breadcrumbLabelVariable: 'user.body.login',
+            },
+            children: [
+                {
+                    path: 'edit',
+                    component: UserManagementUpdateComponent,
+                    data: {
+                        pageTitle: 'userManagement.home.createOrEditLabel',
+                    },
+                },
+            ],
+        },
+    ],
 };
