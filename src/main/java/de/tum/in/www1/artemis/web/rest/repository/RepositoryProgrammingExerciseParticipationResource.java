@@ -135,11 +135,15 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.getFile(participationId, filename);
     }
 
-    @GetMapping(value = "/repository/{participationId}/template-file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<byte[]> getTemplateFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
-        var participation = participationService.findParticipation(participationId);
-        var exercise = super.programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(participation.getExercise().getId());
-        return super.getFile(exercise.getTemplateParticipation().getId(), filename);
+    @GetMapping(value = "/repository/{participationId}/template-files", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, String>> getTemplateFiles(@PathVariable Long participationId) {
+        return super.executeAndCheckForExceptions(() -> {
+            var participation = participationService.findParticipation(participationId);
+            var exercise = super.programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(participation.getExercise().getId());
+            Repository templateRepository = getRepository(exercise.getTemplateParticipation().getId(), RepositoryActionType.READ, true);
+            var filesWithContent = super.repositoryService.getFilesWithContent(templateRepository);
+            return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
+        });
     }
 
     @Override
