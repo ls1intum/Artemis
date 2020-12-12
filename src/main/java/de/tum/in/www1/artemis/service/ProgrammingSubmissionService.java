@@ -677,7 +677,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     @Override
     protected Result lockSubmission(Submission submission) {
         Result automaticResult = submission.getResult();
-        List<Feedback> automaticFeedbacks = automaticResult.getFeedbacks().stream().map(Feedback::copyProgrammingAutomaticFeedbackForManualResult).collect(Collectors.toList());
+        List<Feedback> automaticFeedbacks = automaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
         // Create a new result (manual result) and a new submission for it and set assessor and type to manual
         ProgrammingSubmission newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);

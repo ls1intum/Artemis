@@ -136,13 +136,13 @@ public class ProgrammingExerciseGradingService {
                     newResult.setRated(manualResult.isRated());
 
                     for (Feedback feedback : result.getFeedbacks()) {
-                        Feedback newFeedback = feedback.copyProgrammingAutomaticFeedbackForManualResult();
+                        Feedback newFeedback = feedback.copyFeedback();
                         newResult.addFeedback(newFeedback);
                     }
 
                     for (Feedback feedback : manualResult.getFeedbacks()) {
                         if (feedback != null && feedback.getType() != FeedbackType.AUTOMATIC) {
-                            Feedback newFeedback = feedback.copyProgrammingAutomaticFeedbackForManualResult();
+                            Feedback newFeedback = feedback.copyFeedback();
                             newResult.addFeedback(newFeedback);
                         }
                     }
