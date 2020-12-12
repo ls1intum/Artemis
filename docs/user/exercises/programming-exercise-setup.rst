@@ -12,21 +12,21 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+--------+---------+
   | Programming Language | Bamboo | Jenkins |
   +======================+========+=========+
-  | Java                 | true   | true    |
+  | Java                 | yes   | yes      |
   +----------------------+--------+---------+
-  | Python               | true   | true    |
+  | Python               | yes   | yes      |
   +----------------------+--------+---------+
-  | C                    | true   | true    |
+  | C                    | yes   | yes      |
   +----------------------+--------+---------+
-  | Haskell              | true   | true    |
+  | Haskell              | yes   | yes      |
   +----------------------+--------+---------+
-  | Kotlin               | true   | false   |
+  | Kotlin               | yes   | no       |
   +----------------------+--------+---------+
-  | VHDL                 | true   | false   |
+  | VHDL                 | yes   | no       |
   +----------------------+--------+---------+
-  | Assembler            | true   | false   |
+  | Assembler            | yes   | no       |
   +----------------------+--------+---------+
-  | Swift                | true   | false   |
+  | Swift                | yes   | no       |
   +----------------------+--------+---------+
 
 - Not all ``templates`` support the same feature set.
@@ -36,21 +36,21 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
   | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Solution Repository Checkout |
   +======================+======================+======================+==================+==============+==============================+
-  | Java                 | true                 | true                 | true             | true         | false                        |
+  | Java                 | yes                  | yes                  | yes              | yes          | no                           |
   +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Python               | true                 | false                | true             | false        | false                        |
+  | Python               | yes                  | no                   | yes              | no           | no                           |
   +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | C                    | false                | false                | true             | false        | false                        |
+  | C                    | no                   | no                   | yes              | no           | no                           |
   +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Haskell              | true                 | false                | false            | false        | true                         |
+  | Haskell              | yes                  | no                   | no               | no           | yes                          |
   +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Kotlin               | true                 | false                | false            | true         | false                        |
+  | Kotlin               | yes                  | no                   | no               | yes          | no                           |
   +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | VHDL                 | false                | false                | false            | false        | false                        |
+  | VHDL                 | no                   | no                   | no               | no           | no                           |
   +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Assembler            | false                | false                | false            | false        | false                        |
+  | Assembler            | no                   | no                   | no               | no           | no                           |
   +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
-  | Swift                | false                | false                | false            | false        | false                        |
+  | Swift                | no                   | no                   | no               | no           | no                           |
   +----------------------+----------------------+----------------------+------------------+--------------+------------------------------+
 
   - *Sequential Test Runs*: ``Artemis`` can generate a build plan which first executes structural and then behavioral tests. This feature can help students to better concentrate on the immediate challenge at hand.
