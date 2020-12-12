@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -61,12 +63,13 @@ public class LearningGoalService {
             }
             else {
                 Result result = optionalResult.get();
-                if (result.getScore() == 0) {
+                if (result.getScore() == null) {
                     exerciseToLectureUnitProgress.get(exercise).pointsAchievedByStudentInLectureUnit = 0.0;
                 }
                 else {
-                    exerciseToLectureUnitProgress.get(exercise).pointsAchievedByStudentInLectureUnit = Math
-                            .round((optionalResult.get().getScore() / 100.0 * exercise.getMaxScore()) * 100.0) / 100.0;
+                    BigDecimal points = new BigDecimal((result.getScore() / 100.0) * exercise.getMaxScore());
+                    points = points.setScale(2, RoundingMode.HALF_EVEN);
+                    exerciseToLectureUnitProgress.get(exercise).pointsAchievedByStudentInLectureUnit = points.doubleValue();
                 }
             }
 
