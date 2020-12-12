@@ -154,7 +154,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
             // call feedback conflict service
             if (exercise.isAutomaticAssessmentEnabled() && automaticTextAssessmentConflictService.isPresent()) {
-                this.automaticTextAssessmentConflictService.get().asyncCheckFeedbackConsistency(textAssessment.getTextBlocks(), textSubmission.getResult().getFeedbacks(),
+                this.automaticTextAssessmentConflictService.get().asyncCheckFeedbackConsistency(textAssessment.getTextBlocks(), textSubmission.getLatestResult().getFeedbacks(),
                         exerciseId);
             }
         }
@@ -181,7 +181,7 @@ public class TextAssessmentResource extends AssessmentResource {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkAuthorization(textExercise, user);
         saveTextBlocks(assessmentUpdate.getTextBlocks(), textSubmission);
-        Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getResult(), textExercise, assessmentUpdate);
+        Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getLatestResult(), textExercise, assessmentUpdate);
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
             ((StudentParticipation) result.getParticipation()).setParticipant(null);
@@ -227,7 +227,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final TextSubmission textSubmission = optionalTextSubmission.get();
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        Result result = textSubmission.getResult();
+        Result result = textSubmission.getLatestResult();
 
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
@@ -245,14 +245,14 @@ public class TextAssessmentResource extends AssessmentResource {
         exercise.setGradingCriteria(gradingCriteria);
         // Remove sensitive information of submission depending on user
         textSubmissionService.hideDetails(textSubmission, user);
-        result = textSubmission.getResult();
+        result = textSubmission.getLatestResult();
 
         // Prepare for Response: Set Submissions and Results of Participation to include requested only.
         participation.setSubmissions(Set.of(textSubmission));
         participation.setResults(Set.of(result));
 
         // Remove Result from Submission, as it is send in participation.results[0]
-        textSubmission.setResult(null);
+        textSubmission.setResults(new ArrayList<Result>());
 
         // Remove Submission from Result
         result.setSubmission(null);
@@ -285,7 +285,7 @@ public class TextAssessmentResource extends AssessmentResource {
             return forbidden();
         }
         Submission submission = textAssessmentService.findExampleSubmissionWithResult(submissionId);
-        return ResponseEntity.ok(submission.getResult());
+        return ResponseEntity.ok(submission.getLatestResult());
     }
 
     /**
@@ -309,7 +309,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         final TextExercise textExercise = (TextExercise) textSubmission.get().getParticipation().getExercise();
-        final Result result = textSubmission.get().getResult();
+        final Result result = textSubmission.get().getLatestResult();
 
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkTextExerciseForRequest(textExercise, user);

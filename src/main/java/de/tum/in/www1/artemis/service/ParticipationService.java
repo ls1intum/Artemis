@@ -283,14 +283,14 @@ public class ParticipationService {
             submission.setSubmissionDate(ZonedDateTime.now());
             // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
             submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
-            if (submission.getResult() == null) {
+            if (submission.getLatestResult() == null) {
                 Result result = new Result();
                 result.setParticipation(submission.getParticipation());
                 result.setAssessor(participation.getStudent().get());
                 result.setAssessmentType(AssessmentType.TEST_RUN);
                 result = resultRepository.save(result);
                 result.setSubmission(submission);
-                submission.setResult(result);
+                submission.addResult(result);
                 submissionRepository.save(submission);
             }
             save(participation);
@@ -1057,7 +1057,7 @@ public class ParticipationService {
                     // Get the results over the participation or over submissions
                     Set<Result> resultsOfParticipation;
                     if (resultInSubmission) {
-                        resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getResult).collect(Collectors.toSet());
+                        resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getLatestResult).collect(Collectors.toSet());
                     }
                     else {
                         resultsOfParticipation = participation.getResults();

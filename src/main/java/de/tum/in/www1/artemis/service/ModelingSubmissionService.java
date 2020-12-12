@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -58,7 +59,7 @@ public class ModelingSubmissionService extends SubmissionService {
     public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
-        if (modelingSubmission.getResult() == null || modelingSubmission.getResult().getAssessor() == null) {
+        if (modelingSubmission.getLatestResult() == null || modelingSubmission.getLatestResult().getAssessor() == null) {
             checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
         }
@@ -142,7 +143,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        modelingSubmission.setResult(null);
+        modelingSubmission.setResults(new ArrayList<Result>());
 
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here!
@@ -211,7 +212,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return the updated modeling submission
      */
     private ModelingSubmission assignAutomaticResultToSubmission(ModelingSubmission modelingSubmission) {
-        Result existingResult = modelingSubmission.getResult();
+        Result existingResult = modelingSubmission.getLatestResult();
         if (existingResult != null && existingResult.getAssessmentType() != null && existingResult.getAssessmentType().equals(AssessmentType.MANUAL)) {
             return modelingSubmission;
         }
@@ -224,7 +225,7 @@ public class ModelingSubmissionService extends SubmissionService {
             automaticResult = resultRepository.save(automaticResult);
 
             automaticResult.setSubmission(modelingSubmission);
-            modelingSubmission.setResult(automaticResult);
+            modelingSubmission.addResult(automaticResult);
             modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
 
             compassService.removeAutomaticResultForSubmission(modelingSubmission.getId(), exerciseId);
