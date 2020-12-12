@@ -235,7 +235,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         textResult = resultRepository.save(textResult);
         idOfTextExerciseResult = textResult.getId();
 
-        textSubmission.setResult(textResult);
+        textSubmission.addResult(textResult);
         textResult.setSubmission(textSubmission);
         submissionRepository.save(textSubmission);
     }
@@ -265,7 +265,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         modelingResult = resultRepository.save(modelingResult);
         idOfModelingExerciseResult = modelingResult.getId();
 
-        modelingSubmission.setResult(modelingResult);
+        modelingSubmission.addResult(modelingResult);
         modelingResult.setSubmission(modelingSubmission);
         submissionRepository.save(modelingSubmission);
 
