@@ -60,8 +60,14 @@ public class LearningGoalService {
                 exerciseToLectureUnitProgress.get(exercise).pointsAchievedByStudentInLectureUnit = 0.0;
             }
             else {
-                exerciseToLectureUnitProgress.get(exercise).pointsAchievedByStudentInLectureUnit = Math
-                        .round((optionalResult.get().getScore() / 100.0 * exercise.getMaxScore()) * 100.0) / 100.0;
+                Result result = optionalResult.get();
+                if (result.getScore() == 0) {
+                    exerciseToLectureUnitProgress.get(exercise).pointsAchievedByStudentInLectureUnit = 0.0;
+                }
+                else {
+                    exerciseToLectureUnitProgress.get(exercise).pointsAchievedByStudentInLectureUnit = Math
+                            .round((optionalResult.get().getScore() / 100.0 * exercise.getMaxScore()) * 100.0) / 100.0;
+                }
             }
 
         }
