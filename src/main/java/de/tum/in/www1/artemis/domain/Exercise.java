@@ -557,7 +557,7 @@ public abstract class Exercise extends DomainObject {
             return null;
         }
         for (var submission : participation.getSubmissions()) {
-            var result = submission.getResult();
+            var result = submission.getLatestResult();
             // If not the result does not exist or is not assessed yet, we can skip it
             if (result == null || result.getCompletionDate() == null) {
                 continue;
@@ -574,7 +574,7 @@ public abstract class Exercise extends DomainObject {
                     latestSubmission = submission;
                 }
                 // take newer results and thus disregard older ones
-                else if (latestSubmission.getResult().getCompletionDate().isBefore(result.getCompletionDate())) {
+                else if (latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
                     latestSubmission = submission;
                 }
             }
@@ -639,7 +639,7 @@ public abstract class Exercise extends DomainObject {
         List<Submission> submissionsWithoutResult = new ArrayList<>();
 
         for (Submission submission : submissions) {
-            Result result = submission.getResult();
+            Result result = submission.getLatestResult();
             if (result != null) {
                 if (Boolean.TRUE.equals(result.isRated())) {
                     submissionsWithRatedResult.add(submission);

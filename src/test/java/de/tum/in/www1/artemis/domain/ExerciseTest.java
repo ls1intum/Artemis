@@ -80,9 +80,9 @@ public class ExerciseTest {
         when(ratedResult.isRated()).thenReturn(true);
         when(unratedResult.isRated()).thenReturn(false);
 
-        when(submission1.getResult()).thenReturn(ratedResult);
-        when(submission2.getResult()).thenReturn(ratedResult);
-        when(submission3.getResult()).thenReturn(ratedResult);
+        when(submission1.getLatestResult()).thenReturn(ratedResult);
+        when(submission2.getLatestResult()).thenReturn(ratedResult);
+        when(submission3.getLatestResult()).thenReturn(ratedResult);
 
         when(studentParticipationInitialized.getSubmissions()).thenReturn(Set.of(submission1, submission2, submission3));
     }
@@ -144,12 +144,12 @@ public class ExerciseTest {
         ratedResultTmp.setAssessor(mock(User.class));
         ratedResultTmp.setRated(true);
 
-        when(submission1.getResult()).thenReturn(ratedResultTmp);
-        when(submission2.getResult()).thenReturn(ratedResultTmp);
-        when(submission3.getResult()).thenReturn(ratedResultTmp);
+        when(submission1.getLatestResult()).thenReturn(ratedResultTmp);
+        when(submission2.getLatestResult()).thenReturn(ratedResultTmp);
+        when(submission3.getLatestResult()).thenReturn(ratedResultTmp);
 
         exerciseService.filterForCourseDashboard(exercise, studentParticipations, "student", true);
-        Result result = exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().getResult();
+        Result result = exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().getLatestResult();
         assertThat(result.getAssessor()).isNull();
     }
 
@@ -195,9 +195,9 @@ public class ExerciseTest {
 
     @Test
     public void filterForCourseDashboard_submissionsWithUnratedResultsOrder() {
-        when(submission1.getResult()).thenReturn(unratedResult);
-        when(submission2.getResult()).thenReturn(unratedResult);
-        when(submission3.getResult()).thenReturn(unratedResult);
+        when(submission1.getLatestResult()).thenReturn(unratedResult);
+        when(submission2.getLatestResult()).thenReturn(unratedResult);
+        when(submission3.getLatestResult()).thenReturn(unratedResult);
 
         exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), "student", true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission3));
@@ -205,9 +205,9 @@ public class ExerciseTest {
 
     @Test
     public void filterForCourseDashboard_submissionWithoutResultsOrder() {
-        when(submission1.getResult()).thenReturn(null);
-        when(submission2.getResult()).thenReturn(null);
-        when(submission3.getResult()).thenReturn(null);
+        when(submission1.getLatestResult()).thenReturn(null);
+        when(submission2.getLatestResult()).thenReturn(null);
+        when(submission3.getLatestResult()).thenReturn(null);
 
         exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), "student", true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission3));
@@ -215,9 +215,9 @@ public class ExerciseTest {
 
     @Test
     public void filterForCourseDashboard_submissionWithMixedResults() {
-        when(submission1.getResult()).thenReturn(ratedResult);
-        when(submission2.getResult()).thenReturn(null);
-        when(submission3.getResult()).thenReturn(unratedResult);
+        when(submission1.getLatestResult()).thenReturn(ratedResult);
+        when(submission2.getLatestResult()).thenReturn(null);
+        when(submission3.getLatestResult()).thenReturn(unratedResult);
 
         exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), "student", true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission1));

@@ -18,7 +18,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
@@ -58,19 +58,21 @@ describe('TextSubmissionAssessmentComponent', () => {
         text: 'First text. Second text.',
         participation,
     } as unknown) as TextSubmission;
-    submission.result = ({
-        id: 2374,
-        resultString: '1 of 12 points',
-        completionDate: moment('2019-07-09T11:51:23.251Z'),
-        successful: false,
-        score: 8,
-        rated: true,
-        hasFeedback: true,
-        hasComplaint: false,
-        submission,
-        participation,
-    } as unknown) as Result;
-    submission.result.feedbacks = [
+    submission.results = [
+        ({
+            id: 2374,
+            resultString: '1 of 12 points',
+            completionDate: moment('2019-07-09T11:51:23.251Z'),
+            successful: false,
+            score: 8,
+            rated: true,
+            hasFeedback: true,
+            hasComplaint: false,
+            submission,
+            participation,
+        } as unknown) as Result,
+    ];
+    getLatestSubmissionResult(submission)!.feedbacks = [
         {
             id: 1,
             detailText: 'First Feedback',
@@ -95,7 +97,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         } as TextBlock,
     ];
     submission.participation!.submissions = [submission];
-    submission.participation!.results = [submission.result];
+    submission.participation!.results = [getLatestSubmissionResult(submission)!];
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
@@ -168,7 +170,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component['setPropertiesFromServerResponse'](participation);
         fixture.detectChanges();
 
-        const result = submission.result;
+        const result = getLatestSubmissionResult(submission);
         const textBlockRef = component.textBlockRefs[1];
         textBlockRef.initFeedback();
         textBlockRef.feedback!.detailText = 'my feedback';
@@ -197,7 +199,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component['setPropertiesFromServerResponse'](participation);
         fixture.detectChanges();
 
-        const result = submission.result;
+        const result = getLatestSubmissionResult(submission);
         const textBlockRef = component.textBlockRefs[1];
         textBlockRef.initFeedback();
         textBlockRef.feedback!.detailText = 'my feedback';

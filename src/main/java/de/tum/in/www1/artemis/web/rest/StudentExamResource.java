@@ -507,7 +507,7 @@ public class StudentExamResource {
 
         if ((studentAllowedToSeeResult || isAtLeastInstructor) && latestSubmission.isPresent()) {
             // Set the latest result into the participation as the client expects it there for programming exercises
-            Result result = latestSubmission.get().getResult();
+            Result result = latestSubmission.get().getLatestResult();
             if (result != null) {
                 result.setParticipation(null);
                 result.setSubmission(null);

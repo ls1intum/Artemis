@@ -173,7 +173,7 @@ public class TutorParticipationService {
             float lowerInstructorScore = instructorScore - instructorScore / scoreRangePercentage;
             float higherInstructorScore = instructorScore + instructorScore / scoreRangePercentage;
 
-            float tutorScore = calculateTotalScore(exampleSubmission.getSubmission().getResult().getFeedbacks());
+            float tutorScore = calculateTotalScore(exampleSubmission.getSubmission().getLatestResult().getFeedbacks());
 
             if (lowerInstructorScore > tutorScore) {
                 throw new BadRequestAlertException("tooLow", ENTITY_NAME, "tooLow");
@@ -196,7 +196,8 @@ public class TutorParticipationService {
                 // Otherwise, the tutor could not reach the total number of example submissions, if there are example submissions without assessment.
                 // In this case the tutor could not reach status "TRAINED" in the if statement below and would not be allowed
                 // to asses student submissions in the assessment dashboard.
-                .filter(exSub -> exSub.getSubmission() != null && exSub.getSubmission().getResult() != null && exSub.getSubmission().getResult().isExampleResult()).count();
+                .filter(exSub -> exSub.getSubmission() != null && exSub.getSubmission().getLatestResult() != null && exSub.getSubmission().getLatestResult().isExampleResult())
+                .count();
         int numberOfAlreadyAssessedSubmissions = alreadyAssessedSubmissions.size() + 1;  // +1 because we haven't added yet the one we just did
 
         /*
