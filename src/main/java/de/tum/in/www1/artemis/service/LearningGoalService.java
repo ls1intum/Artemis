@@ -87,7 +87,7 @@ public class LearningGoalService {
             }
             else {
                 Submission latestSubmission = latestSubmissionOptional.get();
-                Result latestResult = latestSubmission.getResult();
+                Result latestResult = latestSubmission.getLatestResult();
                 if (latestResult == null) {
                     return Optional.empty();
                 }
