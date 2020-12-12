@@ -230,7 +230,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     public saveExampleAssessment(): void {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.modelingAssessment.invalidAssessments');
+            this.jhiAlertService.error('modelingAssessment.invalidAssessments');
             return;
         }
         if (this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation && this.feedbacks) {
