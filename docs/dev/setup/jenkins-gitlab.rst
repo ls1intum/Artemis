@@ -405,6 +405,7 @@ Start Jenkins
            continuous-integration:
                user: your.chosen.username
                password: your.chosen.password
+
 Required Jenkins Plugins
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
