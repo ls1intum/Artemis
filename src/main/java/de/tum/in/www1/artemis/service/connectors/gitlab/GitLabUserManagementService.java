@@ -269,6 +269,12 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
     }
 
+    /**
+     * adds a Gitlab user to a Gitlab group based on the provided exercises (project key) and the given access level
+     * @param userId the Gitlab user id
+     * @param exercises the list of exercises which project key is used as the Gitlab "group" (i.e. Gitlab project)
+     * @param accessLevel the access level that the user should get as part of the group/project
+     */
     public void addUserToGroups(int userId, List<ProgrammingExercise> exercises, AccessLevel accessLevel) {
         for (final var exercise : exercises) {
             try {
@@ -284,6 +290,11 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
     }
 
+    /**
+     * creates a Gitlab user account based on the passed Artemis user account with the same email, login, name and password
+     * @param user a valid Artemis user (account)
+     * @return a Gitlab user
+     */
     public org.gitlab4j.api.models.User importUser(User user) {
         final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(user.getName()).withCanCreateGroup(false)
                 .withCanCreateProject(false).withSkipConfirmation(true);
@@ -295,6 +306,11 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
     }
 
+    /**
+     * retrieves the user id of the Gitlab user with the given user name
+     * @param username the username for which the user id should be retrieved
+     * @return the Gitlab user id
+     */
     public int getUserId(String username) {
         try {
             var gitlabUser = gitlab.getUserApi().getUser(username);
