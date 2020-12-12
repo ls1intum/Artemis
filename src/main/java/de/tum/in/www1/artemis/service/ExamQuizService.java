@@ -36,13 +36,16 @@ public class ExamQuizService {
 
     private final QuizStatisticService quizStatisticService;
 
+    private final ResultService resultService;
+
     public ExamQuizService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
-            QuizExerciseService quizExerciseService, QuizStatisticService quizStatisticService) {
+            QuizExerciseService quizExerciseService, QuizStatisticService quizStatisticService, ResultService resultService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizExerciseService = quizExerciseService;
         this.quizStatisticService = quizStatisticService;
+        this.resultService = resultService;
     }
 
     /**
@@ -117,6 +120,10 @@ public class ExamQuizService {
                     resultExisting = true;
                     result = participation.getResults().iterator().next();
                 }
+                // delete result from quizSubmission, to be able to set a new one
+                if (quizSubmission.getLatestResult() != null) {
+                    resultService.deleteResultWithComplaint(quizSubmission.getLatestResult().getId());
+                }
                 result.setRated(true);
                 result.setAssessmentType(AssessmentType.AUTOMATIC);
                 result.setCompletionDate(ZonedDateTime.now());
@@ -138,8 +145,9 @@ public class ExamQuizService {
                 studentParticipationRepository.save(participation);
 
                 // add result to submission
+                // quizSubmission.replaceLatestOrIfEmptyAddResult(result);
                 result.setSubmission(quizSubmission);
-                quizSubmission.setResult(result);
+                quizSubmission.addResult(result);
                 quizSubmissionRepository.save(quizSubmission);
 
                 // Add result so that it can be returned (and processed later)

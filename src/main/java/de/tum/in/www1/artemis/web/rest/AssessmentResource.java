@@ -9,6 +9,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -37,8 +38,11 @@ public abstract class AssessmentResource {
 
     protected final WebsocketMessagingService messagingService;
 
+    protected final ExampleSubmissionService exampleSubmissionService;
+
     public AssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, SubmissionService submissionService,
-            AssessmentService assessmentService, ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService) {
+            AssessmentService assessmentService, ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService,
+            ExampleSubmissionService exampleSubmissionService) {
         this.authCheckService = authCheckService;
         this.userService = userService;
         this.exerciseService = exerciseService;
@@ -47,6 +51,7 @@ public abstract class AssessmentResource {
         this.resultRepository = resultRepository;
         this.examService = examService;
         this.messagingService = messagingService;
+        this.exampleSubmissionService = exampleSubmissionService;
     }
 
     abstract String getEntityName();
@@ -65,7 +70,7 @@ public abstract class AssessmentResource {
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         Exercise exercise = participation.getExercise();
 
-        Result result = submission.getResult();
+        Result result = submission.getLatestResult();
         if (result == null) {
             return notFound();
         }
@@ -99,7 +104,7 @@ public abstract class AssessmentResource {
         checkAuthorization(exercise, user);
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(submission.getResult(), exercise, studentParticipation, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(submission.getLatestResult(), exercise, studentParticipation, user, isAtLeastInstructor)) {
             log.debug("The user " + user.getLogin() + " is not allowed to override the assessment for the submission " + submission.getId());
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
@@ -117,6 +122,43 @@ public abstract class AssessmentResource {
             messagingService.broadcastNewResult(result.getParticipation(), result);
         }
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * @param submissionId id of the submission
+     * @param feedbacks list of feedbacks
+     * @return result after saving example assessment
+     */
+    ResponseEntity<Result> saveExampleAssessment(long submissionId, List<Feedback> feedbacks) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(submissionId);
+        Submission submission = exampleSubmission.getSubmission();
+        Exercise exercise = exampleSubmission.getExercise();
+        checkAuthorization(exercise, user);
+        Result result = assessmentService.saveManualAssessment(submission, feedbacks);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Retrieve the result for an example submission, only if the user is an instructor or if the example submission is not used for tutorial purposes.
+     *
+     * @param exerciseId   the id of the exercise
+     * @param submissionId the id of the example submission
+     * @return the result linked to the example submission
+     */
+    ResponseEntity<Result> getExampleAssessment(long exerciseId, long submissionId) {
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneBySubmissionId(submissionId);
+
+        // It is allowed to get the example assessment, if the user is an instructor or
+        // if the user is a tutor and the submission is not used for tutorial in the assessment dashboard
+        boolean isAllowed = authCheckService.isAtLeastInstructorForExercise(exercise)
+                || authCheckService.isAtLeastTeachingAssistantForExercise(exercise) && !exampleSubmission.isUsedForTutorial();
+        if (!isAllowed) {
+            forbidden();
+        }
+
+        return ResponseEntity.ok(assessmentService.getExampleAssessment(submissionId));
     }
 
     /**
@@ -144,7 +186,7 @@ public abstract class AssessmentResource {
     protected ResponseEntity<Void> cancelAssessment(long submissionId) {
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
         Submission submission = submissionService.findOneWithEagerResults(submissionId);
-        if (submission.getResult() == null) {
+        if (submission.getLatestResult() == null) {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
@@ -154,7 +196,7 @@ public abstract class AssessmentResource {
         Exercise exercise = exerciseService.findOne(exerciseId);
         checkAuthorization(exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        if (!(isAtLeastInstructor || userService.getUser().getId().equals(submission.getResult().getAssessor().getId()))) {
+        if (!(isAtLeastInstructor || userService.getUser().getId().equals(submission.getLatestResult().getAssessor().getId()))) {
             // tutors cannot cancel the assessment of other tutors (only instructors can)
             return forbidden();
         }

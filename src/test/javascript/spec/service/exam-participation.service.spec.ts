@@ -16,6 +16,7 @@ import { Course } from 'app/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 describe('Exam Participation Service', () => {
     let injector: TestBed;
@@ -95,10 +96,10 @@ describe('Exam Participation Service', () => {
         participationResult.participation = studentParticipation;
         studentParticipation.results = [participationResult];
         const submission = new TextSubmission();
-        submission.result = new Result();
+        submission.results = [new Result()];
         submission.participation = studentParticipation;
-        submission.result.participation = studentParticipation;
-        submission.result.submission = submission;
+        getLatestSubmissionResult(submission)!.participation = studentParticipation;
+        getLatestSubmissionResult(submission)!.submission = submission;
         studentParticipation.submissions = [submission];
         exercise.studentParticipations = [studentParticipation];
         /*configure the exam of a student exam*/
