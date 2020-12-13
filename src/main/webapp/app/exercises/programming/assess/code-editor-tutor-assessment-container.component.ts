@@ -29,6 +29,9 @@ import { Course } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { tap, switchMap } from 'rxjs/operators';
+import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { diff_match_patch } from 'diff-match-patch';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -38,6 +41,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
+
+    readonly dmp = new diff_match_patch();
 
     paramSub: Subscription;
     participation: ProgrammingExerciseStudentParticipation;
@@ -76,6 +81,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     isFirstAssessment = false;
     lockLimitReached = false;
 
+    templateFileSession: { [fileName: string]: string } = {};
+
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
         private router: Router,
@@ -89,6 +96,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
         private structuredGradingCriterionService: StructuredGradingCriterionService,
+        private repositoryFileService: CodeEditorRepositoryFileService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -133,37 +141,46 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 participationId = Number(params['participationId']);
             }
 
-            this.programmingExerciseParticipationService.getStudentParticipationWithLatestManualResult(participationId).subscribe(
-                (participationWithResult: ProgrammingExerciseStudentParticipation) => {
-                    // Set domain to make file editor work properly
-                    this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResult]);
-                    this.participation = participationWithResult;
-                    this.manualResult = this.participation.results![0];
+            this.programmingExerciseParticipationService
+                .getStudentParticipationWithLatestManualResult(participationId)
+                .pipe(
+                    tap(
+                        (participationWithResult: ProgrammingExerciseStudentParticipation) => {
+                            // Set domain to make file editor work properly
+                            this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResult]);
+                            this.participation = participationWithResult;
+                            this.manualResult = this.participation.results![0];
 
-                    // Either submission from latest manual or automatic result
-                    this.submission = this.manualResult.submission as ProgrammingSubmission;
-                    this.submission.participation = this.participation;
-                    this.exercise = this.participation.exercise as ProgrammingExercise;
-                    this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
+                            // Either submission from latest manual or automatic result
+                            this.submission = this.manualResult.submission as ProgrammingSubmission;
+                            this.submission.participation = this.participation;
+                            this.exercise = this.participation.exercise as ProgrammingExercise;
+                            this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 
-                    this.checkPermissions();
-                    this.handleFeedback();
+                            this.checkPermissions();
+                            this.handleFeedback();
 
-                    if (this.manualResult && this.manualResult.hasComplaint) {
-                        this.getComplaint();
-                    }
-                    this.createAdjustedRepositoryUrl();
-                },
-                (error: HttpErrorResponse) => {
-                    this.participationCouldNotBeFetched = true;
-                    if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                        this.lockLimitReached = true;
-                    }
-                },
-                () => {
-                    this.loadingParticipation = false;
-                },
-            );
+                            if (this.manualResult && this.manualResult.hasComplaint) {
+                                this.getComplaint();
+                            }
+                            this.createAdjustedRepositoryUrl();
+                        },
+                        (error: HttpErrorResponse) => {
+                            this.participationCouldNotBeFetched = true;
+                            if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                                this.lockLimitReached = true;
+                            }
+                        },
+                        () => (this.loadingParticipation = false),
+                    ),
+                    switchMap(() => this.repositoryFileService.getTemplateFilesWithContent()),
+                    tap((templateFilesObj) => {
+                        if (templateFilesObj) {
+                            this.templateFileSession = templateFilesObj;
+                        }
+                    }),
+                )
+                .subscribe();
         });
     }
 
@@ -173,6 +190,51 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     ngOnDestroy() {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
+        }
+    }
+
+    onSelectedFileChange(selectedFile: string): void {
+        console.log('selectedFile event', selectedFile);
+        console.log('selectedFile from viewChild', this.codeEditorContainer?.selectedFile);
+        if (selectedFile && this.codeEditorContainer?.selectedFile) {
+            setTimeout(() => {
+                console.log('aceEditor editorSession', this.codeEditorContainer?.aceEditor?.editorSession);
+                console.log(this.codeEditorContainer.aceEditor.editorSession.getValue(), this.templateFileSession[selectedFile]);
+
+                if (!this.templateFileSession[selectedFile]) {
+                    console.log('undefined, every line should be green');
+                    const lastLine = this.codeEditorContainer.aceEditor.editorSession.getLength() - 1;
+                    this.codeEditorContainer.aceEditor.markerIds.push(
+                        this.codeEditorContainer.aceEditor.editorSession.addMarker(new this.codeEditorContainer.aceEditor.Range(0, 0, lastLine, 1), 'myMarker', 'fullLine'),
+                    );
+                } else {
+                    const diffArray = this.dmp.diff_main(this.templateFileSession[selectedFile], this.codeEditorContainer.aceEditor.editorSession.getValue());
+                    console.log(diffArray);
+                    this.dmp.diff_cleanupEfficiency(diffArray);
+                    console.log(diffArray, 'after cleanup');
+
+                    let counter = 0;
+                    diffArray.forEach((diffElement) => {
+                        if (diffElement[0] === 0) {
+                            const lines = diffElement[1].split(/\r?\n/);
+                            counter += lines.length - 1;
+                        }
+                        if (diffElement[0] === 1) {
+                            const lines = diffElement[1].split(/\r?\n/).filter(Boolean);
+                            const firstLineToHighlight = counter;
+                            const lastLineToHighlight = counter + lines.length - 1;
+                            this.codeEditorContainer.aceEditor.markerIds.push(
+                                this.codeEditorContainer.aceEditor.editorSession.addMarker(
+                                    new this.codeEditorContainer.aceEditor.Range(firstLineToHighlight, 0, lastLineToHighlight, 1),
+                                    'diff-newLine',
+                                    'fullLine',
+                                ),
+                            );
+                            counter += lines.length;
+                        }
+                    });
+                }
+            }, 500);
         }
     }
 

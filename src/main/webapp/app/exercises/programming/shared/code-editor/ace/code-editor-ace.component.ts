@@ -15,7 +15,7 @@ import 'brace/theme/dreamweaver';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, of, Subscription } from 'rxjs';
-import { catchError, tap, switchMap } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
@@ -24,7 +24,6 @@ import { TextChange } from 'app/entities/text-change.model';
 import { LocalStorageService } from 'ngx-webstorage';
 import { fromPairs, pickBy } from 'lodash';
 import { Feedback } from 'app/entities/feedback.model';
-import { diff_match_patch } from 'diff-match-patch';
 
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };
 
@@ -69,7 +68,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     readonly LineWidgets = ace.acequire('ace/line_widgets').LineWidgets;
 
     readonly Range = ace.acequire('ace/range').Range;
-    readonly dmp = new diff_match_patch();
 
     /** Ace Editor Options **/
     editorMode: string; // String or mode object
@@ -77,7 +75,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
-    templateFileSession: { [fileName: string]: string } = {};
     // Inline feedback variables
     fileFeedbacks: Feedback[];
     lineCounter: any[] = [];
@@ -211,45 +208,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     // It is possible that the selected file has changed - in this case don't update the editor.
                     if (this.selectedFile === fileName) {
                         this.initEditorAfterFileChange();
-                    }
-                }),
-                switchMap(() => {
-                    if (this.isTutorAssessment) {
-                        return this.repositoryFileService.getTemplateFilesWithContent();
-                    } else {
-                        return of(undefined);
-                    }
-                }),
-                tap((templateFilesObj) => {
-                    if (templateFilesObj) {
-                        this.templateFileSession = templateFilesObj;
-                        console.log(this.editorSession.getValue(), this.templateFileSession[fileName]);
-
-                        if (!this.templateFileSession[fileName]) {
-                            console.log('undefined, every line should be green');
-                            const lastLine = this.editorSession.getLength() - 1;
-                            this.markerIds.push(this.editorSession.addMarker(new this.Range(0, 0, lastLine, 1), 'myMarker', 'fullLine'));
-                        } else {
-                            const diffArray = this.dmp.diff_main(this.templateFileSession[fileName], this.editorSession.getValue());
-                            console.log(diffArray);
-                            this.dmp.diff_cleanupEfficiency(diffArray);
-                            console.log(diffArray, 'after cleanup');
-
-                            let counter = 0;
-                            diffArray.forEach((diffElement) => {
-                                if (diffElement[0] === 0) {
-                                    const lines = diffElement[1].split(/\r?\n/);
-                                    counter += lines.length - 1;
-                                }
-                                if (diffElement[0] === 1) {
-                                    const lines = diffElement[1].split(/\r?\n/).filter(Boolean);
-                                    const firstLineToHighlight = counter;
-                                    const lastLineToHighlight = counter + lines.length - 1;
-                                    this.markerIds.push(this.editorSession.addMarker(new this.Range(firstLineToHighlight, 0, lastLineToHighlight, 1), 'diff-newLine', 'fullLine'));
-                                    counter += lines.length;
-                                }
-                            });
-                        }
                     }
                 }),
                 catchError(() => {
