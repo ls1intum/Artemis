@@ -50,10 +50,21 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
     public static PlagiarismSubmission<TextSubmissionElement> fromJPlagSubmission(Submission jplagSubmission) {
         PlagiarismSubmission<TextSubmissionElement> submission = new PlagiarismSubmission<>();
 
-        // TODO: Check length of returned String[]
         String[] submissionIdAndStudentLogin = jplagSubmission.name.split("[-.]");
-        long submissionId = Long.parseLong(submissionIdAndStudentLogin[0]);
-        String studentLogin = submissionIdAndStudentLogin[1];
+
+        long submissionId = 0;
+        String studentLogin = "unknown";
+
+        if (submissionIdAndStudentLogin.length >= 2) {
+            try {
+                submissionId = Long.parseLong(submissionIdAndStudentLogin[0]);
+            }
+            catch (NumberFormatException e) {
+                System.err.println("Invalid submissionId: " + e.getMessage());
+            }
+
+            studentLogin = submissionIdAndStudentLogin[1];
+        }
 
         submission.setStudentLogin(studentLogin);
         submission.setElements(Arrays.stream(jplagSubmission.tokenList.tokens).filter(Objects::nonNull).map(TextSubmissionElement::fromJPlagToken).collect(Collectors.toList()));

@@ -11,6 +11,7 @@ import { ExportToCsv } from 'export-to-csv';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 
 @Component({
     selector: 'jhi-plagiarism-inspector',
@@ -42,6 +43,7 @@ export class PlagiarismInspectorComponent implements OnInit {
         private route: ActivatedRoute,
         private router: Router,
         private modelingExerciseService: ModelingExerciseService,
+        private programmingExerciseService: ProgrammingExerciseService,
         private textExerciseService: TextExerciseService,
     ) {}
 
@@ -69,17 +71,22 @@ export class PlagiarismInspectorComponent implements OnInit {
     checkPlagiarismJPlag() {
         this.detectionInProgress = true;
 
-        this.textExerciseService.checkPlagiarismJPlag(this.exercise.id!).subscribe(
-            (result: TextPlagiarismResult) => {
-                this.detectionInProgress = false;
+        if (this.exercise.type === ExerciseType.TEXT) {
+            this.textExerciseService.checkPlagiarismJPlag(this.exercise.id!).subscribe(this.handleTextPlagiarismResult, () => (this.detectionInProgress = false));
+        } else {
+            this.programmingExerciseService.checkPlagiarism(this.exercise.id!).subscribe(this.handleTextPlagiarismResult, () => (this.detectionInProgress = false));
+        }
+    }
 
-                this.sortComparisonsForResult(result);
+    handleTextPlagiarismResult(result: TextPlagiarismResult) {
+        this.detectionInProgress = false;
 
-                this.plagiarismResult = result;
-                this.selectedComparisonIndex = 0;
-            },
-            () => (this.detectionInProgress = false),
-        );
+        console.log(result);
+
+        this.sortComparisonsForResult(result);
+
+        this.plagiarismResult = result;
+        this.selectedComparisonIndex = 0;
     }
 
     /**

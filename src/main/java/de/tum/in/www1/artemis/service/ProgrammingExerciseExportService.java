@@ -28,7 +28,6 @@ import jplag.JPlag;
 import jplag.JPlagOptions;
 import jplag.JPlagResult;
 import jplag.options.LanguageOption;
-import jplag.reporting.Report;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -48,6 +47,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -168,7 +168,7 @@ public class ProgrammingExerciseExportService {
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException is thrown for file handling errors
      */
-    public File checkPlagiarism(long programmingExerciseId) throws ExitException, IOException {
+    public TextPlagiarismResult checkPlagiarism(long programmingExerciseId) throws ExitException, IOException {
         // TODO: offer the following options in the client
         // 1) filter empty submissions, i.e. repositories with no student commits
         // 2) filter submissions with a result score of 0%
@@ -196,22 +196,17 @@ public class ProgrammingExerciseExportService {
         JPlag jplag = new JPlag(options);
         JPlagResult result = jplag.run();
 
-        Report jplagReport = new Report(outputFolderFile);
-        jplagReport.writeResult(result);
-
-        final var zipFilePath = Paths.get(REPO_DOWNLOAD_CLONE_PATH, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
-                + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + "-Jplag-Analysis-Output.zip");
-        zipFileService.createZipFileWithFolderContent(zipFilePath, Paths.get(outputFolder));
-        fileService.scheduleForDeletion(zipFilePath, 5);
-
         // cleanup
         if (outputFolderFile.exists()) {
             FileSystemUtils.deleteRecursively(outputFolderFile);
         }
 
-        cleanupRepositories(programmingExercise);
+        // cleanupRepositories(programmingExercise);
 
-        return new File(zipFilePath.toString());
+        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(result);
+        textPlagiarismResult.setExerciseId(programmingExercise.getId());
+
+        return textPlagiarismResult;
     }
 
     private LanguageOption getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
