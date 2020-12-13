@@ -111,9 +111,9 @@ public class ModelingPlagiarismDetectionService {
                 ModelingSubmission modelingSubmissionA = models.get(model1);
                 ModelingSubmission modelingSubmissionB = models.get(model2);
 
-                if (modelingSubmissionA.getResult() != null && modelingSubmissionA.getResult().getScore() != null && modelingSubmissionA.getResult().getScore() < minimumScore
-                        && modelingSubmissionB.getResult() != null && modelingSubmissionB.getResult().getScore() != null
-                        && modelingSubmissionB.getResult().getScore() < minimumModelSize) {
+                if (modelingSubmissionA.getLatestResult() != null && modelingSubmissionA.getLatestResult().getScore() != null
+                        && modelingSubmissionA.getLatestResult().getScore() < minimumScore && modelingSubmissionB.getLatestResult() != null
+                        && modelingSubmissionB.getLatestResult().getScore() != null && modelingSubmissionB.getLatestResult().getScore() < minimumModelSize) {
                     // ignore comparison results with too small scores
                     continue;
                 }

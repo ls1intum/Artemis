@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
@@ -85,6 +86,8 @@ public class BitbucketService extends AbstractVersionControlService {
     public void configureRepository(ProgrammingExercise exercise, URL repositoryUrl, Set<User> users, boolean allowAccess) {
         for (User user : users) {
             String username = user.getLogin();
+
+            // TODO: does it really make sense to potentially create a user here? Should we not rather create this user when the user is created in the internal Artemis database?
 
             if ((userPrefixEdx.isPresent() && username.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && username.startsWith((userPrefixU4I.get())))) {
                 // It is an automatically created user
@@ -437,6 +440,16 @@ public class BitbucketService extends AbstractVersionControlService {
     @Override
     public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, Set<User> users) throws BitbucketException {
         users.forEach(user -> setStudentRepositoryPermission(repositoryUrl, projectKey, user.getLogin(), VersionControlRepositoryPermission.READ_ONLY));
+    }
+
+    @Override
+    public void protectBranch(URL repositoryUrl, String branch) throws VersionControlException {
+        // Not implemented because it's not used in BitBucket (yet)
+    }
+
+    @Override
+    public void unprotectBranch(URL repositoryUrl, String branch) throws VersionControlException {
+        // Not implemented because it's not used in BitBucket (yet)
     }
 
     /**

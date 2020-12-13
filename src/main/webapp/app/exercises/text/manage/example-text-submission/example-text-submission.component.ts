@@ -22,6 +22,7 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -208,7 +209,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
 
             this.assessmentsService.getExampleResult(this.exerciseId, this.textSubmission.id!).subscribe((result) => {
                 this.result = result;
-                this.assessments = this.result.feedbacks || [];
+                this.assessments = this.result?.feedbacks || [];
                 this.areNewAssessments = this.assessments.length <= 0;
                 this.checkScoreBoundaries();
             });
@@ -327,7 +328,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
 
         const credits = this.assessments.map((assessment) => assessment.credits);
 
-        if (!credits.every((credit) => credit && !isNaN(credit))) {
+        if (!credits.every((credit) => credit != undefined && !isNaN(credit))) {
             this.invalidError = 'The score field must be a number and can not be empty!';
             this.assessmentsAreValid = false;
             return;
@@ -350,8 +351,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
-
-        this.assessmentsService.save(this.exercise.id!, this.result.id!, this.assessments, []).subscribe((response) => {
+        this.assessmentsService.saveExampleAssessment(this.assessments, this.exampleSubmission.id!).subscribe((response) => {
             this.result = response.body!;
             this.areNewAssessments = false;
             this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
@@ -398,8 +398,9 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
 
         const exampleSubmission = Object.assign({}, this.exampleSubmission);
         if (exampleSubmission.submission) {
-            exampleSubmission.submission.result = new Result();
-            exampleSubmission.submission.result.feedbacks = this.assessments;
+            const result = getLatestSubmissionResult(exampleSubmission.submission);
+            setLatestSubmissionResult(exampleSubmission.submission, result);
+            result!.feedbacks = this.assessments;
         }
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
             () => {

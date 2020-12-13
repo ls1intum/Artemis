@@ -12,6 +12,7 @@ describe('User Management Detail Component', () => {
     let fixture: ComponentFixture<UserManagementDetailComponent>;
     const route = ({
         data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.USER], ['admin']) }),
+        children: [],
     } as any) as ActivatedRoute;
 
     beforeEach(async(() => {

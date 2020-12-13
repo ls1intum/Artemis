@@ -1,6 +1,6 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
+import { filter } from 'rxjs/operators';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 
@@ -8,35 +8,20 @@ import { SystemNotificationService } from 'app/shared/notification/system-notifi
     selector: 'jhi-system-notification-management-detail',
     templateUrl: './system-notification-management-detail.component.html',
 })
-export class SystemNotificationManagementDetailComponent implements OnInit, OnDestroy {
+export class SystemNotificationManagementDetailComponent implements OnInit {
     notification: SystemNotification;
-    private subscription: Subscription;
+    isVisible: boolean;
 
-    constructor(private systemNotificationService: SystemNotificationService, private route: ActivatedRoute) {}
+    constructor(private systemNotificationService: SystemNotificationService, private route: ActivatedRoute, private router: Router) {}
 
     /**
      * Assigns the subscription to system notification service
      */
     ngOnInit() {
-        this.subscription = this.route.params.subscribe((params) => {
-            this.load(params['id']);
+        this.route.data.subscribe(({ notification }) => {
+            this.notification = notification.body ? notification.body : notification;
         });
-    }
-
-    /**
-     * Loads system notification
-     * @param id of the system notification
-     */
-    load(id: string) {
-        this.systemNotificationService.find(parseInt(id, 10)).subscribe((response) => {
-            this.notification = response.body!;
-        });
-    }
-
-    /**
-     * Unsubscribe on component destruction
-     */
-    ngOnDestroy() {
-        this.subscription.unsubscribe();
+        this.isVisible = this.route.children.length === 0;
+        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => (this.isVisible = this.route.children.length === 0));
     }
 }

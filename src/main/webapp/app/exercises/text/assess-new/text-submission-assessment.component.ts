@@ -24,6 +24,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess-new/text-assessment-base.component';
 import { now } from 'moment';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -153,7 +154,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.participation = studentParticipation;
         this.submission = this.participation!.submissions![0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
-        this.result = this.submission?.result;
+        this.result = getLatestSubmissionResult(this.submission);
 
         this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 
@@ -238,7 +239,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             newFeedback.conflictingTextAssessments = this.result?.feedbacks?.find((feedback) => feedback.id === newFeedback.id)?.conflictingTextAssessments;
         });
         this.result = response.body!;
-        this.submission!.result = this.result;
+        setLatestSubmissionResult(this.submission, this.result);
         this.saveBusy = this.submitBusy = false;
     }
 
@@ -267,9 +268,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     async navigateToConflictingSubmissions(feedbackId: number): Promise<void> {
         const tempSubmission = this.submission!;
-        tempSubmission!.result!.completionDate = undefined;
-        tempSubmission!.result!.submission = undefined;
-        tempSubmission!.result!.participation = undefined;
+        getLatestSubmissionResult(tempSubmission)!.completionDate = undefined;
+        getLatestSubmissionResult(tempSubmission)!.submission = undefined;
+        getLatestSubmissionResult(tempSubmission)!.participation = undefined;
         const navigationExtras: NavigationExtras = { state: { submission: tempSubmission } };
         await this.router.navigate(
             ['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'text-feedback-conflict', feedbackId],

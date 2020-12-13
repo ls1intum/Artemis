@@ -10,6 +10,7 @@ const routes: Routes = [
         component: ModelingStatisticsComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            usePathForBreadcrumbs: true,
             pageTitle: 'assessmentDashboard.title',
         },
         canActivate: [UserRouteAccessService],

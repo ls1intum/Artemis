@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -16,6 +17,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class DomainObject implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Id

@@ -470,7 +470,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         textSubmission = (TextSubmission) database.addSubmission(textExercise, textSubmission, "student1");
         textSubmission = (TextSubmission) database.addResultToSubmission(textSubmission, null);
         Result returnedResult = request.get("/api/results/submission/" + textSubmission.getId(), HttpStatus.OK, Result.class);
-        assertThat(returnedResult).isEqualTo(textSubmission.getResult());
+        assertThat(returnedResult).isEqualTo(textSubmission.getLatestResult());
     }
 
     @Test

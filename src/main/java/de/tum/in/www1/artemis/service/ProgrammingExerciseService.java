@@ -123,8 +123,8 @@ public class ProgrammingExerciseService {
      * @param programmingExercise The programmingExercise that should be setup
      * @return The newly setup exercise
      * @throws InterruptedException If something during the communication with the remote Git repository went wrong
-     * @throws GitAPIException If something during the communication with the remote Git repositroy went wrong
-     * @throws IOException If the template files couldn't be read
+     * @throws GitAPIException      If something during the communication with the remote Git repositroy went wrong
+     * @throws IOException          If the template files couldn't be read
      */
     @Transactional
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
@@ -191,7 +191,8 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     *  This method connects the new programming exercise with the template and solution participation
+     * This method connects the new programming exercise with the template and solution participation
+     *
      * @param programmingExercise the new programming exercise
      */
     public void connectBaseParticipationsToExerciseAndSave(ProgrammingExercise programmingExercise) {
@@ -222,8 +223,9 @@ public class ProgrammingExerciseService {
 
     /**
      * Setup the exercise template by determining the files needed for the template and copying them.
+     *
      * @param programmingExercise the programming exercise that should be set up
-     * @param user the User that performed the action (used as Git commit author)
+     * @param user                the User that performed the action (used as Git commit author)
      */
     private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user) throws IOException, GitAPIException, InterruptedException {
 
@@ -282,8 +284,12 @@ public class ProgrammingExerciseService {
 
         try {
             setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, projectTypeExerciseResources, projectTypeExercisePrefix, "Exercise", programmingExercise, user);
+            // The template repo can be re-written so we can unprotect the master branch.
+            versionControlService.get().unprotectBranch(programmingExercise.getTemplateRepositoryUrlAsUrl(), "master");
+
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix, "Solution", programmingExercise, user);
             setupTestTemplateAndPush(testRepo, testResources, testPrefix, projectTypeTestResources, projectTypeTestPrefix, "Test", programmingExercise, user);
+
         }
         catch (Exception ex) {
             // if any exception occurs, try to at least push an empty commit, so that the
@@ -312,9 +318,8 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     *
      * @param programmingExercise the changed programming exercise with its new values
-     * @param notificationText optional text about the changes for a notification
+     * @param notificationText    optional text about the changes for a notification
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText) {
@@ -359,14 +364,15 @@ public class ProgrammingExerciseService {
 
     /**
      * Copy template and push, if no file is currently in the repository.
-     * @param repository The repository to push to
-     * @param resources An array of resources that should be copied. Might be overwritten by projectTypeResources.
-     * @param prefix A prefix that should be replaced for all Resources inside the resources.
+     *
+     * @param repository           The repository to push to
+     * @param resources            An array of resources that should be copied. Might be overwritten by projectTypeResources.
+     * @param prefix               A prefix that should be replaced for all Resources inside the resources.
      * @param projectTypeResources An array of resources that should be copied AFTER the resources array has been copied. Can be null.
-     * @param projectTypePrefix A prefix that should be replaced for all Resources inside the projectTypeResources.
-     * @param templateName The name of the template
-     * @param programmingExercise the programming exercise
-     * @param user The user that triggered the action (used as Git commit author)
+     * @param projectTypePrefix    A prefix that should be replaced for all Resources inside the projectTypeResources.
+     * @param templateName         The name of the template
+     * @param programmingExercise  the programming exercise
+     * @param user                 The user that triggered the action (used as Git commit author)
      * @throws Exception
      */
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, @Nullable Resource[] projectTypeResources, String projectTypePrefix,
@@ -386,12 +392,12 @@ public class ProgrammingExerciseService {
     /**
      * Set up the test repository. This method differentiates non sequential and sequential test repositories (more than 1 test job).
      *
-     * @param repository The repository to be set up
-     * @param resources The resources which should get added to the template
-     * @param prefix The prefix for the path to which the resources should get copied to
-     * @param templateName The name of the template
+     * @param repository          The repository to be set up
+     * @param resources           The resources which should get added to the template
+     * @param prefix              The prefix for the path to which the resources should get copied to
+     * @param templateName        The name of the template
      * @param programmingExercise The related programming exercise for which the template should get created
-     * @param user the user who has initiated the generation of the programming exercise
+     * @param user                the user who has initiated the generation of the programming exercise
      * @throws Exception If anything goes wrong
      */
     private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, Resource[] projectTypeResources, String projectTypePrefix,
@@ -515,8 +521,9 @@ public class ProgrammingExerciseService {
 
     /**
      * Replace placeholders in repository files (e.g. ${placeholder}).
+     *
      * @param programmingExercise The related programming exercise
-     * @param repository The repository in which the placeholders should get replaced
+     * @param repository          The repository in which the placeholders should get replaced
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
     public void replacePlaceholders(ProgrammingExercise programmingExercise, Repository repository) throws IOException {
@@ -548,11 +555,11 @@ public class ProgrammingExerciseService {
 
     /**
      * Stage, commit and push.
-     * @param repository The repository to which the changes should get pushed
-     * @param message The commit message
-     * @param user the user who has initiated the generation of the programming exercise
-     * @throws GitAPIException If committing, or pushing to the repo throws an exception
      *
+     * @param repository The repository to which the changes should get pushed
+     * @param message    The commit message
+     * @param user       the user who has initiated the generation of the programming exercise
+     * @throws GitAPIException If committing, or pushing to the repo throws an exception
      */
     public void commitAndPushRepository(Repository repository, String message, User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
@@ -593,6 +600,7 @@ public class ProgrammingExerciseService {
 
     /**
      * Find a programming exercise by its id, including template and solution but without results.
+     *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
@@ -609,6 +617,7 @@ public class ProgrammingExerciseService {
 
     /**
      * Find a programming exercise by its id, including template and solution participation and their latest results.
+     *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
@@ -665,9 +674,10 @@ public class ProgrammingExerciseService {
 
     /**
      * Combine all commits of the given repository into one.
+     *
      * @param repoUrl of the repository to combine.
      * @throws InterruptedException If the checkout fails
-     * @throws GitAPIException If the checkout fails
+     * @throws GitAPIException      If the checkout fails
      */
     public void combineAllCommitsOfRepositoryIntoOne(URL repoUrl) throws InterruptedException, GitAPIException {
         Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl, true);
@@ -678,11 +688,11 @@ public class ProgrammingExerciseService {
      * Updates the problem statement of the given programming exercise.
      *
      * @param programmingExerciseId ProgrammingExercise Id.
-     * @param problemStatement markdown of the problem statement.
-     * @param notificationText optional text for a notification to all students about the update
+     * @param problemStatement      markdown of the problem statement.
+     * @param notificationText      optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
      * @throws EntityNotFoundException if there is no ProgrammingExercise for the given id.
-     * @throws IllegalAccessException if the user does not have permissions to access the ProgrammingExercise.
+     * @throws IllegalAccessException  if the user does not have permissions to access the ProgrammingExercise.
      */
     public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement, @Nullable String notificationText)
             throws EntityNotFoundException, IllegalAccessException {
@@ -715,9 +725,9 @@ public class ProgrammingExerciseService {
      * @param testsPath       The path to the tests folder, e.g. the path inside the repository where the structure oracle file will be saved in.
      * @param user            The user who has initiated the action
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
-     * @throws IOException If the URLs cannot be converted to actual {@link Path paths}
+     * @throws IOException          If the URLs cannot be converted to actual {@link Path paths}
      * @throws InterruptedException If the checkout fails
-     * @throws GitAPIException If the checkout fails
+     * @throws GitAPIException      If the checkout fails
      */
     public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath, User user)
             throws IOException, GitAPIException, InterruptedException {
@@ -783,7 +793,7 @@ public class ProgrammingExerciseService {
     /**
      * Delete a programming exercise, including its template and solution participations.
      *
-     * @param programmingExerciseId id of the programming exercise to delete.
+     * @param programmingExerciseId     id of the programming exercise to delete.
      * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
      */
     @Transactional // ok
@@ -846,6 +856,7 @@ public class ProgrammingExerciseService {
 
     /**
      * Returns the list of programming exercises with a buildAndTestStudentSubmissionsAfterDueDate in future.
+     *
      * @return List<ProgrammingExercise>
      */
     public List<ProgrammingExercise> findAllWithBuildAndTestAfterDueDateInFuture() {
@@ -868,7 +879,7 @@ public class ProgrammingExerciseService {
      * have to send hundreds/thousands of exercises if there are that many in Artemis.
      *
      * @param search The search query defining the search term and the size of the returned page
-     * @param user The user for whom to fetch all available exercises
+     * @param user   The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
@@ -887,6 +898,7 @@ public class ProgrammingExerciseService {
 
     /**
      * add project permissions to project of the build plans of the given exercise
+     *
      * @param exercise the exercise whose build plans projects should be configured with permissions
      */
     public void giveCIProjectPermissions(ProgrammingExercise exercise) {
@@ -925,7 +937,7 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * @param exerciseId the exercise we are interested in
+     * @param exerciseId     the exercise we are interested in
      * @param ignoreTestRuns should be set for exam exercises
      * @return the number of programming submissions which should be assessed
      * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
@@ -944,7 +956,7 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * @param exerciseId the exercise we are interested in
+     * @param exerciseId     the exercise we are interested in
      * @param ignoreTestRuns should be set for exam exercises
      * @return the number of assessed programming submissions
      * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
@@ -978,6 +990,7 @@ public class ProgrammingExerciseService {
      * Sets the transient attribute "isLocalSimulation" if the exercises is a programming exercise
      * and the testRepositoryUrl contains the String "artemislocalhost" which is the indicator that the programming exercise has
      * no connection to a version control and continuous integration server
+     *
      * @param exercise the exercise for which to set if it is a local simulation
      */
     public void checksAndSetsIfProgrammingExerciseIsLocalSimulation(Exercise exercise) {
