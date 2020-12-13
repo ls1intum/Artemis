@@ -176,11 +176,44 @@ public class StatisticsService {
      * @return the return value of the database call
      */
     private List<Map<String, Object>> getDataFromDatabaseForDay(ZonedDateTime startDate, ZonedDateTime endDate, GraphType graphType) {
-        return switch (graphType) {
-            case SUBMISSIONS -> this.statisticsRepository.getTotalSubmissionsDay(startDate, endDate);
-            case ACTIVE_USERS -> this.statisticsRepository.getActiveUsersDay(startDate, endDate);
-            case RELEASED_EXERCISES -> this.statisticsRepository.getReleasedExercisesDay(startDate, endDate);
-        };
+        switch (graphType) {
+            case SUBMISSIONS -> {
+                return this.statisticsRepository.getTotalSubmissionsDay(startDate, endDate);
+            }
+            case ACTIVE_USERS -> {
+                List<Map<String, Object>> returnList = new ArrayList<>();
+                Map<Integer, List<String>> users = new HashMap<>();
+                List<Map<String, Object>> result = this.statisticsRepository.getActiveUsersDay(startDate, endDate);
+                for (int i = 0; i < result.size(); i++) {
+                    Map<String, Object> listElement = result.get(i);
+                    ZonedDateTime date = (ZonedDateTime) listElement.get("day");
+                    String username = listElement.get("amount").toString();
+                    List<String> usersInSameHour = users.get(date.getHour());
+                    // if this hour is not yet registered
+                    if (usersInSameHour == null) {
+                        usersInSameHour = new ArrayList<>();
+                        usersInSameHour.add(username);
+                        users.put(date.getHour(), usersInSameHour);
+                        // if this hour does not contain this username
+                    }
+                    else if (!usersInSameHour.contains("" + listElement.get("amount"))) {
+                        usersInSameHour.add(username);
+                        users.put(date.getHour(), usersInSameHour);
+                    }
+                }
+                users.forEach((k, v) -> {
+                    Map<String, Object> listElement = new HashMap<>();
+                    listElement.put("day", startDate.withHour(k));
+                    listElement.put("amount", (long) v.size());
+                    returnList.add(listElement);
+                });
+                return returnList;
+            }
+            case RELEASED_EXERCISES -> {
+                return this.statisticsRepository.getReleasedExercisesDay(startDate, endDate);
+            }
+        }
+        return new ArrayList<>();
     }
 
     /**
