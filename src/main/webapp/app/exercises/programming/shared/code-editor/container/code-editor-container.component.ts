@@ -57,6 +57,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     @Output()
     onFileChanged = new EventEmitter<void>();
     @Output()
+    onSelectedFileChanged = new EventEmitter<string>();
+    @Output()
     onUpdateFeedback = new EventEmitter<Feedback[]>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
@@ -148,6 +150,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         }
         this.aceEditor.onFileChange(fileChange);
         this.onFileChanged.emit();
+    }
+
+    onSelectedFileChange(selectedFile: string) {
+        this.onSelectedFileChanged.emit(selectedFile);
     }
 
     /**
