@@ -128,7 +128,8 @@ public class ProgrammingExerciseGradingService {
 
                     Result manualResult = studentParticipation.get().getResults().stream().findFirst().get();
 
-                    Result newResult = programmingSubmissionService.setNewResult(result.getSubmission());
+                    ProgrammingSubmission newSubmission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(participation, SubmissionType.MANUAL);
+                    Result newResult = programmingSubmissionService.setNewResult(newSubmission);
                     newResult.setAssessor(manualResult.getAssessor());
                     newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
                     newResult.setCompletionDate(manualResult.getCompletionDate());
