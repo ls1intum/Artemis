@@ -279,6 +279,7 @@ public class StudentExamService {
                     result.setAssessor(instructor);
                     result.setCompletionDate(ZonedDateTime.now());
                     result.setScore(0L);
+                    result.rated(true);
                     result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
                     submissionService.saveNewResult(latestSubmission, result);
                     numberOfAssessedSubmissions++;
