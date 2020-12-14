@@ -87,8 +87,6 @@ export class PlagiarismInspectorComponent implements OnInit {
     handleTextPlagiarismResult(result: TextPlagiarismResult) {
         this.detectionInProgress = false;
 
-        console.log(result);
-
         this.sortComparisonsForResult(result);
 
         this.plagiarismResult = result;
