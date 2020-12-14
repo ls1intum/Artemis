@@ -17,9 +17,6 @@ public class StudentScore extends DomainObject {
     @ManyToOne
     private Exercise exercise;
 
-    /**
-     * A submission can have a result and therefore, results are persisted and removed with a submission.
-     */
     @OneToOne
     private Result result;
 

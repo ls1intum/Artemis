@@ -68,7 +68,7 @@ public class StudentScoreService {
      *
      * @param student student user
      * @param exercise exercise
-     * @return list of student score objects for that course
+     * @return student score for student and exercise if it exists
      */
     public Optional<StudentScore> getStudentScoreForStudentAndExercise(User student, Exercise exercise) {
         return studentScoreRepository.findByStudentAndExercise(student, exercise);
