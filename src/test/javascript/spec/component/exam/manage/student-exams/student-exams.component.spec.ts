@@ -28,6 +28,7 @@ import * as sinon from 'sinon';
 import { Exam } from 'app/entities/exam.model';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
+import { By } from '@angular/platform-browser';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -75,6 +76,14 @@ describe('StudentExamsComponent', () => {
                         return of(
                             new HttpResponse({
                                 body: exam,
+                                status: 200,
+                            }),
+                        );
+                    },
+                    assessUnsubmittedExamModelingAndTextParticipations: () => {
+                        return of(
+                            new HttpResponse({
+                                body: 1,
                                 status: 200,
                             }),
                         );
@@ -156,5 +165,43 @@ describe('StudentExamsComponent', () => {
         expect(studentExamsComponent.hasStudentsWithoutExam).to.equal(false);
         expect(studentExamsComponent.longestWorkingTime).to.equal(studentExamOne.workingTime);
         expect(studentExamsComponent.isExamOver).to.equal(false);
+        expect(studentExamsComponent.isLoading).to.equal(false);
+    });
+
+    it('should not show assess unsubmitted student exam modeling and text participations', () => {
+        // user is not an instructor
+        studentExamsComponentFixture.detectChanges();
+        const assessButton = studentExamsComponentFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
+        expect(assessButton).to.not.exist;
+    });
+
+    it('should disable show assess unsubmitted student exam modeling and text participations', () => {
+        course.isAtLeastInstructor = true;
+
+        // exam is not over
+        studentExamsComponentFixture.detectChanges();
+        const assessButton = studentExamsComponentFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
+        expect(assessButton).to.exist;
+        expect(assessButton.nativeElement.disabled).to.equal(true);
+    });
+
+    it('should automatically assess modeling and text exercises of unsubmitted student exams', () => {
+        const examManagementService = TestBed.inject(ExamManagementService);
+
+        studentExamOne.workingTime = 10;
+        exam.startDate = moment().subtract(20, 'seconds');
+        exam.endDate = moment().subtract(10, 'seconds');
+        exam.gracePeriod = 0;
+        course.isAtLeastInstructor = true;
+
+        studentExamsComponentFixture.detectChanges();
+        expect(studentExamsComponent.isLoading).to.equal(false);
+        expect(studentExamsComponent.isExamOver).to.equal(true);
+        expect(course).to.exist;
+        const assessSpy = sinon.spy(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations');
+        const assessButton = studentExamsComponentFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
+        expect(assessButton).to.exist;
+        assessButton.nativeElement.click();
+        expect(assessSpy).to.have.been.calledOnce;
     });
 });
