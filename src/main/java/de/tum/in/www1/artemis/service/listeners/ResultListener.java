@@ -29,7 +29,7 @@ public class ResultListener {
     }
 
     /**
-     * Before result gets deleted, delete all StudentScores/TutorScores with this result.
+     * Before result gets deleted, delete all Scores with this result.
      *
      * @param deletedResult deleted result
      */
@@ -37,12 +37,12 @@ public class ResultListener {
     public void preRemove(Result deletedResult) {
         log.info("Result " + deletedResult + " was removed");
 
-        // remove from Student Scores and Tutor Scores
+        // Remove StudentScore
         studentScoreService.getObject().removeResult(deletedResult);
     }
 
     /**
-     * Before result gets updated, remove result from all TutorScores.
+     * Before result gets updated, update all Scores.
      *
      * @param updatedResult updated result
      */
@@ -50,12 +50,12 @@ public class ResultListener {
     public void preUpdate(Result updatedResult) {
         log.info("Result " + updatedResult + " will be persisted");
 
-        // update scores
+        // Update StudentScore
         studentScoreService.getObject().updateResult(updatedResult);
     }
 
     /**
-     * After new result gets persisted, update all StudentScores/TutorScores with this result.
+     * After new result gets persisted, update all Scores with this result.
      *
      * @param newResult new result
      */
@@ -63,7 +63,7 @@ public class ResultListener {
     public void postPersist(Result newResult) {
         log.info("Result " + newResult + " was persisted");
 
-        // update score
+        // Update StudentScore
         studentScoreService.getObject().updateResult(newResult);
     }
 }
