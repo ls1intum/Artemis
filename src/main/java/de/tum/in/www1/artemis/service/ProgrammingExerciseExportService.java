@@ -222,7 +222,7 @@ public class ProgrammingExerciseExportService {
             }
         });
         try {
-            Repository templateRepo = gitService.getOrCheckoutRepositoryForJPlag(programmingExercise.getTemplateParticipation(), REPO_DOWNLOAD_CLONE_PATH);
+            Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), REPO_DOWNLOAD_CLONE_PATH);
             deleteTempLocalRepository(programmingExercise.getTemplateParticipation(), templateRepo);
         }
         catch (GitException | GitAPIException | InterruptedException ex) {
