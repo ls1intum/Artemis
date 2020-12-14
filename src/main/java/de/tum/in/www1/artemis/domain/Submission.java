@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * A Submission.
@@ -98,15 +97,13 @@ public abstract class Submission extends DomainObject {
     }
 
     /**
-     * Is used as a workaround for objects that expect submission to have 1 result
+     * Get the latest result of the submission
      *
-     * @return the latest i.e newest result
+     * @return a {@link Result} or null
      */
     @Nullable
     @JsonIgnore
     public Result getLatestResult() {
-        // in all cases (except 2nd, 3rd correction, etc.) we would like to have the latest result
-        // getLatestResult
         if (!results.isEmpty()) {
             return results.get(results.size() - 1);
         }
@@ -120,14 +117,13 @@ public abstract class Submission extends DomainObject {
     }
 
     /**
-     * currently not used
+     * Get the first result of the submission
      *
-     * @return the first Result of the Submission
+     * @return a {@link Result} or null if no result is present
      */
     @Nullable
     @JsonIgnore
     public Result getFirstResult() {
-        // getLatestResult
         if (!results.isEmpty()) {
             return results.get(0);
         }
@@ -135,19 +131,21 @@ public abstract class Submission extends DomainObject {
     }
 
     /**
-     * Used as a setResult method, as typically the latest result is used
+     * Add a result to the list.
+     * NOTE: You must make sure to correctly persist the result in the database!
      *
-     * @param result
+     * @param result the {@link Result} which should be added
      */
     public void addResult(Result result) {
         this.results.add(result);
-        // At the moment only one result in results is allowed
-        // TODO remove when multi-correction is implemented!
-        if (results.size() > 1) {
-            throw new InternalServerErrorException("Sugbmission.addResult(result): results.size() > 1 | the Submission.results list should not contain more than one element");
-        }
     }
 
+    /**
+     * Set the results list to the specified list.
+     * NOTE: You must correctly persist this change in the database manually!
+     *
+     * @param results The list of {@link Result} which should replace the existing results of the submission
+     */
     @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
     public void setResults(List<Result> results) {
         this.results = results;
