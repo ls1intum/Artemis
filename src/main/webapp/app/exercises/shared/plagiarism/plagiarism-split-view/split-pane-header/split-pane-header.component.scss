@@ -8,5 +8,24 @@
     width: 100%;
     background-color: white;
     border-bottom: 1px solid $body-bg;
-    padding: 2px 4px;
+    padding: 0.25rem 0.5rem;
+
+    &-top {
+        display: flex;
+        justify-content: space-between;
+
+        &.active fa-icon {
+            transform: rotate(180deg);
+        }
+    }
+
+    &-selected-file {
+        margin-left: 0.5rem;
+    }
+
+    &-files {
+        list-style: none;
+        margin: 0.5rem 0;
+        padding: 0;
+    }
 }

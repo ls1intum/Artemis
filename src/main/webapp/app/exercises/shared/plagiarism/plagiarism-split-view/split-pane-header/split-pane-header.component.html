@@ -1,3 +1,15 @@
 <div class="split-pane-header">
-    {{ studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}
+    <div class="split-pane-header-top" [ngClass]="{ clickable: true }" (click)="toggleShowFiles()">
+        <div>
+            <fa-icon [icon]="'chevron-down'"></fa-icon>
+            <span class="split-pane-header-selected-file">src/main/java/Main.java</span>
+        </div>
+
+        <div>{{ studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}</div>
+    </div>
+
+    <ul *ngIf="showFiles" class="split-pane-header-files">
+        <li *ngFor="let file; in: files">src/main/java/Application.java</li>
+        <li *ngIf="!files || files.length === 0">No files found</li>
+    </ul>
 </div>

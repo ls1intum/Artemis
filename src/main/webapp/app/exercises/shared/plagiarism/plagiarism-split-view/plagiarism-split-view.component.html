@@ -1,21 +1,13 @@
 <div class="plagiarism-split-view">
     <div class="plagiarism-split-pane" jhiPane>
-        <jhi-split-pane-header studentLogin="{{ comparison.submissionA.studentLogin }}"></jhi-split-pane-header>
+        <jhi-modeling-submission-viewer *ngIf="isModelingExercise()" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()"></jhi-modeling-submission-viewer>
 
-        <div class="plagiarism-split-pane-body">
-            <jhi-modeling-submission-viewer *ngIf="isModelingExercise()" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()"></jhi-modeling-submission-viewer>
-
-            <jhi-text-submission-viewer *ngIf="isTextOrProgrammingExercise()" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionA()"></jhi-text-submission-viewer>
-        </div>
+        <jhi-text-submission-viewer *ngIf="isTextOrProgrammingExercise()" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionA()"></jhi-text-submission-viewer>
     </div>
 
     <div class="plagiarism-split-pane" jhiPane>
-        <jhi-split-pane-header studentLogin="{{ comparison.submissionB.studentLogin }}"></jhi-split-pane-header>
+        <jhi-modeling-submission-viewer *ngIf="isModelingExercise()" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionB()"></jhi-modeling-submission-viewer>
 
-        <div class="plagiarism-split-pane-body">
-            <jhi-modeling-submission-viewer *ngIf="isModelingExercise()" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionB()"></jhi-modeling-submission-viewer>
-
-            <jhi-text-submission-viewer *ngIf="isTextOrProgrammingExercise()" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionB()"></jhi-text-submission-viewer>
-        </div>
+        <jhi-text-submission-viewer *ngIf="isTextOrProgrammingExercise()" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionB()"></jhi-text-submission-viewer>
     </div>
 </div>

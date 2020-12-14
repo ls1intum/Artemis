@@ -10,7 +10,13 @@ export class SplitPaneHeaderComponent implements OnInit {
 
     @Input() files: string[];
 
+    showFiles = false;
+
     constructor() {}
 
     ngOnInit(): void {}
+
+    toggleShowFiles() {
+        this.showFiles = !this.showFiles;
+    }
 }

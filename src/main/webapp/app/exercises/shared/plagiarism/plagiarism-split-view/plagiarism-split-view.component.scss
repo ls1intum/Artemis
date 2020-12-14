@@ -13,12 +13,8 @@
     height: 100%;
 
     .plagiarism-split-pane {
+        padding-top: 30px;
         position: relative;
-
-        &-body {
-            height: 100%;
-            padding-top: 26px;
-            overflow-y: auto;
-        }
+        overflow-y: auto;
     }
 }
