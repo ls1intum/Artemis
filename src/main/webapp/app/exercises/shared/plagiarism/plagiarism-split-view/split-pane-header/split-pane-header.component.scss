@@ -12,6 +12,7 @@
     &-top {
         display: flex;
         justify-content: space-between;
+        overflow: hidden;
         padding: 0.25rem 0.5rem;
 
         &.active fa-icon {
@@ -22,6 +23,8 @@
 
     &-selected-file {
         margin-left: 0.5rem;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 
     &-file {
@@ -31,6 +34,10 @@
         &:hover {
             background-color: lightskyblue;
         }
+    }
+
+    &-file-name {
+        white-space: nowrap;
     }
 
     &-files {

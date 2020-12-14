@@ -1,6 +1,6 @@
 <div class="split-pane-header">
     <div class="split-pane-header-top" [ngClass]="{ active: showFiles, clickable: hasFiles() }" (click)="toggleShowFiles()">
-        <div *ngIf="getActiveFile()">
+        <div *ngIf="getActiveFile()" class="split-pane-header-file-name">
             <fa-icon [icon]="'chevron-down'"></fa-icon>
             <span class="split-pane-header-selected-file">{{ getActiveFile() }}</span>
         </div>
