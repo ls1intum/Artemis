@@ -15,7 +15,7 @@
         <tbody>
             <tr *ngFor="let achievement of achievements">
                 <ng-container>
-                    <td class="d-md-table-cell">
+                    <td class="d-md-table-cell achievement-table">
                         <div
                             class="circle"
                             [ngClass]="{
@@ -28,10 +28,10 @@
                             <fa-icon class="achievement-icon" [icon]="achievement.icon"></fa-icon>
                         </div>
                     </td>
-                    <td class="d-md-table-cell">
+                    <td class="d-md-table-cell achievement-table">
                         <div>{{ achievement.title }}</div>
                     </td>
-                    <td class="d-md-table-cell">
+                    <td class="d-md-table-cell achievement-table">
                         <div>{{ achievement.description }}</div>
                     </td>
                 </ng-container>
