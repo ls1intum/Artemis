@@ -565,4 +565,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
         return ratingResult;
     }
+
+    onExplanationChanged(explanationText: string) {
+        this.submissionChange.next({ ...this.submission, explanationText });
+    }
 }

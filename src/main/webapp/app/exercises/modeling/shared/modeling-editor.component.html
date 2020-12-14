@@ -91,4 +91,17 @@
             <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
         </div>
     </div>
+
+    <div *ngIf="withExplanation" class="text-editor-container">
+        <label for="explanationText" jhiTranslate="artemisApp.modelingSubmission.explanationText">Explanation</label>
+        <textarea
+            #textEditor
+            id="explanationText"
+            class="text-editor-textarea"
+            [(ngModel)]="explanation"
+            (keydown.tab)="onTextEditorTab(textEditor, $event)"
+            (ngModelChange)="onExplanationChanged.emit(explanation)"
+            [readOnly]="readOnly"
+        ></textarea>
+    </div>
 </div>

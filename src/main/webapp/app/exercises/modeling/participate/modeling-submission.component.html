@@ -33,7 +33,13 @@
         <jhi-fullscreen>
             <div class="row flex-grow-1">
                 <div *ngIf="submission && (isActive || isLate) && !result" class="col-12 editor-large">
-                    <jhi-modeling-editor [umlModel]="umlModel" [diagramType]="modelingExercise.diagramType"></jhi-modeling-editor>
+                    <jhi-modeling-editor
+                        [umlModel]="umlModel"
+                        [diagramType]="modelingExercise.diagramType"
+                        [withExplanation]="true"
+                        [explanation]="submission.explanationText"
+                        (onExplanationChanged)="onExplanationChanged($event)"
+                    ></jhi-modeling-editor>
                     <jhi-team-submission-sync
                         *ngIf="modelingExercise.teamMode"
                         [exerciseType]="modelingExercise.type"

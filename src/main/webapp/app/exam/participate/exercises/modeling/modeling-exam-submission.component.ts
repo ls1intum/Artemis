@@ -26,7 +26,9 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     @Input()
     exercise: ModelingExercise;
-    umlModel: UMLModel; // input model for Apollon
+    umlModel: UMLModel; // input model for Apollon+
+
+    explanationText: string;
 
     constructor(changeDetectorReference: ChangeDetectorRef) {
         super(changeDetectorReference);
@@ -50,6 +52,9 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
             // Updates the Apollon editor model state (view) with the latest modeling submission
             this.umlModel = JSON.parse(this.studentSubmission.model);
         }
+        if (typeof this.studentSubmission.explanationText === 'string') {
+            this.explanationText = this.studentSubmission.explanationText;
+        }
     }
 
     /**
@@ -61,8 +66,15 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         }
         const currentApollonModel = this.modelingEditor.getCurrentModel();
         const diagramJson = JSON.stringify(currentApollonModel);
-        if (this.studentSubmission && diagramJson) {
-            this.studentSubmission.model = diagramJson;
+        if (this.studentSubmission) {
+            if (diagramJson) {
+                this.studentSubmission.model = diagramJson;
+            }
+            console.log('fafasf', typeof this.explanationText);
+            if (typeof this.explanationText === 'string') {
+                console.log(this.explanationText);
+                this.studentSubmission.explanationText = this.explanationText;
+            }
         }
     }
 
@@ -83,5 +95,10 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     modelChanged(model: UMLModel) {
         this.studentSubmission.isSynced = false;
+    }
+
+    explanationChanged(explanation: string) {
+        this.studentSubmission.isSynced = false;
+        this.explanationText = explanation;
     }
 }
