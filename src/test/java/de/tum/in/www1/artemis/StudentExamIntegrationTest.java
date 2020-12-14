@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.util.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -26,6 +27,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -568,8 +570,14 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
-                assertThat(studentParticipation.findLatestSubmission().get().getLatestResult()).isNotNull();
-                assertThat(studentParticipation.findLatestSubmission().get().getLatestResult().getScore()).isEqualTo(0);
+                if (studentParticipation.findLatestSubmission().isPresent()) {
+                    assertThat(studentParticipation.findLatestSubmission().get().getLatestResult()).isNotNull();
+                    assertThat(studentParticipation.findLatestSubmission().get().getLatestResult().getScore()).isEqualTo(0);
+                    assertThat(studentParticipation.findLatestSubmission().get().getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+                }
+                else {
+                    fail("StudentParticipation which is part of an unsubmitted StudentExam contains no submission or result after automatic assessment of unsubmitted student exams call.");
+                }
             }
         }
     }
