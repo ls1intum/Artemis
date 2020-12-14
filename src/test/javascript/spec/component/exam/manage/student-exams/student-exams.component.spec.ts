@@ -18,7 +18,7 @@ import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testi
 import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Course } from 'app/entities/course.model';
 import { of } from 'rxjs';
@@ -127,8 +127,19 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should initialize', () => {
+        const courseManagementService = TestBed.inject(CourseManagementService);
+        const examManagementService = TestBed.inject(ExamManagementService);
+        const studentExamService = TestBed.inject(StudentExamService);
+
+        const findCourseSpy = sinon.spy(courseManagementService, 'find');
+        const findExamSpy = sinon.spy(examManagementService, 'find');
+        const findAllStudentExamsSpy = sinon.spy(studentExamService, 'findAllForExam');
         studentExamsComponentFixture.detectChanges();
+
         expect(studentExamsComponentFixture).to.be.ok;
+        expect(findCourseSpy).to.have.been.calledOnce;
+        expect(findExamSpy).to.have.been.calledOnce;
+        expect(findAllStudentExamsSpy).to.have.been.calledOnce;
         expect(studentExamsComponent.course).to.deep.equal(course);
         expect(studentExamsComponent.studentExams).to.deep.equal([studentExamOne]);
         expect(studentExamsComponent.exam).to.deep.equal(exam);
