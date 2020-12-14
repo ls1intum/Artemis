@@ -8,7 +8,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { concatMap, finalize, switchMap, take } from 'rxjs/operators';
 import { Exercise } from 'app/entities/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { forkJoin, Observable } from 'rxjs';
+import { forkJoin, Observable, combineLatest } from 'rxjs';
 import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
 
 @Component({
@@ -37,12 +37,13 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     ngOnInit(): void {
         this.isLoading = true;
-        this.activatedRoute.paramMap
+        const lectureRoute = this.activatedRoute.parent!.parent!;
+        combineLatest(lectureRoute.paramMap, lectureRoute.parent!.paramMap)
             .pipe(
                 take(1),
-                switchMap((params) => {
+                switchMap(([params, parentParams]) => {
                     this.lectureId = Number(params.get('lectureId'));
-                    this.courseId = Number(params.get('courseId'));
+                    this.courseId = Number(parentParams.get('courseId'));
 
                     const courseObservable = this.courseManagementService.findWithExercises(this.courseId);
                     const exerciseUnitObservable = this.exerciseUnitService.findAllByLectureId(this.lectureId);

@@ -10,7 +10,7 @@ import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AttachmentService } from 'app/lecture/attachment.service';
-import { forkJoin } from 'rxjs';
+import { forkJoin, combineLatest } from 'rxjs';
 import * as moment from 'moment';
 
 @Component({
@@ -39,12 +39,13 @@ export class EditAttachmentUnitComponent implements OnInit {
 
     ngOnInit(): void {
         this.isLoading = true;
-        this.activatedRoute.paramMap
+        const lectureRoute = this.activatedRoute.parent!.parent!;
+        combineLatest(this.activatedRoute.paramMap, lectureRoute.paramMap)
             .pipe(
                 take(1),
-                switchMap((params) => {
+                switchMap(([params, parentParams]) => {
                     const attachmentUnitId = Number(params.get('attachmentUnitId'));
-                    this.lectureId = Number(params.get('lectureId'));
+                    this.lectureId = Number(parentParams.get('lectureId'));
                     return this.attachmentUnitService.findById(attachmentUnitId, this.lectureId);
                 }),
                 finalize(() => {

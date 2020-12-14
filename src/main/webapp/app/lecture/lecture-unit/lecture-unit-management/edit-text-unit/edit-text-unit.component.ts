@@ -7,6 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { combineLatest } from 'rxjs';
 
 @Component({
     selector: 'jhi-edit-text-unit',
@@ -23,12 +24,13 @@ export class EditTextUnitComponent implements OnInit {
 
     ngOnInit(): void {
         this.isLoading = true;
-        this.activatedRoute.paramMap
+        const lectureRoute = this.activatedRoute.parent!.parent!;
+        combineLatest(this.activatedRoute.paramMap, lectureRoute.paramMap)
             .pipe(
                 take(1),
-                switchMap((params) => {
+                switchMap(([params, parentParams]) => {
                     const textUnitId = Number(params.get('textUnitId'));
-                    this.lectureId = Number(params.get('lectureId'));
+                    this.lectureId = Number(parentParams.get('lectureId'));
                     return this.textUnitService.findById(textUnitId, this.lectureId);
                 }),
                 finalize(() => (this.isLoading = false)),

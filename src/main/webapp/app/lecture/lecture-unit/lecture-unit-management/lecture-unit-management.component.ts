@@ -22,6 +22,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     lectureId: number;
     lectureUnits: LectureUnit[] = [];
     lecture: Lecture;
+    isVisible: boolean;
     isLoading = false;
     updateOrderSubject: Subject<any>;
     updateOrderSubjectSubscription: Subscription;
@@ -46,13 +47,14 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.unsubscribe();
         this.navigationEndSubscription.unsubscribe();
     }
+
     ngOnInit(): void {
         this.navigationEndSubscription = this.router.events.pipe(filter((value) => value instanceof NavigationEnd)).subscribe(() => {
             this.loadData();
         });
 
         this.updateOrderSubject = new Subject();
-        this.activatedRoute.params.subscribe((params) => {
+        this.activatedRoute.parent!.params.subscribe((params) => {
             this.lectureId = +params['lectureId'];
             if (this.lectureId) {
                 this.loadData();
@@ -63,6 +65,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.updateOrderSubjectSubscription = this.updateOrderSubject.pipe(debounceTime(1000)).subscribe(() => {
             this.updateOrder();
         });
+
+        this.isVisible = this.activatedRoute.children.length === 0;
+        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => (this.isVisible = this.activatedRoute.children.length === 0));
     }
 
     loadData() {

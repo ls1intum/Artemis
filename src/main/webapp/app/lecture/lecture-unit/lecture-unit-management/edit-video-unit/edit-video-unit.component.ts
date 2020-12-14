@@ -7,6 +7,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { combineLatest } from 'rxjs';
 
 @Component({
     selector: 'jhi-edit-video-unit',
@@ -23,12 +24,13 @@ export class EditVideoUnitComponent implements OnInit {
 
     ngOnInit(): void {
         this.isLoading = true;
-        this.activatedRoute.paramMap
+        const lectureRoute = this.activatedRoute.parent!.parent!;
+        combineLatest(this.activatedRoute.paramMap, lectureRoute.paramMap)
             .pipe(
                 take(1),
-                switchMap((params) => {
+                switchMap(([params, parentParams]) => {
                     const videoUnitId = Number(params.get('videoUnitId'));
-                    this.lectureId = Number(params.get('lectureId'));
+                    this.lectureId = Number(parentParams.get('lectureId'));
                     return this.videoUnitService.findById(videoUnitId, this.lectureId);
                 }),
                 finalize(() => {

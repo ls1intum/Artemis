@@ -70,13 +70,23 @@ describe('EditAttachmentUnitComponent', () => {
                         paramMap: Observable.of({
                             get: (key: string) => {
                                 switch (key) {
-                                    case 'lectureId':
-                                        return 1;
                                     case 'attachmentUnitId':
                                         return 1;
                                 }
                             },
                         }),
+                        parent: {
+                            parent: {
+                                paramMap: Observable.of({
+                                    get: (key: string) => {
+                                        switch (key) {
+                                            case 'lectureId':
+                                                return 1;
+                                        }
+                                    },
+                                }),
+                            },
+                        },
                     },
                 },
             ],

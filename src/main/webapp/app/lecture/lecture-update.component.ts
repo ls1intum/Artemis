@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { Observable, combineLatest } from 'rxjs';
+import { Observable } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
 import { LectureService } from './lecture.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
@@ -38,10 +38,14 @@ export class LectureUpdateComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
-        // Wait for both subscriptions to load
-        combineLatest(this.activatedRoute.data, this.activatedRoute.parent!.data).subscribe(([routeData, parentRouteData]) => {
-            this.lecture = routeData['lecture'];
-            this.lecture.course = parentRouteData['course'];
+        // Create a new lecture to use unless we fetch an existing lecture
+        this.lecture = new Lecture();
+        this.activatedRoute.parent!.data.subscribe((data) => {
+            const lecture = data['lecture'];
+            if (lecture) {
+                this.lecture = lecture;
+            }
+            this.lecture.course = data['course'];
         });
     }
 

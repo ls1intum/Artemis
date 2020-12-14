@@ -54,11 +54,21 @@ describe('EditVideoUnitComponent', () => {
                                 switch (key) {
                                     case 'videoUnitId':
                                         return 1;
-                                    case 'lectureId':
-                                        return 1;
                                 }
                             },
                         }),
+                        parent: {
+                            parent: {
+                                paramMap: Observable.of({
+                                    get: (key: string) => {
+                                        switch (key) {
+                                            case 'lectureId':
+                                                return 1;
+                                        }
+                                    },
+                                }),
+                            },
+                        },
                     },
                 },
             ],

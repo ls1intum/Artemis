@@ -1,71 +1,74 @@
-<jhi-alert></jhi-alert>
+<div *ngIf="isVisible">
+    <jhi-alert></jhi-alert>
 
-<div *ngIf="isLoading" class="d-flex justify-content-center">
-    <div class="spinner-border" role="status">
-        <span class="sr-only">{{ 'loading' | translate }}</span>
+    <div *ngIf="isLoading" class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="sr-only">{{ 'loading' | translate }}</span>
+        </div>
     </div>
-</div>
 
-<div *ngIf="!isLoading" class="container">
-    <!-- Lecture Unit Rows-->
-    <div class="row mb-4" *ngFor="let lectureUnit of lectureUnits; index as i; trackBy: identify">
-        <div class="col-1 my-auto mx-auto">
-            <jhi-learning-goals-popover
-                [courseId]="lecture?.course?.id"
-                [learningGoals]="lectureUnit.learningGoals"
-                [navigateTo]="'learningGoalManagement'"
-            ></jhi-learning-goals-popover>
-        </div>
-        <div class="col-9 mx-auto col-md-7 offset-md-2" [ngSwitch]="lectureUnit.type">
-            <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture?.course"></jhi-exercise-unit>
-            <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
-            <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit"></jhi-video-unit>
-            <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit"></jhi-text-unit>
-        </div>
-        <div class="col-1 my-auto">
-            <div class="container">
-                <div class="row mx-auto mb-1">
-                    <button id="{{ 'up-' + i }}" type="button" class="btn btn-primary btn-circle" (click)="moveUp(i)" [disabled]="i === 0">
-                        <fa-icon [icon]="'arrow-up'" [fixedWidth]="true" [size]="'lg'"></fa-icon>
-                    </button>
-                </div>
-                <div class="row mx-auto">
-                    <button id="{{ 'down-' + i }}" type="button" class="btn btn-primary btn-circle" (click)="moveDown(i)" [disabled]="i === lectureUnits.length - 1">
-                        <fa-icon [icon]="'arrow-down'" [fixedWidth]="true" [size]="'lg'"></fa-icon>
-                    </button>
+    <div *ngIf="!isLoading" class="container">
+        <!-- Lecture Unit Rows-->
+        <div class="row mb-4" *ngFor="let lectureUnit of lectureUnits; index as i; trackBy: identify">
+            <div class="col-1 my-auto mx-auto">
+                <jhi-learning-goals-popover
+                    [courseId]="lecture?.course?.id"
+                    [learningGoals]="lectureUnit.learningGoals"
+                    [navigateTo]="'learningGoalManagement'"
+                ></jhi-learning-goals-popover>
+            </div>
+            <div class="col-9 mx-auto col-md-7 offset-md-2" [ngSwitch]="lectureUnit.type">
+                <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture?.course"></jhi-exercise-unit>
+                <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
+                <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit"></jhi-video-unit>
+                <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit"></jhi-text-unit>
+            </div>
+            <div class="col-1 my-auto">
+                <div class="container">
+                    <div class="row mx-auto mb-1">
+                        <button id="{{ 'up-' + i }}" type="button" class="btn btn-primary btn-circle" (click)="moveUp(i)" [disabled]="i === 0">
+                            <fa-icon [icon]="'arrow-up'" [fixedWidth]="true" [size]="'lg'"></fa-icon>
+                        </button>
+                    </div>
+                    <div class="row mx-auto">
+                        <button id="{{ 'down-' + i }}" type="button" class="btn btn-primary btn-circle" (click)="moveDown(i)" [disabled]="i === lectureUnits.length - 1">
+                            <fa-icon [icon]="'arrow-down'" [fixedWidth]="true" [size]="'lg'"></fa-icon>
+                        </button>
+                    </div>
                 </div>
             </div>
+            <div class="col-1 my-auto">
+                <button
+                    class="rounded-pill"
+                    *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
+                    jhiDeleteButton
+                    [actionType]="getActionType(lectureUnit)"
+                    [entityTitle]="getLectureUnitName(lectureUnit)"
+                    [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
+                    [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
+                    (delete)="deleteLectureUnit(lectureUnit.id)"
+                    [dialogError]="dialogError$"
+                >
+                    <fa-icon [icon]="'times'"></fa-icon>
+                </button>
+                <button *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary edit rounded-pill" (click)="editButtonClicked(lectureUnit)">
+                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                    <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
+                </button>
+            </div>
         </div>
-        <div class="col-1 my-auto">
-            <button
-                class="rounded-pill"
-                *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
-                jhiDeleteButton
-                [actionType]="getActionType(lectureUnit)"
-                [entityTitle]="getLectureUnitName(lectureUnit)"
-                [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
-                [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
-                (delete)="deleteLectureUnit(lectureUnit.id)"
-                [dialogError]="dialogError$"
-            >
-                <fa-icon [icon]="'times'"></fa-icon>
-            </button>
-            <button *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary edit rounded-pill" (click)="editButtonClicked(lectureUnit)">
-                <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
-            </button>
-        </div>
-    </div>
 
-    <!-- Unit Creation Card Row-->
-    <div class="row">
-        <div class="col-10 col-md-8 offset-md-2 mx-auto">
-            <jhi-unit-creation-card
-                (createExerciseUnit)="createExerciseUnit()"
-                (createAttachmentUnit)="createAttachmentUnit()"
-                (createVideoUnit)="createVideoUnit()"
-                (createTextUnit)="createTextUnit()"
-            ></jhi-unit-creation-card>
+        <!-- Unit Creation Card Row-->
+        <div class="row">
+            <div class="col-10 col-md-8 offset-md-2 mx-auto">
+                <jhi-unit-creation-card
+                    (createExerciseUnit)="createExerciseUnit()"
+                    (createAttachmentUnit)="createAttachmentUnit()"
+                    (createVideoUnit)="createVideoUnit()"
+                    (createTextUnit)="createTextUnit()"
+                ></jhi-unit-creation-card>
+            </div>
         </div>
     </div>
 </div>
+<router-outlet></router-outlet>
