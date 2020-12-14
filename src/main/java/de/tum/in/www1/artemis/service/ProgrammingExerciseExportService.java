@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.FileSystemUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
@@ -172,18 +171,11 @@ public class ProgrammingExerciseExportService {
         // TODO: offer the following options in the client
         // 1) filter empty submissions, i.e. repositories with no student commits
         // 2) filter submissions with a result score of 0%
-
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
 
         downloadRepositories(programmingExercise);
 
-        final var output = "output";
         final var projectKey = programmingExercise.getProjectKey();
-
-        final var outputFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey + "-" + output;
-        final var outputFolderFile = new File(outputFolder);
-
-        outputFolderFile.mkdirs();
 
         final var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
         final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
@@ -196,12 +188,7 @@ public class ProgrammingExerciseExportService {
         JPlag jplag = new JPlag(options);
         JPlagResult result = jplag.run();
 
-        // cleanup
-        if (outputFolderFile.exists()) {
-            FileSystemUtils.deleteRecursively(outputFolderFile);
-        }
-
-        // cleanupRepositories(programmingExercise);
+        cleanupRepositories(programmingExercise);
 
         TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(result);
         textPlagiarismResult.setExerciseId(programmingExercise.getId());
@@ -226,7 +213,7 @@ public class ProgrammingExerciseExportService {
                 if (programmingExerciseParticipation.getRepositoryUrlAsUrl() == null) {
                     return;
                 }
-                Repository repo = gitService.getOrCheckoutRepository(programmingExerciseParticipation, REPO_DOWNLOAD_CLONE_PATH);
+                Repository repo = gitService.getOrCheckoutRepositoryForJPlag(programmingExerciseParticipation, REPO_DOWNLOAD_CLONE_PATH);
                 deleteTempLocalRepository(programmingExerciseParticipation, repo);
             }
             catch (GitException | GitAPIException | InterruptedException ex) {
@@ -235,7 +222,7 @@ public class ProgrammingExerciseExportService {
             }
         });
         try {
-            Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), REPO_DOWNLOAD_CLONE_PATH);
+            Repository templateRepo = gitService.getOrCheckoutRepositoryForJPlag(programmingExercise.getTemplateParticipation(), REPO_DOWNLOAD_CLONE_PATH);
             deleteTempLocalRepository(programmingExercise.getTemplateParticipation(), templateRepo);
         }
         catch (GitException | GitAPIException | InterruptedException ex) {
@@ -252,7 +239,7 @@ public class ProgrammingExerciseExportService {
                     log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
                     return;
                 }
-                Repository repo = gitService.getOrCheckoutRepository(programmingExerciseParticipation, REPO_DOWNLOAD_CLONE_PATH);
+                Repository repo = gitService.getOrCheckoutRepositoryForJPlag(programmingExerciseParticipation, REPO_DOWNLOAD_CLONE_PATH);
                 gitService.resetToOriginMaster(repo); // start with clean state
 
                 repo.close();
