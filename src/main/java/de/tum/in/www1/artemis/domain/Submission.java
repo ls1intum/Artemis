@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * A Submission.
@@ -96,21 +97,26 @@ public abstract class Submission extends DomainObject {
         return Duration.between(initilizationDate, submissionDate).toMinutes();
     }
 
-    // TODO Ruscher, Entholzer: Refactor to getLatestResult
     /**
      * Is used as a workaround for objects that expect submission to have 1 result
      *
-     * @return the latest result
+     * @return the latest i.e newest result
      */
     @Nullable
-    @JsonProperty(value = "result", access = JsonProperty.Access.READ_ONLY)
-    public Result getResult() {
+    @JsonIgnore
+    public Result getLatestResult() {
         // in all cases (except 2nd, 3rd correction, etc.) we would like to have the latest result
         // getLatestResult
         if (!results.isEmpty()) {
             return results.get(results.size() - 1);
         }
         return null;
+    }
+
+    @Nullable
+    @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
+    public List<Result> getResults() {
+        return results;
     }
 
     /**
@@ -128,33 +134,22 @@ public abstract class Submission extends DomainObject {
         return null;
     }
 
-    // TODO NR, SE: remove redundant setter after relationship change on client. Currently we need two deserializing setters for "result" (client) and "results" (server)
-    @JsonProperty(value = "result", access = JsonProperty.Access.WRITE_ONLY)
-    public void setResult(Result result) {
-        this.setResults(result);
-    }
-
-    // TODO Ruscher, Entholzer: refactor to addResult
     /**
-     * custom setter that supports the migration from 1...1 to 1...* in the submission->result(s) relationship
-     * Will be refactore in the future
-     * @param result the result that should be added, in case this is null, an empty list will be used instead
+     * Used as a setResult method, as typically the latest result is used
+     *
+     * @param result
      */
-    @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
-    public void setResults(Result result) {
-        if (result == null) {
-            // clear the list of results
-            this.results = new ArrayList<>();
-        }
-        else {
-            // addResult
-            this.results.add(result);
+    public void addResult(Result result) {
+        this.results.add(result);
+        // At the moment only one result in results is allowed
+        // TODO remove when multi-correction is implemented!
+        if (results.size() > 1) {
+            throw new InternalServerErrorException("Sugbmission.addResult(result): results.size() > 1 | the Submission.results list should not contain more than one element");
         }
     }
 
-    // TODO Ruscher, Entholzer: refactor to setResults
-    @JsonIgnore()
-    public void setResultsList(List<Result> results) {
+    @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
+    public void setResults(List<Result> results) {
         this.results = results;
     }
 

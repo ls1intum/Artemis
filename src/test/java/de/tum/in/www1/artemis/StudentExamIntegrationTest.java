@@ -349,8 +349,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         List<Submission> response = request.getList("/api/exercises/" + testRun.getExercises().get(0).getId() + "/test-run-submissions", HttpStatus.OK, Submission.class);
         response.get(0).getParticipation().setSubmissions(new HashSet<>(response));
         assertThat(((StudentParticipation) response.get(0).getParticipation()).isTestRunParticipation()).isTrue();
-        assertThat(response.get(0).getResult().getAssessor()).isEqualTo(instructor);
-        assertThat(response.get(0).getResult().getAssessor()).isEqualTo(((StudentParticipation) response.get(0).getParticipation()).getStudent().get());
+        assertThat(response.get(0).getLatestResult().getAssessor()).isEqualTo(instructor);
+        assertThat(response.get(0).getLatestResult().getAssessor()).isEqualTo(((StudentParticipation) response.get(0).getParticipation()).getStudent().get());
     }
 
     @Test
@@ -626,7 +626,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 submission = new QuizSubmission();
             }
             if (submission != null) {
-                submission.setResult(new Result());
+                submission.addResult(new Result());
                 Set<Submission> submissions = new HashSet<>();
                 submissions.add(submission);
                 participation.setSubmissions(submissions);
@@ -646,7 +646,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             var iterator = participation.getSubmissions().iterator();
             if (iterator.hasNext()) {
                 var submission = iterator.next();
-                assertThat(submission.getResult()).isNull();
+                assertThat(submission.getLatestResult()).isNull();
             }
         }
         deleteExam1WithInstructor();

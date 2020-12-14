@@ -5,6 +5,9 @@ import static org.gitlab4j.api.models.AccessLevel.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 
@@ -70,6 +73,8 @@ public class GitLabService extends AbstractVersionControlService {
 
     private final UrlService urlService;
 
+    private final ScheduledExecutorService scheduler;
+
     public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, GitLabApi gitlab,
             GitLabUserManagementService gitLabUserManagementService, UrlService urlService) {
         this.userService = userService;
@@ -77,6 +82,7 @@ public class GitLabService extends AbstractVersionControlService {
         this.gitlab = gitlab;
         this.gitLabUserManagementService = gitLabUserManagementService;
         this.urlService = urlService;
+        this.scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
     }
 
     @PostConstruct
@@ -88,6 +94,8 @@ public class GitLabService extends AbstractVersionControlService {
     public void configureRepository(ProgrammingExercise exercise, URL repositoryUrl, Set<User> users, boolean allowAccess) {
         for (User user : users) {
             String username = user.getLogin();
+
+            // TODO: does it really make sense to potentially create a user here? Should we not rather create this user when the user is created in the internal Artemis database?
 
             // Automatically created users
             if ((USER_PREFIX_EDX.isPresent() && username.startsWith(USER_PREFIX_EDX.get())) || (USER_PREFIX_U4I.isPresent() && username.startsWith((USER_PREFIX_U4I.get())))) {
@@ -102,12 +110,7 @@ public class GitLabService extends AbstractVersionControlService {
             }
         }
 
-        try {
-            protectBranch("master", repositoryUrl);
-        }
-        catch (GitLabException ex) {
-            log.warn("Could not protect branch (but will still continue) due to the following reason: ", ex);
-        }
+        protectBranch(repositoryUrl, "master");
     }
 
     @Override
@@ -142,31 +145,67 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
-    private void protectBranch(String branch, URL repositoryUrl) {
+    /**
+     * Protects a branch from the repository, so that developers cannot change the history
+     *
+     * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
+     * @param branch            The name of the branch to protect (e.g "master")
+     * @throws VersionControlException      If the communication with the VCS fails.
+     */
+    private void protectBranch(URL repositoryUrl, String branch) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
-        // we have to first unprotect the branch in order to set the correct access level
-        try {
-            unprotectBranch(repositoryId, branch);
-        }
-        catch (GitLabException ex) {
-            log.warn("Could not unprotectBranch branch (but will try to protect it) due to the following reason: ", ex);
-        }
-
-        try {
-            gitlab.getProtectedBranchesApi().protectBranch(repositoryId, branch, DEVELOPER, DEVELOPER);
-        }
-        catch (GitLabApiException e) {
-            throw new GitLabException("Unable to protect branch " + branch + " for repository " + repositoryUrl, e);
-        }
+        // we have to first unprotect the branch in order to set the correct access level, this is the case, because the master branch is protected for maintainers by default
+        // Unprotect the branch in 8 seconds first and then protect the branch in 12 seconds.
+        // We do this to wait on any async calls to Gitlab and make sure that the branch really exists before protecting it.
+        unprotectBranch(repositoryId, branch, 8L, TimeUnit.SECONDS);
+        protectBranch(repositoryId, branch, 12L, TimeUnit.SECONDS);
     }
 
-    private void unprotectBranch(String repositoryId, String branch) {
-        try {
-            gitlab.getRepositoryApi().unprotectBranch(repositoryId, branch);
-        }
-        catch (GitLabApiException e) {
-            throw new GitLabException("Could not unprotect branch " + branch + " for repository " + repositoryId, e);
-        }
+    /**
+     * Protects the branch but delays the execution.
+     *
+     * @param repositoryId  The id of the repository
+     * @param branch        The branch to protect
+     * @param delayTime     Time until the call is executed
+     * @param delayTimeUnit The unit of the time (e.g seconds, minutes)
+     */
+    private void protectBranch(String repositoryId, String branch, Long delayTime, TimeUnit delayTimeUnit) {
+        scheduler.schedule(() -> {
+            try {
+                log.info("Protecting branch " + branch + "for Gitlab repository " + repositoryId);
+                gitlab.getProtectedBranchesApi().protectBranch(repositoryId, branch, DEVELOPER, DEVELOPER, MAINTAINER, false);
+            }
+            catch (GitLabApiException e) {
+                throw new GitLabException("Unable to protect branch " + branch + " for repository " + repositoryId, e);
+            }
+        }, delayTime, delayTimeUnit);
+    }
+
+    @Override
+    public void unprotectBranch(URL repositoryUrl, String branch) throws VersionControlException {
+        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        // Unprotect the branch in 10 seconds. We do this to wait on any async calls to Gitlab and make sure that the branch really exists before unprotecting it.
+        unprotectBranch(repositoryId, branch, 10L, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Unprotects the branch but delays the execution.
+     *
+     * @param repositoryId  The id of the repository
+     * @param branch        The branch to unprotect
+     * @param delayTime     Time until the call is executed
+     * @param delayTimeUnit The unit of the time (e.g seconds, minutes)
+     */
+    private void unprotectBranch(String repositoryId, String branch, Long delayTime, TimeUnit delayTimeUnit) {
+        scheduler.schedule(() -> {
+            try {
+                log.info("Unprotecting branch " + branch + "for Gitlab repository " + repositoryId);
+                gitlab.getProtectedBranchesApi().unprotectBranch(repositoryId, branch);
+            }
+            catch (GitLabApiException e) {
+                throw new GitLabException("Could not unprotect branch " + branch + " for repository " + repositoryId, e);
+            }
+        }, delayTime, delayTimeUnit);
     }
 
     @Override

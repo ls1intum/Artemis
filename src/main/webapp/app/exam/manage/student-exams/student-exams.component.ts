@@ -13,7 +13,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
-
+import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 
 @Component({
@@ -43,6 +43,7 @@ export class StudentExamsComponent implements OnInit {
         private courseService: CourseManagementService,
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
+        private translateService: TranslateService,
     ) {}
 
     /**
@@ -106,7 +107,7 @@ export class StudentExamsComponent implements OnInit {
         if (this.studentExams && this.studentExams.length) {
             const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.title = 'artemisApp.studentExams.generateStudentExams';
-            modalRef.componentInstance.text = 'artemisApp.studentExams.studentExamGenerationModalText';
+            modalRef.componentInstance.text = this.translateService.instant('artemisApp.studentExams.studentExamGenerationModalText');
             modalRef.result.then(() => {
                 this.generateStudentExams();
             });
@@ -241,7 +242,7 @@ export class StudentExamsComponent implements OnInit {
     handleUnlockAllRepositories() {
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.title = 'artemisApp.studentExams.unlockAllRepositories';
-        modalRef.componentInstance.text = 'artemisApp.studentExams.unlockAllRepositoriesModalText';
+        modalRef.componentInstance.text = this.translateService.instant('artemisApp.studentExams.unlockAllRepositoriesModalText');
         modalRef.result.then(() => {
             this.unlockAllRepositories();
         });
@@ -278,7 +279,7 @@ export class StudentExamsComponent implements OnInit {
     handleLockAllRepositories() {
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.title = 'artemisApp.studentExams.lockAllRepositories';
-        modalRef.componentInstance.text = 'artemisApp.studentExams.lockAllRepositoriesModalText';
+        modalRef.componentInstance.text = this.translateService.instant('artemisApp.studentExams.lockAllRepositoriesModalText');
         modalRef.result.then(() => {
             this.lockAllRepositories();
         });

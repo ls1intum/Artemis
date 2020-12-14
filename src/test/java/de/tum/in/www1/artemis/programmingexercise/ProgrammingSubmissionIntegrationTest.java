@@ -98,7 +98,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         assertThat(submissions).hasSize(1);
 
         ProgrammingSubmission submission = submissions.get(0);
-        assertThat(submissionRepository.findWithEagerResultsById(submission.getId()).get().getResult()).isNull();
+        assertThat(submissionRepository.findWithEagerResultsById(submission.getId()).get().getLatestResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
     }
@@ -117,7 +117,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         assertThat(submissions).hasSize(1);
 
         ProgrammingSubmission submission = submissions.get(0);
-        assertThat(submissionRepository.findWithEagerResultsById(submission.getId()).get().getResult()).isNull();
+        assertThat(submissionRepository.findWithEagerResultsById(submission.getId()).get().getLatestResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
     }
@@ -166,7 +166,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
         List<ProgrammingExerciseParticipation> participations = new ArrayList<>();
         for (ProgrammingSubmission submission : submissions) {
-            assertThat(submissionRepository.findWithEagerResultsById(submission.getId()).get().getResult()).isNull();
+            assertThat(submissionRepository.findWithEagerResultsById(submission.getId()).get().getLatestResult()).isNull();
             assertThat(submission.isSubmitted()).isTrue();
             assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
             assertThat(submission.getParticipation()).isNotNull();
@@ -217,7 +217,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
         List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>();
         for (ProgrammingSubmission submission : submissions) {
-            assertThat(submissionRepository.findWithEagerResultsById(submission.getId()).get().getResult()).isNull();
+            assertThat(submissionRepository.findWithEagerResultsById(submission.getId()).get().getLatestResult()).isNull();
             assertThat(submission.isSubmitted()).isTrue();
             assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
             assertThat(submission.getParticipation()).isNotNull();
@@ -350,7 +350,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
-        assertThat(storedSubmission.getResult()).as("result is not set").isNull();
+        assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
     }
 
     @Test
@@ -370,12 +370,13 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
                 ProgrammingSubmission.class);
 
         assertThat(storedSubmission.getSubmissionDate().isAfter(submission.getSubmissionDate())).isEqualTo(true);
-        assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
-        assertThat(storedSubmission.getResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-        var automaticResults = storedSubmission.getResult().getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC).collect(Collectors.toList());
-        assertThat(storedSubmission.getResult().getFeedbacks().size()).isEqualTo(automaticResults.size());
-        assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
-        assertThat(storedSubmission.getResult().getResultString()).isEqualTo(submission.getResult().getResultString());
+        assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
+        assertThat(storedSubmission.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        var automaticResults = storedSubmission.getLatestResult().getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC)
+                .collect(Collectors.toList());
+        assertThat(storedSubmission.getLatestResult().getFeedbacks().size()).isEqualTo(automaticResults.size());
+        assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
+        assertThat(storedSubmission.getLatestResult().getResultString()).isEqualTo(submission.getLatestResult().getResultString());
     }
 
     @Test

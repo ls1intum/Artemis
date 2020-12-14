@@ -210,8 +210,8 @@ public class StudentExamService {
                                     + existingParticipation.getId());
                         }
                         // check that no result has been injected
-                        if (submission.getResult() != null) {
-                            throw new AccessForbiddenException("User " + currentUser.getLogin() + " cannot inject a result " + submission.getResult() + " for submission "
+                        if (submission.getLatestResult() != null) {
+                            throw new AccessForbiddenException("User " + currentUser.getLogin() + " cannot inject a result " + submission.getLatestResult() + " for submission "
                                     + submission + " and participation " + existingParticipation.getId());
                         }
                         submission.setParticipation(studentParticipation);

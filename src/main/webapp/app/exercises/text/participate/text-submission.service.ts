@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { stringifyCircular } from 'app/shared/util/utils';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 export type EntityResponseType = HttpResponse<TextSubmission>;
 
@@ -61,7 +62,7 @@ export class TextSubmissionService {
                 map((response) => {
                     const submission = response.body!;
                     submission.participation!.submissions = [submission];
-                    submission.participation!.results = [submission.result!];
+                    submission.participation!.results = [getLatestSubmissionResult(submission)!];
                     submission.atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
                     return submission;
                 }),
