@@ -15,8 +15,192 @@
     ],
     "contributors": [
         {
-            "fullName": "Thilo Behnke",
-            "photoDirectory": "public/images/about/Thilo_Behnke.png"
+            "fullName": "Nadine von Frankenberg",
+            "photoDirectory": "public/images/about/Nadine_von_Frankenberg.jpg"
+        },
+        {
+            "fullName": "Jonas Schulte-Coerne",
+            "photoDirectory": "public/images/about/Jonas_Schulte_Coerne.jpg"
+        },
+        {
+            "fullName": "Simon Leiß",
+            "photoDirectory": "public/images/about/Simon_Leiss.jpg"
+        },
+        {
+            "fullName": "Andi Turdiu",
+            "photoDirectory": "public/images/about/Andi_Turdiu.jpg"
+        },
+        {
+            "fullName": "Hanya Elhashemy",
+            "photoDirectory": "public/images/about/Hanya_Elhashemy.jpg"
+        },
+        {
+            "fullName": "Tobias Priesching",
+            "photoDirectory": "public/images/about/Tobias_Priesching.jpg"
+        },
+        {
+            "fullName": "Sascha Beele",
+            "photoDirectory": "public/images/about/Sascha_Beele.jpg"
+        },
+        {
+            "fullName": "Filip Gregurevic",
+            "photoDirectory": "public/images/about/Filip_Gregurevic.jpg"
+        },
+        {
+            "fullName": "Linus Michl",
+            "photoDirectory": "public/images/about/Linus_Michl.jpg"
+        },
+        {
+            "fullName": "Stefan Klöss-Schuster",
+            "photoDirectory": "public/images/about/Stefan_Kloess_Schuster.jpg"
+        },
+        {
+            "fullName": "Matthias Linhuber",
+            "photoDirectory": "public/images/about/Matthias_Linhuber.jpg"
+        },
+        {
+            "fullName": "Francisco De las Casas Young",
+            "photoDirectory": "public/images/about/Francisco_De_Las_Casas_Young.png"
+        },
+        {
+            "fullName": "Kilian Schulte",
+            "photoDirectory": "public/images/about/Kilian_Schulte.jpg"
+        },
+        {
+            "fullName": "Sebastian Jagla",
+            "photoDirectory": "public/images/about/Sebastian_Jagla.jpg"
+        },
+        {
+            "fullName": "Jonas Petry",
+            "photoDirectory": "public/images/about/Jonas_Petry.jpg"
+        },
+        {
+            "fullName": "Martin Wauligmann",
+            "photoDirectory": "public/images/about/Martin_Wauligmann.jpg"
+        },
+        {
+            "fullName": "Stefan Waldhauser",
+            "photoDirectory": "public/images/about/Stefan_Waldhauser.jpg"
+        },
+        {
+            "fullName": "Christian Femers",
+            "photoDirectory": "public/images/about/Christian_Femers.png"
+        },
+        {
+            "fullName": "Patrik Zander",
+            "photoDirectory": "public/images/about/Patrik_Zander.jpg"
+        },
+        {
+            "fullName": "Florian Glombik",
+            "photoDirectory": "public/images/about/Florian_Glombik.jpg"
+        },
+        {
+            "fullName": "Julian Christl",
+            "photoDirectory": "public/images/about/Julian_Christl.png"
+        },
+        {
+            "fullName": "Mario Amah",
+            "photoDirectory": "public/images/about/Mario_Amah.jpg"
+        },
+        {
+            "fullName": "Niclas Schümann",
+            "photoDirectory": "public/images/about/Niclas_Schuemann.jpg"
+        },
+        {
+            "fullName": "Tessa Ruckstuhl",
+            "photoDirectory": "public/images/about/Tessa_Ruckstuhl.jpg"
+        },
+        {
+            "fullName": "Tobias Schamel",
+            "photoDirectory": "public/images/about/Tobias_Schamel.png"
+        },
+        {
+            "fullName": "Dominik Fuchs",
+            "photoDirectory": "public/images/about/Dominik_Fuchs.jpg"
+        },
+        {
+            "fullName": "Tiffany Cauthen",
+            "photoDirectory": "public/images/about/Tiffany_Cauthen.jpg"
+        },
+        {
+            "fullName": "Varnika Tyagi",
+            "photoDirectory": "public/images/about/Varnika_Tyagi.jpg"
+        },
+        {
+            "fullName": "Can Sarpkaya",
+            "photoDirectory": "public/images/about/Can_Sarpkaya.jpg"
+        },
+        {
+            "fullName": "Johannes Stöhr",
+            "photoDirectory": "public/images/about/Johannes_Stoehr.jpg"
+        },
+        {
+            "fullName": "Alex Mardale",
+            "photoDirectory": "public/images/about/Alex_Mardale.jpg"
+        },
+        {
+            "fullName": "Alexander Karpp",
+            "photoDirectory": "public/images/about/Alexander_Karpp.jpg"
+        },
+        {
+            "fullName": "Alexander Ungar",
+            "photoDirectory": "public/images/about/Alexander_Ungar.jpg"
+        },
+        {
+            "fullName": "Anh Montag",
+            "photoDirectory": "public/images/about/Anh_Montag.png"
+        },
+        {
+            "fullName": "Jan-Thilo Behnke",
+            "photoDirectory": "public/images/about/Jan-Thilo_Behnke.png"
+        },
+        {
+            "fullName": "Christian Ziegner",
+            "photoDirectory": "public/images/about/Christian_Ziegner.jpg"
+        },
+        {
+            "fullName": "Maximilian Meier",
+            "photoDirectory": "public/images/about/Maximilian_Meier.jpg"
+        },
+        {
+            "fullName": "Julian Willand",
+            "photoDirectory": "public/images/about/placeholder-man.png"
+        },
+        {
+            "fullName": "Riccardo Padovani",
+            "photoDirectory": "public/images/about/Riccardo_Padovani.jpg"
+        },
+        {
+            "fullName": "Katie Sebina",
+            "photoDirectory": "public/images/about/Katie_Sebina.jpg"
+        },
+        {
+            "fullName": "Stefan Kreuzer",
+            "photoDirectory": "public/images/about/Stefan_Kreuzer.jpg"
+        },
+        {
+            "fullName": "Mai Ton Nu Cam",
+            "photoDirectory": "public/images/about/Mai_Ton_Nu_Cam.jpg"
+        },
+        {
+            "fullName": "David Otter",
+            "photoDirectory": "public/images/about/David_Otter.jpg"
+        },
+        {
+            "fullName": "Julian Frielinghaus",
+            "photoDirectory": "public/images/about/Julian_Frielinghaus.jpg"
+        },
+        {
+            "fullName": "Marius Schulz",
+            "photoDirectory": "public/images/about/Marius_Schulz.jpg"
+        },
+        {
+            "fullName": "Valentin Schlattinger",
+            "photoDirectory": "public/images/about/Valentin_Schlattinger.jpg"
+        },
+        {
+            "fullName": "Moritz Issig",
+            "photoDirectory": "public/images/about/placeholder-man.png"
         },
         {
             "fullName": "Josias Montag",
@@ -27,120 +211,20 @@
             "photoDirectory": "public/images/about/Dominik_Muench.jpg"
         },
         {
-            "fullName": "Alexander Ungar",
-            "photoDirectory": "public/images/about/Alexander_Ungar.jpg"
-        },
-        {
-            "fullName": "Simon Leiß",
-            "photoDirectory": "public/images/about/Simon_Leiss.jpg"
-        },
-        {
-            "fullName": "Anh Montag",
-            "photoDirectory": "public/images/about/Anh_Montag.png"
-        },
-        {
-            "fullName": "Maximilian Meier",
-            "photoDirectory": "public/images/about/Maximilian_Meier.jpg"
-        },
-        {
-            "fullName": "Riccardo Padovani",
-            "photoDirectory": "public/images/about/Riccardo_Padovani.jpg"
-        },
-        {
-            "fullName": "Martin Wauligmann",
-            "photoDirectory": "public/images/about/Martin_Wauligmann.jpg"
-        },
-        {
-            "fullName": "Christian Ziegner",
-            "photoDirectory": "public/images/about/Christian_Ziegner.jpg"
-        },
-        {
-            "fullName": "Francisco De las Casas Young",
-            "photoDirectory": "public/images/about/Francisco_De_Las_Casas_Young.png"
-        },
-        {
-            "fullName": "Valentin Schlattinger",
-            "photoDirectory": "public/images/about/Valentin_Schlattinger.jpg"
-        },
-        {
-            "fullName": "Stefan Klöss-Schuster",
-            "photoDirectory": "public/images/about/Stefan_Kloess_Schuster.jpg"
-        },
-        {
-            "fullName": "Sascha Beele",
-            "photoDirectory": "public/images/about/Sascha_Beele.jpg"
-        },
-        {
-            "fullName": "Tobias Priesching",
-            "photoDirectory": "public/images/about/Tobias_Priesching.jpg"
-        },
-        {
-            "fullName": "Stefan Waldhauser",
-            "photoDirectory": "public/images/about/Stefan_Waldhauser.jpg"
-        },
-        {
-            "fullName": "Andi Turdiu",
-            "photoDirectory": "public/images/about/Andi_Turdiu.jpg"
-        },
-        {
-            "fullName": "Christian Femers",
-            "photoDirectory": "public/images/about/Christian_Femers.png"
-        },
-        {
-            "fullName": "Filip Gregurevic",
-            "photoDirectory": "public/images/about/Filip_Gregurevic.jpg"
-        },
-        {
-            "fullName": "Kilian Schulte",
-            "photoDirectory": "public/images/about/Kilian_Schulte.jpg"
-        },
-        {
-            "fullName": "Hanya Elhashemy",
-            "photoDirectory": "public/images/about/Hanya_Elhashemy.jpg"
-        },
-        {
             "fullName": "Lukas Franke",
             "photoDirectory": "public/images/about/Lukas_Franke.png"
-        },
-        {
-            "fullName": "Sebastian Jagla",
-            "photoDirectory": "public/images/about/Sebastian_Jagla.jpg"
-        },
-        {
-            "fullName": "Dominik Fuchs",
-            "photoDirectory": "public/images/about/Dominik_Fuchs.jpg"
-        },
-        {
-            "fullName": "Tessa Ruckstuhl",
-            "photoDirectory": "public/images/about/placeholder-woman.png"
         },
         {
             "fullName": "Philipp Bauch",
             "photoDirectory": "public/images/about/Philipp_Bauch.jpg"
         },
         {
-            "fullName": "Steve Kreuzer",
-            "photoDirectory": "public/images/about/Steve_Kreuzer.jpg"
-        },
-        {
             "fullName": "Alexander von Trostorff",
             "photoDirectory": "public/images/about/Alexander_von_Trostorff.jpg"
         },
         {
-            "fullName": "Jonas Petry",
-            "photoDirectory": "public/images/about/Jonas_Petry.jpg"
-        },
-        {
             "fullName": "René Lalla",
             "photoDirectory": "public/images/about/Rene_Lalla.png"
-        },
-        {
-            "fullName": "Linus Michel",
-            "photoDirectory": "public/images/about/Linus_Michel.jpg"
-        },
-        {
-            "fullName": "Viktoriia Bakalova",
-            "photoDirectory": "public/images/about/placeholder-woman.png"
         },
         {
             "fullName": "Minh Tran",
@@ -155,10 +239,6 @@
             "photoDirectory": "public/images/about/Christopher_Lass.jpg"
         },
         {
-            "fullName": "Maximilian Jelinek",
-            "photoDirectory": "public/images/about/Maximilian_Jelinek.jpg"
-        },
-        {
             "fullName": "Ivan Chimeno",
             "photoDirectory": "public/images/about/Ivan_Chimeno.jpg"
         },
@@ -167,112 +247,20 @@
             "photoDirectory": "public/images/about/Daniel_Crazzolara.jpg"
         },
         {
-            "fullName": "Balazs Czopf",
-            "photoDirectory": "public/images/about/Balazs_Czopf.jpg"
-        },
-        {
-            "fullName": "Matthias Linhuber",
-            "photoDirectory": "public/images/about/Matthias_Linhuber.jpg"
-        },
-        {
-            "fullName": "Tiffany Cauthen",
-            "photoDirectory": "public/images/about/Tiffany_Cauthen.jpg"
-        },
-        {
-            "fullName": "Xin Wang",
-            "photoDirectory": "public/images/about/Xin_Wang.jpg"
-        },
-        {
-            "fullName": "David Otter",
-            "photoDirectory": "public/images/about/David_Otter.jpg"
-        },
-        {
             "fullName": "Birtan Gültekin",
             "photoDirectory": "public/images/about/Birtan_Gueltekin.jpg"
-        },
-        {
-            "fullName": "Beatris Burdeva",
-            "photoDirectory": "public/images/about/Beatris_Burdeva.jpg"
-        },
-        {
-            "fullName": "Fabian Sauter",
-            "photoDirectory": "public/images/about/placeholder-man.png"
         },
         {
             "fullName": "Johann Rottenfusser",
             "photoDirectory": "public/images/about/placeholder-man.png"
         },
         {
-            "fullName": "Roxhens Meraj",
-            "photoDirectory": "public/images/about/Roxhens_Meraj.png"
-        },
-        {
             "fullName": "Nicolas Ruscher",
             "photoDirectory": "public/images/about/Nicolas_Ruscher.jpg"
         },
         {
-            "fullName": "Kevin Kappelmann",
-            "photoDirectory": "public/images/about/Kevin_Kappelmann.jpg"
-        },
-        {
             "fullName": "İsmet Melih Özbeyli",
             "photoDirectory": "public/images/about/Ismet_Melih_Oezbeyli.jpg"
-        },
-        {
-            "fullName": "Benedikt Fein",
-            "photoDirectory": "public/images/about/placeholder-man.png"
-        },
-        {
-            "fullName": "Wenjie HOU",
-            "photoDirectory": "public/images/about/placeholder-man.png"
-        },
-        {
-            "fullName": "Steffen Becker",
-            "photoDirectory": "public/images/about/Steffen_Becker.png"
-        },
-        {
-            "fullName": "Saner Turhaner",
-            "photoDirectory": "public/images/about/Saner_Turhaner.jpg"
-        },
-        {
-            "fullName": "Tung Nguyen",
-            "photoDirectory": "public/images/about/Tung_Nguyen.jpg"
-        },
-        {
-            "fullName": "Niclas Schümann",
-            "photoDirectory": "public/images/about/Niclas_Schuemann.jpg"
-        },
-        {
-            "fullName": "Ahmet Türkmen",
-            "photoDirectory": "public/images/about/Ahmet_Tuerkmen.jpg"
-        },
-        {
-            "fullName": "Jonathan Ryan",
-            "photoDirectory": "public/images/about/placeholder-man.png"
-        },
-        {
-            "fullName": "Florian Glombik",
-            "photoDirectory": "public/images/about/Florian_Glombik.jpg"
-        },
-        {
-            "fullName": "Christian Krieg",
-            "photoDirectory": "public/images/about/Christian_Krieg.jpg"
-        },
-        {
-            "fullName": "Alexandros Tsakpinis",
-            "photoDirectory": "public/images/about/Alexandros_Tsakpinis.png"
-        },
-        {
-            "fullName": "Oliver Layer",
-            "photoDirectory": "public/images/about/Oliver_Layer.png"
-        },
-        {
-            "fullName": "Ulrich Huber",
-            "photoDirectory": "public/images/about/placeholder-man.png"
-        },
-        {
-            "fullName": "Lukas Heddendorp",
-            "photoDirectory": "public/images/about/placeholder-man.png"
         },
         {
             "fullName": "Adem Khachnaoui",
