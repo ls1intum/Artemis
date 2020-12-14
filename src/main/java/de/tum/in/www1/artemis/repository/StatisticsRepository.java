@@ -24,15 +24,6 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             group by s.submissionDate
             order by s.submissionDate asc
             """)
-    List<Map<String, Object>> getTotalSubmissionsWeek(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
-
-    @Query("""
-            select s.submissionDate as day, count(s.id) as amount
-            from Submission s
-            where s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate}
-            group by s.submissionDate
-            order by s.submissionDate asc
-            """)
     List<Map<String, Object>> getTotalSubmissions(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""

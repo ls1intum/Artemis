@@ -39,22 +39,22 @@ public class StatisticsService {
         Arrays.fill(result, 0);
         switch (span) {
             case DAY:
-                startDate = now.minusDays(-periodIndex).withHour(0).withMinute(0).withSecond(0);
+                startDate = now.minusDays(-periodIndex).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusDays(-periodIndex).withHour(23).withMinute(59).withSecond(59);
                 outcome = getDataFromDatabase(span, startDate, endDate, graphType);
                 return createResultArrayForDay(outcome, result, endDate);
             case WEEK:
-                startDate = now.minusWeeks(-periodIndex).minusDays(6).withHour(0).withMinute(0).withSecond(0);
+                startDate = now.minusWeeks(-periodIndex).minusDays(6).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusWeeks(-periodIndex).withHour(23).withMinute(59).withSecond(59);
                 outcome = getDataFromDatabase(span, startDate, endDate, graphType);
                 return createResultArrayForWeek(outcome, result, endDate);
             case MONTH:
-                startDate = now.minusMonths(1 - periodIndex).plusDays(1).withHour(0).withMinute(0).withSecond(0);
+                startDate = now.minusMonths(1 - periodIndex).plusDays(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusMonths(-periodIndex).withHour(23).withMinute(59).withSecond(59);
                 outcome = getDataFromDatabase(span, startDate, endDate, graphType);
                 return createResultArrayForMonth(outcome, result, endDate);
             case YEAR:
-                startDate = now.minusYears(1 - periodIndex).plusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+                startDate = now.minusYears(1 - periodIndex).plusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 lengthOfMonth = YearMonth.of(now.minusYears(-periodIndex).getYear(), now.minusYears(-periodIndex).getMonth()).lengthOfMonth();
                 endDate = now.minusYears(-periodIndex).withDayOfMonth(lengthOfMonth).withHour(23).withMinute(59).withSecond(59);
                 outcome = getDataFromDatabase(span, startDate, endDate, graphType);
@@ -74,94 +74,6 @@ public class StatisticsService {
         spanMap.put(SpanType.MONTH, lengthOfMonth);
         spanMap.put(SpanType.YEAR, 12);
         return spanMap;
-    }
-
-    /**
-     * Gets a List of Maps, each Map describing an entry in the database. The Map has the two keys "day" and "amount",
-     * which map to the date and the amount of the findings. This method handles the spanType DAY
-     *
-     * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
-     * @param result the array in which the converted outcome should be inserted
-     * @param endDate the endDate
-     * @return an array, containing the values for each bar in the graph
-     */
-    private Integer[] createResultArrayForDay(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
-        for (Map<String, Object> map : outcome) {
-            int hour = ((ZonedDateTime) map.get("day")).getHour();
-            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
-            for (int i = 0; i < 24; i++) {
-                if (hour == endDate.minusHours(i).getHour()) {
-                    result[endDate.getHour() - i] += amount;
-                }
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Gets a List of Maps, each Map describing an entry in the database. The Map has the two keys "day" and "amount",
-     * which map to the date and the amount of the findings. This method handles the spanType WEEK
-     *
-     * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
-     * @param result the array in which the converted outcome should be inserted
-     * @param endDate the endDate
-     * @return an array, containing the values for each bar in the graph
-     */
-    private Integer[] createResultArrayForWeek(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
-        for (Map<String, Object> map : outcome) {
-            ZonedDateTime date = (ZonedDateTime) map.get("day");
-            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
-            for (int i = 0; i < 7; i++) {
-                if (date.getDayOfMonth() == endDate.minusDays(i).getDayOfMonth()) {
-                    result[6 - i] += amount;
-                }
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Gets a List of Maps, each Map describing an entry in the database. The Map has the two keys "day" and "amount",
-     * which map to the date and the amount of the findings. This method handles the spanType MONTH
-     *
-     * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
-     * @param result the array in which the converted outcome should be inserted
-     * @param endDate the endDate
-     * @return an array, containing the values for each bar in the graph
-     */
-    private Integer[] createResultArrayForMonth(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
-        for (Map<String, Object> map : outcome) {
-            ZonedDateTime date = (ZonedDateTime) map.get("day");
-            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
-            for (int i = 0; i < result.length; i++) {
-                if (date.getDayOfMonth() == endDate.minusDays(i).getDayOfMonth()) {
-                    result[result.length - 1 - i] += amount;
-                }
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Gets a List of Maps, each Map describing an entry in the database. The Map has the two keys "day" and "amount",
-     * which map to the date and the amount of the findings. This method handles the spanType YEAR
-     *
-     * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
-     * @param result the array in which the converted outcome should be inserted
-     * @param endDate the endDate
-     * @return an array, containing the values for each bar in the graph
-     */
-    private Integer[] createResultArrayForYear(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
-        for (Map<String, Object> map : outcome) {
-            ZonedDateTime date = (ZonedDateTime) map.get("day");
-            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
-            for (int i = 0; i < 12; i++) {
-                if (date.getMonth() == endDate.minusMonths(i).getMonth()) {
-                    result[11 - i] += amount;
-                }
-            }
-        }
-        return result;
     }
 
     /**
@@ -188,6 +100,104 @@ public class StatisticsService {
         return new ArrayList<>();
     }
 
+    /**
+     * Gets a list of maps, each map describing an entry in the database. The map has the two keys "day" and "amount",
+     * which map to the date and the amount of the findings. This method handles the spanType DAY
+     *
+     * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
+     * @param result the array in which the converted outcome should be inserted
+     * @param endDate the endDate
+     * @return an array, containing the values for each bar in the graph
+     */
+    private Integer[] createResultArrayForDay(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
+        for (Map<String, Object> map : outcome) {
+            int hour = ((ZonedDateTime) map.get("day")).getHour();
+            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+            for (int i = 0; i < 24; i++) {
+                if (hour == endDate.minusHours(i).getHour()) {
+                    result[endDate.getHour() - i] += amount;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Gets a list of maps, each map describing an entry in the database. The map has the two keys "day" and "amount",
+     * which map to the date and the amount of the findings. This method handles the spanType WEEK
+     *
+     * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
+     * @param result the array in which the converted outcome should be inserted
+     * @param endDate the endDate
+     * @return an array, containing the values for each bar in the graph
+     */
+    private Integer[] createResultArrayForWeek(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
+        for (Map<String, Object> map : outcome) {
+            ZonedDateTime date = (ZonedDateTime) map.get("day");
+            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+            for (int i = 0; i < 7; i++) {
+                if (date.getDayOfMonth() == endDate.minusDays(i).getDayOfMonth()) {
+                    result[6 - i] += amount;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Gets a list of maps, each map describing an entry in the database. The map has the two keys "day" and "amount",
+     * which map to the date and the amount of the findings. This method handles the spanType MONTH
+     *
+     * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
+     * @param result the array in which the converted outcome should be inserted
+     * @param endDate the endDate
+     * @return an array, containing the values for each bar in the graph
+     */
+    private Integer[] createResultArrayForMonth(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
+        for (Map<String, Object> map : outcome) {
+            ZonedDateTime date = (ZonedDateTime) map.get("day");
+            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+            for (int i = 0; i < result.length; i++) {
+                if (date.getDayOfMonth() == endDate.minusDays(i).getDayOfMonth()) {
+                    result[result.length - 1 - i] += amount;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Gets a list of maps, each map describing an entry in the database. The map has the two keys "day" and "amount",
+     * which map to the date and the amount of the findings. This method handles the spanType YEAR
+     *
+     * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
+     * @param result the array in which the converted outcome should be inserted
+     * @param endDate the endDate
+     * @return an array, containing the values for each bar in the graph
+     */
+    private Integer[] createResultArrayForYear(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
+        for (Map<String, Object> map : outcome) {
+            ZonedDateTime date = (ZonedDateTime) map.get("day");
+            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+            for (int i = 0; i < 12; i++) {
+                if (date.getMonth() == endDate.minusMonths(i).getMonth()) {
+                    result[11 - i] += amount;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+    * This method handles the duplicity of usernames in the active user call. It gets a List<Map<String, Object>> analogue to previous methods, but instead of numbers in an amount key,
+    * it contains a username key with the actual username as value. It then handles all the usernames and returns a List<Map<String, Object>>, but now with the the key "amount"
+    * and value the number of users in this interval
+    *
+    * @param span DAY,WEEK,MONTH or YEAR
+    * @param result the result given by the Repository call
+    * @param startDate the startDate of the period
+    * @return A List<Map<String, Object>> analogue to other database calls
+    */
     private List<Map<String, Object>> convertMapList(SpanType span, List<Map<String, Object>> result, ZonedDateTime startDate) {
         List<Map<String, Object>> returnList = new ArrayList<>();
         switch (span) {
@@ -198,13 +208,12 @@ public class StatisticsService {
                     ZonedDateTime date = (ZonedDateTime) listElement.get("day");
                     String username = listElement.get("username").toString();
                     List<String> usersInSameSlot = users.get(date.getHour());
-                    // if this hour is not yet registered
+                    // if this hour is not yet existing in users
                     if (usersInSameSlot == null) {
                         usersInSameSlot = new ArrayList<>();
                         usersInSameSlot.add(username);
                         users.put(date.getHour(), usersInSameSlot);
-                        // if this hour does not contain this username
-                    }
+                    }   // if the value of the map for this hour does not contain this username
                     else if (!usersInSameSlot.contains("" + listElement.get("username"))) {
                         usersInSameSlot.add(username);
                         users.put(date.getHour(), usersInSameSlot);
@@ -224,13 +233,12 @@ public class StatisticsService {
                     ZonedDateTime date = (ZonedDateTime) listElement.get("day");
                     String username = listElement.get("username").toString();
                     List<String> usersInSameSlot = users.get(date.getDayOfMonth());
-                    // if this hour is not yet registered
+                    // if this day is not yet existing in users
                     if (usersInSameSlot == null) {
                         usersInSameSlot = new ArrayList<>();
                         usersInSameSlot.add(username);
                         users.put(date.getDayOfMonth(), usersInSameSlot);
-                        // if this hour does not contain this username
-                    }
+                    }   // if the value of the map for this day does not contain this username
                     else if (!usersInSameSlot.contains("" + listElement.get("username"))) {
                         usersInSameSlot.add(username);
                         users.put(date.getDayOfMonth(), usersInSameSlot);
@@ -250,13 +258,12 @@ public class StatisticsService {
                     ZonedDateTime date = (ZonedDateTime) listElement.get("day");
                     String username = listElement.get("username").toString();
                     List<String> usersInSameSlot = users.get(date.getMonth());
-                    // if this hour is not yet registered
+                    // if this month is not yet existing in users
                     if (usersInSameSlot == null) {
                         usersInSameSlot = new ArrayList<>();
                         usersInSameSlot.add(username);
                         users.put(date.getMonth(), usersInSameSlot);
-                        // if this hour does not contain this username
-                    }
+                    }   // if the value of the map for this month does not contain this username
                     else if (!usersInSameSlot.contains("" + listElement.get("username"))) {
                         usersInSameSlot.add(username);
                         users.put(date.getMonth(), usersInSameSlot);
@@ -264,7 +271,7 @@ public class StatisticsService {
                 }
                 users.forEach((k, v) -> {
                     Map<String, Object> listElement = new HashMap<>();
-                    listElement.put("day", startDate.withMonth(getMonthValue(k)));
+                    listElement.put("day", startDate.withMonth(getMonthIndex(k)));
                     listElement.put("amount", (long) v.size());
                     returnList.add(listElement);
                 });
@@ -273,7 +280,7 @@ public class StatisticsService {
         return returnList;
     }
 
-    private Integer getMonthValue(Month month) {
+    private Integer getMonthIndex(Month month) {
         return switch (month) {
             case JANUARY -> 1;
             case FEBRUARY -> 2;
