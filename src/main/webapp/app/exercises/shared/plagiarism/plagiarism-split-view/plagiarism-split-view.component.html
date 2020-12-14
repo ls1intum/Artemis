@@ -1,8 +1,6 @@
 <div class="plagiarism-split-view">
     <div class="plagiarism-split-pane" jhiPane>
-        <div class="plagiarism-split-pane-header">
-            {{ comparison.submissionA.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}
-        </div>
+        <jhi-split-pane-header studentLogin="{{ comparison.submissionA.studentLogin }}"></jhi-split-pane-header>
 
         <div class="plagiarism-split-pane-body">
             <jhi-modeling-submission-viewer *ngIf="isModelingExercise()" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()"></jhi-modeling-submission-viewer>
@@ -12,9 +10,7 @@
     </div>
 
     <div class="plagiarism-split-pane" jhiPane>
-        <div class="plagiarism-split-pane-header">
-            {{ comparison.submissionB.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}
-        </div>
+        <jhi-split-pane-header studentLogin="{{ comparison.submissionB.studentLogin }}"></jhi-split-pane-header>
 
         <div class="plagiarism-split-pane-body">
             <jhi-modeling-submission-viewer *ngIf="isModelingExercise()" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionB()"></jhi-modeling-submission-viewer>

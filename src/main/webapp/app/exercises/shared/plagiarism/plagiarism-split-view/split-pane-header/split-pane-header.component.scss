@@ -1,0 +1,12 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+.split-pane-header {
+    z-index: 1;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: white;
+    border-bottom: 1px solid $body-bg;
+    padding: 2px 4px;
+}

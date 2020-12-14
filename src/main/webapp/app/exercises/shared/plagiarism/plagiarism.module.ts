@@ -10,6 +10,7 @@ import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plag
 import { PlagiarismSplitViewComponent, SplitPaneDirective } from 'app/exercises/shared/plagiarism/plagiarism-split-view/plagiarism-split-view.component';
 import { ModelingSubmissionViewerComponent } from './plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
 import { TextSubmissionViewerComponent } from './plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
+import { SplitPaneHeaderComponent } from './plagiarism-split-view/split-pane-header/split-pane-header.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisModelingEditorModule, RouterModule, TranslateModule],
@@ -22,6 +23,7 @@ import { TextSubmissionViewerComponent } from './plagiarism-split-view/text-subm
         SplitPaneDirective,
         ModelingSubmissionViewerComponent,
         TextSubmissionViewerComponent,
+        SplitPaneHeaderComponent,
     ],
     exports: [PlagiarismInspectorComponent],
 })
