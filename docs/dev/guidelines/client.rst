@@ -109,6 +109,7 @@ The most basic test looks similar to this:
     import * as chai from 'chai';
     import * as sinonChai from 'sinon-chai';
     import * as sinon from 'sinon';
+    import { ComponentFixture, TestBed } from '@angular/core/testing';
 
     chai.use(sinonChai);
     const expect = chai.expect;
@@ -150,8 +151,8 @@ The most basic test looks similar to this:
 
 Some guidelines:
 
-1. A component should be tested in isolation without any dependencies. Do not simply import the production module. Instead mock pipes, services,
-   directives and components that the component under test depends upon. A very useful technique is writing stubs for child components: https://angular.io/guide/testing-components-scenarios#stubbing-unneeded-components.
+1. A component should be tested in isolation without any dependencies if possible. Do not simply import the whole production module. Only import "real" dependencies if it is essential for the test
+   that the real dependency is used. Instead mock pipes, services, directives and components that the component under test depends upon. A very useful technique is writing stubs for child components: https://angular.io/guide/testing-components-scenarios#stubbing-unneeded-components.
    This has the benefit of being able to test the interaction with the child components.
 
 2. Do not overuse ``NO_ERRORS_SCHEMA`` (https://angular.io/guide/testing-components-scenarios#no_errors_schema).
