@@ -41,23 +41,23 @@ public class StatisticsService {
             case DAY:
                 startDate = now.minusDays(-periodIndex).withHour(0).withMinute(0).withSecond(0);
                 endDate = now.minusDays(-periodIndex).withHour(23).withMinute(59).withSecond(59);
-                outcome = getDataFromDatabaseForDay(startDate, endDate, graphType);
+                outcome = getDataFromDatabase(span, startDate, endDate, graphType);
                 return createResultArrayForDay(outcome, result, endDate);
             case WEEK:
                 startDate = now.minusWeeks(-periodIndex).minusDays(6).withHour(0).withMinute(0).withSecond(0);
                 endDate = now.minusWeeks(-periodIndex).withHour(23).withMinute(59).withSecond(59);
-                outcome = getDataFromDatabase(startDate, endDate, graphType);
+                outcome = getDataFromDatabase(span, startDate, endDate, graphType);
                 return createResultArrayForWeek(outcome, result, endDate);
             case MONTH:
                 startDate = now.minusMonths(1 - periodIndex).plusDays(1).withHour(0).withMinute(0).withSecond(0);
                 endDate = now.minusMonths(-periodIndex).withHour(23).withMinute(59).withSecond(59);
-                outcome = getDataFromDatabase(startDate, endDate, graphType);
+                outcome = getDataFromDatabase(span, startDate, endDate, graphType);
                 return createResultArrayForMonth(outcome, result, endDate);
             case YEAR:
-                startDate = now.minusYears(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+                startDate = now.minusYears(1 - periodIndex).plusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
                 lengthOfMonth = YearMonth.of(now.minusYears(-periodIndex).getYear(), now.minusYears(-periodIndex).getMonth()).lengthOfMonth();
                 endDate = now.minusYears(-periodIndex).withDayOfMonth(lengthOfMonth).withHour(23).withMinute(59).withSecond(59);
-                outcome = getDataFromDatabase(startDate, endDate, graphType);
+                outcome = getDataFromDatabase(span, startDate, endDate, graphType);
                 return createResultArrayForYear(outcome, result, endDate);
             default:
                 return null;
@@ -109,8 +109,7 @@ public class StatisticsService {
      */
     private Integer[] createResultArrayForWeek(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
         for (Map<String, Object> map : outcome) {
-            LocalDate localDate = LocalDate.parse(map.get("day").toString());
-            ZonedDateTime date = localDate.atStartOfDay(ZoneId.systemDefault());
+            ZonedDateTime date = (ZonedDateTime) map.get("day");
             Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
             for (int i = 0; i < 7; i++) {
                 if (date.getDayOfMonth() == endDate.minusDays(i).getDayOfMonth()) {
@@ -132,8 +131,7 @@ public class StatisticsService {
      */
     private Integer[] createResultArrayForMonth(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
         for (Map<String, Object> map : outcome) {
-            LocalDate localDate = LocalDate.parse(map.get("day").toString());
-            ZonedDateTime date = localDate.atStartOfDay(ZoneId.systemDefault());
+            ZonedDateTime date = (ZonedDateTime) map.get("day");
             Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
             for (int i = 0; i < result.length; i++) {
                 if (date.getDayOfMonth() == endDate.minusDays(i).getDayOfMonth()) {
@@ -155,11 +153,10 @@ public class StatisticsService {
      */
     private Integer[] createResultArrayForYear(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
         for (Map<String, Object> map : outcome) {
-            LocalDate localDate = LocalDate.parse(map.get("day").toString());
-            ZonedDateTime date = localDate.atStartOfDay(ZoneId.systemDefault());
+            ZonedDateTime date = (ZonedDateTime) map.get("day");
             Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
             for (int i = 0; i < 12; i++) {
-                if (date.getMonth() == endDate.minusMonths(i).getMonth() && date.getYear() == endDate.minusMonths(i).getYear()) {
+                if (date.getMonth() == endDate.minusMonths(i).getMonth()) {
                     result[11 - i] += amount;
                 }
             }
@@ -175,30 +172,42 @@ public class StatisticsService {
      * @param graphType the type of graph the data should be fetched for (see GraphType.java)
      * @return the return value of the database call
      */
-    private List<Map<String, Object>> getDataFromDatabaseForDay(ZonedDateTime startDate, ZonedDateTime endDate, GraphType graphType) {
+    private List<Map<String, Object>> getDataFromDatabase(SpanType span, ZonedDateTime startDate, ZonedDateTime endDate, GraphType graphType) {
         switch (graphType) {
             case SUBMISSIONS -> {
-                return this.statisticsRepository.getTotalSubmissionsDay(startDate, endDate);
+                return this.statisticsRepository.getTotalSubmissions(startDate, endDate);
             }
             case ACTIVE_USERS -> {
-                List<Map<String, Object>> returnList = new ArrayList<>();
+                List<Map<String, Object>> result = this.statisticsRepository.getActiveUsers(startDate, endDate);
+                return convertMapList(span, result, startDate);
+            }
+            case RELEASED_EXERCISES -> {
+                return this.statisticsRepository.getReleasedExercises(startDate, endDate);
+            }
+        }
+        return new ArrayList<>();
+    }
+
+    private List<Map<String, Object>> convertMapList(SpanType span, List<Map<String, Object>> result, ZonedDateTime startDate) {
+        List<Map<String, Object>> returnList = new ArrayList<>();
+        switch (span) {
+            case DAY -> {
                 Map<Integer, List<String>> users = new HashMap<>();
-                List<Map<String, Object>> result = this.statisticsRepository.getActiveUsersDay(startDate, endDate);
                 for (int i = 0; i < result.size(); i++) {
                     Map<String, Object> listElement = result.get(i);
                     ZonedDateTime date = (ZonedDateTime) listElement.get("day");
-                    String username = listElement.get("amount").toString();
-                    List<String> usersInSameHour = users.get(date.getHour());
+                    String username = listElement.get("username").toString();
+                    List<String> usersInSameSlot = users.get(date.getHour());
                     // if this hour is not yet registered
-                    if (usersInSameHour == null) {
-                        usersInSameHour = new ArrayList<>();
-                        usersInSameHour.add(username);
-                        users.put(date.getHour(), usersInSameHour);
+                    if (usersInSameSlot == null) {
+                        usersInSameSlot = new ArrayList<>();
+                        usersInSameSlot.add(username);
+                        users.put(date.getHour(), usersInSameSlot);
                         // if this hour does not contain this username
                     }
-                    else if (!usersInSameHour.contains("" + listElement.get("amount"))) {
-                        usersInSameHour.add(username);
-                        users.put(date.getHour(), usersInSameHour);
+                    else if (!usersInSameSlot.contains("" + listElement.get("username"))) {
+                        usersInSameSlot.add(username);
+                        users.put(date.getHour(), usersInSameSlot);
                     }
                 }
                 users.forEach((k, v) -> {
@@ -207,28 +216,77 @@ public class StatisticsService {
                     listElement.put("amount", (long) v.size());
                     returnList.add(listElement);
                 });
-                return returnList;
             }
-            case RELEASED_EXERCISES -> {
-                return this.statisticsRepository.getReleasedExercisesDay(startDate, endDate);
+            case WEEK, MONTH -> {
+                Map<Integer, List<String>> users = new HashMap<>();
+                for (int i = 0; i < result.size(); i++) {
+                    Map<String, Object> listElement = result.get(i);
+                    ZonedDateTime date = (ZonedDateTime) listElement.get("day");
+                    String username = listElement.get("username").toString();
+                    List<String> usersInSameSlot = users.get(date.getDayOfMonth());
+                    // if this hour is not yet registered
+                    if (usersInSameSlot == null) {
+                        usersInSameSlot = new ArrayList<>();
+                        usersInSameSlot.add(username);
+                        users.put(date.getDayOfMonth(), usersInSameSlot);
+                        // if this hour does not contain this username
+                    }
+                    else if (!usersInSameSlot.contains("" + listElement.get("username"))) {
+                        usersInSameSlot.add(username);
+                        users.put(date.getDayOfMonth(), usersInSameSlot);
+                    }
+                }
+                users.forEach((k, v) -> {
+                    Map<String, Object> listElement = new HashMap<>();
+                    listElement.put("day", startDate.withDayOfMonth(k));
+                    listElement.put("amount", (long) v.size());
+                    returnList.add(listElement);
+                });
+            }
+            case YEAR -> {
+                Map<Month, List<String>> users = new HashMap<>();
+                for (int i = 0; i < result.size(); i++) {
+                    Map<String, Object> listElement = result.get(i);
+                    ZonedDateTime date = (ZonedDateTime) listElement.get("day");
+                    String username = listElement.get("username").toString();
+                    List<String> usersInSameSlot = users.get(date.getMonth());
+                    // if this hour is not yet registered
+                    if (usersInSameSlot == null) {
+                        usersInSameSlot = new ArrayList<>();
+                        usersInSameSlot.add(username);
+                        users.put(date.getMonth(), usersInSameSlot);
+                        // if this hour does not contain this username
+                    }
+                    else if (!usersInSameSlot.contains("" + listElement.get("username"))) {
+                        usersInSameSlot.add(username);
+                        users.put(date.getMonth(), usersInSameSlot);
+                    }
+                }
+                users.forEach((k, v) -> {
+                    Map<String, Object> listElement = new HashMap<>();
+                    listElement.put("day", startDate.withMonth(getMonthValue(k)));
+                    listElement.put("amount", (long) v.size());
+                    returnList.add(listElement);
+                });
             }
         }
-        return new ArrayList<>();
+        return returnList;
     }
 
-    /**
-     * Handles the Repository calls depending on the graphType for the span "week", "month" and "year"
-     *
-     * @param startDate The startDate of which the data should be fetched
-     * @param endDate The endDate of which the data should be fetched
-     * @param graphType the type of graph the data should be fetched for (see GraphType.java)
-     * @return the return value of the database call
-     */
-    private List<Map<String, Object>> getDataFromDatabase(ZonedDateTime startDate, ZonedDateTime endDate, GraphType graphType) {
-        return switch (graphType) {
-            case SUBMISSIONS -> this.statisticsRepository.getTotalSubmissions(startDate, endDate);
-            case ACTIVE_USERS -> this.statisticsRepository.getActiveUsers(startDate, endDate);
-            case RELEASED_EXERCISES -> this.statisticsRepository.getReleasedExercises(startDate, endDate);
+    private Integer getMonthValue(Month month) {
+        return switch (month) {
+            case JANUARY -> 1;
+            case FEBRUARY -> 2;
+            case MARCH -> 3;
+            case APRIL -> 4;
+            case MAY -> 5;
+            case JUNE -> 6;
+            case JULY -> 7;
+            case AUGUST -> 8;
+            case SEPTEMBER -> 9;
+            case OCTOBER -> 10;
+            case NOVEMBER -> 11;
+            case DECEMBER -> 12;
         };
     }
 }
