@@ -19,6 +19,7 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { AchievementsComponent } from 'app/achievements/achievements.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -155,7 +156,7 @@ describe('CourseStatisticsComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, TreeviewModule.forRoot(), RouterTestingModule.withRoutes([]), ArtemisSharedModule, ChartsModule],
-            declarations: [CourseStatisticsComponent],
+            declarations: [CourseStatisticsComponent, MockComponent(AchievementsComponent)],
             providers: [
                 {
                     provide: ActivatedRoute,
