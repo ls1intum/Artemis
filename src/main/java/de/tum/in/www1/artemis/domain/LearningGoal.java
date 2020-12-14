@@ -28,7 +28,6 @@ public class LearningGoal extends DomainObject {
     @JsonIgnoreProperties("learningGoals")
     private Course course;
 
-    // ToDo remove this connection, only go through lecture units
     @ManyToMany
     @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"))
     @JsonIgnoreProperties("learningGoals")

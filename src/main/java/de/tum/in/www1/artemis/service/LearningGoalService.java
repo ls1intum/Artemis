@@ -37,8 +37,9 @@ public class LearningGoalService {
      */
     public Set<LearningGoalProgress.LectureUnitProgress> calculateExerciseUnitsProgress(Set<ExerciseUnit> exerciseUnits, User user) {
         // for each exercise unit, the exercise will be mapped to a freshly created lecture unit progress.
-        Map<Exercise, LearningGoalProgress.LectureUnitProgress> exerciseToLectureUnitProgress = exerciseUnits.stream().filter(exerciseUnit -> exerciseUnit.getExercise() != null)
-                .filter(exerciseUnit -> exerciseUnit.getExercise().isAssessmentDueDateOver()).collect(Collectors.toMap(ExerciseUnit::getExercise, exerciseUnit -> {
+        Map<Exercise, LearningGoalProgress.LectureUnitProgress> exerciseToLectureUnitProgress = exerciseUnits.stream()
+                .filter(exerciseUnit -> exerciseUnit.getExercise() != null && exerciseUnit.getExercise().isAssessmentDueDateOver())
+                .collect(Collectors.toMap(ExerciseUnit::getExercise, exerciseUnit -> {
                     LearningGoalProgress.LectureUnitProgress lectureUnitProgress = new LearningGoalProgress.LectureUnitProgress();
                     lectureUnitProgress.lectureTitle = exerciseUnit.getLecture().getTitle();
                     lectureUnitProgress.lectureId = exerciseUnit.getLecture().getId();
@@ -103,7 +104,6 @@ public class LearningGoalService {
                 else {
                     return Optional.of(latestResult);
                 }
-
             }
         }
     }
