@@ -8,11 +8,11 @@
     width: 100%;
     background-color: white;
     border-bottom: 1px solid $body-bg;
-    padding: 0.25rem 0.5rem;
 
     &-top {
         display: flex;
         justify-content: space-between;
+        padding: 0.25rem 0.5rem;
 
         &.active fa-icon {
             transform: rotate(180deg);
@@ -21,6 +21,15 @@
 
     &-selected-file {
         margin-left: 0.5rem;
+    }
+
+    &-file {
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+
+        &:hover {
+            background-color: lightskyblue;
+        }
     }
 
     &-files {

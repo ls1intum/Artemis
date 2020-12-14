@@ -11,8 +11,25 @@ export class SplitPaneHeaderComponent {
     @Output() selectFile = new EventEmitter<string>();
 
     public showFiles = false;
+    public activeFileIndex = 0;
+
+    getActiveFile() {
+        return this.hasFiles() && this.activeFileIndex < this.files.length && this.files[this.activeFileIndex];
+    }
+
+    handleFileSelect(file: string, idx: number) {
+        this.activeFileIndex = idx;
+        this.showFiles = false;
+        this.selectFile.emit(file);
+    }
+
+    hasFiles() {
+        return this.files && this.files.length > 0;
+    }
 
     toggleShowFiles() {
-        this.showFiles = !this.showFiles;
+        if (this.hasFiles()) {
+            this.showFiles = !this.showFiles;
+        }
     }
 }
