@@ -90,4 +90,112 @@ Some general aspects:
 We use ``prettier`` to style code automatically and ``eslint`` to find additional issues.
 You can find the corresponding commands to invoked those tools in ``package.json``.
 
+9. Testing
+===========
+
+If you are new to client testing, it is highly recommended that you work through the testing part of the angular tutorial: https://angular.io/guide/testing.
+
+We use Jest (https://jestjs.io/) as our client testing framework.
+
+There are different tools available to support client testing. A common combination you can see in our codebase is:
+
+- Sinon (https://sinonjs.org/) for creating test spies, stubs and mocks
+- Chai (https://www.chaijs.com/) with Sinon Chai (https://github.com/domenic/sinon-chai) for assertions.
+- NgMocks (https://www.npmjs.com/package/ng-mocks) for mocking the dependencies of an angular component.
+
+The most basic test looks similar to this:
+
+ .. code:: ts
+    import * as chai from 'chai';
+    import * as sinonChai from 'sinon-chai';
+    import * as sinon from 'sinon';
+
+    chai.use(sinonChai);
+    const expect = chai.expect;
+
+    describe('SomeComponent', () => {
+        let someComponentFixture: ComponentFixture<SomeComponent>;
+        let someComponent: SomeComponent;
+
+        beforeEach(() => {
+            TestBed.configureTestingModule({
+                imports: [],
+                declarations: [
+                    SomeComponent,
+                    MockPipe(SomePipeUsedInTemplate),
+                    MockComponent(SomeComponentUsedInTemplate),
+                    MockDirective(SomeDirectiveUsedInTemplate),
+                ],
+                providers: [
+                    MockProvider(SomeServiceUsedInComponent),
+                ],
+                schemas: [],
+            })
+                .compileComponents()
+                .then(() => {
+                    someComponentFixture = TestBed.createComponent(SomeComponent);
+                    someComponent = someComponentFixture.componentInstance;
+                });
+        });
+
+        afterEach(function () {
+            sinon.restore();
+        });
+
+        it('should initialize', () => {
+            someComponentFixture.detectChanges();
+            expect(SomeComponent).to.be.ok;
+        });
+    });
+
+Some guidelines:
+
+1. A component should be tested in isolation without any dependencies. Do not simply import the production module. Instead mock pipes, services,
+   directives and components that the component under test depends upon. A very useful technique is writing stubs for child components: https://angular.io/guide/testing-components-scenarios#stubbing-unneeded-components.
+   This has the benefit of being able to test the interaction with the child components.
+
+2. Do not overuse ``NO_ERRORS_SCHEMA`` (https://angular.io/guide/testing-components-scenarios#no_errors_schema).
+   This tells angular to ignore the attributes and unrecognized elements, prefer to use component stubs as mentioned above.
+
+3. Make sure to have at least 80% test coverage. Running ``yarn test --coverage`` to create a coverage report. You can also simply run the tests in IntelliJ IDEA with coverage activated.
+
+4. It is preferable to test a component through the interaction of the user with the template. This decouples the test from the concrete implementation used in the component.
+   For example if you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click and then assert that the data has been loaded and that the expected
+   template changes have occurred.
+
+5. Do not remove the template during tests. The template is a crucial part of a component and should not be removed during test. Do not do this:
+
+
+ .. code:: ts
+    import * as chai from 'chai';
+    import * as sinonChai from 'sinon-chai';
+    import * as sinon from 'sinon';
+
+    chai.use(sinonChai);
+    const expect = chai.expect;
+
+    describe('SomeComponent', () => {
+        let someComponentFixture: ComponentFixture<SomeComponent>;
+        let someComponent: SomeComponent;
+
+        beforeEach(() => {
+            TestBed.configureTestingModule({
+                imports: [],
+                declarations: [
+                    SomeComponent,
+                ],
+                providers: [
+                ],
+                schemas: [],
+            })
+                .overrideTemplate(SomeComponent, '') // DO NOT DO THIS
+                .compileComponents()
+                .then(() => {
+                    someComponentFixture = TestBed.createComponent(SomeComponent);
+                    someComponent = someComponentFixture.componentInstance;
+                });
+        });
+    });
+
+
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/master/Coding-guidelines.md
