@@ -94,6 +94,7 @@ export class StudentExamsComponent implements OnInit {
         if (this.longestWorkingTime && this.exam) {
             const examEndDate = moment(this.exam.startDate);
             examEndDate.add(this.longestWorkingTime, 'seconds');
+            examEndDate.add(this.exam.gracePeriod, 'seconds');
             this.isExamOver = examEndDate.isBefore(moment());
         }
     }
@@ -229,9 +230,9 @@ export class StudentExamsComponent implements OnInit {
                 );
                 this.isLoading = false;
             },
-            (err: HttpErrorResponse) => {
+            () => {
                 this.isLoading = false;
-                this.onError(err.error);
+                this.jhiAlertService.error('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure');
             },
         );
     }
