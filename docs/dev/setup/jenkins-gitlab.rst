@@ -87,6 +87,36 @@ Tool <https://www.devglan.com/online-tools/jasypt-online-encryption-decryption>`
 to generate encryption strings. Use Two Way Encryption (With Secret
 Text).
 
+**Note:** Sometimes Artemis does not generate the admin user which may lead to a startup
+error. You will have to create the user manually in the MySQL database and in Gitlab. Make sure
+both are set up correctly and follow these steps:
+
+1.  Use the tool mentioned above to generate a password hash.
+2.  Connect to the database via a client like `MySQL Workbench <https://dev.mysql.com/downloads/workbench/>`__ 
+    and execute the following query to create the user. Replace `artemis_admin` and `HASHED_PASSWORD` with your
+    chosen username and password:
+
+    .. code:: sql
+
+        INSERT INTO `artemis`.`jhi_user` (`id`,`login`,`password_hash`,`first_name`,`last_name`,`email`,
+        `activated`,`lang_key`,`activation_key`,`reset_key`,`created_by`,`created_date`,`reset_date`,
+        `last_modified_by`,`last_modified_date`,`image_url`,`last_notification_read`,`registration_number`)
+        VALUES (1,"artemis_admin","HASHED_PASSWORD","artemis","administrator","artemis_admin@localhost",
+        1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+3. Give the user admin and user roles:
+
+    .. code:: sql
+
+        INSERT INTO `artemis`.`jhi_user_authority` (`user_id`, `authority_name`) VALUES (1,"ROLE_ADMIN");
+        INSERT INTO `artemis`.`jhi_user_authority` (`user_id`, `authority_name`) VALUES (1,"ROLE_USER");
+
+4. Create a user in Gitlab (``http://your-gitlab-domain/admin/users/new``) and make sure that the username, 
+email, and password are the same as the user from the database:
+
+.. figure:: jenkins-gitlab/gitlab_admin_user.png
+
+Starting the Artemis server should now succeed.
+
 GitLab
 ------
 
