@@ -10,6 +10,7 @@ import { SystemNotificationService } from 'app/shared/notification/system-notifi
 @Component({
     selector: 'jhi-system-notification',
     templateUrl: './system-notification.component.html',
+    styleUrls: ['system-notification.scss'],
 })
 export class SystemNotificationComponent implements OnInit {
     readonly INFO = SystemNotificationType.INFO;

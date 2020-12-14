@@ -9,6 +9,7 @@ export const textEditorRoute: Routes = [
         component: TextEditorComponent,
         data: {
             authorities: [Authority.USER],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],

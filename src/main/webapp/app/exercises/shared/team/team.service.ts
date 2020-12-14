@@ -1,18 +1,19 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { SERVER_API_URL } from 'app/app.constants';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Course } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { StudentWithTeam } from 'app/entities/team.model';
+import { TeamSearchUser } from 'app/entities/team-search-user.model';
+import { Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/entities/team.model';
+import { downloadFile } from 'app/shared/util/download.util';
+import { createRequestOption } from 'app/shared/util/request-util';
+import * as moment from 'moment';
 import { Observable, Subscription } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
-import * as moment from 'moment';
-
-import { SERVER_API_URL } from 'app/app.constants';
-import { Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/entities/team.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
-import { TeamSearchUser } from 'app/entities/team-search-user.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { User } from 'app/core/user/user.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { createRequestOption } from 'app/shared/util/request-util';
 
 export type TeamResponse = HttpResponse<Team>;
 export type TeamArrayResponse = HttpResponse<Team[]>;
@@ -79,11 +80,24 @@ export interface ITeamService {
     importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategyType: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
 
     /**
+     * Import the teams of an existing source exercise
+     * @param {Exercise} exercise - Exercise the teams should be imported into
+     * @param {Team[]} teams - Teams that should be imported into the exercise
+     */
+    importTeams(exercise: Exercise, teams: Team[], importStrategyType: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
+
+    /**
      * Finds a course with all its team exercises and participations in which the given team exists
      * @param {Course} course - Course which to find
      * @param {Team} team - Team for which to find exercises and participations (by team short name)
      */
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>>;
+
+    /**
+     * Exports given teams into json file
+     * @param teams Teams to add to export file
+     */
+    exportTeams(teams: Team[]): void;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -181,6 +195,18 @@ export class TeamService implements ITeamService {
     /**
      * Import the teams of an existing source exercise
      * @param {Exercise} exercise - Exercise the teams should be imported into
+     * @param {Team[]} teams - Teams that should be imported into the exercise
+     */
+    importTeams(exercise: Exercise, teams: Team[], importStrategyType: TeamImportStrategyType) {
+        const copy = teams.map((team) => TeamService.convertDateFromClient(team));
+        return this.http.put<Team[]>(`${TeamService.resourceUrl(exercise.id!)}/import-from-list?importStrategyType=${importStrategyType}`, copy, {
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Import the teams of an existing source exercise
+     * @param {Exercise} exercise - Exercise the teams should be imported into
      * @param {Exercise} sourceExercise - Exercise the teams should be imported from
      * @param {TeamImportStrategyType} importStrategyType - Strategy to use for the import
      */
@@ -199,6 +225,39 @@ export class TeamService implements ITeamService {
      */
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
         return this.http.get<Course>(`${SERVER_API_URL}api/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' });
+    }
+
+    /**
+     * Exports given teams into json file
+     * @param teams Teams to add to export file
+     */
+    exportTeams(teams: Team[]) {
+        // Make list of teams which we need to export,
+        const exportedTeams: StudentWithTeam[] = [];
+        teams!.forEach((team) => {
+            if (team.students) {
+                team.students.forEach((student) => {
+                    const exportStudent = {
+                        teamName: team.name ?? '',
+                        username: student.login ?? '',
+                    } as StudentWithTeam;
+                    if (student.firstName) {
+                        exportStudent.firstName = student.firstName;
+                    }
+                    if (student.lastName) {
+                        exportStudent.lastName = student.lastName;
+                    }
+                    if (student.visibleRegistrationNumber) {
+                        exportStudent.registrationNumber = student.visibleRegistrationNumber;
+                    }
+                    exportedTeams.push(exportStudent);
+                });
+            }
+        });
+        // Make blob from the list of teams and download the file,
+        const teamJson = JSON.stringify(exportedTeams);
+        const blob = new Blob([teamJson], { type: 'application/json' });
+        downloadFile(blob, 'teams.json');
     }
 
     /**

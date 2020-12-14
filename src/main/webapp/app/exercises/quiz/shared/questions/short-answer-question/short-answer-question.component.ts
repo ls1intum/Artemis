@@ -129,12 +129,48 @@ export class ShortAnswerQuestionComponent {
     }
 
     /**
+     * Returns the submitted text as string for a short answer for the given spot tag
+     * @param spotTag Spot tag for which to get the submitted text
+     */
+    getSubmittedTextForSpotAsString(spotTag: string): string {
+        const submittedText = this.getSubmittedTextForSpot(spotTag);
+        return submittedText?.text ?? '';
+    }
+
+    /**
+     * Returns the size for a submitted text for a short answer for the given spot tag
+     * @param spotTag Spot tag for which to get the submitted text
+     */
+    getSubmittedTextSizeForSpot(spotTag: string): number {
+        const submittedText = this.getSubmittedTextForSpotAsString(spotTag);
+        return submittedText !== '' ? submittedText.length + 2 : 5;
+    }
+
+    /**
      * Returns the sample solution for a short answer for the given spot tag
      * @param spotTag Spot tag for which to get the sample solution
      */
     getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
         const index = this.question.spots!.findIndex((spot) => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
         return this.sampleSolutions[index];
+    }
+
+    /**
+     * Returns the sample solution as text for a short answer for the given spot tag
+     * @param spotTag Spot tag for which to get the sample solution
+     */
+    getSampleSolutionForSpotAsString(spotTag: string): string {
+        const sampleSolution = this.getSampleSolutionForSpot(spotTag);
+        return sampleSolution?.text ?? '';
+    }
+
+    /**
+     * Returns the size for a sample solution for a short answer for the given spot tag
+     * @param spotTag Spot tag for which to get the submitted text
+     */
+    getSampleSolutionSizeForSpot(spotTag: string): number {
+        const sampleSolution = this.getSampleSolutionForSpotAsString(spotTag);
+        return sampleSolution !== '' ? sampleSolution.length + 2 : 5;
     }
 
     /**

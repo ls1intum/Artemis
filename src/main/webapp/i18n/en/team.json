@@ -60,7 +60,11 @@
                 "noResults": "No students found in course for search:"
             },
             "errors": {
-                "studentAlreadyAssignedToTeam": "Student with login {{ studentLogin }} is already assigned to team with id {{ teamId }."
+                "studentAlreadyAssignedToTeam": "Student with login {{ studentLogin }} is already assigned to team with id {{ teamId }.",
+                "registrationNumbersNotFound": "Students with following registration numbers could not be found: {{ registrationNumbers }}",
+                "loginsNotFound": "Students with following usernames could not be found: {{ logins }}",
+                "studentsWithoutRegistrationNumbers": "Following students do not have registration numbers: {{ students }}",
+                "studentsAppearMultipleTimes": "Following students appear multiple times in imported teams: {{ students }}"
             },
             "selectOwnerForTeam": "Select tutor (by searching for login or name)",
             "ownerSearch": {
@@ -87,12 +91,22 @@
             "importTeams": {
                 "buttonLabel": "Import teams",
                 "dialogTitle": "Import teams into:",
-                "introText": "This dialog can be used to import teams from another exercise of this course into this exercise.",
-                "error": "Could not import teams. Please try again."
+                "introTextExercise": "This dialog can be used to import teams from another exercise of this course into this exercise.",
+                "introTextFile": "This dialog can be used to import teams from a file into this exercise.",
+                "error": "Could not import teams. Please try again.",
+                "fromAnExercise": "From an exercise",
+                "fromAFile": "From a file"
+            },
+            "exportTeams": {
+                "buttonLabel": "Export teams"
             },
             "sourceExercise": {
                 "label": "Source exercise",
                 "tooltip": "The teams from the selected source exercise will be copied into this exercise."
+            },
+            "sourceFile": {
+                "label": "Source file",
+                "tooltip": "The teams from the selected file will be copied into this exercise."
             },
             "selectExerciseForImport": "Select exercise (by searching for the title)",
             "exerciseSearch": {
@@ -126,7 +140,8 @@
             "loadSourceTeams": {
                 "failed": "Loading teams failed. Please try again."
             },
-            "noTeamsInSourceExercise": "The source exercise has no teams.",
+            "noTeamsInSourceExercise": "The source exercise has no team.",
+            "noTeamsInFile": "File has no team.",
             "importStrategy": {
                 "label": "Import strategy",
                 "tooltip": "The import strategy determines which of the source teams will be imported and what happens to existing teams in this exercise.",
@@ -149,7 +164,8 @@
                 "teamsToBeDeleted": "Existing teams to be deleted:",
                 "teamsToBeImported": "Teams to be imported:",
                 "outOf": "(out of {{ number }})",
-                "totalTeamsAfterImport": "Total teams after import:"
+                "totalTeamsAfterImport": "Total teams after import:",
+                "studentsInMultipleTeams": "There are students that are in more than one team."
             },
             "purgeConfirmationDialog": {
                 "question": "Are you sure you want to delete all teams of exercise <strong>{{ title }}</strong> and their participations in the exercise? This action can NOT be undone!",

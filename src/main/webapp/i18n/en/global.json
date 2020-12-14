@@ -6,7 +6,9 @@
             "yes": "Yes",
             "no": "No",
             "emptyList": "No items available",
-            "unset": "Unset"
+            "unset": "Unset",
+            "create": "Create",
+            "edit": "Edit"
         },
         "menu": {
             "home": "Home",

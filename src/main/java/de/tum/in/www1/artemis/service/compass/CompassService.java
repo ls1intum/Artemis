@@ -371,7 +371,7 @@ public class CompassService {
      * @return the result of the given submission either obtained from the submission or the automatic result map, or a newly created one if it does not exist already
      */
     private Result provideResultForSubmission(ModelingSubmission modelingSubmission) {
-        Result result = modelingSubmission.getResult();
+        Result result = modelingSubmission.getLatestResult();
 
         if (result == null || !AssessmentType.MANUAL.equals(result.getAssessmentType())) {
             StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
