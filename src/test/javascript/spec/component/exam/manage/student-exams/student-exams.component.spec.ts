@@ -26,6 +26,8 @@ import { HttpResponse } from '@angular/common/http';
 import { StudentExam } from 'app/entities/student-exam.model';
 import * as sinon from 'sinon';
 import { Exam } from 'app/entities/exam.model';
+import { User } from 'app/core/user/user.model';
+import * as moment from 'moment';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -34,6 +36,7 @@ describe('StudentExamsComponent', () => {
     let studentExamsComponentFixture: ComponentFixture<StudentExamsComponent>;
     let studentExamsComponent: StudentExamsComponent;
     let course: Course;
+    let student: User;
     let studentExamOne: StudentExam;
     let exam: Exam;
 
@@ -41,15 +44,22 @@ describe('StudentExamsComponent', () => {
         course = new Course();
         course.id = 1;
 
+        student = new User();
+        student.id = 1;
+
         exam = new Exam();
         exam.course = course;
         exam.id = 1;
+        exam.registeredUsers = [student];
+        exam.endDate = moment();
+        exam.startDate = exam.endDate.subtract(60, 'seconds');
 
         studentExamOne = new StudentExam();
         studentExamOne.exam = exam;
         studentExamOne.id = 1;
+        studentExamOne.workingTime = 70;
+        studentExamOne.user = student;
 
-        studentExamOne = new StudentExam();
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), ArtemisDataTableModule, NgbModalModule, NgxDatatableModule, FontAwesomeTestingModule, TranslateModule.forRoot()],
             declarations: [
@@ -143,5 +153,8 @@ describe('StudentExamsComponent', () => {
         expect(studentExamsComponent.course).to.deep.equal(course);
         expect(studentExamsComponent.studentExams).to.deep.equal([studentExamOne]);
         expect(studentExamsComponent.exam).to.deep.equal(exam);
+        expect(studentExamsComponent.hasStudentsWithoutExam).to.equal(false);
+        expect(studentExamsComponent.longestWorkingTime).to.equal(studentExamOne.workingTime);
+        expect(studentExamsComponent.isExamOver).to.equal(false);
     });
 });
