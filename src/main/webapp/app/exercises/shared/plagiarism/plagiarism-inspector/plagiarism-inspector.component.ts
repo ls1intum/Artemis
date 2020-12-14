@@ -72,9 +72,15 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.detectionInProgress = true;
 
         if (this.exercise.type === ExerciseType.TEXT) {
-            this.textExerciseService.checkPlagiarismJPlag(this.exercise.id!).subscribe(this.handleTextPlagiarismResult, () => (this.detectionInProgress = false));
+            this.textExerciseService.checkPlagiarismJPlag(this.exercise.id!).subscribe(
+                (result) => this.handleTextPlagiarismResult(result),
+                () => (this.detectionInProgress = false),
+            );
         } else {
-            this.programmingExerciseService.checkPlagiarism(this.exercise.id!).subscribe(this.handleTextPlagiarismResult, () => (this.detectionInProgress = false));
+            this.programmingExerciseService.checkPlagiarism(this.exercise.id!).subscribe(
+                (result) => this.handleTextPlagiarismResult(result),
+                () => (this.detectionInProgress = false),
+            );
         }
     }
 
