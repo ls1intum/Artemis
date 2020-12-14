@@ -157,13 +157,17 @@ Some guidelines:
 2. Do not overuse ``NO_ERRORS_SCHEMA`` (https://angular.io/guide/testing-components-scenarios#no_errors_schema).
    This tells angular to ignore the attributes and unrecognized elements, prefer to use component stubs as mentioned above.
 
-3. Make sure to have at least 80% test coverage. Running ``yarn test --coverage`` to create a coverage report. You can also simply run the tests in IntelliJ IDEA with coverage activated.
+3. When using sinon, use sandboxes (https://sinonjs.org/releases/latest/sandbox/).
+   Sandboxes remove the need to keep track of every fake created, which greatly simplifies cleanup and improves readability.
+   Since ``sinon@5.0.0``, the sinon object is a default sandbox. Unless you have a very advanced setup or need a special configuration, you probably want to only use that one.
 
-4. It is preferable to test a component through the interaction of the user with the template. This decouples the test from the concrete implementation used in the component.
+4. Make sure to have at least 80% test coverage. Running ``yarn test --coverage`` to create a coverage report. You can also simply run the tests in IntelliJ IDEA with coverage activated.
+
+5. It is preferable to test a component through the interaction of the user with the template. This decouples the test from the concrete implementation used in the component.
    For example if you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click and then assert that the data has been loaded and that the expected
    template changes have occurred.
 
-5. Do not remove the template during tests. The template is a crucial part of a component and should not be removed during test. Do not do this:
+6. Do not remove the template during tests. The template is a crucial part of a component and should not be removed during test. Do not do this:
 
 
  .. code:: ts
