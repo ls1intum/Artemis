@@ -22,10 +22,6 @@ public class LearningGoalProgress {
      */
     public List<LectureUnitProgress> progressInLectureUnits = new ArrayList<>();
 
-    public LearningGoalProgress() {
-        // default constructor for Jackson
-    }
-
     /**
      * This DTO contains the information for a students progress in completing a lecture unit
      */
@@ -42,9 +38,5 @@ public class LearningGoalProgress {
         public Double pointsAchievedByStudentInLectureUnit;
 
         public Double totalPointsAchievableByStudentsInLectureUnit;
-
-        public LectureUnitProgress() {
-            // default constructor for Jackson
-        }
     }
 }

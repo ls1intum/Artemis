@@ -249,23 +249,24 @@ public class CourseService {
     public void delete(Course course) {
         log.debug("Request to delete Course : {}", course.getTitle());
 
-        for (LearningGoal learningGoal : course.getLearningGoals()) {
-            learningGoalRepository.deleteById(learningGoal.getId());
-        }
+        deleteLearningGoalsOfCourse(course);
+        deleteExercisesOfCourse(course);
+        deleteLecturesOfCourse(course);
+        deleteNotificationsOfCourse(course);
+        deleteDefaultGroups(course);
+        deleteExamsOfCourse(course);
+        courseRepository.deleteById(course.getId());
+    }
 
-        for (Exercise exercise : course.getExercises()) {
-            exerciseService.delete(exercise.getId(), true, true);
+    private void deleteExamsOfCourse(Course course) {
+        // delete the Exams
+        List<Exam> exams = examService.findAllByCourseId(course.getId());
+        for (Exam exam : exams) {
+            examService.deleteById(exam.getId());
         }
+    }
 
-        for (Lecture lecture : course.getLectures()) {
-            lectureService.delete(lecture);
-        }
-
-        List<GroupNotification> notifications = notificationService.findAllGroupNotificationsForCourse(course);
-        for (GroupNotification notification : notifications) {
-            notificationService.deleteGroupNotification(notification);
-        }
-
+    private void deleteDefaultGroups(Course course) {
         // only delete (default) groups which have been created by Artemis before
         if (course.getStudentGroupName().equals(course.getDefaultStudentGroupName())) {
             artemisAuthenticationProvider.deleteGroup(course.getStudentGroupName());
@@ -276,13 +277,31 @@ public class CourseService {
         if (course.getInstructorGroupName().equals(course.getDefaultInstructorGroupName())) {
             artemisAuthenticationProvider.deleteGroup(course.getInstructorGroupName());
         }
+    }
 
-        // delete the Exams
-        List<Exam> exams = examService.findAllByCourseId(course.getId());
-        for (Exam exam : exams) {
-            examService.deleteById(exam.getId());
+    private void deleteNotificationsOfCourse(Course course) {
+        List<GroupNotification> notifications = notificationService.findAllGroupNotificationsForCourse(course);
+        for (GroupNotification notification : notifications) {
+            notificationService.deleteGroupNotification(notification);
         }
-        courseRepository.deleteById(course.getId());
+    }
+
+    private void deleteLecturesOfCourse(Course course) {
+        for (Lecture lecture : course.getLectures()) {
+            lectureService.delete(lecture);
+        }
+    }
+
+    private void deleteExercisesOfCourse(Course course) {
+        for (Exercise exercise : course.getExercises()) {
+            exerciseService.delete(exercise.getId(), true, true);
+        }
+    }
+
+    private void deleteLearningGoalsOfCourse(Course course) {
+        for (LearningGoal learningGoal : course.getLearningGoals()) {
+            learningGoalRepository.deleteById(learningGoal.getId());
+        }
     }
 
     /**
