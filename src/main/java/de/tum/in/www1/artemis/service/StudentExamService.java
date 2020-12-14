@@ -259,9 +259,10 @@ public class StudentExamService {
      * The assessor is current instructor who made the request.
      *
      * @param examId the exam id
+     * @return returns the number of assessedSubmissions
      */
     public int automaticallyAssessUnsubmittedExams(final Long examId) {
-        int gradedSubmissions = 0;
+        int numberOfAssessedSubmissions = 0;
         User instructor = userService.getUser();
         Set<StudentExam> unsubmittedStudentExams = findAllUnsubmittedStudentExams(examId);
         Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
@@ -280,11 +281,11 @@ public class StudentExamService {
                     result.setScore(0L);
                     result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
                     submissionService.saveNewResult(latestSubmission, result);
-                    gradedSubmissions++;
+                    numberOfAssessedSubmissions++;
                 }
             }
         }
-        return gradedSubmissions;
+        return numberOfAssessedSubmissions;
     }
 
     private void lockStudentRepositories(User currentUser, StudentExam existingStudentExam) {
