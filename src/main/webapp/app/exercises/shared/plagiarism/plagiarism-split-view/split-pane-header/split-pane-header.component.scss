@@ -15,6 +15,7 @@
         padding: 0.25rem 0.5rem;
 
         &.active fa-icon {
+            display: inline-block;
             transform: rotate(180deg);
         }
     }
