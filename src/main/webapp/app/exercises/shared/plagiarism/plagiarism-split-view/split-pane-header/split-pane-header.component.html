@@ -1,6 +1,6 @@
 <div class="split-pane-header">
     <div class="split-pane-header-top" [ngClass]="{ clickable: true }" (click)="toggleShowFiles()">
-        <div>
+        <div *ngIf="files">
             <fa-icon [icon]="'chevron-down'"></fa-icon>
             <span class="split-pane-header-selected-file">src/main/java/Main.java</span>
         </div>
