@@ -48,8 +48,12 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnInit {
         return this.exercise.type === ExerciseType.MODELING;
     }
 
-    isTextOrProgrammingExercise() {
-        return this.exercise.type === ExerciseType.TEXT || this.exercise.type === ExerciseType.PROGRAMMING;
+    isProgrammingExercise() {
+        return this.exercise.type === ExerciseType.PROGRAMMING;
+    }
+
+    isTextExercise() {
+        return this.exercise.type === ExerciseType.TEXT;
     }
 
     getModelingSubmissionA() {
