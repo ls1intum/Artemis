@@ -89,6 +89,8 @@ public class TextSubmissionResource {
             throw new BadRequestAlertException("A new textSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
+        checkTextLength(textSubmission);
+
         return handleTextSubmission(exerciseId, principal, textSubmission);
     }
 
@@ -109,6 +111,8 @@ public class TextSubmissionResource {
         if (textSubmission.getId() == null) {
             return createTextSubmission(exerciseId, principal, textSubmission);
         }
+
+        checkTextLength(textSubmission);
 
         return handleTextSubmission(exerciseId, principal, textSubmission);
     }
@@ -161,9 +165,9 @@ public class TextSubmissionResource {
 
         // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
-        if (textSubmission.getResult() != null) {
+        if (textSubmission.getLatestResult() != null) {
             this.atheneTrackingTokenProvider
-                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getResult()));
+                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getLatestResult()));
         }
 
         return bodyBuilder.body(textSubmission);
@@ -290,10 +294,20 @@ public class TextSubmissionResource {
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
 
         // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
-        if (textSubmission.getResult() != null) {
+        if (textSubmission.getLatestResult() != null) {
             this.atheneTrackingTokenProvider
-                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getResult()));
+                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getLatestResult()));
         }
         return bodyBuilder.body(textSubmission);
+    }
+
+    /**
+     * Throws IllegalArgumentException if the text length is over 30000 characters.
+     * @param textSubmission the text submission
+     */
+    private void checkTextLength(TextSubmission textSubmission) {
+        if (textSubmission.getText() != null && textSubmission.getText().length() > 30000) {
+            throw new IllegalArgumentException("Text Submission cannot contain more than 30000 characters");
+        }
     }
 }

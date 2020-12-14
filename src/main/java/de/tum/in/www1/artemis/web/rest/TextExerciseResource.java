@@ -9,10 +9,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 import jplag.ExitException;
@@ -401,7 +398,7 @@ public class TextExerciseResource {
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);
 
-            Result result = textSubmission.getResult();
+            Result result = textSubmission.getLatestResult();
             if (result != null) {
                 // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
                 final var textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
@@ -594,7 +591,7 @@ public class TextExerciseResource {
         final List<TextSubmission> textSubmissions = textPlagiarismDetectionService.textSubmissionsForComparison(textExercise);
         textSubmissions.forEach(submission -> {
             submission.getParticipation().setExercise(null);
-            submission.setResult(null);
+            submission.setResults(new ArrayList<Result>());
             submission.getParticipation().setSubmissions(null);
         });
 

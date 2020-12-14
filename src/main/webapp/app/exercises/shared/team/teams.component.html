@@ -16,6 +16,12 @@
             </div>
         </div>
         <div class="d-flex ml-auto">
+            <jhi-teams-export-button
+                class="mr-2"
+                *ngIf="exercise?.isAtLeastInstructor && teams && teams.length > 0"
+                [teams]="teams"
+                [buttonSize]="ButtonSize.MEDIUM"
+            ></jhi-teams-export-button>
             <jhi-teams-import-button
                 class="mr-2"
                 *ngIf="exercise?.isAtLeastInstructor"

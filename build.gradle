@@ -13,7 +13,7 @@ buildscript {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
         // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-        classpath "com.github.ben-manes:gradle-versions-plugin:0.36.0"
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.35.0"
     }
 }
 
@@ -24,7 +24,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "2.6.0"
+    id "com.google.cloud.tools.jib" version "2.7.0"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.8.0"
+version = "4.8.2"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -141,10 +141,16 @@ jacocoTestCoverageVerification {
     violationRules {
         rule {
             limit {
-                counter = "LINE"
+                counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.90
-                minimum = 0.81
+                minimum = 0.80
+            }
+            limit {
+                counter = "CLASS"
+                value = "MISSEDCOUNT"
+                // TODO: in the future the following value should become less than 50
+                maximum = 150
             }
         }
     }
@@ -172,7 +178,7 @@ dependencies {
     implementation files("libs/jplag-3.0.0.jar")
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation "org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r"
+    implementation "org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"
@@ -189,7 +195,7 @@ dependencies {
 
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.6.1"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.6.2"
     implementation "net.logstash.logback:logstash-logback-encoder:6.5"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -207,7 +213,7 @@ dependencies {
     implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
     implementation "org.hibernate.validator:hibernate-validator:6.1.6.Final"
-    implementation "org.liquibase:liquibase-core:4.2.0"
+    implementation "org.liquibase:liquibase-core:4.2.2"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
@@ -223,23 +229,22 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:2.3.3.RELEASE"
-    implementation "org.springframework.data:spring-data-ldap:2.4.1"
+    implementation "org.springframework.data:spring-data-ldap:2.4.2"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.2.6.RELEASE"
     implementation "org.springframework.cloud:spring-cloud-starter-config:2.2.6.RELEASE"
-    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.11.RELEASE"
+    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.12.RELEASE"
 
-    implementation "io.netty:netty-all:4.1.54.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.0.1"
+    implementation "io.netty:netty-all:4.1.55.Final"
+    implementation "io.projectreactor.netty:reactor-netty:1.0.2"
     implementation "org.springframework:spring-messaging:5.3.1"
-    implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.3.1_1"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
-    implementation "org.xmlbeam:xmlprojector:1.4.17"
+    implementation "org.xmlbeam:xmlprojector:1.4.18"
     implementation "io.jsonwebtoken:jjwt-api:0.11.2"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.2"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.2"
@@ -256,7 +261,9 @@ dependencies {
     implementation "org.apache.maven:maven-model:3.6.3"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
-    annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
+    annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
+        exclude group: "javax.ws.rs", module: "jsr311-api"
+    }
     annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
         exclude group: "com.vaadin.external.google", module: "android-json"
     }

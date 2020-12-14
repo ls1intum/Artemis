@@ -7,6 +7,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 describe('TextAssessment Service', () => {
     let injector: TestBed;
@@ -120,15 +121,17 @@ describe('TextAssessment Service', () => {
             type: 'AUTOMATIC',
             text: 'Test\n\nTest\n\nTest',
         } as unknown) as TextSubmission;
-        submission.result = ({
-            id: 2374,
-            resultString: '1 of 12 points',
-            score: 8,
-            rated: true,
-            hasFeedback: true,
-            hasComplaint: false,
-        } as unknown) as Result;
-        submission.result.feedbacks = [
+        submission.results = [
+            ({
+                id: 2374,
+                resultString: '1 of 12 points',
+                score: 8,
+                rated: true,
+                hasFeedback: true,
+                hasComplaint: false,
+            } as unknown) as Result,
+        ];
+        getLatestSubmissionResult(submission)!.feedbacks = [
             {
                 id: 2,
                 detailText: 'Feedback',
