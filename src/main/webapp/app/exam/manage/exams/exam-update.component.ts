@@ -38,6 +38,9 @@ export class ExamUpdateComponent implements OnInit {
             if (!this.exam.gracePeriod) {
                 this.exam.gracePeriod = 180;
             }
+            if (!this.exam.numberOfCorrectionRoundsInExam) {
+                this.exam.numberOfCorrectionRoundsInExam = 1;
+            }
         });
     }
 
