@@ -2,16 +2,15 @@ import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testin
 import { TranslateModule } from '@ngx-translate/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ArtemisTestModule } from '../../test.module';
-import { SinonStub, spy, stub } from 'sinon';
+import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';
 import { HttpResponse, HttpHeaders } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-
+import * as moment from 'moment';
+import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import * as moment from 'moment';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingAssessmentRepoExportService } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -86,7 +85,6 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         const headers = new HttpHeaders().set('filename', 'blobfile');
         const httpResponse = new HttpResponse({ body: blob, headers });
         const exportReposStub = stub(repoExportService, 'exportReposByParticipations').returns(of(httpResponse));
-        // const exportReposStub = stub(repoExportService, 'exportReposByParticipations').returns(of({ body: blob } as HttpResponse<Blob>));
         fixture.detectChanges();
         comp.exportRepos(exerciseId);
         tick();
@@ -114,8 +112,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     it('Export of multiple repos download multiple files', fakeAsync(() => {
         const programmingExercise2 = new ProgrammingExercise(new Course(), undefined);
         programmingExercise2.id = 43;
-        const selectedProgrammingExercises = [programmingExercise, programmingExercise2];
-        comp.selectedProgrammingExercises = selectedProgrammingExercises;
+        comp.selectedProgrammingExercises = [programmingExercise, programmingExercise2];
 
         const blob = new Blob([JSON.stringify({ property: 'blob' })], { type: 'application/json' });
         const headers = new HttpHeaders().set('filename', 'blobfile');
