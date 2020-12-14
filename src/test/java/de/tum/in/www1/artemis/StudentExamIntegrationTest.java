@@ -568,8 +568,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
-                assertThat(studentParticipation.findLatestSubmission().get().getResult()).isNotNull();
-                assertThat(studentParticipation.findLatestSubmission().get().getResult().getScore()).isEqualTo(0);
+                assertThat(studentParticipation.findLatestSubmission().get().getLatestResult()).isNotNull();
+                assertThat(studentParticipation.findLatestSubmission().get().getLatestResult().getScore()).isEqualTo(0);
             }
         }
     }

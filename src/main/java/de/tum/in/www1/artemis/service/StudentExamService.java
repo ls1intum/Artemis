@@ -269,7 +269,7 @@ public class StudentExamService {
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
-                if (studentParticipation.findLatestSubmission().isPresent() && studentParticipation.findLatestSubmission().get().getResult() == null) {
+                if (studentParticipation.findLatestSubmission().isPresent() && studentParticipation.findLatestSubmission().get().getLatestResult() == null) {
                     // get last submission
                     final var latestSubmission = studentParticipation.findLatestSubmission().get();
                     // create result with 0 points
