@@ -3,6 +3,7 @@
         "points": "Points",
         "assessor": "Assessor: {{firstName}} {{lastName}}",
         "noModel": "No model found to display",
+        "invalidAssessments": "Your assessments are not valid!",
         "messages": {
             "noConflicts": "Conflicts could not be loaded",
             "conflictsResolved": "All conflicts have been processed."
