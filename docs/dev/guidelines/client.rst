@@ -106,6 +106,7 @@ There are different tools available to support client testing. A common combinat
 The most basic test looks similar to this:
 
  .. code:: ts
+
     import * as chai from 'chai';
     import * as sinonChai from 'sinon-chai';
     import * as sinon from 'sinon';
@@ -171,6 +172,7 @@ Some guidelines:
 
 
  .. code:: ts
+
     import * as chai from 'chai';
     import * as sinonChai from 'sinon-chai';
     import * as sinon from 'sinon';
