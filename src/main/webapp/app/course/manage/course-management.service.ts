@@ -19,7 +19,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { createRequestOption } from 'app/shared/util/request-util';
-import { Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 
@@ -261,10 +261,10 @@ export class CourseManagementService {
                 tap((res) =>
                     res.body!.forEach((submission: Submission) => {
                         // reconnect some associations
-                        if (submission.result) {
-                            submission.result.submission = submission;
-                            submission.result.participation = submission.participation;
-                            submission.participation!.results = [submission.result];
+                        if (getLatestSubmissionResult(submission)) {
+                            getLatestSubmissionResult(submission)!.submission = submission;
+                            getLatestSubmissionResult(submission)!.participation = submission.participation;
+                            submission.participation!.results = [getLatestSubmissionResult(submission)!];
                         }
                     }),
                 ),

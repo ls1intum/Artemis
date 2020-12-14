@@ -28,6 +28,7 @@ import { participationStatus } from 'app/exercises/shared/exercise/exercise-util
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -127,8 +128,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.submission = modelingSubmission;
 
         // reconnect participation <--> result
-        if (modelingSubmission.result) {
-            modelingSubmission.participation!.results = [modelingSubmission.result];
+        if (getLatestSubmissionResult(modelingSubmission)) {
+            modelingSubmission.participation!.results = [getLatestSubmissionResult(modelingSubmission)!];
         }
         this.participation = modelingSubmission.participation as StudentParticipation;
 
@@ -153,8 +154,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
         }
         this.subscribeToWebsockets();
-        if (this.submission.result && this.isAfterAssessmentDueDate) {
-            this.result = this.submission.result;
+        if (getLatestSubmissionResult(this.submission) && this.isAfterAssessmentDueDate) {
+            this.result = getLatestSubmissionResult(this.submission);
         }
         if (this.submission.submitted && this.result && this.result.completionDate) {
             this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
@@ -198,7 +199,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.umlModel = JSON.parse(this.submission.model);
                     this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
                 }
-                if (this.submission.result && this.submission.result.completionDate && this.isAfterAssessmentDueDate) {
+                if (getLatestSubmissionResult(this.submission) && getLatestSubmissionResult(this.submission)!.completionDate && this.isAfterAssessmentDueDate) {
                     this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
                         this.assessmentResult = assessmentResult;
                         this.prepareAssessmentData();
@@ -272,7 +273,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     // reconnect so that the submission status is displayed correctly in the result.component
                     this.submission.participation!.submissions = [this.submission];
                     this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.modelingExercise);
-                    this.result = this.submission.result;
+                    this.result = getLatestSubmissionResult(this.submission);
                     this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
                     this.onSaveSuccess();
                 },
@@ -282,7 +283,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingSubmissionService.create(this.submission, this.modelingExercise.id!).subscribe(
                 (submission) => {
                     this.submission = submission.body!;
-                    this.result = this.submission.result;
+                    this.result = getLatestSubmissionResult(this.submission);
                     this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
                     this.subscribeToAutomaticSubmissionWebsocket();
                     this.onSaveSuccess();
@@ -316,7 +317,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.participationWebsocketService.addParticipation(this.participation, this.modelingExercise);
                     this.modelingExercise.studentParticipations = [this.participation];
                     this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
-                    this.result = this.submission.result;
+                    this.result = getLatestSubmissionResult(this.submission);
                     this.retryStarted = false;
 
                     if (this.isLate) {
@@ -342,7 +343,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.participation.exercise = this.modelingExercise;
                     this.modelingExercise.studentParticipations = [this.participation];
                     this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
-                    this.result = this.submission.result;
+                    this.result = getLatestSubmissionResult(this.submission);
                     if (this.isLate) {
                         this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
                     } else {

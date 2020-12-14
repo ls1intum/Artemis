@@ -11,13 +11,15 @@ import { LectureUpdateComponent } from './lecture-update.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { CourseResolve } from 'app/course/manage/course-management.route';
 
 @Injectable({ providedIn: 'root' })
 export class LectureResolve implements Resolve<Lecture> {
     constructor(private service: LectureService) {}
 
     resolve(route: ActivatedRouteSnapshot): Observable<Lecture> {
-        const id = route.params['id'] ? route.params['id'] : undefined;
+        // TODO: This should always use lectureId and never just 'id'
+        const id = route.params['lectureId'] ? route.params['lectureId'] : route.params['id'] ? route.params['id'] : undefined;
         if (id) {
             return this.service.find(id).pipe(
                 filter((response: HttpResponse<Lecture>) => response.ok),
@@ -32,58 +34,79 @@ export const lectureRoute: Routes = [
     {
         path: ':courseId/lectures',
         component: LectureComponent,
+        resolve: {
+            course: CourseResolve,
+        },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            // HACK: The path is a composite, so we need to define both parts
+            breadcrumbs: [
+                { variable: 'course.title', path: 'course.id' },
+                { label: 'artemisApp.lecture.home.title', path: 'lectures' },
+            ],
             pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/lectures/new',
-        component: LectureUpdateComponent,
-        resolve: {
-            lecture: LectureResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.lecture.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/lectures/:id',
-        component: LectureDetailComponent,
-        resolve: {
-            lecture: LectureResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.lecture.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/lectures/:id/attachments',
-        component: LectureAttachmentsComponent,
-        resolve: {
-            lecture: LectureResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.lecture.attachments.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/lectures/:id/edit',
-        component: LectureUpdateComponent,
-        resolve: {
-            lecture: LectureResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.lecture.home.title',
-        },
-        canActivate: [UserRouteAccessService],
+        children: [
+            {
+                path: 'new',
+                component: LectureUpdateComponent,
+                resolve: {
+                    lecture: LectureResolve,
+                },
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'global.generic.create',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':id',
+                component: LectureDetailComponent,
+                resolve: {
+                    lecture: LectureResolve,
+                },
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    breadcrumbLabelVariable: 'lecture.title',
+                    pageTitle: 'artemisApp.lecture.home.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':id/attachments',
+                component: LectureAttachmentsComponent,
+                resolve: {
+                    lecture: LectureResolve,
+                },
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    // HACK: The path is a composite, so we need to define both parts
+                    breadcrumbs: [
+                        { variable: 'lecture.title', path: 'lecture.id' },
+                        { label: 'artemisApp.lecture.attachments.title', path: 'attachments' },
+                    ],
+                    pageTitle: 'artemisApp.lecture.attachments.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':id/edit',
+                component: LectureUpdateComponent,
+                resolve: {
+                    lecture: LectureResolve,
+                },
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    // HACK: The path is a composite, so we need to define both parts
+                    breadcrumbs: [
+                        { variable: 'lecture.title', path: 'lecture.id' },
+                        { label: 'global.generic.edit', path: 'edit' },
+                    ],
+                    pageTitle: 'global.generic.edit',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+        ],
     },
 ];

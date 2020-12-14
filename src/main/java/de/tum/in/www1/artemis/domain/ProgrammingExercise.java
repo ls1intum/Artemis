@@ -325,7 +325,7 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         return submissions.stream().filter(submission -> {
-            Result result = submission.getResult();
+            Result result = submission.getLatestResult();
             if (result != null) {
                 return checkForRatedAndAssessedResult(result);
             }

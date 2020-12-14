@@ -22,7 +22,7 @@ export class RatingListComponent implements OnInit {
     constructor(private ratingService: RatingService, private route: ActivatedRoute, private location: Location, private sortService: SortService, private router: Router) {}
 
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
+        this.route.parent!.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
         });
 
