@@ -63,8 +63,6 @@ public class LtiServiceTest {
 
     private LtiUserId ltiUserId;
 
-    private Course course;
-
     private String courseStudentGroupName = "courseStudentGroupName";
 
     private LtiOutcomeUrl ltiOutcomeUrl;
@@ -74,7 +72,7 @@ public class LtiServiceTest {
         MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
         ltiService = new LtiService(userService, userRepository, ltiOutcomeUrlRepository, resultRepository, artemisAuthenticationProvider, ltiUserIdRepository, response);
-        course = new Course();
+        Course course = new Course();
         course.setStudentGroupName(courseStudentGroupName);
         exercise = new TextExercise();
         exercise.setCourse(course);
@@ -206,14 +204,18 @@ public class LtiServiceTest {
     private void onSuccessfulAuthenticationSetup(User user, LtiUserId ltiUserId) {
         when(userService.getUserWithGroupsAndAuthorities()).thenReturn(user);
         when(ltiUserIdRepository.findByUser(user)).thenReturn(Optional.of(ltiUserId));
+        ltiOutcomeUrlRepositorySetup(user);
+    }
+
+    private void ltiOutcomeUrlRepositorySetup(User user) {
         when(ltiOutcomeUrlRepository.findByUserAndExercise(user, exercise)).thenReturn(Optional.of(ltiOutcomeUrl));
     }
 
     private void onSuccessfulAuthenticationAssertions(User user, LtiUserId ltiUserId) {
         assertThat(user.getGroups().contains(courseStudentGroupName));
-        assertThat(ltiUserId.getLtiUserId().equals("ff30145d6884eeb2c1cef50298939383"));
-        assertThat(ltiOutcomeUrl.getUrl().equals("some.outcome.service.url.com"));
-        assertThat(ltiOutcomeUrl.getSourcedId().equals("someResultSourceId"));
+        assertThat("ff30145d6884eeb2c1cef50298939383".equals(ltiUserId.getLtiUserId()));
+        assertThat("some.outcome.service.url.com".equals(ltiOutcomeUrl.getUrl()));
+        assertThat("someResultSourceId".equals(ltiOutcomeUrl.getSourcedId()));
         verify(userService, times(1)).save(user);
         verify(artemisAuthenticationProvider, times(1)).addUserToGroup(user, courseStudentGroupName);
         verify(ltiOutcomeUrlRepository, times(1)).save(ltiOutcomeUrl);
@@ -226,7 +228,7 @@ public class LtiServiceTest {
 
         String message = ltiService.verifyRequest(request);
 
-        assertThat(message.equals("verifyRequest for LTI is not supported on this Artemis instance, artemis.lti.oauth-secret was not specified in the yml configuration"));
+        assertThat("verifyRequest for LTI is not supported on this Artemis instance, artemis.lti.oauth-secret was not specified in the yml configuration".equals(message));
     }
 
     @Test
@@ -242,7 +244,7 @@ public class LtiServiceTest {
 
         String message = ltiService.verifyRequest(request);
 
-        assertThat(message.equals("LTI signature verification failed with message: Failed to validate: parameter_absent; error: bad_request, launch result: null"));
+        assertThat("LTI signature verification failed with message: Failed to validate: parameter_absent; error: bad_request, launch result: null".equals(message));
     }
 
     @Test
@@ -263,7 +265,7 @@ public class LtiServiceTest {
         ltiOutcomeUrl.setExercise(exercise);
         ltiOutcomeUrl.setUser(user);
 
-        when(ltiOutcomeUrlRepository.findByUserAndExercise(user, exercise)).thenReturn(Optional.of(ltiOutcomeUrl));
+        ltiOutcomeUrlRepositorySetup(user);
         when(resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(27L)).thenReturn(Optional.of(result));
 
         ltiService.onNewResult(participation);
