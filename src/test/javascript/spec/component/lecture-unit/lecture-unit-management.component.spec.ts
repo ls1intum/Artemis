@@ -15,7 +15,7 @@ import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/vide
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { JhiAlertService } from 'ng-jhipster';
@@ -87,6 +87,7 @@ describe('LectureUnitManagementComponent', () => {
                 MockComponent(AlertComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
+                MockDirective(RouterOutlet),
             ],
             providers: [
                 MockProvider(LectureUnitService),
@@ -96,12 +97,15 @@ describe('LectureUnitManagementComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        params: {
-                            subscribe: (fn: (value: Params) => void) =>
-                                fn({
-                                    lectureId: 1,
-                                }),
+                        parent: {
+                            params: {
+                                subscribe: (fn: (value: Params) => void) =>
+                                    fn({
+                                        lectureId: 1,
+                                    }),
+                            },
                         },
+                        children: [],
                     },
                 },
             ],

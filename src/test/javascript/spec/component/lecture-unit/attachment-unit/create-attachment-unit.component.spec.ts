@@ -52,16 +52,28 @@ describe('CreateAttachmentUnitComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        paramMap: Observable.of({
-                            get: (key: string) => {
-                                switch (key) {
-                                    case 'courseId':
-                                        return 1;
-                                    case 'lectureId':
-                                        return 1;
-                                }
+                        parent: {
+                            parent: {
+                                paramMap: Observable.of({
+                                    get: (key: string) => {
+                                        switch (key) {
+                                            case 'lectureId':
+                                                return 1;
+                                        }
+                                    },
+                                }),
+                                parent: {
+                                    paramMap: Observable.of({
+                                        get: (key: string) => {
+                                            switch (key) {
+                                                case 'courseId':
+                                                    return 1;
+                                            }
+                                        },
+                                    }),
+                                },
                             },
-                        }),
+                        },
                     },
                 },
             ],
