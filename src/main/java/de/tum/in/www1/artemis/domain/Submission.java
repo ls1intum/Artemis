@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.domain;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -57,8 +59,7 @@ public abstract class Submission extends DomainObject {
     @JsonIgnore
     @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    // TODO use Set here instead of List
-    private List<SubmissionVersion> versions = new ArrayList<>();
+    private Set<SubmissionVersion> versions = new HashSet<>();
 
     /**
      * A submission can have multiple results, therefore, results are persisted and removed with a submission.
@@ -76,15 +77,12 @@ public abstract class Submission extends DomainObject {
         return submissionDate;
     }
 
-    @Transient
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    public Long durationInMinutes;
-
     /**
-     * Calculates the duration of a submission in minutes
+     * Calculates the duration of a submission in minutes and adds it into the json response
      *
      * @return duration in minutes or null if it can not be determined
      */
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Long getDurationInMinutes() {
         if (this.participation == null || this.participation.getInitializationDate() == null || this.submissionDate == null) {
             return null;
@@ -104,7 +102,7 @@ public abstract class Submission extends DomainObject {
     @Nullable
     @JsonIgnore
     public Result getLatestResult() {
-        if (!results.isEmpty()) {
+        if (results != null && !results.isEmpty()) {
             return results.get(results.size() - 1);
         }
         return null;
@@ -124,7 +122,7 @@ public abstract class Submission extends DomainObject {
     @Nullable
     @JsonIgnore
     public Result getFirstResult() {
-        if (!results.isEmpty()) {
+        if (results != null && !results.isEmpty()) {
             return results.get(0);
         }
         return null;
@@ -201,4 +199,10 @@ public abstract class Submission extends DomainObject {
     public void setExampleSubmission(Boolean exampleSubmission) {
         this.exampleSubmission = exampleSubmission;
     }
+
+    /**
+     * determine whether a submission is empty, i.e. the student did not work properly on the corresponding exercise
+     * @return whether the submission is empty (true) or not (false)
+     */
+    public abstract boolean isEmpty();
 }
