@@ -117,8 +117,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        // based on the locking mechanism there must be exactly one existing manual result
-        // TODO: change this as soon as we allow second corrections
+        // based on the locking mechanism we take the most recent manual result
         Result existingManualResult = participation.getResults().stream().filter(Result::isManualResult).max(Comparator.comparing(Result::getId))
                 .orElseThrow(() -> new EntityNotFoundException("Manual result for participation with id " + participationId + " does not exist"));
         // prevent that tutors create multiple manual results
@@ -126,8 +125,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         // load assessor
         existingManualResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(existingManualResult.getId()).get();
 
-        // make sure that the participation cannot be manipulated on the client side
+        // make sure that the participation and submission cannot be manipulated on the client side
         newManualResult.setParticipation(participation);
+        newManualResult.setSubmission(existingManualResult.getSubmission());
 
         var programmingExercise = (ProgrammingExercise) participation.getExercise();
         checkAuthorization(programmingExercise, user);

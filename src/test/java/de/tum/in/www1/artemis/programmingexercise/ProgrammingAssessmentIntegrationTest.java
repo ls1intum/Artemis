@@ -351,15 +351,13 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         Result firstManualResultResponse = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult,
                 Result.class, HttpStatus.OK);
 
-        // Create a 2nd result (by saving the unsaved result again in order to force generation a new id)
-        manualResult = resultRepository.save(manualResult);
+        // Create a 2nd result (by setting a new id)
+        manualResult.setId(firstManualResultResponse.getId() + 1);
         // Create submission for result and save
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission = programmingSubmissionRepository.save(submission);
         manualResult.setSubmission(submission);
         submission.addResult(manualResult);
-
-        programmingSubmissionRepository.save(submission);
 
         Result secondManualResultResponse = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult,
                 Result.class, HttpStatus.OK);
