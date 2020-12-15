@@ -1,0 +1,39 @@
+@media (min-width: 768px) and (max-width: 1024px) {
+    .page {
+        .contributor {
+            flex: 0 0 20%;
+            max-width: 20%;
+        }
+
+        .project-manager {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+    }
+}
+
+@media (max-width: 767px) {
+    .page {
+        .contributor {
+            flex: 0 0 33.3%;
+            max-width: 33.3%;
+        }
+
+        .project-manager {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+    }
+}
+
+.contributor {
+    padding-right: 15px;
+    padding-left: 15px;
+    flex: 0 0 8.333333%;
+    max-width: 8.333333%;
+}
+
+.project-manager {
+    flex: 0 0 50%;
+    max-width: 50%;
+}
