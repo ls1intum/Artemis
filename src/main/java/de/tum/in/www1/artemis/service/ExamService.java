@@ -295,7 +295,7 @@ public class ExamService {
         }
 
         // Adding registered student information to DTO
-        List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
+        Set<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
         ObjectMapper objectMapper = new ObjectMapper();
         for (StudentExam studentExam : studentExams) {
             User user = studentExam.getUser();
@@ -331,7 +331,7 @@ public class ExamService {
         }
 
         // Updating exam information in DTO
-        Double sumOverallPoints = scores.studentResults.stream().mapToDouble(studentResult -> studentResult.overallPointsAchieved).sum();
+        double sumOverallPoints = scores.studentResults.stream().mapToDouble(studentResult -> studentResult.overallPointsAchieved).sum();
 
         int numberOfStudentResults = scores.studentResults.size();
 

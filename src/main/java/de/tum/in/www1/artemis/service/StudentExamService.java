@@ -261,7 +261,7 @@ public class StudentExamService {
      * @param examId the exam id
      * @return returns the number of assessedSubmissions
      */
-    public int automaticallyAssessUnsubmittedExams(final Long examId) {
+    public int assessUnsubmittedStudentExams(final Long examId) {
         int numberOfAssessedSubmissions = 0;
         User instructor = userService.getUser();
         Set<StudentExam> unsubmittedStudentExams = findAllUnsubmittedStudentExams(examId);
@@ -328,7 +328,7 @@ public class StudentExamService {
      * @param examId the id of the exam
      * @return the list of all student exams
      */
-    public List<StudentExam> findAllByExamId(Long examId) {
+    public Set<StudentExam> findAllByExamId(Long examId) {
         log.debug("Request to get all student exams for Exam : {}", examId);
         return studentExamRepository.findByExamId(examId);
     }

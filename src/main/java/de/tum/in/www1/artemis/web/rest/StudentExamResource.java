@@ -117,13 +117,13 @@ public class StudentExamResource {
      *
      * @param courseId the course to which the student exams belong to
      * @param examId   the exam to which the student exams belong to
-     * @return the ResponseEntity with status 200 (OK) and a list of student exams. The list can be empty
+     * @return the ResponseEntity with status 200 (OK) and a set of student exams. The set can be empty
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    public ResponseEntity<List<StudentExam>> getStudentExamsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<Set<StudentExam>> getStudentExamsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all student exams for exam : {}", examId);
-        Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        Optional<ResponseEntity<Set<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(studentExamService.findAllByExamId(examId)));
     }
 
@@ -373,10 +373,10 @@ public class StudentExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/automatically-assess-unsubmitted-student-exams : Automatically assess unsubmitted student exams.
+     * POST /courses/{courseId}/exams/{examId}/student-exams/automatically-assess-unsubmitted-student-exams : Automatically assess unsubmitted student exams and empty submissions.
      *
      * Finds student exams which the students did not submit on time i.e {@link StudentExam#isSubmitted()} is false.
-     * Automatically grade all modeling- and text exercises with 0 points in {@link StudentExamService#automaticallyAssessUnsubmittedExams}.
+     * Automatically grade all modeling- and text exercises with 0 points in {@link StudentExamService#assessUnsubmittedStudentExams}.
      *
      * @param courseId the id of the course
      * @param examId the id of the exam
@@ -384,7 +384,7 @@ public class StudentExamResource {
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/automatically-assess-unsubmitted-student-exams")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Integer> automaticallyAssessUnsubmittedStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<Integer> automaticallyAssessUnsubmittedStudentExamsAndEmptySubmissions(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to automatically assess the not submitted student exams of the exam with id {}", examId);
 
         Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
@@ -397,7 +397,7 @@ public class StudentExamResource {
             return badRequest();
         }
 
-        Integer numberOfGradedParticipations = studentExamService.automaticallyAssessUnsubmittedExams(examId);
+        int numberOfGradedParticipations = studentExamService.assessUnsubmittedStudentExams(examId);
         log.info("Graded {} participations for unsubmitted student exams of exam {}", numberOfGradedParticipations, examId);
 
         return ResponseEntity.ok().body(numberOfGradedParticipations);
