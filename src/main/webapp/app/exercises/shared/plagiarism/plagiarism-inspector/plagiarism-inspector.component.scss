@@ -23,9 +23,11 @@ $footer-height: 31px;
         }
 
         .plagiarism-buttons {
+            align-items: center;
             display: flex;
 
-            .check-plagiarism {
+            .check-plagiarism,
+            .dropdown {
                 margin-right: 1rem;
             }
         }
@@ -42,6 +44,16 @@ $footer-height: 31px;
             display: flex;
             flex-direction: column;
             height: 100%;
+        }
+    }
+
+    .plagiarism-checkbox {
+        align-items: center;
+        display: flex;
+        margin: 0;
+
+        #generateJPlagReport {
+            margin-right: 0.5rem;
         }
     }
 

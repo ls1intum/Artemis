@@ -16,6 +16,11 @@
                     <button type="button" (click)="downloadPlagiarismResultsCsv()" ngbDropdownItem>CSV</button>
                 </div>
             </div>
+
+            <label class="plagiarism-checkbox" for="generateJPlagReport">
+                <input type="checkbox" id="generateJPlagReport" [(ngModel)]="generateJPlagReport" checked />
+                <span jhiTranslate="artemisApp.plagiarism.generate-jplag-report">Generate JPlag Report</span>
+            </label>
         </div>
     </div>
 

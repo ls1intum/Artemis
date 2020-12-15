@@ -39,6 +39,11 @@ export class PlagiarismInspectorComponent implements OnInit {
      */
     selectedComparisonIndex: number;
 
+    /**
+     * If true, the plagiarism detection will return the generated jplag report.
+     */
+    generateJPlagReport = false;
+
     constructor(
         private route: ActivatedRoute,
         private router: Router,
