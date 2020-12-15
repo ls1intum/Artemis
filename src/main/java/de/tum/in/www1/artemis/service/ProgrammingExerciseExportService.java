@@ -28,12 +28,14 @@ import jplag.JPlag;
 import jplag.JPlagOptions;
 import jplag.JPlagResult;
 import jplag.options.LanguageOption;
+import jplag.reporting.Report;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
@@ -194,6 +196,60 @@ public class ProgrammingExerciseExportService {
         textPlagiarismResult.setExerciseId(programmingExercise.getId());
 
         return textPlagiarismResult;
+    }
+
+    /**
+     * downloads all repos of the exercise and runs JPlag
+     *
+     * @param programmingExerciseId the id of the programming exercises which should be checked
+     * @return a zip file that can be returned to the client
+     * @throws ExitException is thrown if JPlag exits unexpectedly
+     * @throws IOException is thrown for file handling errors
+     */
+    public File checkPlagiarismWithJPlagReport(long programmingExerciseId) throws ExitException, IOException {
+        // TODO: offer the following options in the client
+        // 1) filter empty submissions, i.e. repositories with no student commits
+        // 2) filter submissions with a result score of 0%
+
+        final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
+
+        downloadRepositories(programmingExercise);
+
+        final var output = "output";
+        final var projectKey = programmingExercise.getProjectKey();
+
+        final var outputFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey + "-" + output;
+        final var outputFolderFile = new File(outputFolder);
+
+        outputFolderFile.mkdirs();
+
+        final var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
+        final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
+
+        final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
+
+        JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
+        options.setBaseCodeSubmissionName(templateRepoName);
+
+        JPlag jplag = new JPlag(options);
+        JPlagResult result = jplag.run();
+
+        Report jplagReport = new Report(outputFolderFile);
+        jplagReport.writeResult(result);
+
+        final var zipFilePath = Paths.get(REPO_DOWNLOAD_CLONE_PATH, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
+                + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + "-Jplag-Analysis-Output.zip");
+        zipFileService.createZipFileWithFolderContent(zipFilePath, Paths.get(outputFolder));
+        fileService.scheduleForDeletion(zipFilePath, 5);
+
+        // cleanup
+        if (outputFolderFile.exists()) {
+            FileSystemUtils.deleteRecursively(outputFolderFile);
+        }
+
+        cleanupRepositories(programmingExercise);
+
+        return new File(zipFilePath.toString());
     }
 
     private LanguageOption getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
