@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 
 @Injectable({ providedIn: 'root' })
-export class StaticHtmlContentService {
+export class StaticContentService {
     private readonly staticContentUrl = SERVER_API_URL + 'public/content/';
 
     constructor(private http: HttpClient) {}
@@ -16,5 +16,13 @@ export class StaticHtmlContentService {
      */
     getStaticHtmlFromArtemisServer(filename: string): Observable<SafeHtml> {
         return this.http.get(`${this.staticContentUrl}${filename}`, { responseType: 'text' });
+    }
+
+    /**
+     * Gets the content of the file.
+     * @param filename The name of the file as a string.
+     */
+    getStaticJsonFromArtemisServer(filename: string): Observable<any> {
+        return this.http.get(`${this.staticContentUrl}${filename}`);
     }
 }

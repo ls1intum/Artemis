@@ -9,9 +9,6 @@ import { filter, tap } from 'rxjs/operators';
     templateUrl: './footer.component.html',
 })
 export class FooterComponent implements OnInit {
-    private readonly issueBaseUrl = 'https://github.com/ls1intum/Artemis/issues/new?projects=ls1intum/1';
-    readonly bugReportUrl = `${this.issueBaseUrl}&labels=bug&template=bug-report.md`;
-    readonly featureRequestUrl = `${this.issueBaseUrl}&labels=feature&template=feature-request.md`;
     readonly releaseNotesUrl = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
 
     email: string;
