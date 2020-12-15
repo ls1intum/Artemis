@@ -155,7 +155,8 @@ Some guidelines:
 1. A component should be tested in isolation without any dependencies if possible. Do not simply import the whole production module. Only import real dependencies if it is essential for the test
    that the real dependency is used. Instead mock pipes, directives and components that the component under test depends upon. A very useful technique is writing stubs for child components: https://angular.io/guide/testing-components-scenarios#stubbing-unneeded-components.
    This has the benefit of being able to test the interaction with the child components.
-   -  Services should be mocked if they simply return some data from the server. However, if the service has some form of logic included (for exampling converting dates to moments),
+
+   *  Services should be mocked if they simply return some data from the server. However, if the service has some form of logic included (for exampling converting dates to moments),
       and this logic is important for the component, do not mock the service methods, but mock the http requests and responses from the api. This allows us to test the interaction
       of the component with the service and in addition test that the service logic works correctly.
 
