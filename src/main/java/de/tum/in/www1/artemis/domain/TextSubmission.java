@@ -90,6 +90,7 @@ public class TextSubmission extends Submission {
         this.blocks = textBlocks;
     }
 
+    @Override
     public boolean isEmpty() {
         return text == null || text.isEmpty();
     }
