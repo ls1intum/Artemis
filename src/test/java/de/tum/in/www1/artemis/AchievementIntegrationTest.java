@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AchievementService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -76,59 +77,52 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     public void resetDatabase() {
         database.resetDatabase();
     }
-    // TESTS ARE DISABLED TEMPORARILY AS THE ACHIEVEMENT RESOURCE IS ALSO MODIFIED FOR EASIER CLIENT TESTING AND THESE TESTS WOULD ONLY FAIL
-    // @Test
-    // @WithMockUser(value = "student1", roles = "ADMIN")
-    // public void testDeleteUser() throws Exception {
-    // initTest();
-    // request.delete("/api/users/" + student.getLogin(), HttpStatus.OK);
-    // var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/earned-achievements", HttpStatus.NOT_FOUND, Set.class);
-    // assertThat(achievementsFirstCourse).as("Achievements for user should be null in course " + firstCourse.getId()).isNullOrEmpty();
-    // var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/earned-achievements", HttpStatus.NOT_FOUND, Set.class);
-    // assertThat(achievementsSecondCourse).as("Achievements for user should be null in course " + secondCourse.getId()).isNullOrEmpty();
-    // }
-    //
-    // @Test
-    // @WithMockUser(value = "student1", roles = "ADMIN")
-    // public void testDeleteCourse() throws Exception {
-    // initTest();
-    // var courseId = firstCourse.getId();
-    // request.delete("/api/courses/" + courseId, HttpStatus.OK);
-    // var achievementsFirstCourse = request.get("/api/courses/" + courseId + "/earned-achievements", HttpStatus.OK, Set.class);
-    // assertThat(achievementsFirstCourse.size()).as("Achievements in course " + courseId + " get deleted if course " + courseId + " is deleted").isEqualTo(0);
-    // var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/earned-achievements", HttpStatus.OK, Set.class);
-    // assertThat(achievementsSecondCourse.size()).as("Achievements in course " + secondCourse.getId() + " do not get deleted if course " + courseId + " is deleted")
-    // .isEqualTo(12);
-    // }
-    //
-    // @Test
-    // @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    // public void testDeleteExercise() throws Exception {
-    // initTest();
-    // request.delete("/api/modeling-exercises/" + firstExercise.getId(), HttpStatus.OK);
-    // var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/earned-achievements", HttpStatus.OK, Set.class);
-    // assertThat(achievementsFirstCourse.size()).as("Number of achievements for user should be 12 in course " + firstCourse.getId()).isEqualTo(12);
-    // var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/earned-achievements", HttpStatus.OK, Set.class);
-    // assertThat(achievementsSecondCourse.size()).as("Number of achievements for user should be 12 in course " + secondCourse.getId()).isEqualTo(12);
-    // }
-    //
-    // @Test
-    // @WithMockUser(value = "student1", roles = "USER")
-    // public void testRewardAchievement() throws Exception {
-    // var submission = ModelFactory.generateModelingSubmission("", true);
-    // submission = database.addModelingSubmission(firstExercise, submission, student.getLogin());
-    // var result = ModelFactory.generateResult(true, 100).participation(submission.getParticipation());
-    // result.setSubmission(submission);
-    // resultRepository.save(result);
-    // var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/earned-achievements", HttpStatus.OK, Set.class);
-    // assertThat(achievementsFirstCourse.size()).as("User got three achievements").isEqualTo(3);
-    // }
 
-    // FAKE TEST THAT IS ALSO GOING TO BE REMOVED AGAIN ONCE THE CLIENT IS SUCCESSFULLY TESTED
+    @Test
+    @WithMockUser(value = "student1", roles = "ADMIN")
+    public void testDeleteUser() throws Exception {
+        initTest();
+        request.delete("/api/users/" + student.getLogin(), HttpStatus.OK);
+        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/earned-achievements", HttpStatus.NOT_FOUND, Set.class);
+        assertThat(achievementsFirstCourse).as("Achievements for user should be null in course " + firstCourse.getId()).isNullOrEmpty();
+        var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/earned-achievements", HttpStatus.NOT_FOUND, Set.class);
+        assertThat(achievementsSecondCourse).as("Achievements for user should be null in course " + secondCourse.getId()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "ADMIN")
+    public void testDeleteCourse() throws Exception {
+        initTest();
+        var courseId = firstCourse.getId();
+        request.delete("/api/courses/" + courseId, HttpStatus.OK);
+        var achievementsFirstCourse = request.get("/api/courses/" + courseId + "/earned-achievements", HttpStatus.OK, Set.class);
+        assertThat(achievementsFirstCourse.size()).as("Achievements in course " + courseId + " get deleted if course " + courseId + " is deleted").isEqualTo(0);
+        var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/earned-achievements", HttpStatus.OK, Set.class);
+        assertThat(achievementsSecondCourse.size()).as("Achievements in course " + secondCourse.getId() + " do not get deleted if course " + courseId + " is deleted")
+                .isEqualTo(12);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteExercise() throws Exception {
+        initTest();
+        request.delete("/api/modeling-exercises/" + firstExercise.getId(), HttpStatus.OK);
+        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/earned-achievements", HttpStatus.OK, Set.class);
+        assertThat(achievementsFirstCourse.size()).as("Number of achievements for user should be 12 in course " + firstCourse.getId()).isEqualTo(12);
+        var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/earned-achievements", HttpStatus.OK, Set.class);
+        assertThat(achievementsSecondCourse.size()).as("Number of achievements for user should be 12 in course " + secondCourse.getId()).isEqualTo(12);
+    }
+
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void fakeTest() {
-        assertThat(true).isTrue();
+    public void testRewardAchievement() throws Exception {
+        var submission = ModelFactory.generateModelingSubmission("", true);
+        submission = database.addModelingSubmission(firstExercise, submission, student.getLogin());
+        var result = ModelFactory.generateResult(true, 100).participation(submission.getParticipation());
+        result.setSubmission(submission);
+        resultRepository.save(result);
+        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/earned-achievements", HttpStatus.OK, Set.class);
+        assertThat(achievementsFirstCourse.size()).as("User got three achievements").isEqualTo(3);
     }
 
     private void initTest() throws Exception {
