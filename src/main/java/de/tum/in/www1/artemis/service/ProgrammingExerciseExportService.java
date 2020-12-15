@@ -282,7 +282,7 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
-     * Checks out the repository fo the given participation, zips it and adds the path to the given list of already
+     * Checks out the repository for the given participation, zips it and adds the path to the given list of already
      * zipped repos.
      *
      * @param programmingExercise The programming exercise for the participation
