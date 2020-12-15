@@ -30,7 +30,7 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
     public lineChartType: ChartType = 'line';
     public amountOfStudents: string;
     public chartName: string;
-    public barChartLegend = true;
+    public barChartLegend = false;
     public chartTime: any;
     // Data
     public barChartLabels: Label[] = [];
@@ -168,6 +168,11 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
 
     private createCharts() {
         this.barChartOptions = {
+            layout: {
+                padding: {
+                    top: 20,
+                },
+            },
             responsive: true,
             hover: {
                 animationDuration: 0,
@@ -198,10 +203,6 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
                         },
                     },
                 ],
-            },
-            legend: {
-                display: true,
-                align: 'start',
             },
         };
     }
