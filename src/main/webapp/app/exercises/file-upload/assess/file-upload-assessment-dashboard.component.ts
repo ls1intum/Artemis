@@ -10,9 +10,9 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
-import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, refreshLatestResultsBySubmissionMap, Submission } from 'app/entities/submission.model';
 import { SortService } from 'app/shared/service/sort.service';
-
+import { Result } from 'app/entities/result.model';
 @Component({
     templateUrl: './file-upload-assessment-dashboard.component.html',
 })
@@ -24,9 +24,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     predicate = 'id';
     reverse = false;
 
-    // todo NR SE remove after refactoring hmtl function calls
-    getLatestSubmissionResult = getLatestSubmissionResult;
-
+    private latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
     private cancelConfirmationText: string;
 
     constructor(
@@ -89,6 +87,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
                 )
                 .subscribe((submissions: FileUploadSubmission[]) => {
                     this.submissions = submissions;
+                    this.latestResultsBySubmissionMap = refreshLatestResultsBySubmissionMap(this.submissions);
                     this.filteredSubmissions = submissions;
                     if (submissions.length > 0) {
                         resolve();
