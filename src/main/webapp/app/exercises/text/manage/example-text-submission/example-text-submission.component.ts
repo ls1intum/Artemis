@@ -6,7 +6,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
-import { HighlightColors } from 'app/exercises/text/assess/highlight-colors';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { Interactable } from '@interactjs/core/Interactable';
@@ -23,6 +22,9 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { notUndefined } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -31,19 +33,15 @@ import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entiti
     styleUrls: ['./example-text-submission.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
+export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, AfterViewInit {
     isNewSubmission: boolean;
     areNewAssessments = true;
     exerciseId: number;
     exampleSubmission = new ExampleSubmission();
-    textSubmission = new TextSubmission();
-    assessments: Feedback[] = [];
     assessmentsAreValid = false;
-    result: Result;
+    result?: Result;
     totalScore: number;
     invalidError?: string;
-    exercise: TextExercise;
-    isAtLeastInstructor = false;
     readOnly: boolean;
     toComplete: boolean;
 
@@ -54,29 +52,43 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     interactResizableAssessment: Interactable;
     interactResizableTop: Interactable;
 
-    public getColorForIndex = HighlightColors.forIndex;
-
     private exampleSubmissionId: number;
+    private unreferencedFeedback: Feedback[] = [];
     constructor(
+        jhiAlertService: JhiAlertService,
+        accountService: AccountService,
+        assessmentsService: TextAssessmentsService,
+        structuredGradingCriterionService: StructuredGradingCriterionService,
         private exerciseService: ExerciseService,
         private textSubmissionService: TextSubmissionService,
         private exampleSubmissionService: ExampleSubmissionService,
-        private assessmentsService: TextAssessmentsService,
         private tutorParticipationService: TutorParticipationService,
-        private jhiAlertService: JhiAlertService,
-        private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,
         private location: Location,
         private artemisMarkdown: ArtemisMarkdownService,
         private resultService: ResultService,
         private guidedTourService: GuidedTourService,
-    ) {}
+    ) {
+        super(jhiAlertService, accountService, assessmentsService, structuredGradingCriterionService);
+        this.textBlockRefs = [];
+        this.unusedTextBlockRefs = [];
+        this.submission = new TextSubmission();
+    }
+
+    private get referencedFeedback(): Feedback[] {
+        return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
+    }
+
+    private get assessments(): Feedback[] {
+        return [...this.referencedFeedback, ...this.unreferencedFeedback];
+    }
 
     /**
      * Reads route params and loads the example submission on init.
      */
-    ngOnInit(): void {
+    async ngOnInit(): Promise<void> {
+        await super.ngOnInit();
         // (+) converts string 'id' to a number
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const exampleSubmissionId = this.route.snapshot.paramMap.get('exampleSubmissionId');
@@ -199,33 +211,25 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
 
         this.exampleSubmissionService.get(this.exampleSubmissionId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body!;
-            this.textSubmission = this.exampleSubmission.submission as TextSubmission;
+            this.submission = this.exampleSubmission.submission as TextSubmission;
 
             // Do not load the results when we have to assess the submission. The API will not provide it anyway
             // if we are not instructors
             if (this.toComplete) {
                 return;
             }
-
-            this.assessmentsService.getExampleResult(this.exerciseId, this.textSubmission.id!).subscribe((result) => {
-                this.result = result;
-                this.assessments = this.result?.feedbacks || [];
-                this.areNewAssessments = this.assessments.length <= 0;
-                this.checkScoreBoundaries();
-            });
+            this.fetchExampleResult();
         });
     }
 
-    /**
-     * Creates or updates the example submission.
-     */
-    createUpdateExampleTextSubmission() {
-        this.textSubmission.exampleSubmission = true;
-        if (this.isNewSubmission) {
-            this.createNewExampleTextSubmission();
-        } else {
-            this.updateExampleTextSubmission();
-        }
+    private fetchExampleResult() {
+        this.assessmentsService.getExampleResult(this.exerciseId, this.submission?.id!).subscribe((result) => {
+            this.result = result;
+            this.submission = result.submission;
+            this.prepareTextBlocksAndFeedbacks();
+            this.areNewAssessments = this.assessments.length <= 0;
+            this.validateFeedback();
+        });
     }
 
     /**
@@ -263,30 +267,37 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         }
     }
 
-    private createNewExampleTextSubmission() {
+    /**
+     * Creates the example submission.
+     */
+    createNewExampleTextSubmission() {
         const newExampleSubmission = new ExampleSubmission();
-        newExampleSubmission.submission = this.textSubmission;
+        newExampleSubmission.submission = this.submission!;
         newExampleSubmission.exercise = this.exercise;
 
         this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body!;
             this.exampleSubmission.exercise = this.exercise;
             this.exampleSubmissionId = this.exampleSubmission.id!;
-            this.textSubmission = this.exampleSubmission.submission as TextSubmission;
+            this.submission = this.exampleSubmission.submission as TextSubmission;
             this.isNewSubmission = false;
 
             // Update the url with the new id, without reloading the page, to make the history consistent
             const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
             this.location.go(newUrl);
 
-            this.resultService.createNewExampleResult(this.textSubmission.id!).subscribe((response: HttpResponse<Result>) => {
+            this.resultService.createNewExampleResult(this.submission.id!).subscribe((response: HttpResponse<Result>) => {
                 this.result = response.body!;
                 this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
+                this.fetchExampleResult();
             }, this.onError);
         }, this.onError);
     }
 
-    private updateExampleTextSubmission() {
+    /**
+     * Updates the example submission.
+     */
+    updateExampleTextSubmission() {
         this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body!;
 
@@ -295,63 +306,15 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     }
 
     /**
-     * Adds a feedback item.
-     * @param assessmentText text of feedback that should be added as assessment of type {string}
-     */
-    public addAssessment(assessmentText: string): void {
-        const assessment = new Feedback();
-        assessment.reference = assessmentText;
-        this.assessments.push(assessment);
-        this.checkScoreBoundaries();
-    }
-
-    /**
-     * Delete a feedback item from all feedback items.
-     * @param assessmentToDelete feedback that should be deleted of type {Feedback}
-     */
-    public deleteAssessment(assessmentToDelete: Feedback): void {
-        this.assessments = this.assessments.filter((elem) => elem !== assessmentToDelete);
-        this.checkScoreBoundaries();
-    }
-
-    /**
-     * Calculates the total score of the current assessment.
-     * Returns an error if the total score cannot be calculated
-     * because a score is not a number/empty.
-     */
-    public checkScoreBoundaries() {
-        if (!this.assessments || this.assessments.length === 0) {
-            this.totalScore = 0;
-            this.assessmentsAreValid = true;
-            return;
-        }
-
-        const credits = this.assessments.map((assessment) => assessment.credits);
-
-        if (!credits.every((credit) => credit != undefined && !isNaN(credit))) {
-            this.invalidError = 'The score field must be a number and can not be empty!';
-            this.assessmentsAreValid = false;
-            return;
-        }
-
-        this.totalScore = credits.reduce((a, b) => a! + b!, 0)!;
-        this.assessmentsAreValid = true;
-        this.invalidError = undefined;
-        if (this.guidedTourService.currentTour && this.toComplete) {
-            this.guidedTourService.updateAssessmentResult(this.assessments.length, this.totalScore);
-        }
-    }
-
-    /**
      * Checks if the score boundaries have been respected and save the assessment.
      */
     public saveAssessments(): void {
-        this.checkScoreBoundaries();
+        this.validateFeedback();
         if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
-        this.assessmentsService.saveExampleAssessment(this.assessments, this.exampleSubmission.id!).subscribe((response) => {
+        this.assessmentsService.saveExampleAssessment(this.exampleSubmission.id!, this.assessments, this.textBlocksWithFeedback).subscribe((response) => {
             this.result = response.body!;
             this.areNewAssessments = false;
             this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
@@ -363,19 +326,17 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
      * Otherwise redirects back to the exercise's edit view either for exam exercises or normal exercises.
      */
     async back() {
+        const courseId = this.course?.id;
         // check if exam exercise
-        if (!this.exercise.course) {
-            const courseId = this.exercise.exerciseGroup?.exam?.course?.id;
-            const examId = this.exercise.exerciseGroup?.exam?.id;
-            const exerciseGroupId = this.exercise.exerciseGroup?.id;
+        if (!!this.exercise?.exerciseGroup) {
+            const examId = this.exercise.exerciseGroup.exam?.id;
+            const exerciseGroupId = this.exercise.exerciseGroup.id;
             if (this.readOnly || this.toComplete) {
                 await this.router.navigate([`/course-management/${courseId}/exercises/${this.exerciseId}/tutor-dashboard`]);
             } else {
                 await this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, 'text-exercises', this.exerciseId, 'edit']);
             }
         } else {
-            const courseId = this.exercise.course!.id;
-
             if (this.readOnly || this.toComplete) {
                 this.router.navigate([`/course-management/${courseId}/exercises/${this.exerciseId}/tutor-dashboard`]);
             } else {
@@ -390,7 +351,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
      * The tutor is informed if the given points of the assessment are fine, too low or too high.
      */
     checkAssessment() {
-        this.checkScoreBoundaries();
+        this.validateFeedback();
         if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
@@ -421,6 +382,18 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     }
 
     /**
+     * Validate the feedback of the assessment
+     */
+    validateFeedback(): void {
+        this.assessmentsAreValid = this.referencedFeedback.filter(Feedback.isValid).length > 0;
+        this.totalScore = this.computeTotalScore(this.assessments);
+
+        if (this.guidedTourService.currentTour && this.toComplete) {
+            this.guidedTourService.updateAssessmentResult(this.assessments.length, this.totalScore);
+        }
+    }
+
+    /**
      * After the tutor declared that he read and understood the example submission a corresponding submission will be added to the
      * tutor participation of the exercise. Then a success alert is invoked and the user gets redirected back.
      */
@@ -433,5 +406,11 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
 
     private onError(error: string) {
         this.jhiAlertService.error(error);
+    }
+
+    private prepareTextBlocksAndFeedbacks() {
+        console.log(this.submission?.blocks, this.result?.feedbacks);
+        const matchBlocksWithFeedbacks = TextAssessmentsService.matchBlocksWithFeedbacks(this.submission?.blocks || [], this.result?.feedbacks || []);
+        this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
     }
 }

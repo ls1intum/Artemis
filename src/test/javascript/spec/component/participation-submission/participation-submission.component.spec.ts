@@ -12,8 +12,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
-import { TextAssessmentEditorComponent } from 'app/exercises/text/assess/text-assessment-editor/text-assessment-editor.component';
-import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';
 import { AssessmentDetailComponent } from 'app/assessment/assessment-detail/assessment-detail.component';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -50,8 +48,6 @@ describe('ParticipationSubmissionComponent', () => {
             declarations: [
                 ParticipationSubmissionComponent,
                 MockComponent(UpdatingResultComponent),
-                MockComponent(TextAssessmentEditorComponent),
-                MockComponent(ResizableInstructionsComponent),
                 MockComponent(AssessmentDetailComponent),
                 MockComponent(ComplaintsForTutorComponent),
             ],

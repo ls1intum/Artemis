@@ -83,4 +83,12 @@ public class TextBlockService {
         return blocks;
     }
 
+    /**
+     * Save Iterable collection of text blocks.
+     * @param textBlocks Iterable of TextBlocks.
+     */
+    public void saveAll(Iterable<TextBlock> textBlocks) {
+        textBlockRepository.saveAll(textBlocks);
+    }
+
 }

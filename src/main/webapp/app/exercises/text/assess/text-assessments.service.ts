@@ -78,10 +78,11 @@ export class TextAssessmentsService {
             .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
-    saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<EntityResponseType> {
+    saveExampleAssessment(exampleSubmissionId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/text-submissions/${exampleSubmissionId}/example-assessment`;
+        const body = TextAssessmentsService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
-            .put<Result>(url, feedbacks, { observe: 'response' })
+            .put<Result>(url, body, { observe: 'response' })
             .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
