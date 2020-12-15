@@ -13,8 +13,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingAssessmentRepoExportService } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { Exercise } from 'app/entities/exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -43,7 +41,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, FormDateTimePickerModule, ArtemisProgrammingAssessmentModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisProgrammingAssessmentModule],
             providers: [
                 ExerciseService,
                 ProgrammingAssessmentRepoExportService,
