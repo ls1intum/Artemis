@@ -24,6 +24,13 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                         pageTitle: 'global.menu.account.main',
                     },
                 },
+                {
+                    path: 'about',
+                    loadChildren: () => import('./core/about-us/artemis-about-us.module').then((module) => module.ArtemisAboutUsModule),
+                    data: {
+                        pageTitle: 'aboutUs',
+                    },
+                },
                 // ===== COURSE MANAGEMENT =====
                 {
                     path: 'course-management',
