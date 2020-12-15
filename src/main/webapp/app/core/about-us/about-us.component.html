@@ -1,0 +1,60 @@
+<div class="page">
+    <div class="card-title ml-2">
+        <h2 class="mb-3 mt-3 font-weight-bold">{{ 'aboutUsOverview.title' | translate }}</h2>
+    </div>
+    <div class="mb-5 ml-2">
+        <h3 class="mb-3 font-weight-bold">{{ 'aboutUsOverview.feature' | translate }}</h3>
+        <h6>{{ 'aboutUsOverview.exercises.title' | translate }}</h6>
+        <ul>
+            <li>{{ 'aboutUsOverview.exercises.detail.programmingExercises' | translate }}</li>
+            <li>{{ 'aboutUsOverview.exercises.detail.quiz' | translate }}</li>
+            <li>{{ 'aboutUsOverview.exercises.detail.modelingExercises' | translate }}</li>
+            <li>{{ 'aboutUsOverview.exercises.detail.textExercises' | translate }}</li>
+            <li>{{ 'aboutUsOverview.exercises.detail.uploadExercises' | translate }}</li>
+        </ul>
+    </div>
+
+    <div class="row ml-4 mr-4 mb-4" *ngIf="data && data.projectManagers">
+        <div class="project-manager" *ngFor="let pm of data.projectManagers">
+            <div class="card-body">
+                <div class="row ml-1">
+                    <div class="col-md-4"><img class="img-fluid w-100 rounded" [src]="SERVER_API_URL + pm.photoDirectory" /></div>
+                    <div class="col-md-8">
+                        <h4 class="font-weight-bold">{{ pm.fullName }}</h4>
+                        <h5>{{ pm.role }}</h5>
+                        <span>
+                            <i></i>
+                            <a href="{{ pm.website }}" target="_blank">Website</a></span
+                        >
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div>
+        <h3 class="mb-3 ml-2 font-weight-bold">{{ 'aboutUsOverview.getInTouch' | translate }}</h3>
+        <span jhiTranslate="releaseNotes"></span>
+        <ul>
+            <li>
+                <a [href]="bugReportUrl" rel="noreferrer noopener" class="footer-text ml-3" target="_blank">{{ 'bug' | translate }}</a>
+            </li>
+            <li>
+                <a [href]="featureRequestUrl" class="footer-text ml-3" target="_blank"> {{ 'feature' | translate }}</a>
+            </li>
+            <li>
+                <a [href]="email" class="footer-text ml-3" target="_top"> {{ 'contact' | translate }}</a>
+            </li>
+        </ul>
+    </div>
+    <div class="mt-5 ml-2 mr-2" *ngIf="data && data.contributors">
+        <h3 class="font-weight-bold">{{ 'aboutUsOverview.contributors' | translate }}</h3>
+        <div class="row">
+            <div class="contributor text-center" *ngFor="let contributor of data.contributors">
+                <img class="img-fluid" [src]="SERVER_API_URL + contributor.photoDirectory" />
+                <div class="text-center">
+                    <small class="font-weight-bold">{{ contributor.fullName }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

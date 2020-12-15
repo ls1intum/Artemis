@@ -1,8 +1,6 @@
 <div class="row footer fixed d-none d-md-flex">
     <div class="guided-tour col-sm-6">
-        <a [href]="bugReportUrl" jhiTranslate="bug" rel="noreferrer noopener" class="footer-text" target="_blank"></a>
-        <a [href]="featureRequestUrl" jhiTranslate="feature" class="footer-text ml-3" target="_blank"></a>
-        <a [href]="email" jhiTranslate="contact" class="footer-text ml-3" target="_top"></a>
+        <a [routerLink]="['/about']" jhiTranslate="aboutUs" class="footer-text"></a>
     </div>
 
     <div class="col-sm-6 text-md-right">
@@ -14,7 +12,7 @@
 
 <div class="row footer d-md-none">
     <div class="col-12">
-        <a [href]="email" jhiTranslate="contact" class="footer-text ml-3" target="_top"></a>
+        <a [routerLink]="['/about']" jhiTranslate="aboutUs" class="footer-text"></a>
         <a [routerLink]="['/datenschutz']" jhiTranslate="legal.privacy.title" class="footer-text ml-3"></a>
         <a [href]="imprintUrl" target="_blank" rel="noreferrer noopener" jhiTranslate="legal.imprint.title" class="footer-text ml-3"></a>
     </div>
