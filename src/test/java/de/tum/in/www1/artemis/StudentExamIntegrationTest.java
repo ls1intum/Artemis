@@ -574,7 +574,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     var result = studentParticipation.findLatestSubmission().get().getLatestResult();
                     assertThat(result).isNotNull();
                     assertThat(result.getScore()).isEqualTo(0);
-                    assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+                    assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                     result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
                     assertThat(result.getFeedbacks()).isNotEmpty();
                     assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("You did not submit your exam");

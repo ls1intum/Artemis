@@ -289,7 +289,7 @@ public class StudentExamService {
                     result.setCompletionDate(ZonedDateTime.now());
                     result.setScore(0L);
                     result.rated(true);
-                    result.setAssessmentType(AssessmentType.AUTOMATIC);
+                    result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
                     result = submissionService.saveNewResult(latestSubmission, result);
 
                     var feedback = new Feedback();
