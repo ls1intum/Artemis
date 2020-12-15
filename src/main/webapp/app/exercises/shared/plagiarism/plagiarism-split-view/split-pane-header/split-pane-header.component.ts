@@ -1,17 +1,29 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 
 @Component({
     selector: 'jhi-split-pane-header',
     templateUrl: './split-pane-header.component.html',
     styleUrls: ['./split-pane-header.component.scss'],
 })
-export class SplitPaneHeaderComponent {
+export class SplitPaneHeaderComponent implements OnChanges {
     @Input() files: string[];
     @Input() studentLogin: string;
     @Output() selectFile = new EventEmitter<string>();
 
     public showFiles = false;
     public activeFileIndex = 0;
+
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes.files) {
+            const files = changes.files.currentValue;
+
+            this.activeFileIndex = 0;
+
+            if (this.hasFiles()) {
+                this.selectFile.emit(files[0]);
+            }
+        }
+    }
 
     getActiveFile() {
         return this.hasFiles() && this.activeFileIndex < this.files.length && this.files[this.activeFileIndex];

@@ -1,6 +1,8 @@
 <jhi-split-pane-header [files]="files" (selectFile)="handleFileSelect($event)" studentLogin="{{ plagiarismSubmission?.studentLogin }}"></jhi-split-pane-header>
 
-<div class="programming-submission-viewer" *ngIf="!loading">{{ this.fileContent }}</div>
+<div class="programming-submission-viewer" [ngClass]="{ 'no-file': !fileContent }" *ngIf="!loading">
+    {{ this.fileContent || ('artemisApp.plagiarism.no-file-selected' | translate) }}
+</div>
 
 <div class="plagiarism-submission-loader" *ngIf="loading">
     <div class="spinner-border text-primary" role="status">

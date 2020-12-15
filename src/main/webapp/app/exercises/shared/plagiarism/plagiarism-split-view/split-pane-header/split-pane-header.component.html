@@ -10,6 +10,7 @@
 
     <ul *ngIf="showFiles" class="split-pane-header-files">
         <li *ngFor="let file of files; let idx = index" class="split-pane-header-file" (click)="handleFileSelect(file, idx)">{{ file }}</li>
-        <li *ngIf="!files || files.length === 0">No files found</li>
+
+        <li *ngIf="!hasFiles()">{{ 'artemisApp.plagiarism.no-files-found' | translate }}</li>
     </ul>
 </div>

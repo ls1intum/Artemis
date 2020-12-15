@@ -26,8 +26,6 @@ export class ProgrammingSubmissionViewerComponent implements OnChanges {
 
             const currentPlagiarismSubmission: PlagiarismSubmission<TextSubmissionElement> = changes.plagiarismSubmission.currentValue;
 
-            this.fileContent = 'public static void main() {}';
-
             this.repositoryService.setDomain([DomainType.PARTICIPATION, { id: currentPlagiarismSubmission.submissionId }]);
             this.repositoryService.getRepositoryContent().subscribe(
                 (files) => {

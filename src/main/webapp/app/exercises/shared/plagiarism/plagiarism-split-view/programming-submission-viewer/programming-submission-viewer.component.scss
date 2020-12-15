@@ -4,6 +4,10 @@
     padding: 0.5rem;
     font-family: monospace;
     white-space: pre;
+
+    &.no-file {
+        opacity: 0.5;
+    }
 }
 
 .plagiarism-submission-loader {
