@@ -552,7 +552,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGradeUnsubmittedStudentExams() throws Exception {
+    public void testAssessUnsubmittedStudentExams() throws Exception {
         prepareStudentExamsForConduction();
         exam2.setStartDate(ZonedDateTime.now().minusMinutes(10));
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(8));
@@ -571,9 +571,14 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
-                    assertThat(studentParticipation.findLatestSubmission().get().getLatestResult()).isNotNull();
-                    assertThat(studentParticipation.findLatestSubmission().get().getLatestResult().getScore()).isEqualTo(0);
-                    assertThat(studentParticipation.findLatestSubmission().get().getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+                    var result = studentParticipation.findLatestSubmission().get().getLatestResult();
+                    assertThat(result).isNotNull();
+                    assertThat(result.getScore()).isEqualTo(0);
+                    assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+                    result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
+                    assertThat(result.getFeedbacks()).isNotEmpty();
+                    assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("You did not submit your exam");
+                    assertThat(result.getFeedbacks().get(0).getText()).isEqualTo("You did not submit your exam");
                 }
                 else {
                     fail("StudentParticipation which is part of an unsubmitted StudentExam contains no submission or result after automatic assessment of unsubmitted student exams call.");
@@ -584,7 +589,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGradeUnsubmittedStudentExams_forbidden() throws Exception {
+    public void testAssessUnsubmittedStudentExams_forbidden() throws Exception {
         prepareStudentExamsForConduction();
         exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(1));
@@ -597,7 +602,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGradeUnsubmittedStudentExams_badRequest() throws Exception {
+    public void testAssessUnsubmittedStudentExams_badRequest() throws Exception {
         prepareStudentExamsForConduction();
         exam2 = examRepository.save(exam2);
 
@@ -607,7 +612,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSubmitExamWithSubmissionResult() throws Exception {
+    public void testAssessExamWithSubmissionResult() throws Exception {
 
         List<StudentExam> studentExams = prepareStudentExamsForConduction();
 

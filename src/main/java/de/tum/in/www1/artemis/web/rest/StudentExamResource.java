@@ -387,12 +387,14 @@ public class StudentExamResource {
     public ResponseEntity<Integer> automaticallyAssessUnsubmittedStudentExamsAndEmptySubmissions(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to automatically assess the not submitted student exams of the exam with id {}", examId);
 
-        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        final var exam = examService.findOne(examId);
+
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, exam);
         if (courseAndExamAccessFailure.isPresent()) {
             return forbidden();
         }
 
-        if (!this.examService.isExamOver(examId)) {
+        if (!this.examService.isExamOver(exam)) {
             // you can only grade not submitted exams if the exam is over
             return badRequest();
         }
