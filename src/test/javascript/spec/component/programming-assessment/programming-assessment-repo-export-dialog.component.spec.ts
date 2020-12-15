@@ -20,6 +20,12 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 chai.use(sinonChai);
 const expect = chai.expect;
 
+const createBlobHttpResponse = () => {
+    const blob = new Blob([JSON.stringify({ property: 'blob' })], { type: 'application/json' });
+    const headers = new HttpHeaders().set('filename', 'blobfile');
+    return new HttpResponse({ body: blob, headers });
+};
+
 describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     let comp: ProgrammingAssessmentRepoExportDialogComponent;
     let fixture: ComponentFixture<ProgrammingAssessmentRepoExportDialogComponent>;
@@ -79,11 +85,10 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     }));
 
     it('Export a repo by participations should download a zipped file', fakeAsync(() => {
-        const blob = new Blob([JSON.stringify({ property: 'blob' })], { type: 'application/json' });
-        const headers = new HttpHeaders().set('filename', 'blobfile');
-        const httpResponse = new HttpResponse({ body: blob, headers });
+        const httpResponse = createBlobHttpResponse();
         const exportReposStub = stub(repoExportService, 'exportReposByParticipations').returns(of(httpResponse));
         fixture.detectChanges();
+
         comp.exportRepos(exerciseId);
         tick();
         expect(comp.repositoryExportOptions.addParticipantName).to.be.false;
@@ -95,11 +100,10 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     it('Export a repo by participant identifiers should download a zipped file', fakeAsync(() => {
         comp.participationIdList = [];
         comp.participantIdentifierList = 'ALL';
-        const blob = new Blob([JSON.stringify({ property: 'blob' })], { type: 'application/json' });
-        const headers = new HttpHeaders().set('filename', 'blobfile');
-        const httpResponse = new HttpResponse({ body: blob, headers });
+        const httpResponse = createBlobHttpResponse();
         const exportReposStub = stub(repoExportService, 'exportReposByParticipantIdentifiers').returns(of(httpResponse));
         fixture.detectChanges();
+
         comp.exportRepos(exerciseId);
         tick();
         expect(comp.repositoryExportOptions.addParticipantName).to.be.true;
@@ -111,15 +115,13 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         const programmingExercise2 = new ProgrammingExercise(new Course(), undefined);
         programmingExercise2.id = 43;
         comp.selectedProgrammingExercises = [programmingExercise, programmingExercise2];
-
-        const blob = new Blob([JSON.stringify({ property: 'blob' })], { type: 'application/json' });
-        const headers = new HttpHeaders().set('filename', 'blobfile');
-        const httpResponse = new HttpResponse({ body: blob, headers });
+        const httpResponse = createBlobHttpResponse();
         const exportReposStub = stub(repoExportService, 'exportReposByParticipations').returns(of(httpResponse));
         fixture.detectChanges();
+
         comp.bulkExportRepos();
-        expect(comp.repositoryExportOptions.exportAllParticipants).to.be.true;
         tick();
+        expect(comp.repositoryExportOptions.exportAllParticipants).to.be.true;
         expect(comp.exportInProgress).to.be.false;
         expect(exportReposStub).to.be.calledTwice;
     }));
