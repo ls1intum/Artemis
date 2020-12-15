@@ -1,4 +1,4 @@
-<div class="row mb-5">
+<div class="row">
     <div class="col-md-2 d-flex">
         <div class="row flex-grow-1">
             <h3 class="col-md-8 d-flex">{{ chartName }}</h3>
@@ -18,3 +18,4 @@
     ></canvas>
     <fa-icon [icon]="'arrow-right'" size="3x" class="col-md-1 d-flex justify-content-start align-items-center" role="button" (click)="switchTimeSpan(RIGHT)"></fa-icon>
 </div>
+<h4 class="col-md-9 offset-md-2 text-center mt-2 mb-5">{{ chartTime }}</h4>

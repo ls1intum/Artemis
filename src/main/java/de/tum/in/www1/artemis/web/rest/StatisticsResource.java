@@ -35,7 +35,7 @@ public class StatisticsResource {
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("management/statistics/data")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Integer[]> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType) {
         log.debug("REST request to get graph data");
         return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType));

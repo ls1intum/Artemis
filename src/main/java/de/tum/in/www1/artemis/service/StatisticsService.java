@@ -96,8 +96,10 @@ public class StatisticsService {
             case RELEASED_EXERCISES -> {
                 return this.statisticsRepository.getReleasedExercises(startDate, endDate);
             }
+            default -> {
+                return new ArrayList<>();
+            }
         }
-        return new ArrayList<>();
     }
 
     /**
@@ -203,8 +205,7 @@ public class StatisticsService {
         switch (span) {
             case DAY -> {
                 Map<Integer, List<String>> users = new HashMap<>();
-                for (int i = 0; i < result.size(); i++) {
-                    Map<String, Object> listElement = result.get(i);
+                for (Map<String, Object> listElement : result) {
                     ZonedDateTime date = (ZonedDateTime) listElement.get("day");
                     String username = listElement.get("username").toString();
                     List<String> usersInSameSlot = users.get(date.getHour());
@@ -228,8 +229,7 @@ public class StatisticsService {
             }
             case WEEK, MONTH -> {
                 Map<Integer, List<String>> users = new HashMap<>();
-                for (int i = 0; i < result.size(); i++) {
-                    Map<String, Object> listElement = result.get(i);
+                for (Map<String, Object> listElement : result) {
                     ZonedDateTime date = (ZonedDateTime) listElement.get("day");
                     String username = listElement.get("username").toString();
                     List<String> usersInSameSlot = users.get(date.getDayOfMonth());
@@ -253,8 +253,7 @@ public class StatisticsService {
             }
             case YEAR -> {
                 Map<Month, List<String>> users = new HashMap<>();
-                for (int i = 0; i < result.size(); i++) {
-                    Map<String, Object> listElement = result.get(i);
+                for (Map<String, Object> listElement : result) {
                     ZonedDateTime date = (ZonedDateTime) listElement.get("day");
                     String username = listElement.get("username").toString();
                     List<String> usersInSameSlot = users.get(date.getMonth());
@@ -275,6 +274,9 @@ public class StatisticsService {
                     listElement.put("amount", (long) v.size());
                     returnList.add(listElement);
                 });
+            }
+            default -> {
+                return returnList;
             }
         }
         return returnList;

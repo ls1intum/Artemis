@@ -31,6 +31,7 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
     public amountOfStudents: string;
     public chartName: string;
     public barChartLegend = true;
+    public chartTime: any;
     // Data
     public barChartLabels: Label[] = [];
     public chartData: ChartDataSets[] = [];
@@ -56,7 +57,7 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
 
     ngOnInit() {
         this.amountOfStudents = this.translateService.instant('statistics.amountOfStudents');
-        this.chartName = this.translateService.instant(`statistics.${this.graphType}`);
+        this.chartName = this.translateService.instant(`statistics.${this.graphType.toString().toLowerCase()}`);
         this.initializeChart();
     }
 
@@ -78,23 +79,32 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
     }
 
     private createLabels(): void {
+        const now = moment();
+        let startDate;
+        let endDate;
         switch (this.currentSpan) {
             case SpanType.DAY:
                 for (let i = 0; i < 24; i++) {
                     this.barChartLabels[i] = `${i}:00-${i + 1}:00`;
                 }
+                this.chartTime = now.add(this.currentPeriod, 'days').format('DD.MM.YYYY');
                 break;
             case SpanType.WEEK:
                 this.barChartLabels = this.getWeekdays();
+                startDate = moment().add(this.currentPeriod, 'weeks').subtract(6, 'days').format('DD.MM.YYYY');
+                endDate = moment().add(this.currentPeriod, 'weeks').format('DD.MM.YYYY');
+                this.chartTime = startDate + ' - ' + endDate;
                 break;
             case SpanType.MONTH:
-                const startDate = moment().subtract(1 - this.currentPeriod, 'months');
-                const endDate = moment().subtract(-this.currentPeriod, 'months');
+                startDate = moment().subtract(1 - this.currentPeriod, 'months');
+                endDate = moment().subtract(-this.currentPeriod, 'months');
                 const daysInMonth = endDate.diff(startDate, 'days');
                 this.barChartLabels = this.getLabelsForMonth(daysInMonth);
+                this.chartTime = now.add(this.currentPeriod, 'months').format('MMMM YYYY');
                 break;
             case SpanType.YEAR:
                 this.barChartLabels = this.getMonths();
+                this.chartTime = now.add(this.currentPeriod, 'years').format('YYYY');
                 break;
         }
     }
@@ -188,6 +198,10 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
                         },
                     },
                 ],
+            },
+            legend: {
+                display: true,
+                align: 'start',
             },
         };
     }

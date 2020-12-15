@@ -8,23 +8,9 @@
             "year": "Jahr"
         },
         "title": "Benutzer Statistiken",
-        "days": " Tagen",
-        "loggedInUsers": "Anzahl an Anmeldungen unterschiedlicher Benutzer in den letzten ",
-        "totalSubmissions": "Anzahl an Abgaben in den letzten ",
-        "conductedExams": "Anzahl an abgehaltenen Klausuen in den letzten ",
-        "examParticipation": " -> und Anzahl Studenten, die daran teilgenommen haben: ",
-        "examRegistrations": " -> Die Anzahl an Studenten mit einer Registrierung für die Klausur: ",
-        "activeTutors": "Anzahl der Tutoren, die eine Bewertung erstellt haben in den letzten ",
-        "results": "Anzahl erstellter Resultate in den letzten ",
-        "resultFeedbacks": "-> mit der absoluten Feedbackanzahl: ",
-        "userLogins": "Benutzer Anmeldungen",
-        "SUBMISSIONS": "Abgaben",
-        "ACTIVE_USERS": "Aktive Nutzer",
-        "RELEASED_EXERCISES": "Veröffentlichte Aufgaben",
-        "exercises": {
-            "released": "Veröffentlichte Aufgaben",
-            "due": "Aufgaben mit einer Deadline"
-        }
+        "submissions": "Abgaben",
+        "active_users": "Aktive Nutzer",
+        "released_exercises": "Veröffentlichte Aufgaben"
     },
     "weekdays": {
         "monday": "Montag",
