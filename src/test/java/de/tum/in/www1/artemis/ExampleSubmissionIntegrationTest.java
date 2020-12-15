@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 
 public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -197,7 +198,9 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL).detailText("nice submission 1"));
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL).detailText("nice submission 2"));
-        request.putWithResponseBody("/api/text-assessments/text-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
+        var dto = new TextAssessmentDTO();
+        dto.setFeedbacks(feedbacks);
+        request.putWithResponseBody("/api/text-assessments/text-submissions/" + storedExampleSubmission.getId() + "/example-assessment", dto, Result.class, HttpStatus.OK);
         Result storedResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
