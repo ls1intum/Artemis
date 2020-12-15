@@ -289,6 +289,13 @@ public class StudentExamService {
         return numberOfAssessedSubmissions;
     }
 
+    public int assessEmptySubmissions(final Long examId) {
+        int numberOfAssessedSubmissions = 0;
+        User instructor = userService.getUser();
+        Set<StudentExam> studentExams = findAllByExamId(examId);
+        return numberOfAssessedSubmissions;
+    }
+
     private void lockStudentRepositories(User currentUser, StudentExam existingStudentExam) {
         // Only lock programming exercises when the student submitted early. Otherwise, the lock operations were already scheduled/executed.
         if (existingStudentExam.getIndividualEndDate() != null && ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDate())) {
