@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
@@ -69,14 +68,10 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     private final Optional<LdapUserService> ldapUserService;
 
-    private final AuditEventRepository auditEventRepository;
-
-    public JiraAuthenticationProvider(UserRepository userRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate, Optional<LdapUserService> ldapUserService,
-            AuditEventRepository auditEventRepository) {
+    public JiraAuthenticationProvider(UserRepository userRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate, Optional<LdapUserService> ldapUserService) {
         super(userRepository);
         this.restTemplate = restTemplate;
         this.ldapUserService = ldapUserService;
-        this.auditEventRepository = auditEventRepository;
     }
 
     /**

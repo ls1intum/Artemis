@@ -1,0 +1,18 @@
+{
+    "aboutUsOverview": {
+        "title": "Artemis: Interaktives Lernen mit individuellem Feedback",
+        "feature": "Haupteigenschaften",
+        "exercises": {
+            "title": "Artemis unterstützt folgendes",
+            "detail": {
+                "programmingExercises": "Programmierübungen mit Versionskontrolle und automatischer Bewertung mit Testfällen und kontinuierlicher Integration",
+                "quiz": "Quizübungen mit Multiple-Choice-, Drag & Drop- und Kurzantwort-Quizfragen",
+                "modelingExercises": "Modellierungsübungen mit halbautomatischer Bewertung unter Verwendung von Konzepten von Machine Learning",
+                "textExercises": "Textübungen mit manueller (und experimenteller halbautomatischer) Bewertung",
+                "uploadExercises": "Übungen mit Hochladen von Dateien mit manueller Bewertung"
+            }
+        },
+        "getInTouch": "Kontakt",
+        "contributors": "Andere Beiträger"
+    }
+}
