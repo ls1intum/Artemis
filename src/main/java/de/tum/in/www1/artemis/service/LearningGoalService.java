@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,10 +39,7 @@ public class LearningGoalService {
                 .filter(exerciseUnit -> exerciseUnit.getExercise() != null && exerciseUnit.getExercise().isAssessmentDueDateOver())
                 .collect(Collectors.toMap(ExerciseUnit::getExercise, exerciseUnit -> {
                     LearningGoalProgress.LectureUnitProgress lectureUnitProgress = new LearningGoalProgress.LectureUnitProgress();
-                    lectureUnitProgress.lectureTitle = exerciseUnit.getLecture().getTitle();
-                    lectureUnitProgress.lectureId = exerciseUnit.getLecture().getId();
                     lectureUnitProgress.lectureUnitId = exerciseUnit.getId();
-                    lectureUnitProgress.lectureUnitTitle = exerciseUnit.getExercise().getTitle();
                     lectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit = exerciseUnit.getExercise().getMaxScore();
                     return lectureUnitProgress;
                 }, (progress1, progress2) -> progress1)); // in the case of two exercises referencing the same exercise, take the first one
@@ -55,25 +50,11 @@ public class LearningGoalService {
         // for all relevant exercises the participations with submissions and results will be batch loaded
         List<StudentParticipation> participationsOfTheStudent = getStudentParticipationsWithSubmissionsAndResults(user, individualExercises, teamExercises);
 
-        // exercise -> participation -> submission -> result until possibly the latest result is found for the student
         for (Exercise exercise : exerciseToLectureUnitProgress.keySet()) {
-            Optional<Result> optionalResult = findLastResultOfExerciseInListOfParticipatons(exercise, participationsOfTheStudent);
-
-            if (optionalResult.isEmpty()) {
-                exerciseToLectureUnitProgress.get(exercise).pointsAchievedByStudentInLectureUnit = 0.0;
-            }
-            else {
-                Result result = optionalResult.get();
-                if (result.getScore() == null) {
-                    exerciseToLectureUnitProgress.get(exercise).pointsAchievedByStudentInLectureUnit = 0.0;
-                }
-                else {
-                    BigDecimal points = new BigDecimal((result.getScore() / 100.0) * exercise.getMaxScore());
-                    points = points.setScale(2, RoundingMode.HALF_EVEN);
-                    exerciseToLectureUnitProgress.get(exercise).pointsAchievedByStudentInLectureUnit = points.doubleValue();
-                }
-            }
-
+            // exercise -> participation -> submission -> result until possibly the latest result is found for the student
+            Optional<Result> optionalResult = findLastResultOfExerciseInListOfParticipations(exercise, participationsOfTheStudent);
+            exerciseToLectureUnitProgress.get(exercise).scoreAchievedByStudentInLectureUnit = optionalResult.isEmpty() || optionalResult.get().getScore() == null ? 0.0
+                    : optionalResult.get().getScore().doubleValue();
         }
 
         return new HashSet<>(exerciseToLectureUnitProgress.values());
@@ -85,27 +66,21 @@ public class LearningGoalService {
      * @param participationsList participations with submissions and results that should be checked
      * @return optional containing the last result or else an empty optional
      */
-    private Optional<Result> findLastResultOfExerciseInListOfParticipatons(Exercise exercise, List<StudentParticipation> participationsList) {
+    private Optional<Result> findLastResultOfExerciseInListOfParticipations(Exercise exercise, List<StudentParticipation> participationsList) {
+        // find the relevant participation
         StudentParticipation relevantParticipation = exercise.findRelevantParticipation(participationsList);
         if (relevantParticipation == null) {
             return Optional.empty();
         }
-        else {
-            Optional<Submission> latestSubmissionOptional = relevantParticipation.findLatestSubmission();
-            if (latestSubmissionOptional.isEmpty()) {
-                return Optional.empty();
-            }
-            else {
-                Submission latestSubmission = latestSubmissionOptional.get();
-                Result latestResult = latestSubmission.getLatestResult();
-                if (latestResult == null) {
-                    return Optional.empty();
-                }
-                else {
-                    return Optional.of(latestResult);
-                }
-            }
+        // find the latest submission of the relevant participation
+        Optional<Submission> latestSubmissionOptional = relevantParticipation.findLatestSubmission();
+        if (latestSubmissionOptional.isEmpty()) {
+            return Optional.empty();
         }
+        Submission latestSubmission = latestSubmissionOptional.get();
+        // find the latest result of the latest submission
+        Result latestResult = latestSubmission.getLatestResult();
+        return latestResult == null ? Optional.empty() : Optional.of(latestResult);
     }
 
     /**
@@ -152,7 +127,8 @@ public class LearningGoalService {
                 .map(lectureUnitProgress -> lectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit).reduce(0.0, Double::sum);
 
         learningGoalProgress.pointsAchievedByStudentInLearningGoal = progressInLectureUnits.stream()
-                .map(lectureUnitProgress -> lectureUnitProgress.pointsAchievedByStudentInLectureUnit).reduce(0.0, Double::sum);
+                .map(lectureUnitProgress -> (lectureUnitProgress.scoreAchievedByStudentInLectureUnit / 100.0) * lectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit)
+                .reduce(0.0, Double::sum);
 
         learningGoalProgress.progressInLectureUnits = new ArrayList<>(progressInLectureUnits);
         return learningGoalProgress;

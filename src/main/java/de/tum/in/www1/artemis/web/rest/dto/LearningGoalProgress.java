@@ -29,13 +29,7 @@ public class LearningGoalProgress {
 
         public Long lectureUnitId;
 
-        public String lectureUnitTitle;
-
-        public Long lectureId;
-
-        public String lectureTitle;
-
-        public Double pointsAchievedByStudentInLectureUnit;
+        public Double scoreAchievedByStudentInLectureUnit;
 
         public Double totalPointsAchievableByStudentsInLectureUnit;
     }
