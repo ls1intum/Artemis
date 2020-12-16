@@ -8,6 +8,8 @@ import { Component, Input, OnChanges } from '@angular/core';
 export class CircularProgressBarComponent implements OnChanges {
     @Input()
     progressInPercent = 0;
+    progressUsedForColorCalculation = 0;
+
     @Input()
     progressText = 'Completed';
     circleColor = '#000000';
@@ -15,6 +17,14 @@ export class CircularProgressBarComponent implements OnChanges {
     constructor() {}
 
     ngOnChanges() {
+        if (this.progressInPercent > 100) {
+            this.progressUsedForColorCalculation = 100;
+        }
+        if (this.progressInPercent < 0) {
+            this.progressUsedForColorCalculation = 0;
+        }
+        // rounded to nearest integer
+        this.progressUsedForColorCalculation = Math.round(this.progressInPercent);
         this.circleColor = this.calculateCircleColor();
     }
 
@@ -27,7 +37,7 @@ export class CircularProgressBarComponent implements OnChanges {
      * Provides a smooth transition from red, yellow to finally green depending on the progress bar percentage
      */
     calculateCircleColor() {
-        let value = Math.min(Math.max(0, this.progressInPercent / 100.0), 1) * 510;
+        let value = Math.min(Math.max(0, this.progressUsedForColorCalculation / 100.0), 1) * 510;
         let redValue;
         let greenValue;
         if (value < 255) {
