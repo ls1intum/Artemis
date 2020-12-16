@@ -86,7 +86,7 @@
                                 <a [routerLink]="['/course-management', course.id]">{{ course.id }}</a>
                             </td>
                             <td>
-                                <span class="bold">{{ course.title }}</span
+                                <a [routerLink]="['/course-management', course.id]" class="bold">{{ course.title }}</a
                                 ><br />
                                 <span *ngIf="course.shortName">
                                     <span class="bold">{{ 'artemisApp.course.shortName' | translate }} :</span> {{ course.shortName }}
