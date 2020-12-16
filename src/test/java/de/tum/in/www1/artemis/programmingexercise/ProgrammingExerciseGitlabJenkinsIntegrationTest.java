@@ -86,7 +86,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     }
 
     private static Stream<Arguments> generateArgumentsForImportExercise() {
-        // TODO: Fix me
+        // Only Java and Python are supported right?
         var supportedProgrammingLanguages = Arrays.stream(ProgrammingLanguage.values())
                 .filter(programmingLanguage -> (programmingLanguage == ProgrammingLanguage.JAVA) || (programmingLanguage == ProgrammingLanguage.PYTHON));
         return supportedProgrammingLanguages.flatMap(language -> Stream.of(Arguments.of(language, true), Arguments.of(language, false)));

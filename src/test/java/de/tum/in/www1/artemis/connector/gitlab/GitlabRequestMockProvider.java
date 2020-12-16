@@ -201,7 +201,7 @@ public class GitlabRequestMockProvider {
                 }
                 else {
                     mockUserExists(loginName, false);
-                    mockImportUser(user);
+                    mockImportUser();
                 }
 
             }
@@ -215,7 +215,7 @@ public class GitlabRequestMockProvider {
         doReturn(exists ? new User().withUsername(username) : null).when(userApi).getUser(username);
     }
 
-    private void mockImportUser(de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
+    private void mockImportUser() throws GitLabApiException {
         doReturn(new User()).when(userApi).createUser(any(), anyString(), anyBoolean());
     }
 
