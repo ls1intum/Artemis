@@ -66,7 +66,7 @@ export class ProgrammingExerciseService {
      * Check for plagiarism
      * @param exerciseId of the programming exercise
      */
-    checkPlagiarismJPlagResponse(exerciseId: number): Observable<HttpResponse<Blob>> {
+    checkPlagiarismJPlagReport(exerciseId: number): Observable<HttpResponse<Blob>> {
         return this.http.get(`${this.resourceUrl}/${exerciseId}/check-plagiarism-jplag-report`, {
             observe: 'response',
             responseType: 'blob',

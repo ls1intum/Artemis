@@ -79,7 +79,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     checkPlagiarismJPlagReport() {
         this.detectionInProgress = true;
 
-        this.programmingExerciseService.checkPlagiarismJPlagResponse(this.exercise.id!).subscribe(
+        this.programmingExerciseService.checkPlagiarismJPlagReport(this.exercise.id!).subscribe(
             (response: HttpResponse<Blob>) => {
                 this.detectionInProgress = false;
                 console.log(response);
