@@ -1513,56 +1513,56 @@
     semver "7.3.2"
     semver-intersect "1.4.0"
 
-"@sentry/browser@5.29.0":
-  version "5.29.0"
-  resolved "https://registry.yarnpkg.com/@sentry/browser/-/browser-5.29.0.tgz#a8cab91729c759c456bd2254cef65bafa5cdc4ea"
-  integrity sha512-kRlt1mE2wrYjspnIupNnPxqsUrRuy02SuXhbpP7J6uu8QasoEmJ78hk0hHz4jOZRmuWwfs2zIXD4tLGgWOKq8A==
+"@sentry/browser@5.29.1":
+  version "5.29.1"
+  resolved "https://registry.yarnpkg.com/@sentry/browser/-/browser-5.29.1.tgz#f05f8da562dd54bc0fafac6235817e3a3b76d3b7"
+  integrity sha512-cVlXoQBJ64eNNkQuOB+bS6sK5KWV+Fw+ZYxT+XqjpeXkOPaxh8aeoi9CHz2DsFfbLV91P4AnXZEUdDl+7ktQNg==
   dependencies:
-    "@sentry/core" "5.29.0"
-    "@sentry/types" "5.29.0"
-    "@sentry/utils" "5.29.0"
+    "@sentry/core" "5.29.1"
+    "@sentry/types" "5.29.1"
+    "@sentry/utils" "5.29.1"
     tslib "^1.9.3"
 
-"@sentry/core@5.29.0":
-  version "5.29.0"
-  resolved "https://registry.yarnpkg.com/@sentry/core/-/core-5.29.0.tgz#4410ca0dc5785abf3df02fa23c18e83ad90d7cda"
-  integrity sha512-a1sZBJ2u3NG0YDlGvOTwUCWiNjhfmDtAQiKK1o6RIIbcrWy9TlSps7CYDkBP239Y3A4pnvohjEEKEP3v3L3LZQ==
+"@sentry/core@5.29.1":
+  version "5.29.1"
+  resolved "https://registry.yarnpkg.com/@sentry/core/-/core-5.29.1.tgz#c56cfb6747005413d194f4cfe9a5bbdf5d5e377f"
+  integrity sha512-SMybIx9IlswkJ7a61ez/zjdiMdAo51Adpo4nVrzke2k84U/t726/EbJj0FJ4vVgsGdLCvSSZ6v7BQlINcwWupg==
   dependencies:
-    "@sentry/hub" "5.29.0"
-    "@sentry/minimal" "5.29.0"
-    "@sentry/types" "5.29.0"
-    "@sentry/utils" "5.29.0"
+    "@sentry/hub" "5.29.1"
+    "@sentry/minimal" "5.29.1"
+    "@sentry/types" "5.29.1"
+    "@sentry/utils" "5.29.1"
     tslib "^1.9.3"
 
-"@sentry/hub@5.29.0":
-  version "5.29.0"
-  resolved "https://registry.yarnpkg.com/@sentry/hub/-/hub-5.29.0.tgz#d018b978fdffc6c8261744b0d08e8d25a3f4dc58"
-  integrity sha512-kcDPQsRG4cFdmqDh+TzjeO7lWYxU8s1dZYAbbl1J4uGKmhNB0J7I4ak4SGwTsXLY6fhbierxr6PRaoNojCxjPw==
+"@sentry/hub@5.29.1":
+  version "5.29.1"
+  resolved "https://registry.yarnpkg.com/@sentry/hub/-/hub-5.29.1.tgz#64c738af308c909fe8fcf7c5da9e0685343385bb"
+  integrity sha512-Ig/vqCiJcsnGaWajkWRFH+5IKeo50ZtsjM0zJb8IfTadLjQuF/gTQst0aXO3l6q4HzveeGsELY8jlm6WVcq9Aw==
   dependencies:
-    "@sentry/types" "5.29.0"
-    "@sentry/utils" "5.29.0"
+    "@sentry/types" "5.29.1"
+    "@sentry/utils" "5.29.1"
     tslib "^1.9.3"
 
-"@sentry/minimal@5.29.0":
-  version "5.29.0"
-  resolved "https://registry.yarnpkg.com/@sentry/minimal/-/minimal-5.29.0.tgz#bd8b52f388abcec2234dbbc6d6721ff65aa30e35"
-  integrity sha512-nhXofdjtO41/caiF1wk1oT3p/QuhOZDYdF/b29DoD2MiAMK9IjhhOXI/gqaRpDKkXlDvd95fDTcx4t/MqqcKXA==
+"@sentry/minimal@5.29.1":
+  version "5.29.1"
+  resolved "https://registry.yarnpkg.com/@sentry/minimal/-/minimal-5.29.1.tgz#0f1eab0eccc9d38cb0ff3b17b81dbf9c909cd383"
+  integrity sha512-lAa3+Duxum1qQvR0tKiBUsH6Ehit3g/vO53SqBib7YK3qdvIUWHacmkJvfz/AeSvVnpJ9bsBMCVRJNSVe8BPVA==
   dependencies:
-    "@sentry/hub" "5.29.0"
-    "@sentry/types" "5.29.0"
+    "@sentry/hub" "5.29.1"
+    "@sentry/types" "5.29.1"
     tslib "^1.9.3"
 
-"@sentry/types@5.29.0":
-  version "5.29.0"
-  resolved "https://registry.yarnpkg.com/@sentry/types/-/types-5.29.0.tgz#af5cec98cde54316c14df3121f0e8106e56b578e"
-  integrity sha512-iDkxT/9sT3UF+Xb+JyLjZ5caMXsgLfRyV9VXQEiR2J6mgpMielj184d9jeF3bm/VMuAf/VFFqrHlcVsVgmrrMw==
+"@sentry/types@5.29.1":
+  version "5.29.1"
+  resolved "https://registry.yarnpkg.com/@sentry/types/-/types-5.29.1.tgz#ecc65909ac72d4f8024e26a64129e09d14a0a67f"
+  integrity sha512-QXZBA1gJheMYTGFV+UUhr3+jKpGZqPx8kEJABs8htlKabCDJlEeoFNmeqPuVxCxukoy5ZaaHACoE+2Z87T0g2A==
 
-"@sentry/utils@5.29.0":
-  version "5.29.0"
-  resolved "https://registry.yarnpkg.com/@sentry/utils/-/utils-5.29.0.tgz#b4c1223ba362a94cf4850e9ca2cb24655b006b53"
-  integrity sha512-b2B1gshw2u3EHlAi84PuI5sfmLKXW1z9enMMhNuuNT/CoRp+g5kMAcUv/qYTws7UNnYSvTuVGuZG30v1e0hP9A==
+"@sentry/utils@5.29.1":
+  version "5.29.1"
+  resolved "https://registry.yarnpkg.com/@sentry/utils/-/utils-5.29.1.tgz#889498950f6bde8ce054186096a3c95c0afb0fe4"
+  integrity sha512-FOhWxASvIQREAlSuWf3Vmb4uIkG0fmRdHkULpuv5dFmrMX2PpudYAppQtS8K9V4BYxFy6KFdUht1Qz5zYTecMw==
   dependencies:
-    "@sentry/types" "5.29.0"
+    "@sentry/types" "5.29.1"
     tslib "^1.9.3"
 
 "@sinonjs/commons@^1", "@sinonjs/commons@^1.6.0", "@sinonjs/commons@^1.7.0", "@sinonjs/commons@^1.8.1":
@@ -1707,7 +1707,14 @@
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.2.14.tgz#44d2dd0b5de6185089375d976b4ec5caf6861193"
   integrity sha512-G+ITQPXkwTrslfG5L/BksmbLUA0M1iybEsmCWPqzSxsRRhJZimBKJkoMi8fr/CPygPTj4zO5pJH7I2/cm9M7SQ==
 
-"@types/chart.js@2.9.28", "@types/chart.js@^2.9.24":
+"@types/chart.js@2.9.29":
+  version "2.9.29"
+  resolved "https://registry.yarnpkg.com/@types/chart.js/-/chart.js-2.9.29.tgz#73bf7f02387402943f29946012492f10bde7ed43"
+  integrity sha512-WOZMitUU3gHDM0oQsCsVivX+oDsIki93szcTmmUPBm39cCvAELBjokjSDVOoA3xiIEbb+jp17z/3S2tIqruwOQ==
+  dependencies:
+    moment "^2.10.2"
+
+"@types/chart.js@^2.9.24":
   version "2.9.28"
   resolved "https://registry.yarnpkg.com/@types/chart.js/-/chart.js-2.9.28.tgz#75f1a456ee2eace136073c3264da271a27dcdc8a"
   integrity sha512-9YYhsxRngRJb0dkuaU5BezkF+zvvVHnwdRw+rtlahtFb4zqNf9YSgWsOq+dLYeh0fqsWmHUYLR64eNigh02F+w==
@@ -1813,10 +1820,10 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.12.tgz#0b1d86f8c40141091285dea02e4940df73bba43f"
   integrity sha512-ASH8OPHMNlkdjrEdmoILmzFfsJICvhBsFfAum4aKZ/9U4B6M6tTmTPh+f3ttWdD74CEGV5XvXWkbyfSdXaTd7g==
 
-"@types/node@14.14.13":
-  version "14.14.13"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.13.tgz#9e425079799322113ae8477297ae6ef51b8e0cdf"
-  integrity sha512-vbxr0VZ8exFMMAjCW8rJwaya0dMCDyYW2ZRdTyjtrCvJoENMpdUHOT/eTzvgyA5ZnqRZ/sI0NwqAxNHKYokLJQ==
+"@types/node@14.14.14":
+  version "14.14.14"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.14.tgz#f7fd5f3cc8521301119f63910f0fb965c7d761ae"
+  integrity sha512-UHnOPWVWV1z+VV8k6L1HhG7UbGBgIdghqF3l9Ny9ApPghbjICXkUJSd/b9gOgQfjM1r+37cipdw/HJ3F6ICEnQ==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.0"
@@ -4663,10 +4670,10 @@ domhandler@^4.0.0:
   dependencies:
     domelementtype "^2.1.0"
 
-dompurify@2.2.3:
-  version "2.2.3"
-  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-2.2.3.tgz#ec653ba521b39f397c2ca045769438d593ea8a9f"
-  integrity sha512-8Hv7Q0FuwD9rWoB6qI2eZsfKbGXfoUVuGHHrE15vgk4ReOKwOkSgbqb2OMFtc0d5besOEkoLkcyuV10zQ2X5gw==
+dompurify@2.2.4:
+  version "2.2.4"
+  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-2.2.4.tgz#a98cd182b729bdd8715c3eb7a8bf8eafb2ff7410"
+  integrity sha512-jE21SelIgWrGKoXGfGPA524Zt1IJFBnktwfFMHDlEYRx5FZOdc+4eEH9mkA6PuhExrq3HVpJnY8hMYUzAMl0OA==
 
 domutils@1.5.1:
   version "1.5.1"
