@@ -116,7 +116,7 @@ public class TextUnitResource {
         if (textUnit.getId() != null) {
             return badRequest();
         }
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lectureId);
+        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lectureId);
         if (lectureOptional.isEmpty()) {
             return badRequest();
         }
