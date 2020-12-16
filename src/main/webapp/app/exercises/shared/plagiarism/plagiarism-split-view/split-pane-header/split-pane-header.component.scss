@@ -15,7 +15,7 @@
         overflow: hidden;
         padding: 0.25rem 0.5rem;
 
-        &.active fa-icon {
+        &.active .file-arrow-down {
             display: inline-block;
             transform: rotate(180deg);
         }

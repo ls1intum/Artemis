@@ -6,12 +6,18 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import jplag.Submission;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 
 public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
+
+    private static final Logger log = LoggerFactory.getLogger(PlagiarismSubmission.class);
 
     /**
      * Login of the student who created the submission.
@@ -60,7 +66,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
                 submissionId = Long.parseLong(submissionIdAndStudentLogin[0]);
             }
             catch (NumberFormatException e) {
-                System.err.println("Invalid submissionId: " + e.getMessage());
+                log.error("Invalid submissionId: " + e.getMessage());
             }
 
             studentLogin = submissionIdAndStudentLogin[1];
