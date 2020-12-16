@@ -780,7 +780,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
-        Course course = courseService.findOneWithExercisesAndLectures(courseId);
+        Course course = courseService.findOneWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (course == null) {
             return notFound();
@@ -788,6 +788,7 @@ public class CourseResource {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete the course {}", course.getTitle());
+
         courseService.delete(course);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, course.getTitle())).build();
     }

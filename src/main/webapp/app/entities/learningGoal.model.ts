@@ -5,11 +5,11 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 
 export class LearningGoal implements BaseEntity {
     public id?: number;
-    public title?: String;
-    public description?: String;
+    public title?: string;
+    public description?: string;
     public course?: Course;
     public exercises?: Exercise[];
-    public lectureModules?: LectureUnit[];
+    public lectureUnits?: LectureUnit[];
 
     constructor() {}
 }

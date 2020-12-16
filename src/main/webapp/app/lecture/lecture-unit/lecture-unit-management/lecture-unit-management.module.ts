@@ -20,6 +20,7 @@ import { TextUnitFormComponent } from './text-unit-form/text-unit-form.component
 import { EditTextUnitComponent } from './edit-text-unit/edit-text-unit.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { LectureUnitLayoutComponent } from './lecture-unit-layout/lecture-unit-layout.component';
+import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 
 const ENTITY_STATES = [...lectureUnitRoute];
 
@@ -32,6 +33,7 @@ const ENTITY_STATES = [...lectureUnitRoute];
         RouterModule.forChild(ENTITY_STATES),
         ArtemisCoursesModule,
         FormDateTimePickerModule,
+        ArtemisLearningGoalsModule,
     ],
     declarations: [
         LectureUnitManagementComponent,
