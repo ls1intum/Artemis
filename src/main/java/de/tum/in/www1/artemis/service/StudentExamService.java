@@ -266,7 +266,11 @@ public class StudentExamService {
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
-                submissionService.addResultWithFeedback(studentParticipation, assessor, 0L, "You did not submit your exam");
+                if (studentParticipation.findLatestSubmission().isPresent()) {
+                    // required so that the submission and result do not appear in the assessmentDashboard
+                    studentParticipation.findLatestSubmission().get().submitted(false);
+                    submissionService.addResultWithFeedback(studentParticipation, assessor, 0L, "You did not submit your exam");
+                }
             }
         }
         return unsubmittedStudentExams;
@@ -277,7 +281,7 @@ public class StudentExamService {
      *
      * @param exam the exam
      * @param assessor the assessor should be the instructor making the call
-     * @param excludeStudentExams studentExams which should be excluded. This is used to exclude unsubmitted student exams, see {@link StudentExamService#assessUnsubmittedStudentExams}
+     * @param excludeStudentExams studentExams which should be excluded. This is used to exclude unsubmitted student exams because they are already assessed, see {@link StudentExamService#assessUnsubmittedStudentExams}
      * @return returns the set of StudentExams of which the empty submissions were assessed
      */
     public Set<StudentExam> assessEmptySubmissionsOfStudentExams(final Exam exam, final User assessor, final Set<StudentExam> excludeStudentExams) {
@@ -289,7 +293,11 @@ public class StudentExamService {
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
-                submissionService.addResultWithFeedback(studentParticipation, assessor, 0L, "Empty submission");
+                if (studentParticipation.findLatestSubmission().isPresent() && studentParticipation.findLatestSubmission().get().isEmpty()) {
+                    // required so that the submission and result do not appear in the assessmentDashboard
+                    studentParticipation.findLatestSubmission().get().submitted(false);
+                    submissionService.addResultWithFeedback(studentParticipation, assessor, 0L, "Empty submission");
+                }
             }
         }
         return studentExams;
