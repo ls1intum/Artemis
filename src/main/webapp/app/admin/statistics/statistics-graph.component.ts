@@ -12,7 +12,6 @@ import { Graphs, SpanType } from 'app/entities/statistics.model';
     templateUrl: './statistics-graph.component.html',
 })
 export class StatisticsGraphComponent implements OnInit, OnChanges {
-    // Inputs
     @Input()
     graphType: Graphs;
     @Input()
@@ -25,17 +24,17 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
     Graphs = Graphs;
 
     // Histogram related properties
-    public barChartOptions: ChartOptions = {};
-    public barChartType: ChartType = 'bar';
-    public lineChartType: ChartType = 'line';
-    public amountOfStudents: string;
-    public chartName: string;
-    public barChartLegend = false;
-    public chartTime: any;
+    barChartOptions: ChartOptions = {};
+    barChartType: ChartType = 'bar';
+    lineChartType: ChartType = 'line';
+    amountOfStudents: string;
+    chartName: string;
+    barChartLegend = false;
+    chartTime: any;
     // Data
-    public barChartLabels: Label[] = [];
-    public chartData: ChartDataSets[] = [];
-    public dataForSpanType: number[];
+    barChartLabels: Label[] = [];
+    chartData: ChartDataSets[] = [];
+    dataForSpanType: number[];
 
     // left arrow -> decrease, right arrow -> increase
     private currentPeriod = 0;
