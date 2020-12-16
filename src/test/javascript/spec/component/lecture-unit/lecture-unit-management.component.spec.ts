@@ -7,7 +7,7 @@ import * as sinonChai from 'sinon-chai';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import * as sinon from 'sinon';
 import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
@@ -29,6 +29,7 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { LearningGoal } from 'app/entities/learningGoal.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -45,6 +46,15 @@ class UnitCreationCardStubComponent {
     createAttachmentUnit: EventEmitter<any> = new EventEmitter<any>();
 }
 
+@Component({ selector: 'jhi-learning-goals-popover', template: '' })
+class LearningGoalsPopoverStubComponent {
+    @Input()
+    courseId: number;
+    @Input()
+    learningGoals: LearningGoal[] = [];
+    @Input()
+    navigateTo: 'learningGoalManagement' | 'courseStatistics' = 'courseStatistics';
+}
 describe('LectureUnitManagementComponent', () => {
     let lectureUnitManagementComponent: LectureUnitManagementComponent;
     let lectureUnitManagementComponentFixture: ComponentFixture<LectureUnitManagementComponent>;
@@ -67,6 +77,7 @@ describe('LectureUnitManagementComponent', () => {
             declarations: [
                 LectureUnitManagementComponent,
                 UnitCreationCardStubComponent,
+                LearningGoalsPopoverStubComponent,
                 MockPipe(TranslatePipe),
                 MockComponent(ExerciseUnitComponent),
                 MockComponent(AttachmentUnitComponent),

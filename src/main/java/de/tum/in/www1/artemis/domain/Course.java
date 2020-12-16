@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -136,7 +134,8 @@ public class Course extends DomainObject {
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
-    private List<LearningGoal> learningGoals = new ArrayList<>();
+    @OrderBy("title")
+    private Set<LearningGoal> learningGoals = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -491,11 +490,11 @@ public class Course extends DomainObject {
         return this.numberOfStudentsTransient;
     }
 
-    public List<LearningGoal> getLearningGoals() {
+    public Set<LearningGoal> getLearningGoals() {
         return learningGoals;
     }
 
-    public void setLearningGoals(List<LearningGoal> learningGoals) {
+    public void setLearningGoals(Set<LearningGoal> learningGoals) {
         this.learningGoals = learningGoals;
     }
 

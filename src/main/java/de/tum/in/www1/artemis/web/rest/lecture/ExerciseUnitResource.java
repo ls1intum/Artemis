@@ -59,7 +59,7 @@ public class ExerciseUnitResource {
         if (exerciseUnit.getId() != null) {
             return badRequest();
         }
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lectureId);
+        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lectureId);
         if (lectureOptional.isEmpty()) {
             return badRequest();
         }
@@ -90,7 +90,7 @@ public class ExerciseUnitResource {
     @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<List<ExerciseUnit>> getAllExerciseUnitsOfLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all exercise units for lecture : {}", lectureId);
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lectureId);
+        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lectureId);
         if (lectureOptional.isEmpty()) {
             return badRequest();
         }
