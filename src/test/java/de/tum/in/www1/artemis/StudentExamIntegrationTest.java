@@ -558,10 +558,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(8));
         exam2 = examRepository.save(exam2);
 
-        Integer numberOfAssessedParticipations = request.postWithResponseBody(
-                "/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/automatically-assess-unsubmitted-student-exams", Optional.empty(), Integer.class,
-                HttpStatus.OK);
-        assertThat(numberOfAssessedParticipations).isEqualTo(24);
+        request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", Optional.empty(),
+                HttpStatus.OK, null);
         database.changeUser("instructor1");
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam2.getId());
         Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
@@ -578,7 +576,46 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
                     assertThat(result.getFeedbacks()).isNotEmpty();
                     assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("You did not submit your exam");
-                    assertThat(result.getFeedbacks().get(0).getText()).isEqualTo("You did not submit your exam");
+                }
+                else {
+                    fail("StudentParticipation which is part of an unsubmitted StudentExam contains no submission or result after automatic assessment of unsubmitted student exams call.");
+                }
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testAssessEmptyExamSubmissions() throws Exception {
+        final var studentExams = prepareStudentExamsForConduction();
+        // submit student exam with empty submissions
+        for (final var studentExam : studentExams) {
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(ZonedDateTime.now());
+            studentExamRepository.save(studentExam);
+        }
+        // this test should be after the end date of the exam
+        exam2.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        exam2.setEndDate(ZonedDateTime.now().minusMinutes(7));
+        examRepository.save(exam2);
+
+        request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", Optional.empty(),
+                HttpStatus.OK, null);
+        database.changeUser("instructor1");
+        Map<User, List<Exercise>> exercisesOfUser = studentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises().stream()
+                .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
+        for (final var user : exercisesOfUser.keySet()) {
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
+                    exercisesOfUser.get(user));
+            for (final var studentParticipation : studentParticipations) {
+                if (studentParticipation.findLatestSubmission().isPresent()) {
+                    var result = studentParticipation.findLatestSubmission().get().getLatestResult();
+                    assertThat(result).isNotNull();
+                    assertThat(result.getScore()).isEqualTo(0);
+                    assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+                    result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
+                    assertThat(result.getFeedbacks()).isNotEmpty();
+                    assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("Empty submission");
                 }
                 else {
                     fail("StudentParticipation which is part of an unsubmitted StudentExam contains no submission or result after automatic assessment of unsubmitted student exams call.");
@@ -596,8 +633,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2 = examRepository.save(exam2);
 
         database.changeUser("tutor1");
-        request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/automatically-assess-unsubmitted-student-exams",
-                Optional.empty(), Integer.class, HttpStatus.FORBIDDEN);
+        request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", null,
+                HttpStatus.FORBIDDEN, null);
     }
 
     @Test
@@ -606,8 +643,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         prepareStudentExamsForConduction();
         exam2 = examRepository.save(exam2);
 
-        request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/automatically-assess-unsubmitted-student-exams",
-                Optional.empty(), Integer.class, HttpStatus.BAD_REQUEST);
+        request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", null,
+                HttpStatus.BAD_REQUEST, null);
     }
 
     @Test

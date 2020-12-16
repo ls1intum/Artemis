@@ -13,8 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -57,15 +56,10 @@ public class StudentExamService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final ResultRepository resultRepository;
-
-    private final FeedbackRepository feedbackRepository;
-
     public StudentExamService(StudentExamRepository studentExamRepository, ExamService examService, UserService userService, SubmissionService submissionService,
             ParticipationService participationService, QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository,
             ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ResultRepository resultRepository, FeedbackRepository feedbackRepository) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.examService = examService;
@@ -77,8 +71,6 @@ public class StudentExamService {
         this.submissionVersionService = submissionVersionService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.resultRepository = resultRepository;
-        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -261,59 +253,46 @@ public class StudentExamService {
     }
 
     /**
-     * Automatically assess the modeling- and programming exercises of student exams of an exam which are not submitted with 0 points.
-     * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment,
-     * see {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation}.
-     * The assessor is artemis_admin.
+     * Assess the modeling- and text exercises of student exams of an exam which are not submitted with 0 points.
      *
-     * @param examId the exam id
-     * @return returns the number of assessedSubmissions
+     * @param exam the exam
+     * @param assessor the assessor should be the instructor making the call.
+     * @return returns the set of unsubmitted StudentExams, the participations of which were assessed
      */
-    public int assessUnsubmittedStudentExams(final Long examId) {
-        int numberOfAssessedSubmissions = 0;
-        User artemisAdmin = userService.getUserWithGroupsAndAuthorities("artemis_admin");
-        Set<StudentExam> unsubmittedStudentExams = findAllUnsubmittedStudentExams(examId);
+    public Set<StudentExam> assessUnsubmittedStudentExams(final Exam exam, final User assessor) {
+        Set<StudentExam> unsubmittedStudentExams = findAllUnsubmittedStudentExams(exam.getId());
         Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
                 .stream().filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
-                if (studentParticipation.findLatestSubmission().isPresent() && studentParticipation.findLatestSubmission().get().getLatestResult() == null) {
-                    // get last submission
-                    final var latestSubmission = studentParticipation.findLatestSubmission().get();
-
-                    // create result with 0 points
-                    Result result = new Result();
-                    result.setParticipation(studentParticipation);
-                    result.setAssessor(artemisAdmin);
-                    result.setCompletionDate(ZonedDateTime.now());
-                    result.setScore(0L);
-                    result.rated(true);
-                    result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-                    result = submissionService.saveNewResult(latestSubmission, result);
-
-                    var feedback = new Feedback();
-                    feedback.setCredits(0.0);
-                    feedback.setDetailText("You did not submit your exam");
-                    feedback.setPositive(false);
-                    feedback.setText("You did not submit your exam");
-                    feedback.setType(FeedbackType.AUTOMATIC);
-                    feedback = feedbackRepository.save(feedback);
-                    feedback.setResult(result);
-                    result.setFeedbacks(List.of(feedback));
-                    resultRepository.save(result);
-                    numberOfAssessedSubmissions++;
-                }
+                submissionService.addResultWithFeedback(studentParticipation, assessor, 0L, "You did not submit your exam");
             }
         }
-        return numberOfAssessedSubmissions;
+        return unsubmittedStudentExams;
     }
 
-    public int assessEmptySubmissions(final Long examId) {
-        int numberOfAssessedSubmissions = 0;
-        User instructor = userService.getUser();
-        Set<StudentExam> studentExams = findAllByExamId(examId);
-        return numberOfAssessedSubmissions;
+    /**
+     * Assess the modeling- and  text submissions of an exam which are empty.
+     *
+     * @param exam the exam
+     * @param assessor the assessor should be the instructor making the call
+     * @param excludeStudentExams studentExams which should be excluded. This is used to exclude unsubmitted student exams, see {@link StudentExamService#assessUnsubmittedStudentExams}
+     * @return returns the set of StudentExams of which the empty submissions were assessed
+     */
+    public Set<StudentExam> assessEmptySubmissionsOfStudentExams(final Exam exam, final User assessor, final Set<StudentExam> excludeStudentExams) {
+        Set<StudentExam> studentExams = findAllWithExercisesByExamId(exam.getId());
+        // remove student exams which should be excluded
+        studentExams = studentExams.stream().filter(studentExam -> !excludeStudentExams.contains(studentExam)).collect(Collectors.toSet());
+        Map<User, List<Exercise>> exercisesOfUser = studentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises().stream()
+                .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
+        for (final var user : exercisesOfUser.keySet()) {
+            final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), exercisesOfUser.get(user));
+            for (final var studentParticipation : studentParticipations) {
+                submissionService.addResultWithFeedback(studentParticipation, assessor, 0L, "Empty submission");
+            }
+        }
+        return studentExams;
     }
 
     private void lockStudentRepositories(User currentUser, StudentExam existingStudentExam) {
@@ -356,8 +335,19 @@ public class StudentExamService {
      * @return the list of all student exams
      */
     public Set<StudentExam> findAllByExamId(Long examId) {
-        log.debug("Request to get all student exams for Exam : {}", examId);
+        log.debug("Request to get all student exams for Exam: {}", examId);
         return studentExamRepository.findByExamId(examId);
+    }
+
+    /**
+     * Get all student exams with exercises for the given exam.
+     *
+     * @param examId the id of the exam
+     * @return the list of all student exams
+     */
+    public Set<StudentExam> findAllWithExercisesByExamId(Long examId) {
+        log.debug("Request to get all student exams with exercises for Exam: {}", examId);
+        return studentExamRepository.findAllWithExercisesByExamId(examId);
     }
 
     /**

@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -44,8 +46,11 @@ public class SubmissionService {
 
     private final CourseService courseService;
 
+    protected final FeedbackRepository feedbackRepository;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService,
-            ResultRepository resultRepository, ExamService examService, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService) {
+            ResultRepository resultRepository, ExamService examService, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
+            FeedbackRepository feedbackRepository) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -54,6 +59,7 @@ public class SubmissionService {
         this.examService = examService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -313,6 +319,43 @@ public class SubmissionService {
         submission.addResult(savedResult);
         submissionRepository.save(submission);
         return savedResult;
+    }
+
+    /**
+     * Add a result to the last {@link Submission} of a {@link StudentParticipation}, see {@link StudentParticipation#findLatestSubmission()}, with a feedback of type {@link FeedbackType#AUTOMATIC}.
+     * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation}.
+     * Sets the feedback text and result score.
+     *
+     * @param studentParticipation the studentParticipation containing the latest result
+     * @param assessor the assessor
+     * @param score the score which should be set
+     * @param feedbackText the feedback text for the
+     */
+    public void addResultWithFeedback(StudentParticipation studentParticipation, User assessor, long score, String feedbackText) {
+        if (studentParticipation.getExercise().hasExerciseGroup() && studentParticipation.findLatestSubmission().isPresent()
+                && studentParticipation.findLatestSubmission().get().getLatestResult() == null) {
+            final var latestSubmission = studentParticipation.findLatestSubmission().get();
+            Result result = new Result();
+            result.setParticipation(studentParticipation);
+            result.setAssessor(assessor);
+            result.setCompletionDate(ZonedDateTime.now());
+            result.setScore(score);
+            result.rated(true);
+            // we set the assessment type to semi automatic so that it does not appear to the tutors for manual assessment
+            // if we would use AssessmentType.AUTOMATIC, it would be eligable for manual assessment
+            result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+            result = saveNewResult(latestSubmission, result);
+
+            var feedback = new Feedback();
+            feedback.setCredits(0.0);
+            feedback.setDetailText(feedbackText);
+            feedback.setPositive(false);
+            feedback.setType(FeedbackType.AUTOMATIC);
+            feedback = feedbackRepository.save(feedback);
+            feedback.setResult(result);
+            result.setFeedbacks(List.of(feedback));
+            resultRepository.save(result);
+        }
     }
 
     /**

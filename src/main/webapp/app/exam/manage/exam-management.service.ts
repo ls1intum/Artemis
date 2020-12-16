@@ -252,7 +252,7 @@ export class ExamManagementService {
      * @returns number of evaluated participations
      */
     assessUnsubmittedExamModelingAndTextParticipations(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/automatically-assess-unsubmitted-student-exams`, {}, { observe: 'response' });
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/assess-unsubmitted-and-empty-student-exams`, {}, { observe: 'response' });
     }
 
     /**

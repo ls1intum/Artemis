@@ -373,18 +373,20 @@ public class StudentExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/automatically-assess-unsubmitted-student-exams : Automatically assess unsubmitted student exams and empty submissions.
+     * POST /courses/{courseId}/exams/{examId}/student-exams/assess-unsubmitted-and-empty-student-exams : Assess unsubmitted student exams and empty submissions.
      *
-     * Finds student exams which the students did not submit on time i.e {@link StudentExam#isSubmitted()} is false.
-     * Automatically grade all modeling- and text exercises with 0 points in {@link StudentExamService#assessUnsubmittedStudentExams}.
+     * Finds student exams which the students did not submit on time i.e {@link StudentExam#isSubmitted()} is false and assesses all modeling- and text exercises with 0 points in {@link StudentExamService#assessUnsubmittedStudentExams}.
+     * Additionally assess all empty modeling and text exercises with 0 points in {@link StudentExamService#assessEmptySubmissionsOfStudentExams}.
+     *
+     * NOTE: A result with 0 points is only added if no other result is present for the latest submission of a relevant StudentParticipation.
      *
      * @param courseId the id of the course
      * @param examId the id of the exam
      * @return {@link HttpStatus#BAD_REQUEST} if the exam is not over yet | {@link HttpStatus#FORBIDDEN} if the user is not an instructor
      */
-    @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/automatically-assess-unsubmitted-student-exams")
+    @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/assess-unsubmitted-and-empty-student-exams")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Integer> automaticallyAssessUnsubmittedStudentExamsAndEmptySubmissions(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<Void> assessUnsubmittedStudentExamsAndEmptySubmissions(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to automatically assess the not submitted student exams of the exam with id {}", examId);
 
         final var exam = examService.findOne(examId);
@@ -399,10 +401,13 @@ public class StudentExamResource {
             return badRequest();
         }
 
-        int numberOfGradedParticipations = studentExamService.assessUnsubmittedStudentExams(examId);
-        log.info("Graded {} participations for unsubmitted student exams of exam {}", numberOfGradedParticipations, examId);
+        final var instructor = userService.getUser();
+        var assessedUnsubmittedStudentExams = studentExamService.assessUnsubmittedStudentExams(exam, instructor);
+        log.info("Graded {} unsubmitted student exams of exam {}", assessedUnsubmittedStudentExams.size(), examId);
 
-        return ResponseEntity.ok().body(numberOfGradedParticipations);
+        studentExamService.assessEmptySubmissionsOfStudentExams(exam, instructor, assessedUnsubmittedStudentExams);
+
+        return ResponseEntity.ok().build();
     }
 
     /**
