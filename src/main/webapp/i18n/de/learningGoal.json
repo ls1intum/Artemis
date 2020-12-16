@@ -23,11 +23,11 @@
                 "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} Vorlesungseinheiten verbunden)",
                 "lectureUnitTable": {
                     "type": "Typ",
-                    "name": "Name",
+                    "name": "Vorlesungseinheit",
                     "releaseDate": "Veröffentlichungsdatum",
                     "lecture": "Vorlesung",
-                    "pointsAchievedByStudent": "Punkte erreicht",
-                    "totalPointsAchievable": "Maximal erreichbare Punkte"
+                    "scoreAchievedByStudent": "Deine Bewertung",
+                    "totalPointsAchievable": "Erreichbare Punkte"
                 }
             },
             "editLearningGoal": {
@@ -36,9 +36,7 @@
             "learningGoalCard": {
                 "connectedLectureUnits": "Verbundene Vorlesungseinheiten",
                 "connectedLectureUnitsExplanation": "Die folgenden Vorlesungseinheiten sind mit dem Lernziel verbunden: ",
-                "lectureUnitsForCalculation": "Vorlesungseinheiten für Fortschrittsberechnung",
-                "lectureUnitsForCalculationExplanation": "Die folgenden Vorlesungseinheiten wurden für die Berechnung deines Fortschritts verwendet",
-                "exerciseNote": "Bitte beachte, dass wir hier immer die letzte Einreichung berücksichtigen. Auch Einreichungen nach dem Fälligkeitsdatum. Das bedeutet, dass du z. B. Deinen Fortschritt verbessern kannst, indem du ein Quiz beliebig oft erneut versuchst. Es ist daher normal, dass die Punkte hier von den Punkten, welche du offiziell in einer Übung erreicht hast, abweichen können.",
+                "exerciseNote": "Bitte beachte, dass bei Aufgabeneinheiten immer die letzte Einreichung berücksichtigt wird. Auch Einreichungen nach dem Fälligkeitsdatum. Das bedeutet, dass du z. B. deinen Fortschritt verbessern kannst, indem du ein Quiz beliebig oft erneut versuchst. Es ist daher normal, dass deine Bewertung hier von der Bewertung, welche du offiziell in einer Übung erreicht hast, abweichen kann.",
                 "delete": {
                     "question": "Willst du wirklich das Lernziel <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
                     "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen des Lernziels ein.",
@@ -47,9 +45,7 @@
                 "achieved": "erreicht",
                 "progressUnavailable": "Die Fortschrittsberechnung ist momentan nur verfügbar für Lernziele, welche mit Aufgabeneinheiten verbunden sind.",
                 "noUnitsConnected": "Das Lernziel ist mit keinen Vorlesungseinheiten verbunden",
-                "totalPointsAchievedExplanation": "Insgesamt hast du <strong>{{ points }}</strong> Punkte erreicht",
-                "totalPointsAchievableExplanation": "Du hättest maximal <strong>{{ points }}</strong> Punkte erreichen können",
-                "progressExplanation": "Dein berechneter Fortschritt ist also etwa <strong>{{ progress }}%</strong>"
+                "progressExplanation": "Fortschritt: Momentan hast du <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht."
             },
             "learningGoalPopover": {
                 "connectedLearningGoals": "Verbundene Lernziele",

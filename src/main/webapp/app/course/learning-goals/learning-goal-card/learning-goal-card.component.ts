@@ -32,9 +32,9 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
         } else {
             this.isProgressAvailable = true;
             this.progressText = this.translateService.instant('artemisApp.learningGoal.learningGoalCard.achieved');
-            this.progressInPercent = Math.round(
-                (this.learningGoalProgress.pointsAchievedByStudentInLearningGoal / this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal) * 100,
-            );
+
+            const progress = (this.learningGoalProgress.pointsAchievedByStudentInLearningGoal / this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal) * 100;
+            this.progressInPercent = Math.round(progress * 10) / 10;
         }
     }
 

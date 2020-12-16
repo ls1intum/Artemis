@@ -23,11 +23,11 @@
                 "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} unit(s) connected)",
                 "lectureUnitTable": {
                     "type": "Type",
-                    "name": "Name",
+                    "name": "Lecture Unit",
                     "releaseDate": "Release Date",
                     "lecture": "Lecture",
-                    "pointsAchievedByStudent": "Points achieved",
-                    "totalPointsAchievable": "Total Points achievable"
+                    "scoreAchievedByStudent": "Your Score",
+                    "totalPointsAchievable": "Points achievable"
                 }
             },
             "editLearningGoal": {
@@ -36,9 +36,7 @@
             "learningGoalCard": {
                 "connectedLectureUnits": "Connected Lecture Units",
                 "connectedLectureUnitsExplanation": "The following lecture units are connected to this learning goal: ",
-                "lectureUnitsForCalculation": "Lecture Units Used in Progress Calculation",
-                "lectureUnitsForCalculationExplanation": "The following lecture units are used to calculate your progress in this learning goal",
-                "exerciseNote": "Please note that we take always the last submission into account here. Even submissions after the due date. This means for example that you can improve your progress by re-trying a quiz as often as you like. It is therefore normal, that the points here might differ from the points you officially achieved in an exercise.",
+                "exerciseNote": "Please note that we take always the last submission into account for exercise units. Even submissions after the due date. This means for example that you can improve your progress by re-trying a quiz as often as you like. It is therefore normal, that the score here might differ from the score you officially achieved in an exercise.",
                 "delete": {
                     "question": "Do you really want to delete the learning goal <strong>{{ title }}</strong>? You can not undo this action!",
                     "typeNameToConfirm": "Please enter the name of the learning goal for confirmation.",
@@ -47,9 +45,7 @@
                 "achieved": "achieved",
                 "progressUnavailable": "Progress calculation is currently only available for learning goals connected to exercise units.",
                 "noUnitsConnected": "This learning goal is not connected to any lecture units",
-                "totalPointsAchievedExplanation": "Overall you achieved <strong>{{ points }}</strong> points",
-                "totalPointsAchievableExplanation": "You could have achieved a maximum of <strong>{{ points }}</strong> points",
-                "progressExplanation": "Therefore your progress is about <strong>{{ progress }}%</strong>"
+                "progressExplanation": "Progress: You achieved currently <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points"
             },
             "learningGoalPopover": {
                 "connectedLearningGoals": "Connected Learning Goals",

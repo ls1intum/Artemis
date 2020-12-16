@@ -17,6 +17,9 @@
             <table class="table table-bordered">
                 <thead class="thead-dark">
                     <tr jhiSort [(predicate)]="connectedLectureUnitsPredicate" [(ascending)]="connectedLectureUnitsReverse" [callback]="sortConnectedLectureUnits.bind(this)">
+                        <th id="connectedLectureUnitLectureUnitNameHeader" class="bg-primary">
+                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.name' | translate }}
+                        </th>
                         <th jhiSortBy="type" id="connectedLectureUnitTypeHeader">
                             {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.type' | translate }}
                             <fa-icon [icon]="'sort'"></fa-icon>
@@ -25,13 +28,21 @@
                             {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.lecture' | translate }}
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
-                        <th id="connectedLectureUnitLectureUnitNameHeader">
-                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.name' | translate }}
+                        <th id="connectedLectureUnitScoreAchievedHeader">
+                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.scoreAchievedByStudent' | translate }}
+                        </th>
+                        <th id="connectedLectureUnitPointsAchievableHeader">
+                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.totalPointsAchievable' | translate }}
                         </th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr *ngFor="let lectureUnit of learningGoal.lectureUnits">
+                        <td>
+                            <a [routerLink]="['/courses', learningGoal?.course?.id, 'lectures', lectureUnit.lecture?.id]">
+                                {{ lectureUnitService.getLectureUnitName(lectureUnit) ? lectureUnitService.getLectureUnitName(lectureUnit) : '' }}
+                            </a>
+                        </td>
                         <td>{{ lectureUnit.type ? lectureUnit.type : '' }}</td>
                         <td>
                             <a [routerLink]="['/courses', learningGoal?.course?.id, 'lectures', lectureUnit.lecture?.id]"
@@ -39,83 +50,30 @@
                             </a>
                         </td>
                         <td>
-                            <a [routerLink]="['/courses', learningGoal?.course?.id, 'lectures', lectureUnit.lecture?.id]">
-                                {{ lectureUnitService.getLectureUnitName(lectureUnit) ? lectureUnitService.getLectureUnitName(lectureUnit) : '' }}
-                            </a>
+                            {{ getLectureUnitProgress(lectureUnit.id) === undefined ? '-' : getLectureUnitProgress(lectureUnit.id).scoreAchievedByStudentInLectureUnit + ' %' }}
+                        </td>
+                        <td>
+                            {{ getLectureUnitProgress(lectureUnit.id) === undefined ? '-' : getLectureUnitProgress(lectureUnit.id).totalPointsAchievableByStudentsInLectureUnit }}
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
-    <!-- Table for lecture units progress calculation-->
     <div *ngIf="isProgressAvailable">
-        <h5>{{ 'artemisApp.learningGoal.learningGoalCard.lectureUnitsForCalculation' | translate }}</h5>
-        <p>
-            {{ 'artemisApp.learningGoal.learningGoalCard.lectureUnitsForCalculationExplanation' | translate }}
-        </p>
-        <p class="font-weight-bold font-italic">
+        <p class="text-muted">
+            <span class="badge badge-info">Info</span>
             {{ 'artemisApp.learningGoal.learningGoalCard.exerciseNote' | translate }}
         </p>
-        <div class="table-responsive">
-            <table class="table table-bordered">
-                <thead class="thead-dark">
-                    <tr
-                        jhiSort
-                        [(predicate)]="connectedLectureUnitsForCalculationPredicate"
-                        [(ascending)]="connectedLectureUnitsForCalculationReverse"
-                        [callback]="sortConnectedLectureUnitsForCalculation.bind(this)"
-                    >
-                        <th jhiSortBy="lectureTitle">
-                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.lecture' | translate }}
-                            <fa-icon [icon]="'sort'"></fa-icon>
-                        </th>
-                        <th jhiSortBy="lectureUnitTitle">
-                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.name' | translate }}
-                            <fa-icon [icon]="'sort'"></fa-icon>
-                        </th>
-                        <th jhiSortBy="pointsAchievedByStudentInLectureUnit">
-                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.pointsAchievedByStudent' | translate }}
-                            <fa-icon [icon]="'sort'"></fa-icon>
-                        </th>
-                        <th jhiSortBy="totalPointsAchievableByStudentsInLectureUnit">
-                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.totalPointsAchievable' | translate }}
-                            <fa-icon [icon]="'sort'"></fa-icon>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let lectureUnitProgress of learningGoalProgress.progressInLectureUnits">
-                        <td>
-                            <a [routerLink]="['/courses', learningGoal?.course?.id, 'lectures', lectureUnitProgress.lectureId]"
-                                >{{ lectureUnitProgress.lectureTitle ? lectureUnitProgress.lectureTitle : '' }}
-                            </a>
-                        </td>
-                        <td>
-                            <a [routerLink]="['/courses', learningGoal?.course?.id, 'lectures', lectureUnitProgress.lectureId]"
-                                >{{ lectureUnitProgress.lectureUnitTitle ? lectureUnitProgress.lectureUnitTitle : '' }}
-                            </a>
-                        </td>
-                        <td>{{ lectureUnitProgress.pointsAchievedByStudentInLectureUnit === undefined ? ' ' : lectureUnitProgress.pointsAchievedByStudentInLectureUnit }}</td>
-                        <td>
-                            {{
-                                lectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit === undefined
-                                    ? ''
-                                    : lectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit
-                            }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div>
+            <h5
+                [jhiTranslate]="'artemisApp.learningGoal.learningGoalCard.progressExplanation'"
+                class="text-primary"
+                [translateValues]="{
+                    points: learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal,
+                    progress: progressInPercent
+                }"
+            ></h5>
         </div>
-        <div
-            [jhiTranslate]="'artemisApp.learningGoal.learningGoalCard.totalPointsAchievedExplanation'"
-            [translateValues]="{ points: learningGoalProgress.pointsAchievedByStudentInLearningGoal }"
-        ></div>
-        <div
-            [jhiTranslate]="'artemisApp.learningGoal.learningGoalCard.totalPointsAchievableExplanation'"
-            [translateValues]="{ points: learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal }"
-        ></div>
-        <div [jhiTranslate]="'artemisApp.learningGoal.learningGoalCard.progressExplanation'" [translateValues]="{ progress: progressInPercent }"></div>
     </div>
 </div>
