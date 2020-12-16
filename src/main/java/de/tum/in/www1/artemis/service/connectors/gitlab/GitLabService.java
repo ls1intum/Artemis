@@ -145,13 +145,20 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
-    @Override
-    public void protectBranch(URL repositoryUrl, String branch) {
+    /**
+     * Protects a branch from the repository, so that developers cannot change the history
+     *
+     * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
+     * @param branch            The name of the branch to protect (e.g "master")
+     * @throws VersionControlException      If the communication with the VCS fails.
+     */
+    private void protectBranch(URL repositoryUrl, String branch) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
-        // Protect the branch in 10 seconds. We do this to wait on any async calls
-        // to Gitlab and make sure that the branch really exists before protecting
-        // it.
-        protectBranch(repositoryId, branch, 10L, TimeUnit.SECONDS);
+        // we have to first unprotect the branch in order to set the correct access level, this is the case, because the master branch is protected for maintainers by default
+        // Unprotect the branch in 8 seconds first and then protect the branch in 12 seconds.
+        // We do this to wait on any async calls to Gitlab and make sure that the branch really exists before protecting it.
+        unprotectBranch(repositoryId, branch, 8L, TimeUnit.SECONDS);
+        protectBranch(repositoryId, branch, 12L, TimeUnit.SECONDS);
     }
 
     /**
@@ -166,7 +173,7 @@ public class GitLabService extends AbstractVersionControlService {
         scheduler.schedule(() -> {
             try {
                 log.info("Protecting branch " + branch + "for Gitlab repository " + repositoryId);
-                gitlab.getRepositoryApi().protectBranch(repositoryId, branch);
+                gitlab.getProtectedBranchesApi().protectBranch(repositoryId, branch, DEVELOPER, DEVELOPER, MAINTAINER, false);
             }
             catch (GitLabApiException e) {
                 throw new GitLabException("Unable to protect branch " + branch + " for repository " + repositoryId, e);
@@ -177,9 +184,7 @@ public class GitLabService extends AbstractVersionControlService {
     @Override
     public void unprotectBranch(URL repositoryUrl, String branch) throws VersionControlException {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
-        // Unprotect the branch in 10 seconds. We do this to wait on any async calls
-        // to Gitlab and make sure that the branch really exists before unprotecting
-        // it.
+        // Unprotect the branch in 10 seconds. We do this to wait on any async calls to Gitlab and make sure that the branch really exists before unprotecting it.
         unprotectBranch(repositoryId, branch, 10L, TimeUnit.SECONDS);
     }
 
@@ -195,7 +200,7 @@ public class GitLabService extends AbstractVersionControlService {
         scheduler.schedule(() -> {
             try {
                 log.info("Unprotecting branch " + branch + "for Gitlab repository " + repositoryId);
-                gitlab.getRepositoryApi().unprotectBranch(repositoryId, branch);
+                gitlab.getProtectedBranchesApi().unprotectBranch(repositoryId, branch);
             }
             catch (GitLabApiException e) {
                 throw new GitLabException("Could not unprotect branch " + branch + " for repository " + repositoryId, e);
