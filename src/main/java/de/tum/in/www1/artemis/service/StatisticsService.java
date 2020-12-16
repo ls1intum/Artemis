@@ -202,83 +202,47 @@ public class StatisticsService {
     */
     private List<Map<String, Object>> convertMapList(SpanType span, List<Map<String, Object>> result, ZonedDateTime startDate) {
         List<Map<String, Object>> returnList = new ArrayList<>();
-        switch (span) {
-            case DAY -> {
-                Map<Integer, List<String>> users = new HashMap<>();
-                for (Map<String, Object> listElement : result) {
-                    ZonedDateTime date = (ZonedDateTime) listElement.get("day");
-                    String username = listElement.get("username").toString();
-                    List<String> usersInSameSlot = users.get(date.getHour());
-                    // if this hour is not yet existing in users
-                    if (usersInSameSlot == null) {
-                        usersInSameSlot = new ArrayList<>();
-                        usersInSameSlot.add(username);
-                        users.put(date.getHour(), usersInSameSlot);
-                    }   // if the value of the map for this hour does not contain this username
-                    else if (!usersInSameSlot.contains("" + listElement.get("username"))) {
-                        usersInSameSlot.add(username);
-                        users.put(date.getHour(), usersInSameSlot);
-                    }
-                }
-                users.forEach((k, v) -> {
-                    Map<String, Object> listElement = new HashMap<>();
-                    listElement.put("day", startDate.withHour(k));
-                    listElement.put("amount", (long) v.size());
-                    returnList.add(listElement);
-                });
+        Map<Object, List<String>> users = new HashMap<>();
+        for (Map<String, Object> listElement : result) {
+            Object index;
+            ZonedDateTime date = (ZonedDateTime) listElement.get("day");
+            if (span == SpanType.DAY) {
+                index = date.getHour();
             }
-            case WEEK, MONTH -> {
-                Map<Integer, List<String>> users = new HashMap<>();
-                for (Map<String, Object> listElement : result) {
-                    ZonedDateTime date = (ZonedDateTime) listElement.get("day");
-                    String username = listElement.get("username").toString();
-                    List<String> usersInSameSlot = users.get(date.getDayOfMonth());
-                    // if this day is not yet existing in users
-                    if (usersInSameSlot == null) {
-                        usersInSameSlot = new ArrayList<>();
-                        usersInSameSlot.add(username);
-                        users.put(date.getDayOfMonth(), usersInSameSlot);
-                    }   // if the value of the map for this day does not contain this username
-                    else if (!usersInSameSlot.contains("" + listElement.get("username"))) {
-                        usersInSameSlot.add(username);
-                        users.put(date.getDayOfMonth(), usersInSameSlot);
-                    }
-                }
-                users.forEach((k, v) -> {
-                    Map<String, Object> listElement = new HashMap<>();
-                    listElement.put("day", startDate.withDayOfMonth(k));
-                    listElement.put("amount", (long) v.size());
-                    returnList.add(listElement);
-                });
+            else if (span == SpanType.WEEK || span == SpanType.MONTH) {
+                index = date.getDayOfMonth();
             }
-            case YEAR -> {
-                Map<Month, List<String>> users = new HashMap<>();
-                for (Map<String, Object> listElement : result) {
-                    ZonedDateTime date = (ZonedDateTime) listElement.get("day");
-                    String username = listElement.get("username").toString();
-                    List<String> usersInSameSlot = users.get(date.getMonth());
-                    // if this month is not yet existing in users
-                    if (usersInSameSlot == null) {
-                        usersInSameSlot = new ArrayList<>();
-                        usersInSameSlot.add(username);
-                        users.put(date.getMonth(), usersInSameSlot);
-                    }   // if the value of the map for this month does not contain this username
-                    else if (!usersInSameSlot.contains("" + listElement.get("username"))) {
-                        usersInSameSlot.add(username);
-                        users.put(date.getMonth(), usersInSameSlot);
-                    }
-                }
-                users.forEach((k, v) -> {
-                    Map<String, Object> listElement = new HashMap<>();
-                    listElement.put("day", startDate.withMonth(getMonthIndex(k)));
-                    listElement.put("amount", (long) v.size());
-                    returnList.add(listElement);
-                });
+            else {
+                index = date.getMonth();
             }
-            default -> {
-                return returnList;
+            String username = listElement.get("username").toString();
+            List<String> usersInSameSlot = users.get(index);
+            // if this index is not yet existing in users
+            if (usersInSameSlot == null) {
+                usersInSameSlot = new ArrayList<>();
+                usersInSameSlot.add(username);
+                users.put(index, usersInSameSlot);
+            }   // if the value of the map for this index does not contain this username
+            else if (!usersInSameSlot.contains(username)) {
+                usersInSameSlot.add(username);
             }
         }
+        users.forEach((k, v) -> {
+            Object start;
+            if (span == SpanType.DAY) {
+                start = startDate.withHour((Integer) k);
+            }
+            else if (span == SpanType.WEEK || span == SpanType.MONTH) {
+                start = startDate.withDayOfMonth((Integer) k);
+            }
+            else {
+                start = startDate.withMonth(getMonthIndex((Month) k));
+            }
+            Map<String, Object> listElement = new HashMap<>();
+            listElement.put("day", start);
+            listElement.put("amount", (long) v.size());
+            returnList.add(listElement);
+        });
         return returnList;
     }
 
