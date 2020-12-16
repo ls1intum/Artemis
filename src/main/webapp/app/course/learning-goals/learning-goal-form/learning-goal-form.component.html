@@ -1,0 +1,106 @@
+<div class="row">
+    <div class="col-12">
+        <form *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
+            <div class="form-group">
+                <label for="title">{{ 'artemisApp.learningGoal.title' | translate }}*</label>
+                <input
+                    type="text"
+                    class="form-control"
+                    id="title"
+                    formControlName="title"
+                    [placeholder]="'artemisApp.learningGoal.createLearningGoal.titlePlaceholder' | translate"
+                />
+                <div *ngIf="titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="titleControl?.errors?.required">
+                        {{ 'artemisApp.learningGoal.createLearningGoal.titleRequiredValidationError' | translate }}
+                    </div>
+                    <div *ngIf="titleControl?.errors?.maxlength">
+                        {{ 'artemisApp.learningGoal.createLearningGoal.titleMaxLengthValidationError' | translate }}
+                    </div>
+                    <div *ngIf="titleControl?.errors?.titleUnique">
+                        {{ 'artemisApp.learningGoal.createLearningGoal.titleUniqueValidationError' | translate }}
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="description">{{ 'artemisApp.learningGoal.description' | translate }}</label>
+                <textarea
+                    class="form-control"
+                    id="description"
+                    rows="6"
+                    formControlName="description"
+                    [placeholder]="'artemisApp.learningGoal.createLearningGoal.descriptionPlaceholder' | translate"
+                ></textarea>
+                <div *ngIf="descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="descriptionControl?.errors?.maxlength">
+                        {{ 'artemisApp.learningGoal.createLearningGoal.descriptionMaxLengthValidationError' | translate }}
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label> {{ 'artemisApp.learningGoal.createLearningGoal.connectWithLectureUnits' | translate }}</label>
+                <div *ngIf="lecturesOfCourseWithLectureUnits && lecturesOfCourseWithLectureUnits.length > 0; else noLectures" ngbDropdown class="mb-2">
+                    <button class="btn btn-outline-primary" ngbDropdownToggle type="button">
+                        {{
+                            selectedLectureInDropdown
+                                ? getLectureTitleForDropdown(selectedLectureInDropdown)
+                                : ('artemisApp.learningGoal.createLearningGoal.selectLecture' | translate)
+                        }}
+                    </button>
+                    <div ngbDropdownMenu>
+                        <button ngbDropdownItem type="button" *ngFor="let lecture of lecturesOfCourseWithLectureUnits" (click)="selectLectureInDropdown(lecture)">
+                            {{ getLectureTitleForDropdown(lecture) }}
+                        </button>
+                    </div>
+                </div>
+                <ng-template #noLectures>
+                    <div class="alert alert-info">
+                        {{ 'artemisApp.learningGoal.createLearningGoal.noLectures' | translate }}
+                    </div>
+                </ng-template>
+                <div class="table-responsive" *ngIf="selectedLectureInDropdown">
+                    <table class="table table-bordered">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>id</th>
+                                <th>
+                                    {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.type' | translate }}
+                                </th>
+                                <th>
+                                    {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.name' | translate }}
+                                </th>
+                                <th>
+                                    {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.releaseDate' | translate }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                class="lectureUnitRow"
+                                *ngFor="let lectureUnit of selectedLectureInDropdown.lectureUnits"
+                                (click)="selectLectureUnitInTable(lectureUnit)"
+                                [class.table-primary]="isLectureUnitAlreadySelectedInTable(lectureUnit)"
+                            >
+                                <td>{{ lectureUnit.id ? lectureUnit.id : '' }}</td>
+                                <td>{{ lectureUnit.type ? lectureUnit.type : '' }}</td>
+                                <td>{{ lectureUnitService.getLectureUnitName(lectureUnit) ? lectureUnitService.getLectureUnitName(lectureUnit) : '' }}</td>
+                                <td>
+                                    {{
+                                        lectureUnitService.getLectureUnitReleaseDate(lectureUnit)
+                                            ? lectureUnitService.getLectureUnitReleaseDate(lectureUnit)!.format('MMM DD YYYY, HH:mm:ss')
+                                            : ''
+                                    }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div>
+                <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                    <span>{{ 'entity.action.submit' | translate }}</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

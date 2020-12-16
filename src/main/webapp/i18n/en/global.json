@@ -302,5 +302,6 @@
         "connected": "Connected",
         "disconnected": "Disconnected"
     },
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "completed": "Completed"
 }
