@@ -61,6 +61,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     onError = new EventEmitter<string>();
     @Output()
     onUpdateFeedback = new EventEmitter<Feedback[]>();
+    @Output()
+    onFileLoad = new EventEmitter<string>();
 
     // This fetches a list of all supported editor modes and matches it afterwards against the file extension
     readonly aceModeList = ace.acequire('ace/ext/modelist');
@@ -187,9 +189,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     this.fileFeedbackPerLine[line] = feedback;
                 });
             }
-        }
-        if (this.markerIds.length > 0) {
-            this.markerIds.forEach((markerId) => this.editorSession.removeMarker(markerId));
+
+            if (this.markerIds.length > 0) {
+                this.markerIds.forEach((markerId) => this.editorSession.removeMarker(markerId));
+            }
+            this.onFileLoad.emit(this.selectedFile);
         }
     }
 

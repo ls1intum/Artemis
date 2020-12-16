@@ -60,6 +60,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onSelectedFileChanged = new EventEmitter<string>();
     @Output()
     onUpdateFeedback = new EventEmitter<Feedback[]>();
+    @Output()
+    onFileLoad = new EventEmitter<string>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 
@@ -194,6 +196,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
 
     updateFeedback(feedbacks: Feedback[]) {
         this.onUpdateFeedback.emit(feedbacks);
+    }
+
+    fileLoad(selectedFile: string) {
+        this.onFileLoad.emit(selectedFile);
     }
 
     /**
