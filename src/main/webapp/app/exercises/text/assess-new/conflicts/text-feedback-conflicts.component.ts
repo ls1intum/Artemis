@@ -43,7 +43,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
     isMarkingDisabled = true;
     selectedRightFeedbackId?: number;
 
-    private latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
+    latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
 
     private get textBlocksWithFeedbackForLeftSubmission(): TextBlock[] {
         return [...this.leftTextBlockRefs, ...this.leftUnusedTextBlockRefs]

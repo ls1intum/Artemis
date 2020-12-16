@@ -24,7 +24,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     predicate = 'id';
     reverse = false;
 
-    private latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
+    latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
     private cancelConfirmationText: string;
 
     constructor(

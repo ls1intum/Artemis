@@ -54,7 +54,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     busy: boolean;
     userId: number;
     canOverrideAssessments: boolean;
-    private latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
+    latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
 
     constructor(
         private route: ActivatedRoute,

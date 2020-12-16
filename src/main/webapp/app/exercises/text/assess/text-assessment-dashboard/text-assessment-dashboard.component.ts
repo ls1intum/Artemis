@@ -25,7 +25,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
 
     private cancelConfirmationText: string;
 
-    private latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
+    latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
 
     constructor(
         private route: ActivatedRoute,

@@ -111,7 +111,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
     exerciseForGuidedTour?: Exercise;
 
-    private latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
+    latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
 
     constructor(
         private exerciseService: ExerciseService,

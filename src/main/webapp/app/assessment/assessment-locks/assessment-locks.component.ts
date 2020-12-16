@@ -34,7 +34,7 @@ export class AssessmentLocksComponent implements OnInit {
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
-    private latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
+    latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
 
     constructor(
         private route: ActivatedRoute,
