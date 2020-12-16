@@ -86,7 +86,7 @@ public class RepositoryService {
                 fileListWithContent.put(file.toString(), FileUtils.readFileToString(file, StandardCharsets.UTF_8));
             }
             catch (IOException e) {
-                e.printStackTrace();
+                log.error("Content of file: " + file.toString() + " could not be loaded and throws the following error: " + e.getMessage());
             }
         });
         return fileListWithContent;
