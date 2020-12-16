@@ -135,12 +135,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.getFile(participationId, filename);
     }
 
-    @GetMapping(value = "/repository/{participationId}/template-files", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, String>> getTemplateFiles(@PathVariable Long participationId) {
+    @GetMapping(value = "/repository/{participationId}/files-content", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
-            var participation = participationService.findParticipation(participationId);
-            var exercise = super.programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(participation.getExercise().getId());
-            Repository templateRepository = getRepository(exercise.getTemplateParticipation().getId(), RepositoryActionType.READ, true);
+            Repository templateRepository = getRepository(participationId, RepositoryActionType.READ, true);
             var filesWithContent = super.repositoryService.getFilesWithContent(templateRepository);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
         });

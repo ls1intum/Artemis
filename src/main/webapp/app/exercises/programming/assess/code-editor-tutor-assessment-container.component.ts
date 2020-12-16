@@ -32,6 +32,8 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { tap, switchMap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { diff_match_patch } from 'diff-match-patch';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -81,6 +83,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     isFirstAssessment = false;
     lockLimitReached = false;
 
+    templateParticipation: TemplateProgrammingExerciseParticipation;
     templateFileSession: { [fileName: string]: string } = {};
 
     constructor(
@@ -97,6 +100,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private jhiAlertService: JhiAlertService,
         private structuredGradingCriterionService: StructuredGradingCriterionService,
         private repositoryFileService: CodeEditorRepositoryFileService,
+        private programmingExerciseService: ProgrammingExerciseService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -173,7 +177,16 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         },
                         () => (this.loadingParticipation = false),
                     ),
-                    switchMap(() => this.repositoryFileService.getTemplateFilesWithContent()),
+                    switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!)),
+                    tap((programmingExercise) => (this.templateParticipation = programmingExercise.body!.templateParticipation!)),
+                    switchMap(() => {
+                        // Get all files with content from template repository
+                        this.domainService.setDomain([DomainType.PARTICIPATION, this.templateParticipation]);
+                        const observable = this.repositoryFileService.getFilesWithContent();
+                        // Set back to student participation
+                        this.domainService.setDomain([DomainType.PARTICIPATION, this.participation]);
+                        return observable;
+                    }),
                     tap((templateFilesObj) => {
                         if (templateFilesObj) {
                             this.templateFileSession = templateFilesObj;
@@ -197,44 +210,42 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         console.log('selectedFile event', selectedFile);
         console.log('selectedFile from viewChild', this.codeEditorContainer?.selectedFile);
         if (selectedFile && this.codeEditorContainer?.selectedFile) {
-            setTimeout(() => {
-                console.log('aceEditor editorSession', this.codeEditorContainer?.aceEditor?.editorSession);
-                console.log(this.codeEditorContainer.aceEditor.editorSession.getValue(), this.templateFileSession[selectedFile]);
+            console.log('aceEditor editorSession', this.codeEditorContainer?.aceEditor?.editorSession);
+            console.log(this.codeEditorContainer.aceEditor.editorSession.getValue(), this.templateFileSession[selectedFile]);
 
-                if (!this.templateFileSession[selectedFile]) {
-                    console.log('undefined, every line should be green');
-                    const lastLine = this.codeEditorContainer.aceEditor.editorSession.getLength() - 1;
-                    this.codeEditorContainer.aceEditor.markerIds.push(
-                        this.codeEditorContainer.aceEditor.editorSession.addMarker(new this.codeEditorContainer.aceEditor.Range(0, 0, lastLine, 1), 'myMarker', 'fullLine'),
-                    );
-                } else {
-                    const diffArray = this.dmp.diff_main(this.templateFileSession[selectedFile], this.codeEditorContainer.aceEditor.editorSession.getValue());
-                    console.log(diffArray);
-                    this.dmp.diff_cleanupEfficiency(diffArray);
-                    console.log(diffArray, 'after cleanup');
+            if (!this.templateFileSession[selectedFile]) {
+                console.log('undefined, every line should be green');
+                const lastLine = this.codeEditorContainer.aceEditor.editorSession.getLength() - 1;
+                this.codeEditorContainer.aceEditor.markerIds.push(
+                    this.codeEditorContainer.aceEditor.editorSession.addMarker(new this.codeEditorContainer.aceEditor.Range(0, 0, lastLine, 1), 'diff-newLine', 'fullLine'),
+                );
+            } else {
+                const diffArray = this.dmp.diff_main(this.templateFileSession[selectedFile], this.codeEditorContainer.aceEditor.editorSession.getValue());
+                console.log(diffArray);
+                this.dmp.diff_cleanupEfficiency(diffArray);
+                console.log(diffArray, 'after cleanup');
 
-                    let counter = 0;
-                    diffArray.forEach((diffElement) => {
-                        if (diffElement[0] === 0) {
-                            const lines = diffElement[1].split(/\r?\n/);
-                            counter += lines.length - 1;
-                        }
-                        if (diffElement[0] === 1) {
-                            const lines = diffElement[1].split(/\r?\n/).filter(Boolean);
-                            const firstLineToHighlight = counter;
-                            const lastLineToHighlight = counter + lines.length - 1;
-                            this.codeEditorContainer.aceEditor.markerIds.push(
-                                this.codeEditorContainer.aceEditor.editorSession.addMarker(
-                                    new this.codeEditorContainer.aceEditor.Range(firstLineToHighlight, 0, lastLineToHighlight, 1),
-                                    'diff-newLine',
-                                    'fullLine',
-                                ),
-                            );
-                            counter += lines.length;
-                        }
-                    });
-                }
-            }, 500);
+                let counter = 0;
+                diffArray.forEach((diffElement) => {
+                    if (diffElement[0] === 0) {
+                        const lines = diffElement[1].split(/\r?\n/);
+                        counter += lines.length - 1;
+                    }
+                    if (diffElement[0] === 1) {
+                        const lines = diffElement[1].split(/\r?\n/).filter((element) => element.trim());
+                        const firstLineToHighlight = counter;
+                        const lastLineToHighlight = counter + lines.length - 1;
+                        this.codeEditorContainer.aceEditor.markerIds.push(
+                            this.codeEditorContainer.aceEditor.editorSession.addMarker(
+                                new this.codeEditorContainer.aceEditor.Range(firstLineToHighlight, 0, lastLineToHighlight, 1),
+                                'diff-newLine',
+                                'fullLine',
+                            ),
+                        );
+                        counter += lines.length;
+                    }
+                });
+            }
         }
     }
 
