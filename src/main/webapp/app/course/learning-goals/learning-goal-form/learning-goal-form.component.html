@@ -39,7 +39,7 @@
             </div>
             <div>
                 <label> {{ 'artemisApp.learningGoal.createLearningGoal.connectWithLectureUnits' | translate }}</label>
-                <div ngbDropdown class="mb-2">
+                <div *ngIf="lecturesOfCourseWithLectureUnits && lecturesOfCourseWithLectureUnits.length > 0; else noLectures" ngbDropdown class="mb-2">
                     <button class="btn btn-outline-primary" ngbDropdownToggle type="button">
                         {{
                             selectedLectureInDropdown
@@ -53,6 +53,11 @@
                         </button>
                     </div>
                 </div>
+                <ng-template #noLectures>
+                    <div class="alert alert-info">
+                        {{ 'artemisApp.learningGoal.createLearningGoal.noLectures' | translate }}
+                    </div>
+                </ng-template>
                 <div class="table-responsive" *ngIf="selectedLectureInDropdown">
                     <table class="table table-bordered">
                         <thead class="thead-dark">

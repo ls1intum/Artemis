@@ -20,6 +20,7 @@
                 "descriptionMaxLengthValidationError": "Die Beschreibung eines Lernziels ist auf maximal 10 000 Symbole beschränkt",
                 "connectWithLectureUnits": "Verbinde das Lernziel mit Vorlesungseinheiten",
                 "selectLecture": "Wähle eine Vorlesung aus",
+                "noLectures": "Dieser Kurs hat keine Vorlesungen",
                 "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} Vorlesungseinheiten verbunden)",
                 "lectureUnitTable": {
                     "type": "Typ",
