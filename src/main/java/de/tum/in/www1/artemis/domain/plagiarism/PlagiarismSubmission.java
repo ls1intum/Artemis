@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 
 public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
 
-    private static final Logger log = LoggerFactory.getLogger(PlagiarismSubmission.class);
+    private static final Logger logger = LoggerFactory.getLogger(PlagiarismSubmission.class);
 
     /**
      * Login of the student who created the submission.
@@ -66,7 +66,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
                 submissionId = Long.parseLong(submissionIdAndStudentLogin[0]);
             }
             catch (NumberFormatException e) {
-                log.error("Invalid submissionId: " + e.getMessage());
+                logger.error("Invalid submissionId: " + e.getMessage());
             }
 
             studentLogin = submissionIdAndStudentLogin[1];

@@ -1083,7 +1083,7 @@ public class ProgrammingExerciseResource {
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException is thrown for file handling errors
      */
-    @GetMapping(value = Endpoints.CHECK_PLAGIARISM)
+    @GetMapping(Endpoints.CHECK_PLAGIARISM)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId) throws ExitException, IOException {
