@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
@@ -14,7 +15,7 @@ import { SplitPaneHeaderComponent } from './plagiarism-split-view/split-pane-hea
 import { ProgrammingSubmissionViewerComponent } from './plagiarism-split-view/programming-submission-viewer/programming-submission-viewer.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisModelingEditorModule, RouterModule, TranslateModule],
+    imports: [ArtemisSharedModule, ArtemisModelingEditorModule, FormsModule, RouterModule, TranslateModule],
     declarations: [
         PlagiarismDetailsComponent,
         PlagiarismHeaderComponent,

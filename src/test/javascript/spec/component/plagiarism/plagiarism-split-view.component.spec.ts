@@ -12,6 +12,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
+import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 
 const collapse = jest.fn();
 const setSizes = jest.fn();
@@ -33,8 +34,7 @@ describe('Plagiarism Split View Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisModelingEditorModule, TranslateTestingModule],
-            declarations: [PlagiarismSplitViewComponent, ModelingSubmissionViewerComponent, TextSubmissionViewerComponent],
+            imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -52,13 +52,15 @@ describe('Plagiarism Split View Component', () => {
         comp.exercise = modelingExercise;
 
         expect(comp.isModelingExercise()).toEqual(true);
-        expect(comp.isTextOrProgrammingExercise()).toEqual(false);
+        expect(comp.isTextExercise()).toEqual(false);
+        expect(comp.isProgrammingExercise()).toEqual(false);
     });
 
     it('checks type of text exercise', () => {
         comp.exercise = textExercise;
 
-        expect(comp.isTextOrProgrammingExercise()).toEqual(true);
+        expect(comp.isTextExercise()).toEqual(true);
+        expect(comp.isProgrammingExercise()).toEqual(false);
         expect(comp.isModelingExercise()).toEqual(false);
     });
 

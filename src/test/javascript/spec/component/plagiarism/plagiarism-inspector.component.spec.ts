@@ -20,6 +20,9 @@ import { ModelingSubmissionViewerComponent } from 'app/exercises/shared/plagiari
 import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { SplitPaneHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
+import { ProgrammingSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/programming-submission-viewer/programming-submission-viewer.component';
+import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -69,16 +72,7 @@ describe('Plagiarism Inspector Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisModelingEditorModule, TranslateTestingModule],
-            declarations: [
-                PlagiarismInspectorComponent,
-                PlagiarismDetailsComponent,
-                PlagiarismHeaderComponent,
-                PlagiarismSidebarComponent,
-                PlagiarismSplitViewComponent,
-                ModelingSubmissionViewerComponent,
-                TextSubmissionViewerComponent,
-            ],
+            imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
             providers: [{ provide: ActivatedRoute, useValue: activatedRoute }],
         }).compileComponents();
 
