@@ -177,7 +177,8 @@ public class GitService {
             }
             catch (GitAPIException | RuntimeException | IOException e) {
                 log.error("Exception during clone " + e);
-                // cleanup the folder to avoid problems in the future
+                // cleanup the folder to avoid problems in the future.
+                // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid a try-catch block.
                 FileUtils.deleteQuietly(localPath.toFile());
                 throw new GitException(e);
             }
