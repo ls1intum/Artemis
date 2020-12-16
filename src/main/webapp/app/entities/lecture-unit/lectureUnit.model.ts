@@ -1,10 +1,10 @@
-// IMPORTANT NOTICE: The following strings have to be consistent with
-// the ones defined in LectureUnit.java
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Moment } from 'moment';
 import { Lecture } from 'app/entities/lecture.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 
+// IMPORTANT NOTICE: The following strings have to be consistent with
+// the ones defined in LectureUnit.java
 export enum LectureUnitType {
     ATTACHMENT = 'attachment',
     EXERCISE = 'exercise',

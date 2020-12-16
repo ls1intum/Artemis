@@ -48,6 +48,7 @@ public abstract class LectureUnit extends DomainObject {
     private Lecture lecture;
 
     @ManyToMany(mappedBy = "lectureUnits")
+    @OrderBy("title")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     public Set<LearningGoal> learningGoals = new HashSet<>();
 

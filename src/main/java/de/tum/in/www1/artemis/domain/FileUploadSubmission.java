@@ -60,6 +60,12 @@ public class FileUploadSubmission extends Submission {
     }
 
     @Override
+    public boolean isEmpty() {
+        // Note: this is very unlikely
+        return filePath == null;
+    }
+
+    @Override
     public String toString() {
         return "FileUploadSubmission{" + "id=" + getId() + ", filePath='" + getFilePath() + "'" + "}";
     }
