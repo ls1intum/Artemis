@@ -139,15 +139,12 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         // Make new testCase for bonus
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream().collect(Collectors.toList());
         testCases.add(
-                new ProgrammingExerciseTestCase().testName("test4").weight(1.0).active(true).exercise(programmingExercise).afterDueDate(false).bonusMultiplier(1D).bonusPoints(5D));
-        testCaseRepository.saveAll(testCases);
-        testCases.add(
-                new ProgrammingExerciseTestCase().testName("test5").weight(1.0).active(true).exercise(programmingExercise).afterDueDate(false).bonusMultiplier(1D).bonusPoints(2D));
+                new ProgrammingExerciseTestCase().testName("test4").weight(1.0).active(true).exercise(programmingExercise).afterDueDate(false).bonusMultiplier(1D).bonusPoints(1D));
         testCaseRepository.saveAll(testCases);
 
         List<Feedback> feedbacks = new ArrayList<>();
+        // one successful test that gives 2 points -> 1 normal and 1 bonus point for solving the test correctly
         feedbacks.add(new Feedback().text("test4").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test5").positive(true).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
         result.assessmentType(AssessmentType.AUTOMATIC);
@@ -155,11 +152,19 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
         gradingService.updateResult(result, programmingExercise, true);
 
-        Long expectedScore = 100L;
+        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
+        assertThat(result.getScore()).isEqualTo(40L);
+        assertThat(result.isSuccessful()).isFalse();
+
+        // additional successful test case that gives 1 point (1 normal point, 0 bonus points for solving the test)
+        result.addFeedback(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        scoreBeforeUpdate = result.getScore();
+
+        gradingService.updateResult(result, programmingExercise, true);
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getScore()).isEqualTo(expectedScore);
-        assertThat(result.isSuccessful()).isTrue();
+        assertThat(result.getScore()).isEqualTo(60L);
+        assertThat(result.isSuccessful()).isFalse();
     }
 
     @ValueSource(booleans = { false, true })

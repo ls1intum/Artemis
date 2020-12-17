@@ -386,7 +386,15 @@ public class ProgrammingExerciseGradingService {
              * receive the full 20 points, if the points are not capped before the penalty is subtracted. With the implemented order in place
              * successfulTestPoints will be capped to 20 points first, then the penalty is subtracted resulting in 10 points.
              */
-            double maxPoints = maxScoreRespectingZeroPointExercises + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+            double maxPoints;
+            if (programmingExercise.getMaxScore() > 0) {
+                maxPoints = maxScoreRespectingZeroPointExercises + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+            }
+            else {
+                // contains only the bonus points
+                maxPoints = maxScoreRespectingZeroPointExercises;
+            }
+
             if (successfulTestPoints > maxPoints) {
                 successfulTestPoints = maxPoints;
             }
@@ -402,14 +410,7 @@ public class ProgrammingExerciseGradingService {
             }
 
             // The score is calculated as a percentage of the maximum points
-            long score;
-            if (maxScoreRespectingZeroPointExercises > 0) {
-                score = Math.round(successfulTestPoints / maxScoreRespectingZeroPointExercises * 100.0);
-            }
-            else {
-                // special case when exercise has no regular points, but bonus points (e.g. 0 points, 5 bonus points -> score between 0% and 100% whereas 100% = 5 bonus points)
-                score = Math.round((successfulTestPoints) / programmingExercise.getBonusPoints() * 100.0);
-            }
+            long score = Math.round(successfulTestPoints / maxScoreRespectingZeroPointExercises * 100.0);
 
             result.setScore(score);
         }
@@ -508,8 +509,11 @@ public class ProgrammingExerciseGradingService {
     private static double getMaxScoreRespectingZeroPointExercises(ProgrammingExercise programmingExercise) {
         boolean hasNormalPoints = Objects.requireNonNullElse(programmingExercise.getMaxScore(), 0.0) > 0.0;
         boolean hasBonusPoints = Objects.requireNonNullElse(programmingExercise.getBonusPoints(), 0.0) > 0.0;
-        if (hasNormalPoints || hasBonusPoints) {
+        if (hasNormalPoints) {
             return programmingExercise.getMaxScore();
+        }
+        if (hasBonusPoints) {
+            return programmingExercise.getBonusPoints();
         }
         return PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
     }
