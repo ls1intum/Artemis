@@ -242,5 +242,81 @@ Some guidelines:
         });
     });
 
+10. Preventing Memory Leaks
+===========================
+
+It is crucial that you try to prevent memory leaks in both your components and your tests.
+
+What are memory leaks?
+**********************
+
+A very good explanation that you should definitely read to understand the problem: https://auth0.com/blog/four-types-of-leaks-in-your-javascript-code-and-how-to-get-rid-of-them/
+
+In essence:
+
+*  JS is a garbage collected language
+*  Modern garbage collectors improve on this algorithm in different ways, but the essence is the same: **reachable pieces of memory are marked as such and the rest is considered garbage.**
+*  Unwanted references are references to pieces of memory that the developer knows he or she won't be needing
+   anymore but that for some reason are kept inside the tree of an active root. **In the context of JavaScript, unwanted references are variables kept somewhere in the code that will not be used anymore and point to a piece of memory that could otherwise be freed.**
+
+What are common reasons for memory leaks?
+*****************************************
+https://auth0.com/blog/four-types-of-leaks-in-your-javascript-code-and-how-to-get-rid-of-them/:
+*  Accidental global variables
+*  Forgotten timers or callbacks
+*  Out of DOM references
+*  Closures
+
+https://making.close.com/posts/finding-the-cause-of-a-memory-leak-in-jest
+Mocks not being restored after the end of a test, especially when it involves global objects.
+
+https://www.twilio.com/blog/prevent-memory-leaks-angular-observable-ngondestroy
+RXJS subscriptions not being unsubscribed.
+
+What are ways to identify memory leaks?
+*****************************************
+**Number 1:** Manually checking the heap usage and identifying heap dumps for causes of memory leaks
+https://chanind.github.io/javascript/2019/10/12/jest-tests-memory-leak.html
+
+Corresponding commands from the article for our project (enter in the root directory of the project):
+
+.. code-block:: text
+
+   node --expose-gc ./node_modules/.bin/jest --runInBand --logHeapUsage --config ./src/test/javascript/jest.config.js --env=jsdom
+
+.. code-block:: text
+
+   node --inspect-brk --expose-gc ./node_modules/.bin/jest --runInBand --logHeapUsage --config ./src/test/javascript/jest.config.js --env=jsdom
+
+A live demonstration of this technique to find the reason for memory leaks in the GitLab repository: https://www.youtube.com/watch?v=GOYmouFrGrE
+
+**Number 2:** Using the experimental leak detection feature from jest
+
+
+.. code-block:: text
+
+   --detectLeaks **EXPERIMENTAL**: Detect memory leaks in tests.
+                                   After executing a test, it will try to garbage collect the global object used,
+                                   and fail if it was leaked [boolean] [default: false]
+
+  --runInBand, -i Run all tests serially in the current process
+    (rather than creating a worker pool of child processes that run tests). This is sometimes useful for debugging, but such use cases are pretty rare.
+
+
+
+Navigate into src/test/javascript and run either
+
+.. code-block:: text
+
+   jest --detectLeaks --runInBand
+
+or
+
+.. code-block:: text
+
+   jest --detectLeaks
+
+
+
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/master/Coding-guidelines.md
