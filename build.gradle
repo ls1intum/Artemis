@@ -150,7 +150,7 @@ jacocoTestCoverageVerification {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 50
-                maximum = 150
+                maximum = 145
             }
         }
     }
