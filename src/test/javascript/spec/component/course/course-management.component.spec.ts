@@ -12,6 +12,17 @@ import { of } from 'rxjs/internal/observable/of';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { RouterTestingModule } from '@angular/router/testing';
+import { Router } from '@angular/router';
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { TranslatePipe } from '@ngx-translate/core';
+import { JhiSortDirective, JhiSortByDirective } from 'ng-jhipster';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { MomentModule } from 'ngx-moment';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -21,23 +32,34 @@ describe('CourseManagementComponent', () => {
     let component: CourseManagementComponent;
     let service: CourseManagementService;
     let guidedTourService: GuidedTourService;
+    let router: Router;
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [CourseManagementComponent],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MomentModule],
+            declarations: [
+                CourseManagementComponent,
+                MockDirective(OrionFilterDirective),
+                MockComponent(AlertComponent),
+                MockDirective(MockHasAnyAuthorityDirective),
+                MockDirective(JhiSortByDirective),
+                MockPipe(TranslatePipe),
+                MockDirective(JhiSortDirective),
+                MockPipe(ArtemisDatePipe),
+                MockDirective(DeleteButtonDirective),
+            ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
-            .overrideTemplate(CourseManagementComponent, '')
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseManagementComponent);
                 component = fixture.componentInstance;
                 service = TestBed.inject(CourseManagementService);
                 guidedTourService = TestBed.inject(GuidedTourService);
+                router = TestBed.get(Router);
             });
     });
 
@@ -105,6 +127,7 @@ describe('CourseManagementComponent', () => {
         component.predicate = 'id';
         component.reverse = false;
         component.sortRows();
+        expect(component.courses).to.deep.equal([courseWS, courseSS]);
         expect(component).to.be.ok;
     });
 });
