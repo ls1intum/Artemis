@@ -64,9 +64,6 @@ public class BitbucketService extends AbstractVersionControlService {
     @Value("${artemis.git.name}")
     private String artemisGitName;
 
-    @Value("${artemis.repo-download-clone-path}")
-    private String REPO_DOWNLOAD_CLONE_PATH;
-
     private final UserService userService;
 
     private final RestTemplate restTemplate;
@@ -278,13 +275,13 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) {
+    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName, String targetPath) {
         final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName.toLowerCase();
         try {
             var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepositoryName.toLowerCase());
             URL sourceRepositoryUrlAsUrl = new URL(sourceRepoUrl.toString());
             // checkout the source repo to a different folder than the default one. This avoids a possible conflict state.
-            Repository sourceRepo = gitService.getOrCheckoutRepository(sourceRepositoryUrlAsUrl, true, REPO_DOWNLOAD_CLONE_PATH);
+            Repository sourceRepo = gitService.getOrCheckoutRepository(sourceRepositoryUrlAsUrl, true, targetPath);
             // create target repo
             createRepository(targetProjectKey, targetRepoSlug);
             var targetRepoUrl = getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);

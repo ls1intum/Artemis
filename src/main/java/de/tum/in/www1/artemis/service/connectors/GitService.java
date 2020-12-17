@@ -210,14 +210,17 @@ public class GitService {
             try {
                 log.debug("Cloning from " + repoUrl + " to " + localPath);
                 cloneInProgressOperations.put(localPath, localPath);
+                // make sure the directory to copy into is empty
+                FileUtils.deleteDirectory(localPath.toFile());
                 Git result = Git.cloneRepository().setURI(repoUrl.toString()).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
                         .setDirectory(localPath.toFile()).call();
                 result.close();
             }
-            catch (GitAPIException | RuntimeException e) {
+            catch (GitAPIException | RuntimeException | IOException e) {
                 log.error("Exception during clone " + e);
-                // cleanup the folder to avoid problems in the future
-                localPath.toFile().delete();
+                // cleanup the folder to avoid problems in the future.
+                // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid a try-catch block.
+                FileUtils.deleteQuietly(localPath.toFile());
                 throw new GitException(e);
             }
             finally {
