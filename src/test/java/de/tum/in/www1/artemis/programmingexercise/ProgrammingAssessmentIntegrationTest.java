@@ -347,29 +347,6 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void createManualProgrammingExerciseResult_resultExists() throws Exception {
-        Result firstManualResultResponse = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult,
-                Result.class, HttpStatus.OK);
-
-        // Create a 2nd result (by saving the unsaved result again in order to force generation a new id)
-        manualResult = resultRepository.save(manualResult);
-        // Create submission for result and save
-        ProgrammingSubmission submission = new ProgrammingSubmission();
-        submission = programmingSubmissionRepository.save(submission);
-        manualResult.setSubmission(submission);
-        submission.addResult(manualResult);
-
-        programmingSubmissionRepository.save(submission);
-
-        Result secondManualResultResponse = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult,
-                Result.class, HttpStatus.OK);
-
-        // Make sure that the first generated manual result is always used (to prevent that multiple manual results are created)
-        assertThat(firstManualResultResponse.getId()).isEqualTo(secondManualResultResponse.getId());
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_resultPropertyMissing() throws Exception {
         Result result = new Result();
         Feedback feedback = new Feedback();
