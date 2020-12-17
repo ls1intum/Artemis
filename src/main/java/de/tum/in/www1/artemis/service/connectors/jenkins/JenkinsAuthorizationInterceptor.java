@@ -51,7 +51,7 @@ public class JenkinsAuthorizationInterceptor implements ClientHttpRequestInterce
     private void setCrumb(final HttpHeaders headersToAuthenticate) {
         try {
             JenkinsHttpClient jenkinsHttpClient = new JenkinsHttpClient(jenkinsURL.toURI(), username, password);
-            Crumb crumb = jenkinsHttpClient.get("/crumbIssuer", Crumb.class);
+            Crumb crumb = jenkinsHttpClient.get("/crumbIssuer/api/json", Crumb.class);
             if (crumb != null) {
                 headersToAuthenticate.add(crumb.getCrumbRequestField(), crumb.getCrumb());
             }
