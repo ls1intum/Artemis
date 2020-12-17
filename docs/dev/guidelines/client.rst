@@ -262,6 +262,7 @@ In essence:
 What are common reasons for memory leaks?
 *****************************************
 https://auth0.com/blog/four-types-of-leaks-in-your-javascript-code-and-how-to-get-rid-of-them/:
+
 *  Accidental global variables
 *  Forgotten timers or callbacks
 *  Out of DOM references
