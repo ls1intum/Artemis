@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -44,8 +46,11 @@ public class SubmissionService {
 
     private final CourseService courseService;
 
+    protected final FeedbackRepository feedbackRepository;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService,
-            ResultRepository resultRepository, ExamService examService, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService) {
+            ResultRepository resultRepository, ExamService examService, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
+            FeedbackRepository feedbackRepository) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -54,6 +59,7 @@ public class SubmissionService {
         this.examService = examService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -285,7 +291,7 @@ public class SubmissionService {
      * @param submission the submission for which a new result should be created
      * @return the newly created result
      */
-    public Result setNewResult(Submission submission) {
+    public Result saveNewEmptyResult(Submission submission) {
         Result result = new Result();
         result.setParticipation(submission.getParticipation());
         result = resultRepository.save(result);
@@ -302,7 +308,7 @@ public class SubmissionService {
      * @param result the result which we want to save and order
      * @return the result with correctly persisted relationship to its submission
      */
-    public Result saveOrderedResultBySubmission(final Submission submission, final Result result) {
+    public Result saveNewResult(final Submission submission, final Result result) {
         result.setSubmission(null);
         submission.setResults(new ArrayList<>());
         if (result.getParticipation() == null) {
@@ -316,6 +322,43 @@ public class SubmissionService {
     }
 
     /**
+     * Add a result to the last {@link Submission} of a {@link StudentParticipation}, see {@link StudentParticipation#findLatestSubmission()}, with a feedback of type {@link FeedbackType#AUTOMATIC}.
+     * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation}.
+     * Sets the feedback text and result score.
+     *
+     * @param studentParticipation the studentParticipation containing the latest result
+     * @param assessor the assessor
+     * @param score the score which should be set
+     * @param feedbackText the feedback text for the
+     */
+    public void addResultWithFeedback(StudentParticipation studentParticipation, User assessor, long score, String feedbackText) {
+        if (studentParticipation.getExercise().hasExerciseGroup() && studentParticipation.findLatestSubmission().isPresent()
+                && studentParticipation.findLatestSubmission().get().getLatestResult() == null) {
+            final var latestSubmission = studentParticipation.findLatestSubmission().get();
+            Result result = new Result();
+            result.setParticipation(studentParticipation);
+            result.setAssessor(assessor);
+            result.setCompletionDate(ZonedDateTime.now());
+            result.setScore(score);
+            result.rated(true);
+            // we set the assessment type to semi automatic so that it does not appear to the tutors for manual assessment
+            // if we would use AssessmentType.AUTOMATIC, it would be eligable for manual assessment
+            result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+            result = saveNewResult(latestSubmission, result);
+
+            var feedback = new Feedback();
+            feedback.setCredits(0.0);
+            feedback.setDetailText(feedbackText);
+            feedback.setPositive(false);
+            feedback.setType(FeedbackType.AUTOMATIC);
+            feedback = feedbackRepository.save(feedback);
+            feedback.setResult(result);
+            result.setFeedbacks(List.of(feedback));
+            resultRepository.save(result);
+        }
+    }
+
+    /**
      * Soft lock the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
      * tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
      *
@@ -324,7 +367,7 @@ public class SubmissionService {
     protected Result lockSubmission(Submission submission) {
         Result result = submission.getLatestResult();
         if (result == null) {
-            result = setNewResult(submission);
+            result = saveNewEmptyResult(submission);
         }
 
         if (result.getAssessor() == null) {
