@@ -1,6 +1,5 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementComponent } from 'app/course/manage/course-management.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
