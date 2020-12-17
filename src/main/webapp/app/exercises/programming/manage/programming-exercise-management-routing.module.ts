@@ -12,6 +12,7 @@ import { Observable } from 'rxjs/Observable';
 import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -76,6 +77,18 @@ export const routes: Routes = [
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
             usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/programming-exercises/:id/plagiarism',
+        component: PlagiarismInspectorComponent,
+        resolve: {
+            exercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
         },
         canActivate: [UserRouteAccessService],
     },

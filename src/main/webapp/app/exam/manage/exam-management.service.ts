@@ -246,6 +246,16 @@ export class ExamManagementService {
     }
 
     /**
+     * Assess all the modeling and text participations belonging to unsubmitted student exams
+     * @param courseId id of the course to which the exam belongs
+     * @param examId id of the exam
+     * @returns number of evaluated participations
+     */
+    assessUnsubmittedExamModelingAndTextParticipations(courseId: number, examId: number): Observable<HttpResponse<number>> {
+        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/assess-unsubmitted-and-empty-student-exams`, {}, { observe: 'response' });
+    }
+
+    /**
      * Unlock all the programming exercises belonging to the exam
      * @param courseId id of the course to which the exam belongs
      * @param examId id of the exam for which the programming exercises should be unlocked
