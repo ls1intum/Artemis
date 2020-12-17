@@ -141,9 +141,13 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         testCases.add(
                 new ProgrammingExerciseTestCase().testName("test4").weight(1.0).active(true).exercise(programmingExercise).afterDueDate(false).bonusMultiplier(1D).bonusPoints(5D));
         testCaseRepository.saveAll(testCases);
+        testCases.add(
+                new ProgrammingExerciseTestCase().testName("test5").weight(1.0).active(true).exercise(programmingExercise).afterDueDate(false).bonusMultiplier(1D).bonusPoints(2D));
+        testCaseRepository.saveAll(testCases);
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test4").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test5").positive(true).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
         result.assessmentType(AssessmentType.AUTOMATIC);
@@ -151,7 +155,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
         gradingService.updateResult(result, programmingExercise, true);
 
-        Long expectedScore = 105L;
+        Long expectedScore = 100L;
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
         assertThat(result.getScore()).isEqualTo(expectedScore);

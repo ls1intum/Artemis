@@ -407,8 +407,8 @@ public class ProgrammingExerciseGradingService {
                 score = Math.round(successfulTestPoints / maxScoreRespectingZeroPointExercises * 100.0);
             }
             else {
-                // special case when exercise has no regular points, but bonus points (e.g. 0 points, 5 bonus points -> score between 100% and 105%)
-                score = Math.round((PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES + successfulTestPoints) / PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES * 100.0);
+                // special case when exercise has no regular points, but bonus points (e.g. 0 points, 5 bonus points -> score between 0% and 100% whereas 100% = 5 bonus points)
+                score = Math.round((successfulTestPoints) / programmingExercise.getBonusPoints() * 100.0);
             }
 
             result.setScore(score);
