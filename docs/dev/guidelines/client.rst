@@ -93,7 +93,7 @@ You can find the corresponding commands to invoked those tools in ``package.json
 9. Testing
 ===========
 
-If you are new to client testing, it is highly recommended that you work through the testing part of the angular tutorial: https://angular.io/guide/testing.
+**If you are new to client testing, it is highly recommended that you work through the testing part of the angular tutorial:** https://angular.io/guide/testing
 
 We use Jest (https://jestjs.io/) as our client testing framework.
 
