@@ -27,6 +27,7 @@ module.exports = {
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
     rootDir: '../../../',
     modulePathIgnorePatterns: [
+        '<rootDir>/src/test/javascript/spec/component/programming-assessment/programming-assessment-repo-export-dialog.component.spec.ts',
         '<rootDir>/src/test/javascript/spec/component/admin/upcoming-exams-and-exercises.component.spec.ts',
         '<rootDir>/src/test/javascript/spec/component/admin/user-management-update.component.spec.ts',
         '<rootDir>/src/test/javascript/spec/component/assessment-shared/assessment-complaint-alert.component.spec.ts',
