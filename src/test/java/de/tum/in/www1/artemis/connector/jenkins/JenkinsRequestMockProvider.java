@@ -17,6 +17,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
@@ -25,7 +26,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.client.JenkinsHttpClient;
 import com.offbytwo.jenkins.model.*;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInterceptor;
 
 @Component
 @Profile("jenkins")
@@ -47,6 +50,9 @@ public class JenkinsRequestMockProvider {
 
     @Mock
     private JenkinsHttpClient jenkinsClient;
+
+    @Mock
+    JenkinsAuthorizationInterceptor jenkinsAuthorizationInterceptor;
 
     public JenkinsRequestMockProvider(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -113,6 +119,7 @@ public class JenkinsRequestMockProvider {
 
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planName, "config.xml").build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+        doReturn(new MockClientHttpResponse(new byte[] {}, HttpStatus.OK)).when(jenkinsAuthorizationInterceptor).intercept(any(), any(), any());
 
         final var job = mock(JobWithDetails.class);
         mockTriggerBuild(projectKey, planName, job);
@@ -136,6 +143,7 @@ public class JenkinsRequestMockProvider {
     public void mockEnablePlan(String projectKey, String planKey) throws URISyntaxException, IOException {
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planKey, "enable").build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.FOUND));
+        doReturn(new MockClientHttpResponse(new byte[] {}, HttpStatus.OK)).when(jenkinsAuthorizationInterceptor).intercept(any(), any(), any());
     }
 
     public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws IOException {
