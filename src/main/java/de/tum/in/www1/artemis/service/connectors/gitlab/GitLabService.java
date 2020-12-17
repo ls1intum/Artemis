@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -389,7 +389,7 @@ public class GitLabService extends AbstractVersionControlService {
                 throw new GitLabException(errorMessage + "; response (" + response.getStatusCode() + ") was: " + response.getBody());
             }
         }
-        catch (HttpClientErrorException e) {
+        catch (RestClientException e) {
             defaultExceptionHandling(errorMessage, e);
         }
 
@@ -434,8 +434,8 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
-    private void defaultExceptionHandling(String message, HttpClientErrorException exception) {
-        message = message + "; response was: " + exception.getResponseBodyAsString();
+    private void defaultExceptionHandling(String message, RestClientException exception) {
+        message = message + "; response was: " + exception.getMessage();
         log.error(message);
         throw new GitLabException(message, exception);
     }
@@ -482,14 +482,14 @@ public class GitLabService extends AbstractVersionControlService {
             final var path = projectKey + "/" + repositorySlug;
             final var urlString = GITLAB_SERVER_URL + "/" + path + ".git";
 
-            stirngToURL(urlString);
+            stringToURL(urlString);
         }
 
         private GitLabRepositoryUrl(String urlString) {
-            stirngToURL(urlString);
+            stringToURL(urlString);
         }
 
-        private void stirngToURL(String urlString) {
+        private void stringToURL(String urlString) {
             try {
                 this.url = new URL(urlString);
             }
