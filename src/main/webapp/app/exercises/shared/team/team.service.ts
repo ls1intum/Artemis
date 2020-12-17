@@ -109,7 +109,7 @@ export class TeamService implements ITeamService {
 
     constructor(protected http: HttpClient, private websocketService: JhiWebsocketService, private accountService: AccountService) {}
 
-    private static resourceUrl(exerciseId: number) {
+    static resourceUrl(exerciseId: number) {
         return `${SERVER_API_URL}api/exercises/${exerciseId}/teams`;
     }
 
