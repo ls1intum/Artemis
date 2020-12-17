@@ -397,7 +397,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName)
+    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName, String targetPath)
             throws VersionControlException {
         return forkRepository(sourceProjectKey, sourceRepositoryName, targetProjectKey, targetRepositoryName);
     }

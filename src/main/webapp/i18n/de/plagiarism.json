@@ -11,7 +11,10 @@
             "empty": "Es liegen keine Ergebnisse vor.",
             "not-found": "Kein Plagiat gefunden",
             "not-selected": "Kein Plagiat ausgewählt",
-            "unknown-student": "Unbekannt"
+            "unknown-student": "Unbekannt",
+            "generate-jplag-report": "JPlag Report generieren",
+            "no-file-selected": "Keine Datei ausgewählt",
+            "no-files-found": "Keine Dateien gefunden"
         }
     }
 }

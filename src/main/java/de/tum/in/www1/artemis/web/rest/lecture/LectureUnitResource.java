@@ -2,8 +2,10 @@ package de.tum.in.www1.artemis.web.rest.lecture;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +14,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -38,10 +42,14 @@ public class LectureUnitResource {
 
     private final LectureRepository lectureRepository;
 
-    public LectureUnitResource(AuthorizationCheckService authorizationCheckService, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository) {
+    private final LearningGoalRepository learningGoalRepository;
+
+    public LectureUnitResource(AuthorizationCheckService authorizationCheckService, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
+            LearningGoalRepository learningGoalRepository) {
         this.authorizationCheckService = authorizationCheckService;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
+        this.learningGoalRepository = learningGoalRepository;
     }
 
     /**
@@ -55,7 +63,7 @@ public class LectureUnitResource {
     @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<LectureUnit> orderedLectureUnits) {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lectureId);
+        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lectureId);
         if (lectureOptional.isEmpty()) {
             return notFound();
         }
@@ -102,7 +110,7 @@ public class LectureUnitResource {
     @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
     public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
-        Optional<LectureUnit> lectureUnitOptional = lectureUnitRepository.findById(lectureUnitId);
+        Optional<LectureUnit> lectureUnitOptional = lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnitId);
         if (lectureUnitOptional.isEmpty()) {
             return notFound();
         }
@@ -119,11 +127,22 @@ public class LectureUnitResource {
         }
 
         // we have to get the lecture from the db so that that the lecture units are included
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lectureUnit.getLecture().getId());
+        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lectureUnit.getLecture().getId());
         if (lectureOptional.isEmpty()) {
             return notFound();
         }
         Lecture lecture = lectureOptional.get();
+
+        // update associated learning goals
+        Set<LearningGoal> associatedLearningGoals = new HashSet<>(lectureUnit.getLearningGoals());
+        for (LearningGoal learningGoal : associatedLearningGoals) {
+            Optional<LearningGoal> learningGoalFromDbOptional = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoal.getId());
+            if (learningGoalFromDbOptional.isPresent()) {
+                LearningGoal learningGoalFromDb = learningGoalFromDbOptional.get();
+                learningGoalFromDb.removeLectureUnit(lectureUnit);
+                learningGoalRepository.save(learningGoalFromDb);
+            }
+        }
 
         List<LectureUnit> filteredLectureUnits = lecture.getLectureUnits();
         filteredLectureUnits.removeIf(lu -> lu.getId().equals(lectureUnitId));

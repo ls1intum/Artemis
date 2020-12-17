@@ -33,12 +33,20 @@
                     <h3>{{ 'artemisApp.courseOverview.lectureDetails.lectureUnits' | translate }}</h3>
                 </div>
             </div>
-            <div class="row" *ngFor="let lectureUnit of lectureUnits">
-                <div class="col-12 mx-auto mb-2" [ngSwitch]="lectureUnit.type">
+            <div class="row mb-4" *ngFor="let lectureUnit of lectureUnits">
+                <div class="col-11" [ngSwitch]="lectureUnit.type">
                     <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [course]="lecture?.course"></jhi-exercise-unit>
                     <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
                     <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit"></jhi-video-unit>
                     <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit"></jhi-text-unit>
+                </div>
+                <div class="col-1 my-auto mx-auto">
+                    <jhi-learning-goals-popover
+                        [hidden]="!lectureUnit.learningGoals || lectureUnit.learningGoals.length === 0"
+                        [courseId]="lecture!.course!.id"
+                        [learningGoals]="lectureUnit.learningGoals"
+                        [navigateTo]="'courseStatistics'"
+                    ></jhi-learning-goals-popover>
                 </div>
             </div>
             <!-- LECTURE UNITS END-->

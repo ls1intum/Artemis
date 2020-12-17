@@ -1,25 +1,17 @@
 <div class="plagiarism-split-view">
     <div class="plagiarism-split-pane" jhiPane>
-        <div class="plagiarism-split-pane-header">
-            {{ comparison.submissionA.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}
-        </div>
+        <jhi-modeling-submission-viewer *ngIf="isModelingExercise" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()"></jhi-modeling-submission-viewer>
 
-        <div class="plagiarism-split-pane-body">
-            <jhi-modeling-submission-viewer *ngIf="isModelingExercise()" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()"></jhi-modeling-submission-viewer>
+        <jhi-text-submission-viewer *ngIf="isTextExercise" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionA()"></jhi-text-submission-viewer>
 
-            <jhi-text-submission-viewer *ngIf="isTextOrProgrammingExercise()" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionA()"></jhi-text-submission-viewer>
-        </div>
+        <jhi-programming-submission-viewer *ngIf="isProgrammingExercise" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionA()"></jhi-programming-submission-viewer>
     </div>
 
     <div class="plagiarism-split-pane" jhiPane>
-        <div class="plagiarism-split-pane-header">
-            {{ comparison.submissionB.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}
-        </div>
+        <jhi-modeling-submission-viewer *ngIf="isModelingExercise" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionB()"></jhi-modeling-submission-viewer>
 
-        <div class="plagiarism-split-pane-body">
-            <jhi-modeling-submission-viewer *ngIf="isModelingExercise()" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionB()"></jhi-modeling-submission-viewer>
+        <jhi-text-submission-viewer *ngIf="isTextExercise" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionB()"></jhi-text-submission-viewer>
 
-            <jhi-text-submission-viewer *ngIf="isTextOrProgrammingExercise()" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionB()"></jhi-text-submission-viewer>
-        </div>
+        <jhi-programming-submission-viewer *ngIf="isProgrammingExercise" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionB()"></jhi-programming-submission-viewer>
     </div>
 </div>
