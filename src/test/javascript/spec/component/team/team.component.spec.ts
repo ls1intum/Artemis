@@ -1,5 +1,4 @@
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
-import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -33,7 +32,6 @@ const expect = chai.expect;
 describe('TeamComponent', () => {
     let comp: TeamComponent;
     let fixture: ComponentFixture<TeamComponent>;
-    let debugElement: DebugElement;
     let router: Router;
     const user = new User(99, 'newUser', 'UserFirstName', 'UserLastName');
     let accountService: AccountService;
