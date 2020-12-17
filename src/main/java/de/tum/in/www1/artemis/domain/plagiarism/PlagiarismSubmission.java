@@ -6,12 +6,18 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import jplag.Submission;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 
 public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
+
+    private static final Logger logger = LoggerFactory.getLogger(PlagiarismSubmission.class);
 
     /**
      * Login of the student who created the submission.
@@ -50,10 +56,21 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
     public static PlagiarismSubmission<TextSubmissionElement> fromJPlagSubmission(Submission jplagSubmission) {
         PlagiarismSubmission<TextSubmissionElement> submission = new PlagiarismSubmission<>();
 
-        // TODO: Check length of returned String[]
         String[] submissionIdAndStudentLogin = jplagSubmission.name.split("[-.]");
-        long submissionId = Long.parseLong(submissionIdAndStudentLogin[0]);
-        String studentLogin = submissionIdAndStudentLogin[1];
+
+        long submissionId = 0;
+        String studentLogin = "unknown";
+
+        if (submissionIdAndStudentLogin.length >= 2) {
+            try {
+                submissionId = Long.parseLong(submissionIdAndStudentLogin[0]);
+            }
+            catch (NumberFormatException e) {
+                logger.error("Invalid submissionId: " + e.getMessage());
+            }
+
+            studentLogin = submissionIdAndStudentLogin[1];
+        }
 
         submission.setStudentLogin(studentLogin);
         submission.setElements(Arrays.stream(jplagSubmission.tokenList.tokens).filter(Objects::nonNull).map(TextSubmissionElement::fromJPlagToken).collect(Collectors.toList()));

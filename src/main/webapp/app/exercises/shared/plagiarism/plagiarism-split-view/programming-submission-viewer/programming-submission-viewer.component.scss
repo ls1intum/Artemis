@@ -1,8 +1,13 @@
-.text-submission-viewer {
+.programming-submission-viewer {
     height: 100%;
     overflow-y: auto;
     padding: 0.5rem;
+    font-family: monospace;
     white-space: pre;
+
+    &.no-file {
+        opacity: 0.5;
+    }
 }
 
 .plagiarism-submission-loader {
