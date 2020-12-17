@@ -30,6 +30,7 @@ import jplag.JPlagResult;
 import jplag.options.LanguageOption;
 import jplag.reporting.Report;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,7 +113,8 @@ public class ProgrammingExerciseExportService {
                     log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
                     return;
                 }
-                repo = zipRepositoryForParticipation(programmingExercise, participation, repositoryExportOptions, pathsToZippedRepoFiles);
+                repo = gitService.getOrCheckoutRepository(participation, REPO_DOWNLOAD_CLONE_PATH);
+                repo = zipRepositoryForParticipation(repo, programmingExercise, participation, repositoryExportOptions, pathsToZippedRepoFiles);
             }
             catch (IOException | GitException | GitAPIException | InterruptedException ex) {
                 log.error("export student repository " + participation.getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle() + "' did not work as expected: "
@@ -122,6 +124,9 @@ public class ProgrammingExerciseExportService {
                 deleteTempLocalRepository(participation, repo);
             }
         });
+
+        // delete project root folder
+        deleteProjectRootDirectory(programmingExercise);
 
         if (pathsToZippedRepoFiles.isEmpty()) {
             log.warn("The zip file could not be created. Ignoring the request to export repositories for exercise " + programmingExercise.getTitle());
@@ -285,6 +290,20 @@ public class ProgrammingExerciseExportService {
             log.error("cleanup template repository " + programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle()
                     + "' did not work as expected: " + ex.getMessage());
         }
+
+        // delete project root folder
+        deleteProjectRootDirectory(programmingExercise);
+    }
+
+    private void deleteProjectRootDirectory(ProgrammingExercise programmingExercise) {
+        final String projectDirName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + programmingExercise.getTitle().toUpperCase();
+        Path projectPath = new File(REPO_DOWNLOAD_CLONE_PATH + projectDirName).toPath();
+        try {
+            FileUtils.deleteDirectory(projectPath.toFile());
+        }
+        catch (IOException e) {
+            log.warn("The project root folder '" + projectPath.toString() + "' couldn't be deleted.");
+        }
     }
 
     private void downloadRepositories(ProgrammingExercise programmingExercise) {
@@ -320,21 +339,20 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
-     * Checks out the repository fo the given participation, zips it and adds the path to the given list of already
+     * Checks out the repository for the given participation, zips it and adds the path to the given list of already
      * zipped repos.
      *
+     * @param repository The cloned repository
      * @param programmingExercise The programming exercise for the participation
      * @param participation The participation, for which the repository should get zipped
      * @param repositoryExportOptions The options, that should get applied to the zipeed repo
      * @param pathsToZippedRepos A list of already zipped repos. The path of the newly zip file will get added to this list
      * @return The checked out and zipped repository
-     * @throws GitAPIException If something went wrong checking out the repo
-     * @throws InterruptedException
      * @throws IOException
      */
-    private Repository zipRepositoryForParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
-            final RepositoryExportOptionsDTO repositoryExportOptions, List<Path> pathsToZippedRepos) throws GitAPIException, InterruptedException, IOException {
-        final var repository = gitService.getOrCheckoutRepository(participation, REPO_DOWNLOAD_CLONE_PATH);
+    private Repository zipRepositoryForParticipation(final Repository repository, final ProgrammingExercise programmingExercise,
+            final ProgrammingExerciseStudentParticipation participation, final RepositoryExportOptionsDTO repositoryExportOptions, List<Path> pathsToZippedRepos)
+            throws IOException {
         gitService.resetToOriginMaster(repository); // start with clean state
 
         if (repositoryExportOptions.isFilterLateSubmissions() && repositoryExportOptions.getFilterLateSubmissionsDate() != null) {
