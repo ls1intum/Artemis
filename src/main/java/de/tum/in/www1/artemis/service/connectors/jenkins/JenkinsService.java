@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URI;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -26,7 +27,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -182,8 +182,23 @@ public class JenkinsService implements ContinuousIntegrationService {
             replaceRemoteURLs(jobXmlDocument, repoUrl, repoNameInCI);
         }
 
+        final var headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_XML);
+        final var entity = new HttpEntity(writeXmlToString(jobXmlDocument), headers);
+
+        URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(JENKINS_SERVER_URL.toString(), projectKey, planName).build(true).toUri();
+
         final var errorMessage = "Error trying to configure build plan in Jenkins " + planName;
-        postXml(jobXmlDocument, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planName);
+        try {
+            final var response = restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
+            if (response.getStatusCode() != HttpStatus.OK) {
+                throw new JenkinsException(errorMessage + "; statusCode=" + response.getStatusCode() + "; headers=" + response.getHeaders() + "; body=" + response.getBody());
+            }
+        }
+        catch (HttpClientErrorException e) {
+            log.error(errorMessage, e);
+            throw new JenkinsException(errorMessage, e);
+        }
     }
 
     private void replaceScriptParameters(Document jobXmlDocument, String repoUrl, String baseRepoUrl) throws IllegalArgumentException {
@@ -630,6 +645,9 @@ public class JenkinsService implements ContinuousIntegrationService {
                 // means the project does not exist
                 return null;
             }
+            else if (job.getUrl() == null || job.getUrl().isEmpty()) {
+                return null;
+            }
             else {
                 return "The project " + projectKey + " already exists in the CI Server. Please choose a different short name!";
             }
@@ -753,35 +771,6 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
     }
 
-    private <T> T postXml(Document doc, Class<T> responseType, HttpStatus allowedStatus, String messagInCaseOfError, Endpoint endpoint, Object... args) {
-        return postXml(doc, responseType, List.of(allowedStatus), messagInCaseOfError, endpoint, null, args);
-    }
-
-    private <T> T postXml(Document doc, Class<T> responseType, List<HttpStatus> allowedStatuses, String messagInCaseOfError, Endpoint endpoint,
-            @Nullable Map<String, Object> queryParams, Object... args) {
-        final var headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_XML);
-        final var builder = endpoint.buildEndpoint(JENKINS_SERVER_URL.toString(), args);
-        if (queryParams != null) {
-            queryParams.forEach(builder::queryParam);
-        }
-        final var entity = new HttpEntity<>(writeXmlToString(doc), headers);
-
-        try {
-            final var response = restTemplate.exchange(builder.build(true).toString(), HttpMethod.POST, entity, responseType);
-            if (!allowedStatuses.contains(response.getStatusCode())) {
-                throw new JenkinsException(
-                        messagInCaseOfError + "; statusCode=" + response.getStatusCode() + "; headers=" + response.getHeaders() + "; body=" + response.getBody());
-            }
-
-            return response.getBody();
-        }
-        catch (HttpClientErrorException e) {
-            log.error(messagInCaseOfError, e);
-            throw new JenkinsException(messagInCaseOfError, e);
-        }
-    }
-
     private String writeXmlToString(Document doc) {
         try {
             final var tf = TransformerFactory.newInstance();
@@ -805,7 +794,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         TEST_RESULTS("job", "<projectKey>", "job", "<planKey>", "lastBuild", "testResults", "api", "json"),
         LAST_BUILD("job", "<projectKey>", "job", "<planKey>", "lastBuild", "api", "json");
 
-        private List<String> pathSegments;
+        private final List<String> pathSegments;
 
         Endpoint(String... pathSegments) {
             this.pathSegments = Arrays.asList(pathSegments);
