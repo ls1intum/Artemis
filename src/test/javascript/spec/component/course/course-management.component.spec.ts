@@ -16,7 +16,6 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
-import { Router } from '@angular/router';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { TranslatePipe } from '@ngx-translate/core';
 import { JhiSortDirective, JhiSortByDirective } from 'ng-jhipster';
@@ -32,7 +31,6 @@ describe('CourseManagementComponent', () => {
     let component: CourseManagementComponent;
     let service: CourseManagementService;
     let guidedTourService: GuidedTourService;
-    let router: Router;
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
@@ -59,12 +57,11 @@ describe('CourseManagementComponent', () => {
                 component = fixture.componentInstance;
                 service = TestBed.inject(CourseManagementService);
                 guidedTourService = TestBed.inject(GuidedTourService);
-                router = TestBed.get(Router);
             });
     });
 
     afterEach(async () => {
-        sinon.restore();
+        jest.clearAllMocks();
     });
 
     it('should initialize', async () => {
