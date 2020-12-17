@@ -29,6 +29,11 @@ import { Course } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { tap, switchMap } from 'rxjs/operators';
+import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { diff_match_patch } from 'diff-match-patch';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -38,6 +43,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
+
+    readonly dmp = new diff_match_patch();
 
     paramSub: Subscription;
     participation: ProgrammingExerciseStudentParticipation;
@@ -76,6 +83,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     isFirstAssessment = false;
     lockLimitReached = false;
 
+    templateParticipation: TemplateProgrammingExerciseParticipation;
+    templateFileSession: { [fileName: string]: string } = {};
+
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
         private router: Router,
@@ -89,6 +99,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
         private structuredGradingCriterionService: StructuredGradingCriterionService,
+        private repositoryFileService: CodeEditorRepositoryFileService,
+        private programmingExerciseService: ProgrammingExerciseService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -133,37 +145,55 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 participationId = Number(params['participationId']);
             }
 
-            this.programmingExerciseParticipationService.getStudentParticipationWithLatestManualResult(participationId).subscribe(
-                (participationWithResult: ProgrammingExerciseStudentParticipation) => {
-                    // Set domain to make file editor work properly
-                    this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResult]);
-                    this.participation = participationWithResult;
-                    this.manualResult = this.participation.results![0];
+            this.programmingExerciseParticipationService
+                .getStudentParticipationWithLatestManualResult(participationId)
+                .pipe(
+                    tap(
+                        (participationWithResult: ProgrammingExerciseStudentParticipation) => {
+                            // Set domain to make file editor work properly
+                            this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResult]);
+                            this.participation = participationWithResult;
+                            this.manualResult = this.participation.results![0];
 
-                    // Either submission from latest manual or automatic result
-                    this.submission = this.manualResult.submission as ProgrammingSubmission;
-                    this.submission.participation = this.participation;
-                    this.exercise = this.participation.exercise as ProgrammingExercise;
-                    this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
+                            // Either submission from latest manual or automatic result
+                            this.submission = this.manualResult.submission as ProgrammingSubmission;
+                            this.submission.participation = this.participation;
+                            this.exercise = this.participation.exercise as ProgrammingExercise;
+                            this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 
-                    this.checkPermissions();
-                    this.handleFeedback();
+                            this.checkPermissions();
+                            this.handleFeedback();
 
-                    if (this.manualResult && this.manualResult.hasComplaint) {
-                        this.getComplaint();
-                    }
-                    this.createAdjustedRepositoryUrl();
-                },
-                (error: HttpErrorResponse) => {
-                    this.participationCouldNotBeFetched = true;
-                    if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                        this.lockLimitReached = true;
-                    }
-                },
-                () => {
-                    this.loadingParticipation = false;
-                },
-            );
+                            if (this.manualResult && this.manualResult.hasComplaint) {
+                                this.getComplaint();
+                            }
+                            this.createAdjustedRepositoryUrl();
+                        },
+                        (error: HttpErrorResponse) => {
+                            this.participationCouldNotBeFetched = true;
+                            if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                                this.lockLimitReached = true;
+                            }
+                        },
+                        () => (this.loadingParticipation = false),
+                    ),
+                    switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!)),
+                    tap((programmingExercise) => (this.templateParticipation = programmingExercise.body!.templateParticipation!)),
+                    switchMap(() => {
+                        // Get all files with content from template repository
+                        this.domainService.setDomain([DomainType.PARTICIPATION, this.templateParticipation]);
+                        const observable = this.repositoryFileService.getFilesWithContent();
+                        // Set back to student participation
+                        this.domainService.setDomain([DomainType.PARTICIPATION, this.participation]);
+                        return observable;
+                    }),
+                    tap((templateFilesObj) => {
+                        if (templateFilesObj) {
+                            this.templateFileSession = templateFilesObj;
+                        }
+                    }),
+                )
+                .subscribe();
         });
     }
 
@@ -173,6 +203,56 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     ngOnDestroy() {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
+        }
+    }
+
+    /**
+     * Triggers when a new file was selected in the code editor. Compares the content of the file with the template (if available), calculates the diff
+     * and highlights the changed/added lines or all lines if the file is not in the template.
+     *
+     * @param selectedFile name of the file which is currently displayed
+     */
+    onFileLoad(selectedFile: string): void {
+        if (selectedFile && this.codeEditorContainer?.selectedFile) {
+            // When the selectedFile is not part of the template, then this is a new file and all lines in code editor are highlighted
+            if (!this.templateFileSession[selectedFile]) {
+                const lastLine = this.codeEditorContainer.aceEditor.editorSession.getLength() - 1;
+                this.codeEditorContainer.aceEditor.markerIds.push(
+                    this.codeEditorContainer.aceEditor.editorSession.addMarker(new this.codeEditorContainer.aceEditor.Range(0, 0, lastLine, 1), 'diff-newLine', 'fullLine'),
+                );
+            } else {
+                // Calculation of the diff, see: https://github.com/google/diff-match-patch/wiki/Line-or-Word-Diffs
+                const diffArray = this.dmp.diff_linesToChars_(this.templateFileSession[selectedFile], this.codeEditorContainer.aceEditor.editorSession.getValue());
+                const lineText1 = diffArray.chars1;
+                const lineText2 = diffArray.chars2;
+                const lineArray = diffArray.lineArray;
+                const diffs = this.dmp.diff_main(lineText1, lineText2, false);
+                this.dmp.diff_charsToLines_(diffs, lineArray);
+
+                // Setup counter to know on which range to highlight in the code editor
+                let counter = 0;
+                diffs.forEach((diffElement) => {
+                    // No changes
+                    if (diffElement[0] === 0) {
+                        const lines = diffElement[1].split(/\r?\n/);
+                        counter += lines.length - 1;
+                    }
+                    // Newly added
+                    if (diffElement[0] === 1) {
+                        const lines = diffElement[1].split(/\r?\n/).filter(Boolean);
+                        const firstLineToHighlight = counter;
+                        const lastLineToHighlight = counter + lines.length - 1;
+                        this.codeEditorContainer.aceEditor.markerIds.push(
+                            this.codeEditorContainer.aceEditor.editorSession.addMarker(
+                                new this.codeEditorContainer.aceEditor.Range(firstLineToHighlight, 0, lastLineToHighlight, 1),
+                                'diff-newLine',
+                                'fullLine',
+                            ),
+                        );
+                        counter += lines.length;
+                    }
+                });
+            }
         }
     }
 
