@@ -805,7 +805,7 @@ public class ExamService {
     }
 
     /**
-     * Returns calculates if the exam is over by checking if the latest individual exam end date plus grace period has passed.
+     * Returns if the exam is over by checking if the latest individual exam end date plus grace period has passed.
      * See {@link ExamService#getLatestIndiviudalExamEndDate}
      * <p>
      *
@@ -818,7 +818,7 @@ public class ExamService {
     }
 
     /**
-     * Returns calculates if the exam is over by checking if the latest individual exam end date plus grace period has passed.
+     * Returns if the exam is over by checking if the latest individual exam end date plus grace period has passed.
      * See {@link ExamService#getLatestIndiviudalExamEndDate}
      * <p>
      *
