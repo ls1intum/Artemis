@@ -267,8 +267,8 @@ public class StudentExamService {
             final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
-                    // required so that the submission and result do not appear in the assessmentDashboard
-                    studentParticipation.findLatestSubmission().get().submitted(false);
+                    // required so that the submission is counted in the assessment dashboard
+                    studentParticipation.findLatestSubmission().get().submitted(true);
                     submissionService.addResultWithFeedback(studentParticipation, assessor, 0L, "You did not submit your exam");
                 }
             }
@@ -294,8 +294,8 @@ public class StudentExamService {
             final var studentParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent() && studentParticipation.findLatestSubmission().get().isEmpty()) {
-                    // required so that the submission and result do not appear in the assessmentDashboard
-                    studentParticipation.findLatestSubmission().get().submitted(false);
+                    // required so that the submission is counted in the assessment dashboard
+                    studentParticipation.findLatestSubmission().get().submitted(true);
                     submissionService.addResultWithFeedback(studentParticipation, assessor, 0L, "Empty submission");
                 }
             }
