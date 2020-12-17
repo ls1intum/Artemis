@@ -3,10 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ExportToCsv } from 'export-to-csv';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
-import { PlagiarismHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-header/plagiarism-header.component';
-import { PlagiarismSplitViewComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/plagiarism-split-view.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -14,12 +11,9 @@ import { downloadFile } from 'app/shared/util/download.util';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
-import { PlagiarismDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-details/plagiarism-details.component';
-import { ModelingSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
-import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -69,16 +63,7 @@ describe('Plagiarism Inspector Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisModelingEditorModule, TranslateTestingModule],
-            declarations: [
-                PlagiarismInspectorComponent,
-                PlagiarismDetailsComponent,
-                PlagiarismHeaderComponent,
-                PlagiarismSidebarComponent,
-                PlagiarismSplitViewComponent,
-                ModelingSubmissionViewerComponent,
-                TextSubmissionViewerComponent,
-            ],
+            imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
             providers: [{ provide: ActivatedRoute, useValue: activatedRoute }],
         }).compileComponents();
 
