@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testin
 import { TranslateModule } from '@ngx-translate/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { SinonStub, stub } from 'sinon';
+import { stub } from 'sinon';
 import { of } from 'rxjs';
 import { HttpResponse, HttpHeaders } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -22,7 +22,7 @@ const expect = chai.expect;
 
 const createBlobHttpResponse = () => {
     const blob = new Blob([JSON.stringify({ property: 'blob' })], { type: 'application/json' });
-    const headers = new HttpHeaders().set('filename', 'blobfile');
+    const headers = new HttpHeaders().set('filename', 'blob file');
     return new HttpResponse({ body: blob, headers });
 };
 
@@ -32,8 +32,6 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     let exerciseService: ExerciseService;
     let repoExportService: ProgrammingAssessmentRepoExportService;
 
-    // stubs
-    let findExerciseId: SinonStub;
     global.URL.createObjectURL = jest.fn(() => 'http://some.test.com');
     global.URL.revokeObjectURL = jest.fn(() => '');
 
@@ -66,7 +64,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 repoExportService = fixture.debugElement.injector.get(ProgrammingAssessmentRepoExportService);
 
                 // stubs
-                findExerciseId = stub(exerciseService, 'find').returns(of({ body: programmingExercise } as HttpResponse<Exercise>));
+                stub(exerciseService, 'find').returns(of({ body: programmingExercise } as HttpResponse<Exercise>));
 
                 comp.exerciseId = exerciseId;
                 comp.participationIdList = participationIdList;
@@ -79,7 +77,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         expect(comp.exerciseId).to.be.equal(42);
     });
 
-    it('Exerciseservice should find the correct programming exercise', fakeAsync(() => {
+    it('Exercise service should find the correct programming exercise', fakeAsync(() => {
         fixture.detectChanges();
         expect(comp.exercise).to.be.equal(programmingExercise);
     }));
