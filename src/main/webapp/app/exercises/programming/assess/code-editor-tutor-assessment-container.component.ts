@@ -239,7 +239,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     }
                     // Newly added
                     if (diffElement[0] === 1) {
-                        const lines = diffElement[1].split(/\r?\n/).filter((element) => element.trim());
+                        const lines = diffElement[1].split(/\r?\n/).filter(Boolean);
                         const firstLineToHighlight = counter;
                         const lastLineToHighlight = counter + lines.length - 1;
                         this.codeEditorContainer.aceEditor.markerIds.push(
