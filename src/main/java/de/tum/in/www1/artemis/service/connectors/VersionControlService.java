@@ -131,7 +131,7 @@ public interface VersionControlService {
      * @param sourceRepositoryName The name of the repository which should be copied
      * @param targetProjectKey The key of the target project to which to copy the new plan to
      * @param targetRepositoryName The desired name of the target repository
-     * @param targetPath The path where the repo is cloned into
+     * @param targetPath The path in the local Artemis server file system where the repo is cloned into in order to copy it
      * @return The URL for cloning the repository
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
