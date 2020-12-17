@@ -9,12 +9,11 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { JhiEventManager } from 'ng-jhipster';
 
 @Component({
@@ -119,19 +118,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             return ['/course-management', this.programmingExercise.course?.id, 'programming-exercises', this.programmingExercise.id, 'edit'];
         }
     }
-
-    checkPlagiarism() {
-        this.checkPlagiarismInProgress = true;
-        this.programmingExerciseService.checkPlagiarism(this.programmingExercise.id!).subscribe(this.handleCheckPlagiarismResponse, () => {
-            this.checkPlagiarismInProgress = false;
-        });
-    }
-
-    handleCheckPlagiarismResponse = (response: HttpResponse<Blob>) => {
-        this.jhiAlertService.success('artemisApp.programmingExercise.checkPlagiarismSuccess');
-        this.checkPlagiarismInProgress = false;
-        downloadZipFileFromResponse(response);
-    };
 
     combineTemplateCommits() {
         this.programmingExerciseService.combineTemplateRepositoryCommits(this.programmingExercise.id!).subscribe(

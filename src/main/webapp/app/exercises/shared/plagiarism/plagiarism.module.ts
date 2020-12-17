@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
@@ -10,9 +11,11 @@ import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plag
 import { PlagiarismSplitViewComponent, SplitPaneDirective } from 'app/exercises/shared/plagiarism/plagiarism-split-view/plagiarism-split-view.component';
 import { ModelingSubmissionViewerComponent } from './plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
 import { TextSubmissionViewerComponent } from './plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
+import { SplitPaneHeaderComponent } from './plagiarism-split-view/split-pane-header/split-pane-header.component';
+import { ProgrammingSubmissionViewerComponent } from './plagiarism-split-view/programming-submission-viewer/programming-submission-viewer.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisModelingEditorModule, RouterModule, TranslateModule],
+    imports: [ArtemisSharedModule, ArtemisModelingEditorModule, FormsModule, RouterModule, TranslateModule],
     declarations: [
         PlagiarismDetailsComponent,
         PlagiarismHeaderComponent,
@@ -22,6 +25,8 @@ import { TextSubmissionViewerComponent } from './plagiarism-split-view/text-subm
         SplitPaneDirective,
         ModelingSubmissionViewerComponent,
         TextSubmissionViewerComponent,
+        SplitPaneHeaderComponent,
+        ProgrammingSubmissionViewerComponent,
     ],
     exports: [PlagiarismInspectorComponent],
 })
