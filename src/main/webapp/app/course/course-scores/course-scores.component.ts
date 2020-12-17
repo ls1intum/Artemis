@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
+import { sum } from 'lodash';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExportToCsv } from 'export-to-csv';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -133,16 +134,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 exerciseType,
                 exercisesPerType.map((exercise) => exercise.title!),
             );
-            this.exerciseMaxPointsPerType.set(
-                exerciseType,
-                exercisesPerType.map((exercise) => exercise.maxScore!),
-            );
-            this.maxNumberOfPointsPerExerciseType.set(
-                exerciseType,
-                exercisesPerType.reduce((total, exercise) => total + (exercise.maxScore ? exercise.maxScore : 0), 0),
-            );
+            const maxPointsPerExercise = exercisesPerType.map((exercise) => exercise.maxScore!);
+            this.exerciseMaxPointsPerType.set(exerciseType, maxPointsPerExercise);
+            this.maxNumberOfPointsPerExerciseType.set(exerciseType, sum(maxPointsPerExercise));
         }
-        this.maxNumberOfOverallPoints = this.exercises.reduce((total, exercise) => total + (exercise.maxScore ? exercise.maxScore : 0), 0);
+        this.maxNumberOfOverallPoints = 0;
+        for (const [_, maxPointsPerExerciseType] of this.maxNumberOfPointsPerExerciseType) {
+            this.maxNumberOfOverallPoints += maxPointsPerExerciseType;
+        }
     }
 
     /**
@@ -184,6 +183,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.students.push(student);
 
             for (const exercise of this.exercises) {
+                const relevantMaxPoints = exercise.maxScore! > 0 ? exercise.maxScore! : exercise.bonusPoints ?? 0;
                 const participation = student.participations.find((part) => part.exercise!.id === exercise.id);
                 if (participation && participation.results && participation.results.length > 0) {
                     // we found a result, there should only be one
@@ -192,7 +192,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         console.warn('found more than one result for student ' + student.user.login + ' and exercise ' + exercise.title);
                     }
 
-                    const studentExerciseResultPoints = (result.score! * exercise.maxScore!) / 100;
+                    const studentExerciseResultPoints = (result.score! * relevantMaxPoints) / 100;
                     student.overallPoints += studentExerciseResultPoints;
                     student.pointsPerExercise.set(exercise.id!, studentExerciseResultPoints);
                     student.sumPointsPerExerciseType.set(exercise.type!, student.sumPointsPerExerciseType.get(exercise.type!)! + studentExerciseResultPoints);
