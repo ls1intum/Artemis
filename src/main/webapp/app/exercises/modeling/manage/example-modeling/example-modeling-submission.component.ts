@@ -17,6 +17,7 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { concatMap, tap } from 'rxjs/operators';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -173,7 +174,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         this.modelingSubmission.exampleSubmission = true;
         if (this.result) {
             this.result.feedbacks = this.feedbacks;
-            this.modelingSubmission.result = this.result;
+            setLatestSubmissionResult(this.modelingSubmission, this.result);
         }
 
         const exampleSubmission = this.exampleSubmission;
@@ -229,7 +230,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     public saveExampleAssessment(): void {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.modelingAssessment.invalidAssessments');
+            this.jhiAlertService.error('modelingAssessment.invalidAssessments');
             return;
         }
         if (this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation && this.feedbacks) {
@@ -348,8 +349,9 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         }
 
         const exampleSubmission = Object.assign({}, this.exampleSubmission);
-        exampleSubmission.submission!.result = new Result();
-        exampleSubmission.submission!.result.feedbacks = this.feedbacks;
+
+        setLatestSubmissionResult(exampleSubmission.submission, new Result());
+        getLatestSubmissionResult(exampleSubmission.submission)!.feedbacks = this.feedbacks;
 
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
             () => {

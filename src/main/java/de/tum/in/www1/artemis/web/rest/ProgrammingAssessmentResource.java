@@ -69,7 +69,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             return forbidden();
         }
 
-        Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getResult(), programmingExercise, assessmentUpdate);
+        Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getLatestResult(), programmingExercise, assessmentUpdate);
         // make sure the submission is reconnected with the result to prevent problems when the object is used for other calls in the client
         result.setSubmission(programmingSubmission);
         // remove circular dependencies if the results of the participation are there
@@ -103,90 +103,92 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      *
      * @param participationId the id of the participation that should be sent to the client
      * @param submit       defines if assessment is submitted or saved
-     * @param newResult    result with list of feedbacks to be saved to the database
+     * @param newManualResult    result with list of feedbacks to be saved to the database
      * @return the result saved to the database
      */
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/participations/{participationId}/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
-            @RequestBody Result newResult) {
-        log.debug("REST request to save a new result : {}", newResult);
+            @RequestBody Result newManualResult) {
+        log.debug("REST request to save a new result : {}", newManualResult);
         final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        Result manualResult = participation.getResults().stream().filter(Result::isManualResult).findFirst()
+        // based on the locking mechanism there must be exactly one existing manual result
+        // TODO: change this as soon as we allow second corrections
+        Result existingManualResult = participation.getResults().stream().filter(Result::isManualResult).findFirst()
                 .orElseThrow(() -> new EntityNotFoundException("Manual result for participation with id " + participationId + " does not exist"));
         // prevent that tutors create multiple manual results
-        newResult.setId(manualResult.getId());
+        newManualResult.setId(existingManualResult.getId());
         // load assessor
-        manualResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(manualResult.getId()).get();
+        existingManualResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(existingManualResult.getId()).get();
 
         // make sure that the participation cannot be manipulated on the client side
-        newResult.setParticipation(participation);
+        newManualResult.setParticipation(participation);
 
-        ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
-        checkAuthorization(exercise, user);
+        var programmingExercise = (ProgrammingExercise) participation.getExercise();
+        checkAuthorization(programmingExercise, user);
 
-        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(manualResult, exercise, participation, user, isAtLeastInstructor)) {
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(programmingExercise, user);
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(existingManualResult, programmingExercise, participation, user, isAtLeastInstructor)) {
             log.debug("The user " + user.getLogin() + " is not allowed to override the assessment for the participation " + participation.getId() + " for User " + user.getLogin());
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
-        if (!exercise.areManualResultsAllowed()) {
+        if (!programmingExercise.areManualResultsAllowed()) {
             return forbidden();
         }
 
-        if (Boolean.FALSE.equals(newResult.isRated())) {
+        if (Boolean.FALSE.equals(newManualResult.isRated())) {
             throw new BadRequestAlertException("Result is not rated", ENTITY_NAME, "resultNotRated");
         }
-        if (newResult.getResultString() == null) {
+        if (newManualResult.getResultString() == null) {
             throw new BadRequestAlertException("Result string is required.", ENTITY_NAME, "resultStringNull");
         }
-        else if (newResult.getResultString().length() > 255) {
+        else if (newManualResult.getResultString().length() > 255) {
             throw new BadRequestAlertException("Result string is too long.", ENTITY_NAME, "resultStringNull");
         }
-        else if (newResult.getScore() == null) {
+        else if (newManualResult.getScore() == null) {
             throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
         }
-        else if (newResult.getScore() < 100 && newResult.isSuccessful()) {
+        else if (newManualResult.getScore() < 100 && newManualResult.isSuccessful()) {
             throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         }
         // All not automatically generated result must have a detail text
-        else if (!newResult.getFeedbacks().isEmpty()
-                && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getType() != FeedbackType.AUTOMATIC && feedback.getDetailText() == null)) {
+        else if (!newManualResult.getFeedbacks().isEmpty()
+                && newManualResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getType() != FeedbackType.AUTOMATIC && feedback.getDetailText() == null)) {
             throw new BadRequestAlertException("In case tutor feedback is present, a feedback detail text is mandatory.", ENTITY_NAME, "feedbackDetailTextNull");
         }
-        else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getCredits() == null)) {
+        else if (!newManualResult.getFeedbacks().isEmpty() && newManualResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getCredits() == null)) {
             throw new BadRequestAlertException("In case feedback is present, a feedback must contain points.", ENTITY_NAME, "feedbackCreditsNull");
         }
 
         // TODO: move this logic into a service
 
         // make sure that the submission cannot be manipulated on the client side
-        ProgrammingSubmission submission = (ProgrammingSubmission) manualResult.getSubmission();
-        newResult.setSubmission(submission);
+        var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
+        newManualResult.setSubmission(submission);
 
-        newResult = programmingAssessmentService.saveManualAssessment(newResult);
+        newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
 
-        newResult = submissionService.saveOrderedResultBySubmission(submission, newResult);
+        newManualResult = submissionService.saveOrderedResultBySubmission(submission, newManualResult);
 
         if (submit) {
-            newResult = programmingAssessmentService.submitManualAssessment(newResult.getId());
+            newManualResult = programmingAssessmentService.submitManualAssessment(newManualResult.getId());
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
-            ((StudentParticipation) newResult.getParticipation()).filterSensitiveInformation();
+            ((StudentParticipation) newManualResult.getParticipation()).filterSensitiveInformation();
         }
         // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
-        ltiService.onNewResult((StudentParticipation) newResult.getParticipation());
-        if (submit && ((newResult.getParticipation()).getExercise().getAssessmentDueDate() == null
-                || newResult.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
-            messagingService.broadcastNewResult(newResult.getParticipation(), newResult);
+        ltiService.onNewResult((StudentParticipation) newManualResult.getParticipation());
+        if (submit && ((newManualResult.getParticipation()).getExercise().getAssessmentDueDate() == null
+                || newManualResult.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+            messagingService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
         }
-        return ResponseEntity.ok(newResult);
+        return ResponseEntity.ok(newManualResult);
     }
 
     @Override

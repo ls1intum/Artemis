@@ -3,14 +3,18 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +36,9 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 public class ProgrammingExerciseImportService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportService.class);
+
+    @Value("${artemis.repo-download-clone-path}")
+    private String REPO_DOWNLOAD_CLONE_PATH;
 
     private final ExerciseHintService exerciseHintService;
 
@@ -133,7 +140,20 @@ public class ProgrammingExerciseImportService {
         // Copy all repositories
         final var reposToCopy = List.of(Pair.of(RepositoryType.TEMPLATE, templateExercise.getTemplateRepositoryName()),
                 Pair.of(RepositoryType.SOLUTION, templateExercise.getSolutionRepositoryName()), Pair.of(RepositoryType.TESTS, templateExercise.getTestRepositoryName()));
-        reposToCopy.forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName()));
+        reposToCopy.forEach(
+                repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName(), REPO_DOWNLOAD_CLONE_PATH));
+        // Delete source project folder which contained all cloned source repos
+        Path projectPath = new File(REPO_DOWNLOAD_CLONE_PATH + sourceProjectKey).toPath();
+        try {
+            FileUtils.deleteDirectory(projectPath.toFile());
+        }
+        catch (IOException e) {
+            log.warn("The project root folder '" + projectPath.toString() + "' couldn't be deleted.");
+        }
+
+        // Unprotect the master branch of the template exercise repo.
+        versionControlService.get().unprotectBranch(newExercise.getTemplateRepositoryUrlAsUrl(), "master");
+
         // Add the necessary hooks notifying Artemis about changes after commits have been pushed
         versionControlService.get().addWebHooksForExercise(newExercise);
 

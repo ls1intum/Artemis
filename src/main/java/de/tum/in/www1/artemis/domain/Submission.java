@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.domain;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -57,8 +59,7 @@ public abstract class Submission extends DomainObject {
     @JsonIgnore
     @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    // TODO use Set here instead of List
-    private List<SubmissionVersion> versions = new ArrayList<>();
+    private Set<SubmissionVersion> versions = new HashSet<>();
 
     /**
      * A submission can have multiple results, therefore, results are persisted and removed with a submission.
@@ -76,15 +77,12 @@ public abstract class Submission extends DomainObject {
         return submissionDate;
     }
 
-    @Transient
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    public Long durationInMinutes;
-
     /**
-     * Calculates the duration of a submission in minutes
+     * Calculates the duration of a submission in minutes and adds it into the json response
      *
      * @return duration in minutes or null if it can not be determined
      */
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Long getDurationInMinutes() {
         if (this.participation == null || this.participation.getInitializationDate() == null || this.submissionDate == null) {
             return null;
@@ -96,65 +94,58 @@ public abstract class Submission extends DomainObject {
         return Duration.between(initilizationDate, submissionDate).toMinutes();
     }
 
-    // TODO Ruscher, Entholzer: Refactor to getLatestResult
     /**
-     * Is used as a workaround for objects that expect submission to have 1 result
+     * Get the latest result of the submission
      *
-     * @return the latest result
+     * @return a {@link Result} or null
      */
     @Nullable
-    @JsonProperty(value = "result", access = JsonProperty.Access.READ_ONLY)
-    public Result getResult() {
-        // in all cases (except 2nd, 3rd correction, etc.) we would like to have the latest result
-        // getLatestResult
-        if (!results.isEmpty()) {
+    @JsonIgnore
+    public Result getLatestResult() {
+        if (results != null && !results.isEmpty()) {
             return results.get(results.size() - 1);
         }
         return null;
     }
 
+    @Nullable
+    @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
+    public List<Result> getResults() {
+        return results;
+    }
+
     /**
-     * currently not used
+     * Get the first result of the submission
      *
-     * @return the first Result of the Submission
+     * @return a {@link Result} or null if no result is present
      */
     @Nullable
     @JsonIgnore
     public Result getFirstResult() {
-        // getLatestResult
-        if (!results.isEmpty()) {
+        if (results != null && !results.isEmpty()) {
             return results.get(0);
         }
         return null;
     }
 
-    // TODO NR, SE: remove redundant setter after relationship change on client. Currently we need two deserializing setters for "result" (client) and "results" (server)
-    @JsonProperty(value = "result", access = JsonProperty.Access.WRITE_ONLY)
-    public void setResult(Result result) {
-        this.setResults(result);
+    /**
+     * Add a result to the list.
+     * NOTE: You must make sure to correctly persist the result in the database!
+     *
+     * @param result the {@link Result} which should be added
+     */
+    public void addResult(Result result) {
+        this.results.add(result);
     }
 
-    // TODO Ruscher, Entholzer: refactor to addResult
     /**
-     * custom setter that supports the migration from 1...1 to 1...* in the submission->result(s) relationship
-     * Will be refactore in the future
-     * @param result the result that should be added, in case this is null, an empty list will be used instead
+     * Set the results list to the specified list.
+     * NOTE: You must correctly persist this change in the database manually!
+     *
+     * @param results The list of {@link Result} which should replace the existing results of the submission
      */
     @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
-    public void setResults(Result result) {
-        if (result == null) {
-            // clear the list of results
-            this.results = new ArrayList<>();
-        }
-        else {
-            // addResult
-            this.results.add(result);
-        }
-    }
-
-    // TODO Ruscher, Entholzer: refactor to setResults
-    @JsonIgnore()
-    public void setResultsList(List<Result> results) {
+    public void setResults(List<Result> results) {
         this.results = results;
     }
 
@@ -208,4 +199,10 @@ public abstract class Submission extends DomainObject {
     public void setExampleSubmission(Boolean exampleSubmission) {
         this.exampleSubmission = exampleSubmission;
     }
+
+    /**
+     * determine whether a submission is empty, i.e. the student did not work properly on the corresponding exercise
+     * @return whether the submission is empty (true) or not (false)
+     */
+    public abstract boolean isEmpty();
 }

@@ -39,6 +39,7 @@ import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisCourseQuestionsModule } from 'app/course/course-questions/course-questions.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
+import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 
 @NgModule({
     imports: [
@@ -52,6 +53,7 @@ import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
         ArtemisExerciseModule,
         ArtemisLectureModule,
         ArtemisCourseScoresModule,
+        ArtemisLearningGoalsModule,
         ArtemisExerciseScoresModule,
         ArtemisProgrammingExerciseManagementModule,
         ArtemisFileUploadExerciseManagementModule,

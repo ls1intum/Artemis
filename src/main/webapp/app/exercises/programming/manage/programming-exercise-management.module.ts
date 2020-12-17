@@ -18,6 +18,7 @@ import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-de
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
+import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 
 @NgModule({
     imports: [
@@ -26,6 +27,7 @@ import { OrionModule } from 'app/shared/orion/orion.module';
         ArtemisSharedComponentModule,
         ArtemisResultModule,
         ArtemisAssessmentSharedModule,
+        ArtemisPlagiarismModule,
         ArtemisProgrammingExerciseModule,
         ArtemisProgrammingExerciseManagementRoutingModule,
         ArtemisProgrammingAssessmentModule,

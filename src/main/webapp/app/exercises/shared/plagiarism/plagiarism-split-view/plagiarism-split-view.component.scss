@@ -13,23 +13,7 @@
     height: 100%;
 
     .plagiarism-split-pane {
+        padding-top: 30px;
         position: relative;
-
-        &-header {
-            z-index: 1;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: white;
-            border-bottom: 1px solid $body-bg;
-            padding: 2px 4px;
-        }
-
-        &-body {
-            height: 100%;
-            padding-top: 26px;
-            overflow-y: auto;
-        }
     }
 }

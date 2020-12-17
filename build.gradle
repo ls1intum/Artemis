@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.8.1"
+version = "4.8.2"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -178,7 +178,7 @@ dependencies {
     implementation files("libs/jplag-3.0.0.jar")
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation "org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r"
+    implementation "org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"
@@ -233,7 +233,7 @@ dependencies {
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.2.6.RELEASE"
     implementation "org.springframework.cloud:spring-cloud-starter-config:2.2.6.RELEASE"
-    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.11.RELEASE"
+    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.12.RELEASE"
 
     implementation "io.netty:netty-all:4.1.55.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.0.2"
@@ -244,7 +244,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
-    implementation "org.xmlbeam:xmlprojector:1.4.17"
+    implementation "org.xmlbeam:xmlprojector:1.4.18"
     implementation "io.jsonwebtoken:jjwt-api:0.11.2"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.2"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.2"

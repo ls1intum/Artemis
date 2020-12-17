@@ -131,10 +131,12 @@ public interface VersionControlService {
      * @param sourceRepositoryName The name of the repository which should be copied
      * @param targetProjectKey The key of the target project to which to copy the new plan to
      * @param targetRepositoryName The desired name of the target repository
+     * @param targetPath The path in the local Artemis server file system where the repo is cloned into in order to copy it
      * @return The URL for cloning the repository
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
-    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) throws VersionControlException;
+    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName, String targetPath)
+            throws VersionControlException;
 
     /**
      * Add the user to the repository
@@ -161,6 +163,15 @@ public interface VersionControlService {
      * @throws VersionControlException        If the communication with the VCS fails.
      */
     void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, Set<User> users) throws VersionControlException;
+
+    /**
+     * Unprotects a branch from the repository, so that the history can be changed (important for combine template commits).
+     *
+     * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
+     * @param branch            The name of the branch to unprotect (e.g "master")
+     * @throws VersionControlException      If the communication with the VCS fails.
+     */
+    void unprotectBranch(URL repositoryUrl, String branch) throws VersionControlException;
 
     /**
      * Checks if the underlying VCS server is up and running and gives some additional information about the running
