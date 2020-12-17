@@ -1,8 +1,7 @@
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
-import { HttpTestingController } from '@angular/common/http/testing';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
@@ -15,18 +14,16 @@ import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update
 import { TeamComponent } from 'app/exercises/shared/team/team.component.ts';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe.ts';
 import * as chai from 'chai';
-import { NgJhipsterModule } from 'ng-jhipster';
+import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
-import { restore, SinonStub, stub } from 'sinon';
+import { of, throwError } from 'rxjs';
+import { restore, SinonStub, spy, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { MockRouter } from '../../helpers/mocks/mock-router';
 import { mockExercise, mockTeam, mockTeams, TeamRequestInterceptorMock } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
 
@@ -37,71 +34,67 @@ describe('TeamComponent', () => {
     let comp: TeamComponent;
     let fixture: ComponentFixture<TeamComponent>;
     let debugElement: DebugElement;
-    let httpTestingController: HttpTestingController;
     let router: Router;
-    let user = new User(99, 'newUser', 'UserFirstName', 'UserLastName');
+    const user = new User(99, 'newUser', 'UserFirstName', 'UserLastName');
     let accountService: AccountService;
     let identityStub: SinonStub;
-    function resetComponent() {
-        comp.isLoading = false;
-        comp.isTransitioning = false;
-        comp.isAdmin = false;
-        comp.isTeamOwner = false;
-    }
+    let exerciseService: ExerciseService;
+    let teamService: TeamService;
+    let alertService: JhiAlertService;
 
-    beforeEach(
-        waitForAsync(() => {
-            TestBed.configureTestingModule({
-                imports: [
-                    ArtemisTestModule,
-                    MockModule(NgbModule),
-                    MockModule(NgJhipsterModule),
-                    MockModule(FeatureToggleModule),
-                    MockModule(NgxDatatableModule),
-                    MockModule(RouterModule),
-                ],
-                declarations: [
-                    TeamComponent,
-                    ButtonComponent,
-                    MockComponent(TeamUpdateButtonComponent),
-                    MockComponent(TeamDeleteButtonComponent),
-                    MockPipe(TranslatePipe),
-                    MockPipe(ArtemisDatePipe),
-                    MockComponent(TeamParticipationTableComponent),
-                    MockComponent(DataTableComponent),
-                    MockComponent(AlertComponent),
-                ],
-                providers: [
-                    MockProvider(SessionStorageService),
-                    MockProvider(LocalStorageService),
-                    MockProvider(AccountService),
-                    TeamService,
-                    ExerciseService,
-                    {
-                        provide: HTTP_INTERCEPTORS,
-                        useClass: TeamRequestInterceptorMock,
-                        multi: true,
-                    },
-                    { provide: Router, useClass: MockRouter },
-                    {
-                        provide: ActivatedRoute,
-                        useValue: {
-                            params: of({ teamId: mockTeam.id, exerciseId: mockExercise.id }),
-                        },
-                    },
-                ],
-            }).compileComponents();
-            accountService = TestBed.inject(AccountService);
-            identityStub = stub(accountService, 'identity').returns(Promise.resolve(user));
-            stub(accountService, 'isAtLeastTutorInCourse').returns(true);
-            stub(accountService, 'isAtLeastInstructorInCourse').returns(true);
-            httpTestingController = TestBed.inject(HttpTestingController);
-        }),
-    );
     beforeEach(() => {
-        fixture = TestBed.createComponent(TeamComponent);
-        comp = fixture.componentInstance;
-        debugElement = fixture.debugElement;
+        TestBed.configureTestingModule({
+            imports: [
+                ArtemisTestModule,
+                MockModule(NgbModule),
+                MockModule(NgJhipsterModule),
+                MockModule(FeatureToggleModule),
+                MockModule(NgxDatatableModule),
+                MockModule(RouterModule),
+            ],
+            declarations: [
+                TeamComponent,
+                MockComponent(TeamUpdateButtonComponent),
+                MockComponent(TeamDeleteButtonComponent),
+                MockPipe(TranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockComponent(TeamParticipationTableComponent),
+                MockComponent(DataTableComponent),
+                MockComponent(AlertComponent),
+            ],
+            providers: [
+                MockProvider(SessionStorageService),
+                MockProvider(LocalStorageService),
+                MockProvider(AccountService),
+                TeamService,
+                ExerciseService,
+                {
+                    provide: HTTP_INTERCEPTORS,
+                    useClass: TeamRequestInterceptorMock,
+                    multi: true,
+                },
+                MockProvider(Router),
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ teamId: mockTeam.id, exerciseId: mockExercise.id }),
+                    },
+                },
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                accountService = TestBed.inject(AccountService);
+                identityStub = stub(accountService, 'identity').returns(Promise.resolve(user));
+                stub(accountService, 'isAtLeastTutorInCourse').returns(true);
+                stub(accountService, 'isAtLeastInstructorInCourse').returns(true);
+                fixture = TestBed.createComponent(TeamComponent);
+                comp = fixture.componentInstance;
+                alertService = TestBed.inject(JhiAlertService);
+                router = TestBed.inject(Router);
+                teamService = TestBed.inject(TeamService);
+                exerciseService = TestBed.inject(ExerciseService);
+            });
     });
 
     afterEach(() => {
@@ -109,17 +102,12 @@ describe('TeamComponent', () => {
     });
 
     describe('ngOnInit', () => {
-        waitForAsync(() => {
-            beforeEach(() => {
-                fixture = TestBed.createComponent(TeamComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                resetComponent();
-            });
-        });
+        let alertServiceStub: SinonStub;
+
         afterEach(() => {
             restore();
         });
+
         it('should set team and exercise from services', () => {
             comp.ngOnInit();
             expect(comp.exercise).to.deep.equal(mockExercise);
@@ -128,12 +116,36 @@ describe('TeamComponent', () => {
             expect(comp.exercise.isAtLeastInstructor).equal(true);
             expect(comp.isTeamOwner).to.equal(false);
         });
+
+        it('should call alert service error when exercise service fails', () => {
+            const exerciseStub = stub(exerciseService, 'find').returns(throwError({ status: 404 }));
+            alertServiceStub = stub(alertService, 'error');
+            waitForAsync(() => {
+                comp.ngOnInit();
+                expect(exerciseStub).to.have.been.called;
+                expect(alertServiceStub).to.have.been.called;
+                expect(comp.isLoading).to.equal(false);
+            });
+        });
+
+        it('should call alert service error when team service fails', () => {
+            const teamStub = stub(teamService, 'find').returns(throwError({ status: 404 }));
+            alertServiceStub = stub(alertService, 'error');
+            waitForAsync(() => {
+                comp.ngOnInit();
+                expect(teamStub).to.have.been.called;
+                expect(alertServiceStub).to.have.been.called;
+                expect(comp.isLoading).to.equal(false);
+            });
+        });
+    });
+
+    describe('ngOnInit with team owner', () => {
         it('should set team owner true if user is team owner', () => {
             waitForAsync(() => {
                 identityStub.returns(Promise.resolve({ ...user, id: 1 }));
                 fixture = TestBed.createComponent(TeamComponent);
                 comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
                 comp.ngOnInit();
                 expect(comp.isTeamOwner).to.equal(true);
             });
@@ -144,6 +156,15 @@ describe('TeamComponent', () => {
         it('should update team to given team', () => {
             comp.onTeamUpdate(mockTeams[1]);
             expect(comp.team).to.deep.equal(mockTeams[1]);
+        });
+    });
+
+    describe('onTeamDelete', () => {
+        it('should go to teams overview on delete', () => {
+            comp.ngOnInit();
+            const routerSpy = spy(router, 'navigate');
+            comp.onTeamDelete();
+            expect(routerSpy).to.have.been.calledOnceWithExactly(['/course-management', mockExercise.course?.id, 'exercises', mockExercise.id, 'teams']);
         });
     });
 });

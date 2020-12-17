@@ -50,8 +50,8 @@ const mockTeamFromServer = {
     students: mockTeamStudents,
     owner: { id: 1 } as User,
     createdBy: 'tutor1',
-    createdDate: Date(),
-    lastModifiedDate: Date(),
+    createdDate: new Date(),
+    lastModifiedDate: new Date(),
 };
 
 export const mockTeam = {
