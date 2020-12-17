@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 import interact from 'interactjs';
@@ -42,7 +42,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     participation: StudentParticipation;
     submission: FileUploadSubmission;
     unassessedSubmission: FileUploadSubmission;
-    result: Result;
+    result: Result | null;
     generalFeedback: Feedback = new Feedback();
     // TODO: rename this, because right now there is no reference
     referencedFeedback: Feedback[] = [];
@@ -311,8 +311,8 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             .saveAssessment(this.assessments, this.submission.id!)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(
-                (result: Result) => {
-                    this.result = result;
+                (response: HttpResponse<Result>) => {
+                    this.result = response.body;
                     this.jhiAlertService.clear();
                     this.jhiAlertService.success('artemisApp.assessment.messages.saveSuccessful');
                 },
@@ -334,8 +334,8 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             .saveAssessment(this.assessments, this.submission.id!, true)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(
-                (result) => {
-                    this.result = result;
+                (response: HttpResponse<Result>) => {
+                    this.result = response.body;
                     this.updateParticipationWithResult();
                     this.jhiAlertService.clear();
                     this.jhiAlertService.success('artemisApp.assessment.messages.submitSuccessful');
@@ -363,13 +363,13 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     private updateParticipationWithResult(): void {
         this.showResult = false;
         this.changeDetectorRef.detectChanges();
-        this.participation.results![0] = this.result;
+        this.participation.results![0] = this.result!;
         this.showResult = true;
         this.changeDetectorRef.detectChanges();
     }
 
     getComplaint(): void {
-        this.complaintService.findByResultId(this.result.id!).subscribe(
+        this.complaintService.findByResultId(this.result!.id!).subscribe(
             (res) => {
                 if (!res.body) {
                     return;
