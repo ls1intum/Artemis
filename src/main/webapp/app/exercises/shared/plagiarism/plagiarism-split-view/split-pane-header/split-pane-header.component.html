@@ -1,0 +1,16 @@
+<div class="split-pane-header">
+    <div class="split-pane-header-top" [ngClass]="{ active: showFiles, clickable: hasFiles() }" (click)="toggleShowFiles()">
+        <div *ngIf="getActiveFile()" class="split-pane-header-file-name">
+            <fa-icon class="file-arrow-down" [icon]="'chevron-down'"></fa-icon>
+            <span class="split-pane-header-selected-file">{{ getActiveFile() }}</span>
+        </div>
+
+        <div>{{ studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}</div>
+    </div>
+
+    <ul *ngIf="showFiles" class="split-pane-header-files">
+        <li *ngFor="let file of files; let idx = index" class="split-pane-header-file" (click)="handleFileSelect(file, idx)">{{ file }}</li>
+
+        <li *ngIf="!hasFiles()">{{ 'artemisApp.plagiarism.no-files-found' | translate }}</li>
+    </ul>
+</div>
