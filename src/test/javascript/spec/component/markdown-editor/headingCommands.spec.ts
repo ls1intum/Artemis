@@ -40,7 +40,7 @@ describe('HeadingOneCommand', () => {
                 comp.defaultCommands = [headingOneCommand, headingTwoCommand, headingThreeCommand];
             });
     });
-    it('should add # Heading 1 on execute when no text is selected', () => {
+    it('should add # Heading 1,2,3 on execute when no text is selected', () => {
         fixture.detectChanges();
         comp.ngAfterViewInit();
 
@@ -55,7 +55,7 @@ describe('HeadingOneCommand', () => {
         headingThreeCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).to.equal('### Heading 3');
     });
-    it('should add # on execute when text is selected', () => {
+    it('should add #, ##, ### on execute when text is selected', () => {
         fixture.detectChanges();
         comp.ngAfterViewInit();
         sinon.stub(comp.aceEditorContainer.getEditor(), 'getSelectedText').returns('lorem');
@@ -72,7 +72,7 @@ describe('HeadingOneCommand', () => {
         expect(comp.aceEditorContainer.getEditor().getValue()).to.equal('### lorem');
     });
 
-    it('should remove # on execute when text of header selected', () => {
+    it('should remove #, ##, ### on execute when text of header selected', () => {
         fixture.detectChanges();
         comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('# lorem');
