@@ -39,6 +39,7 @@ export class FeedbackItem {
     styleUrls: ['./result-detail.scss'],
 })
 export class ResultDetailComponent implements OnInit {
+    PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES = 100;
     BuildLogType = BuildLogType;
 
     @Input() result: Result;
@@ -283,8 +284,6 @@ export class ResultDetailComponent implements OnInit {
             return;
         }
 
-        const PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES = 100;
-
         const sumCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.credits || 0);
         const sumAppliedCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.appliedCredits || 0);
 
@@ -298,8 +297,8 @@ export class ResultDetailComponent implements OnInit {
         const exercise = this.result.participation.exercise;
 
         // cap test points
-        const maxPoints = exercise.maxScore! !== 0 || (exercise.bonusPoints || 0) !== 0 ? exercise.maxScore! : PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
-        const maxPointsWithBonus = maxPoints + (exercise.bonusPoints || 0);
+        const maxPoints = this.getMaxPointsRespectingZeroPointExercises(exercise);
+        const maxPointsWithBonus = exercise.maxScore! > 0 ? maxPoints + (exercise.bonusPoints || 0) : maxPoints;
 
         if (testCaseCredits > maxPointsWithBonus) {
             testCaseCredits = maxPointsWithBonus;
@@ -324,6 +323,16 @@ export class ResultDetailComponent implements OnInit {
 
         // the chart preset handles the capping to the maximum score of the exercise
         this.scoreChartPreset.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, maxPoints, maxPointsWithBonus);
+    }
+
+    private getMaxPointsRespectingZeroPointExercises(programmingExercise: ProgrammingExercise): number {
+        if (programmingExercise.maxScore! > 0) {
+            return programmingExercise.maxScore!;
+        }
+        if (programmingExercise.bonusPoints! > 0) {
+            return programmingExercise.bonusPoints!;
+        }
+        return this.PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
     }
 
     /**

@@ -373,10 +373,10 @@ describe('ResultDetailComponent', () => {
         expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
         expect(comp.showScoreChartTooltip).to.equal(true);
 
-        // 107 positive points, 2 applied negative points, 6 received negative points, maxPoints, maxPoints + bonusPoints
-        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(7, 2, 6, 0, 5);
-        // 100% score, 0 of 6 negative points, 5 of 7 positive points
-        checkChartPreset(100, 0, '5 of 7', '0 of 6');
+        // 7 positive points, 3 applied negative points, 6 received negative points, maxPoints, maxPoints + bonusPoints
+        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(7, 3, 6, 5, 5);
+        // 80% score, 20% missed score, 5 of 7 positive points
+        checkChartPreset(80, 20, '5 of 7', '1 of 6');
         expect(comp.isLoading).to.be.false;
     });
 
