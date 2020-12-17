@@ -33,6 +33,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     let repoExportService: ProgrammingAssessmentRepoExportService;
 
     // stubs
+    let findExerciseId: SinonStub;
     global.URL.createObjectURL = jest.fn(() => 'http://some.test.com');
     global.URL.revokeObjectURL = jest.fn(() => '');
 
@@ -63,6 +64,9 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 comp = fixture.componentInstance;
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
                 repoExportService = fixture.debugElement.injector.get(ProgrammingAssessmentRepoExportService);
+
+                // stubs
+                findExerciseId = stub(exerciseService, 'find').returns(of({ body: programmingExercise } as HttpResponse<Exercise>));
 
                 comp.exerciseId = exerciseId;
                 comp.participationIdList = participationIdList;
