@@ -1,12 +1,11 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Observable } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
 import { Result } from 'app/entities/result.model';
-import { buildUrlWithParams } from 'app/shared/util/global.utils';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingAssessmentManualResultService {
@@ -21,13 +20,15 @@ export class ProgrammingAssessmentManualResultService {
      * @param {submit} submit - Indicates whether submit or save is called
      */
     save(participationId: number, result: Result, submit = false): Observable<EntityResponseType> {
-        const copy = this.resultService.convertDateFromClient(result);
-        let url = `${this.resourceUrl}/participations/${participationId}/manual-results`;
+        const params = new HttpParams();
         if (submit) {
-            url = buildUrlWithParams(url, ['submit=true']);
+            params.set('submit', Boolean(true).toString());
         }
+
+        const url = `${this.resourceUrl}/participations/${participationId}/manual-results`;
+        const copy = this.resultService.convertDateFromClient(result);
         return this.http
-            .put<Result>(url, copy, { observe: 'response' })
+            .put<Result>(url, copy, { params, observe: 'response' })
             .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));
     }
 
