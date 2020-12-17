@@ -75,6 +75,7 @@
         "split.js": "1.6.2",
         "ts-cacheable": "1.0.2",
         "tslib": "2.0.3",
+        "weak-napi": "^2.0.2",
         "webstomp-client": "1.2.6",
         "yarn": "1.22.10",
         "zone.js": "0.11.3"
