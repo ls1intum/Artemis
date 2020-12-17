@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Directive, ElementRef, Input, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 // @ts-ignore
 import Split from 'split.js';
 import { Subject } from 'rxjs';
