@@ -30,6 +30,8 @@ export abstract class Submission implements BaseEntity {
     public durationInMinutes?: number;
 
     public results?: Result[];
+    public latestResult?: Result;
+
     public participation?: Participation;
 
     // only used for exam to check if it is saved to server
