@@ -28,7 +28,6 @@ export class TextSubmissionViewerComponent implements OnChanges {
             this.textSubmissionService.getTextSubmission(currentPlagiarismSubmission.submissionId).subscribe(
                 (submission: TextSubmission) => {
                     this.loading = false;
-
                     this.submission = submission;
                 },
                 () => {
