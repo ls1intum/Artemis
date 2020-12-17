@@ -443,13 +443,8 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public void protectBranch(URL repositoryUrl, String branch) throws VersionControlException {
-        // Not implemented because it's not used in BitBucket (yet)
-    }
-
-    @Override
     public void unprotectBranch(URL repositoryUrl, String branch) throws VersionControlException {
-        // Not implemented because it's not used in BitBucket (yet)
+        // Not implemented because it's not needed in Bitbucket for the current use case, because the master branch is not protected by default
     }
 
     /**

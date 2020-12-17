@@ -1,3 +1,4 @@
+import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
@@ -6,12 +7,10 @@ import { MockTranslateService, TranslateTestingModule } from '../../helpers/mock
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { PlagiarismSplitViewComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/plagiarism-split-view.component';
-import { ModelingSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
-import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
+import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 
 const collapse = jest.fn();
 const setSizes = jest.fn();
@@ -33,8 +32,7 @@ describe('Plagiarism Split View Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisModelingEditorModule, TranslateTestingModule],
-            declarations: [PlagiarismSplitViewComponent, ModelingSubmissionViewerComponent, TextSubmissionViewerComponent],
+            imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -49,17 +47,23 @@ describe('Plagiarism Split View Component', () => {
     });
 
     it('checks type of modeling exercise', () => {
-        comp.exercise = modelingExercise;
+        comp.ngOnChanges({
+            exercise: { currentValue: modelingExercise } as SimpleChange,
+        });
 
-        expect(comp.isModelingExercise()).toEqual(true);
-        expect(comp.isTextOrProgrammingExercise()).toEqual(false);
+        expect(comp.isModelingExercise).toEqual(true);
+        expect(comp.isTextExercise).toEqual(false);
+        expect(comp.isProgrammingExercise).toEqual(false);
     });
 
     it('checks type of text exercise', () => {
-        comp.exercise = textExercise;
+        comp.ngOnChanges({
+            exercise: { currentValue: textExercise } as SimpleChange,
+        });
 
-        expect(comp.isTextOrProgrammingExercise()).toEqual(true);
-        expect(comp.isModelingExercise()).toEqual(false);
+        expect(comp.isTextExercise).toEqual(true);
+        expect(comp.isProgrammingExercise).toEqual(false);
+        expect(comp.isModelingExercise).toEqual(false);
     });
 
     it('should subscribe to the split control subject', () => {

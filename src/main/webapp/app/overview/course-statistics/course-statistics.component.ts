@@ -11,11 +11,11 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import {
     ABSOLUTE_SCORE,
     CourseScoreCalculationService,
+    CURRENT_RELATIVE_SCORE,
     MAX_SCORE,
     PRESENTATION_SCORE,
-    RELATIVE_SCORE,
     REACHABLE_SCORE,
-    CURRENT_RELATIVE_SCORE,
+    RELATIVE_SCORE,
 } from 'app/overview/course-score-calculation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 
@@ -38,7 +38,7 @@ export interface CourseStatisticsDataSet {
 export class CourseStatisticsComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
 
-    private courseId: number;
+    courseId: number;
     private courseExercises: Exercise[];
     private paramSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;

@@ -48,6 +48,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -168,7 +169,44 @@ public class ProgrammingExerciseExportService {
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException is thrown for file handling errors
      */
-    public File checkPlagiarism(long programmingExerciseId) throws ExitException, IOException {
+    public TextPlagiarismResult checkPlagiarism(long programmingExerciseId) throws ExitException, IOException {
+        // TODO: offer the following options in the client
+        // 1) filter empty submissions, i.e. repositories with no student commits
+        // 2) filter submissions with a result score of 0%
+        final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
+
+        downloadRepositories(programmingExercise);
+
+        final var projectKey = programmingExercise.getProjectKey();
+
+        final var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
+        final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
+
+        final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
+
+        JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
+        options.setBaseCodeSubmissionName(templateRepoName);
+
+        JPlag jplag = new JPlag(options);
+        JPlagResult result = jplag.run();
+
+        cleanupRepositories(programmingExercise);
+
+        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(result);
+        textPlagiarismResult.setExerciseId(programmingExercise.getId());
+
+        return textPlagiarismResult;
+    }
+
+    /**
+     * downloads all repos of the exercise and runs JPlag
+     *
+     * @param programmingExerciseId the id of the programming exercises which should be checked
+     * @return a zip file that can be returned to the client
+     * @throws ExitException is thrown if JPlag exits unexpectedly
+     * @throws IOException is thrown for file handling errors
+     */
+    public File checkPlagiarismWithJPlagReport(long programmingExerciseId) throws ExitException, IOException {
         // TODO: offer the following options in the client
         // 1) filter empty submissions, i.e. repositories with no student commits
         // 2) filter submissions with a result score of 0%
@@ -231,7 +269,7 @@ public class ProgrammingExerciseExportService {
                 if (programmingExerciseParticipation.getRepositoryUrlAsUrl() == null) {
                     return;
                 }
-                Repository repo = gitService.getOrCheckoutRepository(programmingExerciseParticipation, REPO_DOWNLOAD_CLONE_PATH);
+                Repository repo = gitService.getOrCheckoutRepositoryForJPlag(programmingExerciseParticipation, REPO_DOWNLOAD_CLONE_PATH);
                 deleteTempLocalRepository(programmingExerciseParticipation, repo);
             }
             catch (GitException | GitAPIException | InterruptedException ex) {
@@ -257,7 +295,7 @@ public class ProgrammingExerciseExportService {
                     log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
                     return;
                 }
-                Repository repo = gitService.getOrCheckoutRepository(programmingExerciseParticipation, REPO_DOWNLOAD_CLONE_PATH);
+                Repository repo = gitService.getOrCheckoutRepositoryForJPlag(programmingExerciseParticipation, REPO_DOWNLOAD_CLONE_PATH);
                 gitService.resetToOriginMaster(repo); // start with clean state
 
                 repo.close();

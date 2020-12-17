@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Directive, ElementRef, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 // @ts-ignore
 import Split from 'split.js';
 import { Subject } from 'rxjs';
@@ -18,7 +18,7 @@ export class SplitPaneDirective {
     styleUrls: ['./plagiarism-split-view.component.scss'],
     templateUrl: './plagiarism-split-view.component.html',
 })
-export class PlagiarismSplitViewComponent implements AfterViewInit, OnInit {
+export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit {
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
@@ -26,6 +26,10 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnInit {
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
     public split: Split.Instance;
+
+    public isModelingExercise: boolean;
+    public isProgrammingExercise: boolean;
+    public isTextExercise: boolean;
 
     /**
      * Initialize third party libs inside this lifecycle hook.
@@ -44,12 +48,14 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnInit {
         this.splitControlSubject.subscribe((pane: string) => this.handleSplitControl(pane));
     }
 
-    isModelingExercise() {
-        return this.exercise.type === ExerciseType.MODELING;
-    }
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes.exercise) {
+            const exercise = changes.exercise.currentValue;
 
-    isTextOrProgrammingExercise() {
-        return this.exercise.type === ExerciseType.TEXT || this.exercise.type === ExerciseType.PROGRAMMING;
+            this.isModelingExercise = exercise.type === ExerciseType.MODELING;
+            this.isProgrammingExercise = exercise.type === ExerciseType.PROGRAMMING;
+            this.isTextExercise = exercise.type === ExerciseType.TEXT;
+        }
     }
 
     getModelingSubmissionA() {

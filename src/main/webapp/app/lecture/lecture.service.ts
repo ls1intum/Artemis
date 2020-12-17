@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import * as moment from 'moment';
 import { map } from 'rxjs/operators';
@@ -55,9 +55,13 @@ export class LectureService {
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
-    findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
+    findAllByCourseId(courseId: number, withLectureUnits = false): Observable<EntityArrayResponseType> {
+        const params = new HttpParams().set('withLectureUnits', withLectureUnits ? '1' : '0');
         return this.http
-            .get<Lecture[]>(`api/courses/${courseId}/lectures`, { observe: 'response' })
+            .get<Lecture[]>(`api/courses/${courseId}/lectures`, {
+                params,
+                observe: 'response',
+            })
             .pipe(
                 map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)),
                 map((res: EntityArrayResponseType) => this.checkPermission(res)),
