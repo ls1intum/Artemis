@@ -1,7 +1,7 @@
 import { Command } from 'app/shared/markdown-editor/commands/command';
 
 export class HeadingTwoCommand extends Command {
-    buttonIcon = 'heading2';
+    buttonIcon = 'heading';
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.headingTwo';
 
     /**
