@@ -158,7 +158,41 @@ Some guidelines:
 
    *  Services should be mocked if they simply return some data from the server. However, if the service has some form of logic included (for exampling converting dates to moments),
       and this logic is important for the component, do not mock the service methods, but mock the http requests and responses from the api. This allows us to test the interaction
-      of the component with the service and in addition test that the service logic works correctly.
+      of the component with the service and in addition test that the service logic works correctly. A good explanation can be found in the official angular documentation: https://angular.io/guide/http#testing-http-requests
+
+    .. code:: ts
+
+        import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+        describe('SomeComponent', () => {
+          beforeEach(() => {
+              TestBed.configureTestingModule({
+                  imports: [HttpClientTestingModule],
+              });
+
+              ...
+              httpMock = injector.get(HttpTestingController);
+          });
+
+          afterEach(() => {
+              ...
+              httpMock.verify();
+          });
+
+          it('should make get request', async () => {
+              const returnedFromApi = {some: 'data'};
+
+              component.callServiceMethod()
+                  .subscribe((data) => expect(data).toMatchObject({body: returnedFromApi}));
+
+              const req = httpMock.expectOne({ method: 'GET' });
+              req.flush(JSON.stringify(returnedFromApi));
+          });
+        });
+
+
+
+
+
 
 2. Do not overuse ``NO_ERRORS_SCHEMA`` (https://angular.io/guide/testing-components-scenarios#no_errors_schema).
    This tells angular to ignore the attributes and unrecognized elements, prefer to use component stubs as mentioned above.
