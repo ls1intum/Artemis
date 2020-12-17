@@ -5,7 +5,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementComponent } from 'app/course/manage/course-management.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -22,8 +21,6 @@ describe('CourseManagementComponent', () => {
     let component: CourseManagementComponent;
     let service: CourseManagementService;
     let guidedTourService: GuidedTourService;
-    let alertService: JhiAlertService;
-    let eventManager: JhiEventManager;
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
@@ -41,8 +38,6 @@ describe('CourseManagementComponent', () => {
                 component = fixture.componentInstance;
                 service = TestBed.inject(CourseManagementService);
                 guidedTourService = TestBed.inject(GuidedTourService);
-                alertService = TestBed.inject(JhiAlertService);
-                eventManager = TestBed.inject(JhiEventManager);
             });
     });
 
