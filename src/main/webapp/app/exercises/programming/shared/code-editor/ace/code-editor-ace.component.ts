@@ -61,11 +61,16 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     onError = new EventEmitter<string>();
     @Output()
     onUpdateFeedback = new EventEmitter<Feedback[]>();
+    @Output()
+    onFileLoad = new EventEmitter<string>();
 
     // This fetches a list of all supported editor modes and matches it afterwards against the file extension
     readonly aceModeList = ace.acequire('ace/ext/modelist');
     // Line widgets for inline feedback
     readonly LineWidgets = ace.acequire('ace/line_widgets').LineWidgets;
+
+    readonly Range = ace.acequire('ace/range').Range;
+
     /** Ace Editor Options **/
     editorMode: string; // String or mode object
     isLoading = false;
@@ -78,6 +83,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     private elementArray: Element[] = [];
     fileFeedbackPerLine: { [line: number]: Feedback } = {};
     editorSession: any;
+    markerIds: number[] = [];
 
     constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
 
@@ -135,6 +141,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     initEditorAfterFileChange() {
         // Setup editorSession for inline feedback using lineWidgets
         this.editorSession = this.editor.getEditor().getSession();
+
         if (!this.editorSession.widgetManager) {
             this.editorSession.widgetManager = new this.LineWidgets(this.editorSession);
             this.editorSession.widgetManager.attach(this.editor.getEditor());
@@ -182,6 +189,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     this.fileFeedbackPerLine[line] = feedback;
                 });
             }
+
+            if (this.markerIds.length > 0) {
+                this.markerIds.forEach((markerId) => this.editorSession.removeMarker(markerId));
+                this.markerIds = [];
+            }
+            this.onFileLoad.emit(this.selectedFile);
         }
     }
 
