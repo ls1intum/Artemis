@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.connector.jenkins;
 
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -17,7 +19,6 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
@@ -25,10 +26,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.client.JenkinsHttpClient;
-import com.offbytwo.jenkins.model.*;
-
+import com.offbytwo.jenkins.model.ExtractHeader;
+import com.offbytwo.jenkins.model.FolderJob;
+import com.offbytwo.jenkins.model.JobWithDetails;
+import com.offbytwo.jenkins.model.QueueReference;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInterceptor;
 
 @Component
 @Profile("jenkins")
@@ -51,11 +53,13 @@ public class JenkinsRequestMockProvider {
     @Mock
     private JenkinsHttpClient jenkinsClient;
 
-    @Mock
-    JenkinsAuthorizationInterceptor jenkinsAuthorizationInterceptor;
-
     public JenkinsRequestMockProvider(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
+        // We remove JenkinsAuthorizationInterceptor because the tests hit the intercept() method
+        // which has its' own instance of RestTemplate (in order to get a crumb(. Since that template
+        // isn't mocked, it will throw an exception.
+        // TODO: Find a way to either mock the interceptor or mock its RestTemplate
+        this.restTemplate.setInterceptors(List.of());
     }
 
     public void enableMockingOfRequests(JenkinsServer jenkinsServer) {
@@ -119,7 +123,6 @@ public class JenkinsRequestMockProvider {
 
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planName, "config.xml").build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
-        doReturn(new MockClientHttpResponse(new byte[] {}, HttpStatus.OK)).when(jenkinsAuthorizationInterceptor).intercept(any(), any(), any());
 
         final var job = mock(JobWithDetails.class);
         mockTriggerBuild(projectKey, planName, job);
@@ -143,7 +146,6 @@ public class JenkinsRequestMockProvider {
     public void mockEnablePlan(String projectKey, String planKey) throws URISyntaxException, IOException {
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planKey, "enable").build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.FOUND));
-        doReturn(new MockClientHttpResponse(new byte[] {}, HttpStatus.OK)).when(jenkinsAuthorizationInterceptor).intercept(any(), any(), any());
     }
 
     public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws IOException {
