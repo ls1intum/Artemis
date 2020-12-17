@@ -119,10 +119,11 @@ public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     private void persistTextUnitWithLecture() {
         this.textUnit = textUnitRepository.save(this.textUnit);
-        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
+        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture1.getId()).get();
         lecture1.addLectureUnit(this.textUnit);
         lecture1 = lectureRepository.save(lecture1);
-        this.textUnit = (TextUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.textUnit = (TextUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst()
+                .get();
     }
 
 }
