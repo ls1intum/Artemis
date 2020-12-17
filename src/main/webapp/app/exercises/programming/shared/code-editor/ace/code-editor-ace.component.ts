@@ -192,6 +192,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
             if (this.markerIds.length > 0) {
                 this.markerIds.forEach((markerId) => this.editorSession.removeMarker(markerId));
+                this.markerIds = [];
             }
             this.onFileLoad.emit(this.selectedFile);
         }

@@ -42,7 +42,7 @@
         [isTutorAssessment]="true"
         [readOnlyManualFeedback]="readOnly()"
         (onUpdateFeedback)="onUpdateFeedback($event)"
-        (onFileLoad)="onSelectedFileChange($event)"
+        (onFileLoad)="onFileLoad($event)"
     >
         <span editorTitle>{{ exercise.title }}</span>
         <div editorToolbar>

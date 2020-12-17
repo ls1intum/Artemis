@@ -206,31 +206,38 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
-    onSelectedFileChange(selectedFile: string): void {
-        console.log('selectedFile event', selectedFile);
-        console.log('selectedFile from viewChild', this.codeEditorContainer?.selectedFile);
+    /**
+     * Triggers when a new file was selected in the code editor. Compares the content of the file with the template (if available), calculates the diff
+     * and highlights the changed/added lines or all lines if the file is not in the template.
+     *
+     * @param selectedFile name of the file which is currently displayed
+     */
+    onFileLoad(selectedFile: string): void {
         if (selectedFile && this.codeEditorContainer?.selectedFile) {
-            console.log('aceEditor editorSession', this.codeEditorContainer?.aceEditor?.editorSession);
-            console.log(this.codeEditorContainer.aceEditor.editorSession.getValue(), this.templateFileSession[selectedFile]);
-
+            // When the selectedFile is not part of the template, then this is a new file and all lines in code editor are highlighted
             if (!this.templateFileSession[selectedFile]) {
-                console.log('undefined, every line should be green');
                 const lastLine = this.codeEditorContainer.aceEditor.editorSession.getLength() - 1;
                 this.codeEditorContainer.aceEditor.markerIds.push(
                     this.codeEditorContainer.aceEditor.editorSession.addMarker(new this.codeEditorContainer.aceEditor.Range(0, 0, lastLine, 1), 'diff-newLine', 'fullLine'),
                 );
             } else {
-                const diffArray = this.dmp.diff_main(this.templateFileSession[selectedFile], this.codeEditorContainer.aceEditor.editorSession.getValue());
-                console.log(diffArray);
-                this.dmp.diff_cleanupEfficiency(diffArray);
-                console.log(diffArray, 'after cleanup');
+                // Calculation of the diff, see: https://github.com/google/diff-match-patch/wiki/Line-or-Word-Diffs
+                const diffArray = this.dmp.diff_linesToChars_(this.templateFileSession[selectedFile], this.codeEditorContainer.aceEditor.editorSession.getValue());
+                const lineText1 = diffArray.chars1;
+                const lineText2 = diffArray.chars2;
+                const lineArray = diffArray.lineArray;
+                const diffs = this.dmp.diff_main(lineText1, lineText2, false);
+                this.dmp.diff_charsToLines_(diffs, lineArray);
 
+                // Setup counter to know on which range to highlight in the code editor
                 let counter = 0;
-                diffArray.forEach((diffElement) => {
+                diffs.forEach((diffElement) => {
+                    // No changes
                     if (diffElement[0] === 0) {
                         const lines = diffElement[1].split(/\r?\n/);
                         counter += lines.length - 1;
                     }
+                    // Newly added
                     if (diffElement[0] === 1) {
                         const lines = diffElement[1].split(/\r?\n/).filter((element) => element.trim());
                         const firstLineToHighlight = counter;
