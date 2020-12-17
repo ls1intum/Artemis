@@ -17,7 +17,7 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { concatMap, tap } from 'rxjs/operators';
-import { getLatestSubmissionResult, refreshLatestResultsBySubmissionMap, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, refreshLatestResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-example-modeling-submission',

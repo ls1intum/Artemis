@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { TranslateService } from '@ngx-translate/core';
-import { getLatestSubmissionResult, refreshLatestResultsBySubmissionMap, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, refreshLatestResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
@@ -28,13 +28,10 @@ export class AssessmentLocksComponent implements OnInit {
 
     submissions: Submission[] = [];
 
-    // todo NR SE remove after refactoring hmtl function calls
-
     private cancelConfirmationText: string;
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
-    latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
 
     constructor(
         private route: ActivatedRoute,

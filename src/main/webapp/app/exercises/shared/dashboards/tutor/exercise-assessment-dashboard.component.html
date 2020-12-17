@@ -253,9 +253,7 @@
                                 {{ calculateStatus(submission) }}
                             </td>
                             <td>
-                                <span *ngIf="latestResultsBySubmissionMap.get(submission) !== null && latestResultsBySubmissionMap.get(submission)!.score !== null"
-                                    >{{ latestResultsBySubmissionMap.get(submission)!.score }} %</span
-                                >
+                                <span *ngIf="submission.latestResult !== null && submission.latestResult!.score !== null">{{ submission.latestResult!.score }} %</span>
                             </td>
                             <td *ngIf="exercise.type === ExerciseType.TEXT">
                                 {{ 'artemisApp.exerciseAssessmentDashboard.languages.' + (submission.language ? submission.language : 'UNKNOWN') | translate }}
@@ -274,11 +272,7 @@
                                         </button>
                                         <ng-template #continueButton>
                                             <button
-                                                *ngIf="
-                                                    submission !== null &&
-                                                    latestResultsBySubmissionMap.get(submission) !== null &&
-                                                    latestResultsBySubmissionMap.get(submission) !== undefined
-                                                "
+                                                *ngIf="submission !== null && submission.latestResult !== null && submission.latestResult !== undefined"
                                                 (click)="openAssessmentEditor(submission)"
                                                 class="btn btn-primary btn-sm"
                                             >
