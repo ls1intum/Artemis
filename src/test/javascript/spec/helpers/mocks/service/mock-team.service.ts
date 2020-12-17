@@ -1,5 +1,6 @@
 import { Observable, of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { Injectable, Injector } from '@angular/core';
+import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
 import { ITeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team, TeamImportStrategyType } from 'app/entities/team.model';
@@ -9,7 +10,9 @@ import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { User } from 'app/core/user/user.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
+import { TeamService } from 'app/exercises/shared/team/team.service';
 import * as moment from 'moment';
+import { SERVER_API_URL } from 'app/app.constants';
 
 export const mockTeamStudents = [
     { id: 1, firstName: 'John', lastName: 'Doe', name: 'John Doe', login: 'ga12abc', email: 'john.doe@example.com', visibleRegistrationNumber: '01234567' },
@@ -40,6 +43,17 @@ export const mockEmptyTeam = ({
     students: [],
 } as unknown) as Team;
 
+const mockTeamFromServer = {
+    id: 1,
+    name: 'Team 1',
+    shortName: 'team1',
+    students: mockTeamStudents,
+    owner: { id: 1 } as User,
+    createdBy: 'tutor1',
+    createdDate: Date(),
+    lastModifiedDate: Date(),
+};
+
 export const mockTeam = {
     id: 1,
     name: 'Team 1',
@@ -47,7 +61,8 @@ export const mockTeam = {
     students: mockTeamStudents,
     owner: { id: 1 } as User,
     createdBy: 'tutor1',
-    createdDate: moment(),
+    createdDate: moment(mockTeamFromServer.createdDate),
+    lastModifiedDate: moment(mockTeamFromServer.lastModifiedDate),
 } as Team;
 
 export const mockTeams = [
@@ -156,5 +171,20 @@ export class MockTeamService implements ITeamService {
     // helper method
     private static response<T>(entity: T) {
         return of({ body: entity }) as Observable<HttpResponse<T>>;
+    }
+}
+
+@Injectable()
+export class TeamRequestInterceptorMock implements HttpInterceptor {
+    constructor(private injector: Injector) {}
+
+    intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+        if (request.url && request.url.indexOf(`${TeamService.resourceUrl(mockExercise.id!)}/${mockTeamFromServer.id}`) > -1) {
+            return of(new HttpResponse({ status: 200, body: mockTeamFromServer }));
+        }
+        if (request.url === `${SERVER_API_URL}api/exercises/${mockExercise.id}`) {
+            return of(new HttpResponse({ status: 200, body: mockExercise }));
+        }
+        return next.handle(request);
     }
 }
