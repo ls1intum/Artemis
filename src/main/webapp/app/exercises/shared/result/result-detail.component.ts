@@ -298,8 +298,8 @@ export class ResultDetailComponent implements OnInit {
         const exercise = this.result.participation.exercise;
 
         // cap test points
-        let maxPoints = exercise.maxScore! !== 0 || (exercise.bonusPoints || 0) !== 0 ? exercise.maxScore! : PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
-        let maxPointsWithBonus = maxPoints + (exercise.bonusPoints || 0);
+        const maxPoints = exercise.maxScore! !== 0 || (exercise.bonusPoints || 0) !== 0 ? exercise.maxScore! : PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
+        const maxPointsWithBonus = maxPoints + (exercise.bonusPoints || 0);
 
         if (testCaseCredits > maxPointsWithBonus) {
             testCaseCredits = maxPointsWithBonus;
@@ -316,16 +316,10 @@ export class ResultDetailComponent implements OnInit {
 
         const appliedNegativePoints = codeIssueCredits + negativeCredits;
         const receivedNegativePoints = codeIssuePenalties + negativeCredits;
-        let positivePoints = testCaseCredits + positiveCredits;
+        const positivePoints = testCaseCredits + positiveCredits;
 
         if (appliedNegativePoints !== receivedNegativePoints) {
             this.showScoreChartTooltip = true;
-        }
-
-        if (maxPoints === 0) {
-            maxPoints = PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
-            maxPointsWithBonus = maxPoints + (exercise.bonusPoints || 0);
-            positivePoints += PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
         }
 
         // the chart preset handles the capping to the maximum score of the exercise

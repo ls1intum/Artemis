@@ -75,12 +75,14 @@ export class ScoreChartPreset implements ChartPreset {
 
         this.datasets = [
             {
-                data: [this.roundToDecimals(((appliedPositive - appliedNegative) / maxScore) * 100, 2)],
+                // when maxScore is 0 use maxScoreWithBonus
+                data: [this.roundToDecimals(((appliedPositive - appliedNegative) / (maxScore || maxScoreWithBonus)) * 100, 2)],
                 backgroundColor: '#28a745',
                 hoverBackgroundColor: '#28a745',
             },
             {
-                data: [this.roundToDecimals((appliedNegative / maxScore) * 100, 2)],
+                // when maxScore is 0 use maxScoreWithBonus
+                data: [this.roundToDecimals((appliedNegative / (maxScore || maxScoreWithBonus)) * 100, 2)],
                 backgroundColor: this.redGreenPattern,
                 hoverBackgroundColor: this.redGreenPattern,
             },

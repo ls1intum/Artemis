@@ -374,9 +374,9 @@ describe('ResultDetailComponent', () => {
         expect(comp.showScoreChartTooltip).to.equal(true);
 
         // 107 positive points, 2 applied negative points, 6 received negative points, maxPoints, maxPoints + bonusPoints
-        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(107, 2, 6, 100, 105);
-        // 105 of 107 positive points, 0 of 6 negative points after calculations -> 107 - 2 = 105
-        checkChartPreset(105, 0, '105 of 107', '0 of 6');
+        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(7, 2, 6, 0, 5);
+        // 100% score, 0 of 6 negative points, 5 of 7 positive points
+        checkChartPreset(100, 0, '5 of 7', '0 of 6');
         expect(comp.isLoading).to.be.false;
     });
 
