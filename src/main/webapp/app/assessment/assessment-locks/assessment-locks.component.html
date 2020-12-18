@@ -37,7 +37,7 @@
                     <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
                     <td>{{ submission.participation.submissions?.length }}</td>
                     <td>
-                        <span *ngIf="submission.latestResult!.score != null">{{ submission.latestResult!.score }}%</span>
+                        <span *ngIf="submission.latestResult?.score != undefined">{{ submission.latestResult.score }}%</span>
                     </td>
                     <td>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
