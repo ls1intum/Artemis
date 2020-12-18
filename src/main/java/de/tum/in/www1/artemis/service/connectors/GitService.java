@@ -688,6 +688,9 @@ public class GitService {
             FileUtils.deleteDirectory(repoPath.toFile());
             log.debug("Deleted Repository at " + repoPath);
         }
+        else {
+            log.info("Cannot delete local repository at " + repoPath + " because it does not exist!");
+        }
     }
 
     /**
