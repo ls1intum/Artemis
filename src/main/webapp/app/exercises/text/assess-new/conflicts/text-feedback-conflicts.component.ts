@@ -121,19 +121,12 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         this.conflictingSubmissions = conflictingTextSubmissions;
         this.prepareTextBlocksAndFeedbackFor(this.leftSubmission!, this.leftTextBlockRefs, this.leftUnusedTextBlockRefs);
         refreshLatestResult(conflictingTextSubmissions);
-        refreshLatestResult([this.leftSubmission]);
+        refreshLatestResult([this.leftSubmission!]);
         this.leftTotalScore = this.computeTotalScore(getLatestSubmissionResult(this.leftSubmission)!.feedbacks!);
         this.setConflictingSubmission(0);
         refreshLatestResult(conflictingTextSubmissions);
-        refreshLatestResult([this.leftSubmission]);
+        refreshLatestResult([this.leftSubmission!]);
     }
-
-    /**
-     * Avoid issues with refreshing results.
-     */
-    //private refreshResultMap() {
-    //    this.latestResultsBySubmissionMap = new Map([...this.latestResultsBySubmissionMap, ...refreshLatestResultsBySubmissionMap(this.conflictingSubmissions!)]);
-    // }
 
     private setConflictingSubmission(index: number) {
         this.rightSubmission = this.conflictingSubmissions ? this.conflictingSubmissions[index] : undefined;
@@ -195,13 +188,13 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
      * submits the left submission
      */
     overrideLeftSubmission() {
-        if (!this.leftSubmission || !this.leftSubmission.latestResult || !this.leftSubmission.latestResult!.id || this.overrideBusy) {
+        if (!this.leftSubmission || !this.leftSubmission!.latestResult || !this.leftSubmission!.latestResult!.id || this.overrideBusy) {
             return;
         }
 
         this.overrideBusy = true;
         this.assessmentsService
-            .submit(this.exercise!.id!, this.leftSubmission.latestResult!.id!, this.leftSubmission.latestResult!.feedbacks!, this.textBlocksWithFeedbackForLeftSubmission)
+            .submit(this.exercise!.id!, this.leftSubmission!.latestResult!.id!, this.leftSubmission!.latestResult!.feedbacks!, this.textBlocksWithFeedbackForLeftSubmission)
             .subscribe(
                 (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
                 (error: HttpErrorResponse) => this.handleError(error),
