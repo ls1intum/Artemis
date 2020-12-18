@@ -14,7 +14,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
-import { getLatestSubmissionResult, refreshLatestResultsBySubmissionMap, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, refreshLatestResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -110,8 +110,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     tutor?: User;
 
     exerciseForGuidedTour?: Exercise;
-
-    latestResultsBySubmissionMap: Map<Submission, Result | undefined>;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -317,7 +315,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     submission.participation!.submissions = [submission];
                     return submission;
                 });
-                this.latestResultsBySubmissionMap = refreshLatestResultsBySubmissionMap(this.submissions);
+                refreshLatestResult(submissions);
             });
     }
 
