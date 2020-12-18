@@ -17,12 +17,12 @@
         <div class="left card">
             <div class="card-header bg-primary text-white">
                 <div class="flew-grow-1">
-                    <span *ngIf="isAssessor(this.leftSubmission!.latestResult!); else otherAssessorLeftCard" jhiTranslate="artemisApp.textAssessment.conflict.assessor"></span>
+                    <span *ngIf="isAssessor(this.leftSubmission!.latestResult); else otherAssessorLeftCard" jhiTranslate="artemisApp.textAssessment.conflict.assessor"></span>
                     <ng-template #otherAssessorLeftCard>
                         <span
                             jhiTranslate="artemisApp.textAssessment.conflict.otherAssessor"
                             [translateValues]="{
-                                otherUser: this.leftSubmission!.latestResult!.assessor?.name + ' (' + this.leftSubmission!.latestResult!.assessor?.login + ')'
+                                otherUser: this.leftSubmission!.latestResult?.assessor?.name + ' (' + this.leftSubmission!.latestResult?.assessor?.login + ')'
                             }"
                         ></span>
                     </ng-template>
@@ -48,12 +48,12 @@
             <div class="right card">
                 <div class="card-header bg-primary text-white">
                     <div class="flew-grow-1">
-                        <span *ngIf="isAssessor(rightSubmission!.latestResult!); else otherAssessorRightCard" jhiTranslate="artemisApp.textAssessment.conflict.assessor"></span>
+                        <span *ngIf="isAssessor(rightSubmission!.latestResult); else otherAssessorRightCard" jhiTranslate="artemisApp.textAssessment.conflict.assessor"></span>
                         <ng-template #otherAssessorRightCard>
                             <span
                                 jhiTranslate="artemisApp.textAssessment.conflict.otherAssessor"
                                 [translateValues]="{
-                                    otherUser: rightSubmission!.latestResult!.assessor?.name + ' (' + rightSubmission!.latestResult!.assessor?.login + ')'
+                                    otherUser: rightSubmission!.latestResult?.assessor?.name + ' (' + rightSubmission!.latestResult?.assessor?.login + ')'
                                 }"
                             ></span>
                         </ng-template>
