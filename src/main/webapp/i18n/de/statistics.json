@@ -10,7 +10,15 @@
         "title": "Benutzer Statistiken",
         "submissions": "Abgaben",
         "active_users": "Aktive Nutzer",
-        "released_exercises": "Veröffentlichte Aufgaben"
+        "logged_in_users": "Eingeloggte Nutzer",
+        "released_exercises": "Veröffentlichte Aufgaben",
+        "exercises_due": "Aufgaben mit Abgabeende",
+        "conducted_exams": "Durchgeführte Klausuren",
+        "exam_participations": "Klausur Teilnahmen",
+        "exam_registrations": "Klausur Anmeldungen",
+        "active_tutors": "Active Tutoren",
+        "created_results": "Erstellte Resultate",
+        "created_feedbacks": "Erstellte Rückmeldungen"
     },
     "weekdays": {
         "monday": "Montag",
