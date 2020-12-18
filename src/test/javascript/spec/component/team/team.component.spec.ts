@@ -61,7 +61,7 @@ describe('TeamComponent', () => {
             isAtLeastInstructor: true,
             isAtLeastTutor: true,
             teams: [team],
-            course: course,
+            course,
         } as Exercise;
 
         return TestBed.configureTestingModule({
@@ -77,45 +77,9 @@ describe('TeamComponent', () => {
                 MockDirective(NgbTooltip),
             ],
             providers: [
-                MockProvider(ExerciseService, {
-                    find: () => {
-                        return of(
-                            new HttpResponse({
-                                body: exercise,
-                                status: 200,
-                            }),
-                        );
-                    },
-                }),
-                MockProvider(TeamService, {
-                    find: () => {
-                        return of(
-                            new HttpResponse({
-                                body: team,
-                                status: 200,
-                            }),
-                        );
-                    },
-                    findCourseWithExercisesAndParticipationsForTeam: () => {
-                        return of(
-                            new HttpResponse({
-                                body: course,
-                                status: 200,
-                            }),
-                        );
-                    },
-                }),
-                MockProvider(AccountService, {
-                    identity: () => Promise.resolve(user),
-                }),
                 MockProvider(SessionStorageService),
                 MockDirective(JhiTranslateDirective),
                 MockProvider(HttpClient),
-                { provide: TranslateService, useClass: MockTranslateService },
-                {
-                    provide: LocalStorageService,
-                    useClass: MockLocalStorageService,
-                },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -127,6 +91,34 @@ describe('TeamComponent', () => {
                                 }),
                         },
                     },
+                },
+                MockProvider(TeamService, {
+                    find: () => {
+                        return of(
+                            new HttpResponse({
+                                body: team,
+                                status: 200,
+                            }),
+                        );
+                    },
+                }),
+                MockProvider(ExerciseService, {
+                    find: () => {
+                        return of(
+                            new HttpResponse({
+                                body: exercise,
+                                status: 200,
+                            }),
+                        );
+                    },
+                }),
+                MockProvider(AccountService, {
+                    identity: () => Promise.resolve(user),
+                }),
+                { provide: TranslateService, useClass: MockTranslateService },
+                {
+                    provide: LocalStorageService,
+                    useClass: MockLocalStorageService,
                 },
             ],
         })
@@ -151,7 +143,13 @@ describe('TeamComponent', () => {
 
         expect(teamComponentFixture).to.be.ok;
         expect(exerciseServiceSpy).to.be.calledOnce;
+        exerciseService.find(20).subscribe((result) => {
+            expect(result.body).to.equal(exercise);
+        });
         expect(teamServiceSpy).to.be.calledOnce;
+        teamService.find(exercise, 1).subscribe((result) => {
+            expect(result.body).to.equal(team);
+        });
     });
 
     it('onTeamUpdate should set the updated Team', () => {
