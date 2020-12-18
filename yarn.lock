@@ -12713,7 +12713,7 @@ wcwidth@^1.0.1:
   dependencies:
     defaults "^1.0.3"
 
-weak-napi@^2.0.2:
+weak-napi@2.0.2:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/weak-napi/-/weak-napi-2.0.2.tgz#40662d0931498397979edb38a571409f5afce6d3"
   integrity sha512-LcOSVFrghtVXf4QH+DLIy8iPiCktV7lVbqRDYP+bDPpLzC41RCHQPMyQOnPpWO41Ie4CmnDxS+mbL72r5xFMMQ==
