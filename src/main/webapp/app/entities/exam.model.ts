@@ -29,6 +29,7 @@ export class Exam implements BaseEntity {
     public maxPoints?: number;
     public randomizeExerciseOrder?: boolean;
     public numberOfExercisesInExam?: number;
+    public numberOfCorrectionRoundsInExam?: number;
     public course?: Course;
     public exerciseGroups?: ExerciseGroup[];
     public studentExams?: StudentExam[];

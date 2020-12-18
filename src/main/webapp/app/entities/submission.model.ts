@@ -37,7 +37,7 @@ export abstract class Submission implements BaseEntity {
     // Helper Attributes
 
     // latestResult is undefined until submission.setLatestResult() is called
-    public latestResult?: Result | undefined;
+    public latestResult?: undefined | Result;
 
     // only used for exam to check if it is saved to server
     public isSynced?: boolean;
@@ -54,6 +54,7 @@ export abstract class Submission implements BaseEntity {
  * @param submission
  */
 export function getLatestSubmissionResult(submission: Submission | undefined): Result | undefined {
+    console.log('ran getLatestsSubmissionResutl');
     if (submission?.results) {
         const length = submission.results.length;
         if (length > 0) {
@@ -68,11 +69,11 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
  * @param submission
  * @param result
  *
- * @return the index of the latestSubmissionResult or undefined if any of the params was undefined
+ * @return
  */
-export function setLatestSubmissionResult(submission: Submission | undefined, result: Result | undefined): number | undefined {
+export function setLatestSubmissionResult(submission: Submission | undefined, result: Result | undefined) {
     if (!submission || !result) {
-        return undefined;
+        return;
     }
 
     if (submission!.results && submission!.results.length > 0) {
@@ -80,7 +81,7 @@ export function setLatestSubmissionResult(submission: Submission | undefined, re
     } else {
         submission.results = [result];
     }
-    return submission.results.length - 1;
+    submission.latestResult = result;
 }
 
 export function getFirstResult(submission: Submission | undefined): Result | undefined {
@@ -93,6 +94,7 @@ export function getFirstResult(submission: Submission | undefined): Result | und
 }
 
 export function setLatestResult(submissions: Submission[]) {
+    console.log('ran setLatestResult');
     submissions.forEach((submission) => {
         submission.latestResult = getLatestSubmissionResult(submission);
     });
