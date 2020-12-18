@@ -3,12 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Exercise } from 'app/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { of } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
@@ -17,29 +11,28 @@ import { Team } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-button.component';
-import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-dialog.component';
-import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
-import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-export-button.component';
-import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
-import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
-import { TeamStudentSearchComponent } from 'app/exercises/shared/team/team-student-search/team-student-search.component';
-import { TeamOwnerSearchComponent } from 'app/exercises/shared/team/team-owner-search/team-owner-search.component';
-import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exercise-search/team-exercise-search.component';
-import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-students-list/team-students-list.component';
-import { TeamStudentsOnlineListComponent } from 'app/exercises/shared/team/team-students-online-list/team-students-online-list.component';
-import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-participate-info-box/team-participate-info-box.component';
-import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-participation-table/team-participation-table.component';
-import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { TranslateModule } from '@ngx-translate/core';
+import { NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslatePipe } from '@ngx-translate/core';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ActivatedRoute, Params } from '@angular/router';
 import * as moment from 'moment';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { Course } from 'app/entities/course.model';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-button.component';
+import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
+import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-participation-table/team-participation-table.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,11 +41,14 @@ describe('TeamComponent', () => {
     let teamComponentFixture: ComponentFixture<TeamComponent>;
     let component: TeamComponent;
     let user: User;
+    let course: Course;
     let exercise: Exercise;
 
     let team: Team;
 
     beforeEach(() => {
+        course = new Course();
+        course.id = 1;
         user = new User();
         user.id = 1234;
 
@@ -61,31 +57,24 @@ describe('TeamComponent', () => {
         team.createdDate = moment();
 
         exercise = {
-            id: 20,
+            id: 1,
             isAtLeastInstructor: true,
             isAtLeastTutor: true,
             teams: [team],
+            course: course,
         } as Exercise;
 
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule, ArtemisSharedComponentModule, ArtemisResultModule],
+            imports: [RouterTestingModule.withRoutes([]), ArtemisDataTableModule, NgbModalModule, NgxDatatableModule, FontAwesomeTestingModule, TranslateModule.forRoot()],
             declarations: [
                 TeamComponent,
-                TeamUpdateButtonComponent,
-                TeamUpdateDialogComponent,
-                TeamsImportButtonComponent,
-                TeamsExportButtonComponent,
-                TeamsImportDialogComponent,
-                TeamDeleteButtonComponent,
-                TeamStudentSearchComponent,
-                TeamOwnerSearchComponent,
-                TeamExerciseSearchComponent,
-                TeamStudentsListComponent,
-                TeamStudentsOnlineListComponent,
-                TeamParticipateInfoBoxComponent,
-                TeamParticipationTableComponent,
-                TeamsImportFromFileFormComponent,
+                MockComponent(AlertComponent),
+                MockComponent(TeamUpdateButtonComponent),
+                MockComponent(TeamDeleteButtonComponent),
+                MockComponent(TeamParticipationTableComponent),
                 MockPipe(TranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockDirective(NgbTooltip),
             ],
             providers: [
                 MockProvider(ExerciseService, {
@@ -103,6 +92,14 @@ describe('TeamComponent', () => {
                         return of(
                             new HttpResponse({
                                 body: team,
+                                status: 200,
+                            }),
+                        );
+                    },
+                    findCourseWithExercisesAndParticipationsForTeam: () => {
+                        return of(
+                            new HttpResponse({
+                                body: course,
                                 status: 200,
                             }),
                         );
@@ -157,7 +154,9 @@ describe('TeamComponent', () => {
         expect(teamServiceSpy).to.be.calledOnce;
     });
 
-    it('onTeamUpdate', () => {
-        expect(component.onTeamUpdate(team)).to.equal(team);
+    it('onTeamUpdate should set the updated Team', () => {
+        teamComponentFixture.detectChanges();
+        component.onTeamUpdate(team);
+        expect(component.team).to.equal(team);
     });
 });
