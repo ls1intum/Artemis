@@ -26,6 +26,7 @@ module.exports = {
     modulePaths: ['<rootDir>/src/main/webapp/'],
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
     rootDir: '../../../',
+    modulePathIgnorePatterns: [],
     testMatch: [
         '<rootDir>/src/test/javascript/spec/component/**/*.ts',
         '<rootDir>/src/test/javascript/spec/directive/**/*.ts',
