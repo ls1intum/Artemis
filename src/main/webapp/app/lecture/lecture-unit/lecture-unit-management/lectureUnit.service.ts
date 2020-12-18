@@ -38,15 +38,6 @@ export class LectureUnitService {
         return this.httpClient.delete(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}`, { observe: 'response' });
     }
 
-    convertDateArrayFromClient<T extends LectureUnit>(lectureUnits: T[]): T[] {
-        if (lectureUnits && lectureUnits.length > 0) {
-            for (let _i = 0; _i < lectureUnits.length; _i++) {
-                lectureUnits[_i] = this.convertDateFromClient(lectureUnits[_i]);
-            }
-        }
-        return lectureUnits;
-    }
-
     convertDateFromClient<T extends LectureUnit>(lectureUnit: T): T {
         if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
             if ((<AttachmentUnit>lectureUnit).attachment) {
@@ -62,6 +53,15 @@ export class LectureUnitService {
         return Object.assign({}, lectureUnit, {
             releaseDate: lectureUnit.releaseDate && moment(lectureUnit.releaseDate).isValid() ? lectureUnit.releaseDate.toJSON() : undefined,
         });
+    }
+
+    convertDateArrayFromClient<T extends LectureUnit>(lectureUnits: T[]): T[] {
+        if (lectureUnits && lectureUnits.length > 0) {
+            for (let _i = 0; _i < lectureUnits.length; _i++) {
+                lectureUnits[_i] = this.convertDateFromClient(lectureUnits[_i]);
+            }
+        }
+        return lectureUnits;
     }
 
     convertDateFromServerResponse<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
@@ -112,5 +112,25 @@ export class LectureUnitService {
             });
         }
         return res;
+    }
+
+    getLectureUnitName(lectureUnit: LectureUnit) {
+        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
+            return (<AttachmentUnit>lectureUnit)?.attachment?.name;
+        } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
+            return (<ExerciseUnit>lectureUnit)?.exercise?.title;
+        } else {
+            return lectureUnit.name;
+        }
+    }
+
+    getLectureUnitReleaseDate(lectureUnit: LectureUnit) {
+        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
+            return (<AttachmentUnit>lectureUnit)?.attachment?.releaseDate;
+        } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
+            return (<ExerciseUnit>lectureUnit)?.exercise?.releaseDate;
+        } else {
+            return lectureUnit.releaseDate;
+        }
     }
 }

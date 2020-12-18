@@ -52,8 +52,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ResultRepository resultRepository;
 
-    private final FeedbackRepository feedbackRepository;
-
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final GroupNotificationService groupNotificationService;
@@ -76,7 +74,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
             CourseService courseService, ExamService examService, FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService);
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService,
+                feedbackRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
@@ -88,7 +87,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.gitService = gitService;
         this.resultRepository = resultRepository;
-        this.feedbackRepository = feedbackRepository;
         this.auditEventRepository = auditEventRepository;
     }
 
@@ -682,7 +680,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         ProgrammingSubmission newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);
 
-        Result newResult = setNewResult(newSubmission);
+        Result newResult = saveNewEmptyResult(newSubmission);
         newResult.setAssessor(userService.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         // Copy automatic feedbacks into the manual result

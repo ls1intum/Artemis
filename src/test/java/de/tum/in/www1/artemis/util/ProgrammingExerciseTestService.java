@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.exception.BitbucketException;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -665,8 +665,40 @@ public class ProgrammingExerciseTestService {
         try {
             participationService.startExercise(exercise, team, false);
         }
-        catch (BitbucketException e) {
-            assertThat(e.getMessage()).isEqualTo("Error while forking repository");
+        catch (VersionControlException e) {
+            // We cannot compare exception messages because each vcs has their
+            // own. Maybe simply checking that the exception is not empty is
+            // enough?
+            assertThat(e.getMessage()).isNotEmpty();
+        }
+    }
+
+    // TEST
+    public void copyRepository_testNotCreatedError() throws Exception {
+        exercise.setMode(ExerciseMode.TEAM);
+        programmingExerciseRepository.save(exercise);
+        database.addTemplateParticipationForProgrammingExercise(exercise);
+        database.addSolutionParticipationForProgrammingExercise(exercise);
+
+        // Create a team with students
+        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
+        team = teamService.save(exercise, team);
+
+        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
+
+        // test for internal server error
+        mockDelegate.mockForkRepositoryForParticipation(exercise, team.getParticipantIdentifier(), HttpStatus.OK);
+
+        // Start participation
+        try {
+            participationService.startExercise(exercise, team, false);
+        }
+        catch (VersionControlException e) {
+            // We cannot compare exception messages because each vcs has their
+            // own. Maybe simply checking that the exception is not empty is
+            // enough?
+            assertThat(e.getMessage()).isNotEmpty();
         }
     }
 
@@ -691,8 +723,11 @@ public class ProgrammingExerciseTestService {
         try {
             participationService.startExercise(exercise, team, false);
         }
-        catch (BitbucketException e) {
-            assertThat(e.getMessage()).isEqualTo("Error while forking repository");
+        catch (VersionControlException e) {
+            // We cannot compare exception messages because each vcs has their
+            // own. Maybe simply checking that the exception is not empty is
+            // enough?
+            assertThat(e.getMessage()).isNotEmpty();
         }
     }
 
@@ -743,8 +778,11 @@ public class ProgrammingExerciseTestService {
         try {
             participationService.startExercise(exercise, team, false);
         }
-        catch (BitbucketException e) {
-            assertThat(e.getMessage()).isEqualTo("Error while giving repository permissions");
+        catch (VersionControlException e) {
+            // We cannot compare exception messages because each vcs has their
+            // own. Maybe simply checking that the exception is not empty is
+            // enough?
+            assertThat(e.getMessage()).isNotEmpty();
         }
     }
 

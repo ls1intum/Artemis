@@ -174,7 +174,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
 
-        newManualResult = submissionService.saveOrderedResultBySubmission(submission, newManualResult);
+        newManualResult = submissionService.saveNewResult(submission, newManualResult);
 
         if (submit) {
             newManualResult = programmingAssessmentService.submitManualAssessment(newManualResult.getId());

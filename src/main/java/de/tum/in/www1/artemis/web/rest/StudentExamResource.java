@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -46,6 +47,8 @@ public class StudentExamResource {
 
     private final StudentExamRepository studentExamRepository;
 
+    private final ExamService examService;
+
     private final ExamSessionService examSessionService;
 
     private final QuizExerciseService quizExerciseService;
@@ -57,13 +60,15 @@ public class StudentExamResource {
     private final AuthorizationCheckService authorizationCheckService;
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
-            UserService userService, StudentExamRepository studentExamRepository, ExamSessionService examSessionService, ParticipationService participationService,
-            QuizExerciseService quizExerciseService, ExamRepository examRepository, AuthorizationCheckService authorizationCheckService) {
+            UserService userService, StudentExamRepository studentExamRepository, ExamService examService, ExamSessionService examSessionService,
+            ParticipationService participationService, QuizExerciseService quizExerciseService, ExamRepository examRepository,
+            AuthorizationCheckService authorizationCheckService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
         this.userService = userService;
         this.studentExamRepository = studentExamRepository;
+        this.examService = examService;
         this.examSessionService = examSessionService;
         this.participationService = participationService;
         this.quizExerciseService = quizExerciseService;
@@ -112,13 +117,13 @@ public class StudentExamResource {
      *
      * @param courseId the course to which the student exams belong to
      * @param examId   the exam to which the student exams belong to
-     * @return the ResponseEntity with status 200 (OK) and a list of student exams. The list can be empty
+     * @return the ResponseEntity with status 200 (OK) and a set of student exams. The set can be empty
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/studentExams")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    public ResponseEntity<List<StudentExam>> getStudentExamsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<Set<StudentExam>> getStudentExamsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all student exams for exam : {}", examId);
-        Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        Optional<ResponseEntity<Set<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(studentExamService.findAllByExamId(examId)));
     }
 
@@ -365,6 +370,44 @@ public class StudentExamResource {
 
         StudentExam testRun = studentExamService.generateTestRun(testRunConfiguration);
         return ResponseEntity.ok(testRun);
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/student-exams/assess-unsubmitted-and-empty-student-exams : Assess unsubmitted student exams and empty submissions.
+     *
+     * Finds student exams which the students did not submit on time i.e {@link StudentExam#isSubmitted()} is false and assesses all modeling- and text exercises with 0 points in {@link StudentExamService#assessUnsubmittedStudentExams}.
+     * Additionally assess all empty modeling and text exercises with 0 points in {@link StudentExamService#assessEmptySubmissionsOfStudentExams}.
+     *
+     * NOTE: A result with 0 points is only added if no other result is present for the latest submission of a relevant StudentParticipation.
+     *
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     * @return {@link HttpStatus#BAD_REQUEST} if the exam is not over yet | {@link HttpStatus#FORBIDDEN} if the user is not an instructor
+     */
+    @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/assess-unsubmitted-and-empty-student-exams")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> assessUnsubmittedStudentExamsAndEmptySubmissions(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to automatically assess the not submitted student exams of the exam with id {}", examId);
+
+        final var exam = examService.findOne(examId);
+
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, exam);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return forbidden();
+        }
+
+        if (!this.examService.isExamOver(exam)) {
+            // you can only grade not submitted exams if the exam is over
+            return badRequest();
+        }
+
+        final var instructor = userService.getUser();
+        var assessedUnsubmittedStudentExams = studentExamService.assessUnsubmittedStudentExams(exam, instructor);
+        log.info("Graded {} unsubmitted student exams of exam {}", assessedUnsubmittedStudentExams.size(), examId);
+
+        studentExamService.assessEmptySubmissionsOfStudentExams(exam, instructor, assessedUnsubmittedStudentExams);
+
+        return ResponseEntity.ok().build();
     }
 
     /**

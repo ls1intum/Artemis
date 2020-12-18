@@ -48,6 +48,12 @@ import { delay } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
+import { TreeviewItem } from 'ngx-treeview';
+import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -63,12 +69,16 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let accountService: AccountService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let programmingSubmissionService: ProgrammingSubmissionService;
+    let programmingExerciseService: ProgrammingExerciseService;
+    let repositoryFileService: CodeEditorRepositoryFileService;
 
     let updateAfterComplaintStub: SinonStub;
     let getStudentParticipationWithResultsStub: SinonStub;
     let findByResultIdStub: SinonStub;
     let getIdentityStub: SinonStub;
     let getProgrammingSubmissionForExerciseWithoutAssessmentStub: SinonStub;
+    let findWithParticipationsStub: SinonStub;
+
     const user = <User>{ id: 99, groups: ['instructorGroup'] };
     const result: Result = <any>{
         feedbacks: [new Feedback()],
@@ -85,7 +95,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     result.submission!.id = 1;
 
     const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
-    const exercise = <ProgrammingExercise>{ id: 1, maxScore: 100, gradingInstructions: 'Grading Instructions', course: <Course>{ instructorGroupName: 'instructorGroup' } };
+    const exercise = ({
+        id: 1,
+        templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, submission: { id: 1, buildFailed: false } }] },
+        maxScore: 100,
+        gradingInstructions: 'Grading Instructions',
+        course: <Course>{ instructorGroupName: 'instructorGroup' },
+    } as unknown) as ProgrammingExercise;
     // const automaticResult: Result = { feedbacks: [new Feedback()], assessmentType: AssessmentType.AUTOMATIC, id: 1, resultString: '1 of 13 passed' };
     const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
     participation.results = [result];
@@ -103,6 +119,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     afterComplaintResult.score = 100;
 
     const route = ({ params: of({ participationId: 1 }), queryParamMap: of(convertToParamMap({ testRun: false })) } as any) as ActivatedRoute;
+
+    const fileContent = 'This is the content of a file';
+    const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -140,6 +159,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 programmingSubmissionService = debugElement.injector.get(ProgrammingSubmissionService);
                 complaintService = debugElement.injector.get(ComplaintService);
                 accountService = debugElement.injector.get(AccountService);
+                programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
+                repositoryFileService = debugElement.injector.get(CodeEditorRepositoryFileService);
 
                 updateAfterComplaintStub = stub(programmingAssessmentManualResultService, 'updateAfterComplaint').returns(of(afterComplaintResult));
                 getStudentParticipationWithResultsStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithLatestManualResult').returns(
@@ -150,6 +171,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 getProgrammingSubmissionForExerciseWithoutAssessmentStub = stub(programmingSubmissionService, 'getProgrammingSubmissionForExerciseWithoutAssessment').returns(
                     of(unassessedSubmission),
                 );
+
+                findWithParticipationsStub = stub(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
+                findWithParticipationsStub.returns(of({ body: exercise }));
             });
     });
 
@@ -256,10 +280,62 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.nextSubmission();
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
     }));
+
     it('should create the correct repository url', fakeAsync(() => {
         comp.ngOnInit();
         tick(100);
         expect(comp.adjustedRepositoryURL).to.be.equal('http://bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git');
+        flush();
+    }));
+
+    it('should highlight lines that were changed', fakeAsync(() => {
+        // Stub
+        const getFilesWithContentStub = stub(repositoryFileService, 'getFilesWithContent');
+        getFilesWithContentStub.returns(of(templateFileSessionReturn));
+        // Stub for ace editor
+        const getFileStub = stub(repositoryFileService, 'getFile');
+        getFileStub.returns(of({ fileContent: 'new file text' }));
+
+        // Data for file browser
+        const treeItems = [
+            new TreeviewItem({
+                internalDisabled: false,
+                internalChecked: false,
+                internalCollapsed: false,
+                text: 'folder/file1',
+                value: 'file1',
+            } as any),
+        ];
+
+        const repositoryFiles = {
+            folder: FileType.FOLDER,
+            'folder/file1': FileType.FILE,
+        };
+
+        // Initialize component and children
+        fixture.detectChanges();
+        // wait until data is loaded from CodeEditorTutorAssessmentContainer
+        tick(100);
+        fixture.detectChanges();
+
+        // Setup tree for file browser
+        const codeEditorFileBrowserComp = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
+        codeEditorFileBrowserComp.filesTreeViewItem = treeItems;
+        codeEditorFileBrowserComp.repositoryFiles = repositoryFiles;
+        codeEditorFileBrowserComp.selectedFile = 'folder/file1';
+        fixture.detectChanges();
+        codeEditorFileBrowserComp.isLoadingFiles = false;
+        fixture.detectChanges();
+        const filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
+        expect(filesInTreeHtml).to.have.lengthOf(1);
+
+        const codeEditorAceComp = fixture.debugElement.query(By.directive(CodeEditorAceComponent)).componentInstance;
+        codeEditorAceComp.isLoading = false;
+        fixture.detectChanges();
+
+        expect(codeEditorAceComp.markerIds).to.have.lengthOf(1);
+
+        fixture.destroy();
         flush();
     }));
 

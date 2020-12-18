@@ -25,16 +25,19 @@ public class LearningGoal extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "course_id")
+    @JsonIgnoreProperties("learningGoals")
     private Course course;
 
     @ManyToMany
     @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"))
     @JsonIgnoreProperties("learningGoals")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Exercise> exercises = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "learning_goal_lecture_unit", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "lecture_unit_id", referencedColumnName = "id"))
     @JsonIgnoreProperties("learningGoals")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<LectureUnit> lectureUnits = new HashSet<>();
 
     public String getTitle() {

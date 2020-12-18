@@ -111,24 +111,24 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String bambooRepoName, String bitbucketRepoName, List<String> triggeredBy)
+    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy)
             throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var buildPlanKey = (projectKey + "-" + planName).toUpperCase();
 
         final var bambooRepositoryAssignment = new BambooRepositoryDTO(296200357L, ASSIGNMENT_REPO_NAME);
         final var bambooRepositoryTests = new BambooRepositoryDTO(296200356L, TEST_REPO_NAME);
-        final var bitbucketRepository = new BitbucketRepositoryDTO("id", bitbucketRepoName, projectKey, "ssh:cloneUrl");
+        final var bitbucketRepository = new BitbucketRepositoryDTO("id", repoNameInVcs, projectKey, "ssh:cloneUrl");
 
         bambooRequestMockProvider.mockGetBuildPlanRepositoryList(buildPlanKey);
 
-        bitbucketRequestMockProvider.mockGetBitbucketRepository(exercise, bitbucketRepoName, bitbucketRepository);
+        bitbucketRequestMockProvider.mockGetBitbucketRepository(exercise, repoNameInVcs, bitbucketRepository);
 
         var applicationLinksToBeReturned = bambooRequestMockProvider.createApplicationLink();
         var applicationLink = applicationLinksToBeReturned.getApplicationLinks().get(0);
         bambooRequestMockProvider.mockGetApplicationLinks(applicationLinksToBeReturned);
 
-        if (ASSIGNMENT_REPO_NAME.equals(bambooRepoName)) {
+        if (ASSIGNMENT_REPO_NAME.equals(repoNameInCI)) {
             bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAssignment, bitbucketRepository, applicationLink);
         }
         else {

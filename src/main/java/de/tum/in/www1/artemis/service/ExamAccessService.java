@@ -139,6 +139,23 @@ public class ExamAccessService {
      * belongs to the given course.
      *
      * @param courseId  The id of the course
+     * @param exam    The exam
+     * @param <X>       The type of the return type of the requesting route so that the response can be returned there
+     * @return an optional with a typed ResponseEntity. If it is empty all checks passed
+     */
+    public <X> Optional<ResponseEntity<X>> checkCourseAndExamAccessForInstructor(Long courseId, Exam exam) {
+        Optional<ResponseEntity<X>> courseAccessFailure = checkCourseAccessForInstructor(courseId);
+        if (courseAccessFailure.isPresent()) {
+            return courseAccessFailure;
+        }
+        return checkCourseAndExamAccess(courseId, exam);
+    }
+
+    /**
+     * Checks if the current user is allowed to manage exams of the given course, that the exam exists and that the exam
+     * belongs to the given course.
+     *
+     * @param courseId  The id of the course
      * @param examId    The id of the exam
      * @param <X>       The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
@@ -157,6 +174,13 @@ public class ExamAccessService {
             return Optional.of(notFound());
         }
         if (!exam.get().getCourse().getId().equals(courseId)) {
+            return Optional.of(conflict());
+        }
+        return Optional.empty();
+    }
+
+    private <X> Optional<ResponseEntity<X>> checkCourseAndExamAccess(Long courseId, Exam exam) {
+        if (!exam.getCourse().getId().equals(courseId)) {
             return Optional.of(conflict());
         }
         return Optional.empty();
