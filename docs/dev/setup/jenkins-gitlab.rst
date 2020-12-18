@@ -657,16 +657,42 @@ the following steps:
            continuous-integration:
                secret-push-token: $some-long-encrytped-value
 
-12. In a local setup, you might want to disable CSRF by going to:
-    “Manage Jenkins” - “Configure Global Security” and uncheck “Prevent
-    Cross Site Request Forgery exploits”. Also disable the option
-    ``use-crumb`` in ``application-jenkins.yml``.
+12. In a local setup, you have to disable CSRF otherwise some API endpoints will return HTTP Status 403 Forbidden. 
+    This is done by creating a groovy script inside the ``jenkins`` docker container at ``jenkins_home/init.groovy``
+    with the following contents:
 
-    TODO: this seems to be outdated: Only ``Enable proxy compatibility`` is available
+    .. code:: groovy
 
-    Depending on the version this setting might not be available anymore.
-    Have a look `here <https://unix.stackexchange.com/questions/444177/how-to-disable-the-csrf-protection-in-jenkins-by-default>`__ on how you can disable CSRF protection.
+        import jenkins.model.Jenkins
+        def instance = Jenkins.instance
+        instance.setCrumbIssuer(null)
 
+    In order to save the script, first create a file called ``jenkins-disable-csrf.groovy`` with the groovy code from above.
+
+    Then create a `init.groovy` file in your Jenkins container:
+
+    ::
+      
+      docker exec jenkins /bin/bash -c "cd /var/jenkins_home; touch init.groovy"
+
+    Now we need to pipe the script into the container:
+
+    ::
+
+      docker exec -i jenkins dd of=/var/jenkins_home/init.groovy < jenkins-disable-csrf.groovy 
+
+    To make sure that the commands worked as intended, the following command should output the script from above:
+
+    ::
+
+      docker exec jenkins cat /var/jenkins_home/init.groovy
+
+    The last step is to disable the ``use-crumb`` option in ``application-jenkins.yml``:
+
+    .. code:: yaml
+
+       jenkins::
+           use-crumb: false
 
 Build agents
 ^^^^^^^^^^^^
