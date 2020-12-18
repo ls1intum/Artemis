@@ -13,7 +13,7 @@ pipeline {
         stages {
             stage('Checkout') {
                 steps {
-                    dir('#testCheckoutPath') {
+                    dir('#testsCheckoutPath') {
                         checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'tests', url: '#testRepository']]])
                     }
                     dir('#assignmentCheckoutPath') {
