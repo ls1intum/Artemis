@@ -12,7 +12,13 @@
         "active_users": "Active users",
         "logged_in_users": "Logged in users",
         "released_exercises": "Released exercises",
-        "exercises_due": "Exercises due"
+        "exercises_due": "Exercises due",
+        "conducted_exams": "Conducted exams",
+        "exam_participations": "Exam participations",
+        "exam_registrations": "Exam registrations",
+        "active_tutors": "Active tutors",
+        "created_results": "Created results",
+        "created_feedbacks": "Created Feedbacks"
     },
     "weekdays": {
         "monday": "Monday",

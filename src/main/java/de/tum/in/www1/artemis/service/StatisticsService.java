@@ -105,6 +105,25 @@ public class StatisticsService {
             case EXERCISES_DUE -> {
                 return this.statisticsRepository.getExercisesDue(startDate, endDate);
             }
+            case CONDUCTED_EXAMS -> {
+                return this.statisticsRepository.getConductedExams(startDate, endDate);
+            }
+            case EXAM_PARTICIPATIONS -> {
+                return this.statisticsRepository.getExamParticipations(startDate, endDate);
+            }
+            case EXAM_REGISTRATIONS -> {
+                return this.statisticsRepository.getExamRegistrations(startDate, endDate);
+            }
+            case ACTIVE_TUTORS -> {
+                List<Map<String, Object>> result = this.statisticsRepository.getActiveTutors(startDate, endDate);
+                return convertMapList(span, result, startDate, graphType);
+            }
+            case CREATED_RESULTS -> {
+                return this.statisticsRepository.getCreatedResults(startDate, endDate);
+            }
+            case CREATED_FEEDBACKS -> {
+                return this.statisticsRepository.getResultFeedbacks(startDate, endDate);
+            }
             default -> {
                 return new ArrayList<>();
             }

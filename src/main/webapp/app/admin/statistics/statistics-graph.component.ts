@@ -62,6 +62,15 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
 
     private initializeChart(): void {
         this.createLabels();
+        this.chartData = [
+            {
+                label: this.amountOfStudents,
+                data: new Array(this.barChartLabels.length).fill(0),
+                backgroundColor: 'rgba(53,61,71,1)',
+                borderColor: 'rgba(53,61,71,1)',
+                hoverBackgroundColor: 'rgba(53,61,71,1)',
+            },
+        ];
         this.createCharts();
         this.service.getChartData(this.currentSpan, this.currentPeriod, this.graphType).subscribe((res: number[]) => {
             this.dataForSpanType = res;
