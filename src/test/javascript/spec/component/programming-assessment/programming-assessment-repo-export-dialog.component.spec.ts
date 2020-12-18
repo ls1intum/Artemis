@@ -77,10 +77,10 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         expect(comp.exerciseId).to.be.equal(42);
     });
 
-    it('Exercise service should find the correct programming exercise', fakeAsync(() => {
+    it('Exercise service should find the correct programming exercise', () => {
         fixture.detectChanges();
         expect(comp.exercise).to.be.equal(programmingExercise);
-    }));
+    });
 
     it('Export a repo by participations should download a zipped file', fakeAsync(() => {
         const httpResponse = createBlobHttpResponse();
