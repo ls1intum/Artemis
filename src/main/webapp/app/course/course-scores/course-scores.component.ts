@@ -139,8 +139,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.maxNumberOfPointsPerExerciseType.set(exerciseType, sum(maxPointsPerExercise));
         }
         this.maxNumberOfOverallPoints = 0;
-        for (const [_, maxPointsPerExerciseType] of this.maxNumberOfPointsPerExerciseType) {
-            this.maxNumberOfOverallPoints += maxPointsPerExerciseType;
+        for (const maxNumberOfPointsPerExerciseTypeElement of this.maxNumberOfPointsPerExerciseType) {
+            this.maxNumberOfOverallPoints += maxNumberOfPointsPerExerciseTypeElement[1];
         }
     }
 
