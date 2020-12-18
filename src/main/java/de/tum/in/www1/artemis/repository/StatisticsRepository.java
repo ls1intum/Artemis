@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -42,4 +43,21 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             order by e.releaseDate asc
             """)
     List<Map<String, Object>> getReleasedExercises(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+
+    @Query("""
+            select e.dueDate as day, count(e.id) as amount
+            from Exercise e
+            where e.dueDate >= :#{#startDate} and e.dueDate <= :#{#endDate}
+            group by e.dueDate
+            order by e.dueDate asc
+            """)
+    List<Map<String, Object>> getExercisesDue(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+
+    @Query("""
+            select p.auditEventDate as day, u.login as username
+            from User u, PersistentAuditEvent p
+            where u.login = p.principal and p.auditEventType = 'AUTHENTICATION_SUCCESS' and u.login not like '%test%' and p.auditEventDate >= :#{#startDate} and p.auditEventDate <= :#{#endDate}
+            order by p.auditEventDate asc
+            """)
+    List<Map<String, Object>> getLoggedInUsers(@Param("startDate") Instant startDate, @Param("endDate") Instant endDate);
 }

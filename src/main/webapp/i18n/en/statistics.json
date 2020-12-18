@@ -10,7 +10,9 @@
         "title": "User statistics",
         "submissions": "Submissions",
         "active_users": "Active users",
-        "released_exercises": "Released exercises"
+        "logged_in_users": "Logged in users",
+        "released_exercises": "Released exercises",
+        "exercises_due": "Exercises due"
     },
     "weekdays": {
         "monday": "Monday",

@@ -10,7 +10,9 @@
         "title": "Benutzer Statistiken",
         "submissions": "Abgaben",
         "active_users": "Aktive Nutzer",
-        "released_exercises": "Veröffentlichte Aufgaben"
+        "logged_in_users": "Eingeloggte Nutzer",
+        "released_exercises": "Veröffentlichte Aufgaben",
+        "exercises_due": "Aufgaben mit Abgabeende"
     },
     "weekdays": {
         "monday": "Montag",
