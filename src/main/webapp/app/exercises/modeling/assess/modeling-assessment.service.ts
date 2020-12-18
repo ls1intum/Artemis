@@ -18,15 +18,15 @@ export class ModelingAssessmentService {
 
     constructor(private http: HttpClient) {}
 
-    saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false): Observable<Result | null> {
+    saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false): Observable<Result> {
         const params = new HttpParams();
         if (submit) {
-            params.set('submit', Boolean(true).toString());
+            params.set('submit', 'true');
         }
         const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment`;
         return this.http
             .put<Result>(url, feedbacks, { params, observe: 'response' })
-            .map((res) => (res.body ? this.convertResult(res.body) : res.body));
+            .map((res: EntityResponseType) => this.convertResult(res.body!));
     }
 
     saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<Result> {

@@ -20,7 +20,7 @@ export class FileUploadAssessmentsService {
     saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false): Observable<EntityResponseType> {
         const params = new HttpParams();
         if (submit) {
-            params.set('submit', Boolean(true).toString());
+            params.set('submit', 'true');
         }
         const url = `${this.resourceUrl}/file-upload-submissions/${submissionId}/feedback`;
         return this.http.put<Result>(url, feedbacks, { params, observe: 'response' });

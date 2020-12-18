@@ -22,7 +22,7 @@ export class ProgrammingAssessmentManualResultService {
     save(participationId: number, result: Result, submit = false): Observable<EntityResponseType> {
         const params = new HttpParams();
         if (submit) {
-            params.set('submit', Boolean(true).toString());
+            params.set('submit', 'true');
         }
 
         const url = `${this.resourceUrl}/participations/${participationId}/manual-results`;
