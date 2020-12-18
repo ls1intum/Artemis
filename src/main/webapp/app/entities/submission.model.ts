@@ -29,15 +29,18 @@ export abstract class Submission implements BaseEntity {
     public submissionExerciseType?: SubmissionExerciseType;
     public durationInMinutes?: number;
 
+    // results is initialized by the value the server returns
     public results?: Result[];
 
     public participation?: Participation;
 
+    // Helper Attributes
+
+    // latestResult is undefined until submission.setLatestResult() is called
+    public latestResult?: Result | undefined;
+
     // only used for exam to check if it is saved to server
     public isSynced?: boolean;
-
-    // Helper Attributes
-    public latestResult?: Result;
 
     protected constructor(submissionExerciseType: SubmissionExerciseType) {
         this.submissionExerciseType = submissionExerciseType;
@@ -50,7 +53,7 @@ export abstract class Submission implements BaseEntity {
  *
  * @param submission
  */
-function getLatestSubmissionResult(submission: Submission | undefined): Result | undefined {
+export function getLatestSubmissionResult(submission: Submission | undefined): Result | undefined {
     if (submission?.results) {
         const length = submission.results.length;
         if (length > 0) {

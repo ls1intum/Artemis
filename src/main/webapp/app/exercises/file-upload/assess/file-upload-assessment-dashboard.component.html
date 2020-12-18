@@ -63,12 +63,12 @@
                         {{ submission.participation.participantName }}
                     </td>
                     <td>
-                        <span *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }}</span>
+                        <span *ngIf="submission.latestResult && submission.latestResult?.assessor">{{ submission.latestResult!.assessor!.name }}</span>
                     </td>
                     <td>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
                             <button
-                                *ngIf="submission && !submission.latestResult! && exercise.course"
+                                *ngIf="submission && !submission.latestResult && exercise.course"
                                 [routerLink]="['/course-management', exercise.course?.id, 'file-upload-exercises', exercise.id, 'submissions', submission.id, 'assessment']"
                                 [disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm mb-1"
@@ -120,7 +120,7 @@
                         </span>
                         <span *ngIf="exercise.isAtLeastInstructor">
                             <button
-                                *ngIf="submission && submission.latestResult && !submission.latestResult!.completionDate"
+                                *ngIf="submission && submission.latestResult && !submission.latestResult?.completionDate"
                                 (click)="cancelAssessment(submission)"
                                 [disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm mb-1"

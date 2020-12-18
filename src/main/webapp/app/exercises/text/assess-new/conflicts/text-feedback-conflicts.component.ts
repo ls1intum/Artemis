@@ -18,7 +18,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 
 import interact from 'interactjs';
 import * as moment from 'moment';
-import { getLatestSubmissionResult, refreshLatestResult, Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestResult, Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-text-feedback-conflicts',
@@ -69,7 +69,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         this.rightTextBlockRefs = [];
         this.rightUnusedTextBlockRefs = [];
         this.feedbackConflicts = [];
-        refreshLatestResult([this.leftSubmission]);
+        setLatestResult([this.leftSubmission]);
     }
 
     /**
@@ -107,7 +107,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
             const submissionId = Number(this.activatedRoute.snapshot.paramMap.get('submissionId'));
             const participation = await this.assessmentsService.getFeedbackDataForExerciseSubmission(submissionId).toPromise();
             this.leftSubmission = participation.submissions![0];
-            refreshLatestResult([this.leftSubmission]);
+            setLatestResult([this.leftSubmission]);
             this.exercise = participation.exercise as TextExercise;
         }
         this.activatedRoute.data.subscribe(({ conflictingTextSubmissions }) => this.setPropertiesFromServerResponse(conflictingTextSubmissions));
@@ -120,12 +120,12 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
 
         this.conflictingSubmissions = conflictingTextSubmissions;
         this.prepareTextBlocksAndFeedbackFor(this.leftSubmission!, this.leftTextBlockRefs, this.leftUnusedTextBlockRefs);
-        refreshLatestResult(conflictingTextSubmissions);
-        refreshLatestResult([this.leftSubmission!]);
+        setLatestResult(conflictingTextSubmissions);
+        setLatestResult([this.leftSubmission!]);
         this.leftTotalScore = this.computeTotalScore(this.leftSubmission!.latestResult!.feedbacks!);
         this.setConflictingSubmission(0);
-        refreshLatestResult(conflictingTextSubmissions);
-        refreshLatestResult([this.leftSubmission!]);
+        setLatestResult(conflictingTextSubmissions);
+        setLatestResult([this.leftSubmission!]);
     }
 
     private setConflictingSubmission(index: number) {
@@ -206,7 +206,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
      * override button is enabled.
      */
     leftTextBlockRefsChange(): void {
-        this.leftTotalScore = this.computeTotalScore(this.leftSubmission!.latestResult!.feedbacks!);
+        this.leftTotalScore = this.computeTotalScore(this.leftSubmission!.latestResult?.feedbacks!);
         this.isOverrideDisabled = false;
     }
 
