@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { AccountService } from 'app/core/auth/account.service';
-import { sum, flatten, maxBy } from 'lodash';
+import { flatten, maxBy, sum } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
 import { isOrion } from 'app/shared/orion/orion';
@@ -148,7 +148,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
      */
     private needsWork(exercise: Exercise): boolean {
         const latestResult = maxBy(flatten(exercise.studentParticipations?.map((participation) => participation.results)), 'completionDate');
-        return !latestResult || latestResult.score !== 100;
+        return !latestResult || !latestResult.score || latestResult.score < 100;
     }
 
     /**

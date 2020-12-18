@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -66,6 +67,29 @@ public class RepositoryService {
         }
 
         return fileList;
+    }
+
+    /**
+     * Get all files/folders with content from repository.
+     *
+     * @param repository in which the requested files are located
+     * @return Files with code or an exception is thrown
+     * @throws IOException if a file cannot be found, is corrupt, etc.
+     */
+    public Map<String, String> getFilesWithContent(Repository repository) {
+        var files = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+        Map<String, String> fileListWithContent = new HashMap<>();
+
+        files.forEach(file -> {
+            try {
+                fileListWithContent.put(file.toString(), FileUtils.readFileToString(file, StandardCharsets.UTF_8));
+            }
+            catch (IOException e) {
+                log.error("Content of file: " + file.toString() + " could not be loaded and throws the following error: " + e.getMessage());
+            }
+        });
+        return fileListWithContent;
     }
 
     /**

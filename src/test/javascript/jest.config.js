@@ -15,10 +15,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should be increase to 80%
-            statements: 69,
+            statements: 70,
             branches: 45,
             functions: 53,
-            lines: 68,
+            lines: 69,
         },
     },
     preset: 'jest-preset-angular',
@@ -26,6 +26,7 @@ module.exports = {
     modulePaths: ['<rootDir>/src/main/webapp/'],
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
     rootDir: '../../../',
+    modulePathIgnorePatterns: [],
     testMatch: [
         '<rootDir>/src/test/javascript/spec/component/**/*.ts',
         '<rootDir>/src/test/javascript/spec/directive/**/*.ts',
