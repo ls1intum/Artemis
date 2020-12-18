@@ -44,6 +44,7 @@
         (onFileContentChange)="onFileContentChange($event)"
         (onUpdateFeedback)="updateFeedback($event)"
         (onError)="onError($event)"
+        (onFileLoad)="fileLoad($event)"
     >
     </jhi-code-editor-ace>
     <jhi-code-editor-instructions *ngIf="showEditorInstructions" editorSidebarRight (onToggleCollapse)="onToggleCollapse($event)" (onError)="onError($event)">
