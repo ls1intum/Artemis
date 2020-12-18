@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
-import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
@@ -26,6 +25,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.service.TextSubmissionExportService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 @Service
 public class TextPlagiarismDetectionService {
@@ -107,18 +107,22 @@ public class TextPlagiarismDetectionService {
      * @throws ExitException is thrown if JPlag exits unexpectedly
      */
     public TextPlagiarismResult checkPlagiarism(TextExercise textExercise) throws ExitException {
+        long start = System.nanoTime();
         // TODO: offer the following options in the client
         // 1) filter empty submissions, i.e. repositories with no student commits
         // 2) filter submissions with a result score of 0%
 
+        // TODO: why do we have such a strange folder name?
         final var submissionsFolderName = "./tmp/submissions";
         final var submissionFolderFile = new File(submissionsFolderName);
         submissionFolderFile.mkdirs();
 
         final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise);
+        final var submissionsSize = textSubmissions.size();
+        log.info("Save text submissions for JPlag text comparison with " + submissionsSize + " submissions");
 
         textSubmissions.forEach(submission -> {
-            submission.setResults(new ArrayList<Result>());
+            submission.setResults(new ArrayList<>());
 
             StudentParticipation participation = (StudentParticipation) submission.getParticipation();
             participation.setExercise(null);
@@ -134,21 +138,28 @@ public class TextPlagiarismDetectionService {
             }
         });
 
+        log.info("Saving text submissions done");
+
         JPlagOptions options = new JPlagOptions(submissionsFolderName, LanguageOption.TEXT);
 
         // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
-        // therefore we limit the results to at least 30% or 0.3 similarity, the passed threshold is between 0 and 100%
-        options.setSimilarityThreshold(30f);
+        // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
+        options.setSimilarityThreshold(50f);
 
+        log.info("Start JPlag Text comparison");
         JPlag jplag = new JPlag(options);
         JPlagResult jPlagResult = jplag.run();
+        log.info("JPlag Text comparison finished with " + jPlagResult.getComparisons().size() + " comparisons");
 
+        log.info("Delete submission folder");
         if (submissionFolderFile.exists()) {
             FileSystemUtils.deleteRecursively(submissionFolderFile);
         }
 
         TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(jPlagResult);
         textPlagiarismResult.setExerciseId(textExercise.getId());
+
+        log.info("JPlag text comparison for " + submissionsSize + " submissions done in " + TimeLogUtil.formatDurationFrom(start));
 
         return textPlagiarismResult;
     }
