@@ -1,168 +1,163 @@
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslatePipe } from '@ngx-translate/core';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { AccountService } from 'app/core/auth/account.service';
+import { TeamComponent } from 'app/exercises/shared/team/team.component';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Exercise } from 'app/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
+import { RouterTestingModule } from '@angular/router/testing';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-participation-table/team-participation-table.component';
-import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
-import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-button.component';
-import { TeamComponent } from 'app/exercises/shared/team/team.component.ts';
+import { of } from 'rxjs';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import * as sinon from 'sinon';
+import { Team } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { AlertComponent } from 'app/shared/alert/alert.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe.ts';
 import * as chai from 'chai';
-import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of, throwError } from 'rxjs';
-import { restore, SinonStub, spy, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { mockExercise, mockTeam, mockTeams, TeamRequestInterceptorMock } from '../../helpers/mocks/service/mock-team.service';
-import { ArtemisTestModule } from '../../test.module';
+import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-button.component';
+import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-dialog.component';
+import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
+import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-export-button.component';
+import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
+import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
+import { TeamStudentSearchComponent } from 'app/exercises/shared/team/team-student-search/team-student-search.component';
+import { TeamOwnerSearchComponent } from 'app/exercises/shared/team/team-owner-search/team-owner-search.component';
+import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exercise-search/team-exercise-search.component';
+import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-students-list/team-students-list.component';
+import { TeamStudentsOnlineListComponent } from 'app/exercises/shared/team/team-students-online-list/team-students-online-list.component';
+import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-participate-info-box/team-participate-info-box.component';
+import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-participation-table/team-participation-table.component';
+import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
+import { TranslatePipe } from '@ngx-translate/core';
+import { JhiTranslateDirective } from 'ng-jhipster';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { ActivatedRoute, Params } from '@angular/router';
+import * as moment from 'moment';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('TeamComponent', () => {
-    let comp: TeamComponent;
-    let fixture: ComponentFixture<TeamComponent>;
-    let router: Router;
-    const user = new User(99, 'newUser', 'UserFirstName', 'UserLastName');
-    let accountService: AccountService;
-    let identityStub: SinonStub;
-    let exerciseService: ExerciseService;
-    let teamService: TeamService;
-    let alertService: JhiAlertService;
+    let teamComponentFixture: ComponentFixture<TeamComponent>;
+    let component: TeamComponent;
+    let user: User;
+    let exercise: Exercise;
+
+    let team: Team;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                MockModule(NgbModule),
-                MockModule(NgJhipsterModule),
-                MockModule(FeatureToggleModule),
-                MockModule(NgxDatatableModule),
-                MockModule(RouterModule),
-            ],
+        user = new User();
+        user.id = 1234;
+
+        team = new Team();
+        team.id = 1;
+        team.createdDate = moment();
+
+        exercise = {
+            id: 20,
+            isAtLeastInstructor: true,
+            isAtLeastTutor: true,
+            teams: [team],
+        } as Exercise;
+
+        return TestBed.configureTestingModule({
+            imports: [RouterTestingModule.withRoutes([]), ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule, ArtemisSharedComponentModule, ArtemisResultModule],
             declarations: [
                 TeamComponent,
-                MockComponent(TeamUpdateButtonComponent),
-                MockComponent(TeamDeleteButtonComponent),
+                TeamUpdateButtonComponent,
+                TeamUpdateDialogComponent,
+                TeamsImportButtonComponent,
+                TeamsExportButtonComponent,
+                TeamsImportDialogComponent,
+                TeamDeleteButtonComponent,
+                TeamStudentSearchComponent,
+                TeamOwnerSearchComponent,
+                TeamExerciseSearchComponent,
+                TeamStudentsListComponent,
+                TeamStudentsOnlineListComponent,
+                TeamParticipateInfoBoxComponent,
+                TeamParticipationTableComponent,
+                TeamsImportFromFileFormComponent,
                 MockPipe(TranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockComponent(TeamParticipationTableComponent),
-                MockComponent(DataTableComponent),
-                MockComponent(AlertComponent),
             ],
             providers: [
+                MockProvider(ExerciseService, {
+                    find: () => {
+                        return of(
+                            new HttpResponse({
+                                body: exercise,
+                                status: 200,
+                            }),
+                        );
+                    },
+                }),
+                MockProvider(TeamService, {
+                    find: () => {
+                        return of(
+                            new HttpResponse({
+                                body: team,
+                                status: 200,
+                            }),
+                        );
+                    },
+                }),
+                MockProvider(AccountService, {
+                    identity: () => Promise.resolve(user),
+                }),
                 MockProvider(SessionStorageService),
-                MockProvider(LocalStorageService),
-                MockProvider(AccountService),
-                TeamService,
-                ExerciseService,
+                MockDirective(JhiTranslateDirective),
+                MockProvider(HttpClient),
+                { provide: TranslateService, useClass: MockTranslateService },
                 {
-                    provide: HTTP_INTERCEPTORS,
-                    useClass: TeamRequestInterceptorMock,
-                    multi: true,
+                    provide: LocalStorageService,
+                    useClass: MockLocalStorageService,
                 },
-                MockProvider(Router),
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        params: of({ teamId: mockTeam.id, exerciseId: mockExercise.id }),
+                        params: {
+                            subscribe: (fn: (value: Params) => void) =>
+                                fn({
+                                    exerciseId: 20,
+                                    teamId: 1,
+                                }),
+                        },
                     },
                 },
             ],
         })
             .compileComponents()
             .then(() => {
-                accountService = TestBed.inject(AccountService);
-                identityStub = stub(accountService, 'identity').returns(Promise.resolve(user));
-                stub(accountService, 'isAtLeastTutorInCourse').returns(true);
-                stub(accountService, 'isAtLeastInstructorInCourse').returns(true);
-                fixture = TestBed.createComponent(TeamComponent);
-                comp = fixture.componentInstance;
-                alertService = TestBed.inject(JhiAlertService);
-                router = TestBed.inject(Router);
-                teamService = TestBed.inject(TeamService);
-                exerciseService = TestBed.inject(ExerciseService);
+                teamComponentFixture = TestBed.createComponent(TeamComponent);
+                component = teamComponentFixture.componentInstance;
             });
     });
 
     afterEach(() => {
-        restore();
+        sinon.restore();
     });
 
-    describe('ngOnInit', () => {
-        let alertServiceStub: SinonStub;
+    it('should initialize', () => {
+        const exerciseService = TestBed.inject(ExerciseService);
+        const teamService = TestBed.inject(TeamService);
 
-        afterEach(() => {
-            restore();
-        });
+        const exerciseServiceSpy = sinon.spy(exerciseService, 'find');
+        const teamServiceSpy = sinon.spy(teamService, 'find');
+        teamComponentFixture.detectChanges();
 
-        it('should set team and exercise from services', () => {
-            comp.ngOnInit();
-            expect(comp.exercise).to.deep.equal(mockExercise);
-            expect(comp.team).to.deep.equal(mockTeam);
-            expect(comp.exercise.isAtLeastTutor).equal(true);
-            expect(comp.exercise.isAtLeastInstructor).equal(true);
-            expect(comp.isTeamOwner).to.equal(false);
-        });
-
-        it('should call alert service error when exercise service fails', () => {
-            const exerciseStub = stub(exerciseService, 'find').returns(throwError({ status: 404 }));
-            alertServiceStub = stub(alertService, 'error');
-            waitForAsync(() => {
-                comp.ngOnInit();
-                expect(exerciseStub).to.have.been.called;
-                expect(alertServiceStub).to.have.been.called;
-                expect(comp.isLoading).to.equal(false);
-            });
-        });
-
-        it('should call alert service error when team service fails', () => {
-            const teamStub = stub(teamService, 'find').returns(throwError({ status: 404 }));
-            alertServiceStub = stub(alertService, 'error');
-            waitForAsync(() => {
-                comp.ngOnInit();
-                expect(teamStub).to.have.been.called;
-                expect(alertServiceStub).to.have.been.called;
-                expect(comp.isLoading).to.equal(false);
-            });
-        });
+        expect(teamComponentFixture).to.be.ok;
+        expect(exerciseServiceSpy).to.be.calledOnce;
+        expect(teamServiceSpy).to.be.calledOnce;
     });
 
-    describe('ngOnInit with team owner', () => {
-        it('should set team owner true if user is team owner', () => {
-            waitForAsync(() => {
-                identityStub.returns(Promise.resolve({ ...user, id: 1 }));
-                fixture = TestBed.createComponent(TeamComponent);
-                comp = fixture.componentInstance;
-                comp.ngOnInit();
-                expect(comp.isTeamOwner).to.equal(true);
-            });
-        });
-    });
-
-    describe('onTeamUpdate', () => {
-        it('should update team to given team', () => {
-            comp.onTeamUpdate(mockTeams[1]);
-            expect(comp.team).to.deep.equal(mockTeams[1]);
-        });
-    });
-
-    describe('onTeamDelete', () => {
-        it('should go to teams overview on delete', () => {
-            comp.ngOnInit();
-            const routerSpy = spy(router, 'navigate');
-            comp.onTeamDelete();
-            expect(routerSpy).to.have.been.calledOnceWithExactly(['/course-management', mockExercise.course?.id, 'exercises', mockExercise.id, 'teams']);
-        });
+    it('onTeamUpdate', () => {
+        expect(component.onTeamUpdate(team)).to.equal(team);
     });
 });
