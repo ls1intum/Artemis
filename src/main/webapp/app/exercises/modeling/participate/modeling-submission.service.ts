@@ -7,6 +7,7 @@ import { map } from 'rxjs/operators';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { stringifyCircular } from 'app/shared/util/utils';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
@@ -108,7 +109,9 @@ export class ModelingSubmissionService {
      * Convert a returned JSON object to ModelingSubmission.
      */
     private static convertItemFromServer(modelingSubmission: ModelingSubmission): ModelingSubmission {
-        return Object.assign({}, modelingSubmission);
+        const convertedModelingSubmission = Object.assign({}, modelingSubmission);
+        convertedModelingSubmission.latestResult = getLatestSubmissionResult(convertedModelingSubmission);
+        return convertedModelingSubmission;
     }
 
     /**

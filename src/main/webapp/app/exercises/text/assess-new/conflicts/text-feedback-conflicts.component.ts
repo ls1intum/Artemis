@@ -18,7 +18,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 
 import interact from 'interactjs';
 import * as moment from 'moment';
-import { getLatestSubmissionResult, setLatestResult, Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-text-feedback-conflicts',
@@ -69,7 +69,6 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         this.rightTextBlockRefs = [];
         this.rightUnusedTextBlockRefs = [];
         this.feedbackConflicts = [];
-        setLatestResult([this.leftSubmission]);
     }
 
     /**
@@ -107,7 +106,6 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
             const submissionId = Number(this.activatedRoute.snapshot.paramMap.get('submissionId'));
             const participation = await this.assessmentsService.getFeedbackDataForExerciseSubmission(submissionId).toPromise();
             this.leftSubmission = participation.submissions![0];
-            setLatestResult([this.leftSubmission]);
             this.exercise = participation.exercise as TextExercise;
         }
         this.activatedRoute.data.subscribe(({ conflictingTextSubmissions }) => this.setPropertiesFromServerResponse(conflictingTextSubmissions));
@@ -120,7 +118,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
 
         this.conflictingSubmissions = conflictingTextSubmissions;
         this.prepareTextBlocksAndFeedbackFor(this.leftSubmission!, this.leftTextBlockRefs, this.leftUnusedTextBlockRefs);
-        setLatestResult(conflictingTextSubmissions);
+        //      setLatestResult(conflictingTextSubmissions);
         this.leftTotalScore = this.computeTotalScore(this.leftSubmission!.latestResult?.feedbacks!);
         this.setConflictingSubmission(0);
     }

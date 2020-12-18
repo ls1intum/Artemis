@@ -87,7 +87,9 @@ export class TextSubmissionService {
      * Convert a returned JSON object to TextSubmission.
      */
     private static convertItemFromServer(textSubmission: TextSubmission): TextSubmission {
-        return Object.assign({}, textSubmission);
+        const convertedTextSubmission = Object.assign({}, textSubmission);
+        convertedTextSubmission.latestResult = getLatestSubmissionResult(convertedTextSubmission);
+        return convertedTextSubmission;
     }
 
     /**

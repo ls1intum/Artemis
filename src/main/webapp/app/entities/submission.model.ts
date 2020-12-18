@@ -92,10 +92,3 @@ export function getFirstResult(submission: Submission | undefined): Result | und
         }
     }
 }
-
-export function setLatestResult(submissions: Submission[]) {
-    console.log('ran setLatestResult');
-    submissions.forEach((submission) => {
-        submission.latestResult = getLatestSubmissionResult(submission);
-    });
-}
