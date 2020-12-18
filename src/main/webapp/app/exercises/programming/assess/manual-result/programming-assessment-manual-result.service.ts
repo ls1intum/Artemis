@@ -19,7 +19,8 @@ export class ProgrammingAssessmentManualResultService {
      * @param {Result} result - The result to be created and sent to the server
      * @param {submit} submit - Indicates whether submit or save is called
      */
-    save(participationId: number, result: Result, submit = false): Observable<EntityResponseType> {
+    // TODO: make consistent with other *.assessment.service.ts file
+    saveAssessment(participationId: number, result: Result, submit = false): Observable<EntityResponseType> {
         const params = new HttpParams();
         if (submit) {
             params.set('submit', 'true');
