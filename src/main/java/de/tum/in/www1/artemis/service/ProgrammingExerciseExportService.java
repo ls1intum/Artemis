@@ -192,6 +192,10 @@ public class ProgrammingExerciseExportService {
         JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
         options.setBaseCodeSubmissionName(templateRepoName);
 
+        // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
+        // therefore we limit the results to at least 30% or 0.3 similarity, the passed threshold is between 0 and 100%
+        options.setSimilarityThreshold(30f);
+
         JPlag jplag = new JPlag(options);
         JPlagResult result = jplag.run();
 
