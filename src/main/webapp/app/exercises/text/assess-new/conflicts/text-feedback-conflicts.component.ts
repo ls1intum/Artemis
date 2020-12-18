@@ -122,7 +122,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         this.prepareTextBlocksAndFeedbackFor(this.leftSubmission!, this.leftTextBlockRefs, this.leftUnusedTextBlockRefs);
         refreshLatestResult(conflictingTextSubmissions);
         refreshLatestResult([this.leftSubmission!]);
-        this.leftTotalScore = this.computeTotalScore(getLatestSubmissionResult(this.leftSubmission)!.feedbacks!);
+        this.leftTotalScore = this.computeTotalScore(this.leftSubmission!.latestResult!.feedbacks!);
         this.setConflictingSubmission(0);
         refreshLatestResult(conflictingTextSubmissions);
         refreshLatestResult([this.leftSubmission!]);
