@@ -91,7 +91,7 @@ export function getFirstResult(submission: Submission | undefined): Result | und
     }
 }
 
-export function refreshLatestResult(submissions: Submission[]) {
+export function setLatestResult(submissions: Submission[]) {
     submissions.forEach((submission) => {
         submission.latestResult = getLatestSubmissionResult(submission);
     });
