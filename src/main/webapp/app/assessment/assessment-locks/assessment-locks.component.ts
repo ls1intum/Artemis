@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { TranslateService } from '@ngx-translate/core';
-import { getLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
@@ -12,7 +12,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
-import { Result } from 'app/entities/result.model';
 
 @Component({
     selector: 'jhi-assessment-locks',

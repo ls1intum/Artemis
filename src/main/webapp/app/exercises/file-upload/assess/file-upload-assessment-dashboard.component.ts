@@ -12,7 +12,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { Result } from 'app/entities/result.model';
+
 @Component({
     templateUrl: './file-upload-assessment-dashboard.component.html',
 })

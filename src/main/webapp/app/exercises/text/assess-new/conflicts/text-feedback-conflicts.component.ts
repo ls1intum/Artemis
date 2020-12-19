@@ -15,10 +15,10 @@ import { Result } from 'app/entities/result.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { AccountService } from 'app/core/auth/account.service';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 import interact from 'interactjs';
 import * as moment from 'moment';
-import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-text-feedback-conflicts',

@@ -18,9 +18,8 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { SortService } from 'app/shared/service/sort.service';
+import { SortService } from 'app/shared/snervice/sort.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { Result } from 'app/entities/result.model';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
