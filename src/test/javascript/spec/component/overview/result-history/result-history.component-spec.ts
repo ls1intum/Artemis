@@ -2,15 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Result } from 'app/entities/result.model';
 import * as sinonChai from 'sinon-chai';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
-import { MockComponent, MockModule } from 'ng-mocks';
+import { MockModule } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MomentModule } from 'ngx-moment';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ResultComponent } from 'app/exercises/shared/result/result.component';
-import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
-import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
-import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import * as sinon from 'sinon';
 import * as chai from 'chai';
 
@@ -26,15 +19,8 @@ describe('ResultHistoryComponent', () => {
         result = new Result();
 
         return TestBed.configureTestingModule({
-            imports: [MockModule(ArtemisSharedModule), MockModule(MomentModule), MockModule(ArtemisProgrammingExerciseActionsModule), MockModule(ArtemisSharedCommonModule)],
-            declarations: [
-                ResultHistoryComponent,
-                MockComponent(ResultComponent),
-                MockComponent(UpdatingResultComponent),
-                MockComponent(ResultDetailComponent),
-                MockComponent(ResultHistoryComponent),
-                MockComponent(SubmissionResultStatusComponent),
-            ],
+            imports: [MockModule(ArtemisSharedModule)],
+            declarations: [ResultHistoryComponent],
         })
             .compileComponents()
             .then(() => {
