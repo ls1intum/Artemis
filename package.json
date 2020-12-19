@@ -42,7 +42,7 @@
         "compare-versions": "3.6.0",
         "core-js": "3.8.1",
         "diff-match-patch": "^1.0.5",
-        "dompurify": "2.2.4",
+        "dompurify": "2.2.6",
         "export-to-csv": "0.2.1",
         "franc-min": "5.0.0",
         "interactjs": "1.10.1",
