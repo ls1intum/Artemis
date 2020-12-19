@@ -39,6 +39,7 @@ export class FeedbackItem {
     styleUrls: ['./result-detail.scss'],
 })
 export class ResultDetailComponent implements OnInit {
+    PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES = 100;
     BuildLogType = BuildLogType;
 
     @Input() result: Result;
@@ -296,7 +297,9 @@ export class ResultDetailComponent implements OnInit {
         const exercise = this.result.participation.exercise;
 
         // cap test points
-        const maxPointsWithBonus = exercise.maxScore! + (exercise.bonusPoints || 0) || 100;
+        const maxPoints = this.getMaxPointsRespectingZeroPointExercises(exercise);
+        const maxPointsWithBonus = exercise.maxScore! > 0 ? maxPoints + (exercise.bonusPoints || 0) : maxPoints;
+
         if (testCaseCredits > maxPointsWithBonus) {
             testCaseCredits = maxPointsWithBonus;
         }
@@ -305,7 +308,6 @@ export class ResultDetailComponent implements OnInit {
         if (exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = exercise as ProgrammingExercise;
             if (programmingExercise.staticCodeAnalysisEnabled && programmingExercise.maxStaticCodeAnalysisPenalty != undefined) {
-                const maxPoints = programmingExercise.maxScore! + (programmingExercise.bonusPoints || 0) === 0 ? 100 : programmingExercise.maxScore!;
                 const maxPenaltyCredits = (maxPoints * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
                 codeIssueCredits = Math.min(codeIssueCredits, maxPenaltyCredits);
             }
@@ -320,7 +322,17 @@ export class ResultDetailComponent implements OnInit {
         }
 
         // the chart preset handles the capping to the maximum score of the exercise
-        this.scoreChartPreset.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, exercise);
+        this.scoreChartPreset.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, maxPoints, maxPointsWithBonus);
+    }
+
+    private getMaxPointsRespectingZeroPointExercises(programmingExercise: ProgrammingExercise): number {
+        if (programmingExercise.maxScore! > 0) {
+            return programmingExercise.maxScore!;
+        }
+        if (programmingExercise.bonusPoints! > 0) {
+            return programmingExercise.bonusPoints!;
+        }
+        return this.PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
     }
 
     /**
