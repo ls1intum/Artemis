@@ -340,8 +340,8 @@ public class ProgrammingExerciseExportService {
             log.info("Delete project root directory " + projectPath.toFile());
             FileUtils.deleteDirectory(projectPath.toFile());
         }
-        catch (IOException e) {
-            log.warn("The project root directory '" + projectPath.toString() + "' could not be deleted.");
+        catch (IOException ex) {
+            log.warn("The project root directory '" + projectPath.toString() + "' could not be deleted.", ex);
         }
     }
 
@@ -456,10 +456,6 @@ public class ProgrammingExerciseExportService {
         // We can always delete the repository as it won't be used by the student (separate path)
         if (repository != null) {
             try {
-                // if repository is not closed, it causes weird IO issues when trying to delete the repository again
-                // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
-                repository.close();
-
                 log.info("Delete temporary repository " + repository.getLocalPath().toString());
                 gitService.deleteLocalRepository(repository);
             }
