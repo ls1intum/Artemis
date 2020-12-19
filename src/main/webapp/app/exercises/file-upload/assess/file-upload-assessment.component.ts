@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 import interact from 'interactjs';
@@ -311,15 +311,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             .saveAssessment(this.assessments, this.submission.id!)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(
-                (response: HttpResponse<Result>) => {
-                    if (response.body) {
-                        this.result = response.body;
-                        this.jhiAlertService.clear();
-                        this.jhiAlertService.success('artemisApp.assessment.messages.saveSuccessful');
-                    } else {
-                        this.jhiAlertService.clear();
-                        this.jhiAlertService.error('artemisApp.assessment.messages.saveFailed');
-                    }
+                (result: Result) => {
+                    this.result = result;
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.success('artemisApp.assessment.messages.saveSuccessful');
                 },
                 () => {
                     this.jhiAlertService.clear();
@@ -339,13 +334,11 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             .saveAssessment(this.assessments, this.submission.id!, true)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(
-                (response: HttpResponse<Result>) => {
-                    if (response.body) {
-                        this.result = response.body;
-                        this.updateParticipationWithResult();
-                        this.jhiAlertService.clear();
-                        this.jhiAlertService.success('artemisApp.assessment.messages.submitSuccessful');
-                    }
+                (result: Result) => {
+                    this.result = result;
+                    this.updateParticipationWithResult();
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.success('artemisApp.assessment.messages.submitSuccessful');
                 },
                 (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
             );

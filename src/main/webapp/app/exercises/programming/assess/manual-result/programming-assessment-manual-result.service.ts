@@ -21,9 +21,9 @@ export class ProgrammingAssessmentManualResultService {
      */
     // TODO: make consistent with other *.assessment.service.ts file
     saveAssessment(participationId: number, result: Result, submit = false): Observable<EntityResponseType> {
-        const params = new HttpParams();
+        let params = new HttpParams();
         if (submit) {
-            params.set('submit', 'true');
+            params = params.set('submit', 'true');
         }
 
         const url = `${this.resourceUrl}/participations/${participationId}/manual-results`;

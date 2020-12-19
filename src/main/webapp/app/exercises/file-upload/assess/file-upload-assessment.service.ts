@@ -17,13 +17,13 @@ export class FileUploadAssessmentsService {
 
     constructor(private http: HttpClient) {}
 
-    saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false): Observable<EntityResponseType> {
-        const params = new HttpParams();
+    saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false): Observable<Result> {
+        let params = new HttpParams();
         if (submit) {
-            params.set('submit', 'true');
+            params = params.set('submit', 'true');
         }
         const url = `${this.resourceUrl}/file-upload-submissions/${submissionId}/feedback`;
-        return this.http.put<Result>(url, feedbacks, { params, observe: 'response' });
+        return this.http.put<Result>(url, feedbacks, { params });
     }
 
     updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<EntityResponseType> {
