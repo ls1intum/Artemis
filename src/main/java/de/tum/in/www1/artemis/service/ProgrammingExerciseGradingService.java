@@ -122,24 +122,31 @@ public class ProgrammingExerciseGradingService {
 
             if (!isSolutionParticipation && !isTemplateParticipation) {
 
+                // check if a manual result exists, if so we want to clone and update this with the new updated test-case and sca feedback
                 Optional<ProgrammingExerciseStudentParticipation> studentParticipation = programmingExerciseParticipationService
                         .findStudentParticipationWithLatestManualResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(participation.getId());
+
                 if (studentParticipation.isPresent() && studentParticipation.get().getResults().stream().findFirst().isPresent()) {
 
                     Result manualResult = studentParticipation.get().getResults().stream().findFirst().get();
 
+                    // create a new manual result for the same submission as the automatic result
                     Result newResult = programmingSubmissionService.saveNewEmptyResult(result.getSubmission());
+
                     newResult.setAssessor(manualResult.getAssessor());
                     newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-                    newResult.setCompletionDate(manualResult.getCompletionDate());
+                    // this makes it the most recent result, but optionally keeps the draft state of an unfinished manual result
+                    newResult.setCompletionDate(manualResult.getCompletionDate() != null ? result.getCompletionDate().plusSeconds(1) : null);
                     newResult.setHasFeedback(manualResult.getHasFeedback());
                     newResult.setRated(manualResult.isRated());
 
+                    // copy all feedback from the automatic result
                     for (Feedback feedback : result.getFeedbacks()) {
                         Feedback newFeedback = feedback.copyFeedback();
                         newResult.addFeedback(newFeedback);
                     }
 
+                    // copy only the non-automatic feedback from the manual result
                     for (Feedback feedback : manualResult.getFeedbacks()) {
                         if (feedback != null && feedback.getType() != FeedbackType.AUTOMATIC) {
                             Feedback newFeedback = feedback.copyFeedback();
@@ -147,6 +154,7 @@ public class ProgrammingExerciseGradingService {
                         }
                     }
 
+                    // recalculate the score and set the result string
                     double maxScore = getMaxScoreRespectingZeroPointExercises(programmingExercise);
                     double points = programmingAssessmentService.calculateTotalScore(newResult);
                     newResult.setScore(points, maxScore);
@@ -154,7 +162,10 @@ public class ProgrammingExerciseGradingService {
                     String resultString = result.getResultString() + ", " + newResult.createResultString(points, maxScore);
                     newResult.setResultString(resultString);
 
+                    // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
+                    tmpSubmission = newResult.getSubmission();
                     newResult = resultRepository.save(newResult);
+                    newResult.setSubmission(tmpSubmission);
 
                     return Optional.of(newResult);
                 }
