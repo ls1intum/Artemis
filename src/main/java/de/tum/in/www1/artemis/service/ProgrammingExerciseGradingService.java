@@ -431,7 +431,15 @@ public class ProgrammingExerciseGradingService {
              * receive the full 20 points, if the points are not capped before the penalty is subtracted. With the implemented order in place
              * successfulTestPoints will be capped to 20 points first, then the penalty is subtracted resulting in 10 points.
              */
-            double maxPoints = maxScoreRespectingZeroPointExercises + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+            double maxPoints;
+            if (programmingExercise.getMaxScore() > 0) {
+                maxPoints = maxScoreRespectingZeroPointExercises + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+            }
+            else {
+                // contains only the bonus points
+                maxPoints = maxScoreRespectingZeroPointExercises;
+            }
+
             if (successfulTestPoints > maxPoints) {
                 successfulTestPoints = maxPoints;
             }
@@ -545,9 +553,12 @@ public class ProgrammingExerciseGradingService {
      */
     private static double getMaxScoreRespectingZeroPointExercises(ProgrammingExercise programmingExercise) {
         boolean hasNormalPoints = Objects.requireNonNullElse(programmingExercise.getMaxScore(), 0.0) > 0.0;
-        boolean hasBonusPoints = Objects.requireNonNullElse(programmingExercise.getMaxScore(), 0.0) > 0.0;
-        if (hasNormalPoints || hasBonusPoints) {
+        boolean hasBonusPoints = Objects.requireNonNullElse(programmingExercise.getBonusPoints(), 0.0) > 0.0;
+        if (hasNormalPoints) {
             return programmingExercise.getMaxScore();
+        }
+        if (hasBonusPoints) {
+            return programmingExercise.getBonusPoints();
         }
         return PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
     }

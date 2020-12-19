@@ -60,3 +60,37 @@ Note that the ``Jenkinsfile`` **must** start either
 The variables `#dockerImage`, `#testRepository`, `#assignmentRepository`, `#jenkinsNotificationToken` and `#notificationsUrl` will automatically be replaced (for the normal Jenkinsfile, within the Jenkinsfile-staticCodeAnalysis, #staticCodeAnalysisScript is also replaced).
 
 You should not need to touch any of these variables, except the `#dockerImage` variable, if you want to use a different agent setup (e.g. a Kubernetes setup).
+
+
+Caching example for Maven
+^^^^^^^^^^^^^^^^^^^^^^^^^
+The Docker image used to run the maven-tests already contains a set of commonly used dependencies (see `artemis-maven-docker <https://github.com/ls1intum/artemis-maven-docker>`__).
+This significantly speeds up builds as the dependencies do not have to be downloaded every time a build is started.
+However, the dependencies included in the Docker image might not match the dependencies required in your tests (e.g. because you added new dependencies or the Docker image is outdated).
+
+You can cache the maven-dependencies also on the machine that runs the builds (that means, outside the docker container) using the following steps:
+
+Adjust the agent-args and add the environment block.
+
+
+.. code:: bash
+
+        agent {
+            docker {
+                image '#dockerImage'
+                label 'docker'
+                args '-v $HOME/maven-cache-docker:/var/maven'
+            }
+        }
+        environment {
+          JAVA_TOOL_OPTIONS = '-Duser.home=/var/maven'
+        }
+        stages {
+            stage('Checkout') {
+
+
+
+You have to add permissions to the folder (which will be located at the $HOME folder of the user that jenkins uses), e.g. with ``sudo chmod 777 maven-cache-docker -R``.
+
+Note that this might allow students to access shared resources (e.g. jars used by Maven), and they might be able to overwrite them.
+You can use `Artemis-java-testing-sandbox <https://github.com/ls1intum/artemis-java-test-sandbox>`__ to prevent this by restricting the resources the student's code can access.

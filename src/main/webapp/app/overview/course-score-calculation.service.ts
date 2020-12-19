@@ -30,6 +30,7 @@ export class CourseScoreCalculationService {
         let presentationScore = 0;
         for (const exercise of courseExercises) {
             if (exercise.maxScore != undefined && (!exercise.dueDate || exercise.dueDate.isBefore(moment()))) {
+                const relevantMaxPoints = exercise.maxScore! > 0 ? exercise.maxScore! : exercise.bonusPoints ?? 0;
                 maxScore = maxScore + exercise.maxScore;
                 const participation = this.getParticipationForExercise(exercise);
                 if (participation) {
@@ -40,7 +41,7 @@ export class CourseScoreCalculationService {
                         if (score == undefined) {
                             score = 0;
                         }
-                        absoluteScore = absoluteScore + score * this.SCORE_NORMALIZATION_VALUE * exercise.maxScore;
+                        absoluteScore = absoluteScore + score * this.SCORE_NORMALIZATION_VALUE * relevantMaxPoints;
                         reachableScore += exercise.maxScore;
                     }
                     presentationScore += participation.presentationScore ? participation.presentationScore : 0;
