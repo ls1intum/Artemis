@@ -91,10 +91,38 @@ public class StatisticsService {
             }
             case ACTIVE_USERS -> {
                 List<Map<String, Object>> result = this.statisticsRepository.getActiveUsers(startDate, endDate);
-                return convertMapList(span, result, startDate);
+                return convertMapList(span, result, startDate, graphType);
+            }
+            case LOGGED_IN_USERS -> {
+                Instant startDateInstant = startDate.toInstant();
+                Instant endDateInstant = endDate.toInstant();
+                List<Map<String, Object>> result = this.statisticsRepository.getLoggedInUsers(startDateInstant, endDateInstant);
+                return convertMapList(span, result, startDate, graphType);
             }
             case RELEASED_EXERCISES -> {
                 return this.statisticsRepository.getReleasedExercises(startDate, endDate);
+            }
+            case EXERCISES_DUE -> {
+                return this.statisticsRepository.getExercisesDue(startDate, endDate);
+            }
+            case CONDUCTED_EXAMS -> {
+                return this.statisticsRepository.getConductedExams(startDate, endDate);
+            }
+            case EXAM_PARTICIPATIONS -> {
+                return this.statisticsRepository.getExamParticipations(startDate, endDate);
+            }
+            case EXAM_REGISTRATIONS -> {
+                return this.statisticsRepository.getExamRegistrations(startDate, endDate);
+            }
+            case ACTIVE_TUTORS -> {
+                List<Map<String, Object>> result = this.statisticsRepository.getActiveTutors(startDate, endDate);
+                return convertMapList(span, result, startDate, graphType);
+            }
+            case CREATED_RESULTS -> {
+                return this.statisticsRepository.getCreatedResults(startDate, endDate);
+            }
+            case CREATED_FEEDBACKS -> {
+                return this.statisticsRepository.getResultFeedbacks(startDate, endDate);
             }
             default -> {
                 return new ArrayList<>();
@@ -200,12 +228,19 @@ public class StatisticsService {
     * @param startDate the startDate of the period
     * @return A List<Map<String, Object>> analogue to other database calls
     */
-    private List<Map<String, Object>> convertMapList(SpanType span, List<Map<String, Object>> result, ZonedDateTime startDate) {
+    private List<Map<String, Object>> convertMapList(SpanType span, List<Map<String, Object>> result, ZonedDateTime startDate, GraphType graphytpe) {
         List<Map<String, Object>> returnList = new ArrayList<>();
         Map<Object, List<String>> users = new HashMap<>();
         for (Map<String, Object> listElement : result) {
             Object index;
-            ZonedDateTime date = (ZonedDateTime) listElement.get("day");
+            ZonedDateTime date;
+            if (graphytpe == GraphType.LOGGED_IN_USERS) {
+                Instant instant = (Instant) listElement.get("day");
+                date = instant.atZone(startDate.getZone());
+            }
+            else {
+                date = (ZonedDateTime) listElement.get("day");
+            }
             if (span == SpanType.DAY) {
                 index = date.getHour();
             }

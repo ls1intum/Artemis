@@ -295,7 +295,7 @@ public class ExamService {
         }
 
         // Adding registered student information to DTO
-        List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
+        Set<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
         ObjectMapper objectMapper = new ObjectMapper();
         for (StudentExam studentExam : studentExams) {
             User user = studentExam.getUser();
@@ -331,7 +331,7 @@ public class ExamService {
         }
 
         // Updating exam information in DTO
-        Double sumOverallPoints = scores.studentResults.stream().mapToDouble(studentResult -> studentResult.overallPointsAchieved).sum();
+        double sumOverallPoints = scores.studentResults.stream().mapToDouble(studentResult -> studentResult.overallPointsAchieved).sum();
 
         int numberOfStudentResults = scores.studentResults.size();
 
@@ -802,6 +802,33 @@ public class ExamService {
         }
 
         return programmingExercises.size();
+    }
+
+    /**
+     * Returns if the exam is over by checking if the latest individual exam end date plus grace period has passed.
+     * See {@link ExamService#getLatestIndiviudalExamEndDate}
+     * <p>
+     *
+     * @param examId the id of the exam
+     * @return true if the exam is over and the students cannot submit anymore
+     * @throws EntityNotFoundException if no exam with the given examId can be found
+     */
+    public boolean isExamOver(Long examId) {
+        return isExamOver(findOne(examId));
+    }
+
+    /**
+     * Returns if the exam is over by checking if the latest individual exam end date plus grace period has passed.
+     * See {@link ExamService#getLatestIndiviudalExamEndDate}
+     * <p>
+     *
+     * @param exam the exam
+     * @return true if the exam is over and the students cannot submit anymore
+     * @throws EntityNotFoundException if no exam with the given examId can be found
+     */
+    public boolean isExamOver(Exam exam) {
+        var now = ZonedDateTime.now();
+        return getLatestIndiviudalExamEndDate(exam).plusSeconds(exam.getGracePeriod()).isBefore(now);
     }
 
     /**
