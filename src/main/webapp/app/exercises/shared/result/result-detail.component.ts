@@ -15,6 +15,7 @@ import { ScoreChartPreset } from 'app/shared/chart/presets/scoreChartPreset';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { getMaxPointsRespectingZeroPointExercises } from 'app/exercises/shared/exercise/exercise-utils';
 
 export enum FeedbackItemType {
     Issue,
@@ -39,7 +40,6 @@ export class FeedbackItem {
     styleUrls: ['./result-detail.scss'],
 })
 export class ResultDetailComponent implements OnInit {
-    PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES = 100;
     BuildLogType = BuildLogType;
 
     @Input() result: Result;
@@ -297,7 +297,7 @@ export class ResultDetailComponent implements OnInit {
         const exercise = this.result.participation.exercise;
 
         // cap test points
-        const maxPoints = this.getMaxPointsRespectingZeroPointExercises(exercise);
+        const maxPoints = getMaxPointsRespectingZeroPointExercises(exercise);
         const maxPointsWithBonus = exercise.maxScore! > 0 ? maxPoints + (exercise.bonusPoints || 0) : maxPoints;
 
         if (testCaseCredits > maxPointsWithBonus) {
@@ -323,16 +323,6 @@ export class ResultDetailComponent implements OnInit {
 
         // the chart preset handles the capping to the maximum score of the exercise
         this.scoreChartPreset.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, maxPoints, maxPointsWithBonus);
-    }
-
-    private getMaxPointsRespectingZeroPointExercises(programmingExercise: ProgrammingExercise): number {
-        if (programmingExercise.maxScore! > 0) {
-            return programmingExercise.maxScore!;
-        }
-        if (programmingExercise.bonusPoints! > 0) {
-            return programmingExercise.bonusPoints!;
-        }
-        return this.PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
     }
 
     /**

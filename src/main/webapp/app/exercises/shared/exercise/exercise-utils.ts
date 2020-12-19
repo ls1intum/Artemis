@@ -8,6 +8,8 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { hasResults } from 'app/overview/participation-utils';
 
+export const PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES = 100;
+
 export const hasExerciseChanged = (changes: SimpleChanges) => {
     return changes.exercise && changes.exercise.currentValue && (!changes.exercise.previousValue || changes.exercise.previousValue.id !== changes.exercise.currentValue.id);
 };
@@ -161,3 +163,18 @@ export const areManualResultsAllowed = (exercise: Exercise) => {
     const relevantDueDate = progEx.buildAndTestStudentSubmissionsAfterDueDate ?? progEx.dueDate;
     return progEx.isAtLeastTutor === true && progEx.assessmentType === AssessmentType.SEMI_AUTOMATIC && (!relevantDueDate || moment(relevantDueDate).isBefore(now()));
 };
+
+/**
+ * Gets the max points of a exercise. It takes also zero point exercises with/without bonus points into account
+ *
+ * @param exercise
+ */
+export const getMaxPointsRespectingZeroPointExercises = (exercise: Exercise): number => {
+    if (exercise.maxScore! > 0) {
+        return exercise.maxScore!;
+    }
+    if (exercise.bonusPoints! > 0) {
+        return exercise.bonusPoints!;
+    }
+    return PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
+}
