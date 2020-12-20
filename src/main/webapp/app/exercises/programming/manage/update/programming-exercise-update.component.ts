@@ -437,6 +437,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         );
     }
 
+    /**
+     * checking if at least one of Online Editor or Offline Ide is selected
+     */
     validIdeSelection() {
         return this.programmingExercise.allowOnlineEditor || this.programmingExercise.allowOfflineIde;
     }
