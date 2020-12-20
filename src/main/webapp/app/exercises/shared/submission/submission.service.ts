@@ -5,7 +5,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Result } from 'app/entities/result.model';
-import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 
@@ -42,8 +42,10 @@ export class SubmissionService {
                 tap((res) =>
                     res.body!.forEach((submission) => {
                         // reconnect results to submissions
-                        if (getLatestSubmissionResult(submission)) {
-                            getLatestSubmissionResult(submission)!.submission = submission;
+                        const tmp = getLatestSubmissionResult(submission);
+                        if (tmp) {
+                            setLatestSubmissionResult(submission, tmp);
+                            tmp!.submission = submission;
                         }
                     }),
                 ),
@@ -67,6 +69,11 @@ export class SubmissionService {
             submissions.forEach((submission: Submission) => {
                 if (submission !== null) {
                     submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : undefined;
+                    const tmp = getLatestSubmissionResult(submission);
+                    if (tmp) {
+                        setLatestSubmissionResult(submission, tmp);
+                        tmp!.submission = submission;
+                    }
                     convertedSubmissions.push(submission);
                 }
             });
