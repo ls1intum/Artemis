@@ -5,7 +5,7 @@ import { TextSubmissionService } from 'app/exercises/text/participate/text-submi
 import { TextSubmission } from 'app/entities/text-submission.model';
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
-import { of } from 'rxjs/internal/observable/of';
+
 chai.use(sinonChai);
 
 const expect = chai.expect;
