@@ -436,4 +436,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             },
         );
     }
+
+    validIdeSelection() {
+        return this.programmingExercise.allowOnlineEditor || this.programmingExercise.allowOfflineIde;
+    }
 }

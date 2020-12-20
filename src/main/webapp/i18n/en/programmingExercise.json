@@ -40,9 +40,15 @@
             "repositories": "Repositories",
             "buildplans": "Build Plans",
             "publishBuildPlanUrl": "Publish Build Plan",
-            "allowOnlineEditor": "Allow Online Editor",
+            "allowOnlineEditor": {
+                "title": "Allow Online Editor",
+                "alert": "At least one between Offline IDE and Online Editor must be selected"
+            },
             "onlineEditor": "Online Editor",
-            "allowOfflineIde": "Allow Offline IDE",
+            "allowOfflineIde": {
+                "title": "Allow Offline IDE",
+                "alert": "At least one between Offline IDE and Online Editor must be selected"
+            },
             "offlineIde": "Offline IDE",
             "showTestNamesToStudents": "Show Test Names to Students",
             "showTestNamesToStudentsTooltip": "Activate this option to show the names of the automated test cases to the students. Leave the option disabled to make no visual distinction between manual and automated feedback for the students.",
