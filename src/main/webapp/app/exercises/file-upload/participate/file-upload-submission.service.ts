@@ -6,6 +6,7 @@ import { map } from 'rxjs/operators';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { stringifyCircular } from 'app/shared/util/utils';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 export type EntityResponseType = HttpResponse<FileUploadSubmission>;
 
@@ -98,6 +99,7 @@ export class FileUploadSubmissionService {
      */
     private convertItemFromServer(fileUploadSubmission: FileUploadSubmission): FileUploadSubmission {
         const convertedFileUploadSubmission = Object.assign({}, fileUploadSubmission);
+        setLatestSubmissionResult(convertedFileUploadSubmission, getLatestSubmissionResult(convertedFileUploadSubmission));
         return convertedFileUploadSubmission;
     }
 
