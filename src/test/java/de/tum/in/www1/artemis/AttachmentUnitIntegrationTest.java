@@ -115,10 +115,11 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
 
     private void persistAttachmentUnitWithLecture() {
         this.attachmentUnit = attachmentUnitRepository.save(this.attachmentUnit);
-        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get();
+        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture1.getId()).get();
         lecture1.addLectureUnit(this.attachmentUnit);
         lecture1 = lectureRepository.save(lecture1);
-        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream()
+                .findFirst().get();
     }
 
     @Test

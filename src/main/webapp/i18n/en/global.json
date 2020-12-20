@@ -224,6 +224,7 @@
             "registerForCourse": "Register For Course",
             "exercise": "Exercises",
             "scores": "Scores",
+            "exams": "Exams",
             "manageHints": "Manage Hints",
             "addExternalSubmission": "Add External Submission",
             "questionsAndAnswers": "Q&A"
@@ -283,6 +284,7 @@
         "invalid.solution.repository.url": "The Solution Repository URL seems to be invalid. Please make sure it exists and is accessible for Artemis.",
         "unexpectedError": "An unexpected error occurred: {{error}}"
     },
+    "aboutUs": "About us",
     "contact": "Contact us",
     "bug": "Report a bug",
     "feature": "Request a feature",
@@ -301,5 +303,6 @@
         "connected": "Connected",
         "disconnected": "Disconnected"
     },
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "completed": "Completed"
 }
