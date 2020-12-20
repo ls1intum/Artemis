@@ -132,6 +132,8 @@ public class UserService {
 
         try {
             if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminPassword.isPresent()) {
+                // authenticate so that db queries are possible
+                SecurityUtils.setAuthorizationObject();
                 Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(artemisInternalAdminUsername.get());
                 if (existingInternalAdmin.isPresent()) {
                     log.info("Update internal admin user " + artemisInternalAdminUsername.get());
