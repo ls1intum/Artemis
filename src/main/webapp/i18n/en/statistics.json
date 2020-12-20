@@ -5,6 +5,7 @@
             "day": "Day",
             "week": "Week",
             "month": "Month",
+            "newWeeks": "newWeeks",
             "year": "Year"
         },
         "title": "User statistics",

@@ -2,6 +2,7 @@ export enum SpanType {
     DAY = 'DAY',
     WEEK = 'WEEK',
     MONTH = 'MONTH',
+    WEEKS_ORDERED = 'WEEKS_ORDERED',
     YEAR = 'YEAR',
 }
 

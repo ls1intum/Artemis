@@ -5,6 +5,7 @@
             "day": "Tag",
             "week": "Woche",
             "month": "Monat",
+            "newWeeks": "Neue Wochen",
             "year": "Jahr"
         },
         "title": "Benutzer Statistiken",

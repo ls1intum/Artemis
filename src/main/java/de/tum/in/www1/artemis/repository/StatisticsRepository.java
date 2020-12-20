@@ -37,8 +37,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     @Query("""
             select e.releaseDate as day, count(e.id) as amount
-            from Exercise e
-            where e.releaseDate >= :#{#startDate} and e.releaseDate <= :#{#endDate}
+            from Exercise e, Course c
+            where e.releaseDate >= :#{#startDate} and e.releaseDate <= :#{#endDate} and c.id = e.course.id and c.testCourse = false
             group by e.releaseDate
             order by e.releaseDate asc
             """)
@@ -46,8 +46,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     @Query("""
             select e.dueDate as day, count(e.id) as amount
-            from Exercise e
-            where e.dueDate >= :#{#startDate} and e.dueDate <= :#{#endDate}
+            from Exercise e, Course c
+            where e.dueDate >= :#{#startDate} and e.dueDate <= :#{#endDate} and c.id = e.course.id and c.testCourse = false
             group by e.dueDate
             order by e.dueDate asc
             """)
@@ -63,8 +63,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     @Query("""
             select e.endDate as day, count(e.id) as amount
-            from Exam e
-            where e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate}
+            from Exam e, Course c
+            where e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate} and c.id = e.course.id and c.testCourse = false
             group by e.endDate
             order by e.endDate asc
             """)
@@ -72,8 +72,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     @Query("""
             select e.endDate as day, count(se.id) as amount
-            from StudentExam se, Exam e
-            where se.submitted = true and se.exam = e and e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate}
+            from StudentExam se, Exam e, Course c
+            where se.submitted = true and se.exam = e and e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate} and c.id = e.course.id and c.testCourse = false
             group by e.endDate
             order by e.endDate asc
             """)
@@ -81,8 +81,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     @Query("""
             select e.endDate as day, sum(size(e.registeredUsers)) as amount
-            from Exam e
-            where e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate}
+            from Exam e, Course c
+            where e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate} and c.id = e.course.id and c.testCourse = false
             group by e.endDate
             order by e.endDate asc
             """)
@@ -90,15 +90,16 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     @Query("""
             select r.completionDate as day, r.assessor.login as username
-            from Result r
+            from Result r, Participation p, Exercise e, Course c
             where (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI-AUTOMATIC') and r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and r.assessor.login not like '%test%'
+            and r.exampleResult = false and r.participation.id = p.id and p.exercise.id = e.id and e.course.id = c.id and c.testCourse = false
             """)
     List<Map<String, Object>> getActiveTutors(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
             select r.completionDate as day, count(r.id) as amount
-            from Result r
-            where r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate}
+            from Result r, Participation p, Exercise e, Course c
+            where r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and r.exampleResult = false and r.participation.id = p.id and p.exercise.id = e.id and e.course.id = c.id and c.testCourse = false
             group by r.completionDate
             order by r.completionDate
             """)
@@ -106,8 +107,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     @Query("""
             select r.completionDate as day, sum(size(r.feedbacks)) as amount
-            from Result r
-            where r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate}
+            from Result r, Participation p, Exercise e, Course c
+            where r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and r.exampleResult = false and r.participation.id = p.id and p.exercise.id = e.id and e.course.id = c.id and c.testCourse = false
             group by r.completionDate
             order by r.completionDate
             """)
