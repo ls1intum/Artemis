@@ -36,7 +36,7 @@ export abstract class Submission implements BaseEntity {
 
     // Helper Attributes
 
-    // latestResult is undefined until submission.setLatestResult() is called
+    // latestResult is undefined until setLatestSubmissionResult() is called
     public latestResult?: undefined | Result;
 
     // only used for exam to check if it is saved to server
@@ -63,12 +63,11 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
 }
 
 /**
- * Used to set the latest submissions result
+ * Used to set / override the latest result in the results list, and set / override the
+ * var latestResult
  *
  * @param submission
  * @param result
- *
- * @return
  */
 export function setLatestSubmissionResult(submission: Submission | undefined, result: Result | undefined) {
     if (!submission || !result) {

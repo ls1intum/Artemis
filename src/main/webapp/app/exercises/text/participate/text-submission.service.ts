@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { stringifyCircular } from 'app/shared/util/utils';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 export type EntityResponseType = HttpResponse<TextSubmission>;
 
@@ -88,7 +88,7 @@ export class TextSubmissionService {
      */
     private static convertItemFromServer(textSubmission: TextSubmission): TextSubmission {
         const convertedTextSubmission = Object.assign({}, textSubmission);
-        convertedTextSubmission.latestResult = getLatestSubmissionResult(convertedTextSubmission);
+        setLatestSubmissionResult(convertedTextSubmission, getLatestSubmissionResult(convertedTextSubmission));
         return convertedTextSubmission;
     }
 
