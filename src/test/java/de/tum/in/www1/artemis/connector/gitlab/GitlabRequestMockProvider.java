@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.connector.gitlab;
 
-import static org.gitlab4j.api.models.AccessLevel.GUEST;
-import static org.gitlab4j.api.models.AccessLevel.MAINTAINER;
+import static org.gitlab4j.api.models.AccessLevel.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.gitlab4j.api.*;
 import org.gitlab4j.api.models.*;
@@ -17,18 +19,32 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 
 @Component
 @Profile("gitlab")
 public class GitlabRequestMockProvider {
 
     @Value("${artemis.version-control.url}")
-    private URL GITLAB_SERVER_URL;
+    private URL gitlabServerUrl;
+
+    @Value("${artemis.lti.user-prefix-edx:#{null}}")
+    private Optional<String> userPrefixEdx;
+
+    @Value("${artemis.lti.user-prefix-u4i:#{null}}")
+    private Optional<String> userPrefixU4I;
 
     private final RestTemplate restTemplate;
 
@@ -46,6 +62,12 @@ public class GitlabRequestMockProvider {
 
     @Mock
     private UserApi userApi;
+
+    @Mock
+    private RepositoryApi repositoryApi;
+
+    @Mock
+    private ProtectedBranchesApi protectedBranchesApi;
 
     public GitlabRequestMockProvider(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -72,6 +94,7 @@ public class GitlabRequestMockProvider {
 
     /**
      * Method to mock the getUser method to return mocked users with their id's
+     *
      * @throws GitLabApiException
      */
     public void mockGetUserID() throws GitLabApiException {
@@ -132,6 +155,7 @@ public class GitlabRequestMockProvider {
 
     /**
      * Mocks that given user is not found in GitLab and is hence created.
+     *
      * @param login Login of the user who's creation is mocked
      * @throws GitLabApiException Never
      */
@@ -144,5 +168,99 @@ public class GitlabRequestMockProvider {
             user.setId(1234);
             return user;
         }).when(userApi).createUser(any(), any(), anyBoolean());
+    }
+
+    public void mockForkRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
+        final var projectKey = exercise.getProjectKey();
+        final var templateRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var clonedRepoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
+
+        mockForkRepository(projectKey, projectKey, templateRepoName, clonedRepoName, status);
+    }
+
+    public void mockForkRepository(String sourceProjectKey, String targetProjectKey, String sourceRepoName, String targetRepoName, HttpStatus httpStatus)
+            throws URISyntaxException, JsonProcessingException {
+        final var sourceNamespace = sourceProjectKey + "%2F" + sourceRepoName.toLowerCase();
+        final var targetRepoSlug = targetRepoName.toLowerCase();
+
+        final var uri = UriComponentsBuilder.fromUri(gitlabServerUrl.toURI()).path("/api/v4/projects/").path(sourceNamespace).path("/fork").build(true).toUri();
+        final var requestBody = Map.of("namespace", targetProjectKey, "path", targetRepoSlug, "name", targetRepoSlug);
+        final var requestContent = new ObjectMapper().writeValueAsString(requestBody);
+
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andExpect(content().string(requestContent)).andRespond(withStatus(httpStatus));
+    }
+
+    public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<de.tum.in.www1.artemis.domain.User> users, boolean ltiUserExists)
+            throws GitLabApiException {
+        URL repositoryUrl = exercise.getTemplateRepositoryUrlAsUrl();
+        for (de.tum.in.www1.artemis.domain.User user : users) {
+            String loginName = user.getLogin();
+            if ((userPrefixEdx.isPresent() && loginName.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && loginName.startsWith((userPrefixU4I.get())))) {
+                if (ltiUserExists) {
+                    mockUserExists(loginName, true);
+                }
+                else {
+                    mockUserExists(loginName, false);
+                    mockImportUser();
+                }
+
+            }
+
+            mockAddMemberToRepository(repositoryUrl, user);
+        }
+        mockProtectBranch("master", repositoryUrl);
+    }
+
+    private void mockUserExists(String username, boolean exists) throws GitLabApiException {
+        doReturn(exists ? new User().withUsername(username) : null).when(userApi).getUser(username);
+    }
+
+    private void mockImportUser() throws GitLabApiException {
+        doReturn(new User()).when(userApi).createUser(any(), anyString(), anyBoolean());
+    }
+
+    private void mockAddMemberToRepository(URL repositoryUrl, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
+        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        mockAddMemberToRepository(repositoryId, user);
+    }
+
+    public void mockAddMemberToRepository(String repositoryId, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
+        final var mockedUserId = 1;
+        mockGitlabUserManagementServiceGetUserId(user.getLogin(), mockedUserId);
+        doReturn(new Member()).when(projectApi).addMember(repositoryId, mockedUserId, DEVELOPER);
+    }
+
+    private void mockProtectBranch(String branch, URL repositoryUrl) throws GitLabApiException {
+        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        doReturn(new Branch()).when(repositoryApi).unprotectBranch(repositoryId, branch);
+        doReturn(new ProtectedBranch()).when(protectedBranchesApi).protectBranch(repositoryId, branch);
+    }
+
+    private String getPathIDFromRepositoryURL(URL repository) {
+        final var namespaces = repository.toString().split("/");
+        final var last = namespaces.length - 1;
+
+        return namespaces[last - 1] + "/" + namespaces[last].replace(".git", "");
+    }
+
+    public void mockFailToCheckIfProjectExists(String projectKey) throws GitLabApiException {
+        doThrow(GitLabApiException.class).when(projectApi).getProjects(projectKey);
+    }
+
+    public void mockHealth(String healthStatus, HttpStatus httpStatus) throws URISyntaxException, JsonProcessingException {
+        final var uri = UriComponentsBuilder.fromUri(gitlabServerUrl.toURI()).path("/-/liveness").build().toUri();
+        final var response = new ObjectMapper().writeValueAsString(Map.of("status", healthStatus));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(httpStatus).contentType(MediaType.APPLICATION_JSON).body(response));
+    }
+
+    public void mockRemoveMemberFromRepository(String repositoryId, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
+        final var mockedUserId = 1;
+        mockGitlabUserManagementServiceGetUserId(user.getLogin(), mockedUserId);
+        doNothing().when(projectApi).removeMember(repositoryId, mockedUserId);
+    }
+
+    private void mockGitlabUserManagementServiceGetUserId(String username, int userIdToReturn) throws GitLabApiException {
+        var gitlabUser = new User().withId(userIdToReturn).withUsername(username);
+        doReturn(gitlabUser).when(userApi).getUser(username);
     }
 }

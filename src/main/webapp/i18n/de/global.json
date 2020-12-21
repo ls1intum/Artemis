@@ -223,6 +223,7 @@
             "registerForCourse": "Für Kurs anmelden",
             "exercise": "Aufgaben",
             "scores": "Bewertungen",
+            "exams": "Klausuren",
             "manageHints": "Verwalte Hinweise",
             "addExternalSubmission": "Externe Einreichung anlegen",
             "questionsAndAnswers": "Q&A"
@@ -282,6 +283,7 @@
         "idnull": "Ungültige ID",
         "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}"
     },
+    "aboutUs": "Über uns",
     "contact": "Kontaktiere uns",
     "bug": "Melde einen Fehler",
     "feature": "Beantrage ein Feature",
@@ -300,5 +302,6 @@
         "connected": "Verbunden",
         "disconnected": "Verbindung getrennt"
     },
-    "loading": "Lädt..."
+    "loading": "Lädt...",
+    "completed": "abgeschlossen"
 }

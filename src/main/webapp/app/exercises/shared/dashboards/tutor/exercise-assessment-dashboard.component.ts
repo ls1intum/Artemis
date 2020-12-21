@@ -112,9 +112,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
     exerciseForGuidedTour?: Exercise;
 
-    // todo NR SE remove after refactoring hmtl function calls
-    getLatestSubmissionResult = getLatestSubmissionResult;
-
     constructor(
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
@@ -320,6 +317,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     submission.participation!.submissions = [submission];
                     return submission;
                 });
+                //         setLatestResult(submissions);
             });
     }
 
