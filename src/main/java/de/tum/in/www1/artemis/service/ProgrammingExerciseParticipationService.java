@@ -305,7 +305,7 @@ public class ProgrammingExerciseParticipationService {
      */
     public void lockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            versionControlService.get().setRepositoryPermissionsToReadOnly(participation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), participation.getStudents());
+            versionControlService.get().setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation.getStudents());
         }
         else {
             log.warn("Cannot lock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
@@ -321,7 +321,7 @@ public class ProgrammingExerciseParticipationService {
      */
     public void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            versionControlService.get().configureRepository(programmingExercise, participation.getRepositoryUrlAsUrl(), participation.getStudents(), true);
+            versionControlService.get().configureRepository(programmingExercise, participation.getVcsRepositoryUrl(), participation.getStudents(), true);
         }
         else {
             log.warn("Cannot unlock student repository for participation " + participation.getId() + " because the repository was not copied yet!");

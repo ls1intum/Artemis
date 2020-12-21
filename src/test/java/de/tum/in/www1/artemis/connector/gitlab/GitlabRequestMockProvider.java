@@ -31,6 +31,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 
 @Component
@@ -192,7 +193,7 @@ public class GitlabRequestMockProvider {
 
     public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<de.tum.in.www1.artemis.domain.User> users, boolean ltiUserExists)
             throws GitLabApiException {
-        URL repositoryUrl = exercise.getTemplateRepositoryUrlAsUrl();
+        var repositoryUrl = exercise.getVcsTemplateRepositoryUrl();
         for (de.tum.in.www1.artemis.domain.User user : users) {
             String loginName = user.getLogin();
             if ((userPrefixEdx.isPresent() && loginName.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && loginName.startsWith((userPrefixU4I.get())))) {
@@ -219,7 +220,7 @@ public class GitlabRequestMockProvider {
         doReturn(new User()).when(userApi).createUser(any(), anyString(), anyBoolean());
     }
 
-    private void mockAddMemberToRepository(URL repositoryUrl, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
+    private void mockAddMemberToRepository(VcsRepositoryUrl repositoryUrl, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         mockAddMemberToRepository(repositoryId, user);
     }
@@ -230,13 +231,13 @@ public class GitlabRequestMockProvider {
         doReturn(new Member()).when(projectApi).addMember(repositoryId, mockedUserId, DEVELOPER);
     }
 
-    private void mockProtectBranch(String branch, URL repositoryUrl) throws GitLabApiException {
+    private void mockProtectBranch(String branch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         doReturn(new Branch()).when(repositoryApi).unprotectBranch(repositoryId, branch);
         doReturn(new ProtectedBranch()).when(protectedBranchesApi).protectBranch(repositoryId, branch);
     }
 
-    private String getPathIDFromRepositoryURL(URL repository) {
+    private String getPathIDFromRepositoryURL(VcsRepositoryUrl repository) {
         final var namespaces = repository.toString().split("/");
         final var last = namespaces.length - 1;
 

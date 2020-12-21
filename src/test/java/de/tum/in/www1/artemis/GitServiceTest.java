@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.StreamSupport;
@@ -50,7 +49,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @Test
     public void checkoutRepositoryAlreadyOnServer() throws GitAPIException, InterruptedException {
-        URL localPath = gitUtilService.getLocalRepoUrlByType(GitUtilService.REPOS.REMOTE);
+        var localPath = gitUtilService.getLocalRepoUrlByType(GitUtilService.REPOS.REMOTE);
         String newFileContent = "const a = arr.reduce(sum)";
         gitUtilService.updateFile(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1, newFileContent);
         gitService.getOrCheckoutRepository(localPath, true);
@@ -60,7 +59,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @Test
     public void checkoutRepositoryNotOnServer() throws GitAPIException, InterruptedException, IOException {
-        URL localPath = gitUtilService.getLocalRepoUrlByType(GitUtilService.REPOS.REMOTE);
+        var localPath = gitUtilService.getLocalRepoUrlByType(GitUtilService.REPOS.REMOTE);
         gitUtilService.deleteRepo(GitUtilService.REPOS.LOCAL);
         gitService.getOrCheckoutRepository(localPath, true);
         gitUtilService.reinitializeRepo(GitUtilService.REPOS.LOCAL);

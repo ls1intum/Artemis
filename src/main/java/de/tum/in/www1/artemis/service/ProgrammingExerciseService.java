@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -174,9 +173,9 @@ public class ProgrammingExerciseService {
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
         // Get URLs for repos
-        URL exerciseRepoUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
-        URL testsRepoUrl = programmingExercise.getTestRepositoryUrlAsUrl();
-        URL solutionRepoUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
+        var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
+        var testsRepoUrl = programmingExercise.getVcsTestRepositoryUrl();
+        var solutionRepoUrl = programmingExercise.getVcsSolutionRepositoryUrl();
 
         continuousIntegrationService.get().createProjectForExercise(programmingExercise);
         // template build plan
@@ -227,12 +226,12 @@ public class ProgrammingExerciseService {
      * @param programmingExercise the programming exercise that should be set up
      * @param user                the User that performed the action (used as Git commit author)
      */
-    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user) throws IOException, GitAPIException, InterruptedException {
+    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user) throws GitAPIException, InterruptedException {
 
         // Get URLs for repos
-        URL exerciseRepoUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
-        URL testsRepoUrl = programmingExercise.getTestRepositoryUrlAsUrl();
-        URL solutionRepoUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
+        var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
+        var testsRepoUrl = programmingExercise.getVcsTestRepositoryUrl();
+        var solutionRepoUrl = programmingExercise.getVcsSolutionRepositoryUrl();
 
         // Checkout repositories
         Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl, true);
@@ -285,7 +284,7 @@ public class ProgrammingExerciseService {
         try {
             setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, projectTypeExerciseResources, projectTypeExercisePrefix, "Exercise", programmingExercise, user);
             // The template repo can be re-written so we can unprotect the master branch.
-            versionControlService.get().unprotectBranch(programmingExercise.getTemplateRepositoryUrlAsUrl(), "master");
+            versionControlService.get().unprotectBranch(programmingExercise.getVcsTemplateRepositoryUrl(), "master");
 
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix, "Solution", programmingExercise, user);
             setupTestTemplateAndPush(testRepo, testResources, testPrefix, projectTypeTestResources, projectTypeTestPrefix, "Test", programmingExercise, user);
@@ -678,7 +677,7 @@ public class ProgrammingExerciseService {
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException      If the checkout fails
      */
-    public void combineAllCommitsOfRepositoryIntoOne(URL repoUrl) throws InterruptedException, GitAPIException {
+    public void combineAllCommitsOfRepositoryIntoOne(VcsRepositoryUrl repoUrl) throws InterruptedException, GitAPIException {
         Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl, true);
         gitService.combineAllCommitsIntoInitialCommit(exerciseRepository);
     }
@@ -728,7 +727,7 @@ public class ProgrammingExerciseService {
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException      If the checkout fails
      */
-    public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath, User user)
+    public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
             throws IOException, GitAPIException, InterruptedException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);
@@ -800,9 +799,9 @@ public class ProgrammingExerciseService {
         // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId).get();
-        final var templateRepositoryUrlAsUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
-        final var solutionRepositoryUrlAsUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
-        final var testRepositoryUrlAsUrl = programmingExercise.getTestRepositoryUrlAsUrl();
+        final var templateRepositoryUrlAsUrl = programmingExercise.getVcsTemplateRepositoryUrl();
+        final var solutionRepositoryUrlAsUrl = programmingExercise.getVcsSolutionRepositoryUrl();
+        final var testRepositoryUrlAsUrl = programmingExercise.getVcsTestRepositoryUrl();
 
         if (deleteBaseReposBuildPlans) {
             final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();

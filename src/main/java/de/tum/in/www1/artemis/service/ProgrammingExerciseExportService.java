@@ -115,7 +115,7 @@ public class ProgrammingExerciseExportService {
         participations.parallelStream().forEach(participation -> {
             Repository repo = null;
             try {
-                if (participation.getRepositoryUrlAsUrl() == null) {
+                if (participation.getVcsRepositoryUrl() == null) {
                     log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
                     return;
                 }
@@ -123,7 +123,7 @@ public class ProgrammingExerciseExportService {
                 repo = zipRepositoryForParticipation(repo, programmingExercise, participation, repositoryExportOptions, pathsToZippedRepoFiles);
             }
             catch (IOException | GitException | GitAPIException | InterruptedException ex) {
-                log.error("export student repository " + participation.getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle() + "' did not work as expected: "
+                log.error("export student repository " + participation.getVcsRepositoryUrl() + " in exercise '" + programmingExercise.getTitle() + "' did not work as expected: "
                         + ex.getMessage());
             }
             finally {
@@ -197,7 +197,7 @@ public class ProgrammingExerciseExportService {
         final var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
         final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
 
-        final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
+        final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
 
         JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
         options.setBaseCodeSubmissionName(templateRepoName);
@@ -263,7 +263,7 @@ public class ProgrammingExerciseExportService {
         final var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
         final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
 
-        final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
+        final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
 
         JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
         options.setBaseCodeSubmissionName(templateRepoName);
@@ -343,7 +343,7 @@ public class ProgrammingExerciseExportService {
         programmingExercise.getStudentParticipations().parallelStream().forEach(participation -> {
             var programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
             try {
-                if (programmingExerciseParticipation.getRepositoryUrlAsUrl() == null) {
+                if (programmingExerciseParticipation.getVcsRepositoryUrl() == null) {
                     log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
                     return;
                 }
@@ -352,7 +352,7 @@ public class ProgrammingExerciseExportService {
                 downloadedRepositores.add(repo);
             }
             catch (GitException | GitAPIException | InterruptedException ex) {
-                log.error("clone student repository " + programmingExerciseParticipation.getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle()
+                log.error("clone student repository " + programmingExerciseParticipation.getVcsRepositoryUrl() + " in exercise '" + programmingExercise.getTitle()
                         + "' did not work as expected: " + ex.getMessage());
             }
         });
@@ -364,7 +364,7 @@ public class ProgrammingExerciseExportService {
             downloadedRepositores.add(templateRepo);
         }
         catch (GitException | GitAPIException | InterruptedException ex) {
-            log.error("clone template repository " + programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle()
+            log.error("clone template repository " + programmingExercise.getTemplateParticipation().getVcsRepositoryUrl() + " in exercise '" + programmingExercise.getTitle()
                     + "' did not work as expected: " + ex.getMessage());
         }
 

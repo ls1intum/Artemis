@@ -152,7 +152,7 @@ public class ProgrammingExerciseImportService {
         }
 
         // Unprotect the master branch of the template exercise repo.
-        versionControlService.get().unprotectBranch(newExercise.getTemplateRepositoryUrlAsUrl(), "master");
+        versionControlService.get().unprotectBranch(newExercise.getVcsTemplateRepositoryUrl(), "master");
 
         // Add the necessary hooks notifying Artemis about changes after commits have been pushed
         versionControlService.get().addWebHooksForExercise(newExercise);
@@ -356,7 +356,7 @@ public class ProgrammingExerciseImportService {
      */
     private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user)
             throws GitAPIException, IOException, InterruptedException {
-        final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, repositoryName).getURL();
+        final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, repositoryName);
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements);
         gitService.stageAllChanges(repository);

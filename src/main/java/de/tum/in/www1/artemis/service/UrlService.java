@@ -1,11 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
-import java.net.URL;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
 @Service
@@ -25,9 +24,9 @@ public class UrlService {
      * @return The repository slug, i.e. the part of the url that identifies the repository (not the project) without .git in the end
      * @throws VersionControlException if the URL is invalid and no repository slug could be extracted
      */
-    public String getRepositorySlugFromUrl(URL repositoryUrl) throws VersionControlException {
+    public String getRepositorySlugFromUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
         // split the URL in parts using the separator "/"
-        String[] urlParts = repositoryUrl.getFile().split("/");
+        String[] urlParts = repositoryUrl.getURL().getFile().split("/");
         if (urlParts.length < 1) {
             throw new VersionControlException("Repository URL is not a git URL! Can't get repository slug for " + repositoryUrl.toString());
         }
@@ -46,12 +45,12 @@ public class UrlService {
      *
      * Example: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git --> EIST2016RME
      *
-     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
+     * @param repositoryUrl The complete repository url (including protocol, host and the complete path)
      * @return The project key
      * @throws VersionControlException if the URL is invalid and no project key could be extracted
      */
-    public String getProjectKeyFromUrl(URL repositoryUrl) throws VersionControlException {
-        String[] urlParts = repositoryUrl.getFile().split("/");
+    public String getProjectKeyFromUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
+        String[] urlParts = repositoryUrl.getURL().getFile().split("/");
         if (urlParts.length > 2) {
             return urlParts[2];
         }

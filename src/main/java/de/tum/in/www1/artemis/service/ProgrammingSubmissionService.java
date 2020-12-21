@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -306,7 +305,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     private ObjectId getLastCommitHashForParticipation(ProgrammingExerciseParticipation participation) throws IllegalStateException {
-        URL repoUrl = participation.getRepositoryUrlAsUrl();
+        var repoUrl = participation.getVcsRepositoryUrl();
         ObjectId lastCommitHash;
         try {
             lastCommitHash = gitService.getLastCommitHash(repoUrl);
@@ -320,7 +319,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     private ObjectId getLastCommitHashForTestRepository(ProgrammingExercise programmingExercise) throws IllegalStateException {
-        URL repoUrl = programmingExercise.getTestRepositoryUrlAsUrl();
+        var repoUrl = programmingExercise.getVcsTestRepositoryUrl();
         ObjectId lastCommitHash;
         try {
             lastCommitHash = gitService.getLastCommitHash(repoUrl);

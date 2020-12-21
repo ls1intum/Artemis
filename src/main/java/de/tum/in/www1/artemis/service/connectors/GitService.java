@@ -4,8 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,14 +17,12 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.PullResult;
-import org.eclipse.jgit.api.ResetCommand;
-import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.ConfigConstants;
@@ -34,13 +32,17 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.URIish;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.jgit.transport.*;
+import org.eclipse.jgit.util.FS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -55,19 +57,28 @@ public class GitService {
     private final Logger log = LoggerFactory.getLogger(GitService.class);
 
     @Value("${artemis.version-control.user}")
-    private String GIT_USER;
+    private String gitUser;
 
     @Value("${artemis.version-control.password}")
-    private String GIT_PASSWORD;
+    private String gitPassword;
+
+    @Value("${artemis.version-control.token:#{null}}")
+    private Optional<String> gitToken;
+
+    @Value("${artemis.version-control.ssh-private-key-path:#{null}}")
+    private Optional<String> gitSshPrivateKeyPath;
+
+    @Value("${artemis.version-control.ssh-password:#{null}}")
+    private Optional<String> gitSshPrivateKeyPassphrase;
 
     @Value("${artemis.repo-clone-path}")
     private String REPO_CLONE_PATH;
 
     @Value("${artemis.git.name}")
-    private String ARTEMIS_GIT_NAME;
+    private String artemisGitName;
 
     @Value("${artemis.git.email}")
-    private String ARTEMIS_GIT_EMAIL;
+    private String artemisGitEmail;
 
     private final Map<Path, Repository> cachedRepositories = new ConcurrentHashMap<>();
 
@@ -75,12 +86,62 @@ public class GitService {
 
     private final ZipFileService zipFileService;
 
+    private TransportConfigCallback sshCallback;
+
     public GitService(ZipFileService zipFileService) {
         log.info("file.encoding=" + System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding=" + System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset=" + Charset.defaultCharset());
         log.info("Default Charset in Use=" + new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
         this.zipFileService = zipFileService;
+    }
+
+    @PostConstruct
+    public void init() {
+        // Artemis uses the following order for authentication:
+        // 1. ssh key (if available)
+        // 2. username + personal access token (if available)
+        // 3. username + password
+        if (useSsh()) {
+            SshSessionFactory sshSessionFactory = new JschConfigSessionFactory() {
+
+                @Override
+                protected void configure(OpenSshConfig.Host host, Session session) {
+                    super.configure(host, session);
+                }
+
+                @Override
+                protected JSch createDefaultJSch(FS fs) throws JSchException {
+                    final JSch defaultJSch = new JSch();
+                    JSch.setConfig("ssh-rsa", JSch.getConfig("signature.rsa"));
+                    JSch.setConfig("ssh-dss", JSch.getConfig("signature.dss"));
+                    // TODO: check if we can get an alternative implementation running that accepts the host public key for the predefined vcs server automatically
+                    JSch.setConfig("StrictHostKeyChecking", "no");
+                    var passphrase = gitSshPrivateKeyPassphrase.get().getBytes(StandardCharsets.UTF_8);
+                    defaultJSch.addIdentity(gitSshPrivateKeyPath.get(), passphrase);
+                    return defaultJSch;
+                }
+            };
+
+            sshCallback = transport -> {
+                SshTransport sshTransport = (SshTransport) transport;
+                sshTransport.setSshSessionFactory(sshSessionFactory);
+            };
+        }
+        else if (gitToken.isPresent()) {
+            CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitToken.get()));
+        }
+        else {
+            CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
+        }
+    }
+
+    private boolean useSsh() {
+        return gitSshPrivateKeyPath.isPresent() && gitSshPrivateKeyPassphrase.isPresent();
+    }
+
+    private String getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
+        return useSsh() ? vcsRepositoryUrl.getSshUri().toString() : vcsRepositoryUrl.getURL().toString();
     }
 
     /**
@@ -107,7 +168,7 @@ public class GitService {
      * @throws GitAPIException if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, String targetPath) throws InterruptedException, GitAPIException {
-        URL repoUrl = participation.getRepositoryUrlAsUrl();
+        var repoUrl = participation.getVcsRepositoryUrl();
         Repository repository = getOrCheckoutRepository(repoUrl, true, targetPath);
         repository.setParticipation(participation);
         return repository;
@@ -127,7 +188,7 @@ public class GitService {
      * @throws GitAPIException if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepositoryForJPlag(ProgrammingExerciseParticipation participation, String targetPath) throws InterruptedException, GitAPIException {
-        URL repoUrl = participation.getRepositoryUrlAsUrl();
+        var repoUrl = participation.getVcsRepositoryUrl();
         String repoFolderName = folderNameForRepositoryUrl(repoUrl);
 
         // Replace the exercise name in the repository folder name with the participation ID.
@@ -152,7 +213,7 @@ public class GitService {
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      */
-    public Repository getOrCheckoutRepository(URL repoUrl, boolean pullOnGet) throws InterruptedException, GitAPIException {
+    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, boolean pullOnGet) throws InterruptedException, GitAPIException {
         return getOrCheckoutRepository(repoUrl, pullOnGet, REPO_CLONE_PATH);
     }
 
@@ -166,7 +227,7 @@ public class GitService {
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      */
-    public Repository getOrCheckoutRepository(URL repoUrl, boolean pullOnGet, String targetPath) throws InterruptedException, GitAPIException {
+    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, boolean pullOnGet, String targetPath) throws InterruptedException, GitAPIException {
         Path localPath = new java.io.File(targetPath + folderNameForRepositoryUrl(repoUrl)).toPath();
         return getOrCheckoutRepository(repoUrl, localPath, pullOnGet);
     }
@@ -181,7 +242,7 @@ public class GitService {
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      */
-    public Repository getOrCheckoutRepository(URL repoUrl, Path localPath, boolean pullOnGet) throws InterruptedException, GitAPIException {
+    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, Path localPath, boolean pullOnGet) throws InterruptedException, GitAPIException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         Repository repository = getRepositoryByLocalPath(localPath);
         // TODO: in case the actual git repository in the file system was deleted (e.g. by accident or through some administrator), we will get an exception here
@@ -212,11 +273,11 @@ public class GitService {
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
-                Git result = Git.cloneRepository().setURI(repoUrl.toString()).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
-                        .setDirectory(localPath.toFile()).call();
+
+                Git result = Git.cloneRepository().setTransportConfigCallback(sshCallback).setURI(getGitUri(repoUrl)).setDirectory(localPath.toFile()).call();
                 result.close();
             }
-            catch (GitAPIException | RuntimeException | IOException e) {
+            catch (GitAPIException | RuntimeException | IOException | URISyntaxException e) {
                 log.error("Exception during clone " + e);
                 // cleanup the folder to avoid problems in the future.
                 // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid a try-catch block.
@@ -282,7 +343,7 @@ public class GitService {
      */
     public void commit(Repository repo, String message) throws GitAPIException {
         Git git = new Git(repo);
-        git.commit().setMessage(message).setAllowEmpty(true).setCommitter(ARTEMIS_GIT_NAME, ARTEMIS_GIT_EMAIL).call();
+        git.commit().setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
         git.close();
     }
 
@@ -295,11 +356,11 @@ public class GitService {
      * @throws GitAPIException if the commit failed.
      */
     public void commitAndPush(Repository repo, String message, @Nullable User user) throws GitAPIException {
-        var name = user != null ? user.getName() : ARTEMIS_GIT_NAME;
-        var email = user != null ? user.getEmail() : ARTEMIS_GIT_EMAIL;
+        var name = user != null ? user.getName() : artemisGitName;
+        var email = user != null ? user.getEmail() : artemisGitEmail;
         Git git = new Git(repo);
         git.commit().setMessage(message).setAllowEmpty(true).setCommitter(name, email).call();
-        git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+        git.push().setTransportConfigCallback(sshCallback).call();
         git.close();
     }
 
@@ -311,12 +372,11 @@ public class GitService {
      * @param targetRepoUrl URI of targets repo
      * @throws GitAPIException if the repo could not be pushed
      */
-    public void pushSourceToTargetRepo(Repository sourceRepo, URL targetRepoUrl) throws GitAPIException {
+    public void pushSourceToTargetRepo(Repository sourceRepo, VcsRepositoryUrl targetRepoUrl) throws GitAPIException {
         Git git = new Git(sourceRepo);
-        var targetUri = targetRepoUrl.toString();
         try {
-            git.remoteAdd().setName("target").setUri(new URIish(targetUri)).call();
-            git.push().setRemote("target").setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+            git.remoteAdd().setName("target").setUri(new URIish(getGitUri(targetRepoUrl))).call();
+            git.push().setRemote("target").setTransportConfigCallback(sshCallback).call();
             git.remoteRemove().setRemoteName("target").call();
             git.close();
         }
@@ -361,7 +421,7 @@ public class GitService {
      */
     public void fetchAll(Repository repo) throws GitAPIException {
         Git git = new Git(repo);
-        git.fetch().setForceUpdate(true).setRemoveDeletedRefs(true).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+        git.fetch().setForceUpdate(true).setRemoveDeletedRefs(true).setTransportConfigCallback(sshCallback).call();
         git.close();
     }
 
@@ -375,7 +435,7 @@ public class GitService {
             Git git = new Git(repo);
             // flush cache of files
             repo.setContent(null);
-            git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+            git.pull().setTransportConfigCallback(sshCallback).call();
         }
         catch (GitAPIException ex) {
             log.error("Cannot pull the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
@@ -394,7 +454,7 @@ public class GitService {
         Git git = new Git(repo);
         // flush cache of files
         repo.setContent(null);
-        return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+        return git.pull().setTransportConfigCallback(sshCallback).call();
     }
 
     /**
@@ -419,14 +479,14 @@ public class GitService {
      * @return the latestHash of the given repo.
      * @throws EntityNotFoundException if retrieving the latestHash from the git repo failed.
      */
-    public ObjectId getLastCommitHash(URL repoUrl) throws EntityNotFoundException {
-        if (repoUrl == null) {
+    public ObjectId getLastCommitHash(VcsRepositoryUrl repoUrl) throws EntityNotFoundException {
+        if (repoUrl == null || repoUrl.getURL() == null) {
             return null;
         }
         // Get refs of repo without cloning it locally
         Collection<Ref> refs;
         try {
-            refs = Git.lsRemoteRepository().setRemote(repoUrl.toString()).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+            refs = Git.lsRemoteRepository().setRemote(repoUrl.getURL().toString()).setTransportConfigCallback(sshCallback).call();
         }
         catch (GitAPIException ex) {
             throw new EntityNotFoundException("Could not retrieve the last commit hash for repoUrl " + repoUrl + " due to the following exception: " + ex);
@@ -447,6 +507,7 @@ public class GitService {
      * @param lastValidSubmission The last valid submission from the database or empty, if not found
      * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
      */
+    // TODO: remove transactional
     @Transactional(readOnly = true)
     public void filterLateSubmissions(Repository repository, Optional<Submission> lastValidSubmission, ZonedDateTime filterLateSubmissionsDate) {
         if (filterLateSubmissionsDate == null) {
@@ -499,7 +560,7 @@ public class GitService {
         try {
             Git studentGit = new Git(repository);
             // Get last commit hash from template repo
-            ObjectId latestHash = getLastCommitHash(programmingExercise.getTemplateRepositoryUrlAsUrl());
+            ObjectId latestHash = getLastCommitHash(programmingExercise.getVcsTemplateRepositoryUrl());
 
             if (latestHash == null) {
                 // Template Repository is somehow empty. Should never happen
@@ -516,8 +577,8 @@ public class GitService {
             studentGit.reset().setMode(ResetCommand.ResetType.SOFT).setRef(latestHash.getName()).call();
             studentGit.add().addFilepattern(".").call();
             var optionalStudent = ((StudentParticipation) repository.getParticipation()).getStudents().stream().findFirst();
-            var name = optionalStudent.map(User::getName).orElse(ARTEMIS_GIT_NAME);
-            var email = optionalStudent.map(User::getEmail).orElse(ARTEMIS_GIT_EMAIL);
+            var name = optionalStudent.map(User::getName).orElse(artemisGitName);
+            var email = optionalStudent.map(User::getEmail).orElse(artemisGitEmail);
             studentGit.commit().setMessage("All student changes in one commit").setCommitter(name, email).call();
 
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
@@ -631,7 +692,7 @@ public class GitService {
                 git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();
                 git.add().addFilepattern(".").call();
                 git.commit().setAmend(true).setMessage(firstCommit.getFullMessage()).call();
-                git.push().setForce(true).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+                git.push().setForce(true).setTransportConfigCallback(sshCallback).call();
                 git.close();
             }
             else {
@@ -684,7 +745,7 @@ public class GitService {
      * @throws IOException if the deletion of the repository failed.
      */
     public void deleteLocalRepository(ProgrammingExerciseParticipation participation, String targetPath) throws IOException {
-        Path repoPath = new java.io.File(targetPath + folderNameForRepositoryUrl(participation.getRepositoryUrlAsUrl())).toPath();
+        Path repoPath = new java.io.File(targetPath + folderNameForRepositoryUrl(participation.getVcsRepositoryUrl())).toPath();
         cachedRepositories.remove(repoPath);
         if (Files.exists(repoPath)) {
             FileUtils.deleteDirectory(repoPath.toFile());
@@ -701,7 +762,7 @@ public class GitService {
      * @param repoUrl url of the repository.
      * @throws IOException if the deletion of the repository failed.
      */
-    public void deleteLocalRepository(URL repoUrl) {
+    public void deleteLocalRepository(VcsRepositoryUrl repoUrl) {
         deleteLocalRepository(repoUrl, REPO_CLONE_PATH);
     }
 
@@ -712,7 +773,7 @@ public class GitService {
      * @param targetPath path where the repo is located on disk
      * @throws IOException if the deletion of the repository failed.
      */
-    public void deleteLocalRepository(URL repoUrl, String targetPath) {
+    public void deleteLocalRepository(VcsRepositoryUrl repoUrl, String targetPath) {
         Path repoPath = new java.io.File(targetPath + folderNameForRepositoryUrl(repoUrl)).toPath();
         cachedRepositories.remove(repoPath);
         if (Files.exists(repoPath)) {
@@ -724,17 +785,6 @@ public class GitService {
                 log.error("Could not delete repository at " + repoPath, e);
             }
         }
-    }
-
-    /**
-     * Zip the content of a git repository (expected in default path).
-     *
-     * @param repo Local Repository Object.
-     * @throws IOException if the zipping process failed.
-     * @return path to zip file.
-     */
-    public Path zipRepository(Repository repo) throws IOException {
-        return zipRepository(repo, REPO_CLONE_PATH, false);
     }
 
     /**
@@ -776,8 +826,8 @@ public class GitService {
      * @param repoUrl URL of the remote repository.
      * @return the folderName as a string.
      */
-    public String folderNameForRepositoryUrl(URL repoUrl) {
-        String path = repoUrl.getPath();
+    private String folderNameForRepositoryUrl(VcsRepositoryUrl repoUrl) {
+        String path = repoUrl.getURL().getPath();
         path = path.replaceAll(".git$", "");
         path = path.replaceAll("/$", "");
         path = path.replaceAll("^/.*scm/", "");
@@ -790,7 +840,7 @@ public class GitService {
      * @param repoUrl URL of the remote repository.
      * @return True if repo exists on disk
      */
-    public boolean repositoryAlreadyExists(URL repoUrl) {
+    public boolean repositoryAlreadyExists(VcsRepositoryUrl repoUrl) {
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
         return Files.exists(localPath);
     }

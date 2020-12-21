@@ -3,14 +3,13 @@ package de.tum.in.www1.artemis.util;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
-import java.net.URL;
-
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -75,12 +74,12 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     @Override
-    public void mockGetRepositorySlugFromUrl(String repositorySlug, URL url) {
+    public void mockGetRepositorySlugFromUrl(String repositorySlug, VcsRepositoryUrl url) {
         doReturn(repositorySlug).when(urlService).getRepositorySlugFromUrl(url);
     }
 
     @Override
-    public void mockGetProjectKeyFromUrl(String projectKey, URL url) {
+    public void mockGetProjectKeyFromUrl(String projectKey, VcsRepositoryUrl url) {
         doReturn(projectKey).when(urlService).getProjectKeyFromUrl(url);
     }
 

@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.domain.participation;
 
-import java.net.URL;
 import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 
 public interface ProgrammingExerciseParticipation extends ParticipationInterface {
 
@@ -16,7 +16,7 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
 
     void setBuildPlanId(String buildPlanId);
 
-    URL getRepositoryUrlAsUrl();
+    VcsRepositoryUrl getVcsRepositoryUrl();
 
     ProgrammingExercise getProgrammingExercise();
 

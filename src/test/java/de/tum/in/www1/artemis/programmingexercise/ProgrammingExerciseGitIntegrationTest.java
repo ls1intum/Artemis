@@ -8,7 +8,6 @@ import static org.mockito.Mockito.doReturn;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -28,6 +27,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
@@ -70,7 +70,7 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
         localGit.commit().setMessage("add test3.json").setAuthor("test", "test@test.com").call();
 
         var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
-        doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(any(VcsRepositoryUrl.class), anyBoolean(), anyString());
         doNothing().when(gitService).fetchAll(any());
         var objectId = localGit.reflog().call().iterator().next().getNewId();
         doReturn(objectId).when(gitService).getLastCommitHash(any());

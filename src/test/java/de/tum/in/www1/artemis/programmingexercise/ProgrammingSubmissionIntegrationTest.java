@@ -74,9 +74,9 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
         var newObjectId = new ObjectId(4, 5, 2, 5, 3);
         doReturn(newObjectId).when(gitService).getLastCommitHash(null);
-        doReturn(newObjectId).when(gitService).getLastCommitHash(exercise.getTemplateParticipation().getRepositoryUrlAsUrl());
+        doReturn(newObjectId).when(gitService).getLastCommitHash(exercise.getTemplateParticipation().getVcsRepositoryUrl());
         var dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl());
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(programmingExerciseStudentParticipation.getVcsRepositoryUrl());
     }
 
     @AfterEach

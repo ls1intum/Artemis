@@ -225,9 +225,9 @@ public class GitUtilService {
         return Paths.get(getLocalRepoPathStringByType(repo));
     }
 
-    public URL getLocalRepoUrlByType(REPOS repo) {
+    public VcsRepositoryUrl getLocalRepoUrlByType(REPOS repo) {
         try {
-            return new URL("file://" + System.getProperty("user.dir") + "/" + getLocalRepoPathByType(repo));
+            return new VcsRepositoryUrl("file://" + System.getProperty("user.dir") + "/" + getLocalRepoPathByType(repo));
         }
         catch (MalformedURLException ex) {
         }

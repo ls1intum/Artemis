@@ -4,7 +4,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -286,7 +285,7 @@ public class RepositoryService {
      * @throws IOException if the repository status can't be retrieved.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
-    public boolean isClean(URL repositoryUrl) throws GitAPIException, InterruptedException {
+    public boolean isClean(VcsRepositoryUrl repositoryUrl) throws GitAPIException, InterruptedException {
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
         return gitService.isClean(repository);
     }
@@ -303,7 +302,8 @@ public class RepositoryService {
      * @throws IllegalAccessException if the user does not have access to the repository.
      * @throws InterruptedException if the repository can't be checked out.
      */
-    public Repository checkoutRepositoryByName(Exercise exercise, URL repoUrl, boolean pullOnCheckout) throws IllegalAccessException, InterruptedException, GitAPIException {
+    public Repository checkoutRepositoryByName(Exercise exercise, VcsRepositoryUrl repoUrl, boolean pullOnCheckout)
+            throws IllegalAccessException, InterruptedException, GitAPIException {
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
@@ -324,7 +324,8 @@ public class RepositoryService {
      * @throws IllegalAccessException if the user does not have access to the repository.
      * @throws InterruptedException if the repository can't be checked out.
      */
-    public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, URL repoUrl) throws IllegalAccessException, InterruptedException, GitAPIException {
+    public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, VcsRepositoryUrl repoUrl)
+            throws IllegalAccessException, InterruptedException, GitAPIException {
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean hasPermissions = authCheckService.isAtLeastInstructorInCourse(course, user);

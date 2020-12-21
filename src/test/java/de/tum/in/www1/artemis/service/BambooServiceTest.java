@@ -73,8 +73,8 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         assertThat(programmingExercise).as("Exercise was correctly set").isEqualTo(participation.getProgrammingExercise());
 
         // mock return of git path
-        doReturn(gitService.getRepositoryByLocalPath(localRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(participation.getRepositoryUrlAsUrl(), true);
-        doReturn(gitService.getRepositoryByLocalPath(localRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(participation.getRepositoryUrlAsUrl(), false);
+        doReturn(gitService.getRepositoryByLocalPath(localRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(participation.getVcsRepositoryUrl(), true);
+        doReturn(gitService.getRepositoryByLocalPath(localRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(participation.getVcsRepositoryUrl(), false);
 
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();

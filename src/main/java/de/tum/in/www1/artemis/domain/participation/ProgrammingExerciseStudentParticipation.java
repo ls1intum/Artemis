@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.participation;
 
 import java.net.MalformedURLException;
-import java.net.URL;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -13,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity
@@ -44,17 +44,10 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         this.buildPlanId = buildPlanId;
     }
 
-    /**
-     * @return the repository URL as an URL Object
-     */
     @JsonIgnore
-    public URL getRepositoryUrlAsUrl() {
-        if (repositoryUrl == null) {
-            return null;
-        }
-
+    public VcsRepositoryUrl getVcsRepositoryUrl() {
         try {
-            return new URL(repositoryUrl);
+            return new VcsRepositoryUrl(repositoryUrl);
         }
         catch (MalformedURLException e) {
             e.printStackTrace();

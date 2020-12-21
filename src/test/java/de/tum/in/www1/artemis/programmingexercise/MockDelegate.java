@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.programmingexercise;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.List;
 import java.util.Set;
 
@@ -14,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.util.Verifiable;
@@ -42,9 +42,9 @@ public interface MockDelegate {
     void mockGetBuildLogs(ProgrammingExerciseStudentParticipation participation, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> logs)
             throws URISyntaxException, JsonProcessingException;
 
-    void mockGetRepositorySlugFromUrl(String repositorySlug, URL url);
+    void mockGetRepositorySlugFromUrl(String repositorySlug, VcsRepositoryUrl url);
 
-    void mockGetProjectKeyFromUrl(String projectKey, URL url);
+    void mockGetProjectKeyFromUrl(String projectKey, VcsRepositoryUrl url);
 
     void mockGetProjectKeyFromAnyUrl(String projectKey);
 

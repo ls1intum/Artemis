@@ -145,13 +145,13 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
 
         doReturn(gitService.getRepositoryByLocalPath(templateRepository.localRepoFile.toPath())).when(gitService)
-                .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl(), true);
+                .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(), true);
 
         doReturn(gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath())).when(gitService)
-                .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl(), true);
+                .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(), true);
 
         doReturn(gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath())).when(gitService)
-                .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl(), false);
+                .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(), false);
 
         doReturn(gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath())).when(gitService)
                 .getOrCheckoutRepository((ProgrammingExerciseParticipation) participation);
@@ -273,7 +273,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
 
         doReturn(gitService.getRepositoryByLocalPath(solutionRepository.localRepoFile.toPath())).when(gitService)
-                .getOrCheckoutRepository(programmingExercise.getSolutionParticipation().getRepositoryUrlAsUrl(), true);
+                .getOrCheckoutRepository(programmingExercise.getSolutionParticipation().getVcsRepositoryUrl(), true);
 
         var files = request.getMap(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files", HttpStatus.OK, String.class, FileType.class);
 
@@ -747,7 +747,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         doAnswer((Answer<Void>) invocation -> {
             ((ProgrammingExercise) participation.getExercise()).setBuildAndTestStudentSubmissionsAfterDueDate(null);
             return null;
-        }).when(versionControlService).configureRepository(programmingExercise, ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl(),
+        }).when(versionControlService).configureRepository(programmingExercise, ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(),
                 participation.getStudents(), true);
 
         programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
@@ -774,7 +774,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         doAnswer((Answer<Void>) invocation -> {
             participation.getExercise().setDueDate(ZonedDateTime.now().minusHours(1));
             return null;
-        }).when(versionControlService).setRepositoryPermissionsToReadOnly(((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl(),
+        }).when(versionControlService).setRepositoryPermissionsToReadOnly(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(),
                 programmingExercise.getProjectKey(), participation.getStudents());
 
         programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);

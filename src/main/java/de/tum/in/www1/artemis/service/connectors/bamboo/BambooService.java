@@ -109,7 +109,8 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, URL sourceCodeRepositoryURL, URL testRepositoryURL, URL solutionRepositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
+            VcsRepositoryUrl solutionRepositoryURL) {
         bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromUrl(sourceCodeRepositoryURL),
                 urlService.getRepositorySlugFromUrl(testRepositoryURL), urlService.getRepositorySlugFromUrl(solutionRepositoryURL));
     }
@@ -117,7 +118,7 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         String buildPlanId = participation.getBuildPlanId();
-        URL repositoryUrl = participation.getRepositoryUrlAsUrl();
+        var repositoryUrl = participation.getVcsRepositoryUrl();
         String planProject = getProjectKeyFromBuildPlanId(buildPlanId);
         String planKey = participation.getBuildPlanId();
         updatePlanRepository(planProject, planKey, ASSIGNMENT_REPO_NAME, urlService.getProjectKeyFromUrl(repositoryUrl), repositoryUrl.toString(),
@@ -132,7 +133,7 @@ public class BambooService implements ContinuousIntegrationService {
         if (isEmptyCommitNecessary) {
             try {
                 ProgrammingExercise exercise = participation.getProgrammingExercise();
-                URL repositoryUrl = participation.getRepositoryUrlAsUrl();
+                var repositoryUrl = participation.getVcsRepositoryUrl();
                 Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, true);
                 // we set user to null to make sure the Artemis user is used to create the setup commit, this is important to filter this commit later in
                 // notifyPush in ProgrammingSubmissionService
@@ -489,7 +490,7 @@ public class BambooService implements ContinuousIntegrationService {
     public void updatePlanRepository(String bambooProject, String buildPlanKey, String bambooRepositoryName, String repoProjectName, String repoUrl, String templateRepositoryUrl,
             Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
         try {
-            final var repositoryName = versionControlService.get().getRepositoryName(new URL(repoUrl));
+            final var repositoryName = versionControlService.get().getRepositoryName(new VcsRepositoryUrl(repoUrl));
             continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, buildPlanKey, bambooRepositoryName, repoProjectName, repositoryName,
                     optionalTriggeredByRepositories);
         }
