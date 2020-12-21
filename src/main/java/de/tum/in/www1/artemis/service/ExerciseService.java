@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -26,6 +23,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -513,4 +511,64 @@ public class ExerciseService {
             exercise.setStudentAssignedTeamIdComputed(true);
         }
     }
+
+    /**
+     * Gets the {@link CourseExerciseStatisticsDTO} for each exercise proved in <code>exerciseIds</code>.
+     *
+     * Either the results of the last submission or the results of the last rated
+     * submission are considered for a student/team, depending on the value of <code>onlyConsiderRatedResults</code>
+     * @param onlyConsiderRatedResults - either the results of the last submission or the results of the last rated submission are considered
+     * @param exerciseIds - list of exercise ids (must be belong to the same course)
+     * @return the list of {@link CourseExerciseStatisticsDTO}
+     * @throws IllegalArgumentException if exercise is not found in database, exercise is not a course exercise or not all exercises are from the same course
+     */
+    public List<CourseExerciseStatisticsDTO> calculateExerciseStatistics(List<Long> exerciseIds, boolean onlyConsiderRatedResults) throws IllegalArgumentException {
+        List<Exercise> exercisesFromDb = new ArrayList<>();
+        for (Long exerciseId : exerciseIds) {
+            Optional<Exercise> exerciseFromDbOptional = this.exerciseRepository.findById(exerciseId);
+            if (exerciseFromDbOptional.isEmpty()) {
+                throw new IllegalArgumentException("Exercise not found in database");
+            }
+            Exercise exerciseFromDb = exerciseFromDbOptional.get();
+
+            if (!exerciseFromDb.hasCourse()) {
+                throw new IllegalArgumentException("Exercise is not a course exercise");
+            }
+
+            exercisesFromDb.add(exerciseFromDb);
+        }
+
+        List<Long> uniqueCourseIds = exercisesFromDb.stream().map(exercise -> exercise.getCourseViaExerciseGroupOrCourseMember().getId()).distinct().collect(Collectors.toList());
+        if (uniqueCourseIds.size() != 1) {
+            throw new IllegalArgumentException("Not all exercises are from the same course");
+        }
+
+        List<Object[]> resultsUnconverted = this.exerciseRepository.calculateExerciseStatisticsForCourseExercise(exerciseIds, onlyConsiderRatedResults);
+        List<CourseExerciseStatisticsDTO> resultsConverted = new ArrayList<>();
+        resultsUnconverted.forEach((record) -> {
+            CourseExerciseStatisticsDTO courseExerciseStatisticsDTO = convertExerciseStatisticsRowToDTO(record);
+            resultsConverted.add(courseExerciseStatisticsDTO);
+        });
+        return resultsConverted;
+    }
+
+    /**
+     * Converts the raw exercise statistics data from the database to the corresponding {@link CourseExerciseStatisticsDTO}
+     * @param row - row containing the data from the database query
+     * @return {@link CourseExerciseStatisticsDTO}
+     */
+    private CourseExerciseStatisticsDTO convertExerciseStatisticsRowToDTO(Object[] row) {
+        CourseExerciseStatisticsDTO courseExerciseStatisticsDTO = new CourseExerciseStatisticsDTO();
+        courseExerciseStatisticsDTO.setExerciseId(row[0] != null ? ((Number) row[0]).longValue() : null);
+        courseExerciseStatisticsDTO.setExerciseTitle(row[1] != null ? ((String) row[1]) : null);
+        courseExerciseStatisticsDTO.setExerciseMode(row[2] != null ? ((String) row[2]) : null);
+        courseExerciseStatisticsDTO.setExerciseMaxPoints(row[3] != null ? ((Number) row[3]).doubleValue() : null);
+        courseExerciseStatisticsDTO.setAverageScoreInPercent(row[4] != null ? ((Number) row[4]).doubleValue() : null);
+        courseExerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(row[5] != null ? ((Number) row[5]).intValue() : null);
+        courseExerciseStatisticsDTO.setNoOfStudentsInCourse(row[6] != null ? ((Number) row[6]).intValue() : null);
+        courseExerciseStatisticsDTO.setNoOfTeamsInCourse(row[7] != null ? ((Number) row[7]).intValue() : null);
+        courseExerciseStatisticsDTO.setParticipationRateInPercent(row[8] != null ? ((Number) row[8]).doubleValue() : null);
+        return courseExerciseStatisticsDTO;
+    }
+
 }

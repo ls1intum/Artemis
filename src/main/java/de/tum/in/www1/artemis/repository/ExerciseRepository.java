@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -53,6 +54,102 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.exerciseHints left join fetch exercise.studentQuestions left join fetch exercise.categories where exercise.id = :#{#exerciseId}")
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
+
+    @Query(value = """
+            WITH chosen_exercises(exercise_id, course_id) AS (
+                SELECT DISTINCT e.id, e.course_id
+                FROM exercise e
+                WHERE e.id IN :exerciseIds
+            ),
+                 students_in_course(student_id) -- finds id of students in exercise course that are neither TA nor instructors in the course
+                     AS
+                     (
+                         SELECT DISTINCT ug.user_id
+                         FROM user_groups ug,
+                              course c
+                         WHERE c.id = (
+                             SELECT DISTINCT e.course_id
+                             FROM chosen_exercises e
+                         )
+                           AND ug.`groups` = c.student_group_name
+                           AND ug.user_id NOT IN ( -- user should not be teaching assistant in course
+                             SELECT ug2.user_id
+                             FROM user_groups ug2
+                             WHERE ug2.`groups` = c.teaching_assistant_group_name
+                         )
+                           AND ug.user_id NOT IN ( -- user should not be instructor in course
+                             SELECT ug3.user_id
+                             FROM user_groups ug3
+                             WHERE ug3.`groups` = c.instructor_group_name
+                         )
+                     ),
+                 teams_of_course(team_id) AS
+                     (SELECT DISTINCT ts.team_id
+                      FROM team_student ts
+                      WHERE ts.student_id IN (
+                          SELECT s.student_id
+                          FROM students_in_course s
+                      )
+                     ),
+                 last_score_of_participating_student_or_team(exercise_id, student_id, team_id, participant_score)
+                     AS (
+                     SELECT DISTINCT e.exercise_id, p.student_id, p.team_id, r.score
+                     FROM chosen_exercises e
+                              JOIN participation p ON e.exercise_id = p.exercise_id
+                              JOIN submission s ON p.id = s.participation_id
+                              JOIN result r ON s.id = r.submission_id
+                     WHERE (
+                             p.team_id IN (SELECT tc.team_id FROM teams_of_course tc) -- participation has to be either from a student of the course or from a team
+                             OR
+                             p.student_id IN (SELECT sc.student_id FROM students_in_course sc)
+                         )
+                       AND r.score IS NOT NULL
+                       AND (IF(:onlyConsiderRatedResults, r.rated = 1, TRUE))
+                       AND NOT EXISTS( -- only consider the last submission (the one with the highest id)
+                             SELECT *
+                             FROM submission s2,
+                                  result r2
+                             WHERE s2.participation_id = s.participation_id
+                               AND r2.submission_id = s2.id
+                               AND r2.score IS NOT NULL
+                               AND (IF(:onlyConsiderRatedResults, r2.rated = 1, TRUE))
+                               AND s2.id > s.id
+                         )
+                 ),
+                 last_score_of_all_chosen_exercises(exercise_id, exercise_title, exercise_mode, exercise_max_points, student_id, team_id, participant_score)
+                     AS (
+                     SELECT e.id, e.title, e.mode, e.max_score, ls.student_id, ls.team_id, ls.participant_score
+                     FROM exercise e
+                              LEFT JOIN last_score_of_participating_student_or_team ls ON e.id = ls.exercise_id
+                     WHERE e.id IN (
+                         SELECT ce.exercise_id
+                         FROM chosen_exercises ce
+                     )
+                 )
+            SELECT exercise_id,
+                   exercise_title,
+                   exercise_mode,
+                   exercise_max_points,
+                   avg(participant_score) as average_score,
+                   (
+                       IF(exercise_mode = 'INDIVIDUAL', count(DISTINCT student_id), count(DISTINCT team_id))
+                       )                  AS no_of_participating_students_or_teams,
+                   (
+                       SELECT count(*)
+                       FROM students_in_course sc
+                   )                      AS no_students_in_course,
+                   (SELECT count(*)
+                    FROM teams_of_course tc
+                   )                      AS no_teams_in_course,
+                   (
+                       IF(exercise_mode = 'INDIVIDUAL',
+                          ROUND(CAST(count(DISTINCT student_id) AS FLOAT) / (SELECT CAST(count(*) AS FLOAT) from students_in_course), 4) * 100.0,
+                          ROUND(CAST(count(DISTINCT team_id) AS FLOAT) / (SELECT CAST(count(*) AS FLOAT) from teams_of_course), 4) * 100.0)
+                       )                  AS participation_rate
+            FROM last_score_of_all_chosen_exercises ls
+            GROUP BY exercise_id, exercise_title, exercise_mode, exercise_max_points
+                    """, nativeQuery = true)
+    List<Object[]> calculateExerciseStatisticsForCourseExercise(@Param("exerciseIds") List<Long> exerciseIds, @Param("onlyConsiderRatedResults") boolean onlyConsiderRatedResults);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);

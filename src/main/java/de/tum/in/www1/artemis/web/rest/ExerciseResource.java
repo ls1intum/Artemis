@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
@@ -149,6 +150,29 @@ public class ExerciseResource {
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
+    }
+
+    /**
+     * GET /exercises/course-exercise-statistics : gets various useful statistics for course exercises
+     *
+     * Gets the {@link CourseExerciseStatisticsDTO} for each exercise proved in <code>exerciseIds</code>. Either the results of the last submission or the results of the last rated
+     * submission are considered for a student/team, depending on the value of <code>onlyConsiderRatedResults</code>
+     * @param onlyConsiderRatedResults - either the results of the last submission or the results of the last rated submission are considered
+     * @param exerciseIds - list of exercise ids (must be belong to the same course)
+     * @return the ResponseEntity with status 200 (OK) and with body the list of {@link CourseExerciseStatisticsDTO}
+     */
+    @GetMapping("/exercises/course-exercise-statistics")
+    @PreAuthorize("hasAnyRole('USER','TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<CourseExerciseStatisticsDTO>> getCourseExerciseStatistics(@RequestParam(defaultValue = "true") boolean onlyConsiderRatedResults,
+            @RequestParam() List<Long> exerciseIds) {
+        log.debug("REST request to get statistics for exercises : {}", exerciseIds.toString());
+        try {
+            List<CourseExerciseStatisticsDTO> test = exerciseService.calculateExerciseStatistics(exerciseIds, onlyConsiderRatedResults);
+            return ResponseEntity.ok(test);
+        }
+        catch (Exception e) {
+            return badRequest();
+        }
     }
 
     /**
