@@ -41,7 +41,7 @@
             [collapsed]="false"
         ></jhi-collapsable-assessment-instructions>
     </div>
-    <div *ngIf="submission.explanationText" class="row mt-3">
+    <div *ngIf="submission && submission.explanationText" class="row mt-3">
         <!--// TODO: will be replaced with text assessment-->
         <textarea #textEditor id="explanationText" class="text-editor-textarea" [ngModel]="submission.explanationText" [readOnly]="true"></textarea>
     </div>

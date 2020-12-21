@@ -28,7 +28,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     exercise: ModelingExercise;
     umlModel: UMLModel; // input model for Apollon+
 
-    explanationText: string;
+    explanationText: string; // current explanation text
 
     constructor(changeDetectorReference: ChangeDetectorRef) {
         super(changeDetectorReference);
@@ -52,13 +52,13 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
             // Updates the Apollon editor model state (view) with the latest modeling submission
             this.umlModel = JSON.parse(this.studentSubmission.model);
         }
-        if (typeof this.studentSubmission.explanationText === 'string') {
-            this.explanationText = this.studentSubmission.explanationText;
-        }
+        // Updates explanation text with the latest submission
+        this.explanationText = this.studentSubmission.explanationText ?? '';
     }
 
     /**
      * Updates the model of the submission with the current Apollon editor model state (view)
+     * Updates the explanation text of the submission with the current explanation
      */
     public updateSubmissionFromView(): void {
         if (!this.modelingEditor || !this.modelingEditor.getCurrentModel()) {
@@ -70,9 +70,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
             if (diagramJson) {
                 this.studentSubmission.model = diagramJson;
             }
-            if (typeof this.explanationText === 'string') {
-                this.studentSubmission.explanationText = this.explanationText;
-            }
+            this.studentSubmission.explanationText = this.explanationText;
         }
     }
 
@@ -95,6 +93,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         this.studentSubmission.isSynced = false;
     }
 
+    // Changes isSynced to false and updates explanation text
     explanationChanged(explanation: string) {
         this.studentSubmission.isSynced = false;
         this.explanationText = explanation;

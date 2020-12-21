@@ -106,9 +106,8 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 if (this.modelingSubmission.model) {
                     this.umlModel = JSON.parse(this.modelingSubmission.model);
                 }
-                if (this.modelingSubmission.explanationText) {
-                    this.explanationText = this.modelingSubmission.explanationText;
-                }
+                // Updates the explanation text with example modeling submission's explanation
+                this.explanationText = this.modelingSubmission.explanationText ?? '';
             }
             this.usedForTutorial = this.exampleSubmission.usedForTutorial!;
             this.assessmentExplanation = this.exampleSubmission.assessmentExplanation!;
@@ -156,9 +155,8 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                     if (this.modelingSubmission.model) {
                         this.umlModel = JSON.parse(this.modelingSubmission.model);
                     }
-                    if (this.modelingSubmission.explanationText) {
-                        this.explanationText = this.modelingSubmission.explanationText;
-                    }
+                    // Updates the explanation text with example modeling submission's explanation
+                    this.explanationText = this.modelingSubmission.explanationText ?? '';
                 }
                 this.isNewSubmission = false;
 

@@ -124,6 +124,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         window.scroll(0, 0);
     }
 
+    // Updates component with the given modeling submission
     private updateModelingSubmission(modelingSubmission: ModelingSubmission) {
         if (!modelingSubmission) {
             this.jhiAlertService.error('artemisApp.apollonDiagram.submission.noSubmission');
@@ -157,9 +158,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.umlModel = JSON.parse(this.submission.model);
             this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
         }
-        if (typeof this.submission.explanationText === 'string') {
-            this.explanation = this.submission.explanationText;
-        }
+        this.explanation = this.submission.explanationText ?? '';
         this.subscribeToWebsockets();
         if (getLatestSubmissionResult(this.submission) && this.isAfterAssessmentDueDate) {
             this.result = getLatestSubmissionResult(this.submission);
@@ -257,7 +256,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.teamSyncInterval = window.setInterval(() => {
             if (!this.canDeactivate()) {
                 // make sure this.submission includes the newest content of the apollon editor
-                this.updateSubmission();
+                this.updateSubmissionWithCurrentValues();
                 // notify the team sync component to send this.submission to the server (and all online team members)
                 this.submissionChange.next(this.submission);
             }
@@ -269,7 +268,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             // don't execute the function if it is already currently executing
             return;
         }
-        this.updateSubmission();
+        this.updateSubmissionWithCurrentValues();
         this.isSaving = true;
         this.autoSaveTimer = 0;
 
@@ -305,7 +304,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             // don't execute the function if it is already currently executing
             return;
         }
-        this.updateSubmission();
+        this.updateSubmissionWithCurrentValues();
         if (this.isModelEmpty(this.submission.model)) {
             this.jhiAlertService.warning('artemisApp.modelingEditor.empty');
             return;
@@ -401,14 +400,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     /**
      * Updates the model of the submission with the current Apollon model state
+     * Updates the explanation text of submission with current explanation if explanation is defined
      */
-    updateSubmission(): void {
+    updateSubmissionWithCurrentValues(): void {
         if (!this.submission) {
             this.submission = new ModelingSubmission();
         }
-        if (typeof this.explanation === 'string') {
-            this.submission.explanationText = this.explanation;
-        }
+        this.submission.explanationText = this.explanation;
         if (!this.modelingEditor || !this.modelingEditor.getCurrentModel()) {
             return;
         }
