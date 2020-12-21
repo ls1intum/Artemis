@@ -41,15 +41,22 @@ export class SubmissionService {
                 filter((res) => !!res.body),
                 tap((res) =>
                     res.body!.forEach((submission) => {
-                        // reconnect results to submissions
-                        const tmp = getLatestSubmissionResult(submission);
-                        if (tmp) {
-                            setLatestSubmissionResult(submission, tmp);
-                            tmp!.submission = submission;
-                        }
+                        this.reconnectSubmissionAndResult(submission);
                     }),
                 ),
             );
+    }
+
+    /**
+     * reconnect submission and result
+     * @param submission
+     */
+    private reconnectSubmissionAndResult(submission: Submission) {
+        const result = getLatestSubmissionResult(submission);
+        if (result) {
+            setLatestSubmissionResult(submission, result);
+            result.submission = submission;
+        }
     }
 
     convertResultsDateFromServer(results?: Result[]) {
@@ -69,11 +76,7 @@ export class SubmissionService {
             submissions.forEach((submission: Submission) => {
                 if (submission !== null) {
                     submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : undefined;
-                    const tmp = getLatestSubmissionResult(submission);
-                    if (tmp) {
-                        setLatestSubmissionResult(submission, tmp);
-                        tmp!.submission = submission;
-                    }
+                    this.reconnectSubmissionAndResult(submission);
                     convertedSubmissions.push(submission);
                 }
             });
