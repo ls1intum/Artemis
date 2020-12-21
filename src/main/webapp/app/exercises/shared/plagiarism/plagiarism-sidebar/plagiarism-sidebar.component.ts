@@ -13,4 +13,12 @@ export class PlagiarismSidebarComponent {
     @Input() comparisons?: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[];
 
     @Output() selectIndex = new EventEmitter<string>();
+
+    handlePageLeft() {
+        console.log('Left');
+    }
+
+    handlePageRight() {
+        console.log('Right');
+    }
 }
