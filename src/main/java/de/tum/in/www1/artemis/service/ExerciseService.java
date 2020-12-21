@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -51,6 +52,8 @@ public class ExerciseService {
 
     private final QuizScheduleService quizScheduleService;
 
+    private final ResultService resultService;
+
     private final ExamRepository examRepository;
 
     private final StudentExamRepository studentExamRepository;
@@ -69,10 +72,11 @@ public class ExerciseService {
 
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
-            QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
-            AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService,
-            StudentExamRepository studentExamRepository, ExamRepository exampRepository) {
+            QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ResultService resultService,
+            ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository,
+            ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamRepository studentExamRepository, ExamRepository exampRepository) {
         this.exerciseRepository = exerciseRepository;
+        this.resultService = resultService;
         this.examRepository = exampRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -393,6 +397,39 @@ public class ExerciseService {
         exercise.setNumberOfComplaints(numberOfComplaints);
         exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
         exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+    }
+
+    /**
+     * Calculates the number of assessments done for each correction round.
+     *
+     * @param exercise the exercise for which we want to calculate the # of assessments for each correction round
+     * @param examMode
+     *
+     * return the number of assessments for each correction rounds
+     */
+    public DueDateStat[] calculateNrOfAssessmentsOfCorrectionRounds(Exercise exercise, boolean examMode, DueDateStat totalNumberOfAssessments) {
+        DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
+        if (examMode) {
+            // set number of corrections specific to each correction round
+            int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            // numberOfAssessmentsOfCorrectionRounds = new DueDateStat[numberOfCorrectionRounds];
+            if (exercise instanceof ProgrammingExercise) {
+                // numberOfAssessmentsOfCorrectionRounds = //todo remove
+            }
+            else {
+                // numberOfAssessmentsOfCorrectionRounds = //todo remove
+            }
+
+            // todo remove:
+            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[2];
+            numberOfAssessmentsOfCorrectionRounds[0] = new DueDateStat(2L, 0L);
+            numberOfAssessmentsOfCorrectionRounds[1] = new DueDateStat(3L, 0L);
+        }
+        else {
+            // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
+            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+        }
+        return numberOfAssessmentsOfCorrectionRounds;
     }
 
     /**

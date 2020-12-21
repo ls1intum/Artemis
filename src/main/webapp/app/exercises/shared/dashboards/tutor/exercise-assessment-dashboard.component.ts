@@ -205,7 +205,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     this.exam = this.exercise?.exerciseGroup?.exam;
                 }
 
-                this.getTutorAssessedSubmissions();
+                this.getAllTutorAssessedSubmissions();
 
                 // 1. We don't want to assess submissions before the exercise due date
                 // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
@@ -284,7 +284,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      * Get all the submissions from the server for which the current user is the assessor, which is the case for started or completed assessments. All these submissions get listed
      * in the exercise dashboard.
      */
-    private getTutorAssessedSubmissions(): void {
+    private getAllTutorAssessedSubmissions(): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
         if (this.isTestRun) {
             submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId);
