@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.dto.LearningGoalProgress;
+import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
 
 public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -363,16 +363,16 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getLearningGoalProgress_asStudent1_shouldReturnProgressTenOutOfTwenty() throws Exception {
-        LearningGoalProgress learningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/progress", HttpStatus.OK,
-                LearningGoalProgress.class);
-        assertThat(learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(20.0);
-        assertThat(learningGoalProgress.pointsAchievedByStudentInLearningGoal).isEqualTo(10.0);
+        IndividualLearningGoalProgress individualLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress",
+                HttpStatus.OK, IndividualLearningGoalProgress.class);
+        assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(20.0);
+        assertThat(individualLearningGoalProgress.pointsAchievedByStudentInLearningGoal).isEqualTo(10.0);
     }
 
     @Test
     @WithMockUser(username = "student42", roles = "USER")
     public void getLearningGoalProgress_asStudentNotInCourse_shouldReturnProgressTenOutOfTwenty() throws Exception {
-        request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/progress", HttpStatus.FORBIDDEN, LearningGoalProgress.class);
+        request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress", HttpStatus.FORBIDDEN, IndividualLearningGoalProgress.class);
     }
 
     @Test

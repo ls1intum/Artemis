@@ -539,7 +539,7 @@ public class ExerciseService {
         }
 
         List<Long> uniqueCourseIds = exercisesFromDb.stream().map(exercise -> exercise.getCourseViaExerciseGroupOrCourseMember().getId()).distinct().collect(Collectors.toList());
-        if (uniqueCourseIds.size() != 1) {
+        if (uniqueCourseIds.size() > 1) {
             throw new IllegalArgumentException("Not all exercises are from the same course");
         }
 
