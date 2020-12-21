@@ -400,7 +400,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     /**
      * Updates the model of the submission with the current Apollon model state
-     * Updates the explanation text of submission with current explanation if explanation is defined
+     * and the explanation text of submission with current explanation if explanation is defined
      */
     updateSubmissionWithCurrentValues(): void {
         if (!this.submission) {
