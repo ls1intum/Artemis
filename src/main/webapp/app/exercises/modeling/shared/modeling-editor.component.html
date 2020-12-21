@@ -100,7 +100,7 @@
             class="text-editor-textarea"
             [(ngModel)]="explanation"
             (keydown.tab)="onTextEditorTab(textEditor, $event)"
-            (ngModelChange)="onExplanationChanged.emit(explanation)"
+            (input)="onExplanationInput($event)"
             [readOnly]="readOnly"
         ></textarea>
     </div>

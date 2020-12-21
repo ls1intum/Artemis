@@ -37,8 +37,7 @@
                         [umlModel]="umlModel"
                         [diagramType]="modelingExercise.diagramType"
                         [withExplanation]="true"
-                        [explanation]="submission.explanationText"
-                        (onExplanationChanged)="onExplanationChanged($event)"
+                        [(explanation)]="explanation"
                     ></jhi-modeling-editor>
                     <jhi-team-submission-sync
                         *ngIf="modelingExercise.teamMode"

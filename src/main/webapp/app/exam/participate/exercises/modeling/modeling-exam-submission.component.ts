@@ -70,9 +70,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
             if (diagramJson) {
                 this.studentSubmission.model = diagramJson;
             }
-            console.log('fafasf', typeof this.explanationText);
             if (typeof this.explanationText === 'string') {
-                console.log(this.explanationText);
                 this.studentSubmission.explanationText = this.explanationText;
             }
         }

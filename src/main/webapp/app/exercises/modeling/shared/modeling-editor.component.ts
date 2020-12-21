@@ -35,7 +35,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     private onModelChanged: EventEmitter<UMLModel> = new EventEmitter<UMLModel>();
 
     @Output()
-    onExplanationChanged: EventEmitter<string> = new EventEmitter<string>();
+    explanationChange = new EventEmitter();
 
     private apollonEditor?: ApollonEditor;
     private modelSubscription: number;
@@ -248,6 +248,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
         }
     }
 
+    // Add tab to the value of textarea instead of moving to the next element in DOM
     onTextEditorTab(editor: HTMLTextAreaElement, event: KeyboardEvent) {
         event.preventDefault();
         const value = editor.value;
@@ -258,7 +259,8 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
         editor.selectionStart = editor.selectionEnd = start + 1;
     }
 
+    // Emit explanation change when textarea input changes
     onExplanationInput(event: Event) {
-        this.onExplanationChanged.emit((<HTMLTextAreaElement>event.target).value);
+        this.explanationChange.emit((<HTMLTextAreaElement>event.target).value);
     }
 }
