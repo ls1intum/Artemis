@@ -24,9 +24,6 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     predicate = 'id';
     reverse = false;
 
-    // todo NR SE remove after refactoring hmtl function calls
-    getLatestSubmissionResult = getLatestSubmissionResult;
-
     private cancelConfirmationText: string;
 
     constructor(
