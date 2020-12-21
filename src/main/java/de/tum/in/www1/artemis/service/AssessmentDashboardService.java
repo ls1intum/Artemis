@@ -54,19 +54,42 @@ public class AssessmentDashboardService {
         for (Exercise exercise : exercises) {
 
             DueDateStat numberOfSubmissions;
-            DueDateStat numberOfAssessments;
+            DueDateStat totalNumberOfAssessments;
 
             if (exercise instanceof ProgrammingExercise) {
                 numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
-                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
+                totalNumberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
             }
             else {
                 numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId(), examMode);
-                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), examMode);
+                totalNumberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), examMode);
             }
 
             exercise.setNumberOfSubmissions(numberOfSubmissions);
-            exercise.setNumberOfAssessments(numberOfAssessments);
+            exercise.setTotalNumberOfAssessments(totalNumberOfAssessments);
+
+            if (examMode) {
+                // set number of corrections specific to each correction round
+                // int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+                // DueDateStat[] specificNumberOfAssessments = new DueDateStat[numberOfCorrectionRounds];
+                // if(exercise instanceof ProgrammingExercise){
+                // numberOfAssessmentsOfCorrectionRounds = //todo remove ;
+                // }
+                // else{
+                // numberOfAssessmentsOfCorrectionRounds = //todo remove;
+                // }
+
+                // todo remove:
+                DueDateStat[] numberOfAssessmentsOfCorrectionRounds = new DueDateStat[2];
+                numberOfAssessmentsOfCorrectionRounds[0] = new DueDateStat(2L, 0L);
+                numberOfAssessmentsOfCorrectionRounds[1] = new DueDateStat(3L, 0L);
+                exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
+            }
+            else {
+                // no examMode here, so its the same as totalNumberOfAssessments
+                DueDateStat[] numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+                exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
+            }
 
             exerciseService.calculateNrOfOpenComplaints(exercise, examMode);
 

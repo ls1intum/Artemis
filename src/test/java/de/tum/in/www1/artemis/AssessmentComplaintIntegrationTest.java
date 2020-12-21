@@ -468,7 +468,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         if (participation != null && participation.getExercise() != null) {
             final var exercise = participation.getExercise();
             assertThat(exercise.getGradingInstructions()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.getNumberOfAssessments()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.getTotalNumberOfAssessments()).as("Exercise only contains title and ID").isNull();
             assertThat(exercise.getNumberOfComplaints()).as("Exercise only contains title and ID").isNull();
             assertThat(exercise.getNumberOfMoreFeedbackRequests()).as("Exercise only contains title and ID").isNull();
             assertThat(exercise.getNumberOfSubmissions()).as("Exercise only contains title and ID").isNull();

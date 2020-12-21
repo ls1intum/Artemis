@@ -229,7 +229,7 @@ public class ExerciseResource {
     }
 
     /**
-     * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, numberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
+     * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, totalNumberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
      * stats for assessment dashboard and for instructor dashboard
      *
      * @param exercise - the exercise we are interested in
@@ -241,19 +241,42 @@ public class ExerciseResource {
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
         DueDateStat numberOfSubmissions;
-        DueDateStat numberOfAssessments;
+        DueDateStat totalNumberOfAssessments;
 
         if (exercise instanceof ProgrammingExercise) {
             numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId, examMode), 0L);
-            numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exerciseId, examMode), 0L);
+            totalNumberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exerciseId, examMode), 0L);
         }
         else {
             numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId, examMode);
-            numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId, examMode);
+            totalNumberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId, examMode);
         }
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
-        stats.setNumberOfAssessments(numberOfAssessments);
+        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
+
+        if (examMode) {
+            // set number of corrections specific to each correction round
+            // int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            // DueDateStat[] specificNumberOfAssessments = new DueDateStat[numberOfCorrectionRounds];
+            // if(exercise instanceof ProgrammingExercise){
+            // numberOfAssessmentsOfCorrectionRounds = //todo remove ;
+            // }
+            // else{
+            // numberOfAssessmentsOfCorrectionRounds = //todo remove;
+            // }
+
+            // todo remove:
+            DueDateStat[] numberOfAssessmentsOfCorrectionRounds = new DueDateStat[2];
+            numberOfAssessmentsOfCorrectionRounds[0] = new DueDateStat(2L, 0L);
+            numberOfAssessmentsOfCorrectionRounds[1] = new DueDateStat(3L, 0L);
+            stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
+        }
+        else {
+            // no examMode here, so its the same as totalNumberOfAssessments
+            DueDateStat[] numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+            stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
+        }
 
         final DueDateStat numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);

@@ -58,7 +58,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     const submission = { id: 30 } as ModelingSubmission;
     const stats = {
         numberOfSubmissions: { inTime: 12, late: 5 },
-        numberOfAssessments: { inTime: 9, late: 1 },
+        totalNumberOfAssessments: { inTime: 9, late: 1 },
     } as StatsForDashboard;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
 

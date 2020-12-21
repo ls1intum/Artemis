@@ -14,12 +14,13 @@ import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/d
 export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
     @Input() public numberOfSubmissions: DueDateStat;
-    @Input() public numberOfAssessments: DueDateStat;
+    @Input() public totalNumberOfAssessments: DueDateStat;
     @Input() public numberOfComplaints: number;
     @Input() public numberOfOpenComplaints: number;
     @Input() public numberOfMoreFeedbackRequests: number;
     @Input() public numberOfOpenMoreFeedbackRequests: number;
     @Input() exercise: Exercise;
+    @Input() public numberOfAssessmentsOfCorrectionRounds: DueDateStat[];
 
     tutorParticipationStatus: TutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;
 
@@ -50,6 +51,8 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         }
         this.calculatePercentageAssessmentProgress();
         this.calculatePercentageComplaintsProgress();
+
+        console.log('number o fin tutPart-grpah', this.numberOfAssessmentsOfCorrectionRounds);
     }
 
     /**
@@ -80,10 +83,10 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
      */
     calculatePercentageAssessmentProgress() {
         if (this.numberOfSubmissions?.inTime !== 0) {
-            this.percentageInTimeAssessmentProgress = Math.floor((this.numberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
+            this.percentageInTimeAssessmentProgress = Math.floor((this.totalNumberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
         }
         if (this.numberOfSubmissions?.late !== 0) {
-            this.percentageLateAssessmentProgress = Math.floor((this.numberOfAssessments.late / this.numberOfSubmissions.late) * 100);
+            this.percentageLateAssessmentProgress = Math.floor((this.totalNumberOfAssessments.late / this.numberOfSubmissions.late) * 100);
         }
     }
 
@@ -147,7 +150,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
         if (
             this.tutorParticipationStatus === this.COMPLETED ||
-            this.numberOfSubmissions.inTime === this.numberOfAssessments.inTime ||
+            this.numberOfSubmissions.inTime === this.totalNumberOfAssessments.inTime ||
             this.numberOfOpenComplaints + this.numberOfOpenMoreFeedbackRequests === 0
         ) {
             return 'active';

@@ -579,8 +579,14 @@ public class CourseResource {
                 + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
         final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
 
+        DueDateStat totalNumberOfAssessments = resultService.countNumberOfAssessments(courseId);
+        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
+
+        // no examMode here, so its the same as totalNumberOfAssessments
+        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+        stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
+
         stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
-        stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
 
         final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseId);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
@@ -659,19 +665,19 @@ public class CourseResource {
         for (Exercise exercise : interestingExercises) {
 
             DueDateStat numberOfSubmissions;
-            DueDateStat numberOfAssessments;
+            DueDateStat totalNumberOfAssessments;
 
             if (exercise instanceof ProgrammingExercise) {
                 numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId(), false), 0L);
-                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId(), false), 0L);
+                totalNumberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId(), false), 0L);
             }
             else {
                 numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId(), false);
-                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), false);
+                totalNumberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), false);
             }
 
             exercise.setNumberOfSubmissions(numberOfSubmissions);
-            exercise.setNumberOfAssessments(numberOfAssessments);
+            exercise.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
             final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
             final long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
@@ -736,6 +742,13 @@ public class CourseResource {
 
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
+        DueDateStat totalNumberOfAssessments = resultService.countNumberOfAssessments(courseId);
+        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
+
+        // no examMode here, so its the same as totalNumberOfAssessments
+        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+        stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
+
         final long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
         final long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,
@@ -755,7 +768,7 @@ public class CourseResource {
         final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
 
         stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
-        stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
+        stats.setTotalNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
 
         final long numberOfAssessmentLocks = submissionService.countSubmissionLocks(courseId);
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);

@@ -54,7 +54,7 @@ describe('CourseStatisticsComponent', () => {
             ],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
-            numberOfAssessments: new DueDateStat(),
+            totalNumberOfAssessments: new DueDateStat(),
             numberOfComplaints: 0,
             presentationScoreEnabled: true,
         },
@@ -82,7 +82,7 @@ describe('CourseStatisticsComponent', () => {
             ],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
-            numberOfAssessments: new DueDateStat(),
+            totalNumberOfAssessments: new DueDateStat(),
             numberOfComplaints: 0,
         },
         {
@@ -94,7 +94,7 @@ describe('CourseStatisticsComponent', () => {
             studentParticipations: [],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
-            numberOfAssessments: new DueDateStat(),
+            totalNumberOfAssessments: new DueDateStat(),
             numberOfComplaints: 0,
         },
         {
@@ -134,7 +134,7 @@ describe('CourseStatisticsComponent', () => {
             ],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
-            numberOfAssessments: new DueDateStat(),
+            totalNumberOfAssessments: new DueDateStat(),
             numberOfComplaints: 0,
         },
     ] as ModelingExercise[];

@@ -62,7 +62,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     exerciseId: number;
     numberOfTutorAssessments = 0;
     numberOfSubmissions = new DueDateStat();
-    numberOfAssessments = new DueDateStat();
+    totalNumberOfAssessments = new DueDateStat();
+    numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
     numberOfComplaints = 0;
     numberOfOpenComplaints = 0;
     numberOfTutorComplaints = 0;
@@ -238,7 +239,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             (res: HttpResponse<StatsForDashboard>) => {
                 this.statsForDashboard = StatsForDashboard.from(res.body!);
                 this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
-                this.numberOfAssessments = this.statsForDashboard.numberOfAssessments;
+                this.totalNumberOfAssessments = this.statsForDashboard.totalNumberOfAssessments;
+                this.numberOfAssessmentsOfCorrectionRounds = this.statsForDashboard.numberOfAssessmentsOfCorrectionRounds;
                 this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
                 this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
                 this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
@@ -255,12 +257,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 }
 
                 if (this.numberOfSubmissions.inTime > 0) {
-                    this.totalAssessmentPercentage.inTime = Math.floor((this.numberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
+                    this.totalAssessmentPercentage.inTime = Math.floor((this.totalNumberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
                 } else {
                     this.totalAssessmentPercentage.inTime = 100;
                 }
                 if (this.numberOfSubmissions.late > 0) {
-                    this.totalAssessmentPercentage.late = Math.floor((this.numberOfAssessments.late / this.numberOfSubmissions.late) * 100);
+                    this.totalAssessmentPercentage.late = Math.floor((this.totalNumberOfAssessments.late / this.numberOfSubmissions.late) * 100);
                 } else {
                     this.totalAssessmentPercentage.late = 100;
                 }

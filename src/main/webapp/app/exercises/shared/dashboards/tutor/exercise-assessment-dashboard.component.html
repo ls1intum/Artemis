@@ -13,11 +13,12 @@
                 [exercise]="exercise"
                 [tutorParticipation]="tutorParticipation"
                 [numberOfSubmissions]="numberOfSubmissions"
-                [numberOfAssessments]="numberOfAssessments"
+                [totalNumberOfAssessments]="totalNumberOfAssessments"
                 [numberOfComplaints]="numberOfComplaints"
                 [numberOfOpenComplaints]="numberOfOpenComplaints"
                 [numberOfMoreFeedbackRequests]="numberOfMoreFeedbackRequests"
                 [numberOfOpenMoreFeedbackRequests]="numberOfOpenMoreFeedbackRequests"
+                [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
             >
             </jhi-tutor-participation-graph>
         </div>
@@ -41,18 +42,18 @@
                 <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfAssessedSubmissions' | translate }}</div>
                     <div class="col-4">
-                        {{ numberOfAssessments.inTime }} ({{ totalAssessmentPercentage.inTime }}%)
+                        {{ totalNumberOfAssessments.inTime }} ({{ totalAssessmentPercentage.inTime }}%)
                         <span *ngIf="numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
-                            >| {{ numberOfAssessments.late }} ({{ totalAssessmentPercentage.late }}%)</span
+                            >| {{ totalNumberOfAssessments.late }} ({{ totalAssessmentPercentage.late }}%)</span
                         >
                     </div>
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions' | translate }}</div>
                     <div class="col-4">
-                        {{ numberOfSubmissions.inTime - numberOfAssessments.inTime }} ({{ 100 - totalAssessmentPercentage.inTime }}%)
+                        {{ numberOfSubmissions.inTime - totalNumberOfAssessments.inTime }} ({{ 100 - totalAssessmentPercentage.inTime }}%)
                         <span *ngIf="numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
-                            >| {{ numberOfSubmissions.late - numberOfAssessments.late }} ({{ 100 - totalAssessmentPercentage.late }}%)</span
+                            >| {{ numberOfSubmissions.late - totalNumberOfAssessments.late }} ({{ 100 - totalAssessmentPercentage.late }}%)</span
                         >
                     </div>
                 </div>

@@ -597,7 +597,7 @@ public class ModelFactory {
         toBeImported.setId(template.getId());
         toBeImported.setTestCases(null);
         toBeImported.setStaticCodeAnalysisCategories(null);
-        toBeImported.setNumberOfAssessments(template.getNumberOfAssessments());
+        toBeImported.setTotalNumberOfAssessments(template.getTotalNumberOfAssessments());
         toBeImported.setNumberOfComplaints(template.getNumberOfComplaints());
         toBeImported.setNumberOfMoreFeedbackRequests(template.getNumberOfMoreFeedbackRequests());
         toBeImported.setExerciseHints(null);
