@@ -224,20 +224,27 @@
             <div class="alert alert-danger" *ngIf="submissionLockLimitReached && tutorParticipationStatus !== REVIEWED_INSTRUCTIONS">
                 {{ 'artemisApp.submission.lockedSubmissionsLimitReached' | translate }}
             </div>
-            <div *ngFor="let roundState of numberOfAssessmentsOfCorrectionRounds; let j = index">
+            <div *ngFor="let roundState of numberOfAssessmentsOfCorrectionRounds; let correctionRound = index">
                 <h4 *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isTestRun && !isExamMode">
                     {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | translate }}
                 </h4>
 
                 <h4 *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isTestRun && isExamMode">
-                    {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | translate }}, Correction Round {{ j + 1 }}:
+                    {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | translate }}, Correction Round {{ correctionRound + 1 }}:
                 </h4>
 
                 <h4 *ngIf="isTestRun">
                     {{ 'artemisApp.exerciseAssessmentDashboard.testRunSubmissions' | translate }}
                 </h4>
                 <div class="table-responsive" *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED || isTestRun">
-                    <table class="table table-striped exercise-table" *ngIf="(unassessedSubmission && unassessedSubmission?.id > 0) || submissions.length > 0; else noSubmissions">
+                    <table
+                        class="table table-striped exercise-table"
+                        *ngIf="
+                            (unassessedSubmissionByCorrectionRound && unassessedSubmissionByCorrectionRound.get(correctionRound)?.id > 0) ||
+                                submissionsByCorrectionRound.get(correctionRound)?.length > 0;
+                            else noSubmissions
+                        "
+                    >
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -250,7 +257,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr *ngFor="let submission of submissions; let i = index">
+                            <tr *ngFor="let submission of submissionsByCorrectionRound.get(correctionRound); let i = index">
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ submission.submissionDate | artemisDate }}</td>
                                 <td>
@@ -292,14 +299,18 @@
                                     </ng-container>
                                 </td>
                             </tr>
-                            <tr *ngIf="unassessedSubmission && unassessedSubmission?.id > 0 && !exercise.teamMode && !isTestRun">
+                            <tr
+                                *ngIf="
+                                    unassessedSubmissionByCorrectionRound && unassessedSubmissionByCorrectionRound.get(correctionRound)?.id > 0 && !exercise.teamMode && !isTestRun
+                                "
+                            >
                                 <td></td>
-                                <td>{{ unassessedSubmission?.submissionDate | artemisDate }}</td>
+                                <td>{{ unassessedSubmissionByCorrectionRound.get(correctionRound)?.submissionDate | artemisDate }}</td>
                                 <td></td>
                                 <td>{{ 'artemisApp.exerciseAssessmentDashboard.new' | translate }}</td>
                                 <td></td>
                                 <td *ngIf="exercise.type === ExerciseType.TEXT">
-                                    {{ 'artemisApp.exerciseAssessmentDashboard.languages.' + language(unassessedSubmission) | translate }}
+                                    {{ 'artemisApp.exerciseAssessmentDashboard.languages.' + language(unassessedSubmissionByCorrectionRound.get(correctionRound)!) | translate }}
                                 </td>
                                 <td>
                                     <button

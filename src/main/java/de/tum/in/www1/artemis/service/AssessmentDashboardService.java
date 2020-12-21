@@ -68,7 +68,8 @@ public class AssessmentDashboardService {
             exercise.setNumberOfSubmissions(numberOfSubmissions);
             exercise.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
-            final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = exerciseService.calculateNrOfAssessmentsOfCorrectionRounds(exercise, examMode, totalNumberOfAssessments);
+            final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = exerciseService.calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
+                    totalNumberOfAssessments);
             exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
             exerciseService.calculateNrOfOpenComplaints(exercise, examMode);

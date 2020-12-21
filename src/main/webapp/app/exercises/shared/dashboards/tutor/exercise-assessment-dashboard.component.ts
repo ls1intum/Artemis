@@ -14,7 +14,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
-import { getLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -73,8 +73,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     totalAssessmentPercentage = new DueDateStat();
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
-    submissions: Submission[] = [];
-    unassessedSubmission?: Submission;
+    submissionsByCorrectionRound: Map<number, Submission[]> = new Map<number, Submission[]>();
+    unassessedSubmissionByCorrectionRound?: Map<number, Submission> = new Map<number, Submission>();
     exampleSubmissionsToReview: ExampleSubmission[] = [];
     exampleSubmissionsToAssess: ExampleSubmission[] = [];
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
@@ -138,6 +138,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.isTestRun = this.route.snapshot.url[3]?.toString() === 'test-run-tutor-dashboard';
+        this.unassessedSubmissionByCorrectionRound = new Map<number, Submission>();
 
         this.loadAll();
 
@@ -313,11 +314,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             )
             .subscribe((submissions: Submission[]) => {
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
-                this.submissions = submissions.map((submission) => {
+                const sub = submissions.map((submission) => {
                     submission.participation!.submissions = [submission];
                     return submission;
                 });
-                //         setLatestResult(submissions);
+                this.submissionsByCorrectionRound!.set(0, sub); // todo NR
             });
     }
 
@@ -332,6 +333,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 tmpResult!.submission = submission;
                 tmpResult!.participation = submission.participation;
                 submission.participation!.results = [tmpResult!];
+                setLatestSubmissionResult(submission, tmpResult);
             }
             return submission;
         });
@@ -361,13 +363,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
         submissionObservable.subscribe(
             (submission: Submission) => {
-                this.unassessedSubmission = submission;
+                if (submission) {
+                    this.unassessedSubmissionByCorrectionRound!.set(0, submission);
+                }
                 this.submissionLockLimitReached = false;
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    this.unassessedSubmission = undefined;
+                    this.unassessedSubmissionByCorrectionRound = new Map<number, Submission>();
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.submissionLockLimitReached = true;
                 } else {

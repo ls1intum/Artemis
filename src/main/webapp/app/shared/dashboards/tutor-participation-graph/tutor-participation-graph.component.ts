@@ -51,8 +51,6 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         }
         this.calculatePercentageAssessmentProgress();
         this.calculatePercentageComplaintsProgress();
-
-        console.log('number o fin tutPart-grpah', this.numberOfAssessmentsOfCorrectionRounds);
     }
 
     /**

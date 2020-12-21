@@ -81,7 +81,6 @@ export class Course implements BaseEntity {
             course.exercises.forEach((exercise) => {
                 exercise.numberOfSubmissions = Object.assign(new DueDateStat(), exercise.numberOfSubmissions);
                 exercise.totalNumberOfAssessments = Object.assign(new DueDateStat(), exercise.totalNumberOfAssessments);
-                console.log('course Model: numbAofCorrRounds' + exercise.numberOfAssessmentsOfCorrectionRounds);
             });
         }
         return course;

@@ -407,7 +407,7 @@ public class ExerciseService {
      *
      * return the number of assessments for each correction rounds
      */
-    public DueDateStat[] calculateNrOfAssessmentsOfCorrectionRounds(Exercise exercise, boolean examMode, DueDateStat totalNumberOfAssessments) {
+    public DueDateStat[] calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(Exercise exercise, boolean examMode, DueDateStat totalNumberOfAssessments) {
         DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
         if (examMode) {
             // set number of corrections specific to each correction round
@@ -421,9 +421,9 @@ public class ExerciseService {
             }
 
             // todo remove:
-            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[2];
-            numberOfAssessmentsOfCorrectionRounds[0] = new DueDateStat(2L, 0L);
-            numberOfAssessmentsOfCorrectionRounds[1] = new DueDateStat(3L, 0L);
+            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[numberOfCorrectionRounds];
+            numberOfAssessmentsOfCorrectionRounds[0] = new DueDateStat(0L, 0L); // todo müssen zumindest leer gesetzt sein also DeuDateSat(0L,0L);
+            numberOfAssessmentsOfCorrectionRounds[1] = new DueDateStat(0L, 0L);
         }
         else {
             // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments

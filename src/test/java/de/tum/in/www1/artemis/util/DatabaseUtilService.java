@@ -905,6 +905,7 @@ public class DatabaseUtilService {
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
+        exam.setNumberOfCorrectionRoundsInExam(1);
         examRepository.save(exam);
         return exam;
     }
