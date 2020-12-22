@@ -86,7 +86,7 @@ public class Exam extends DomainObject {
     @Column(name = "number_of_exercises_in_exam")
     private Integer numberOfExercisesInExam;
 
-    @Column(name = "number_of_correction_rounds_in_exam", columnDefinition = "integer default 1")
+    @Column(name = "number_of_correction_rounds", columnDefinition = "integer default 1")
     private Integer numberOfCorrectionRoundsInExam;
 
     @Column(name = "examiner")
