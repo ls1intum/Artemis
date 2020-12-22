@@ -34,6 +34,7 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 import { diff_match_patch } from 'diff-match-patch';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { getMaxPointsRespectingZeroPointExercises } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -513,8 +514,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             resultStringParts[resultStringParts.length - 1] = this.exercise.maxScore ? `${totalScore} of ${this.exercise.maxScore} points` : `${totalScore} points`;
             this.manualResult!.resultString = resultStringParts.join(', ');
         }
-
-        this.manualResult!.score = this.exercise.maxScore ? Math.round((totalScore / this.exercise.maxScore!) * 100) : 100;
+        const relevantMaxPoints = getMaxPointsRespectingZeroPointExercises(this.exercise);
+        this.manualResult!.score = Math.round((totalScore / relevantMaxPoints) * 100);
         // This is done to update the result string in result.component.ts
         this.manualResult = cloneDeep(this.manualResult);
     }
@@ -530,7 +531,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private calculateTotalScore() {
         const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
-        const maxPoints = this.exercise.maxScore! + (this.exercise.bonusPoints! ?? 0.0);
+        const maxPoints = this.exercise.maxScore! > 0 ? this.exercise.maxScore! + (this.exercise.bonusPoints! ?? 0.0) : getMaxPointsRespectingZeroPointExercises(this.exercise);
         let totalScore = 0.0;
         let scoreAutomaticTests = 0.0;
         const gradingInstructions = {}; // { instructionId: noOfEncounters }

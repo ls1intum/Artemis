@@ -108,7 +108,9 @@ public class ProgrammingAssessmentService extends AssessmentService {
         }
         /** Calculated score from automatic test feedbacks, is capped to max points + bonus points,
         * see also see {@link ProgrammingExerciseGradingService#updateScore} */
-        double maxPoints = programmingExercise.getMaxScore() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+        double maxPointsRespectingZeroPoints = programmingExercise.getMaxScoreRespectingZeroPointExercises();
+        double maxPoints = programmingExercise.getMaxScore() > 0 ? maxPointsRespectingZeroPoints + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0)
+                : maxPointsRespectingZeroPoints;
         if (scoreAutomaticTests > maxPoints) {
             scoreAutomaticTests = maxPoints;
         }

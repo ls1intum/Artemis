@@ -121,7 +121,8 @@ public class AssessmentService {
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks(), exercise instanceof ProgrammingExercise);
         if (exercise instanceof ProgrammingExercise) {
             double maxPointsRespectingZeroPoints = exercise.getMaxScoreRespectingZeroPointExercises();
-            double maxPoints = exercise.getMaxScore() > 0 ? maxPointsRespectingZeroPoints + Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0) : maxPointsRespectingZeroPoints;
+            double maxPoints = exercise.getMaxScore() > 0 ? maxPointsRespectingZeroPoints + Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0)
+                    : maxPointsRespectingZeroPoints;
 
             double points = ((ProgrammingAssessmentService) this).calculateTotalScore(originalResult);
             originalResult.setScore(points, maxPoints);
