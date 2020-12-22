@@ -73,6 +73,7 @@ describe('TextFeedbackConflictsComponent', () => {
             textSubmission,
         } as unknown) as Result,
     ];
+    textSubmission.latestResult = getLatestSubmissionResult(textSubmission);
 
     getLatestSubmissionResult(textSubmission)!.feedbacks = [
         {
@@ -129,6 +130,7 @@ describe('TextFeedbackConflictsComponent', () => {
             conflictingSubmission,
         } as unknown) as Result,
     ];
+    conflictingSubmission.latestResult = getLatestSubmissionResult(conflictingSubmission);
     getLatestSubmissionResult(conflictingSubmission)!.feedbacks = [
         {
             id: 5,

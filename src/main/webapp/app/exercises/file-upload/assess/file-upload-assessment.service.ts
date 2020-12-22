@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { buildUrlWithParams } from 'app/shared/util/global.utils';
 import * as moment from 'moment';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -19,11 +18,12 @@ export class FileUploadAssessmentsService {
     constructor(private http: HttpClient) {}
 
     saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false): Observable<Result> {
-        let url = `${this.resourceUrl}/file-upload-submissions/${submissionId}/feedback`;
+        let params = new HttpParams();
         if (submit) {
-            url = buildUrlWithParams(url, ['submit=true']);
+            params = params.set('submit', 'true');
         }
-        return this.http.put<Result>(url, feedbacks);
+        const url = `${this.resourceUrl}/file-upload-submissions/${submissionId}/feedback`;
+        return this.http.put<Result>(url, feedbacks, { params });
     }
 
     updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<EntityResponseType> {
