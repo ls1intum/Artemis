@@ -177,4 +177,4 @@ export const getMaxPointsRespectingZeroPointExercises = (exercise: Exercise): nu
         return exercise.bonusPoints!;
     }
     return PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
-}
+};

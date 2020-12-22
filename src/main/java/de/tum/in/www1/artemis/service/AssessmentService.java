@@ -121,17 +121,14 @@ public class AssessmentService {
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks(), exercise instanceof ProgrammingExercise);
         if (exercise instanceof ProgrammingExercise) {
             double maxPointsRespectingZeroPoints = exercise.getMaxScoreRespectingZeroPointExercises();
-            double maxPoints = exercise.getMaxScore() > 0 ? maxPointsRespectingZeroPoints + Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0)
-                    : maxPointsRespectingZeroPoints;
-
             double points = ((ProgrammingAssessmentService) this).calculateTotalScore(originalResult);
-            originalResult.setScore(points, maxPoints);
+            originalResult.setScore(points, maxPointsRespectingZeroPoints);
             /*
              * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
              * student has achieved have changed
              */
             String[] resultStringParts = originalResult.getResultString().split(", ");
-            resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, maxPoints);
+            resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, maxPointsRespectingZeroPoints);
             originalResult.setResultString(String.join(", ", resultStringParts));
             return resultRepository.save(originalResult);
         }
