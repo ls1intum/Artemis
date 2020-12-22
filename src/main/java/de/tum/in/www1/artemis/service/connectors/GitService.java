@@ -652,16 +652,18 @@ public class GitService {
     /**
      * Deletes a local repository folder.
      *
-     * @param repo Local Repository Object.
+     * @param repository Local Repository Object.
      * @throws IOException if the deletion of the repository failed.
      */
-    public void deleteLocalRepository(Repository repo) throws IOException {
-        Path repoPath = repo.getLocalPath();
+    public void deleteLocalRepository(Repository repository) throws IOException {
+        Path repoPath = repository.getLocalPath();
         cachedRepositories.remove(repoPath);
-        repo.close();
+        // if repository is not closed, it causes weird IO issues when trying to delete the repository again
+        // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+        repository.closeBeforeDelete();
         FileUtils.deleteDirectory(repoPath.toFile());
-        repo.setContent(null);
-        log.debug("Deleted Repository at " + repoPath);
+        repository.setContent(null);
+        log.info("Deleted Repository at " + repoPath);
     }
 
     /**

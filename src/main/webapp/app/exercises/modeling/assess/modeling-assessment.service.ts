@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
@@ -19,11 +19,14 @@ export class ModelingAssessmentService {
     constructor(private http: HttpClient) {}
 
     saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false): Observable<Result> {
-        let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment`;
+        let params = new HttpParams();
         if (submit) {
-            url += '?submit=true';
+            params = params.set('submit', 'true');
         }
-        return this.http.put<Result>(url, feedbacks).map((res) => this.convertResult(res));
+        const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment`;
+        return this.http
+            .put<Result>(url, feedbacks, { params })
+            .map((res: Result) => this.convertResult(res));
     }
 
     saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<Result> {
