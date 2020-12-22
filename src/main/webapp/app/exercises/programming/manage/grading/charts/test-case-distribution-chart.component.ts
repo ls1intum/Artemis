@@ -11,16 +11,16 @@ import { ChartDataSets } from 'chart.js';
         <div>
             <div>
                 <h4>Weight Distribution</h4>
-                <p>The distribution of test case weights in the exercise. Hover over a colored block to see the test-case details.</p>
+                <p>The distribution of test case weights in the exercise. <br/> Hover over a colored block to see the test-case details.</p>
             </div>
             <div class="bg-light">
                 <jhi-chart [preset]="weightChartPreset" [datasets]="weightChartDatasets"></jhi-chart>
             </div>
-            <div>
+            <div class="mt-4">
                 <h4>Total Points</h4>
-                <p>The percentage of points given to students according to a specific test case. Hover over a colored block to see the test-case details.</p>
+                <p>The percentage of points given to students according to a specific test case. <br/> Hover over a colored block to see the test-case details.</p>
             </div>
-            <div class="bg-light">
+            <div class="bg-light" style="height: 100px">
                 <jhi-chart [preset]="pointsChartPreset" [datasets]="pointsChartDatasets"></jhi-chart>
             </div>
         </div>
