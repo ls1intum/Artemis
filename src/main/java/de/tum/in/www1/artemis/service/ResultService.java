@@ -270,7 +270,11 @@ public class ResultService {
             correctionRoundsDataStats[i] = new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exerciseId, (long) i),
                     0L);
         }
-        correctionRoundsDataStats[(int) (correctionRounds - 1)] = new DueDateStat(0L, 0L);
+
+        // todo NR, SE: Will be removed in followup PR
+        if (correctionRounds > 1) {
+            correctionRoundsDataStats[(int) (correctionRounds - 1)] = new DueDateStat(0L, 0L);
+        }
 
         return correctionRoundsDataStats;
     }
