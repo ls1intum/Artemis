@@ -5,7 +5,7 @@
     </div>
     <ng-container *ngIf="!isLoading">
         <div class="top-bar">
-            <div class="d-flex align-items-center" *ngIf="exercise.staticCodeAnalysisEnabled">
+            <div class="d-flex align-items-center" *ngIf="exercise.staticCodeAnalysisEnabled; else tabPlaceholder">
                 <div class="tab-item test-cases" (click)="selectTab('test-cases')" [ngClass]="activeTab == 'test-cases' ? 'active' : ''">
                     <b>Test Cases</b>
                 </div>
@@ -13,6 +13,7 @@
                     <b>Code Analysis</b>
                 </div>
             </div>
+            <ng-template #tabPlaceholder><div></div></ng-template>
 
             <div class="d-flex align-items-center">
                 <jhi-programming-exercise-configure-grading-status
