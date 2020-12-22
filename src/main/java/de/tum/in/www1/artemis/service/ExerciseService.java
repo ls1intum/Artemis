@@ -414,20 +414,14 @@ public class ExerciseService {
             int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
             // numberOfAssessmentsOfCorrectionRounds = new DueDateStat[numberOfCorrectionRounds];
             if (exercise instanceof ProgrammingExercise) {
-                // numberOfAssessmentsOfCorrectionRounds = //todo remove
+                // todo change to proper call
+                numberOfAssessmentsOfCorrectionRounds = resultService.countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(exercise.getId(),
+                        (long) numberOfCorrectionRounds);
             }
             else {
                 numberOfAssessmentsOfCorrectionRounds = resultService.countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(exercise.getId(),
-                        (long) numberOfCorrectionRounds, examMode);
+                        (long) numberOfCorrectionRounds);
             }
-
-            // todo remove:
-            // numberOfAssessmentsOfCorrectionRounds = new DueDateStat[numberOfCorrectionRounds];
-            // numberOfAssessmentsOfCorrectionRounds[0] = new DueDateStat(0L, 0L); // todo müssen zumindest leer gesetzt sein also DeuDateSat(0L,0L);
-            // numberOfAssessmentsOfCorrectionRounds[1] = new DueDateStat(0L, 0L);
-
-            // default behavior, until multiple correction rounds are fully supported
-            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
         }
         else {
             // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
