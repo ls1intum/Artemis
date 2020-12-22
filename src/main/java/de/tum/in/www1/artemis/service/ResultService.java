@@ -253,8 +253,33 @@ public class ResultService {
         if (examMode) {
             return new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(exerciseId), 0L);
         }
-        return new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId),
-                resultRepository.countNumberOfFinishedLateAssessmentsForExercise(exerciseId));
+        return new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId), 0L);
+    }
+
+    /**
+     * Given an exerciseId and a resultOrder, return the number of assessments for that exerciseId and resultOrder that have been completed
+     *
+     * @param exerciseId  - the exercise we are interested in
+     * @param examMode - should be used for exam exercises to ignore test run submissions
+     * @return an array of the number of assessments for the exercise for a given correction round
+     */
+
+    public DueDateStat[] countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(Long exerciseId, Long correctionRounds, boolean examMode) {
+        DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds.intValue()];
+
+        if (examMode) {
+            for (int i = 0; i < correctionRounds.intValue(); i++) {
+                try {
+                    correctionRoundsDataStats[i] = new DueDateStat(
+                            resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exerciseId, correctionRounds), 0L);
+                }
+                catch (Exception e) {
+                    correctionRoundsDataStats[i] = new DueDateStat(42l, 0l);
+                    throw e;
+                }
+            }
+        }
+        return correctionRoundsDataStats;
     }
 
     /**

@@ -529,4 +529,33 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
                 HttpStatus.BAD_REQUEST);
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void getAssessmentCountByCorrectionRound() throws Exception {
+        var now = ZonedDateTime.now();
+        TextExercise textExercise = new TextExercise();
+        textExerciseRepository.save(textExercise);
+
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setExercise(textExercise);
+
+        TextSubmission textSubmission = new TextSubmission();
+        submissionRepository.save(textSubmission);
+        textSubmission.setText("abc");
+
+        Result[] results = new Result[2];
+        Result r1 = new Result();
+        Result r2 = new Result();
+        resultRepository.save(r1);
+        resultRepository.save(r2);
+        textSubmission.addResult(r1);
+        submissionRepository.save(textSubmission);
+        textSubmission.addResult(r2);
+        submissionRepository.save(textSubmission);
+        long assessments = resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(modelingExercise.getId(), (long) 1);
+
+        assessments = resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(modelingExercise.getId(), (long) 2);
+
+    }
 }
