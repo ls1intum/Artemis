@@ -267,15 +267,10 @@ public class ResultService {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds.intValue()];
 
         for (int i = 0; i < correctionRounds.intValue(); i++) {
-            try {
-                correctionRoundsDataStats[i] = new DueDateStat(
-                        resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exerciseId, correctionRounds), 0L);
-            }
-            catch (Exception e) {
-                correctionRoundsDataStats[i] = new DueDateStat(42l, 0l);
-                throw e;
-            }
+            correctionRoundsDataStats[i] = new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exerciseId, (long) i),
+                    0L);
         }
+        correctionRoundsDataStats[(int) (correctionRounds - 1)] = new DueDateStat(0L, 0L);
 
         return correctionRoundsDataStats;
     }
