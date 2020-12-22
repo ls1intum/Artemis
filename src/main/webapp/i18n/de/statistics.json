@@ -5,7 +5,7 @@
             "day": "Tag",
             "week": "Woche",
             "month": "Monat",
-            "newWeeks": "Neue Wochen",
+            "calendarWeek": "Kalenderwoche",
             "year": "Jahr"
         },
         "title": "Benutzer Statistiken",

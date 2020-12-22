@@ -111,8 +111,8 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
                 this.chartTime = now.add(this.currentPeriod, 'months').format('MMMM YYYY');
                 break;
             case SpanType.WEEKS_ORDERED:
-                startDate = moment().subtract(12 + 12 * -this.currentPeriod, 'weeks');
-                endDate = this.currentPeriod !== 0 ? moment().subtract(12 * -this.currentPeriod + 1, 'weeks') : moment();
+                startDate = moment().subtract(11 + 12 * -this.currentPeriod, 'weeks');
+                endDate = this.currentPeriod !== 0 ? moment().subtract(12 * -this.currentPeriod, 'weeks') : moment();
                 const startWeek = startDate.week();
                 for (let i = 0; i < 12; i++) {
                     this.barChartLabels[i] = '' + (startWeek + i);

@@ -59,8 +59,8 @@ public class StatisticsService {
                 LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
                 LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
                 ZoneId zone = now.getZone();
-                startDate = localStartDate.atZone(zone).minusWeeks(12 + (12 * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
-                endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(12 * (-periodIndex) + 1).withHour(23).withMinute(59).withSecond(59)
+                startDate = localStartDate.atZone(zone).minusWeeks(11 + (12 * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
+                endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(12 * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
                         : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
                 outcome = getDataFromDatabase(span, startDate, endDate, graphType);
                 return createResultArrayForOrderedWeek(outcome, result, endDate);
@@ -83,7 +83,7 @@ public class StatisticsService {
         spanMap.put(SpanType.DAY, 24);
         spanMap.put(SpanType.WEEK, 7);
         spanMap.put(SpanType.MONTH, lengthOfMonth);
-        spanMap.put(SpanType.WEEKS_ORDERED, 13);
+        spanMap.put(SpanType.WEEKS_ORDERED, 12);
         spanMap.put(SpanType.YEAR, 12);
         return spanMap;
     }
@@ -311,7 +311,7 @@ public class StatisticsService {
             }
             else if (span == SpanType.WEEKS_ORDERED) {
                 int year = (Integer) k < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
-                start = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone()).plusWeeks((Integer) k);
+                start = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone()).plusWeeks(((Integer) k) - 1);
             }
             else {
                 start = startDate.withMonth(getMonthIndex((Month) k));
