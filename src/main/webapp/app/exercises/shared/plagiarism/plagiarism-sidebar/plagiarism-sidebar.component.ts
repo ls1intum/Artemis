@@ -32,7 +32,7 @@ export class PlagiarismSidebarComponent implements OnChanges {
     /**
      * Number of comparisons per page.
      */
-    public pageSize = 100;
+    public pageSize = 10;
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.comparisons) {
