@@ -297,8 +297,8 @@ export class ResultDetailComponent implements OnInit {
         const exercise = this.result.participation.exercise;
 
         // cap test points
-        const maxPoints = getMaxPointsRespectingZeroPointExercises(exercise);
-        const maxPointsWithBonus = exercise.maxScore! > 0 ? maxPoints + (exercise.bonusPoints || 0) : maxPoints;
+        const relevantMaxPoints = getMaxPointsRespectingZeroPointExercises(exercise);
+        const maxPointsWithBonus = exercise.maxScore! > 0 ? relevantMaxPoints + (exercise.bonusPoints ?? 0) : relevantMaxPoints;
 
         if (testCaseCredits > maxPointsWithBonus) {
             testCaseCredits = maxPointsWithBonus;
@@ -308,7 +308,7 @@ export class ResultDetailComponent implements OnInit {
         if (exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = exercise as ProgrammingExercise;
             if (programmingExercise.staticCodeAnalysisEnabled && programmingExercise.maxStaticCodeAnalysisPenalty != undefined) {
-                const maxPenaltyCredits = (maxPoints * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
+                const maxPenaltyCredits = (relevantMaxPoints * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
                 codeIssueCredits = Math.min(codeIssueCredits, maxPenaltyCredits);
             }
         }
@@ -322,7 +322,7 @@ export class ResultDetailComponent implements OnInit {
         }
 
         // the chart preset handles the capping to the maximum score of the exercise
-        this.scoreChartPreset.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, maxPoints, maxPointsWithBonus);
+        this.scoreChartPreset.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, relevantMaxPoints, maxPointsWithBonus);
     }
 
     /**

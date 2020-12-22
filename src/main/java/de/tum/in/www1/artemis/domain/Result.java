@@ -143,6 +143,7 @@ public class Result extends DomainObject {
             return formatter.format(totalScore) + " points";
         }
         else {
+            // TODO: rene: for 0 point and 0 bonusPoint exercises the resultString would be e.g. '2 of 100 Points'
             return formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points";
         }
     }

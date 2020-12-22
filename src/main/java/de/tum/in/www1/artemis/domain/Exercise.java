@@ -831,7 +831,7 @@ public abstract class Exercise extends DomainObject {
      * Returns the maximum amount of regular points for the given exercise or a replacement point amount if the exercise has zero points (neither regular nor bonus points).
      * <p>
      * <b>Must only be used for the exercise-local score calculation and display messages and never for the actual score of a student in a course.</b>
-     * @return {@link Exercise#getMaxScore()} or {@link #PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES}
+     * @return {@link Exercise#getMaxScore()}, {@link Exercise#getBonusPoints()} or {@link #PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES}
      */
     @JsonIgnore
     public double getMaxScoreRespectingZeroPointExercises() {

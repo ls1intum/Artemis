@@ -381,14 +381,8 @@ public class ProgrammingExerciseGradingService {
              * receive the full 20 points, if the points are not capped before the penalty is subtracted. With the implemented order in place
              * successfulTestPoints will be capped to 20 points first, then the penalty is subtracted resulting in 10 points.
              */
-            double maxPoints;
-            if (programmingExercise.getMaxScore() > 0) {
-                maxPoints = maxScoreRespectingZeroPointExercises + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
-            }
-            else {
-                // contains only the bonus points
-                maxPoints = maxScoreRespectingZeroPointExercises;
-            }
+            double maxPoints = programmingExercise.getMaxScore() > 0 ? maxScoreRespectingZeroPointExercises + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0)
+                    : maxScoreRespectingZeroPointExercises;
 
             if (successfulTestPoints > maxPoints) {
                 successfulTestPoints = maxPoints;
@@ -405,9 +399,7 @@ public class ProgrammingExerciseGradingService {
             }
 
             // The score is calculated as a percentage of the maximum points
-            long score = Math.round(successfulTestPoints / maxScoreRespectingZeroPointExercises * 100.0);
-
-            result.setScore(score);
+            result.setScore(successfulTestPoints, maxScoreRespectingZeroPointExercises);
         }
         else {
             result.setScore(0L);
