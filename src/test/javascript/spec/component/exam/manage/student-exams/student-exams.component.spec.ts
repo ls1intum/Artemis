@@ -5,10 +5,9 @@ import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { TranslateModule } from '@ngx-translate/core';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
@@ -29,6 +28,7 @@ import { Exam } from 'app/entities/exam.model';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { By } from '@angular/platform-browser';
+import { NgbModal, NgbModule, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -36,22 +36,29 @@ const expect = chai.expect;
 describe('StudentExamsComponent', () => {
     let studentExamsComponentFixture: ComponentFixture<StudentExamsComponent>;
     let studentExamsComponent: StudentExamsComponent;
+    let studentExams: StudentExam[] = [];
     let course: Course;
-    let student: User;
-    let studentExamOne: StudentExam;
+    let studentOne: User;
+    let studentTwo: User;
+    let studentExamOne: StudentExam | undefined;
+    let studentExamTwo: StudentExam | undefined;
     let exam: Exam;
+    let modalService: NgbModal;
 
     beforeEach(() => {
         course = new Course();
         course.id = 1;
 
-        student = new User();
-        student.id = 1;
+        studentOne = new User();
+        studentOne.id = 1;
+
+        studentTwo = new User();
+        studentTwo.id = 2;
 
         exam = new Exam();
         exam.course = course;
         exam.id = 1;
-        exam.registeredUsers = [student];
+        exam.registeredUsers = [studentOne, studentTwo];
         exam.endDate = moment();
         exam.startDate = exam.endDate.subtract(60, 'seconds');
 
@@ -59,10 +66,18 @@ describe('StudentExamsComponent', () => {
         studentExamOne.exam = exam;
         studentExamOne.id = 1;
         studentExamOne.workingTime = 70;
-        studentExamOne.user = student;
+        studentExamOne.user = studentOne;
+
+        studentExamTwo = new StudentExam();
+        studentExamTwo.exam = exam;
+        studentExamTwo.id = 1;
+        studentExamTwo.workingTime = 70;
+        studentExamTwo.user = studentOne;
+
+        studentExams = [studentExamOne, studentExamTwo];
 
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), ArtemisDataTableModule, NgbModalModule, NgxDatatableModule, FontAwesomeTestingModule, TranslateModule.forRoot()],
+            imports: [RouterTestingModule.withRoutes([]), ArtemisDataTableModule, MockModule(NgbModule), NgxDatatableModule, FontAwesomeTestingModule, TranslateModule.forRoot()],
             declarations: [
                 StudentExamsComponent,
                 MockComponent(StudentExamStatusComponent),
@@ -88,12 +103,60 @@ describe('StudentExamsComponent', () => {
                             }),
                         );
                     },
+                    generateStudentExams: () => {
+                        return of(
+                            new HttpResponse({
+                                body: [studentExamOne!, studentExamTwo!],
+                                status: 200,
+                            }),
+                        );
+                    },
+                    generateMissingStudentExams: () => {
+                        return of(
+                            new HttpResponse({
+                                body: studentExamTwo ? [studentExamTwo] : [],
+                                status: 200,
+                            }),
+                        );
+                    },
+                    startExercises: () => {
+                        return of(
+                            new HttpResponse({
+                                body: 2,
+                                status: 200,
+                            }),
+                        );
+                    },
+                    unlockAllRepositories: () => {
+                        return of(
+                            new HttpResponse({
+                                body: 2,
+                                status: 200,
+                            }),
+                        );
+                    },
+                    lockAllRepositories: () => {
+                        return of(
+                            new HttpResponse({
+                                body: 2,
+                                status: 200,
+                            }),
+                        );
+                    },
+                    evaluateQuizExercises: () => {
+                        return of(
+                            new HttpResponse({
+                                body: 1,
+                                status: 200,
+                            }),
+                        );
+                    },
                 }),
                 MockProvider(StudentExamService, {
                     findAllForExam: () => {
                         return of(
                             new HttpResponse({
-                                body: [studentExamOne],
+                                body: studentExams,
                                 status: 200,
                             }),
                         );
@@ -138,6 +201,7 @@ describe('StudentExamsComponent', () => {
             .then(() => {
                 studentExamsComponentFixture = TestBed.createComponent(StudentExamsComponent);
                 studentExamsComponent = studentExamsComponentFixture.componentInstance;
+                modalService = TestBed.inject(NgbModal);
             });
     });
 
@@ -160,10 +224,10 @@ describe('StudentExamsComponent', () => {
         expect(findExamSpy).to.have.been.calledOnce;
         expect(findAllStudentExamsSpy).to.have.been.calledOnce;
         expect(studentExamsComponent.course).to.deep.equal(course);
-        expect(studentExamsComponent.studentExams).to.deep.equal([studentExamOne]);
+        expect(studentExamsComponent.studentExams).to.deep.equal(studentExams);
         expect(studentExamsComponent.exam).to.deep.equal(exam);
         expect(studentExamsComponent.hasStudentsWithoutExam).to.equal(false);
-        expect(studentExamsComponent.longestWorkingTime).to.equal(studentExamOne.workingTime);
+        expect(studentExamsComponent.longestWorkingTime).to.equal(studentExamOne!.workingTime);
         expect(studentExamsComponent.isExamOver).to.equal(false);
         expect(studentExamsComponent.isLoading).to.equal(false);
     });
@@ -188,9 +252,9 @@ describe('StudentExamsComponent', () => {
     it('should automatically assess modeling and text exercises of unsubmitted student exams', () => {
         const examManagementService = TestBed.inject(ExamManagementService);
 
-        studentExamOne.workingTime = 10;
-        exam.startDate = moment().subtract(20, 'seconds');
-        exam.endDate = moment().subtract(10, 'seconds');
+        studentExamOne!.workingTime = 10;
+        exam.startDate = moment().subtract(200, 'seconds');
+        exam.endDate = moment().subtract(100, 'seconds');
         exam.gracePeriod = 0;
         course.isAtLeastInstructor = true;
 
@@ -203,5 +267,166 @@ describe('StudentExamsComponent', () => {
         expect(assessButton).to.exist;
         assessButton.nativeElement.click();
         expect(assessSpy).to.have.been.calledOnce;
+    });
+
+    it('should generate student exams if there are none', () => {
+        const examManagementService = TestBed.inject(ExamManagementService);
+        course.isAtLeastInstructor = true;
+        exam.startDate = moment().add(120, 'seconds');
+
+        studentExams = [];
+        studentExamsComponentFixture.detectChanges();
+
+        expect(studentExamsComponent.isLoading).to.equal(false);
+        expect(studentExamsComponent.isExamStarted).to.equal(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
+        expect(course).to.exist;
+
+        studentExams = [studentExamOne!, studentExamTwo!];
+
+        const generateStudentExamsSpy = sinon.spy(examManagementService, 'generateStudentExams');
+        const generateStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateStudentExamsButton'));
+        expect(generateStudentExamsButton).to.exist;
+        expect(generateStudentExamsButton.nativeElement.disabled).to.equal(false);
+        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).to.equal(false);
+        generateStudentExamsButton.nativeElement.click();
+        expect(generateStudentExamsSpy).to.have.been.calledOnce;
+        expect(studentExamsComponent.studentExams.length).to.equal(2);
+    });
+
+    it('should generate student exams after warning the user that the existing are deleted', () => {
+        const examManagementService = TestBed.inject(ExamManagementService);
+        course.isAtLeastInstructor = true;
+        exam.startDate = moment().add(120, 'seconds');
+
+        studentExamsComponentFixture.detectChanges();
+        let componentInstance = { title: String, text: String };
+        const result = new Promise((resolve) => resolve(true));
+        let modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+
+        expect(studentExamsComponent.isLoading).to.equal(false);
+        expect(studentExamsComponent.isExamStarted).to.equal(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
+        expect(course).to.exist;
+        const generateStudentExamsSpy = sinon.spy(examManagementService, 'generateStudentExams');
+        const generateStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateStudentExamsButton'));
+        expect(generateStudentExamsButton).to.exist;
+        expect(generateStudentExamsButton.nativeElement.disabled).to.equal(false);
+        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).to.equal(true);
+        generateStudentExamsButton.nativeElement.click();
+        expect(modalServiceOpenStub).to.have.been.called;
+        expect(generateStudentExamsSpy).to.have.been.calledOnce;
+        expect(studentExamsComponent.studentExams.length).to.equal(2);
+        modalServiceOpenStub.restore();
+    });
+
+    it('should generate missing student exams', () => {
+        const examManagementService = TestBed.inject(ExamManagementService);
+        course.isAtLeastInstructor = true;
+        exam.startDate = moment().add(120, 'seconds');
+        studentExams = [studentExamOne!];
+        studentExamsComponentFixture.detectChanges();
+        studentExams = [studentExamOne!, studentExamTwo!];
+
+        expect(studentExamsComponent.hasStudentsWithoutExam).to.equal(true);
+        expect(studentExamsComponent.isLoading).to.equal(false);
+        expect(studentExamsComponent.isExamStarted).to.equal(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
+        expect(studentExamsComponent.studentExams.length).to.equal(1);
+        expect(course).to.exist;
+        const generateStudentExamsSpy = sinon.spy(examManagementService, 'generateMissingStudentExams');
+        const generateMissingStudentExamsButton = studentExamsComponentFixture.debugElement.query(By.css('#generateMissingStudentExamsButton'));
+        expect(generateMissingStudentExamsButton).to.exist;
+        expect(generateMissingStudentExamsButton.nativeElement.disabled).to.equal(false);
+        expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).to.equal(true);
+        generateMissingStudentExamsButton.nativeElement.click();
+        expect(generateStudentExamsSpy).to.have.been.calledOnce;
+        expect(studentExamsComponent.studentExams.length).to.equal(2);
+    });
+
+    it('should start the exercises of students', () => {
+        const examManagementService = TestBed.inject(ExamManagementService);
+        course.isAtLeastInstructor = true;
+        exam.startDate = moment().add(120, 'seconds');
+        studentExamsComponentFixture.detectChanges();
+
+        expect(studentExamsComponent.isLoading).to.equal(false);
+        expect(studentExamsComponent.isExamStarted).to.equal(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
+        expect(course).to.exist;
+
+        const startExercisesSpy = sinon.spy(examManagementService, 'startExercises');
+        const startExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#startExercisesButton'));
+        expect(startExercisesButton).to.exist;
+        expect(startExercisesButton.nativeElement.disabled).to.equal(false);
+
+        startExercisesButton.nativeElement.click();
+        expect(startExercisesSpy).to.have.been.calledOnce;
+    });
+
+    it('should unlock all repositories of the students', () => {
+        let componentInstance = { title: String, text: String };
+        const result = new Promise((resolve) => resolve(true));
+        let modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+
+        const examManagementService = TestBed.inject(ExamManagementService);
+        course.isAtLeastInstructor = true;
+
+        studentExamsComponentFixture.detectChanges();
+        expect(studentExamsComponent.isLoading).to.equal(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
+        expect(course).to.exist;
+        const unlockAllRepositories = sinon.spy(examManagementService, 'unlockAllRepositories');
+        const unlockAllRepositoriesButton = studentExamsComponentFixture.debugElement.query(By.css('#handleUnlockAllRepositoriesButton'));
+        expect(unlockAllRepositoriesButton).to.exist;
+        expect(unlockAllRepositoriesButton.nativeElement.disabled).to.equal(false);
+        unlockAllRepositoriesButton.nativeElement.click();
+        expect(modalServiceOpenStub).to.have.been.called;
+        expect(unlockAllRepositories).to.have.been.calledOnce;
+
+        modalServiceOpenStub.restore();
+    });
+
+    it('should lock all repositories of the students', () => {
+        let componentInstance = { title: String, text: String };
+        const result = new Promise((resolve) => resolve(true));
+        let modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+
+        const examManagementService = TestBed.inject(ExamManagementService);
+        course.isAtLeastInstructor = true;
+
+        studentExamsComponentFixture.detectChanges();
+        expect(studentExamsComponent.isLoading).to.equal(false);
+        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
+        expect(course).to.exist;
+        const lockAllRepositories = sinon.spy(examManagementService, 'lockAllRepositories');
+        const lockAllRepositoriesButton = studentExamsComponentFixture.debugElement.query(By.css('#lockAllRepositoriesButton'));
+        expect(lockAllRepositoriesButton).to.exist;
+        expect(lockAllRepositoriesButton.nativeElement.disabled).to.equal(false);
+        lockAllRepositoriesButton.nativeElement.click();
+        expect(modalServiceOpenStub).to.have.been.called;
+        expect(lockAllRepositories).to.have.been.calledOnce;
+
+        modalServiceOpenStub.restore();
+    });
+
+    it('should evaluate Quiz exercises', () => {
+        const examManagementService = TestBed.inject(ExamManagementService);
+        course.isAtLeastInstructor = true;
+        exam.startDate = moment().subtract(200, 'seconds');
+        exam.endDate = moment().subtract(100, 'seconds');
+
+        studentExamsComponentFixture.detectChanges();
+        expect(studentExamsComponent.isLoading).to.equal(false);
+        expect(studentExamsComponent.isExamOver).to.equal(true);
+        expect(studentExamsComponent.course.isAtLeastInstructor).to.equal(true);
+        expect(course).to.exist;
+        const evaluateQuizExercises = sinon.spy(examManagementService, 'evaluateQuizExercises');
+        const evaluateQuizExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#evaluateQuizExercisesButton'));
+
+        expect(evaluateQuizExercisesButton).to.exist;
+        expect(evaluateQuizExercisesButton.nativeElement.disabled).to.equal(false);
+        evaluateQuizExercisesButton.nativeElement.click();
+        expect(evaluateQuizExercises).to.have.been.calledOnce;
     });
 });
