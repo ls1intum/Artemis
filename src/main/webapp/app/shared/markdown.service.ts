@@ -92,13 +92,14 @@ export class ArtemisMarkdownService {
      *
      * @param {string} markdownText the original markdown text
      * @param {showdown.ShowdownExtension[]} extensions to use for markdown parsing
+     * @param {string[]} allowedHtmlTags to allow during sanitization
      * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
      */
-    safeHtmlForMarkdown(markdownText?: string, extensions: showdown.ShowdownExtension[] = []): SafeHtml {
+    safeHtmlForMarkdown(markdownText?: string, extensions: showdown.ShowdownExtension[] = [], allowedHtmlTags: string[] = []): SafeHtml {
         if (!markdownText || markdownText === '') {
             return '';
         }
-        const convertedString = this.htmlForMarkdown(markdownText, [...extensions, ...addCSSClass]);
+        const convertedString = this.htmlForMarkdown(markdownText, [...extensions, ...addCSSClass], allowedHtmlTags);
         return this.sanitizer.bypassSecurityTrustHtml(convertedString);
     }
 
@@ -108,9 +109,10 @@ export class ArtemisMarkdownService {
      *
      * @param {string} markdownText the original markdown text
      * @param {showdown.ShowdownExtension[]} extensions to use for markdown parsing
+     * @param {string[]} allowedHtmlTags to allow during sanitization
      * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
      */
-    htmlForMarkdown(markdownText?: string, extensions: showdown.ShowdownExtension[] = []): string {
+    htmlForMarkdown(markdownText?: string, extensions: showdown.ShowdownExtension[] = [], allowedHtmlTags: string[] = []): string {
         if (!markdownText || markdownText === '') {
             return '';
         }
@@ -126,7 +128,10 @@ export class ArtemisMarkdownService {
             extensions: [...extensions, showdownKatex(), ...addCSSClass],
         });
         const html = converter.makeHtml(markdownText);
-        return DOMPurify.sanitize(html);
+        if (allowedHtmlTags.length === 0) {
+            return DOMPurify.sanitize(html);
+        }
+        return DOMPurify.sanitize(html, { ALLOWED_TAGS: allowedHtmlTags });
     }
 
     /**
