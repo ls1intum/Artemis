@@ -1052,6 +1052,6 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
     private static double convertPoints(double points, boolean withZeroTotalScore) {
         // 42 are the default exercise points
-        return withZeroTotalScore ? points * ProgrammingExerciseGradingService.PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES / 42 : points;
+        return withZeroTotalScore ? points * ProgrammingExercise.PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES / 42 : points;
     }
 }

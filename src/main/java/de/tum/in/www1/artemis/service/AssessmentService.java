@@ -68,8 +68,8 @@ public class AssessmentService {
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
-        double maxScore = exercise.getMaxScore();
-        double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
+        double maxPointsRespectingZeroPoints = exercise.getMaxScoreRespectingZeroPointExercises();
+        double maxPoints = exercise.getMaxScore() > 0 ? maxPointsRespectingZeroPoints + Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0) : maxPointsRespectingZeroPoints;
 
         // Exam results and manual results of programming exercises are always to rated
         if (exercise.hasExerciseGroup() || exercise instanceof ProgrammingExercise) {
@@ -81,10 +81,10 @@ public class AssessmentService {
 
         result.setCompletionDate(ZonedDateTime.now());
         // Take bonus points into account to achieve a result score > 100%
-        double totalScore = calculateTotalScore(calculatedScore, maxScore + bonusPoints);
+        double totalScore = calculateTotalScore(calculatedScore, maxPoints);
         // Set score and resultString according to maxScore, to establish results with score > 100%
-        result.setScore(totalScore, maxScore);
-        result.setResultString(totalScore, maxScore);
+        result.setScore(totalScore, maxPoints);
+        result.setResultString(totalScore, maxPoints);
         return resultRepository.save(result);
     }
 
@@ -120,14 +120,17 @@ public class AssessmentService {
         // Update the result that was complained about with the new feedback
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks(), exercise instanceof ProgrammingExercise);
         if (exercise instanceof ProgrammingExercise) {
+            double maxPointsRespectingZeroPoints = exercise.getMaxScoreRespectingZeroPointExercises();
+            double maxPoints = exercise.getMaxScore() > 0 ? maxPointsRespectingZeroPoints + Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0) : maxPointsRespectingZeroPoints;
+
             double points = ((ProgrammingAssessmentService) this).calculateTotalScore(originalResult);
-            originalResult.setScore(points, exercise.getMaxScore());
+            originalResult.setScore(points, maxPoints);
             /*
              * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
              * student has achieved have changed
              */
             String[] resultStringParts = originalResult.getResultString().split(", ");
-            resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, exercise.getMaxScore());
+            resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, maxPoints);
             originalResult.setResultString(String.join(", ", resultStringParts));
             return resultRepository.save(originalResult);
         }
