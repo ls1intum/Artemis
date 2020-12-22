@@ -114,6 +114,35 @@ public class GitService {
     }
 
     /**
+     * Get the local repository for a given participation.
+     * If the local repo does not exist yet, it will be checked out.
+     *
+     * This method will include the participation ID in the local path of the repository so
+     * JPlag can refer back to the correct participation.
+     *
+     * @param participation Participation the remote repository belongs to.
+     * @param targetPath path where the repo is located on disk
+     * @return the repository if it could be checked out
+     * @throws InterruptedException if the repository could not be checked out.
+     * @throws GitAPIException if the repository could not be checked out.
+     */
+    public Repository getOrCheckoutRepositoryForJPlag(ProgrammingExerciseParticipation participation, String targetPath) throws InterruptedException, GitAPIException {
+        URL repoUrl = participation.getRepositoryUrlAsUrl();
+        String repoFolderName = folderNameForRepositoryUrl(repoUrl);
+
+        // Replace the exercise name in the repository folder name with the participation ID.
+        // This is necessary to be able to refer back to the correct participation after the
+        // JPlag detection run.
+        String updatedRepoFolderName = repoFolderName.replaceAll("/[a-zA-Z0-9]*-", "/" + participation.getId() + "-");
+        Path localPath = Path.of(targetPath, updatedRepoFolderName);
+
+        Repository repository = getOrCheckoutRepository(repoUrl, localPath, true);
+        repository.setParticipation(participation);
+
+        return repository;
+    }
+
+    /**
      * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
      * Saves the repo in the default path
      *
@@ -138,9 +167,21 @@ public class GitService {
      * @throws GitAPIException if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(URL repoUrl, boolean pullOnGet, String targetPath) throws InterruptedException, GitAPIException {
-
         Path localPath = new java.io.File(targetPath + folderNameForRepositoryUrl(repoUrl)).toPath();
+        return getOrCheckoutRepository(repoUrl, localPath, pullOnGet);
+    }
 
+    /**
+     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
+     *
+     * @param repoUrl   The remote repository.
+     * @param localPath The local path to clone the repository to.
+     * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
+     * @return the repository if it could be checked out.
+     * @throws InterruptedException if the repository could not be checked out.
+     * @throws GitAPIException if the repository could not be checked out.
+     */
+    public Repository getOrCheckoutRepository(URL repoUrl, Path localPath, boolean pullOnGet) throws InterruptedException, GitAPIException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         Repository repository = getRepositoryByLocalPath(localPath);
         // TODO: in case the actual git repository in the file system was deleted (e.g. by accident or through some administrator), we will get an exception here
@@ -169,14 +210,17 @@ public class GitService {
             try {
                 log.debug("Cloning from " + repoUrl + " to " + localPath);
                 cloneInProgressOperations.put(localPath, localPath);
+                // make sure the directory to copy into is empty
+                FileUtils.deleteDirectory(localPath.toFile());
                 Git result = Git.cloneRepository().setURI(repoUrl.toString()).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
                         .setDirectory(localPath.toFile()).call();
                 result.close();
             }
-            catch (GitAPIException | RuntimeException e) {
+            catch (GitAPIException | RuntimeException | IOException e) {
                 log.error("Exception during clone " + e);
-                // cleanup the folder to avoid problems in the future
-                localPath.toFile().delete();
+                // cleanup the folder to avoid problems in the future.
+                // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid a try-catch block.
+                FileUtils.deleteQuietly(localPath.toFile());
                 throw new GitException(e);
             }
             finally {
@@ -616,16 +660,18 @@ public class GitService {
     /**
      * Deletes a local repository folder.
      *
-     * @param repo Local Repository Object.
+     * @param repository Local Repository Object.
      * @throws IOException if the deletion of the repository failed.
      */
-    public void deleteLocalRepository(Repository repo) throws IOException {
-        Path repoPath = repo.getLocalPath();
+    public void deleteLocalRepository(Repository repository) throws IOException {
+        Path repoPath = repository.getLocalPath();
         cachedRepositories.remove(repoPath);
-        repo.close();
+        // if repository is not closed, it causes weird IO issues when trying to delete the repository again
+        // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+        repository.closeBeforeDelete();
         FileUtils.deleteDirectory(repoPath.toFile());
-        repo.setContent(null);
-        log.debug("Deleted Repository at " + repoPath);
+        repository.setContent(null);
+        log.info("Deleted Repository at " + repoPath);
     }
 
     /**
@@ -651,6 +697,9 @@ public class GitService {
         if (Files.exists(repoPath)) {
             FileUtils.deleteDirectory(repoPath.toFile());
             log.debug("Deleted Repository at " + repoPath);
+        }
+        else {
+            log.info("Cannot delete local repository at " + repoPath + " because it does not exist!");
         }
     }
 

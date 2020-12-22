@@ -224,6 +224,7 @@
             "registerForCourse": "Register For Course",
             "exercise": "Exercises",
             "scores": "Scores",
+            "exams": "Exams",
             "manageHints": "Manage Hints",
             "addExternalSubmission": "Add External Submission",
             "questionsAndAnswers": "Q&A"
@@ -302,5 +303,6 @@
         "connected": "Connected",
         "disconnected": "Disconnected"
     },
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "completed": "Completed"
 }

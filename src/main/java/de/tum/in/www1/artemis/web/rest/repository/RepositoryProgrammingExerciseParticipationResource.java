@@ -135,6 +135,24 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.getFile(participationId, filename);
     }
 
+    /**
+     * GET /repository/{participationId}/files-content
+     *
+     * Gets the files of the repository with content
+     *
+     * @param participationId participation of the student/template/solution
+     * @return the ResponseEntity with status 200 (OK) and a map of files with their content
+     */
+    @GetMapping(value = "/repository/{participationId}/files-content", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId) {
+        return super.executeAndCheckForExceptions(() -> {
+            Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
+            var filesWithContent = super.repositoryService.getFilesWithContent(repository);
+            return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
+        });
+    }
+
     @Override
     @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)

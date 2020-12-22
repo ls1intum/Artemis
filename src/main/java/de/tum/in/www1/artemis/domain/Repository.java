@@ -80,4 +80,9 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     public void setFiles(Collection<File> files) {
         this.files = files;
     }
+
+    public void closeBeforeDelete() {
+        super.close();
+        super.doClose();
+    }
 }

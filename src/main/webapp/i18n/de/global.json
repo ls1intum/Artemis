@@ -223,6 +223,7 @@
             "registerForCourse": "Für Kurs anmelden",
             "exercise": "Aufgaben",
             "scores": "Bewertungen",
+            "exams": "Klausuren",
             "manageHints": "Verwalte Hinweise",
             "addExternalSubmission": "Externe Einreichung anlegen",
             "questionsAndAnswers": "Q&A"
@@ -301,5 +302,6 @@
         "connected": "Verbunden",
         "disconnected": "Verbindung getrennt"
     },
-    "loading": "Lädt..."
+    "loading": "Lädt...",
+    "completed": "abgeschlossen"
 }

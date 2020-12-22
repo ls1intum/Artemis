@@ -73,6 +73,11 @@ public class ProgrammingSubmission extends Submission {
     }
 
     @Override
+    public boolean isEmpty() {
+        return false; // programming submissions cannot be empty, they are only created for actual commits in the git repository
+    }
+
+    @Override
     public String toString() {
         return "ProgrammingSubmission{" + "commitHash='" + commitHash + '\'' + ", buildFailed=" + buildFailed + ", buildArtifact=" + buildArtifact + '}';
     }

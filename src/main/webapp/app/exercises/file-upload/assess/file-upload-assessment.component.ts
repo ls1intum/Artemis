@@ -334,7 +334,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             .saveAssessment(this.assessments, this.submission.id!, true)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(
-                (result) => {
+                (result: Result) => {
                     this.result = result;
                     this.updateParticipationWithResult();
                     this.jhiAlertService.clear();
@@ -363,13 +363,13 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     private updateParticipationWithResult(): void {
         this.showResult = false;
         this.changeDetectorRef.detectChanges();
-        this.participation.results![0] = this.result;
+        this.participation.results![0] = this.result!;
         this.showResult = true;
         this.changeDetectorRef.detectChanges();
     }
 
     getComplaint(): void {
-        this.complaintService.findByResultId(this.result.id!).subscribe(
+        this.complaintService.findByResultId(this.result!.id!).subscribe(
             (res) => {
                 if (!res.body) {
                     return;

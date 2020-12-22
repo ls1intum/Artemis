@@ -111,7 +111,7 @@ public class LectureResource {
         }
 
         // Make sure that the original references are preserved.
-        Lecture originalLecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lecture.getId()).get();
+        Lecture originalLecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
 
         // NOTE: Make sure that all references are preserved here
         lecture.setLectureUnits(originalLecture.getLectureUnits());
@@ -123,12 +123,13 @@ public class LectureResource {
     /**
      * GET /courses/:courseId/lectures : get all the lectures of a course for the course administration page
      *
+     * @param withLectureUnits if set associated lecture units will also be loaded
      * @param courseId the courseId of the course for which all lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
     @GetMapping(value = "/courses/{courseId}/lectures")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -136,7 +137,16 @@ public class LectureResource {
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
             return forbidden();
         }
-        return ResponseEntity.ok().body(lectureService.findAllByCourseId(courseId));
+
+        Set<Lecture> lectures;
+        if (withLectureUnits) {
+            lectures = lectureService.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
+        }
+        else {
+            lectures = lectureService.findAllByCourseIdWithAttachments(courseId);
+        }
+
+        return ResponseEntity.ok().body(lectures);
     }
 
     /**
@@ -149,7 +159,7 @@ public class LectureResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Lecture> getLecture(@PathVariable Long id) {
         log.debug("REST request to get Lecture : {}", id);
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(id);
+        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(id);
         if (lectureOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -203,7 +213,7 @@ public class LectureResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        Optional<Lecture> optionalLecture = lectureRepository.findById(id);
+        Optional<Lecture> optionalLecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(id);
         if (optionalLecture.isEmpty()) {
             return ResponseEntity.notFound().build();
         }

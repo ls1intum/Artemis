@@ -19,91 +19,97 @@ import de.tum.in.www1.artemis.domain.User;
 public interface StatisticsRepository extends JpaRepository<User, Long> {
 
     @Query("""
-            select count(distinct u.login)
-            from User u, PersistentAuditEvent p
-            where u.login like p.principal and p.auditEventType = 'AUTHENTICATION_SUCCESS' and u.login not like '%test%' and p.auditEventDate >= :#{#span}
+            select s.submissionDate as day, count(s.id) as amount
+            from Submission s
+            where s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate}
+            group by s.submissionDate
+            order by s.submissionDate asc
             """)
-    Integer getLoggedInUsers(@Param("span") Instant span);
+    List<Map<String, Object>> getTotalSubmissions(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select count(distinct u.login)
+            select s.submissionDate as day, u.login as username
             from User u, Submission s, StudentParticipation p
-            where s.participation.id = p.id and p.student.id = u.id and s.submissionDate >= :#{#span} and u.login not like '%test%'
+            where s.participation.id = p.id and p.student.id = u.id and s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate} and u.login not like '%test%'
+            order by s.submissionDate asc
             """)
-    Integer getActiveUsers(@Param("span") ZonedDateTime span);
+    List<Map<String, Object>> getActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select count(e.id)
+            select e.releaseDate as day, count(e.id) as amount
             from Exercise e
-            where e.releaseDate >= :#{#span} and e.releaseDate <= :#{#now}
+            where e.releaseDate >= :#{#startDate} and e.releaseDate <= :#{#endDate}
+            group by e.releaseDate
+            order by e.releaseDate asc
             """)
-    Integer getReleasedExercises(@Param("span") ZonedDateTime span, @Param("now") ZonedDateTime now);
+    List<Map<String, Object>> getReleasedExercises(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select count(e.id)
+            select e.dueDate as day, count(e.id) as amount
             from Exercise e
-            where e.dueDate >= :#{#span} and e.dueDate <= :#{#now}
+            where e.dueDate >= :#{#startDate} and e.dueDate <= :#{#endDate}
+            group by e.dueDate
+            order by e.dueDate asc
             """)
-    Integer getExerciseDeadlines(@Param("span") ZonedDateTime span, @Param("now") ZonedDateTime now);
+    List<Map<String, Object>> getExercisesDue(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select count(e.id)
+            select p.auditEventDate as day, u.login as username
+            from User u, PersistentAuditEvent p
+            where u.login = p.principal and p.auditEventType = 'AUTHENTICATION_SUCCESS' and u.login not like '%test%' and p.auditEventDate >= :#{#startDate} and p.auditEventDate <= :#{#endDate}
+            order by p.auditEventDate asc
+            """)
+    List<Map<String, Object>> getLoggedInUsers(@Param("startDate") Instant startDate, @Param("endDate") Instant endDate);
+
+    @Query("""
+            select e.endDate as day, count(e.id) as amount
             from Exam e
-            where e.endDate >= :#{#span} and e.endDate <= :#{#now}
+            where e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate}
+            group by e.endDate
+            order by e.endDate asc
             """)
-    Integer getConductedExams(@Param("span") ZonedDateTime span, @Param("now") ZonedDateTime now);
+    List<Map<String, Object>> getConductedExams(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select count(se.id)
+            select e.endDate as day, count(se.id) as amount
             from StudentExam se, Exam e
-            where se.submitted = true and se.exam = e and e.endDate >= :#{#span}
+            where se.submitted = true and se.exam = e and e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate}
+            group by e.endDate
+            order by e.endDate asc
             """)
-    Integer getExamParticipations(@Param("span") ZonedDateTime span);
+    List<Map<String, Object>> getExamParticipations(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select sum(size(e.registeredUsers))
+            select e.endDate as day, sum(size(e.registeredUsers)) as amount
             from Exam e
-            where e.endDate >= :#{#span} and e.endDate <= :#{#now}
+            where e.endDate >= :#{#startDate} and e.endDate <= :#{#endDate}
+            group by e.endDate
+            order by e.endDate asc
             """)
-    Integer getExamRegistrations(@Param("span") ZonedDateTime span, @Param("now") ZonedDateTime now);
+    List<Map<String, Object>> getExamRegistrations(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select count(distinct r.assessor.id)
+            select r.completionDate as day, r.assessor.login as username
             from Result r
-            where (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI-AUTOMATIC') and r.completionDate >= :#{#span}
+            where (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI-AUTOMATIC') and r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and r.assessor.login not like '%test%'
             """)
-    Integer getActiveTutors(@Param("span") ZonedDateTime span);
+    List<Map<String, Object>> getActiveTutors(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select count(r.id)
+            select r.completionDate as day, count(r.id) as amount
             from Result r
-            where r.completionDate >= :#{#span}
+            where r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate}
+            group by r.completionDate
+            order by r.completionDate
             """)
-    Integer getCreatedResults(@Param("span") ZonedDateTime span);
+    List<Map<String, Object>> getCreatedResults(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select sum(size(r.feedbacks))
+            select r.completionDate as day, sum(size(r.feedbacks)) as amount
             from Result r
-            where r.completionDate >= :#{#span}
+            where r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate}
+            group by r.completionDate
+            order by r.completionDate
             """)
-    Integer getResultFeedbacks(@Param("span") ZonedDateTime span);
-
-    @Query("""
-            select s.submissionDate as day, count(s.id) as amount
-            from Submission s
-            where s.submissionDate > :#{#startDate}
-            group by s.submissionDate
-            order by s.submissionDate asc
-            """)
-    List<Map<String, Object>> getTotalSubmissions(ZonedDateTime startDate);
-
-    @Query("""
-            select s.submissionDate as day, count(s.id) as amount
-            from Submission s
-            where s.submissionDate > :#{#startDate} and s.submissionDate < :#{#endDate}
-            group by s.submissionDate
-            order by s.submissionDate asc
-            """)
-    List<Map<String, Object>> getTotalSubmissionsYesterday(ZonedDateTime startDate, ZonedDateTime endDate);
-
+    List<Map<String, Object>> getResultFeedbacks(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 }

@@ -474,8 +474,8 @@ public class ParticipationService {
      * @param participationId of submission
      * @return List<submission>
      */
-    public List<Submission> getSubmissionsWithParticipationId(long participationId) {
-        return submissionRepository.findAllWithResultsByParticipationId(participationId);
+    public List<Submission> getSubmissionsWithResultsAndAssessorsByParticipationId(long participationId) {
+        return submissionRepository.findAllWithResultsAndAssessorByParticipationId(participationId);
     }
 
     /**
@@ -922,6 +922,21 @@ public class ParticipationService {
             return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
         }
         return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
+    }
+
+    /**
+     * Get all exercise participations belonging to exercise and student.
+     *
+     * @param exercise  the exercise
+     * @param studentId the id of student
+     * @return the list of exercise participations belonging to exercise and student
+     */
+    public List<StudentParticipation> findByExerciseAndStudentId(Exercise exercise, Long studentId) {
+        if (exercise.isTeamMode()) {
+            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
+            return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), team.getId())).orElse(List.of());
+        }
+        return studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), studentId);
     }
 
     /**
