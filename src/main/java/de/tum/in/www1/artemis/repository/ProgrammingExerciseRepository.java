@@ -182,9 +182,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             AND s.id = (select max(id) from p.submissions)
             AND r.assessor IS NOT NULL
             AND r.rated = TRUE
-            AND r.submission.submitted = TRUE
+            AND s.submitted = TRUE
             AND r.completionDate IS NOT NULL
-            AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
+            AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
             AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)
             AND :correctionRound = 1L
             """)
