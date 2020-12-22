@@ -31,6 +31,7 @@ export class StudentQuestionComponent implements OnInit {
     isEditMode: boolean;
     EditorMode = EditorMode;
     courseId: number;
+    allowedHtmlTags: string[] = ['b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup'];
 
     constructor(private studentQuestionService: StudentQuestionService, private route: ActivatedRoute) {}
 
