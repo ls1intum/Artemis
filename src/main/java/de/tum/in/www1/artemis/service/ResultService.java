@@ -257,12 +257,12 @@ public class ResultService {
     }
 
     /**
-     * Given an exerciseId and a resultOrder, return the number of assessments for that exerciseId and resultOrder that have been completed
+     * Given an exerciseId and a correctionRound, return the number of assessments for that exerciseId and correctionRound that have been finished
      *
      * @param exerciseId  - the exercise we are interested in
+     * @param correctionRounds - the correction round we want finished assessments for
      * @return an array of the number of assessments for the exercise for a given correction round
      */
-
     public DueDateStat[] countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(Long exerciseId, Long correctionRounds) {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds.intValue()];
 

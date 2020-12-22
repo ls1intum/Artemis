@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -971,6 +972,25 @@ public class ProgrammingExerciseService {
         }
         log.debug("countAssessmentsByExerciseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
         return count;
+    }
+
+    /**
+     * Given an exerciseId and a correctionRound, return the number of assessments for that exerciseId and correctionRound that have been finished
+     *
+     * @param exerciseId  - the exercise we are interested in
+     * @param correctionRounds - the correction round we want finished assessments for
+     * @return an array of the number of assessments for the exercise for a given correction round
+     */
+    public DueDateStat[] countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(Long exerciseId, Long correctionRounds) {
+        DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds.intValue()];
+
+        for (int i = 0; i < correctionRounds.intValue(); i++) {
+            correctionRoundsDataStats[i] = new DueDateStat(
+                    programmingExerciseRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exerciseId, (long) i), 0L);
+        }
+        correctionRoundsDataStats[(int) (correctionRounds - 1)] = new DueDateStat(0L, 0L);
+
+        return correctionRoundsDataStats;
     }
 
     /**

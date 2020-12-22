@@ -415,7 +415,7 @@ public class ExerciseService {
             // numberOfAssessmentsOfCorrectionRounds = new DueDateStat[numberOfCorrectionRounds];
             if (exercise instanceof ProgrammingExercise) {
                 // todo change to proper call
-                numberOfAssessmentsOfCorrectionRounds = resultService.countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(exercise.getId(),
+                numberOfAssessmentsOfCorrectionRounds = programmingExerciseService.countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(exercise.getId(),
                         (long) numberOfCorrectionRounds);
             }
             else {
