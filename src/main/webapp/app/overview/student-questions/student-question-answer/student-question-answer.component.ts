@@ -32,8 +32,8 @@ export class StudentQuestionAnswerComponent implements OnInit {
     courseId: number;
 
     // Only allow certain html tags and no attributes
-    allowedHtmlTags: string[] = ['b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p'];
-    allowedHtmlAttributes: string[] = [];
+    allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p'];
+    allowedHtmlAttributes: string[] = ['href'];
 
     constructor(private studentQuestionAnswerService: StudentQuestionAnswerService, private route: ActivatedRoute) {}
 
