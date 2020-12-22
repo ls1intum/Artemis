@@ -10,11 +10,18 @@ import { ChartDataSets } from 'chart.js';
     template: `
         <div>
             <div>
-                <h4>Test Case Distribution</h4>
-                <p>The distribution of test cases across the metrices 'Weight', 'Weight + Bonus' and 'Points'. Hover over a colored block to see the test-case details.</p>
+                <h4>Weight Distribution</h4>
+                <p>The distribution of test case weights in the exercise. Hover over a colored block to see the test-case details.</p>
             </div>
             <div class="bg-light">
-                <jhi-chart [preset]="chartPreset" [datasets]="chartDatasets"></jhi-chart>
+                <jhi-chart [preset]="weightChartPreset" [datasets]="weightChartDatasets"></jhi-chart>
+            </div>
+            <div>
+                <h4>Total Points</h4>
+                <p>The percentage of points given to students according to a specific test case. Hover over a colored block to see the test-case details.</p>
+            </div>
+            <div class="bg-light">
+                <jhi-chart [preset]="pointsChartPreset" [datasets]="pointsChartDatasets"></jhi-chart>
             </div>
         </div>
     `,
@@ -27,8 +34,11 @@ export class TestCaseDistributionChartComponent implements OnChanges {
 
     @Output() testCaseColorsChange = new EventEmitter<{}>();
 
-    chartPreset = new HorizontalStackedBarChartPreset(['Weight', 'Weight & Bonus', 'Points'], ['all weights', 'all weights and bonuses', 'all achieved points']);
-    chartDatasets: ChartDataSets[] = [];
+    weightChartPreset = new HorizontalStackedBarChartPreset(['Weight', 'Weight & Bonus'], ['all weights', 'all weights and bonuses']);
+    pointsChartPreset = new HorizontalStackedBarChartPreset(['Points'], ['all exercise points']);
+
+    weightChartDatasets: ChartDataSets[] = [];
+    pointsChartDatasets: ChartDataSets[] = [];
 
     ngOnChanges(): void {
         // sum of all weights
@@ -51,23 +61,38 @@ export class TestCaseDistributionChartComponent implements OnChanges {
         // total of achievable points for this exercise
         const totalPoints = maxPoints * (this.totalParticipations || 0);
 
-        this.chartDatasets = testCaseScores.map((element, i) => ({
-            label: element.testCase.testName!,
-            data: [
-                // relative weight percentage
-                totalWeight > 0 ? (element.testCase.weight! / totalWeight) * 100 : 0,
-                // relative score percentage
-                element.score * 100,
-                // relative points percentage
-                element.stats && totalPoints > 0 ? ((element.stats.numPassed! * element.score * maxPoints) / totalPoints) * 100 : 0,
-            ],
-            backgroundColor: this.getColor(i / this.testCases.length, 50),
-            hoverBackgroundColor: this.getColor(i / this.testCases.length, 60),
-        }));
+        const testCaseColors = {};
+
+        this.weightChartDatasets = [];
+        this.pointsChartDatasets = [];
+
+        for (let i in testCaseScores) {
+            const element = testCaseScores[i];
+
+            const label = element.testCase.testName!;
+            const backgroundColor = this.getColor(+i / this.testCases.length, 50);
+            const hoverBackgroundColor = this.getColor(+i / this.testCases.length, 60);
+
+            testCaseColors[label] = backgroundColor;
+
+            this.weightChartDatasets.push({
+                label, backgroundColor, hoverBackgroundColor, data: [
+                    // relative weight percentage
+                    totalWeight > 0 ? (element.testCase.weight! / totalWeight) * 100 : 0,
+                    // relative score percentage
+                    element.score * 100,
+                ],
+            });
+
+            this.pointsChartDatasets.push({
+                label, backgroundColor, hoverBackgroundColor, data: [
+                    // relative points percentage
+                    element.stats && totalPoints > 0 ? ((element.stats.numPassed! * element.score * maxPoints) / totalPoints) * 100 : 0,
+                ],
+            });
+        }
 
         // update colors for test case table
-        const testCaseColors = {};
-        this.chartDatasets.forEach(({ label, backgroundColor }) => (testCaseColors[label!] = backgroundColor));
         this.testCaseColorsChange.emit(testCaseColors);
     }
 
