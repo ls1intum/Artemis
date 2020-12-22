@@ -83,8 +83,8 @@ public class AssessmentService {
         // Take bonus points into account to achieve a result score > 100%
         double totalScore = calculateTotalScore(calculatedScore, maxPoints);
         // Set score and resultString according to maxScore, to establish results with score > 100%
-        result.setScore(totalScore, maxPoints);
-        result.setResultString(totalScore, maxPoints);
+        result.setScore(totalScore, maxPointsRespectingZeroPoints);
+        result.setResultString(totalScore, maxPointsRespectingZeroPoints);
         return resultRepository.save(result);
     }
 
