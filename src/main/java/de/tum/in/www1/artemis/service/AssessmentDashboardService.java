@@ -68,30 +68,9 @@ public class AssessmentDashboardService {
             exercise.setNumberOfSubmissions(numberOfSubmissions);
             exercise.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
-            // final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = exerciseService.calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
-            // totalNumberOfAssessments);
-            // exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
-
-            if (examMode) {
-                // set number of corrections specific to each correction round
-                int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
-                DueDateStat[] numberOfAssessmentsOfCorrectionRounds; // = new DueDateStat[numberOfCorrectionRounds];
-                if (exercise instanceof ProgrammingExercise) {
-                    numberOfAssessmentsOfCorrectionRounds = new DueDateStat[numberOfCorrectionRounds];
-                    // todo needs correct call
-                }
-                else {
-                    numberOfAssessmentsOfCorrectionRounds = resultService.countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(exercise.getId(),
-                            (long) numberOfCorrectionRounds, examMode);
-                }
-                exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
-
-            }
-            else {
-                // no examMode here, so its the same as totalNumberOfAssessments
-                DueDateStat[] numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
-                exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
-            }
+            final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = exerciseService.calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
+                    totalNumberOfAssessments);
+            exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
             exerciseService.calculateNrOfOpenComplaints(exercise, examMode);
 
