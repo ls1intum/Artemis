@@ -630,7 +630,7 @@ public class ParticipationResource {
         StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
         User user = userService.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
-        List<Submission> submissions = participationService.getSubmissionsWithParticipationId(participationId);
+        List<Submission> submissions = participationService.getSubmissionsWithResultsAndAssessorsByParticipationId(participationId);
         return ResponseEntity.ok(submissions);
     }
 
