@@ -55,7 +55,7 @@ public class StatisticsService {
                 endDate = now.minusMonths(-periodIndex).withHour(23).withMinute(59).withSecond(59);
                 outcome = getDataFromDatabase(span, startDate, endDate, graphType);
                 return createResultArrayForMonth(outcome, result, endDate);
-            case WEEKS_ORDERED:
+            case QUARTER:
                 LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
                 LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
                 ZoneId zone = now.getZone();
@@ -63,7 +63,7 @@ public class StatisticsService {
                 endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(12 * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
                         : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
                 outcome = getDataFromDatabase(span, startDate, endDate, graphType);
-                return createResultArrayForOrderedWeek(outcome, result, endDate);
+                return createResultArrayForQuarter(outcome, result, endDate);
             case YEAR:
                 startDate = now.minusYears(1 - periodIndex).plusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 lengthOfMonth = YearMonth.of(now.minusYears(-periodIndex).getYear(), now.minusYears(-periodIndex).getMonth()).lengthOfMonth();
@@ -83,7 +83,7 @@ public class StatisticsService {
         spanMap.put(SpanType.DAY, 24);
         spanMap.put(SpanType.WEEK, 7);
         spanMap.put(SpanType.MONTH, lengthOfMonth);
-        spanMap.put(SpanType.WEEKS_ORDERED, 12);
+        spanMap.put(SpanType.QUARTER, 12);
         spanMap.put(SpanType.YEAR, 12);
         return spanMap;
     }
@@ -217,7 +217,7 @@ public class StatisticsService {
      * @param endDate the endDate
      * @return an array, containing the values for each bar in the graph
      */
-    private Integer[] createResultArrayForOrderedWeek(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
+    private Integer[] createResultArrayForQuarter(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
         int week;
         for (Map<String, Object> map : outcome) {
             ZonedDateTime date = (ZonedDateTime) map.get("day");
@@ -283,7 +283,7 @@ public class StatisticsService {
             else if (span == SpanType.WEEK || span == SpanType.MONTH) {
                 index = date.getDayOfMonth();
             }
-            else if (span == SpanType.WEEKS_ORDERED) {
+            else if (span == SpanType.QUARTER) {
                 index = getWeekOfDate(date);
             }
             else {
@@ -309,7 +309,7 @@ public class StatisticsService {
             else if (span == SpanType.WEEK || span == SpanType.MONTH) {
                 start = startDate.withDayOfMonth((Integer) k);
             }
-            else if (span == SpanType.WEEKS_ORDERED) {
+            else if (span == SpanType.QUARTER) {
                 int year = (Integer) k < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
                 start = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone()).plusWeeks(((Integer) k) - 1);
             }

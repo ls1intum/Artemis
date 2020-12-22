@@ -5,7 +5,7 @@
             "day": "Day",
             "week": "Week",
             "month": "Month",
-            "calendarWeek": "Calendar week",
+            "quarter": "Quarter",
             "year": "Year"
         },
         "title": "User statistics",
