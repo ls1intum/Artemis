@@ -822,4 +822,28 @@ public abstract class Exercise extends DomainObject {
         }
     }
 
+    /**
+     * Placeholder point value for the score calculation of zero-point exercises to avoid the score always being 0.
+     */
+    public static final double PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES = 100.0;
+
+    /**
+     * Returns the maximum amount of regular points for the given exercise or a replacement point amount if the exercise has zero points (neither regular nor bonus points).
+     * <p>
+     * <b>Must only be used for the exercise-local score calculation and display messages and never for the actual score of a student in a course.</b>
+     * @return {@link Exercise#getMaxScore()} or {@link #PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES}
+     */
+    @JsonIgnore
+    public double getMaxScoreRespectingZeroPointExercises() {
+        boolean hasNormalPoints = Objects.requireNonNullElse(getMaxScore(), 0.0) > 0.0;
+        boolean hasBonusPoints = Objects.requireNonNullElse(getBonusPoints(), 0.0) > 0.0;
+        if (hasNormalPoints) {
+            return getMaxScore();
+        }
+        if (hasBonusPoints) {
+            return getBonusPoints();
+        }
+        return PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
+    }
+
 }

@@ -30,11 +30,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ProgrammingExerciseGradingService {
 
-    /**
-     * Placeholder point value for the score calculation of zero-point exercises to avoid the score always being 0.
-     */
-    public static final double PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES = 100.0;
-
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingService.class);
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
@@ -365,7 +360,7 @@ public class ProgrammingExerciseGradingService {
             List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
         if (successfulTestCases.size() > 0) {
 
-            double maxScoreRespectingZeroPointExercises = getMaxScoreRespectingZeroPointExercises(programmingExercise);
+            double maxScoreRespectingZeroPointExercises = programmingExercise.getMaxScoreRespectingZeroPointExercises();
             double weightSum = allTests.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
 
             // calculate the achieved points from the passed test cases
@@ -463,7 +458,7 @@ public class ProgrammingExerciseGradingService {
          * points due to static code analysis issues.
          */
         final var maxExercisePenaltyPoints = (double) Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(100) / 100.0
-                * getMaxScoreRespectingZeroPointExercises(programmingExercise);
+                * programmingExercise.getMaxScoreRespectingZeroPointExercises();
         if (codeAnalysisPenaltyPoints > maxExercisePenaltyPoints) {
             codeAnalysisPenaltyPoints = maxExercisePenaltyPoints;
         }
@@ -491,31 +486,12 @@ public class ProgrammingExerciseGradingService {
         }
         if (result.isManualResult()) {
             // Calculate different scores for totalScore calculation and add points and maxScore to result string
-            double maxScore = getMaxScoreRespectingZeroPointExercises(exercise);
+            double maxScore = exercise.getMaxScoreRespectingZeroPointExercises();
             double points = programmingAssessmentService.calculateTotalScore(result);
             result.setScore(points, maxScore);
             newResultString += ", " + result.createResultString(points, maxScore);
         }
         result.setResultString(newResultString);
-    }
-
-    /**
-     * Returns the maximum amount of regular points for the given exercise or a replacement point amount if the exercise has zero points (neither regular nor bonus points).
-     * <p>
-     * <b>Must only be used for the exercise-local score calculation and display messages and never for the actual score of a student in a course.</b>
-     * @param programmingExercise the exercise to the the maxScore for
-     * @return {@link Exercise#getMaxScore()} or {@link #PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES}
-     */
-    private static double getMaxScoreRespectingZeroPointExercises(ProgrammingExercise programmingExercise) {
-        boolean hasNormalPoints = Objects.requireNonNullElse(programmingExercise.getMaxScore(), 0.0) > 0.0;
-        boolean hasBonusPoints = Objects.requireNonNullElse(programmingExercise.getBonusPoints(), 0.0) > 0.0;
-        if (hasNormalPoints) {
-            return programmingExercise.getMaxScore();
-        }
-        if (hasBonusPoints) {
-            return programmingExercise.getBonusPoints();
-        }
-        return PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
     }
 
     /**
