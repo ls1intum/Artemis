@@ -47,7 +47,7 @@
             "onlineEditor": "Online Editor",
             "allowOfflineIde": {
                 "title": "Offline IDE erlauben",
-                "alert": "Es muss mindestens eine zwischen Offline IDE und Online Editor ausgewählt sein"
+                "alert": "Es muss mindestens eine Option (Offline IDE oder Online Editor) ausgewählt sein"
             },
             "offlineIde": "Offline IDE",
             "showTestNamesToStudents": "Zeige die Test Namen den Studierenden",
