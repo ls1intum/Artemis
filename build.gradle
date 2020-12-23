@@ -202,9 +202,9 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:${fasterxml_version}"
     implementation "com.fasterxml.jackson.core:jackson-annotations:${fasterxml_version}"
     implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
-    implementation "com.hazelcast:hazelcast:4.1"
+    implementation "com.hazelcast:hazelcast:${hazelcast_version}"
+    implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-hibernate53:2.2.0"
-    implementation "com.hazelcast:hazelcast-spring:4.1"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate:hibernate-core"
     implementation "com.zaxxer:HikariCP:3.4.5"
@@ -231,13 +231,13 @@ dependencies {
     implementation "org.springframework.ldap:spring-ldap-core:2.3.3.RELEASE"
     implementation "org.springframework.data:spring-data-ldap:2.4.2"
 
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.2.6.RELEASE"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:2.2.6.RELEASE"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.12.RELEASE"
 
     implementation "io.netty:netty-all:4.1.56.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.0.2"
-    implementation "org.springframework:spring-messaging:5.3.1"
+    implementation "org.springframework:spring-messaging:5.3.2"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
