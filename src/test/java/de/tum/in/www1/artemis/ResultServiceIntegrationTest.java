@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -74,6 +75,9 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
+    StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
     UserRepository userRepo;
@@ -532,30 +536,44 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void getAssessmentCountByCorrectionRound() throws Exception {
-        var now = ZonedDateTime.now();
+    public void testGetAssessmentCountByCorrectionRound() throws Exception {
+        // exercise
         TextExercise textExercise = new TextExercise();
         textExerciseRepository.save(textExercise);
 
+        // participation
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setExercise(textExercise);
+        studentParticipationRepository.save(studentParticipation);
 
+        // submission
         TextSubmission textSubmission = new TextSubmission();
-        submissionRepository.save(textSubmission);
+        textSubmission.setParticipation(studentParticipation);
+        textSubmission.setSubmitted(true);
         textSubmission.setText("abc");
+        textSubmission = submissionRepository.save(textSubmission);
 
-        Result[] results = new Result[2];
-        Result r1 = new Result();
-        Result r2 = new Result();
-        resultRepository.save(r1);
-        resultRepository.save(r2);
+        // result 1
+        Result r1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, "text result string 1", "instructor1", new ArrayList<>());
+        r1.setRated(true);
+        r1 = database.addFeedbackToResults(r1);
+        r1.setSubmission(textSubmission);
+
+        // result 2
+        Result r2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, "text result string 2", "tutor1", new ArrayList<>());
+        r2.setRated(true);
+        r2 = database.addFeedbackToResults(r2);
+        r2.setSubmission(textSubmission);
+
         textSubmission.addResult(r1);
-        submissionRepository.save(textSubmission);
+        textSubmission = submissionRepository.save(textSubmission);
+
         textSubmission.addResult(r2);
-        submissionRepository.save(textSubmission);
-        long assessments = resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(modelingExercise.getId(), (long) 1);
+        textSubmission = submissionRepository.save(textSubmission);
 
-        assessments = resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(modelingExercise.getId(), (long) 2);
-
+        long assessments = resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(textExercise.getId(), (long) 1);
+        assertThat(assessments).isEqualTo(0);
+        assessments = resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(textExercise.getId(), (long) 2);
+        assertThat(assessments).isEqualTo(1);
     }
 }

@@ -36,7 +36,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         submission.addResult(result2);
 
         var savedSubmission = submissionRepository.save(submission);
-        submission = submissionRepository.findWithEagerResultsById(savedSubmission.getId()).orElseThrow();
+        submission = submissionRepository.findWithEagerResultsAndAssessorById(savedSubmission.getId()).orElseThrow();
 
         assert submission.getResults() != null;
         assertThat(submission.getResults().size()).isEqualTo(2);
@@ -67,7 +67,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         submission.addResult(result2);
         submission = submissionRepository.save(submission);
 
-        submission = submissionRepository.findWithEagerResultsById(submission.getId()).orElseThrow();
+        submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).orElseThrow();
 
         assert submission.getResults() != null;
         assertThat(submission.getResults().size()).isEqualTo(2);
@@ -104,7 +104,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         result2.setResultString("New Result #2");
         result2 = resultRepository.save(result2);
 
-        submission = submissionRepository.findWithEagerResultsById(submission.getId()).orElseThrow();
+        submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).orElseThrow();
 
         assert submission.getResults() != null;
         assertThat(submission.getResults().size()).isEqualTo(2);

@@ -1257,7 +1257,7 @@ public class DatabaseUtilService {
         result.setSubmission(submission);
         submission.addResult(result);
         var savedSubmission = submissionRepository.save(submission);
-        return submissionRepository.findWithEagerResultsById(savedSubmission.getId()).orElseThrow();
+        return submissionRepository.findWithEagerResultsAndAssessorById(savedSubmission.getId()).orElseThrow();
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
