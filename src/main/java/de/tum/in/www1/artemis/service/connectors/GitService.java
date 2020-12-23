@@ -4,8 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,6 +25,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
@@ -33,16 +34,14 @@ import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.*;
-import org.eclipse.jgit.util.FS;
+import org.eclipse.jgit.transport.sshd.JGitKeyCache;
+import org.eclipse.jgit.transport.sshd.KeyPasswordProvider;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -55,6 +54,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class GitService {
 
     private final Logger log = LoggerFactory.getLogger(GitService.class);
+
+    @Value("${artemis.version-control.url}")
+    private URL gitUrl;
 
     @Value("${artemis.version-control.user}")
     private String gitUser;
@@ -72,7 +74,7 @@ public class GitService {
     private Optional<String> gitSshPrivateKeyPassphrase;
 
     @Value("${artemis.repo-clone-path}")
-    private String REPO_CLONE_PATH;
+    private String repoClonePath;
 
     @Value("${artemis.git.name}")
     private String artemisGitName;
@@ -103,30 +105,7 @@ public class GitService {
         // 2. username + personal access token (if available)
         // 3. username + password
         if (useSsh()) {
-            SshSessionFactory sshSessionFactory = new JschConfigSessionFactory() {
-
-                @Override
-                protected void configure(OpenSshConfig.Host host, Session session) {
-                    super.configure(host, session);
-                }
-
-                @Override
-                protected JSch createDefaultJSch(FS fs) throws JSchException {
-                    final JSch defaultJSch = new JSch();
-                    JSch.setConfig("ssh-rsa", JSch.getConfig("signature.rsa"));
-                    JSch.setConfig("ssh-dss", JSch.getConfig("signature.dss"));
-                    // TODO: check if we can get an alternative implementation running that accepts the host public key for the predefined vcs server automatically
-                    JSch.setConfig("StrictHostKeyChecking", "no");
-                    var passphrase = gitSshPrivateKeyPassphrase.get().getBytes(StandardCharsets.UTF_8);
-                    defaultJSch.addIdentity(gitSshPrivateKeyPath.get(), passphrase);
-                    return defaultJSch;
-                }
-            };
-
-            sshCallback = transport -> {
-                SshTransport sshTransport = (SshTransport) transport;
-                sshTransport.setSshSessionFactory(sshSessionFactory);
-            };
+            configureSsh();
         }
         else if (gitToken.isPresent()) {
             CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitToken.get()));
@@ -136,8 +115,94 @@ public class GitService {
         }
     }
 
+    private void configureSsh() {
+        CredentialsProvider.setDefault(new CredentialsProvider() {
+
+            @Override
+            public boolean isInteractive() {
+                return false;
+            }
+
+            @Override
+            public boolean supports(CredentialItem... items) {
+                return true;
+            }
+
+            // Note: the following method allows us to store known hosts
+            @Override
+            public boolean get(URIish uri, CredentialItem... items) throws UnsupportedCredentialItem {
+                for (CredentialItem item : items) {
+                    if (item instanceof CredentialItem.YesNoType) {
+                        ((CredentialItem.YesNoType) item).setValue(true);
+                    }
+                }
+                return true;
+            }
+        });
+
+        var sshSessionFactory = new SshdSessionFactoryBuilder().setKeyPasswordProvider(credentialsProvider -> new KeyPasswordProvider() {
+
+            @Override
+            public char[] getPassphrase(URIish uri, int attempt) {
+                log.debug("getPassphrase: " + uri.toString() + ", attempt: " + attempt);
+                // Example: /Users/artemis/.ssh/artemis/id_rsa contains /Users/artemis/.ssh/artemis
+                if (gitSshPrivateKeyPath.isPresent() && uri.getPath().contains(gitSshPrivateKeyPath.get())) {
+                    return gitSshPrivateKeyPassphrase.get().toCharArray();
+                }
+                else {
+                    return null;
+                }
+            }
+
+            @Override
+            public void setAttempts(int maxNumberOfAttempts) {
+            }
+
+            @Override
+            public boolean keyLoaded(URIish uri, int attempt, Exception error) {
+                return false;
+            }
+        }).setConfigStoreFactory((homeDir, configFile, localUserName) -> (hostName, port, userName) -> new SshConfigStore.HostConfig() {
+
+            @Override
+            public String getValue(String key) {
+                return null;
+            }
+
+            @Override
+            public List<String> getValues(String key) {
+                return Collections.emptyList();
+            }
+
+            @Override
+            // NOTE: this is some kind of workaround to only avoid host checking for the git server that we use
+            // this simplifies administration and should be secure, because the known hosts file does not need to be created
+            public Map<String, String> getOptions() {
+                log.debug("getOptions: " + hostName + ":" + port);
+                if (hostName.equals(gitUrl.getHost())) {
+                    return Collections.singletonMap(SshConstants.STRICT_HOST_KEY_CHECKING, SshConstants.NO);
+                }
+                else {
+                    return Collections.emptyMap();
+                }
+            }
+
+            @Override
+            public Map<String, List<String>> getMultiValuedOptions() {
+                return Collections.emptyMap();
+            }
+        }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.get()))
+                // TODO: double check if the home directoy works like this
+                .setHomeDirectory(new java.io.File("~")).build(new JGitKeyCache());
+        sshCallback = transport -> {
+            SshTransport sshTransport = (SshTransport) transport;
+            sshTransport.setSshSessionFactory(sshSessionFactory);
+        };
+    }
+
     private boolean useSsh() {
-        return gitSshPrivateKeyPath.isPresent() && gitSshPrivateKeyPassphrase.isPresent();
+        return gitSshPrivateKeyPath.isPresent();
+        // password is optional and will only be applied if the ssh private key was encrypted using a password
     }
 
     private String getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
@@ -154,7 +219,7 @@ public class GitService {
      * @throws GitAPIException if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation) throws InterruptedException, GitAPIException {
-        return getOrCheckoutRepository(participation, REPO_CLONE_PATH);
+        return getOrCheckoutRepository(participation, repoClonePath);
     }
 
     /**
@@ -214,7 +279,7 @@ public class GitService {
      * @throws GitAPIException if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, boolean pullOnGet) throws InterruptedException, GitAPIException {
-        return getOrCheckoutRepository(repoUrl, pullOnGet, REPO_CLONE_PATH);
+        return getOrCheckoutRepository(repoUrl, pullOnGet, repoClonePath);
     }
 
     /**
@@ -245,8 +310,8 @@ public class GitService {
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, Path localPath, boolean pullOnGet) throws InterruptedException, GitAPIException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         Repository repository = getRepositoryByLocalPath(localPath);
-        // TODO: in case the actual git repository in the file system was deleted (e.g. by accident or through some administrator), we will get an exception here
-        // so we should basically check if the folder localPath still includes a valid git repository or not and potentially fix this situation then.
+        // Note: in case the actual git repository in the file system is corrupt (e.g. by accident), we will get an exception here
+        // the exception will then delete the folder, so that the next attempt would be successful.
         if (repository != null) {
             if (pullOnGet) {
                 pull(repository);
@@ -273,7 +338,6 @@ public class GitService {
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
-
                 Git result = Git.cloneRepository().setTransportConfigCallback(sshCallback).setURI(getGitUri(repoUrl)).setDirectory(localPath.toFile()).call();
                 result.close();
             }
@@ -360,6 +424,7 @@ public class GitService {
         var email = user != null ? user.getEmail() : artemisGitEmail;
         Git git = new Git(repo);
         git.commit().setMessage(message).setAllowEmpty(true).setCommitter(name, email).call();
+        log.debug("commitAndPush -> Push " + repo.getLocalPath());
         git.push().setTransportConfigCallback(sshCallback).call();
         git.close();
     }
@@ -376,6 +441,7 @@ public class GitService {
         Git git = new Git(sourceRepo);
         try {
             git.remoteAdd().setName("target").setUri(new URIish(getGitUri(targetRepoUrl))).call();
+            log.debug("pushSourceToTargetRepo -> Push " + targetRepoUrl.getURL().toString());
             git.push().setRemote("target").setTransportConfigCallback(sshCallback).call();
             git.remoteRemove().setRemoteName("target").call();
             git.close();
@@ -421,6 +487,7 @@ public class GitService {
      */
     public void fetchAll(Repository repo) throws GitAPIException {
         Git git = new Git(repo);
+        log.debug("Fetch " + repo.getLocalPath());
         git.fetch().setForceUpdate(true).setRemoveDeletedRefs(true).setTransportConfigCallback(sshCallback).call();
         git.close();
     }
@@ -435,6 +502,7 @@ public class GitService {
             Git git = new Git(repo);
             // flush cache of files
             repo.setContent(null);
+            log.debug("Pull ignore conflicts " + repo.getLocalPath());
             git.pull().setTransportConfigCallback(sshCallback).call();
         }
         catch (GitAPIException ex) {
@@ -454,6 +522,7 @@ public class GitService {
         Git git = new Git(repo);
         // flush cache of files
         repo.setContent(null);
+        log.debug("Pull " + repo.getLocalPath());
         return git.pull().setTransportConfigCallback(sshCallback).call();
     }
 
@@ -486,6 +555,7 @@ public class GitService {
         // Get refs of repo without cloning it locally
         Collection<Ref> refs;
         try {
+            log.debug("getLastCommitHash " + repoUrl);
             refs = Git.lsRemoteRepository().setRemote(repoUrl.getURL().toString()).setTransportConfigCallback(sshCallback).call();
         }
         catch (GitAPIException ex) {
@@ -564,7 +634,7 @@ public class GitService {
 
             if (latestHash == null) {
                 // Template Repository is somehow empty. Should never happen
-                log.info("Cannot find a commit in the template repo for:" + repository.getLocalPath());
+                log.debug("Cannot find a commit in the template repo for:" + repository.getLocalPath());
                 return;
             }
 
@@ -692,6 +762,7 @@ public class GitService {
                 git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();
                 git.add().addFilepattern(".").call();
                 git.commit().setAmend(true).setMessage(firstCommit.getFullMessage()).call();
+                log.debug("combineAllCommitsIntoInitialCommit -> Push " + repo.getLocalPath());
                 git.push().setForce(true).setTransportConfigCallback(sshCallback).call();
                 git.close();
             }
@@ -724,7 +795,7 @@ public class GitService {
         repository.closeBeforeDelete();
         FileUtils.deleteDirectory(repoPath.toFile());
         repository.setContent(null);
-        log.info("Deleted Repository at " + repoPath);
+        log.debug("Deleted Repository at " + repoPath);
     }
 
     /**
@@ -734,7 +805,7 @@ public class GitService {
      * @throws IOException if the deletion of the repository failed.
      */
     public void deleteLocalRepository(ProgrammingExerciseParticipation participation) throws IOException {
-        deleteLocalRepository(participation, REPO_CLONE_PATH);
+        deleteLocalRepository(participation, repoClonePath);
     }
 
     /**
@@ -763,7 +834,7 @@ public class GitService {
      * @throws IOException if the deletion of the repository failed.
      */
     public void deleteLocalRepository(VcsRepositoryUrl repoUrl) {
-        deleteLocalRepository(repoUrl, REPO_CLONE_PATH);
+        deleteLocalRepository(repoUrl, repoClonePath);
     }
 
     /**
@@ -841,7 +912,7 @@ public class GitService {
      * @return True if repo exists on disk
      */
     public boolean repositoryAlreadyExists(VcsRepositoryUrl repoUrl) {
-        Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
+        Path localPath = new java.io.File(repoClonePath + folderNameForRepositoryUrl(repoUrl)).toPath();
         return Files.exists(localPath);
     }
 
