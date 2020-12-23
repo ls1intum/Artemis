@@ -92,8 +92,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("SELECT COUNT(DISTINCT p) FROM StudentParticipation p left join p.results r WHERE p.exercise.id = :exerciseId AND r.assessor IS NOT NULL AND r.rated = TRUE AND r.submission.submitted = TRUE AND r.completionDate IS NOT NULL AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
     long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * todo: NR, SE: Can be removed once multi correction round feature is merged
+     *
+     * @param exerciseId
+     * @return
+     */
     @Query("""
-
             SELECT COUNT(DISTINCT p) FROM StudentParticipation p left join p.submissions s  left join s.results r
             WHERE p.exercise.id = :exerciseId
             AND s.id = (select max(id) from p.submissions)
@@ -103,8 +108,29 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             AND r.completionDate IS NOT NULL
             AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
             AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)
-            AND :correctionRound = 1L
             """)
+    long countNumberOfFinishedAssessmentsAndExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
+
+
+    /**
+     * @param exerciseId
+     * @param correctionRound
+     * @return the number of completed assessments for the specified correction round of an exam exercise
+     */
+    @Query("""
+       SELECT COUNT(DISTINCT p)
+       FROM StudentParticipation p WHERE p.exercise.id = :exerciseId AND
+                    (SELECT COUNT(r)
+                    FROM Result r
+                    WHERE r.assessor IS NOT NULL
+                        AND r.rated = TRUE
+                        AND r.submission = (select max(id) from p.submissions)
+                        AND r.submission.submitted = TRUE
+                        AND r.completionDate IS NOT NULL
+                        AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
+                        AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)
+                    ) = :correctionRound
+    """)
     long countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("correctionRound") Long correctionRound);
 
     // @Query("SELECT COUNT(DISTINCT p) FROM StudentParticipation p left join p.results r WHERE p.exercise.id = :exerciseId AND r.assessor IS NOT NULL AND r.rated = FALSE AND

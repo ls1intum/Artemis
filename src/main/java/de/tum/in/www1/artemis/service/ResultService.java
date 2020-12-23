@@ -267,7 +267,7 @@ public class ResultService {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds.intValue()];
 
         for (int i = 0; i < correctionRounds.intValue(); i++) {
-            correctionRoundsDataStats[i] = new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exerciseId, (long) i),
+            correctionRoundsDataStats[i] = new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exerciseId, (long) i+1),
                     0L);
         }
 
