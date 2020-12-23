@@ -37,6 +37,8 @@ public class ResultService {
 
     private final FeedbackRepository feedbackRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     private final WebsocketMessagingService websocketMessagingService;
 
     private final ComplaintResponseRepository complaintResponseRepository;
@@ -48,13 +50,15 @@ public class ResultService {
     private final ComplaintRepository complaintRepository;
 
     public ResultService(UserService userService, ResultRepository resultRepository, LtiService ltiService, ObjectMapper objectMapper, FeedbackRepository feedbackRepository,
-            WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
-            ComplaintRepository complaintRepository, RatingRepository ratingRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, WebsocketMessagingService websocketMessagingService,
+            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
+            RatingRepository ratingRepository) {
         this.userService = userService;
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
         this.objectMapper = objectMapper;
         this.feedbackRepository = feedbackRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.complaintResponseRepository = complaintResponseRepository;
         this.submissionRepository = submissionRepository;
@@ -259,16 +263,22 @@ public class ResultService {
     /**
      * Given an exerciseId and a correctionRound, return the number of assessments for that exerciseId and correctionRound that have been finished
      *
-     * @param exerciseId  - the exercise we are interested in
+     * @param exercise  - the exercise we are interested in
      * @param correctionRounds - the correction round we want finished assessments for
      * @return an array of the number of assessments for the exercise for a given correction round
      */
-    public DueDateStat[] countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(Long exerciseId, Long correctionRounds) {
+    public DueDateStat[] countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(Exercise exercise, Long correctionRounds) {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds.intValue()];
 
         for (int i = 0; i < correctionRounds.intValue(); i++) {
-            correctionRoundsDataStats[i] = new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exerciseId, (long) i+1),
-                    0L);
+            if (exercise instanceof ProgrammingExercise) {
+                correctionRoundsDataStats[i] = new DueDateStat(
+                        programmingExerciseRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), (long) i), 0L);
+            }
+            else {
+                correctionRoundsDataStats[i] = new DueDateStat(
+                        resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), (long) i + 1), 0L);
+            }
         }
 
         // todo NR, SE: Will be removed in followup PR
