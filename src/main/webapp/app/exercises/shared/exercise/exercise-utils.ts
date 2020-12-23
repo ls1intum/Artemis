@@ -165,7 +165,7 @@ export const areManualResultsAllowed = (exercise: Exercise) => {
 };
 
 /**
- * Gets the max points of a exercise. It takes also zero point exercises with/without bonus points into account
+ * Gets the max points of an exercise. It takes also zero point exercises with/without bonus points into account
  *
  * @param exercise
  */
@@ -177,4 +177,23 @@ export const getMaxPointsRespectingZeroPointExercises = (exercise: Exercise): nu
         return exercise.bonusPoints!;
     }
     return PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
+};
+
+/**
+ * Gets the positive and capped to maximum points which is fixed at two decimal numbers
+ *
+ * @param totalScore the calculated score of a student
+ * @param maxPoints the maximal points (including bonus points) of an exercise
+ */
+export const getPositiveAndCappedTotalScore = (totalScore: number, maxPoints: number): number => {
+    // Do not allow negative score
+    if (totalScore < 0) {
+        totalScore = 0;
+    }
+    // Cap totalScore to maxPoints
+    if (totalScore > maxPoints) {
+        totalScore = maxPoints;
+    }
+
+    return +totalScore.toFixed(2);
 };

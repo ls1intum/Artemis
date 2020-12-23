@@ -18,7 +18,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { concatMap, tap } from 'rxjs/operators';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
-import { getMaxPointsRespectingZeroPointExercises } from 'app/exercises/shared/exercise/exercise-utils';
+import { getMaxPointsRespectingZeroPointExercises, getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -314,19 +314,10 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             return;
         }
 
-        let reducedTotalScore = credits.reduce((a, b) => a! + b!, 0)!;
         const relevantMaxPoints = getMaxPointsRespectingZeroPointExercises(this.exercise);
         const maxPoints = this.exercise.maxScore! > 0 ? relevantMaxPoints + (this.exercise.bonusPoints! ?? 0.0) : relevantMaxPoints;
-        // Do not allow negative score
-        if (reducedTotalScore < 0) {
-            reducedTotalScore = 0;
-        }
-        // Cap totalScore to maxPoints
-        if (reducedTotalScore > maxPoints) {
-            reducedTotalScore = maxPoints;
-        }
-        reducedTotalScore = +reducedTotalScore.toFixed(2);
-        this.totalScore = reducedTotalScore;
+        const reducedTotalScore = credits.reduce((a, b) => a! + b!, 0)!;
+        this.totalScore = getPositiveAndCappedTotalScore(reducedTotalScore, maxPoints);
         this.assessmentsAreValid = true;
         this.invalidError = undefined;
     }

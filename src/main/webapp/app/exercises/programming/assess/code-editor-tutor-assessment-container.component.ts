@@ -34,7 +34,7 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 import { diff_match_patch } from 'diff-match-patch';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { getMaxPointsRespectingZeroPointExercises } from 'app/exercises/shared/exercise/exercise-utils';
+import { getMaxPointsRespectingZeroPointExercises, getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -503,6 +503,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResult!.hasFeedback = true;
         // Append the automatic result string which the manual result holds with the score part, to create the manual result string
         if (this.isFirstAssessment) {
+            // TODO: rene: change the resultString depending on bonusPoints?
             this.manualResult!.resultString += this.exercise.maxScore ? `, ${totalScore} of ${this.exercise.maxScore} points` : `, ${totalScore} points`;
             this.isFirstAssessment = false;
         } else {
@@ -511,6 +512,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
              */
             const resultStringParts: string[] = this.manualResult!.resultString!.split(', ');
             // When no maxScore is set, then show only the achieved points
+            // TODO: rene: change the resultString depending on bonusPoints?
             resultStringParts[resultStringParts.length - 1] = this.exercise.maxScore ? `${totalScore} of ${this.exercise.maxScore} points` : `${totalScore} points`;
             this.manualResult!.resultString = resultStringParts.join(', ');
         }
@@ -555,16 +557,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             scoreAutomaticTests = maxPoints;
         }
         totalScore += scoreAutomaticTests;
-        // Do not allow negative score
-        if (totalScore < 0) {
-            totalScore = 0;
-        }
-        // Cap totalScore to maxPoints
-        if (totalScore > maxPoints) {
-            totalScore = maxPoints;
-        }
-
-        totalScore = +totalScore.toFixed(2);
+        totalScore = getPositiveAndCappedTotalScore(totalScore, maxPoints);
 
         // Set attributes of manual result
         this.setAttributesForManualResult(totalScore);
