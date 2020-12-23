@@ -145,7 +145,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.loadAll();
 
         expect(modelingSubmissionStub).to.have.been.calledOnceWithExactly(exercise.id);
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(0)).to.equal(submission);
+        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).to.equal(submission);
         expect(comp.submissionLockLimitReached).to.be.false;
     });
 
@@ -155,7 +155,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.loadAll();
 
         expect(modelingSubmissionStub).to.have.been.calledOnceWithExactly(exercise.id);
-        expect(comp.unassessedSubmissionByCorrectionRound).to.be.undefined;
+        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).to.be.undefined;
         expect(comp.submissionLockLimitReached).to.be.true;
     });
 

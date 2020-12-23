@@ -364,7 +364,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         submissionObservable.subscribe(
             (submission: Submission) => {
                 if (submission) {
-                    this.unassessedSubmissionByCorrectionRound!.set(0, submission);
+                    this.unassessedSubmissionByCorrectionRound!.set(1, submission);
                 }
                 this.submissionLockLimitReached = false;
             },
