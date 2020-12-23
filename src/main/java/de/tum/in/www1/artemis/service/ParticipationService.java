@@ -474,8 +474,8 @@ public class ParticipationService {
      * @param participationId of submission
      * @return List<submission>
      */
-    public List<Submission> getSubmissionsWithParticipationId(long participationId) {
-        return submissionRepository.findAllWithResultsByParticipationId(participationId);
+    public List<Submission> getSubmissionsWithResultsAndAssessorsByParticipationId(long participationId) {
+        return submissionRepository.findAllWithResultsAndAssessorByParticipationId(participationId);
     }
 
     /**

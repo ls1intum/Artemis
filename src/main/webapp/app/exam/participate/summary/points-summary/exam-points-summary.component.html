@@ -20,10 +20,10 @@
                     {{ calculateAchievedPoints(exercise) }}
                 </td>
                 <td>
-                    <span *ngIf="exercise.maxScore">{{ exercise.maxScore }}</span>
+                    <span *ngIf="exercise.maxScore != undefined">{{ exercise.maxScore }}</span>
                 </td>
                 <td>
-                    <span *ngIf="exercise.bonusPoints">{{ exercise.bonusPoints }}</span>
+                    <span *ngIf="exercise.bonusPoints != undefined">{{ exercise.bonusPoints }}</span>
                 </td>
             </tr>
             <tr>

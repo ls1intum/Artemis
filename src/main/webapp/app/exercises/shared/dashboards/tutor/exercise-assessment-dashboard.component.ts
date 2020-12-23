@@ -316,6 +316,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
                 const sub = submissions.map((submission) => {
                     submission.participation!.submissions = [submission];
+                    setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     return submission;
                 });
                 this.submissionsByCorrectionRound!.set(1, sub); // todo NR
@@ -327,8 +328,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     private reconnectEntities = (submissions: Submission[]) => {
         return submissions.map((submission: Submission) => {
-            const tmpResult = getLatestSubmissionResult(submission);
-            if (tmpResult) {
+            const latestResult = getLatestSubmissionResult(submission);
+            if (latestResult) {
                 // reconnect some associations
                 tmpResult!.submission = submission;
                 tmpResult!.participation = submission.participation;

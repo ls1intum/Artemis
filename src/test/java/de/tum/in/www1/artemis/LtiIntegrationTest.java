@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.net.URI;
-import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,8 +16,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.LtiOutcomeUrl;
-import de.tum.in.www1.artemis.domain.LtiUserId;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
@@ -124,109 +120,5 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void exerciseLtiConfiguration() throws Exception {
         request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.OK, ExerciseLtiConfigurationDTO.class);
         request.get("/api/lti/configuration/1234254354", HttpStatus.NOT_FOUND, ExerciseLtiConfigurationDTO.class);
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    void createLtiOutcomeUrl() throws Exception {
-        List<LtiOutcomeUrl> returnedLtiOutcomeUrlList = ltiOutcomeUrlRepository.findAll();
-        assertThat(returnedLtiOutcomeUrlList).isEmpty();
-
-        LtiOutcomeUrl ltiOutcomeUrl = new LtiOutcomeUrl();
-        request.postWithoutLocation("/api/lti-outcome-urls", ltiOutcomeUrl, HttpStatus.CREATED, new HttpHeaders());
-        returnedLtiOutcomeUrlList = ltiOutcomeUrlRepository.findAll();
-        assertThat(returnedLtiOutcomeUrlList).hasSize(1);
-
-        ltiOutcomeUrl.setId(1L);
-        request.postWithoutLocation("/api/lti-outcome-urls", ltiOutcomeUrl, HttpStatus.BAD_REQUEST, new HttpHeaders());
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    void updateLtiOutcomeUrl() throws Exception {
-        LtiOutcomeUrl ltiOutcomeUrl = new LtiOutcomeUrl();
-        LtiOutcomeUrl returnedLtiOutcomeUrl = request.putWithResponseBody("/api/lti-outcome-urls", ltiOutcomeUrl, LtiOutcomeUrl.class, HttpStatus.CREATED);
-
-        request.putWithResponseBody("/api/lti-outcome-urls", returnedLtiOutcomeUrl, LtiOutcomeUrl.class, HttpStatus.OK);
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    void getAllLtiOutcomeUrls() throws Exception {
-        List<LtiOutcomeUrl> ltiOutcomeUrlList = request.getList("/api/lti-outcome-urls", HttpStatus.OK, LtiOutcomeUrl.class);
-        assertThat(ltiOutcomeUrlList).as("List of LtiOutcomeUrl is empty").isEmpty();
-
-        request.postWithoutLocation("/api/lti-outcome-urls", new LtiOutcomeUrl(), HttpStatus.CREATED, new HttpHeaders());
-        ltiOutcomeUrlList = request.getList("/api/lti-outcome-urls", HttpStatus.OK, LtiOutcomeUrl.class);
-        assertThat(ltiOutcomeUrlList).hasSize(1);
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    void getLtiOutcomeUrl() throws Exception {
-        LtiOutcomeUrl ltiOutcomeUrl = new LtiOutcomeUrl();
-        request.postWithoutLocation("/api/lti-outcome-urls", ltiOutcomeUrl, HttpStatus.CREATED, new HttpHeaders());
-        LtiOutcomeUrl savedLtiOutcomeUrl = ltiOutcomeUrlRepository.findAll().get(0);
-
-        request.get("/api/lti-outcome-urls/" + savedLtiOutcomeUrl.getId(), HttpStatus.OK, LtiOutcomeUrl.class);
-        request.get("/api/lti-outcome-urls/" + savedLtiOutcomeUrl.getId() + 1, HttpStatus.NOT_FOUND, LtiOutcomeUrl.class);
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    void deleteLtiOutcomeUrl() throws Exception {
-        LtiOutcomeUrl ltiOutcomeUrl = new LtiOutcomeUrl();
-        request.postWithoutLocation("/api/lti-outcome-urls", ltiOutcomeUrl, HttpStatus.CREATED, new HttpHeaders());
-        LtiOutcomeUrl savedLtiOutcomeUrl = ltiOutcomeUrlRepository.findAll().get(0);
-
-        request.delete("/api/lti-outcome-urls/" + savedLtiOutcomeUrl.getId(), HttpStatus.OK);
-
-        assertThat(ltiOutcomeUrlRepository.findAll()).isEmpty();
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    void createLtiUserId() throws Exception {
-        List<LtiUserId> returnedLtiUserList = ltiUserIdRepository.findAll();
-        assertThat(returnedLtiUserList).isEmpty();
-
-        LtiUserId ltiUserId = new LtiUserId();
-        request.postWithoutLocation("/api/lti-user-ids", ltiUserId, HttpStatus.CREATED, new HttpHeaders());
-        returnedLtiUserList = ltiUserIdRepository.findAll();
-        assertThat(returnedLtiUserList).hasSize(1);
-
-        ltiUserId.setId(1L);
-        request.postWithoutLocation("/api/lti-user-ids", ltiUserId, HttpStatus.BAD_REQUEST, new HttpHeaders());
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    void updateLtiUserId() throws Exception {
-        LtiUserId ltiUserId = new LtiUserId();
-        LtiUserId returnedLtiUserId = request.putWithResponseBody("/api/lti-user-ids", ltiUserId, LtiUserId.class, HttpStatus.CREATED);
-
-        request.putWithResponseBody("/api/lti-user-ids", returnedLtiUserId, LtiUserId.class, HttpStatus.OK);
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    void getLtiUserId() throws Exception {
-        LtiUserId ltiUserId = new LtiUserId();
-        request.putWithResponseBody("/api/lti-user-ids", ltiUserId, LtiUserId.class, HttpStatus.CREATED);
-        LtiUserId savedLtiUserId = ltiUserIdRepository.findAll().get(0);
-
-        request.get("/api/lti-user-ids/" + savedLtiUserId.getId(), HttpStatus.OK, LtiUserId.class);
-        request.get("/api/lti-user-ids/" + savedLtiUserId.getId() + 1, HttpStatus.NOT_FOUND, LtiUserId.class);
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    void deleteLtiUserId() throws Exception {
-        LtiUserId ltiUserId = new LtiUserId();
-        request.putWithResponseBody("/api/lti-user-ids", ltiUserId, LtiUserId.class, HttpStatus.CREATED);
-        LtiUserId savedLtiUserId = ltiUserIdRepository.findAll().get(0);
-
-        request.delete("/api/lti-user-ids/" + savedLtiUserId.getId(), HttpStatus.OK);
-        assertThat(ltiUserIdRepository.findAll()).isEmpty();
     }
 }
