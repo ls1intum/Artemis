@@ -316,6 +316,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
                 this.submissions = submissions.map((submission) => {
                     submission.participation!.submissions = [submission];
+                    setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     return submission;
                 });
             });
