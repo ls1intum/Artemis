@@ -522,10 +522,10 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void testSubmitAssessment_ZeroPointsNONZeroBonusPointsExercise() throws Exception {
+    public void testSubmitAssessment_NONZeroPointsNONZeroBonusPointsExercise() throws Exception {
         // setting up exercise
-        textExercise.setMaxScore(0.0); // 0 points
-        textExercise.setBonusPoints(10.0); // 50 bonus points
+        textExercise.setMaxScore(10.0);
+        textExercise.setBonusPoints(10.0);
         exerciseRepo.save(textExercise);
 
         // setting up student submission
@@ -540,55 +540,76 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
 
-        // first assessment 0 points --> score should be 0
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().credits(0.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("first assessment"));
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        Result response = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
-                Result.class, HttpStatus.OK);
-        assertThat(response.getScore()).isEqualTo(0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 150L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 200L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 200L);
+    }
 
-        // second assessment -1 points --> score should be 0
-        feedbacks.add(new Feedback().credits(-1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("second assessment"));
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        response = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
-                Result.class, HttpStatus.OK);
-        assertThat(response.getScore()).isEqualTo(0L);
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testSubmitAssessment_NONZeroPointsZeroBonusPointsExercise() throws Exception {
+        // setting up exercise
+        textExercise.setMaxScore(10.0);
+        textExercise.setBonusPoints(0.0);
+        exerciseRepo.save(textExercise);
 
-        // third assessment 1 points --> score should be 0
-        feedbacks.add(new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("third assessment"));
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        response = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
-                Result.class, HttpStatus.OK);
-        assertThat(response.getScore()).isEqualTo(0L);
+        // setting up student submission
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
+        // ending exercise
+        exerciseDueDatePassed();
 
-        // fourth assessment 50 points --> score should be 50
-        feedbacks.add(new Feedback().credits(5.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("fourth assessment"));
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        response = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
-                Result.class, HttpStatus.OK);
-        assertThat(response.getScore()).isEqualTo(50);
+        // getting submission from db
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, params);
 
-        // fifth assessment 5 points --> score should be 100
-        feedbacks.add(new Feedback().credits(5.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("fifth assessment"));
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        response = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
-                Result.class, HttpStatus.OK);
-        assertThat(response.getScore()).isEqualTo(100);
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
+    }
 
-        // sixth assessment 5 points --> score should be 100
-        feedbacks.add(new Feedback().credits(5.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("sixth assessment"));
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        response = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
-                Result.class, HttpStatus.OK);
-        assertThat(response.getScore()).isEqualTo(100L);
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testSubmitAssessment_ZeroPointsNONZeroBonusPointsExercise() throws Exception {
+        // setting up exercise
+        textExercise.setMaxScore(0.0);
+        textExercise.setBonusPoints(10.0);
+        exerciseRepo.save(textExercise);
+
+        // setting up student submission
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
+        // ending exercise
+        exerciseDueDatePassed();
+
+        // getting submission from db
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, params);
+
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
 
     }
 
@@ -596,8 +617,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testSubmitAssessment_ZeroPointsZeroBonusPointsExercise() throws Exception {
         // setting up exercise
-        textExercise.setMaxScore(0.0); // 0 points
-        textExercise.setBonusPoints(0.0); // 0 bonus points
+        textExercise.setMaxScore(0.0);
+        textExercise.setBonusPoints(0.0);
         exerciseRepo.save(textExercise);
 
         // setting up student submission
@@ -612,55 +633,14 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
 
-        // first assessment 0 points --> score should be 0
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().credits(0.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("first assessment"));
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        Result response = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
-                Result.class, HttpStatus.OK);
-        assertThat(response.getScore()).isEqualTo(0L);
-
-        // second assessment -1 points --> score should be 0
-        feedbacks.add(new Feedback().credits(-1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("second assessment"));
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        response = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
-                Result.class, HttpStatus.OK);
-        assertThat(response.getScore()).isEqualTo(0L);
-
-        // third assessment 1 points --> score should be 0
-        feedbacks.add(new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("third assessment"));
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        response = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
-                Result.class, HttpStatus.OK);
-        assertThat(response.getScore()).isEqualTo(0L);
-
-        // fourth assessment 50 points --> score should be 50
-        feedbacks.add(new Feedback().credits(50.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("fourth assessment"));
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        response = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
-                Result.class, HttpStatus.OK);
-        assertThat(response.getScore()).isEqualTo(50L);
-
-        // fifth assessment 50 points --> score should be 100
-        feedbacks.add(new Feedback().credits(50.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("fifth assessment"));
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        response = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
-                Result.class, HttpStatus.OK);
-        assertThat(response.getScore()).isEqualTo(100);
-
-        // sixth assessment 50 points --> score should be 100
-        feedbacks.add(new Feedback().credits(50.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("sixth assessment"));
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        response = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
-                Result.class, HttpStatus.OK);
-        assertThat(response.getScore()).isEqualTo(100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 50.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 50.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 50.0, 100L);
     }
 
     @Test
@@ -971,5 +951,15 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         feedbackConflictRepository.save(feedbackConflict);
 
         return asList(textSubmission1, textSubmission2);
+    }
+
+    public void addAssessmentFeedbackAndCheckScore(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks, double pointsAwarded,
+            long expectedScore) throws Exception {
+        feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj"));
+        textAssessmentDTO.setFeedbacks(feedbacks);
+        Result response = request.putWithResponseBody(
+                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
+                Result.class, HttpStatus.OK);
+        assertThat(response.getScore()).isEqualTo(expectedScore);
     }
 }
