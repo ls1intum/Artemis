@@ -9,7 +9,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { SubmissionType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -569,6 +569,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         const jsonResponse: ProgrammingSubmission[] = res.body!;
         const body: ProgrammingSubmission[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
+            setLatestSubmissionResult(jsonResponse[i], getLatestSubmissionResult(jsonResponse[i]));
             body.push({ ...jsonResponse[i] });
         }
         return res.clone({ body });
