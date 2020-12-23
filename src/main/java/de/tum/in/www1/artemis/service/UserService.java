@@ -809,10 +809,9 @@ public class UserService {
      * Update user notification read date for current user
      * @return currently logged in user
      */
-    public User updateUserNotificationReadDate() {
-        User loggedInUser = getUserWithGroupsAndAuthorities();
-        userRepository.updateUserNotificationReadDate(loggedInUser.getId(), ZonedDateTime.now());
-        return loggedInUser;
+    @Transactional // ok because of modifying query
+    public void updateUserNotificationReadDate(long userId) {
+        userRepository.updateUserNotificationReadDate(userId, ZonedDateTime.now());
     }
 
     /**
