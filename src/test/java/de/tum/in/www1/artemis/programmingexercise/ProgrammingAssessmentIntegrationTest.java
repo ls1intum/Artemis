@@ -282,6 +282,99 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_NONZeroPointsNONZeroBonusPointsExercise() throws Exception {
+        // setting up exercise
+        programmingExercise.setMaxScore(10.0);
+        programmingExercise.setBonusPoints(10.0);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getParticipation().setExercise(programmingExercise);
+
+        // setting up student submission
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 150L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 200L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 200L);
+
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_NONZeroPointsZeroBonusPointsExercise() throws Exception {
+        // setting up exercise
+        programmingExercise.setMaxScore(10.0);
+        programmingExercise.setBonusPoints(0.0);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getParticipation().setExercise(programmingExercise);
+
+        // setting up student submission
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_ZeroPointsNONZeroBonusPointsExercise() throws Exception {
+        // setting up exercise
+        programmingExercise.setMaxScore(0.0);
+        programmingExercise.setBonusPoints(10.0);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getParticipation().setExercise(programmingExercise);
+
+        // setting up student submission
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_ZeroPointsZeroBonusPointsExercise() throws Exception {
+        // setting up exercise
+        programmingExercise.setMaxScore(0.0);
+        programmingExercise.setBonusPoints(0.0);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getParticipation().setExercise(programmingExercise);
+
+        // setting up student submission
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore(feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 50.0, 50L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 50.0, 100L);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 50.0, 100L);
+    }
+
+    private void addAssessmentFeedbackAndCheckScore(List<Feedback> feedbacks, Double pointsAwarded, Long expectedScore) throws Exception {
+        feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
+        manualResult.setFeedbacks(feedbacks);
+        double points = programmingAssessmentService.calculateTotalScore(manualResult);
+        long score = (long) ((points / programmingExercise.getMaxScoreRespectingZeroPointExercises()) * 100.0);
+        manualResult.resultString(manualResult.createResultString(points, programmingExercise.getMaxScoreRespectingZeroPointExercises()));
+        manualResult.score(score);
+        manualResult.rated(true);
+        Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
+                Result.class, HttpStatus.OK);
+        assertThat(response.getScore()).isEqualTo(expectedScore);
+        assertThat(response.getResultString()).isEqualTo((int) points + " of " + (int) programmingExercise.getMaxScoreRespectingZeroPointExercises() + " points");
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_withResultOver100Percent() throws Exception {
         List<Feedback> feedbacks = new ArrayList<>();
         // Check that result is over 100% -> 105
