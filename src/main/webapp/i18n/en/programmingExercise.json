@@ -42,7 +42,7 @@
             "publishBuildPlanUrl": "Publish Build Plan",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
-                "alert": "At least one between Offline IDE and Online Editor must be selected"
+                "alert": "At least one option (Offline IDE or Online Editor) must be selected"
             },
             "onlineEditor": "Online Editor",
             "allowOfflineIde": {
