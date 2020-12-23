@@ -121,7 +121,7 @@ public class ProgrammingExerciseParticipationService {
      * @return the participation for the given exercise and user.
      * @throws EntityNotFoundException if there is no participation for the given exercise and user.
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true) // ok, as we explicitly use Hibernate.initialize
     @NotNull
     public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentId(Exercise exercise, String username) throws EntityNotFoundException {
         Optional<ProgrammingExerciseStudentParticipation> participation;

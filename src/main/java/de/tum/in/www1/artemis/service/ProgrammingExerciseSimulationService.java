@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -69,7 +68,6 @@ public class ProgrammingExerciseSimulationService {
      * @return returns the modified and stored programming exercise
      * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      */
-    @Transactional
     public ProgrammingExercise createProgrammingExerciseWithoutVersionControlAndContinuousIntegrationAvailable(ProgrammingExercise programmingExercise) {
         programmingExercise.generateAndSetProjectKey();
 

@@ -126,7 +126,6 @@ public class ProgrammingExerciseService {
      * @throws GitAPIException      If something during the communication with the remote Git repositroy went wrong
      * @throws IOException          If the template files couldn't be read
      */
-    @Transactional
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final var user = userService.getUser();
