@@ -318,7 +318,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     submission.participation!.submissions = [submission];
                     return submission;
                 });
-                this.submissionsByCorrectionRound!.set(0, sub); // todo NR
+                this.submissionsByCorrectionRound!.set(1, sub); // todo NR
             });
     }
 

@@ -240,8 +240,8 @@
                     <table
                         class="table table-striped exercise-table"
                         *ngIf="
-                            (unassessedSubmissionByCorrectionRound && unassessedSubmissionByCorrectionRound.get(correctionRound)?.id > 0) ||
-                                submissionsByCorrectionRound.get(correctionRound)?.length > 0;
+                            (unassessedSubmissionByCorrectionRound && unassessedSubmissionByCorrectionRound.get(correctionRound + 1)?.id > 0) ||
+                                submissionsByCorrectionRound.get(correctionRound + 1)?.length > 0;
                             else noSubmissions
                         "
                     >
@@ -257,7 +257,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr *ngFor="let submission of submissionsByCorrectionRound.get(correctionRound); let i = index">
+                            <tr *ngFor="let submission of submissionsByCorrectionRound.get(correctionRound + 1); let i = index">
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ submission.submissionDate | artemisDate }}</td>
                                 <td>
@@ -301,16 +301,21 @@
                             </tr>
                             <tr
                                 *ngIf="
-                                    unassessedSubmissionByCorrectionRound && unassessedSubmissionByCorrectionRound.get(correctionRound)?.id > 0 && !exercise.teamMode && !isTestRun
+                                    unassessedSubmissionByCorrectionRound &&
+                                    unassessedSubmissionByCorrectionRound.get(correctionRound + 1)?.id > 0 &&
+                                    !exercise.teamMode &&
+                                    !isTestRun
                                 "
                             >
                                 <td></td>
-                                <td>{{ unassessedSubmissionByCorrectionRound.get(correctionRound)?.submissionDate | artemisDate }}</td>
+                                <td>{{ unassessedSubmissionByCorrectionRound.get(correctionRound + 1)?.submissionDate | artemisDate }}</td>
                                 <td></td>
                                 <td>{{ 'artemisApp.exerciseAssessmentDashboard.new' | translate }}</td>
                                 <td></td>
                                 <td *ngIf="exercise.type === ExerciseType.TEXT">
-                                    {{ 'artemisApp.exerciseAssessmentDashboard.languages.' + language(unassessedSubmissionByCorrectionRound.get(correctionRound)!) | translate }}
+                                    {{
+                                        'artemisApp.exerciseAssessmentDashboard.languages.' + language(unassessedSubmissionByCorrectionRound.get(correctionRound + 1)!) | translate
+                                    }}
                                 </td>
                                 <td>
                                     <button
