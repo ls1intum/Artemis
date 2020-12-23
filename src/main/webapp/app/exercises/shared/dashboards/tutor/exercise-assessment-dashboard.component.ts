@@ -334,7 +334,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 tmpResult!.participation = submission.participation;
                 submission.participation!.results = [tmpResult!];
             }
-            setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
             return submission;
         });
     };
