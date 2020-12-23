@@ -60,6 +60,7 @@ public class ComplaintService {
      * @param examId the optional examId. This is only set if the exercise is an exam exercise
      * @return the saved complaint
      */
+    // TODO: remove Transactional
     @Transactional
     public Complaint createComplaint(Complaint complaint, OptionalLong examId, Principal principal) {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaint.getResult().getId())

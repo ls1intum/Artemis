@@ -103,7 +103,7 @@ public class LectureService {
      * Attachments and Lecture Units are not explicitly deleted, as the delete operation is cascaded by the database.
      * @param lecture the lecture to be deleted
      */
-    @Transactional
+    @Transactional // ok
     public void delete(Lecture lecture) {
         Optional<Lecture> lectureToDeleteOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId());
         if (lectureToDeleteOptional.isEmpty()) {
