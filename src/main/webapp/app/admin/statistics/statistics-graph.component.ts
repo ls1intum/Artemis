@@ -113,9 +113,13 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
             case SpanType.QUARTER:
                 startDate = moment().subtract(11 + 12 * -this.currentPeriod, 'weeks');
                 endDate = this.currentPeriod !== 0 ? moment().subtract(12 * -this.currentPeriod, 'weeks') : moment();
-                const startWeek = startDate.week();
+                let currentWeek;
                 for (let i = 0; i < 12; i++) {
-                    this.barChartLabels[i] = '' + (startWeek + i);
+                    currentWeek = moment()
+                        .subtract(11 + 12 * -this.currentPeriod - i, 'weeks')
+                        .isoWeekday(1)
+                        .isoWeek();
+                    this.barChartLabels[i] = '' + currentWeek;
                 }
                 this.chartTime = startDate.isoWeekday(1).format('DD.MM.YYYY') + ' - ' + endDate.isoWeekday(7).format('DD.MM.YYYY');
                 break;

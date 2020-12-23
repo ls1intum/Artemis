@@ -311,7 +311,8 @@ public class StatisticsService {
             }
             else if (span == SpanType.QUARTER) {
                 int year = (Integer) k < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
-                start = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone()).plusWeeks(((Integer) k) - 1);
+                ZonedDateTime firstDateOfYear = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone());
+                start = getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(((Integer) k) - 1) : firstDateOfYear.plusWeeks((Integer) k);
             }
             else {
                 start = startDate.withMonth(getMonthIndex((Month) k));
