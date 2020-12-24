@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 
 /**
- * Service that provides utilites for managing files in a git repository.
+ * Service that provides utilities for managing files in a git repository.
  */
 @Service
 public class RepositoryService {
