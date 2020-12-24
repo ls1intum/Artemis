@@ -58,6 +58,12 @@ import { FileType } from 'app/exercises/programming/shared/code-editor/model/cod
 chai.use(sinonChai);
 const expect = chai.expect;
 
+function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
+    comp.unreferencedFeedback.push({ type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'unreferenced feedback', credits: pointsAwarded });
+    comp.validateFeedback();
+    expect(comp.manualResult?.score).to.equal(scoreExpected);
+}
+
 describe('CodeEditorTutorAssessmentContainerComponent', () => {
     // needed to make sure ace is defined
     ace.acequire('ace/ext/modelist.js');
@@ -223,6 +229,76 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         // Wait until periodic timer has passed out
         tick(100);
+    }));
+
+    it('should calculate score correctly for NONZeroNonZeroBonusPointsExercise', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+
+        comp.exercise.maxScore = 10;
+        comp.exercise.bonusPoints = 10;
+        comp.automaticFeedback = [];
+        comp.referencedFeedback = [];
+        comp.unreferencedFeedback = [];
+        addFeedbackAndValidateScore(comp, 0, 0);
+        addFeedbackAndValidateScore(comp, -1, 0);
+        addFeedbackAndValidateScore(comp, 1, 0);
+        addFeedbackAndValidateScore(comp, 5, 50);
+        addFeedbackAndValidateScore(comp, 5, 100);
+        addFeedbackAndValidateScore(comp, 5, 150);
+        addFeedbackAndValidateScore(comp, 5, 200);
+        addFeedbackAndValidateScore(comp, 5, 200);
+    }));
+
+    it('should calculate score correctly for NONZeroPointsZeroBonusPointsExercise', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+
+        comp.exercise.maxScore = 10;
+        comp.exercise.bonusPoints = 0;
+        comp.automaticFeedback = [];
+        comp.referencedFeedback = [];
+        comp.unreferencedFeedback = [];
+        addFeedbackAndValidateScore(comp, 0, 0);
+        addFeedbackAndValidateScore(comp, -1, 0);
+        addFeedbackAndValidateScore(comp, 1, 0);
+        addFeedbackAndValidateScore(comp, 5, 50);
+        addFeedbackAndValidateScore(comp, 5, 100);
+        addFeedbackAndValidateScore(comp, 5, 100);
+    }));
+
+    it('should calculate score correctly for ZeroPointsNONZeroBonusPointsExercise', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+
+        comp.exercise.maxScore = 0;
+        comp.exercise.bonusPoints = 10;
+        comp.automaticFeedback = [];
+        comp.referencedFeedback = [];
+        comp.unreferencedFeedback = [];
+        addFeedbackAndValidateScore(comp, 0, 0);
+        addFeedbackAndValidateScore(comp, -1, 0);
+        addFeedbackAndValidateScore(comp, 1, 0);
+        addFeedbackAndValidateScore(comp, 5, 50);
+        addFeedbackAndValidateScore(comp, 5, 100);
+        addFeedbackAndValidateScore(comp, 5, 100);
+    }));
+
+    it('should calculate score correctly for ZeroPointsZeroBonusPointsExercise', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+
+        comp.exercise.maxScore = 0;
+        comp.exercise.bonusPoints = 0;
+        comp.automaticFeedback = [];
+        comp.referencedFeedback = [];
+        comp.unreferencedFeedback = [];
+        addFeedbackAndValidateScore(comp, 0, 0);
+        addFeedbackAndValidateScore(comp, -1, 0);
+        addFeedbackAndValidateScore(comp, 1, 0);
+        addFeedbackAndValidateScore(comp, 50, 50);
+        addFeedbackAndValidateScore(comp, 50, 100);
+        addFeedbackAndValidateScore(comp, 50, 100);
     }));
 
     it('should save and submit manual result', fakeAsync(() => {
