@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.8.4"
+version = "4.8.5"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -203,7 +203,7 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-annotations:${fasterxml_version}"
     implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
     implementation "com.hazelcast:hazelcast:4.1"
-    implementation "com.hazelcast:hazelcast-hibernate53:2.1.1"
+    implementation "com.hazelcast:hazelcast-hibernate53:2.2.0"
     implementation "com.hazelcast:hazelcast-spring:4.1"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate:hibernate-core"
@@ -255,7 +255,7 @@ dependencies {
     implementation "mysql:mysql-connector-java:8.0.22"
 
     implementation "org.zalando:problem-spring-web:0.26.2"
-    implementation "com.ibm.icu:icu4j:68.1"
+    implementation "com.ibm.icu:icu4j:68.2"
     implementation "com.github.seancfoley:ipaddress:5.3.3"
     implementation "info.debatty:java-string-similarity:2.0.0"
     implementation "org.apache.maven:maven-model:3.6.3"

@@ -117,10 +117,6 @@ public class ComplaintService {
         return complaintRepository.save(complaint);
     }
 
-    public Optional<Complaint> getById(long complaintId) {
-        return complaintRepository.findById(complaintId);
-    }
-
     public Optional<Complaint> getByResultId(long resultId) {
         return complaintRepository.findByResult_Id(resultId);
     }
