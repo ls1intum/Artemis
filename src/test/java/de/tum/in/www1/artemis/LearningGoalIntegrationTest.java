@@ -476,6 +476,36 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(progressInTeamExercise.averageScoreAchievedByStudentInLectureUnit).isEqualTo(30.0);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getLearningGoalCourseProgressIndividualTest_asInstructorOne() throws Exception {
+        cleanUpInitialParticipations();
+        User student1 = userRepository.findOneByLogin("student1").get();
+        User student2 = userRepository.findOneByLogin("student2").get();
+        User student3 = userRepository.findOneByLogin("student3").get();
+        User student4 = userRepository.findOneByLogin("student4").get();
+
+        createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
+        createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 50, false);
+
+        createParticipationSubmissionAndResult(idOfTextExercise, student2, 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from student
+        createParticipationSubmissionAndResult(idOfTextExercise, student2, 10.0, 0.0, 10, false);
+
+        createParticipationSubmissionAndResult(idOfTextExercise, student3, 10.0, 0.0, 10, true);
+        createParticipationSubmissionAndResult(idOfTextExercise, student4, 10.0, 0.0, 50, true);
+
+        CourseLearningGoalProgress courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress", HttpStatus.OK,
+                CourseLearningGoalProgress.class);
+
+        assertThat(courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
+        assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(3.0);
+        CourseLearningGoalProgress.CourseLectureUnitProgress progressInIndividualExercise = courseLearningGoalProgress.progressInLectureUnits.stream()
+                .filter(courseLectureUnitProgress -> courseLectureUnitProgress.lectureUnitId.equals(idOfExerciseUnitTextOfLectureOne)).findFirst().get();
+        assertThat(progressInIndividualExercise.participationRate).isEqualTo(80.0);
+        assertThat(progressInIndividualExercise.noOfParticipants).isEqualTo(4);
+        assertThat(progressInIndividualExercise.averageScoreAchievedByStudentInLectureUnit).isEqualTo(30.0);
+    }
+
     private void cleanUpInitialParticipations() {
         participationService.deleteAllByExerciseId(idOfTextExercise, true, true);
         participationService.deleteAllByExerciseId(idOfModelingExercise, true, true);
