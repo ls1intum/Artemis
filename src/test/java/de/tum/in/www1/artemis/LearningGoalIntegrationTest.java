@@ -19,19 +19,27 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
 
 public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Autowired
+    TeamRepository teamRepository;
 
     @Autowired
     CourseRepository courseRepository;
@@ -43,10 +51,16 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     ExerciseRepository exerciseRepository;
 
     @Autowired
+    ParticipationService participationService;
+
+    @Autowired
     UserRepository userRepository;
 
     @Autowired
     CourseStudentViewRepository courseStudentViewRepository;
+
+    @Autowired
+    CourseTeamViewRepository courseTeamViewRepository;
 
     @Autowired
     StudentParticipationRepository studentParticipationRepository;
@@ -84,6 +98,8 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     Long idOfExerciseUnitModelingOfLectureOne;
 
+    Long idOfExerciseUnitTeamTextOfLectureOne;
+
     Long idOfLectureTwo;
 
     Long idOfTextUnitOfLectureTwo;
@@ -94,19 +110,11 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     Long idOfTextExercise;
 
-    Long idOfTextExerciseParticipation;
-
-    Long idOfTextExerciseSubmission;
-
-    Long idOfTextExerciseResult;
-
     Long idOfModelingExercise;
 
-    Long idOfModelingExerciseParticipation;
+    Long idOfTeamTextExercise;
 
-    Long idOfModelingExerciseSubmission;
-
-    Long idOfModelingExerciseResult;
+    List<Team> teams;
 
     @AfterEach
     public void resetDatabase() {
@@ -116,28 +124,46 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     @BeforeEach
     public void setupTestScenario() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        // creating the users student1-student10, tutor1-tutor10 and instructors1-instructor10
-        this.database.addUsers(10, 10, 10);
+        // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
+        this.database.addUsers(5, 10, 10);
 
         // Add users that are not in the course
         userRepository.save(ModelFactory.generateActivatedUser("student42"));
         userRepository.save(ModelFactory.generateActivatedUser("tutor42"));
         userRepository.save(ModelFactory.generateActivatedUser("instructor42"));
+
         // creating course
         Course course = this.database.createCourse();
         idOfCourse = course.getId();
 
         // setting up course student view (view is just a table in embedded test scenario and therefore needs to be filled manually!!)
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= 5; i++) {
             Long studentId = userRepository.findOneByLogin("student" + i).get().getId();
             CourseStudentsView.CourseStudentViewId courseStudentViewId = new CourseStudentsView.CourseStudentViewId(idOfCourse, studentId);
             courseStudentViewRepository.save(new CourseStudentsView(courseStudentViewId));
         }
 
+        User student1 = userRepository.findOneByLogin("student1").get();
+
         createLectureOne(course);
         createLectureTwo(course);
         createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp);
+        createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 50, true);
         createModelingExercise(pastTimestamp, pastTimestamp, pastTimestamp);
+        createParticipationSubmissionAndResult(idOfModelingExercise, student1, 10.0, 0.0, 50, true);
+        createTeamTextExercise(pastTimestamp, pastTimestamp, pastTimestamp);
+        User tutor = userRepository.findOneByLogin("tutor1").get();
+        Exercise teamTextExercise = exerciseRepository.findById(idOfTeamTextExercise).get();
+        // will also create users
+        teams = database.addTeamsForExerciseFixedTeamSize(teamTextExercise, 5, tutor, 3);
+
+        // setting up course team view (view is just a table in embedded test scenario and therefore needs to be filled manually!!)
+        for (Team team : teams) {
+            CourseTeamView.CourseTeamViewId courseTeamViewId = new CourseTeamView.CourseTeamViewId(idOfCourse, team.getId());
+            courseTeamViewRepository.save(new CourseTeamView(courseTeamViewId));
+        }
+        createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(0), 10.0, 0.0, 50, true);
+
         creatingLectureUnitsOfLectureOne();
         creatingLectureUnitsOfLectureTwo();
         createLearningGoal();
@@ -176,7 +202,13 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         modelingExerciseUnit = exerciseUnitRepository.save(modelingExerciseUnit);
         idOfExerciseUnitModelingOfLectureOne = modelingExerciseUnit.getId();
 
-        List<LectureUnit> lectureUnitsOfLectureOne = List.of(textUnit, textExerciseUnit, modelingExerciseUnit);
+        Exercise textTeamExercise = exerciseRepository.findById(idOfTeamTextExercise).get();
+        ExerciseUnit teamTextExerciseUnit = new ExerciseUnit();
+        teamTextExerciseUnit.setExercise(textTeamExercise);
+        teamTextExerciseUnit = exerciseUnitRepository.save(teamTextExerciseUnit);
+        idOfExerciseUnitTeamTextOfLectureOne = teamTextExerciseUnit.getId();
+
+        List<LectureUnit> lectureUnitsOfLectureOne = List.of(textUnit, textExerciseUnit, modelingExerciseUnit, teamTextExerciseUnit);
         Lecture lectureOne = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(idOfLectureOne).get();
         for (LectureUnit lectureUnit : lectureUnitsOfLectureOne) {
             lectureOne.addLectureUnit(lectureUnit);
@@ -236,26 +268,6 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         textExercise.setBonusPoints(0.0);
         textExercise = exerciseRepository.save(textExercise);
         idOfTextExercise = textExercise.getId();
-        User user = (userRepository.findOneByLogin("student1")).get();
-        // participation
-        StudentParticipation textParticipation = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
-        textParticipation = studentParticipationRepository.save(textParticipation);
-        idOfTextExerciseParticipation = textParticipation.getId();
-        // submission
-        Submission textSubmission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, true);
-        textSubmission.setParticipation(textParticipation);
-        textSubmission = submissionRepository.save(textSubmission);
-        idOfTextExerciseSubmission = textSubmission.getId();
-
-        // result
-        Result textResult = ModelFactory.generateResult(true, 50);
-        textResult.setParticipation(textParticipation);
-        textResult = resultRepository.save(textResult);
-        idOfTextExerciseResult = textResult.getId();
-
-        textSubmission.addResult(textResult);
-        textResult.setSubmission(textSubmission);
-        submissionRepository.save(textSubmission);
     }
 
     private void createModelingExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
@@ -267,32 +279,73 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         modelingExercise.setBonusPoints(0.0);
         modelingExercise = exerciseRepository.save(modelingExercise);
         idOfModelingExercise = modelingExercise.getId();
-        User user = (userRepository.findOneByLogin("student1")).get();
-        // participation
-        StudentParticipation modelingParticipation = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise, user);
-        modelingParticipation = studentParticipationRepository.save(modelingParticipation);
-        idOfModelingExerciseParticipation = modelingParticipation.getId();
-        // submission
-        Submission modelingSubmission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, true);
-        modelingSubmission.setParticipation(modelingParticipation);
-        modelingSubmission = submissionRepository.save(modelingSubmission);
-        idOfModelingExerciseSubmission = modelingSubmission.getId();
+    }
+
+    private void createTeamTextExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
+        Course course;
+        // creating text exercise with Result
+        course = courseRepository.findWithEagerExercisesById(idOfCourse);
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        textExercise.setMode(ExerciseMode.TEAM);
+        textExercise.setMaxScore(10.0);
+        textExercise.setBonusPoints(0.0);
+        textExercise = exerciseRepository.save(textExercise);
+        idOfTeamTextExercise = textExercise.getId();
+    }
+
+    private void createParticipationSubmissionAndResult(Long idOfExercise, Participant participant, Double pointsOfExercise, Double bonusPointsOfExercise, long scoreAwarded,
+            boolean rated) {
+        Exercise exercise = exerciseRepository.findById(idOfExercise).get();
+
+        if (!exercise.getMaxScore().equals(pointsOfExercise)) {
+            exercise.setMaxScore(pointsOfExercise);
+        }
+        if (!exercise.getBonusPoints().equals(bonusPointsOfExercise)) {
+            exercise.setBonusPoints(bonusPointsOfExercise);
+        }
+        exercise = exerciseRepository.save(exercise);
+
+        StudentParticipation studentParticipation = participationService.startExercise(exercise, participant, false);
+
+        Submission submission;
+        if (exercise instanceof ProgrammingExercise) {
+            submission = new ProgrammingSubmission();
+        }
+        else if (exercise instanceof ModelingExercise) {
+            submission = new ModelingSubmission();
+        }
+        else if (exercise instanceof TextExercise) {
+            submission = new TextSubmission();
+        }
+        else if (exercise instanceof FileUploadExercise) {
+            submission = new FileUploadSubmission();
+        }
+        else if (exercise instanceof QuizExercise) {
+            submission = new QuizSubmission();
+        }
+        else {
+            throw new RuntimeException("Unsupported exercise type: " + exercise);
+        }
+
+        submission.setType(SubmissionType.MANUAL);
+        submission.setParticipation(studentParticipation);
+        submission = submissionRepository.save(submission);
+
         // result
-        Result modelingResult = ModelFactory.generateResult(true, 50);
-        modelingResult.setParticipation(modelingParticipation);
-        modelingResult = resultRepository.save(modelingResult);
-        idOfModelingExerciseResult = modelingResult.getId();
+        Result result = ModelFactory.generateResult(rated, scoreAwarded);
+        result.setParticipation(studentParticipation);
+        result = resultRepository.save(result);
 
-        modelingSubmission.addResult(modelingResult);
-        modelingResult.setSubmission(modelingSubmission);
-        submissionRepository.save(modelingSubmission);
-
+        submission.addResult(result);
+        result.setSubmission(submission);
+        submissionRepository.save(submission);
     }
 
     private void testAllPreAuthorize() throws Exception {
         request.put("/api/courses/" + idOfCourse + "/goals", new LearningGoal(), HttpStatus.FORBIDDEN);
         request.post("/api/courses/" + idOfCourse + "/goals", new LearningGoal(), HttpStatus.FORBIDDEN);
         request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN, LearningGoal.class);
+        request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress", HttpStatus.FORBIDDEN, CourseLearningGoalProgress.class);
         request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN);
     }
 
@@ -383,17 +436,50 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     public void getLearningGoalProgress_asStudent1_shouldReturnProgressTenOutOfTwenty() throws Exception {
         IndividualLearningGoalProgress individualLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress",
                 HttpStatus.OK, IndividualLearningGoalProgress.class);
-        assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(20.0);
+        assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
         assertThat(individualLearningGoalProgress.pointsAchievedByStudentInLearningGoal).isEqualTo(10.0);
     }
 
     @Test
+    @WithMockUser(username = "team1student1", roles = "USER")
+    public void getLearningGoalProgress_asTeam1Student1_shouldReturnProgressTenOutOfThirty() throws Exception {
+        IndividualLearningGoalProgress individualLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress",
+                HttpStatus.OK, IndividualLearningGoalProgress.class);
+        assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
+        assertThat(individualLearningGoalProgress.pointsAchievedByStudentInLearningGoal).isEqualTo(5.0);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getLearningGoalCourseProgress_asInstructorOne() throws Exception {
+    public void getLearningGoalCourseProgressTeamsTest_asInstructorOne() throws Exception {
+        cleanUpInitialParticipations();
+
+        createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(0), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
+        createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(0), 10.0, 0.0, 50, false);
+
+        // will be ignored in favor of last submission from team
+        createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(1), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
+        createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(1), 10.0, 0.0, 10, false);
+
+        createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(2), 10.0, 0.0, 10, true);
+        createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(3), 10.0, 0.0, 50, true);
+
         CourseLearningGoalProgress courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress", HttpStatus.OK,
                 CourseLearningGoalProgress.class);
-        assertThat(courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(20.0);
-        assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(10.0);
+
+        assertThat(courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
+        assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(3.0);
+        CourseLearningGoalProgress.CourseLectureUnitProgress progressInTeamExercise = courseLearningGoalProgress.progressInLectureUnits.stream()
+                .filter(courseLectureUnitProgress -> courseLectureUnitProgress.lectureUnitId.equals(idOfExerciseUnitTeamTextOfLectureOne)).findFirst().get();
+        assertThat(progressInTeamExercise.participationRate).isEqualTo(80.0);
+        assertThat(progressInTeamExercise.noOfParticipants).isEqualTo(4);
+        assertThat(progressInTeamExercise.averageScoreAchievedByStudentInLectureUnit).isEqualTo(30.0);
+    }
+
+    private void cleanUpInitialParticipations() {
+        participationService.deleteAllByExerciseId(idOfTextExercise, true, true);
+        participationService.deleteAllByExerciseId(idOfModelingExercise, true, true);
+        participationService.deleteAllByExerciseId(idOfTeamTextExercise, true, true);
     }
 
     @Test
