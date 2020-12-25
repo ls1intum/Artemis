@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.persistence.EntityManager;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +28,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
 
 public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -43,6 +46,9 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     UserRepository userRepository;
 
     @Autowired
+    CourseStudentViewRepository courseStudentViewRepository;
+
+    @Autowired
     StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
@@ -50,6 +56,9 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     ResultRepository resultRepository;
+
+    @Autowired
+    EntityManager entityManager;
 
     @Autowired
     TextUnitRepository textUnitRepository;
@@ -109,6 +118,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student10, tutor1-tutor10 and instructors1-instructor10
         this.database.addUsers(10, 10, 10);
+
         // Add users that are not in the course
         userRepository.save(ModelFactory.generateActivatedUser("student42"));
         userRepository.save(ModelFactory.generateActivatedUser("tutor42"));
@@ -116,6 +126,14 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         // creating course
         Course course = this.database.createCourse();
         idOfCourse = course.getId();
+
+        // setting up course student view (view is just a table in embedded test scenario and therefore needs to be filled manually!!)
+        for (int i = 1; i <= 10; i++) {
+            Long studentId = userRepository.findOneByLogin("student" + i).get().getId();
+            CourseStudentsView.CourseStudentViewId courseStudentViewId = new CourseStudentsView.CourseStudentViewId(idOfCourse, studentId);
+            courseStudentViewRepository.save(new CourseStudentsView(courseStudentViewId));
+        }
+
         createLectureOne(course);
         createLectureTwo(course);
         createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp);
@@ -367,6 +385,15 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
                 HttpStatus.OK, IndividualLearningGoalProgress.class);
         assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(20.0);
         assertThat(individualLearningGoalProgress.pointsAchievedByStudentInLearningGoal).isEqualTo(10.0);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getLearningGoalCourseProgress_asInstructorOne() throws Exception {
+        CourseLearningGoalProgress courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress", HttpStatus.OK,
+                CourseLearningGoalProgress.class);
+        assertThat(courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(20.0);
+        assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(10.0);
     }
 
     @Test

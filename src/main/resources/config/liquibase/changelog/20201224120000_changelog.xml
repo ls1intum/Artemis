@@ -1,0 +1,34 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="stefanwaldhauser" id="20201224120000">
+        <createView replaceIfExists="true" viewName="view_students_of_course">
+            SELECT DISTINCT C.ID AS COURSE_ID, UG.USER_ID AS STUDENT_ID
+            FROM USER_GROUPS UG,
+            COURSE C
+            WHERE UG.`groups` = C.STUDENT_GROUP_NAME
+            AND UG.USER_ID NOT IN ( -- USER SHOULD NOT BE TEACHING ASSISTANT IN COURSE
+            SELECT UG2.USER_ID
+            FROM USER_GROUPS UG2
+            WHERE UG2.`groups` = C.TEACHING_ASSISTANT_GROUP_NAME
+            )
+            AND UG.USER_ID NOT IN ( -- USER SHOULD NOT BE INSTRUCTOR IN COURSE
+            SELECT UG3.USER_ID
+            FROM USER_GROUPS UG3
+            WHERE UG3.`groups` = C.INSTRUCTOR_GROUP_NAME
+            )
+        </createView>
+    </changeSet>
+    <changeSet author="stefanwaldhauser" id="20201224120001">
+        <createView replaceIfExists="true" viewName="view_teams_of_course">
+            SELECT DISTINCT C.ID AS COURSE_ID, TS.TEAM_ID AS TEAM_ID
+            FROM TEAM_STUDENT TS,
+            COURSE C
+            WHERE TS.STUDENT_ID IN (
+            SELECT SC.STUDENT_ID
+            FROM VIEW_STUDENTS_OF_COURSE SC
+            WHERE SC.COURSE_ID = C.ID
+            )
+        </createView>
+    </changeSet>
+</databaseChangeLog>

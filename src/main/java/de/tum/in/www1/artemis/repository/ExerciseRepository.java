@@ -56,99 +56,116 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
 
     @Query(value = """
-            WITH chosen_exercises(exercise_id, course_id) AS (
-                SELECT DISTINCT e.id, e.course_id
-                FROM exercise e
-                WHERE e.id IN :exerciseIds
-            ),
-                 students_in_course(student_id) -- finds id of students in exercise course that are neither TA nor instructors in the course
-                     AS
-                     (
-                         SELECT DISTINCT ug.user_id
-                         FROM user_groups ug,
-                              course c
-                         WHERE c.id = (
-                             SELECT DISTINCT e.course_id
-                             FROM chosen_exercises e
-                         )
-                           AND ug.`groups` = c.student_group_name
-                           AND ug.user_id NOT IN ( -- user should not be teaching assistant in course
-                             SELECT ug2.user_id
-                             FROM user_groups ug2
-                             WHERE ug2.`groups` = c.teaching_assistant_group_name
-                         )
-                           AND ug.user_id NOT IN ( -- user should not be instructor in course
-                             SELECT ug3.user_id
-                             FROM user_groups ug3
-                             WHERE ug3.`groups` = c.instructor_group_name
-                         )
-                     ),
-                 teams_of_course(team_id) AS
-                     (SELECT DISTINCT ts.team_id
-                      FROM team_student ts
-                      WHERE ts.student_id IN (
-                          SELECT s.student_id
-                          FROM students_in_course s
-                      )
-                     ),
-                 last_score_of_participating_student_or_team(exercise_id, student_id, team_id, participant_score)
-                     AS (
-                     SELECT DISTINCT e.exercise_id, p.student_id, p.team_id, r.score
-                     FROM chosen_exercises e
-                              JOIN participation p ON e.exercise_id = p.exercise_id
-                              JOIN submission s ON p.id = s.participation_id
-                              JOIN result r ON s.id = r.submission_id
-                     WHERE (
-                             p.team_id IN (SELECT tc.team_id FROM teams_of_course tc) -- participation has to be either from a student of the course or from a team
-                             OR
-                             p.student_id IN (SELECT sc.student_id FROM students_in_course sc)
-                         )
-                       AND r.score IS NOT NULL
-                       AND (IF(:onlyConsiderRatedResults, r.rated = 1, TRUE))
-                       AND NOT EXISTS( -- only consider the last submission (the one with the highest id)
-                             SELECT *
-                             FROM submission s2,
-                                  result r2
-                             WHERE s2.participation_id = s.participation_id
-                               AND r2.submission_id = s2.id
-                               AND r2.score IS NOT NULL
-                               AND (IF(:onlyConsiderRatedResults, r2.rated = 1, TRUE))
-                               AND s2.id > s.id
-                         )
-                 ),
-                 last_score_of_all_chosen_exercises(exercise_id, exercise_title, exercise_mode, exercise_max_points, student_id, team_id, participant_score)
-                     AS (
-                     SELECT e.id, e.title, e.mode, e.max_score, ls.student_id, ls.team_id, ls.participant_score
-                     FROM exercise e
-                              LEFT JOIN last_score_of_participating_student_or_team ls ON e.id = ls.exercise_id
-                     WHERE e.id IN (
-                         SELECT ce.exercise_id
-                         FROM chosen_exercises ce
-                     )
-                 )
-            SELECT exercise_id,
-                   exercise_title,
-                   exercise_mode,
-                   exercise_max_points,
-                   avg(participant_score) as average_score,
+            SELECT EXERCISE_ID,
+                   EXERCISE_TITLE,
+                   EXERCISE_MODE,
+                   EXERCISE_MAX_POINTS,
+                   AVG(PARTICIPANT_SCORE) AS AVERAGE_SCORE,
                    (
-                       IF(exercise_mode = 'INDIVIDUAL', count(DISTINCT student_id), count(DISTINCT team_id))
-                       )                  AS no_of_participating_students_or_teams,
+                       CASE
+                           WHEN EXERCISE_MODE = 'INDIVIDUAL' THEN COUNT(DISTINCT STUDENT_ID)
+                           ELSE COUNT(DISTINCT TEAM_ID)
+                           END
+                       )                  AS NO_OF_PARTICIPATING_STUDENTS_OR_TEAMS,
                    (
-                       SELECT count(*)
-                       FROM students_in_course sc
-                   )                      AS no_students_in_course,
-                   (SELECT count(*)
-                    FROM teams_of_course tc
-                   )                      AS no_teams_in_course,
+                       SELECT COUNT(DISTINCT STUDENT_ID)
+                       FROM VIEW_STUDENTS_OF_COURSE
+                       WHERE COURSE_ID = (
+                           SELECT DISTINCT COURSE_ID
+                           FROM EXERCISE
+                           WHERE ID IN :exerciseIds
+                       )
+                   )                      AS NO_STUDENTS_IN_COURSE,
                    (
-                       IF(exercise_mode = 'INDIVIDUAL',
-                          ROUND(CAST(count(DISTINCT student_id) AS FLOAT) / (SELECT CAST(count(*) AS FLOAT) from students_in_course), 4) * 100.0,
-                          ROUND(CAST(count(DISTINCT team_id) AS FLOAT) / (SELECT CAST(count(*) AS FLOAT) from teams_of_course), 4) * 100.0)
-                       )                  AS participation_rate
-            FROM last_score_of_all_chosen_exercises ls
-            GROUP BY exercise_id, exercise_title, exercise_mode, exercise_max_points
-                    """, nativeQuery = true)
+                       SELECT COUNT(DISTINCT TEAM_ID)
+                       FROM VIEW_TEAMS_OF_COURSE
+                       WHERE COURSE_ID = (
+                           SELECT DISTINCT COURSE_ID
+                           FROM EXERCISE
+                           WHERE ID IN :exerciseIds
+                       )
+                   )                      AS NO_TEAMS_IN_COURSE,
+                   (
+                       CASE
+                           WHEN EXERCISE_MODE = 'INDIVIDUAL' THEN
+                                   ROUND(CAST(COUNT(DISTINCT STUDENT_ID) AS FLOAT) / ( -- NUMBER OF PARTICIPATING STUDENT IN EXERCISE
+                                   SELECT CAST(COUNT(DISTINCT STUDENT_ID) AS FLOAT) -- NUMBER OF TEAMS IN COURSE
+                               FROM VIEW_STUDENTS_OF_COURSE
+                               WHERE COURSE_ID = (
+                                   SELECT DISTINCT COURSE_ID
+                                   FROM EXERCISE
+                                   WHERE ID IN :exerciseIds
+                               )
+                                   ), 4) * 100.0
+                           ELSE ROUND(CAST(COUNT(DISTINCT TEAM_ID) AS FLOAT) / ( -- NUMBER OF PARTICIPATING TEAMS IN EXERCISE
+                               SELECT CAST(COUNT(DISTINCT TEAM_ID) AS FLOAT) -- NUMBER OF TEAMS IN COURSE
+                               FROM VIEW_TEAMS_OF_COURSE
+                               WHERE COURSE_ID = (
+                                   SELECT DISTINCT COURSE_ID
+                                   FROM EXERCISE
+                                   WHERE ID IN :exerciseIds
+                               )
+                           ), 4) * 100.0
+                           END
+                       )                  AS PARTICIPATION_RATE
+            FROM (
+                    SELECT ID AS EXERCISE_ID, TITLE AS EXERCISE_TITLE, MODE AS EXERCISE_MODE, MAX_SCORE AS EXERCISE_MAX_POINTS, LAST_RESULT.STUDENT_ID, LAST_RESULT.TEAM_ID, LAST_RESULT.PARTICIPANT_SCORE
+                    FROM EXERCISE
+                    LEFT JOIN (
+                        SELECT DISTINCT E.EXERCISE_ID,
+                                        P.STUDENT_ID,
+                                        P.TEAM_ID,
+                                        R.SCORE AS PARTICIPANT_SCORE
+                        FROM (SELECT DISTINCT ID AS EXERCISE_ID
+                              FROM EXERCISE
+                              WHERE ID IN :exerciseIds) AS E
+                                 JOIN PARTICIPATION P ON E.EXERCISE_ID = P.EXERCISE_ID
+                                 JOIN SUBMISSION S ON P.ID = S.PARTICIPATION_ID
+                                 JOIN RESULT R ON S.ID = R.SUBMISSION_ID
+                        WHERE (
+                                    P.TEAM_ID IN ( -- ONLY COUNT PARTICIPATIONS FROM TEAMS OF THE COURSE
+                                    SELECT DISTINCT TEAM_ID
+                                    FROM VIEW_TEAMS_OF_COURSE
+                                    WHERE COURSE_ID = (
+                                        SELECT DISTINCT COURSE_ID
+                                        FROM EXERCISE
+                                        WHERE ID IN :exerciseIds
+                                        )
+                                    )
+                                OR
+                                    P.STUDENT_ID IN (
+                                        SELECT DISTINCT STUDENT_ID -- ONLY COUNT PARTICIPATIONS FROM STUDENTS OF THE COURSE
+                                        FROM VIEW_STUDENTS_OF_COURSE
+                                        WHERE COURSE_ID = (
+                                            SELECT DISTINCT COURSE_ID
+                                            FROM EXERCISE
+                                            WHERE ID IN :exerciseIds
+                                            )
+                                        )
+                            )
+                          AND R.SCORE IS NOT NULL
+                          AND (CASE
+                                   WHEN :onlyConsiderRatedResults THEN R.RATED = 1 -- WE EITHER CARE ONLY ABOUT RATED RESULTS OR WE CARE FOR BOTH
+                                   ELSE TRUE
+                            END)
+                          AND NOT EXISTS( -- ONLY CONSIDER THE LAST SUBMISSION (THE ONE WITH THE HIGHEST ID)
+                                SELECT *
+                                FROM SUBMISSION S2,
+                                     RESULT R2
+                                WHERE S2.PARTICIPATION_ID = S.PARTICIPATION_ID
+                                  AND R2.SUBMISSION_ID = S2.ID
+                                  AND R2.SCORE IS NOT NULL
+                                  AND (CASE
+                                           WHEN :onlyConsiderRatedResults THEN R2.RATED = 1 -- WE EITHER CARE ONLY ABOUT RATED RESULTS OR WE CARE FOR BOTH
+                                           ELSE TRUE
+                                    END)
+                                  AND S2.ID > S.ID
+                        )
+                    ) AS LAST_RESULT ON LAST_RESULT.EXERCISE_ID = ID
+                    WHERE ID IN :exerciseIds
+                 ) AS LAST_RESULT_FOR_ALL_GIVEN_EXERCISES
+            GROUP BY EXERCISE_ID, EXERCISE_TITLE, EXERCISE_MODE, EXERCISE_MAX_POINTS
+            """, nativeQuery = true)
     List<Object[]> calculateExerciseStatisticsForCourseExercise(@Param("exerciseIds") List<Long> exerciseIds, @Param("onlyConsiderRatedResults") boolean onlyConsiderRatedResults);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
