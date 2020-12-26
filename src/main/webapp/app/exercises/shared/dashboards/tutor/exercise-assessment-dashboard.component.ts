@@ -331,10 +331,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             const latestResult = getLatestSubmissionResult(submission);
             if (latestResult) {
                 // reconnect some associations
-                tmpResult!.submission = submission;
-                tmpResult!.participation = submission.participation;
-                submission.participation!.results = [tmpResult!];
-                setLatestSubmissionResult(submission, tmpResult);
+                latestResult!.submission = submission;
+                latestResult!.participation = submission.participation;
+                submission.participation!.results = [latestResult!];
+                setLatestSubmissionResult(submission, latestResult);
             }
             return submission;
         });
