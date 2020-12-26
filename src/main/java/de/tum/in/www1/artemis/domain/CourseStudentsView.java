@@ -17,10 +17,21 @@ public class CourseStudentsView {
     @EmbeddedId
     private CourseStudentViewId courseStudentViewId;
 
+    public CourseStudentViewId getCourseStudentViewId() {
+        return courseStudentViewId;
+    }
+
+    public void setCourseStudentViewId(CourseStudentViewId courseStudentViewId) {
+        this.courseStudentViewId = courseStudentViewId;
+    }
+
     public CourseStudentsView(CourseStudentViewId courseStudentViewId) {
         this.courseStudentViewId = courseStudentViewId;
     }
 
+    /**
+     * Empty constructor needed for jackson
+     */
     public CourseStudentsView() {
     }
 
@@ -30,53 +41,59 @@ public class CourseStudentsView {
     public static class CourseStudentViewId implements Serializable {
 
         @Column(name = "COURSE_ID")
-        private long course_id;
+        private long courseId;
 
         @Column(name = "STUDENT_ID")
         private long studentId;
 
+        /**
+         * Empty constructor needed for jackson
+         */
         public CourseStudentViewId() {
 
         }
 
-        public CourseStudentViewId(long course_id, long studentId) {
-            this.course_id = course_id;
+        public CourseStudentViewId(long courseId, long studentId) {
+            this.courseId = courseId;
             this.studentId = studentId;
         }
 
-        public long getCourse_id() {
-            return course_id;
+        public long getCourseId() {
+            return courseId;
         }
 
-        public void setCourse_id(long course_id) {
-            this.course_id = course_id;
+        public void setCourseId(long courseId) {
+            this.courseId = courseId;
         }
 
         public long getStudentId() {
             return studentId;
         }
 
-        public void setStudentId(long exerciseId) {
-            this.studentId = exerciseId;
+        public void setStudentId(long studentId) {
+            this.studentId = studentId;
         }
 
         @Override
         public boolean equals(Object o) {
-            if (this == o)
+            if (this == o) {
                 return true;
-            if (o == null || getClass() != o.getClass())
+            }
+            if (o == null || getClass() != o.getClass()) {
                 return false;
+            }
 
             CourseStudentViewId that = (CourseStudentViewId) o;
 
-            if (course_id != that.course_id)
+            if (courseId != that.courseId) {
                 return false;
+            }
             return studentId == that.studentId;
         }
 
         @Override
         public int hashCode() {
-            int result = (int) (course_id ^ (course_id >>> 32));
+            int result = (int) (courseId ^ (courseId >>> 32));
             result = 31 * result + (int) (studentId ^ (studentId >>> 32));
             return result;
         }

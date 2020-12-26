@@ -69,9 +69,9 @@ public class ExerciseService {
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
             AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService,
-            StudentExamRepository studentExamRepository, ExamRepository exampRepository) {
+            StudentExamRepository studentExamRepository, ExamRepository examRepository) {
         this.exerciseRepository = exerciseRepository;
-        this.examRepository = exampRepository;
+        this.examRepository = examRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.programmingExerciseService = programmingExerciseService;
@@ -560,8 +560,8 @@ public class ExerciseService {
     private CourseExerciseStatisticsDTO convertExerciseStatisticsRowToDTO(Object[] row) {
         CourseExerciseStatisticsDTO courseExerciseStatisticsDTO = new CourseExerciseStatisticsDTO();
         courseExerciseStatisticsDTO.setExerciseId(row[0] != null ? ((Number) row[0]).longValue() : null);
-        courseExerciseStatisticsDTO.setExerciseTitle(row[1] != null ? ((String) row[1]) : null);
-        courseExerciseStatisticsDTO.setExerciseMode(row[2] != null ? ((String) row[2]) : null);
+        courseExerciseStatisticsDTO.setExerciseTitle(row[1] != null ? (String) row[1] : null);
+        courseExerciseStatisticsDTO.setExerciseMode(row[2] != null ? (String) row[2] : null);
         courseExerciseStatisticsDTO.setExerciseMaxPoints(row[3] != null ? ((Number) row[3]).doubleValue() : null);
         courseExerciseStatisticsDTO.setAverageScoreInPercent(row[4] != null ? ((Number) row[4]).doubleValue() : null);
         courseExerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(row[5] != null ? ((Number) row[5]).intValue() : null);

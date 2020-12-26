@@ -77,15 +77,15 @@ public class LearningGoalService {
      * @return progress of the course in the exercise units
      */
     private Set<CourseLearningGoalProgress.CourseLectureUnitProgress> calculateExerciseUnitsProgressForCourse(List<ExerciseUnit> exerciseUnits) {
-        exerciseUnits = exerciseUnits.stream().filter(exerciseUnit -> exerciseUnit.getExercise() != null && exerciseUnit.getExercise().isAssessmentDueDateOver())
-                .collect(Collectors.toList());
-        List<Long> exerciseIds = exerciseUnits.stream().map(exerciseUnit -> exerciseUnit.getExercise().getId()).distinct().collect(Collectors.toList());
+        List<ExerciseUnit> filteredExerciseUnits = exerciseUnits.stream()
+                .filter(exerciseUnit -> exerciseUnit.getExercise() != null && exerciseUnit.getExercise().isAssessmentDueDateOver()).collect(Collectors.toList());
+        List<Long> exerciseIds = filteredExerciseUnits.stream().map(exerciseUnit -> exerciseUnit.getExercise().getId()).distinct().collect(Collectors.toList());
 
         Map<Long, CourseExerciseStatisticsDTO> exerciseIdToExerciseCourseStatistics = this.exerciseService.calculateExerciseStatistics(exerciseIds, false).stream()
-                .collect(Collectors.toMap(CourseExerciseStatisticsDTO::getExerciseId, CourseExerciseStatisticsDTO -> CourseExerciseStatisticsDTO));
+                .collect(Collectors.toMap(CourseExerciseStatisticsDTO::getExerciseId, courseExerciseStatisticsDTO -> courseExerciseStatisticsDTO));
 
         // for each exercise unit, the exercise will be mapped to a freshly created lecture unit course progress.
-        Map<Exercise, CourseLearningGoalProgress.CourseLectureUnitProgress> exerciseToLectureUnitCourseProgress = exerciseUnits.stream()
+        Map<Exercise, CourseLearningGoalProgress.CourseLectureUnitProgress> exerciseToLectureUnitCourseProgress = filteredExerciseUnits.stream()
                 .collect(Collectors.toMap(ExerciseUnit::getExercise, exerciseUnit -> {
                     CourseExerciseStatisticsDTO courseExerciseStatisticsDTO = exerciseIdToExerciseCourseStatistics.get(exerciseUnit.getExercise().getId());
                     CourseLearningGoalProgress.CourseLectureUnitProgress courseLectureUnitProgress = new CourseLearningGoalProgress.CourseLectureUnitProgress();
