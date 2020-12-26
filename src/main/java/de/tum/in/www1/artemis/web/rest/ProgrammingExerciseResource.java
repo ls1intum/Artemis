@@ -542,7 +542,7 @@ public class ProgrammingExerciseResource {
         final var originalProgrammingExercise = optionalOriginalProgrammingExercise.get();
 
         // The static code analysis flag can only change, if the build plans are recreated and the template is upgraded
-        if (newExercise.isStaticCodeAnalysisEnabled() != originalProgrammingExercise.isStaticCodeAnalysisEnabled() && !recreateBuildPlans && !updateTemplate) {
+        if (newExercise.isStaticCodeAnalysisEnabled() != originalProgrammingExercise.isStaticCodeAnalysisEnabled() && !(recreateBuildPlans && updateTemplate)) {
             throw new BadRequestAlertException("Static code analysis can only change, if the recreation of build plans and update of template files is activated", ENTITY_NAME,
                     "staticCodeAnalysisCannotChange");
         }
