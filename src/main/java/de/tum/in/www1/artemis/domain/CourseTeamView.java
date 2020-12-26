@@ -25,6 +25,7 @@ public class CourseTeamView {
      * Empty constructor needed for jackson
      */
     public CourseTeamView() {
+        // needed for jackson
     }
 
     public CourseTeamViewId getCourseTeamViewId() {
@@ -55,6 +56,7 @@ public class CourseTeamView {
          * Empty constructor needed for jackson
          */
         public CourseTeamViewId() {
+            // needed for jackson
         }
 
         public long getCourseId() {

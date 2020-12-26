@@ -33,6 +33,7 @@ public class CourseStudentsView {
      * Empty constructor needed for jackson
      */
     public CourseStudentsView() {
+        // needed for jackson
     }
 
     @Immutable
@@ -50,7 +51,7 @@ public class CourseStudentsView {
          * Empty constructor needed for jackson
          */
         public CourseStudentViewId() {
-
+            // needed for jackson
         }
 
         public CourseStudentViewId(long courseId, long studentId) {
