@@ -8,8 +8,13 @@ import { StudentQuestionAnswer } from 'app/entities/student-question-answer.mode
 import { StudentQuestion } from 'app/entities/student-question.model';
 import { User } from 'app/core/user/user.model';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { StudentVotesComponent } from 'app/overview/student-questions/student-votes/student-votes.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -46,16 +51,46 @@ describe('StudentQuestionComponent', () => {
         id: 1,
         questionText: 'question',
         creationDate: undefined,
+        author: user1,
         answers: [unApprovedStudentQuestionAnswer, approvedStudentQuestionAnswer],
+    } as StudentQuestion;
+
+    const maliciousStudentQuestion = {
+        id: 2,
+        questionText: '<div style="transform: scaleX(-1)">&gt;:)</div>',
+        creationDate: undefined,
+        author: user2,
+        answers: [],
     } as StudentQuestion;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
-            declarations: [StudentQuestionComponent],
-            providers: [{ provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects }],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule],
+            declarations: [
+                StudentQuestionComponent,
+                MockDirective(MarkdownEditorComponent),
+                MockDirective(ConfirmIconComponent),
+                MockDirective(StudentVotesComponent),
+                MockDirective(NgbTooltip),
+                MockPipe(ArtemisDatePipe),
+                // Don't mock this since we want to test this pipe, too
+                HtmlForMarkdownPipe,
+            ],
+            providers: [
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        snapshot: {
+                            paramMap: {
+                                get: () => {
+                                    return { courseId: 1 };
+                                },
+                            },
+                        },
+                    },
+                },
+            ],
         })
-            .overrideTemplate(StudentQuestionComponent, '')
             .compileComponents()
             .then(() => {
                 componentFixture = TestBed.createComponent(StudentQuestionComponent);
@@ -80,5 +115,14 @@ describe('StudentQuestionComponent', () => {
         component.editText = 'test';
         component.saveQuestion();
         expect(component.studentQuestion.questionText).to.deep.equal('test');
+    });
+
+    it('should not display malicious html in question texts', () => {
+        component.studentQuestion = maliciousStudentQuestion;
+        componentFixture.detectChanges();
+
+        const text = componentFixture.debugElement.nativeElement.querySelector('#questionText');
+        expect(text.innerHTML).to.not.equal(maliciousStudentQuestion.questionText);
+        expect(text.innerHTML).to.equal('&gt;:)');
     });
 });
