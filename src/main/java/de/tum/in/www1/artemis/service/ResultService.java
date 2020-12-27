@@ -270,7 +270,7 @@ public class ResultService {
     public DueDateStat[] countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(Exercise exercise, Long correctionRounds) {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds.intValue()];
 
-        for (int i = 1; i < correctionRounds.intValue(); i++) {
+        for (int i = 1; i <= correctionRounds.intValue(); i++) {
             if (exercise instanceof ProgrammingExercise) {
                 correctionRoundsDataStats[i - 1] = new DueDateStat(
                         programmingExerciseRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), (long) i), 0L);

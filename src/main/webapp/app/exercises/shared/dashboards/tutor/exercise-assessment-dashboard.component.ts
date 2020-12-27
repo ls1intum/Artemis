@@ -150,6 +150,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     ngAfterViewInit(): void {
         this.guidedTourService.componentPageLoaded();
+        console.log(this.exercise.numberOfAssessmentsOfCorrectionRounds);
     }
 
     /**
