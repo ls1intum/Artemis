@@ -61,6 +61,9 @@ public class MetricsBean {
         registerWebsocketMetrics();
     }
 
+    /**
+     * initialize the websocket logging
+     */
     @PostConstruct
     public void init() {
         // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
