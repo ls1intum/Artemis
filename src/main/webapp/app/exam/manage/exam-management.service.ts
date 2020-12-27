@@ -305,7 +305,6 @@ export class ExamManagementService {
             res.body.examStudentReviewStart = res.body.examStudentReviewStart ? moment(res.body.examStudentReviewStart) : undefined;
             res.body.examStudentReviewEnd = res.body.examStudentReviewEnd ? moment(res.body.examStudentReviewEnd) : undefined;
         }
-        console.log('log state from /for-exam-tutor-dashboard ', res.body);
         return res;
     }
 

@@ -556,10 +556,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (lock) {
             url += '?lock=true';
         }
-        this.http
-            .get<ProgrammingSubmission>(url)
-            .pipe(map((res: ProgrammingSubmission) => this.convertItemFromServer(res)))
-            .subscribe((x) => console.log('new query would return:', x));
         return this.http.get<ProgrammingSubmission>(url);
     }
 
@@ -584,8 +580,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private convertItemFromServer(programmingSubmission: ProgrammingSubmission): ProgrammingSubmission {
         const convertedProgrammingSubmission = Object.assign({}, programmingSubmission);
         setLatestSubmissionResult(convertedProgrammingSubmission, getLatestSubmissionResult(convertedProgrammingSubmission));
-        console.log('prog submission alt: ', programmingSubmission);
-        console.log('prog submission alt: ', convertedProgrammingSubmission);
         return convertedProgrammingSubmission;
     }
 

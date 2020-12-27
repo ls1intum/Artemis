@@ -150,7 +150,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     ngAfterViewInit(): void {
         this.guidedTourService.componentPageLoaded();
-        console.log(this.exercise.numberOfAssessmentsOfCorrectionRounds);
     }
 
     /**
@@ -365,11 +364,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
         submissionObservable.subscribe(
             (submission: Submission) => {
-                console.log('submission: 1 ', submission);
                 if (submission) {
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     this.unassessedSubmissionByCorrectionRound!.set(1, submission);
-                    console.log('submission: 2 ', submission);
                 }
                 this.submissionLockLimitReached = false;
             },
