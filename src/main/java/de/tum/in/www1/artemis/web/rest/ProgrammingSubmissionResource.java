@@ -139,15 +139,14 @@ public class ProgrammingSubmissionResource {
                 || (submissionType.equals(SubmissionType.INSTRUCTOR) && !authCheckService.isAtLeastInstructorForExercise(participation.getExercise()))) {
             return forbidden();
         }
-        ProgrammingSubmission submission;
+
         try {
-            submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, submissionType);
+            ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, submissionType);
+            programmingSubmissionService.triggerBuildAndNotifyUser(submission);
         }
         catch (IllegalStateException ex) {
             return notFound();
         }
-
-        programmingSubmissionService.triggerBuildAndNotifyUser(submission);
 
         return ResponseEntity.ok().build();
     }

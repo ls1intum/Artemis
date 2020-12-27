@@ -89,7 +89,8 @@ public interface ContinuousIntegrationService {
 
     /**
      * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
-     * bamboo-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin
+     * (bamboo|jenkins)-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin or here:
+     * https://github.com/ls1intum/jenkins-server-notification-plugin
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key of the build
@@ -99,7 +100,8 @@ public interface ContinuousIntegrationService {
 
     /**
      * Get the result of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
-     * bamboo-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin
+     * (bamboo|jenkins)-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin or here:
+     * https://github.com/ls1intum/jenkins-server-notification-plugin
      *
      * @param participation The participation for which the build finished
      * @param requestBody   The request Body received from the CI-Server.
@@ -168,18 +170,18 @@ public interface ContinuousIntegrationService {
     void enablePlan(String projectKey, String planKey);
 
     /**
-     * Updates the configured repository for a given plan to the given Bamboo Server repository.
+     * Updates the configured exercise repository for a given build plan to the given repository, this is a key method in the Artemis system structure.
      *
-     * @param bambooProject         The key of the project, e.g. 'EIST16W1'.
-     * @param bambooPlan            The key of the plan, which is usually the name combined with the project, e.g. 'PROJECT-GA56HUR'.
-     * @param bambooRepositoryName  The name of the configured repository in the CI plan.
-     * @param repoProjectName       The key of the project that contains the repository.
-     * @param repoUrl               The url of the newly to be referenced repository.
-     * @param templateRepositoryUrl The url of the template repository (that should be replaced).
-     * @param triggeredBy           Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten
+     * @param buildProjectKey                   The key of the build project, e.g. 'EIST16W1', which is normally the programming exercise project key.
+     * @param buildPlanKey                      The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
+     * @param ciRepoName                        The name of the configured repository in the CI plan, normally 'assignment' (or 'test').
+     * @param repoProjectKey                    The key of the project that contains the repository, e.g. 'EIST16W1', which is normally the programming exercise project key.
+     * @param newRepoUrl                        The url of the newly to be referenced repository.
+     * @param existingRepoUrl                   The url of the existing repository (which should be replaced).
+     * @param optionalTriggeredByRepositories   Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten.
      */
-    void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoUrl, String templateRepositoryUrl,
-            Optional<List<String>> triggeredBy);
+    void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
+            Optional<List<String>> optionalTriggeredByRepositories);
 
     /**
      * Gives overall roles permissions for the defined project. A role can e.g. be all logged in users

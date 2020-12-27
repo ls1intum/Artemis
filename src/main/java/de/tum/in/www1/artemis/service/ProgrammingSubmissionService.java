@@ -302,6 +302,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public ProgrammingSubmission createSubmissionWithLastCommitHashForParticipation(ProgrammingExerciseParticipation participation, SubmissionType submissionType)
             throws IllegalStateException {
         ObjectId lastCommitHash = getLastCommitHashForParticipation(participation);
+        // TODO: we should not create a new submission here, but simply use the existing one with the last CommitHash
         return createSubmissionWithCommitHashAndSubmissionType(participation, lastCommitHash, submissionType);
     }
 
