@@ -556,7 +556,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (lock) {
             url += '?lock=true';
         }
-        return this.http.get<ProgrammingSubmission>(url).pipe(map((res: ProgrammingSubmission) => this.convertItemFromServer(res)));
+        this.http
+            .get<ProgrammingSubmission>(url)
+            .pipe(map((res: ProgrammingSubmission) => this.convertItemFromServer(res)))
+            .subscribe((x) => console.log('new query would return:', x));
+        return this.http.get<ProgrammingSubmission>(url);
     }
 
     /**
