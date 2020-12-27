@@ -580,6 +580,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private convertItemFromServer(programmingSubmission: ProgrammingSubmission): ProgrammingSubmission {
         const convertedProgrammingSubmission = Object.assign({}, programmingSubmission);
         setLatestSubmissionResult(convertedProgrammingSubmission, getLatestSubmissionResult(convertedProgrammingSubmission));
+        console.log('prog submission alt: ', programmingSubmission);
+        console.log('prog submission alt: ', convertedProgrammingSubmission);
         return convertedProgrammingSubmission;
     }
 

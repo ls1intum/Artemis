@@ -364,6 +364,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
         submissionObservable.subscribe(
             (submission: Submission) => {
+                console.log('submission: ', submission);
                 if (submission) {
                     this.unassessedSubmissionByCorrectionRound!.set(1, submission);
                 }
