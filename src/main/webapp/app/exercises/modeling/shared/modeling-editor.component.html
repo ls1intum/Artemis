@@ -92,16 +92,10 @@
         </div>
     </div>
 
-    <div *ngIf="withExplanation" class="text-editor-container">
-        <label for="explanationText" jhiTranslate="artemisApp.modelingSubmission.explanationText">Explanation</label>
-        <textarea
-            #textEditor
-            id="explanationText"
-            class="text-editor-textarea"
-            [(ngModel)]="explanation"
-            (keydown.tab)="onTextEditorTab(textEditor, $event)"
-            (input)="onExplanationInput($event)"
-            [readOnly]="readOnly"
-        ></textarea>
-    </div>
+    <jhi-modeling-explanation-editor
+        *ngIf="withExplanation"
+        [explanation]="explanation"
+        (explanationChange)="onExplanationInput($event)"
+        [readOnly]="readOnly"
+    ></jhi-modeling-explanation-editor>
 </div>

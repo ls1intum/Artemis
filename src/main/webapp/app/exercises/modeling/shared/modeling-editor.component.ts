@@ -248,19 +248,9 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
         }
     }
 
-    // Add tab to the value of textarea instead of moving to the next element in DOM
-    onTextEditorTab(editor: HTMLTextAreaElement, event: KeyboardEvent) {
-        event.preventDefault();
-        const value = editor.value;
-        const start = editor.selectionStart;
-        const end = editor.selectionEnd;
-
-        editor.value = value.substring(0, start) + '\t' + value.substring(end);
-        editor.selectionStart = editor.selectionEnd = start + 1;
-    }
-
     // Emit explanation change when textarea input changes
-    onExplanationInput(event: Event) {
-        this.explanationChange.emit((<HTMLTextAreaElement>event.target).value);
+    onExplanationInput(newValue: string) {
+        this.explanationChange.emit(newValue);
+        this.explanation = newValue;
     }
 }

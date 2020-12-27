@@ -33,6 +33,7 @@
             [feedbacks]="result?.feedbacks"
             [highlightedElements]="highlightedElements"
             (feedbackChanged)="onFeedbackChanged($event)"
+            [explanation]="submission.explanationText"
         ></jhi-modeling-assessment>
         <jhi-collapsable-assessment-instructions
             *ngIf="modelingExercise"
@@ -40,10 +41,6 @@
             [exercise]="modelingExercise"
             [collapsed]="false"
         ></jhi-collapsable-assessment-instructions>
-    </div>
-    <div *ngIf="submission && submission.explanationText" class="row mt-3">
-        <!--// TODO: will be replaced with text assessment-->
-        <textarea #textEditor id="explanationText" class="text-editor-textarea" [ngModel]="submission.explanationText" [readOnly]="true"></textarea>
     </div>
 
     <div class="row mt-3">
