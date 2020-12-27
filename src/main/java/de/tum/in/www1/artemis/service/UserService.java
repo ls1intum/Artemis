@@ -807,7 +807,7 @@ public class UserService {
 
     /**
      * Update user notification read date for current user
-     * @return currently logged in user
+     * @param userId the user for which the notification read date should be updated
      */
     @Transactional // ok because of modifying query
     public void updateUserNotificationReadDate(long userId) {
