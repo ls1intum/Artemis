@@ -27,6 +27,7 @@ import { Result } from 'app/entities/result.model';
 chai.use(sinonChai);
 const expect = chai.expect;
 
+// tslint:disable-next-line:directive-selector
 @Directive({ selector: '[translateValues]' })
 export class MockTranslateValuesDirective {
     @Input('translateValues') data: any;
