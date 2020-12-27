@@ -55,118 +55,85 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.exerciseHints left join fetch exercise.studentQuestions left join fetch exercise.categories where exercise.id = :#{#exerciseId}")
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
 
-    @Query(value = """
-            SELECT EXERCISE_ID,
-                   EXERCISE_TITLE,
-                   EXERCISE_MODE,
-                   EXERCISE_MAX_POINTS,
-                   AVG(PARTICIPANT_SCORE) AS AVERAGE_SCORE,
-                   (
-                       CASE
-                           WHEN EXERCISE_MODE = 'INDIVIDUAL' THEN COUNT(DISTINCT STUDENT_ID)
-                           ELSE COUNT(DISTINCT TEAM_ID)
-                           END
-                       )                  AS NO_OF_PARTICIPATING_STUDENTS_OR_TEAMS,
-                   (
-                       SELECT COUNT(DISTINCT STUDENT_ID)
-                       FROM VIEW_STUDENTS_OF_COURSE
-                       WHERE COURSE_ID = (
-                           SELECT DISTINCT COURSE_ID
-                           FROM EXERCISE
-                           WHERE ID IN :exerciseIds
-                       )
-                   )                      AS NO_STUDENTS_IN_COURSE,
-                   (
-                       SELECT COUNT(DISTINCT TEAM_ID)
-                       FROM VIEW_TEAMS_OF_COURSE
-                       WHERE COURSE_ID = (
-                           SELECT DISTINCT COURSE_ID
-                           FROM EXERCISE
-                           WHERE ID IN :exerciseIds
-                       )
-                   )                      AS NO_TEAMS_IN_COURSE,
-                   (
-                       CASE
-                           WHEN EXERCISE_MODE = 'INDIVIDUAL' THEN
-                                   ROUND(CAST(COUNT(DISTINCT STUDENT_ID) AS FLOAT) / ( -- NUMBER OF PARTICIPATING STUDENT IN EXERCISE
-                                   SELECT CAST(COUNT(DISTINCT STUDENT_ID) AS FLOAT) -- NUMBER OF TEAMS IN COURSE
-                               FROM VIEW_STUDENTS_OF_COURSE
-                               WHERE COURSE_ID = (
-                                   SELECT DISTINCT COURSE_ID
-                                   FROM EXERCISE
-                                   WHERE ID IN :exerciseIds
-                               )
-                                   ), 4) * 100.0
-                           ELSE ROUND(CAST(COUNT(DISTINCT TEAM_ID) AS FLOAT) / ( -- NUMBER OF PARTICIPATING TEAMS IN EXERCISE
-                               SELECT CAST(COUNT(DISTINCT TEAM_ID) AS FLOAT) -- NUMBER OF TEAMS IN COURSE
-                               FROM VIEW_TEAMS_OF_COURSE
-                               WHERE COURSE_ID = (
-                                   SELECT DISTINCT COURSE_ID
-                                   FROM EXERCISE
-                                   WHERE ID IN :exerciseIds
-                               )
-                           ), 4) * 100.0
-                           END
-                       )                  AS PARTICIPATION_RATE
-            FROM (
-                    SELECT ID AS EXERCISE_ID, TITLE AS EXERCISE_TITLE, MODE AS EXERCISE_MODE, MAX_SCORE AS EXERCISE_MAX_POINTS, LAST_RESULT.STUDENT_ID, LAST_RESULT.TEAM_ID, LAST_RESULT.PARTICIPANT_SCORE
-                    FROM EXERCISE
-                    LEFT JOIN (
-                        SELECT DISTINCT E.EXERCISE_ID,
-                                        P.STUDENT_ID,
-                                        P.TEAM_ID,
-                                        R.SCORE AS PARTICIPANT_SCORE
-                        FROM (SELECT DISTINCT ID AS EXERCISE_ID
-                              FROM EXERCISE
-                              WHERE ID IN :exerciseIds) AS E
-                                 JOIN PARTICIPATION P ON E.EXERCISE_ID = P.EXERCISE_ID
-                                 JOIN SUBMISSION S ON P.ID = S.PARTICIPATION_ID
-                                 JOIN RESULT R ON S.ID = R.SUBMISSION_ID
-                        WHERE (
-                                    P.TEAM_ID IN ( -- ONLY COUNT PARTICIPATIONS FROM TEAMS OF THE COURSE
-                                    SELECT DISTINCT TEAM_ID
-                                    FROM VIEW_TEAMS_OF_COURSE
-                                    WHERE COURSE_ID = (
-                                        SELECT DISTINCT COURSE_ID
-                                        FROM EXERCISE
-                                        WHERE ID IN :exerciseIds
-                                        )
-                                    )
-                                OR
-                                    P.STUDENT_ID IN (
-                                        SELECT DISTINCT STUDENT_ID -- ONLY COUNT PARTICIPATIONS FROM STUDENTS OF THE COURSE
-                                        FROM VIEW_STUDENTS_OF_COURSE
-                                        WHERE COURSE_ID = (
-                                            SELECT DISTINCT COURSE_ID
-                                            FROM EXERCISE
-                                            WHERE ID IN :exerciseIds
-                                            )
-                                        )
-                            )
-                          AND R.SCORE IS NOT NULL
-                          AND (CASE
-                                   WHEN :onlyConsiderRatedResults THEN R.RATED = 1 -- WE EITHER CARE ONLY ABOUT RATED RESULTS OR WE CARE FOR BOTH
-                                   ELSE TRUE
-                            END)
-                          AND NOT EXISTS( -- ONLY CONSIDER THE LAST SUBMISSION (THE ONE WITH THE HIGHEST ID)
-                                SELECT *
-                                FROM SUBMISSION S2,
-                                     RESULT R2
-                                WHERE S2.PARTICIPATION_ID = S.PARTICIPATION_ID
-                                  AND R2.SUBMISSION_ID = S2.ID
-                                  AND R2.SCORE IS NOT NULL
-                                  AND (CASE
-                                           WHEN :onlyConsiderRatedResults THEN R2.RATED = 1 -- WE EITHER CARE ONLY ABOUT RATED RESULTS OR WE CARE FOR BOTH
-                                           ELSE TRUE
-                                    END)
-                                  AND S2.ID > S.ID
-                        )
-                    ) AS LAST_RESULT ON LAST_RESULT.EXERCISE_ID = ID
-                    WHERE ID IN :exerciseIds
-                 ) AS LAST_RESULT_FOR_ALL_GIVEN_EXERCISES
-            GROUP BY EXERCISE_ID, EXERCISE_TITLE, EXERCISE_MODE, EXERCISE_MAX_POINTS
-            """, nativeQuery = true)
-    List<Object[]> calculateExerciseStatisticsForCourseExercise(@Param("exerciseIds") List<Long> exerciseIds, @Param("onlyConsiderRatedResults") boolean onlyConsiderRatedResults);
+    /**
+     * calculates the average score and the participation rate of students for each given individual course exercise
+     * by using the last result (rated or not)
+     * @param exerciseIds - exercise ids to count the statistics for
+     * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
+     */
+    @Query("""
+            SELECT
+            e.id,
+            AVG(r.score),
+            Count(Distinct p.student.id),
+            (SELECT count(distinct u.id)
+            FROM User u
+            WHERE
+            e.course.studentGroupName member of u.groups
+            AND e.course.teachingAssistantGroupName not member of u.groups
+            AND e.course.instructorGroupName not member of u.groups
+            )
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            WHERE e.id IN :exerciseIds
+            AND e.course.studentGroupName member of p.student.groups
+            AND e.course.teachingAssistantGroupName not member of p.student.groups
+            AND e.course.instructorGroupName not member of p.student.groups
+            AND r.score IS NOT NULL
+            AND
+            s.id = (
+                SELECT max(s2.id)
+                FROM Submission s2 JOIN s2.results r2
+                WHERE s2.participation.id = s.participation.id
+                AND r2.score IS NOT NULL
+                )
+            GROUP BY e.id
+            """)
+    List<Object[]> calculateExerciseStatisticsForIndividualCourseExercises(@Param("exerciseIds") List<Long> exerciseIds);
+
+    /**
+     * calculates the average score and the participation rate of students for each given team course exercise
+     * by using the last result (rated or not)
+     * @param exerciseIds - exercise ids to count the statistics for
+     * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
+     */
+    @Query("""
+            SELECT
+            e.id,
+            AVG(r.score),
+            Count(Distinct p.team.id),
+            (SELECT count(distinct t.id)
+             FROM Team t JOIN t.students st2
+             WHERE st2.id IN (
+                 SELECT DISTINCT u.id
+                FROM User u
+                WHERE
+                e.course.studentGroupName member of u.groups
+                AND e.course.teachingAssistantGroupName not member of u.groups
+                AND e.course.instructorGroupName not member of u.groups
+             )
+            )
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r JOIN p.team.students st
+            WHERE e.id IN :exerciseIds
+            AND r.score IS NOT NULL
+            AND
+            st.id IN (
+                 SELECT DISTINCT u.id
+                FROM User u
+                WHERE
+                e.course.studentGroupName member of u.groups
+                AND e.course.teachingAssistantGroupName not member of u.groups
+                AND e.course.instructorGroupName not member of u.groups
+             )
+             AND
+            s.id = (
+                SELECT max(s2.id)
+                FROM Submission s2 JOIN s2.results r2
+                WHERE s2.participation.id = s.participation.id
+                AND r2.score IS NOT NULL
+                )
+            GROUP BY e.id
+            """)
+    List<Object[]> calculateExerciseStatisticsForTeamCourseExercises(@Param("exerciseIds") List<Long> exerciseIds);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);

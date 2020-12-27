@@ -57,12 +57,6 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     UserRepository userRepository;
 
     @Autowired
-    CourseStudentViewRepository courseStudentViewRepository;
-
-    @Autowired
-    CourseTeamViewRepository courseTeamViewRepository;
-
-    @Autowired
     StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
@@ -136,13 +130,6 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         Course course = this.database.createCourse();
         idOfCourse = course.getId();
 
-        // setting up course student view (view is just a table in embedded test scenario and therefore needs to be filled manually!!)
-        for (int i = 1; i <= 5; i++) {
-            Long studentId = userRepository.findOneByLogin("student" + i).get().getId();
-            CourseStudentsView.CourseStudentViewId courseStudentViewId = new CourseStudentsView.CourseStudentViewId(idOfCourse, studentId);
-            courseStudentViewRepository.save(new CourseStudentsView(courseStudentViewId));
-        }
-
         User student1 = userRepository.findOneByLogin("student1").get();
 
         createLectureOne(course);
@@ -157,11 +144,6 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         // will also create users
         teams = database.addTeamsForExerciseFixedTeamSize(teamTextExercise, 5, tutor, 3);
 
-        // setting up course team view (view is just a table in embedded test scenario and therefore needs to be filled manually!!)
-        for (Team team : teams) {
-            CourseTeamView.CourseTeamViewId courseTeamViewId = new CourseTeamView.CourseTeamViewId(idOfCourse, team.getId());
-            courseTeamViewRepository.save(new CourseTeamView(courseTeamViewId));
-        }
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(0), 10.0, 0.0, 50, true);
 
         creatingLectureUnitsOfLectureOne();
@@ -484,6 +466,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         User student2 = userRepository.findOneByLogin("student2").get();
         User student3 = userRepository.findOneByLogin("student3").get();
         User student4 = userRepository.findOneByLogin("student4").get();
+        User instructor1 = userRepository.findOneByLogin("instructor1").get();
 
         createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
         createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 50, false);
@@ -494,6 +477,8 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         createParticipationSubmissionAndResult(idOfTextExercise, student3, 10.0, 0.0, 10, true);
         createParticipationSubmissionAndResult(idOfTextExercise, student4, 10.0, 0.0, 50, true);
 
+        createParticipationSubmissionAndResult(idOfTextExercise, instructor1, 10.0, 0.0, 100, true); // will be ignored as not a student
+
         CourseLearningGoalProgress courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress", HttpStatus.OK,
                 CourseLearningGoalProgress.class);
 
@@ -501,7 +486,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(3.0);
         CourseLearningGoalProgress.CourseLectureUnitProgress progressInIndividualExercise = courseLearningGoalProgress.progressInLectureUnits.stream()
                 .filter(courseLectureUnitProgress -> courseLectureUnitProgress.lectureUnitId.equals(idOfExerciseUnitTextOfLectureOne)).findFirst().get();
-        assertThat(progressInIndividualExercise.participationRate).isEqualTo(80.0);
+        assertThat(progressInIndividualExercise.participationRate).isEqualTo(20.0);
         assertThat(progressInIndividualExercise.noOfParticipants).isEqualTo(4);
         assertThat(progressInIndividualExercise.averageScoreAchievedByStudentInLectureUnit).isEqualTo(30.0);
     }

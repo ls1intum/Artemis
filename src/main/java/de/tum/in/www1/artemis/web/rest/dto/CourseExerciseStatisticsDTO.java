@@ -14,10 +14,6 @@ public class CourseExerciseStatisticsDTO {
 
     private Integer noOfParticipatingStudentsOrTeams;
 
-    private Integer noOfStudentsInCourse;
-
-    private Integer noOfTeamsInCourse;
-
     private Double participationRateInPercent;
 
     public Long getExerciseId() {
@@ -66,22 +62,6 @@ public class CourseExerciseStatisticsDTO {
 
     public void setNoOfParticipatingStudentsOrTeams(Integer noOfParticipatingStudentsOrTeams) {
         this.noOfParticipatingStudentsOrTeams = noOfParticipatingStudentsOrTeams;
-    }
-
-    public Integer getNoOfStudentsInCourse() {
-        return noOfStudentsInCourse;
-    }
-
-    public void setNoOfStudentsInCourse(Integer noOfStudentsInCourse) {
-        this.noOfStudentsInCourse = noOfStudentsInCourse;
-    }
-
-    public Integer getNoOfTeamsInCourse() {
-        return noOfTeamsInCourse;
-    }
-
-    public void setNoOfTeamsInCourse(Integer noOfTeamsInCourse) {
-        this.noOfTeamsInCourse = noOfTeamsInCourse;
     }
 
     public Double getParticipationRateInPercent() {

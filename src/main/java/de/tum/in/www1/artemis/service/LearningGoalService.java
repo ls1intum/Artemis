@@ -81,7 +81,7 @@ public class LearningGoalService {
                 .filter(exerciseUnit -> exerciseUnit.getExercise() != null && exerciseUnit.getExercise().isAssessmentDueDateOver()).collect(Collectors.toList());
         List<Long> exerciseIds = filteredExerciseUnits.stream().map(exerciseUnit -> exerciseUnit.getExercise().getId()).distinct().collect(Collectors.toList());
 
-        Map<Long, CourseExerciseStatisticsDTO> exerciseIdToExerciseCourseStatistics = this.exerciseService.calculateExerciseStatistics(exerciseIds, false).stream()
+        Map<Long, CourseExerciseStatisticsDTO> exerciseIdToExerciseCourseStatistics = this.exerciseService.calculateExerciseStatistics(exerciseIds).stream()
                 .collect(Collectors.toMap(CourseExerciseStatisticsDTO::getExerciseId, courseExerciseStatisticsDTO -> courseExerciseStatisticsDTO));
 
         // for each exercise unit, the exercise will be mapped to a freshly created lecture unit course progress.
@@ -91,11 +91,9 @@ public class LearningGoalService {
                     CourseLearningGoalProgress.CourseLectureUnitProgress courseLectureUnitProgress = new CourseLearningGoalProgress.CourseLectureUnitProgress();
                     courseLectureUnitProgress.lectureUnitId = exerciseUnit.getId();
                     courseLectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit = exerciseUnit.getExercise().getMaxScore();
-                    courseLectureUnitProgress.averageScoreAchievedByStudentInLectureUnit = courseExerciseStatisticsDTO.getAverageScoreInPercent() == null ? 0.0
-                            : courseExerciseStatisticsDTO.getAverageScoreInPercent();
+                    courseLectureUnitProgress.averageScoreAchievedByStudentInLectureUnit = courseExerciseStatisticsDTO.getAverageScoreInPercent();
                     courseLectureUnitProgress.noOfParticipants = courseExerciseStatisticsDTO.getNoOfParticipatingStudentsOrTeams();
-                    courseLectureUnitProgress.participationRate = courseExerciseStatisticsDTO.getParticipationRateInPercent() == null ? 0.0
-                            : courseExerciseStatisticsDTO.getParticipationRateInPercent();
+                    courseLectureUnitProgress.participationRate = courseExerciseStatisticsDTO.getParticipationRateInPercent();
                     return courseLectureUnitProgress;
                 }, (progress1, progress2) -> progress1)); // in the case of two exercises referencing the same exercise, take the first one
 
