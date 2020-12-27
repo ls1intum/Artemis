@@ -42,11 +42,11 @@ spring:
     jmx:
         enabled: false
     jpa:
-        database-platform: io.github.jhipster.domain.util.FixedH2Dialect
+#        database-platform: io.github.jhipster.domain.util.FixedH2Dialect
         open-in-view: false
         show-sql: false
         hibernate:
-            ddl-auto: none
+#            ddl-auto: none                         # out commented because it would lead to test execution errors
             naming:
                 physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
                 implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
