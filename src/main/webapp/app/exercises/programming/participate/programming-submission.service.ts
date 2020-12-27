@@ -13,6 +13,8 @@ import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionType } 
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { Participation } from 'app/entities/participation/participation.model';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -554,7 +556,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (lock) {
             url += '?lock=true';
         }
-        return this.http.get<ProgrammingSubmission>(url);
+        return this.http.get<ProgrammingSubmission>(url).pipe(map((res: ProgrammingSubmission) => this.convertItemFromServer(res)));
     }
 
     /**
@@ -569,11 +571,16 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         const submissions = res.body!;
         const convertedSubmissions: ProgrammingSubmission[] = [];
         for (const submission of submissions) {
-            const latestResult = getLatestSubmissionResult(submission);
-            setLatestSubmissionResult(submission, latestResult);
+            this.convertItemFromServer(submission);
             convertedSubmissions.push({ ...submission });
         }
         return res.clone({ body: convertedSubmissions });
+    }
+
+    private convertItemFromServer(programmingSubmission: ProgrammingSubmission): ProgrammingSubmission {
+        const convertedProgrammingSubmission = Object.assign({}, programmingSubmission);
+        setLatestSubmissionResult(convertedProgrammingSubmission, getLatestSubmissionResult(convertedProgrammingSubmission));
+        return convertedProgrammingSubmission;
     }
 
     /**
