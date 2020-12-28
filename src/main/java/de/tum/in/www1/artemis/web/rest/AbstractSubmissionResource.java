@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -65,7 +64,8 @@ public abstract class AbstractSubmissionResource {
         final boolean examMode = exercise.hasExerciseGroup();
         List<Submission> submissions;
         if (assessedByTutor) {
-            submissions = submissionService.getAllSubmissionsAssessedByTutorForExercise(exerciseId, user, examMode);
+            // TODO SE: change this so not only submissions from 1st correctionRound are fetched
+            submissions = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user, examMode, 1L);
         }
         else {
             submissions = submissionService.getAllSubmissionsForExercise(exerciseId, submittedOnly, examMode);

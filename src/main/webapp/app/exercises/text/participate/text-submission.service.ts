@@ -40,10 +40,15 @@ export class TextSubmissionService {
             .pipe(map((res: HttpResponse<TextSubmission>) => res.body!));
     }
 
-    getTextSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<TextSubmission[]>> {
+    getTextSubmissionsForExercise(
+        exerciseId: number,
+        req: { submittedOnly?: boolean; assessedByTutor?: boolean },
+        correctionRound?: number,
+    ): Observable<HttpResponse<TextSubmission[]>> {
+        correctionRound = correctionRound ? correctionRound : 1;
         const options = createRequestOption(req);
         return this.http
-            .get<TextSubmission[]>(`api/exercises/${exerciseId}/text-submissions`, {
+            .get<TextSubmission[]>(`api/exercises/${exerciseId}/${correctionRound}/text-submissions`, {
                 params: options,
                 observe: 'response',
             })

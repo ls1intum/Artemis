@@ -573,14 +573,17 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * Given an exercise id and a tutor id, it returns all the programming submissions where the tutor has a result associated
      *
      * @param exerciseId - the id of the exercise we are looking for
+     * @param correctionRound - the correctionRound for which the submissions should be fetched for
      * @param tutorId    - the id of the tutor we are interested in
      * @param examMode - flag should be set to ignore the test run submissions
      * @return a list of programming submissions
      */
-    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForExercise(long exerciseId, long tutorId, boolean examMode) {
+    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(long exerciseId, long tutorId, boolean examMode,
+            Long correctionRound) {
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessorIgnoreTestRuns(exerciseId, tutorId);
+            participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutorId,
+                    correctionRound);
         }
         else {
             participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
@@ -598,10 +601,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param examMode - set flag to ignore test run submissions for exam exercises
      * @return a list of programming submissions for the given exercise id
      */
-    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
+    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode, Long correctionRound) {
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(exerciseId,
+                    correctionRound);
         }
         else {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);

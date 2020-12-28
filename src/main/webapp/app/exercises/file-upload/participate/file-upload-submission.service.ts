@@ -51,10 +51,15 @@ export class FileUploadSubmissionService {
      * @param exerciseId the id of the exercise
      * @param req request parameters
      */
-    getFileUploadSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<FileUploadSubmission[]>> {
+    getFileUploadSubmissionsForExercise(
+        exerciseId: number,
+        req: { submittedOnly?: boolean; assessedByTutor?: boolean },
+        correctionRound?: number,
+    ): Observable<HttpResponse<FileUploadSubmission[]>> {
+        correctionRound = correctionRound ? correctionRound : 1;
         const options = createRequestOption(req);
         return this.http
-            .get<FileUploadSubmission[]>(`api/exercises/${exerciseId}/file-upload-submissions`, {
+            .get<FileUploadSubmission[]>(`api/exercises/${exerciseId}/${correctionRound}/file-upload-submissions`, {
                 params: options,
                 observe: 'response',
             })

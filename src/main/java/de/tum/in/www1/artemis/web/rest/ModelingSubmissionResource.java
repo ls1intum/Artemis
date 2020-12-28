@@ -142,6 +142,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId id of the exercise for which the modeling submission should be returned
+     * @param correctionRound - correctionRound for which the submissions' results should be fetched
      * @param submittedOnly if true, it returns only submission with submitted flag set to true
      * @param assessedByTutor if true, it returns only the submissions which are assessed by the current user as a tutor
      * @return a list of modeling submissions
@@ -149,7 +150,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = GET_200_SUBMISSIONS_REASON, response = ModelingSubmission.class, responseContainer = "List"),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON), })
-    @GetMapping(value = "/exercises/{exerciseId}/modeling-submissions")
+    @GetMapping(value = "/exercises/{exerciseId}/{correctionRound}/modeling-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<Submission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,

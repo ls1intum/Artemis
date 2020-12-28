@@ -52,10 +52,11 @@ export class ModelingSubmissionService {
      * @param {number} exerciseId - Id of the exercise
      * @param {any?} req - Request option
      */
-    getModelingSubmissionsForExercise(exerciseId: number, req?: any): Observable<HttpResponse<ModelingSubmission[]>> {
+    getModelingSubmissionsForExercise(exerciseId: number, req?: any, correctionRound?: number): Observable<HttpResponse<ModelingSubmission[]>> {
+        correctionRound = correctionRound ? correctionRound : 1;
         const options = createRequestOption(req);
         return this.http
-            .get<ModelingSubmission[]>(`${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions`, {
+            .get<ModelingSubmission[]>(`${this.resourceUrl}/exercises/${exerciseId}/${correctionRound}/modeling-submissions`, {
                 params: options,
                 observe: 'response',
             })
