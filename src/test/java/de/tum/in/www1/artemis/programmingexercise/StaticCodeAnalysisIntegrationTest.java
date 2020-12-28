@@ -123,7 +123,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories() throws Exception {
         ProgrammingExercise exerciseWithSolutionParticipation = programmingExerciseRepository
-                .findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseSCAEnabled.getId()).get();
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseSCAEnabled.getId()).get();
         bambooRequestMockProvider.mockTriggerBuild(exerciseWithSolutionParticipation.getSolutionParticipation());
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
         // Change the first category

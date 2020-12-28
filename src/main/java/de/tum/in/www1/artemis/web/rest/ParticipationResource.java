@@ -181,7 +181,7 @@ public class ParticipationResource {
 
         ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise,
                 principal.getName());
-        // explicitly set the exercise here to make sure that
+        // explicitly set the exercise here to make sure that the templateParticipation and solutionParticipation are initialized in case they should be used again
         participation.setProgrammingExercise(programmingExercise);
 
         User user = userService.getUserWithGroupsAndAuthorities();

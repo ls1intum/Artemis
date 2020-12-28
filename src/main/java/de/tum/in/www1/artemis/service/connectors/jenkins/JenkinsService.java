@@ -17,7 +17,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.hibernate.Hibernate;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -51,6 +50,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.FeedbackService;
@@ -82,6 +82,8 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     private final ResultRepository resultRepository;
 
     private final JenkinsServer jenkinsServer;
@@ -92,11 +94,13 @@ public class JenkinsService implements ContinuousIntegrationService {
     private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
     public JenkinsService(JenkinsBuildPlanCreator jenkinsBuildPlanCreator, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackService feedbackService, ResultRepository resultRepository) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, FeedbackService feedbackService,
+            ResultRepository resultRepository) {
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.feedbackService = feedbackService;
         this.resultRepository = resultRepository;
     }
@@ -159,13 +163,11 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
-        final var programmingExercise = participation.getProgrammingExercise();
+        // Refetch the programming exercise with the template participation and assign it to programmingExerciseParticipation to make sure it is initialized (and not a proxy)
+        final var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(participation.getProgrammingExercise().getId()).get();
+        participation.setProgrammingExercise(programmingExercise);
         final var projectKey = programmingExercise.getProjectKey();
         final var planKey = participation.getBuildPlanId();
-        // Note: this should not happen, we explicitly log it as error to simplify error handling
-        if (programmingExercise.getTemplateParticipation() == null || !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
-            log.error("configureBuildPlan will fail with a NullPointerException because participation.programmingExercise.templateParticipation is null or not initialized!");
-        }
         final var templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
         updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, null /* not needed */, participation.getRepositoryUrl(), templateRepoUrl, Optional.empty());
         enablePlan(projectKey, planKey);

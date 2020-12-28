@@ -141,11 +141,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
 
-            // Refetch the programming exercise with the template participation and assign it to programmingExerciseParticipation to make sure it is initialized (and not a proxy)
-            final var programmingExercise = programmingExerciseRepository
-                    .findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseParticipation.getProgrammingExercise().getId()).get();
-            programmingExerciseParticipation.setProgrammingExercise(programmingExercise);
-
             participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             try {
@@ -237,7 +232,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public void triggerInstructorBuildForExercise(Long exerciseId) throws EntityNotFoundException {
         // Async can't access the authentication object. We need to do any security checks before this point.
         SecurityUtils.setAuthorizationObject();
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId);
         if (optionalProgrammingExercise.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
         }
@@ -353,7 +349,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 .findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
         // If no commitHash is provided, use the last commitHash for the test repository.
         if (commitHash == null) {
-            Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+            Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
+                    .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
             if (programmingExercise.isEmpty()) {
                 throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " not found.");
             }
@@ -417,12 +414,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         try {
             if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
                     || !programmingExerciseParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
-
-                // Refetch the programming exercise with the template participation and assign it to programmingExerciseParticipation to make sure it is initialized (and not a
-                // proxy)
-                final var programmingExercise = programmingExerciseRepository
-                        .findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseParticipation.getProgrammingExercise().getId()).get();
-                programmingExerciseParticipation.setProgrammingExercise(programmingExercise);
 
                 // in this case, we first have to resume the exercise: this includes that we again setup the build plan properly before we trigger it
                 participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
@@ -514,7 +505,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws EntityNotFoundException if the programming exercise does not exist.
      */
     public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
         if (optionalProgrammingExercise.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " not found.");
         }

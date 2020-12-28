@@ -614,7 +614,8 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     public ProgrammingExercise findWithTemplateParticipationAndSolutionParticipationById(Long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
         if (programmingExercise.isPresent()) {
             return programmingExercise.get();
         }
@@ -631,7 +632,7 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     public ProgrammingExercise findWithTemplateAndSolutionParticipationWithResultsById(Long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationLatestResultById(programmingExerciseId);
         if (programmingExercise.isPresent()) {
             return programmingExercise.get();
         }
@@ -704,7 +705,8 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement, @Nullable String notificationText)
             throws EntityNotFoundException, IllegalAccessException {
-        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
         if (programmingExerciseOpt.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise not found with id: " + programmingExerciseId);
         }
@@ -808,7 +810,8 @@ public class ProgrammingExerciseService {
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
         // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId).get();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
+                .get();
         final var templateRepositoryUrlAsUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
         final var solutionRepositoryUrlAsUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
         final var testRepositoryUrlAsUrl = programmingExercise.getTestRepositoryUrlAsUrl();
