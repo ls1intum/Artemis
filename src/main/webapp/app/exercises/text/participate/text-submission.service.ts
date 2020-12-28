@@ -48,7 +48,7 @@ export class TextSubmissionService {
         correctionRound = correctionRound ? correctionRound : 1;
         const options = createRequestOption(req);
         return this.http
-            .get<TextSubmission[]>(`api/exercises/${exerciseId}/${correctionRound}/text-submissions`, {
+            .get<TextSubmission[]>(`api/exercises/${exerciseId}/round/${correctionRound}/text-submissions`, {
                 params: options,
                 observe: 'response',
             })
@@ -64,7 +64,7 @@ export class TextSubmissionService {
     getTextSubmissionForExerciseWithoutAssessment(exerciseId: number, option?: 'lock' | 'head', correctionRound?: number): Observable<TextSubmission> {
         correctionRound = correctionRound ? correctionRound : 1;
         console.log('get text submissionwithou assessemnt');
-        let url = `api/exercises/${exerciseId}/${correctionRound}/text-submission-without-assessment`;
+        let url = `api/exercises/${exerciseId}/round/${correctionRound}/text-submission-without-assessment`;
         if (option) {
             url += `?${option}=true`;
         }

@@ -150,7 +150,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = GET_200_SUBMISSIONS_REASON, response = ModelingSubmission.class, responseContainer = "List"),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON), })
-    @GetMapping(value = "/exercises/{exerciseId}/{correctionRound}/modeling-submissions")
+    @GetMapping(value = "/exercises/{exerciseId}/round/{correctionRound}/modeling-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<Submission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @PathVariable Long correctionRound,
@@ -197,7 +197,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @param correctionRound correctionRound for which submissions without a result should be returned
      * @return the ResponseEntity with status 200 (OK) and a modeling submission without assessment in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/{correctionRound}/modeling-submission-without-assessment")
+    @GetMapping(value = "/exercises/{exerciseId}/round/{correctionRound}/modeling-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId, @PathVariable Long correctionRound,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {

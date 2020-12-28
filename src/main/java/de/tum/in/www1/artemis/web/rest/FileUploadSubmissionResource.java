@@ -175,7 +175,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @param assessedByTutor if the submission was assessed by calling tutor
      * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
      */
-    @GetMapping("/exercises/{exerciseId}/{correctionRound}/file-upload-submissions")
+    @GetMapping("/exercises/{exerciseId}/round/{correctionRound}/file-upload-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<Submission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @PathVariable Long correctionRound,
@@ -192,7 +192,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @param correctionRound the correctionround for which we want to find the submission
      * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/{correctionRound}/file-upload-submission-without-assessment")
+    @GetMapping(value = "/exercises/{exerciseId}/round/{correctionRound}/file-upload-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId, @PathVariable Long correctionRound,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {

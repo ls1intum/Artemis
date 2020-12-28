@@ -183,7 +183,7 @@ public class TextSubmissionResource {
      * @param assessedByTutor mark if only assessed Submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/{correctionRound}/text-submissions")
+    @GetMapping(value = "/exercises/{exerciseId}/round/{correctionRound}/text-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @PathVariable Long correctionRound,
@@ -234,7 +234,7 @@ public class TextSubmissionResource {
      * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/{correctionRound}/text-submission-without-assessment")
+    @GetMapping(value = "/exercises/{exerciseId}/round/{correctionRound}/text-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId, @PathVariable Long correctionRound,
             @RequestParam(value = "head", defaultValue = "false") boolean skipAssessmentOrderOptimization,

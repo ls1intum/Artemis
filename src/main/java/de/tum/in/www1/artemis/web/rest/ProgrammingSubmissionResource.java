@@ -326,7 +326,7 @@ public class ProgrammingSubmissionResource {
      * @param assessedByTutor if the submission was assessed by calling tutor.
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body.
      */
-    @GetMapping("/exercises/{exerciseId}/{correctionRound}/programming-submissions")
+    @GetMapping("/exercises/{exerciseId}/round/{correctionRound}/programming-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @PathVariable Long correctionRound,
             @RequestParam(defaultValue = "false") boolean submittedOnly, @RequestParam(defaultValue = "false") boolean assessedByTutor) {
@@ -395,7 +395,7 @@ public class ProgrammingSubmissionResource {
      * @param correctionRound the correctionround for which we want to find the submission
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/{correctionRound}/programming-submission-without-assessment")
+    @GetMapping(value = "/exercises/{exerciseId}/round/{correctionRound}/programming-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId, @PathVariable Long correctionRound,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {

@@ -56,7 +56,7 @@ export class ModelingSubmissionService {
         correctionRound = correctionRound ? correctionRound : 1;
         const options = createRequestOption(req);
         return this.http
-            .get<ModelingSubmission[]>(`${this.resourceUrl}/exercises/${exerciseId}/${correctionRound}/modeling-submissions`, {
+            .get<ModelingSubmission[]>(`${this.resourceUrl}/exercises/${exerciseId}/round/${correctionRound}/modeling-submissions`, {
                 params: options,
                 observe: 'response',
             })
@@ -70,7 +70,7 @@ export class ModelingSubmissionService {
      */
     getModelingSubmissionForExerciseWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound?: number): Observable<ModelingSubmission> {
         correctionRound = correctionRound ? correctionRound : 1;
-        let url = `api/exercises/${exerciseId}/${correctionRound}/modeling-submission-without-assessment`;
+        let url = `api/exercises/${exerciseId}/round/${correctionRound}/modeling-submission-without-assessment`;
         if (lock) {
             url += '?lock=true';
         }
