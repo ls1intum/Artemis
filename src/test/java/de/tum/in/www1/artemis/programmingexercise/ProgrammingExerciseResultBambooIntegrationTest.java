@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
 import java.util.List;
@@ -46,16 +47,21 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldStoreFeedbackForResultWithJavaStaticCodeAnalysisReport() {
-        var notification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
-                ProgrammingLanguage.JAVA);
-        programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification);
+        var programmingLanguage = ProgrammingLanguage.JAVA;
+        var notification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), programmingLanguage);
+        programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification, programmingLanguage);
     }
 
+    @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldStoreFeedbackForResultWithSwiftStaticCodeAnalysisReport() {
-        var notification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
-                ProgrammingLanguage.SWIFT);
-        programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification);
+        var programmingLanguage = ProgrammingLanguage.SWIFT;
+        var notification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), programmingLanguage);
+        var scaReports = notification.getBuild().getJobs().get(0).getStaticCodeAnalysisReports();
+        // SwiftLint has only one category at the moment
+        assertThat(scaReports.size()).isEqualTo(1);
+        assertThat(scaReports.get(0).getIssues().get(0).getCategory()).isEqualTo("swiftLint");
+        programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification, programmingLanguage);
     }
 
     @Test

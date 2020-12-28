@@ -14,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ProgrammingExerciseResultTestService;
 
@@ -46,7 +47,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport() {
         var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
-        programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification);
+        programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification, ProgrammingLanguage.JAVA);
     }
 
     @Test

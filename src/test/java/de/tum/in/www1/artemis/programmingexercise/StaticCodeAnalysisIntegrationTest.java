@@ -98,6 +98,20 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void testCreateDefaultCategoriesForSwift() {
+        var swiftEx = ModelFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1),
+                programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember());
+        swiftEx.setProgrammingLanguage(ProgrammingLanguage.SWIFT);
+        swiftEx = programmingExerciseRepository.save(swiftEx);
+        staticCodeAnalysisService.createDefaultCategories(swiftEx);
+        // Swift has only one default category at the time of creation of this test
+        var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(swiftEx.getId());
+        assertThat(categories.size()).isEqualTo(6);
+        assertThat(categories.stream().filter(c -> c.getState() == CategoryState.FEEDBACK).count()).isEqualTo(1);
+    }
+
+    @Test
     @WithMockUser(value = "student1", roles = "STUDENT")
     void testGetStaticCodeAnalysisCategories_asStudent_forbidden() throws Exception {
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);

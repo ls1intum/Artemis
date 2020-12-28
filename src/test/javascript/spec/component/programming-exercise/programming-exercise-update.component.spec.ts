@@ -1,6 +1,8 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
+import { stub } from 'sinon';
 import { of } from 'rxjs';
 import * as moment from 'moment';
 
@@ -25,6 +27,7 @@ import {
 describe('ProgrammingExercise Management Update Component', () => {
     let comp: ProgrammingExerciseUpdateComponent;
     let fixture: ComponentFixture<ProgrammingExerciseUpdateComponent>;
+    let debugElement: DebugElement;
     let programmingExerciseService: ProgrammingExerciseService;
     let courseService: CourseManagementService;
     let exerciseGroupService: ExerciseGroupService;
@@ -46,10 +49,11 @@ describe('ProgrammingExercise Management Update Component', () => {
 
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
         comp = fixture.componentInstance;
-        programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-        courseService = fixture.debugElement.injector.get(CourseManagementService);
-        exerciseGroupService = fixture.debugElement.injector.get(ExerciseGroupService);
-        programmingExerciseFeatureService = fixture.debugElement.injector.get(ProgrammingLanguageFeatureService);
+        debugElement = fixture.debugElement;
+        programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
+        courseService = debugElement.injector.get(CourseManagementService);
+        exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
+        programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
     });
 
     describe('save', () => {
@@ -181,6 +185,48 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.isSaving).toEqual(false);
             expect(comp.programmingExercise).toEqual(expectedProgrammingExercise);
             expect(comp.isExamMode).toBeFalsy();
+        }));
+    });
+
+    describe('static code analysis', () => {
+        const courseId = 2;
+        const course = { id: courseId } as Course;
+        const expectedProgrammingExercise = new ProgrammingExercise(course, undefined);
+        expectedProgrammingExercise.id = 1;
+        expectedProgrammingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: expectedProgrammingExercise });
+        });
+
+        it('Should activate sca on Swift', fakeAsync(() => {
+            // GIVEN
+            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
+            const programmingLanguageFeature: ProgrammingLanguageFeature = {
+                programmingLanguage: ProgrammingLanguage.SWIFT,
+                sequentialTestRuns: false,
+                staticCodeAnalysis: true,
+                plagiarismCheckSupported: false,
+                packageNameRequired: true,
+                checkoutSolutionRepositoryAllowed: false,
+                projectTypes: [],
+            };
+            // spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(of(programmingLanguageFeature));
+            stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').returns(programmingLanguageFeature);
+
+            // WHEN
+            fixture.detectChanges();
+            tick(1000);
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.SWIFT);
+
+            // THEN
+            expect(courseService.find).toHaveBeenCalledWith(courseId);
+            expect(comp.programmingExercise).toEqual(expectedProgrammingExercise);
+            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.SWIFT);
+            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
         }));
     });
 });

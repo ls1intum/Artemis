@@ -110,7 +110,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification) {
+    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification, ProgrammingLanguage programmingLanguage) {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
         final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
 
@@ -129,7 +129,7 @@ public class ProgrammingExerciseResultTestService {
         var result = optionalResult.get();
         assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(savedResult.getFeedbacks());
         assertThat(result.getFeedbacks().stream().filter(Feedback::isStaticCodeAnalysisFeedback).count())
-                .isEqualTo(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA).size());
+                .isEqualTo(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage).size());
     }
 
     // Test
