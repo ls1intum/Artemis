@@ -450,7 +450,16 @@ public class ProgrammingExerciseService {
 
                     try {
                         Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
-                        fileService.copyResources(projectTypeTestFileResources, projectTypePrefix, packagePath, false);
+                        // filter non existing resources to avoid exceptions
+                        List<Resource> existingProjectTypeTestFileResources = new ArrayList<>();
+                        for (Resource resource : projectTypeTestFileResources) {
+                            if (resource.exists()) {
+                                existingProjectTypeTestFileResources.add(resource);
+                            }
+                        }
+                        if (!existingProjectTypeTestFileResources.isEmpty()) {
+                            fileService.copyResources(existingProjectTypeTestFileResources.toArray(new Resource[] {}), projectTypePrefix, packagePath, false);
+                        }
                     }
                     catch (FileNotFoundException ignored) {
                     }
