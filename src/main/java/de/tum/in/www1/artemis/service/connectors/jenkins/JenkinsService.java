@@ -17,6 +17,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.hibernate.Hibernate;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -158,14 +159,18 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    // TODO: this is a workaround
+    // TODO: @Transactional is a workaround, we should try to find a different solution
     @Transactional(readOnly = true) // ok because of workaround
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
-        final var projectKey = participation.getProgrammingExercise().getProjectKey();
+        final var programmingExercise = participation.getProgrammingExercise();
+        final var projectKey = programmingExercise.getProjectKey();
         final var planKey = participation.getBuildPlanId();
         // TODO: properly handle the case that programmingExercise.templateParticipation is a proxy object, ideally we can completely omit the templateRepoUrl and use a different
         // way to replace the old with the new URL in JenkinsService.updatePlanRepository
-        final var templateRepoUrl = participation.getProgrammingExercise().getTemplateRepositoryUrl();
+        if (programmingExercise.getTemplateParticipation() != null && !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
+            Hibernate.initialize(programmingExercise.getTemplateParticipation());
+        }
+        final var templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
         updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, null /* not needed */, participation.getRepositoryUrl(), templateRepoUrl, Optional.empty());
         enablePlan(projectKey, planKey);
     }
