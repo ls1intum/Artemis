@@ -6,11 +6,7 @@
         "height": 620
     },
     "interactive": {
-        "elements": [
-            "b390a813-dad9-4d6d-b3cd-732ce99d0a23",
-            "6f572312-066b-4678-9c03-5032f3ba9be9",
-            "2f67120e-b491-4222-beb1-79e87c2cf54d"
-        ],
+        "elements": ["b390a813-dad9-4d6d-b3cd-732ce99d0a23", "6f572312-066b-4678-9c03-5032f3ba9be9", "2f67120e-b491-4222-beb1-79e87c2cf54d"],
         "relationships": []
     },
     "elements": [
@@ -37,12 +33,8 @@
                 "width": 200,
                 "height": 100
             },
-            "attributes": [
-                "6f572312-066b-4678-9c03-5032f3ba9be9"
-            ],
-            "methods": [
-                "11aae531-3244-4d07-8d60-b6210789ffa3"
-            ]
+            "attributes": ["6f572312-066b-4678-9c03-5032f3ba9be9"],
+            "methods": ["11aae531-3244-4d07-8d60-b6210789ffa3"]
         },
         {
             "id": "6f572312-066b-4678-9c03-5032f3ba9be9",
@@ -79,12 +71,8 @@
                 "width": 200,
                 "height": 100
             },
-            "attributes": [
-                "6a6aadfd-a2dd-44d7-b91a-271efba52072"
-            ],
-            "methods": [
-                "5adfa0d4-e76c-4e98-8960-08abe615ec77"
-            ]
+            "attributes": ["6a6aadfd-a2dd-44d7-b91a-271efba52072"],
+            "methods": ["5adfa0d4-e76c-4e98-8960-08abe615ec77"]
         },
         {
             "id": "6a6aadfd-a2dd-44d7-b91a-271efba52072",
@@ -121,12 +109,8 @@
                 "width": 200,
                 "height": 100
             },
-            "attributes": [
-                "fea23cbc-8df0-4dcc-9d7a-eb86fbb2ce9d"
-            ],
-            "methods": [
-                "3e0d47e6-7491-49ce-a8bb-ce1fc4f022d0"
-            ]
+            "attributes": ["fea23cbc-8df0-4dcc-9d7a-eb86fbb2ce9d"],
+            "methods": ["3e0d47e6-7491-49ce-a8bb-ce1fc4f022d0"]
         },
         {
             "id": "fea23cbc-8df0-4dcc-9d7a-eb86fbb2ce9d",
@@ -163,12 +147,8 @@
                 "width": 200,
                 "height": 100
             },
-            "attributes": [
-                "593e9ae3-a516-4322-b54f-e07c57729e01"
-            ],
-            "methods": [
-                "b390a813-dad9-4d6d-b3cd-732ce99d0a23"
-            ]
+            "attributes": ["593e9ae3-a516-4322-b54f-e07c57729e01"],
+            "methods": ["b390a813-dad9-4d6d-b3cd-732ce99d0a23"]
         },
         {
             "id": "593e9ae3-a516-4322-b54f-e07c57729e01",

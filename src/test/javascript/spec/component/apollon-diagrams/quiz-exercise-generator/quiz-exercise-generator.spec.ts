@@ -6,18 +6,18 @@ import { TestBed } from '@angular/core/testing';
 import * as sinon from 'sinon';
 import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import * as testClassDiagram from './test-models/class-diagram.json';
-import { MockRouter } from '../../helpers/mocks/mock-router';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Router } from '@angular/router';
-import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { Text } from '@ls1intum/apollon/lib/utils/svg/text';
 import { of } from 'rxjs';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
