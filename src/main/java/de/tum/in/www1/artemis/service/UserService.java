@@ -271,6 +271,7 @@ public class UserService {
      */
     public User save(User user) {
         clearUserCaches(user);
+        log.debug("Save user " + user);
         return userRepository.save(user);
     }
 
@@ -874,6 +875,7 @@ public class UserService {
             loggedInUser.addGuidedTourSetting(setting);
             guidedTourSettingsRepository.save(setting);
         }
+        // TODO: do we really need to save the user here, or is it enough if we save in the guidedTourSettingsRepository?
         return save(loggedInUser);
     }
 
