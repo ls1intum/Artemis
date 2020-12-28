@@ -151,7 +151,7 @@ public class ParticipationResource {
     }
 
     /**
-     * POST /courses/:courseId/exercises/:exerciseId/resume-participation: resume the participation of the current user in the exercise identified by exerciseId
+     * PUT /courses/:courseId/exercises/:exerciseId/resume-programming-participation: resume the participation of the current user in the given programming exercise
      *
      * @param courseId   only included for API consistency, not actually used
      * @param exerciseId of the exercise for which to resume participation
@@ -192,7 +192,7 @@ public class ParticipationResource {
             return forbidden();
         }
 
-        participation = participationService.resumeExercise(participation);
+        participation = participationService.resumeProgrammingExercise(participation);
         // Note: in this case we might need an empty commit to make sure the build plan works correctly for subsequent student commits
         participation = participationService.performEmptyCommit(participation);
         addLatestResultToParticipation(participation);

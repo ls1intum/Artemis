@@ -126,6 +126,13 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseTestService.resumeProgrammingExercise_correctInitializationState(exerciseMode);
     }
 
+    @ParameterizedTest
+    @EnumSource(ExerciseMode.class)
+    @WithMockUser(username = studentLogin, roles = "USER")
+    public void resumeProgrammingExercise_doesNotExist(ExerciseMode exerciseMode) throws Exception {
+        programmingExerciseTestService.resumeProgrammingExercise_doesNotExist(exerciseMode);
+    }
+
     @Test
     @WithMockUser(username = studentLogin, roles = "USER")
     public void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
