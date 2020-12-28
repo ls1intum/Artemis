@@ -327,7 +327,7 @@ describe('StudentExamsComponent', () => {
         exam.startDate = moment().add(120, 'seconds');
 
         studentExams = [];
-        sinon.stub(examManagementService, 'generateStudentExams').returns(throwError(httpError));
+        const generateStudentExamsStub = sinon.stub(examManagementService, 'generateStudentExams').returns(throwError(httpError));
 
         studentExamsComponentFixture.detectChanges();
 
@@ -338,6 +338,8 @@ describe('StudentExamsComponent', () => {
         expect(generateStudentExamsButton.nativeElement.disabled).to.equal(false);
         generateStudentExamsButton.nativeElement.click();
         expect(alertServiceSpy).to.have.been.calledOnce;
+
+        generateStudentExamsStub.restore();
     });
 
     it('should generate student exams after warning the user that the existing are deleted', () => {
@@ -397,7 +399,7 @@ describe('StudentExamsComponent', () => {
         course.isAtLeastInstructor = true;
         exam.startDate = moment().add(120, 'seconds');
 
-        sinon.stub(examManagementService, 'generateMissingStudentExams').returns(throwError(httpError));
+        const generateMissingStudentExamsStub = sinon.stub(examManagementService, 'generateMissingStudentExams').returns(throwError(httpError));
         studentExams = [studentExamOne!];
         studentExamsComponentFixture.detectChanges();
 
@@ -408,6 +410,8 @@ describe('StudentExamsComponent', () => {
         expect(generateMissingStudentExamsButton.nativeElement.disabled).to.equal(false);
         generateMissingStudentExamsButton.nativeElement.click();
         expect(alertServiceSpy).to.have.been.calledOnce;
+
+        generateMissingStudentExamsStub.restore();
     });
 
     it('should start the exercises of students', () => {
@@ -437,7 +441,7 @@ describe('StudentExamsComponent', () => {
         course.isAtLeastInstructor = true;
         exam.startDate = moment().add(120, 'seconds');
 
-        sinon.stub(examManagementService, 'startExercises').returns(throwError(httpError));
+        const startExercisesStub = sinon.stub(examManagementService, 'startExercises').returns(throwError(httpError));
         studentExamsComponentFixture.detectChanges();
 
         const alertServiceSpy = sinon.spy(alertService, 'error');
@@ -446,6 +450,8 @@ describe('StudentExamsComponent', () => {
         expect(startExercisesButton.nativeElement.disabled).to.equal(false);
         startExercisesButton.nativeElement.click();
         expect(alertServiceSpy).to.have.been.calledOnce;
+
+        startExercisesStub.restore();
     });
 
     it('should unlock all repositories of the students', () => {
@@ -480,7 +486,7 @@ describe('StudentExamsComponent', () => {
         const alertService = TestBed.inject(JhiAlertService);
         course.isAtLeastInstructor = true;
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        sinon.stub(examManagementService, 'unlockAllRepositories').returns(throwError(httpError));
+        const unlockRepoStub = sinon.stub(examManagementService, 'unlockAllRepositories').returns(throwError(httpError));
 
         studentExamsComponentFixture.detectChanges();
         expect(studentExamsComponent.isLoading).to.equal(false);
@@ -495,6 +501,7 @@ describe('StudentExamsComponent', () => {
         expect(alertServiceSpy).to.have.been.calledOnce;
 
         modalServiceOpenStub.restore();
+        unlockRepoStub.restore();
     });
 
     it('should lock all repositories of the students', () => {
@@ -529,7 +536,7 @@ describe('StudentExamsComponent', () => {
         const alertService = TestBed.inject(JhiAlertService);
         course.isAtLeastInstructor = true;
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        sinon.stub(examManagementService, 'lockAllRepositories').returns(throwError(httpError));
+        const lockRepoStub = sinon.stub(examManagementService, 'lockAllRepositories').returns(throwError(httpError));
 
         studentExamsComponentFixture.detectChanges();
         expect(studentExamsComponent.isLoading).to.equal(false);
@@ -544,6 +551,7 @@ describe('StudentExamsComponent', () => {
         expect(alertServiceSpy).to.have.been.calledOnce;
 
         modalServiceOpenStub.restore();
+        lockRepoStub.restore();
     });
 
     it('should evaluate Quiz exercises', () => {
@@ -580,7 +588,7 @@ describe('StudentExamsComponent', () => {
         expect(course).to.exist;
 
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        sinon.stub(examManagementService, 'evaluateQuizExercises').returns(throwError(httpError));
+        const evaluateQuizExercisesStub = sinon.stub(examManagementService, 'evaluateQuizExercises').returns(throwError(httpError));
         studentExamsComponentFixture.detectChanges();
 
         const alertServiceSpy = sinon.spy(alertService, 'error');
@@ -589,5 +597,7 @@ describe('StudentExamsComponent', () => {
         expect(evaluateQuizExercisesButton.nativeElement.disabled).to.equal(false);
         evaluateQuizExercisesButton.nativeElement.click();
         expect(alertServiceSpy).to.have.been.calledOnce;
+
+        evaluateQuizExercisesStub.restore();
     });
 });
