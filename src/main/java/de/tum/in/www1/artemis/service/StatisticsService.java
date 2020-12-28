@@ -344,7 +344,9 @@ public class StatisticsService {
 
     private Integer getWeekOfDate(ZonedDateTime date) {
         LocalDate localDate = date.toLocalDate();
-        TemporalField woy = WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear();
+        // LocalDate date2 = LocalDate.of(date.getYear(), date.getMonth(), date.getDayOfMonth());
+        TemporalField woy = WeekFields.of(DayOfWeek.MONDAY, 4).weekOfWeekBasedYear();
         return localDate.get(woy);
+        // return date.get(WeekFields.of(locale).weekOfYear());
     }
 }
