@@ -67,8 +67,9 @@ export class ModelingSubmissionService {
      * @param {number} exerciseId - Id of the exercise
      * @param {boolean?} lock - True if assessment is locked
      */
-    getModelingSubmissionForExerciseWithoutAssessment(exerciseId: number, lock?: boolean): Observable<ModelingSubmission> {
-        let url = `api/exercises/${exerciseId}/modeling-submission-without-assessment`;
+    getModelingSubmissionForExerciseWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound?: number): Observable<ModelingSubmission> {
+        correctionRound = correctionRound ? correctionRound : 1;
+        let url = `api/exercises/${exerciseId}/${correctionRound}/modeling-submission-without-assessment`;
         if (lock) {
             url += '?lock=true';
         }

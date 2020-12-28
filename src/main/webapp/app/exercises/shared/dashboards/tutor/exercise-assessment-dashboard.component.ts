@@ -211,7 +211,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 // 1. We don't want to assess submissions before the exercise due date
                 // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
                 if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
-                    this.getSubmissionWithoutAssessment();
+                    // TODO write loop over all correctionRounds
+                    this.getSubmissionWithoutAssessment(1);
                 }
             },
             (response: string) => this.onError(response),
@@ -345,20 +346,20 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      * dashboard and the user can start the assessment. Note, that the number of started but unfinished assessments is limited per user and course. If the user reached this limit,
      * the server will respond with a BAD REQUEST response here.
      */
-    private getSubmissionWithoutAssessment(): void {
+    private getSubmissionWithoutAssessment(correctionRound: number): void {
         let submissionObservable: Observable<Submission> = of();
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
-                submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId, 'head');
+                submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId, 'head', correctionRound);
                 break;
             case ExerciseType.MODELING:
-                submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId);
+                submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId, undefined, correctionRound);
                 break;
             case ExerciseType.FILE_UPLOAD:
-                submissionObservable = this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exerciseId);
+                submissionObservable = this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exerciseId, undefined, correctionRound);
                 break;
             case ExerciseType.PROGRAMMING:
-                submissionObservable = this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exerciseId);
+                submissionObservable = this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exerciseId, undefined, correctionRound);
                 break;
         }
 
@@ -366,7 +367,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             (submission: Submission) => {
                 if (submission) {
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-                    this.unassessedSubmissionByCorrectionRound!.set(1, submission);
+                    this.unassessedSubmissionByCorrectionRound!.set(correctionRound, submission);
                 }
                 this.submissionLockLimitReached = false;
             },

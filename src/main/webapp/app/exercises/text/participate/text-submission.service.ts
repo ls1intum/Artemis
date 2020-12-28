@@ -51,8 +51,9 @@ export class TextSubmissionService {
     }
 
     // option = 'head': Do not optimize assessment order. Only used to check if assessments available.
-    getTextSubmissionForExerciseWithoutAssessment(exerciseId: number, option?: 'lock' | 'head'): Observable<TextSubmission> {
-        let url = `api/exercises/${exerciseId}/text-submission-without-assessment`;
+    getTextSubmissionForExerciseWithoutAssessment(exerciseId: number, option?: 'lock' | 'head', correctionRound?: number): Observable<TextSubmission> {
+        correctionRound = correctionRound ? correctionRound : 1;
+        let url = `api/exercises/${exerciseId}/${correctionRound}/text-submission-without-assessment`;
         if (option) {
             url += `?${option}=true`;
         }
