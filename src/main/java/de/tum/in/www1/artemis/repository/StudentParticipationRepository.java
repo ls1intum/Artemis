@@ -131,12 +131,15 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch submission.results result
             left join fetch result.feedbacks feedbacks
             where participation.exercise.id = :#{#exerciseId}
+            and
+            1 = :#{#correctionRound}
             and not exists (select prs from participation.results prs where prs.assessor.id = participation.student.id)
             and not exists (select prs from participation.results prs where prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
             and submission.submitted = true
             and submission.id = (select max(id) from participation.submissions)
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation(@Param("exerciseId") Long exerciseId);
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation(@Param("exerciseId") Long exerciseId,
+            @Param("correctionRound") Long correctionRound);
 
     /**
      * Find all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the

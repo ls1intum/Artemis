@@ -191,9 +191,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @param lockSubmission specifies if the submission should be locked for assessor
      * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/file-upload-submission-without-assessment")
+    @GetMapping(value = "/exercises/{exerciseId}/{correctionRound}/file-upload-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+    public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId, @PathVariable Long correctionRound,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a file upload submission without assessment");
         final Exercise fileUploadExercise = exerciseService.findOneWithAdditionalElements(exerciseId);
@@ -219,11 +219,11 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         final FileUploadSubmission fileUploadSubmission;
         if (lockSubmission) {
             fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise,
-                    fileUploadExercise.hasExerciseGroup());
+                    fileUploadExercise.hasExerciseGroup(), correctionRound);
         }
         else {
             Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService
-                    .getRandomFileUploadSubmissionEligibleForNewAssessment((FileUploadExercise) fileUploadExercise, fileUploadExercise.hasExerciseGroup());
+                    .getRandomFileUploadSubmissionEligibleForNewAssessment((FileUploadExercise) fileUploadExercise, fileUploadExercise.hasExerciseGroup(), correctionRound);
 
             if (optionalFileUploadSubmission.isEmpty()) {
                 return notFound();

@@ -171,12 +171,12 @@ public class SubmissionService {
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise exercise, boolean examMode) {
+    public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise exercise, boolean examMode, long correctionRound) {
         Random random = new Random();
         List<StudentParticipation> participations;
 
         if (examMode) {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(exercise.getId());
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(exercise.getId(), correctionRound);
         }
         else {
             participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId());

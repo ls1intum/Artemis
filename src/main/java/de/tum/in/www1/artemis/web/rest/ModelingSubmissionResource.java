@@ -193,12 +193,14 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      *
      * @param exerciseId id of the exercise for which the modeling submission should be returned
      * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
+     * @param correctionRound correctionRound for which submissions without a result should be returned
      * @return the ResponseEntity with status 200 (OK) and a modeling submission without assessment in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
+    @GetMapping(value = "/exercises/{exerciseId}/{correctionRound}/modeling-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId, @PathVariable Long correctionRound,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
+
         log.debug("REST request to get a modeling submission without assessment");
         final Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
@@ -222,11 +224,11 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         final ModelingSubmission modelingSubmission;
         if (lockSubmission) {
-            modelingSubmission = modelingSubmissionService.lockModelingSubmissionWithoutResult((ModelingExercise) exercise, exercise.hasExerciseGroup());
+            modelingSubmission = modelingSubmissionService.lockModelingSubmissionWithoutResult((ModelingExercise) exercise, exercise.hasExerciseGroup(), correctionRound);
         }
         else {
             final Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService
-                    .getRandomModelingSubmissionEligibleForNewAssessment((ModelingExercise) exercise, exercise.hasExerciseGroup());
+                    .getRandomModelingSubmissionEligibleForNewAssessment((ModelingExercise) exercise, exercise.hasExerciseGroup(), correctionRound);
             if (optionalModelingSubmission.isEmpty()) {
                 return notFound();
             }

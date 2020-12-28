@@ -212,7 +212,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
                 if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
                     // TODO write loop over all correctionRounds
-                    this.getSubmissionWithoutAssessment(1);
+                    this.getSubmissionWithoutAssessmentForCorrectionround(1);
                 }
             },
             (response: string) => this.onError(response),
@@ -342,17 +342,19 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     };
 
     /**
-     * Get a submission from the server that does not have an assessment yet (if there is one). The submission gets added to the end of the list of submissions in the exercise
+     * Get a submission from the server that does not have an assessment for the given correctionround yet (if there is one). The submission gets added to the end of the list of submissions in the exercise
      * dashboard and the user can start the assessment. Note, that the number of started but unfinished assessments is limited per user and course. If the user reached this limit,
      * the server will respond with a BAD REQUEST response here.
      */
-    private getSubmissionWithoutAssessment(correctionRound: number): void {
+    private getSubmissionWithoutAssessmentForCorrectionround(correctionRound: number): void {
         let submissionObservable: Observable<Submission> = of();
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
+                console.log('unassessed for textexercises!');
                 submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId, 'head', correctionRound);
                 break;
             case ExerciseType.MODELING:
+                console.log('unassessed for textexercises!');
                 submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId, undefined, correctionRound);
                 break;
             case ExerciseType.FILE_UPLOAD:

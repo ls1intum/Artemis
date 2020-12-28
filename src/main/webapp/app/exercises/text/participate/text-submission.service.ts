@@ -50,13 +50,20 @@ export class TextSubmissionService {
             .pipe(map((res: HttpResponse<TextSubmission[]>) => TextSubmissionService.convertArrayResponse(res)));
     }
 
-    // option = 'head': Do not optimize assessment order. Only used to check if assessments available.
+    /**
+     *
+     * @param exerciseId id of the exerciser
+     * @param option 'head': Do not optimize assessment order. Only used to check if assessments available.
+     * @param correctionRound: The correction round for which we want to get a new assessment
+     */
     getTextSubmissionForExerciseWithoutAssessment(exerciseId: number, option?: 'lock' | 'head', correctionRound?: number): Observable<TextSubmission> {
         correctionRound = correctionRound ? correctionRound : 1;
+        console.log('get text submissionwithou assessemnt');
         let url = `api/exercises/${exerciseId}/${correctionRound}/text-submission-without-assessment`;
         if (option) {
             url += `?${option}=true`;
         }
+        console.log('url: ', url);
         return this.http
             .get<TextSubmission>(url, { observe: 'response' })
             .pipe(

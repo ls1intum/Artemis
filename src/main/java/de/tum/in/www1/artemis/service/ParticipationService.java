@@ -988,8 +988,8 @@ public class ParticipationService {
      * @param exerciseId the id of the exercise the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
-    public List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation(exerciseId);
+    public List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(Long exerciseId, Long correctionRound) {
+        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation(exerciseId, correctionRound);
     }
 
     /**
