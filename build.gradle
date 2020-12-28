@@ -25,7 +25,6 @@ plugins {
     id "jacoco"
     id "org.springframework.boot"
     id "com.google.cloud.tools.jib" version "2.7.0"
-    id "org.openapi.generator"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
@@ -45,7 +44,6 @@ apply plugin: "com.github.ben-manes.versions"
 apply from: "gradle/docker.gradle"
 //this enables us to invoke ./gradlew liquibaseDiffChangelog
 apply from: "gradle/liquibase.gradle"
-apply from: "gradle/openapi.gradle"
 
 if (project.hasProperty("prod")) {
     apply from: "gradle/profile_prod.gradle"
@@ -398,4 +396,3 @@ tasks.named("dependencyUpdates").configure {
 // 7) Generate Liquibase diff:                      ./gradlew liquibaseDiffChangelog
 // 8) Clear Liquibase checksums:                    ./gradlew liquibaseClearChecksums
 // 9) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
-// 10) Generate Open API documentation:             ./gradlew openApiGenerate

@@ -76,8 +76,6 @@ module.exports = (options) => ({
         }),
         new CopyWebpackPlugin({
             patterns: [
-                { from: './node_modules/swagger-ui-dist/*.{js,css,html,png}', to: 'openapi-ui', flatten: true, globOptions: { ignore: ['**/index.html'] }},
-                { from: './src/main/webapp/openapi-ui/', to: 'openapi-ui' },
                 { from: './src/main/webapp/content/', to: 'content' },
                 { from: './src/main/resources/public/images/favicon.ico', to: 'public/images/favicon.ico' },
                 { from: './src/main/webapp/manifest.webapp', to: 'manifest.webapp' },

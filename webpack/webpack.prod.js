@@ -160,7 +160,6 @@ module.exports = merge(commonConfig({ env: ENV }), {
         new WorkboxPlugin.GenerateSW({
             clientsClaim: true,
             skipWaiting: true,
-            exclude: [/openapi-ui/]
         })
     ],
     mode: 'production'
