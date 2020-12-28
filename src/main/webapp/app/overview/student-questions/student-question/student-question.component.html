@@ -28,7 +28,11 @@
     </div>
     <div class="row">
         <jhi-student-votes [questionId]="studentQuestion.id" [votes]="studentQuestion.votes" (interactVotes)="interactVotes($event)"></jhi-student-votes>
-        <div class="col question-text markdown-preview" [innerHTML]="studentQuestion.questionText ? (studentQuestion.questionText | htmlForMarkdown) : ''"></div>
+        <div
+            id="questionText"
+            class="col question-text markdown-preview"
+            [innerHTML]="studentQuestion.questionText ? (studentQuestion.questionText | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"
+        ></div>
     </div>
     <div class="row pl-2 mb-2">
         <span class="text-black-50 question-subtitle">{{ studentQuestion.author!.name }} - {{ studentQuestion.creationDate | artemisDate: 'short' }}</span>
