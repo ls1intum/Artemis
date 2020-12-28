@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -384,29 +383,18 @@ public class ExamService {
     /**
      * Generates the student exams randomly based on the exam configuration and the exercise groups
      *
-     * @param examId the id of the exam
+     * @param examWithExistingStudentExams the exam with student exams loaded for orphan removal
      * @return the list of student exams with their corresponding users
      */
-    public List<StudentExam> generateStudentExams(Long examId) {
-        // Delete all existing student exams via orphan removal (ignore test runs)
-        Exam examWithExistingStudentExams = findWithStudentExamsById(examId);
-
-        // TODO: the validation checks should happen in the resource, before this method is even being called!
-        if (examWithExistingStudentExams.getNumberOfExercisesInExam() == null) {
-            throw new BadRequestAlertException("The number of exercises must be set for the exam", "Exam", "artemisApp.exam.validation.numberOfExercisesMustBeSet");
-        }
-
+    public List<StudentExam> generateStudentExams(final Exam examWithExistingStudentExams) {
         // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
         studentExamRepository.deleteAll(examWithExistingStudentExams.getStudentExams());
 
         // now fetch the exam with additional information
-        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).get();
+        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examWithExistingStudentExams.getId()).get();
 
         List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
         long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
-
-        // Validate settings of the exam
-        validateStudentExamGeneration(exam, numberOfOptionalExercises);
 
         // StudentExams are saved in the called method
         List<StudentExam> studentExams = createRandomStudentExams(exam, exam.getRegisteredUsers(), numberOfOptionalExercises);
@@ -424,15 +412,7 @@ public class ExamService {
     public List<StudentExam> generateMissingStudentExams(Long examId) {
         Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).get();
 
-        // TODO: the validation checks should happen in the resource, before this method is even being called!
-        if (exam.getNumberOfExercisesInExam() == null) {
-            throw new BadRequestAlertException("The number of exercises must be set for the exam", "Exam", "artemisApp.exam.validation.numberOfExercisesMustBeSet");
-        }
-
         long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
-
-        // Validate settings of the exam
-        validateStudentExamGeneration(exam, numberOfOptionalExercises);
 
         // Get all users who already have an individual exam
         Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(examId);
@@ -450,42 +430,6 @@ public class ExamService {
         // TODO: make sure the student exams still contain non proxy users
 
         return missingStudentExams;
-    }
-
-    /**
-     * Validates exercise settings.
-     *
-     * @param exam exam which is validated
-     * @param numberOfOptionalExercises number of optional exercises in the exam
-     * @throws BadRequestAlertException
-     */
-    private void validateStudentExamGeneration(Exam exam, long numberOfOptionalExercises) throws BadRequestAlertException {
-        // Check that the start and end date of the exam is set
-        if (exam.getStartDate() == null || exam.getEndDate() == null) {
-            throw new BadRequestAlertException("The start and end date must be set for the exam", "Exam", "artemisApp.exam.validation.startAndEndMustBeSet");
-        }
-
-        // Ensure that all exercise groups have at least one exercise
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            if (exerciseGroup.getExercises().isEmpty()) {
-                throw new BadRequestAlertException("All exercise groups must have at least one exercise", "Exam", "artemisApp.exam.validation.atLeastOneExercisePerExerciseGroup");
-            }
-        }
-
-        // Check that numberOfExercisesInExam is set
-        if (exam.getNumberOfExercisesInExam() == null) {
-            throw new BadRequestAlertException("The number of exercises in the exam is not set.", "Exam", "artemisApp.exam.validation.numberOfExercisesInExamNotSet");
-        }
-
-        // Check that there are enough exercise groups
-        if (exam.getExerciseGroups().size() < exam.getNumberOfExercisesInExam()) {
-            throw new BadRequestAlertException("The number of exercise groups is too small", "Exam", "artemisApp.exam.validation.tooFewExerciseGroups");
-        }
-
-        // Check that there are not too much mandatory exercise groups
-        if (numberOfOptionalExercises < 0) {
-            throw new BadRequestAlertException("The number of mandatory exercise groups is too large", "Exam", "artemisApp.exam.validation.tooManyMandatoryExerciseGroups");
-        }
     }
 
     /**
@@ -613,8 +557,9 @@ public class ExamService {
      * @param examId the id of the exam
      * @return the exam with student exams loaded
      */
-    private Exam findWithStudentExamsById(long examId) {
-        Exam exam = examRepository.findWithStudentExamsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id " + examId + " does not exist"));
+    public Exam findWithStudentExamsAndExerciseGroupsAndExercisesById(long examId) {
+        Exam exam = examRepository.findWithStudentExamsAndExerciseGroupsAndExercisesById(examId)
+                .orElseThrow(() -> new EntityNotFoundException("Exam with id " + examId + " does not exist"));
         // drop all test runs and set the remaining student exams to the exam
         exam.setStudentExams(exam.getStudentExams().stream().dropWhile(StudentExam::getTestRun).collect(Collectors.toSet()));
         return exam;

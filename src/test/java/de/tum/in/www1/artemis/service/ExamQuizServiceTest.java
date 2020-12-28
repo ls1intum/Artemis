@@ -139,7 +139,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
 
-        assertThat(examService.generateStudentExams(exam.getId()).size()).isEqualTo(numberOfParticipants);
+        assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
         assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
         assertThat(examService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 
@@ -182,7 +182,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
 
-        assertThat(examService.generateStudentExams(exam.getId()).size()).isEqualTo(numberOfParticipants);
+        assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
         assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
         assertThat(examService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 

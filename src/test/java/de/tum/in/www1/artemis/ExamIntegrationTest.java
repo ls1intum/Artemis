@@ -350,6 +350,67 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerateStudentExamsNoDates_badRequest() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+        exam.setStartDate(null);
+        examRepository.save(exam);
+
+        // invoke generate student exams
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerateStudentExamsNoExerciseGroups_badRequest() throws Exception {
+        Exam exam = database.addExamWithExerciseGroup(course1, true);
+        exam.setStartDate(ZonedDateTime.now());
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        exam = examRepository.save(exam);
+
+        // invoke generate student exams
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerateStudentExamsNoExerciseNumber_badRequest() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+        exam.setNumberOfExercisesInExam(null);
+        examRepository.save(exam);
+
+        // invoke generate student exams
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerateStudentExamsNotEnoughExerciseGroups_badRequest() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+        exam.setNumberOfExercisesInExam(exam.getNumberOfExercisesInExam() + 2);
+        examRepository.save(exam);
+
+        // invoke generate student exams
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerateStudentExamsTooManyMandetoryExerciseGroups_badRequest() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+        exam.setNumberOfExercisesInExam(exam.getNumberOfExercisesInExam() - 2);
+        examRepository.save(exam);
+
+        // invoke generate student exams
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerateMissingStudentExams() throws Exception {
         Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
 
