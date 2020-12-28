@@ -463,11 +463,12 @@ public class ProgrammingExerciseTestService {
         final Course course = setupCourseWithProgrammingExercise(exerciseMode);
         Participant participant = (exerciseMode == TEAM) ? setupTeam(userRepo.findOneByLogin(studentLogin).get()) : userRepo.findOneByLogin(studentLogin).orElseThrow();
 
-        // TODO: resume instead of start
+        // TODO: create a participation and set it to inactive (also set build plan id to null)
+        // TODO: mock resume instead of start
         final var verifications = mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
-        final var path = ParticipationResource.Endpoints.ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId()))
-                .replace("{exerciseId}", String.valueOf(exercise.getId()));
-        final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
+
+        var participation = request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/resume-programming-participation", null,
+                ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
 
         for (final var verification : verifications) {
             verification.performVerification();
