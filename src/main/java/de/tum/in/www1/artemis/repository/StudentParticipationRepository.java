@@ -132,8 +132,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch result.feedbacks feedbacks
             where participation.exercise.id = :#{#exerciseId}
             and
-                :#{#correctionRound} = (SELECT COUNT(r)
-                            FROM Result r where r.submission = submission)
+              :#{#correctionRound} = (SELECT COUNT(r)
+                          FROM Result r where r.assessor IS NOT NULL
+                              AND r.rated = TRUE
+                              AND r.submission = (select max(id) from participation.submissions)
+                              AND r.submission.submitted = TRUE
+                              AND r.completionDate IS NOT NULL
+                              AND (participation.exercise.dueDate IS NULL OR r.submission.submissionDate <= participation.exercise.dueDate))
             and not exists (select prs from participation.results prs where prs.assessor.id = participation.student.id)
             and not exists (select prs from participation.results prs where prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
             and submission.submitted = true
@@ -189,7 +194,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     // TODO SE: use correctionRound
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch r.assessor a
-            WHERE p.exercise.id = :#{#exerciseId}
+            WHERE p.exercise.id = :#{#exerciseId} and 1L = :#{#correctionRound}
             AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)
             """)
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(long exerciseId,
@@ -257,9 +262,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select participation.id, count(submissions) from StudentParticipation participation left join participation.submissions submissions where participation.team.shortName = :#{#teamShortName} and participation.exercise.course.id = :#{#courseId} group by participation.id")
     List<long[]> countSubmissionsPerParticipationByCourseIdAndTeamShortName(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
 
+    // todo SE
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p left join fetch p.submissions s left join fetch s.results r
-                WHERE p.exercise.id = :#{#exerciseId}
+                WHERE p.exercise.id = :#{#exerciseId} and 1L = :#{#correctionRound}
                 AND EXISTS (SELECT s FROM Submission s
                     WHERE s.participation.id = p.id
                     AND s.submitted = TRUE
