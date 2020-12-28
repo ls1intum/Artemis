@@ -151,10 +151,10 @@ public class ParticipationResource {
     }
 
     /**
-     * POST /courses/:courseId/exercises/:exerciseId/resume-participation: resume the participation of the current user in the exercise identified by participationId
+     * POST /courses/:courseId/exercises/:exerciseId/resume-participation: resume the participation of the current user in the exercise identified by exerciseId
      *
      * @param courseId   only included for API consistency, not actually used
-     * @param exerciseId participationId of the exercise for which to resume participation
+     * @param exerciseId of the exercise for which to resume participation
      * @param principal  current user principal
      * @return ResponseEntity with status 200 (OK) and with updated participation as a body, or with status 500 (Internal Server Error)
      */
