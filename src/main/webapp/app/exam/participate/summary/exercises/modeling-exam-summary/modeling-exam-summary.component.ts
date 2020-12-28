@@ -24,7 +24,6 @@ export class ModelingExamSummaryComponent implements OnInit {
             if (this.submission.model) {
                 this.umlModel = JSON.parse(this.submission.model);
             }
-            console.log(this.submission.explanationText);
             if (this.submission.explanationText) {
                 this.explanation = this.submission.explanationText;
             }

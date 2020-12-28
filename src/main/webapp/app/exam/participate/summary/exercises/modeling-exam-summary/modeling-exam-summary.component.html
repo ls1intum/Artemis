@@ -1,4 +1,4 @@
-<div *ngIf="umlModel; else noSubmission" class="editor-outline-background">
+<div *ngIf="umlModel || explanation; else noSubmission" class="editor-outline-background">
     <jhi-modeling-editor
         [readOnly]="true"
         [diagramType]="exercise.diagramType || null"

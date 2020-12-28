@@ -48,12 +48,14 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     }
 
     updateViewFromSubmission(): void {
-        if (this.studentSubmission.model) {
-            // Updates the Apollon editor model state (view) with the latest modeling submission
-            this.umlModel = JSON.parse(this.studentSubmission.model);
+        if (this.studentSubmission) {
+            if (this.studentSubmission.model) {
+                // Updates the Apollon editor model state (view) with the latest modeling submission
+                this.umlModel = JSON.parse(this.studentSubmission.model);
+            }
+            // Updates explanation text with the latest submission
+            this.explanationText = this.studentSubmission.explanationText ?? '';
         }
-        // Updates explanation text with the latest submission
-        this.explanationText = this.studentSubmission.explanationText ?? '';
     }
 
     /**
@@ -66,6 +68,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         }
         const currentApollonModel = this.modelingEditor.getCurrentModel();
         const diagramJson = JSON.stringify(currentApollonModel);
+
         if (this.studentSubmission) {
             if (diagramJson) {
                 this.studentSubmission.model = diagramJson;
