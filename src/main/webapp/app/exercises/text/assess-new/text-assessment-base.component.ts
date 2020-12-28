@@ -13,6 +13,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback } from 'app/entities/feedback.model';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     template: '',
@@ -49,13 +50,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
         const maxPoints = this.exercise?.maxScore! + this.exercise?.bonusPoints! ?? 0.0;
         let totalScore = this.structuredGradingCriterionService.computeTotalScore(assessments);
         // Cap totalScore to maxPoints
-        if (totalScore > maxPoints) {
-            totalScore = maxPoints;
-        }
-        // Do not allow negative score
-        if (totalScore < 0) {
-            totalScore = 0;
-        }
+        totalScore = getPositiveAndCappedTotalScore(totalScore, maxPoints);
         return totalScore;
     }
 
