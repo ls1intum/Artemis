@@ -403,7 +403,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     onStaticCodeAnalysisChanged() {
         // On import: If SCA mode changed, activate recreation of build plans and update of the template
-        if (this.isImport && this.programmingExercise.staticCodeAnalysisEnabled != this.originalStaticCodeAnalysisEnabled) {
+        if (this.isImport && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
             this.recreateBuildPlans = true;
             this.updateTemplate = true;
         }
