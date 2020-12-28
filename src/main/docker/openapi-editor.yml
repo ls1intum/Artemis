@@ -1,0 +1,6 @@
+version: '2'
+services:
+  openapi-editor:
+    image: swaggerapi/swagger-editor:latest
+    ports:
+      - 7742:8080

@@ -50,6 +50,20 @@ You can find information on how to set up user registration [here](docs/admin/re
 
 Please read the guide on [how to contribute](/CONTRIBUTING.md) to Artemis.
 
+### Doing API-First development using openapi-generator
+
+[OpenAPI-Generator](https://openapi-generator.tech) is configured for this application. You can generate API code from the `src/main/resources/openapi/api.yml` definition file by running:
+
+```bash
+./gradlew openApiGenerate
+```
+
+This implements the generated delegate classes with `@Service` classes.
+
+To edit the `api.yml` definition file, you can use a tool such as [Swagger-Editor](). Start a local instance of the swagger-editor using docker by running: `docker-compose -f src/main/docker/swagger-editor.yml up -d`. The editor will then be reachable at [http://localhost:7742](http://localhost:7742).
+
+Refer to [Doing API-First development][https://www.jhipster.tech/documentation-archive/v6.10.5/doing-api-first-development] for more details.
+
 ### Building for production
 
 To build and optimize the Artemis application for production, run:

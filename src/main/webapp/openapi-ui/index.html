@@ -2,14 +2,14 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Artemis - Swagger UI</title>
+        <title>Artemis - Open API UI</title>
         <link rel="stylesheet" type="text/css" href="./swagger-ui.css" />
         <link rel="icon" type="image/png" href="./favicon-32x32.png" sizes="32x32" />
         <link rel="icon" type="image/png" href="./favicon-16x16.png" sizes="16x16" />
     </head>
 
     <body>
-        <div id="swagger-ui"></div>
+        <div id="openapi-ui"></div>
 
         <script src="./swagger-ui-bundle.js"></script>
         <script src="./swagger-ui-standalone-preset.js"></script>
@@ -18,7 +18,7 @@
         <script type="text/javascript">
             window.onload = function () {
                 var urls = [];
-                axios.get('/swagger-resources').then(function (response) {
+                axios.get('/openapi-resources').then(function (response) {
                     response.data.forEach(function (resource) {
                         urls.push({ name: resource.name, url: resource.location });
                     });
@@ -32,7 +32,7 @@
                     // Build a system
                     var ui = SwaggerUIBundle({
                         urls: urls,
-                        dom_id: '#swagger-ui',
+                        dom_id: '#openapi-ui',
                         deepLinking: true,
                         filter: true,
                         layout: 'StandaloneLayout',

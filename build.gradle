@@ -82,7 +82,7 @@ spotless {
 defaultTasks "bootRun"
 
 springBoot {
-    mainClassName = "de.tum.in.www1.artemis.ArtemisApp"
+    mainClass = "de.tum.in.www1.artemis.ArtemisApp"
 }
 
 // Execute the test cases: ./gradlew executeTests
@@ -182,6 +182,8 @@ dependencies {
     implementation "io.sentry:sentry-spring-boot-starter:3.2.0"
     implementation "io.sentry:sentry-logback:3.2.0"
     implementation "org.jsoup:jsoup:1.13.1"
+
+    implementation "org.springdoc:springdoc-openapi-ui:1.5.2"
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )

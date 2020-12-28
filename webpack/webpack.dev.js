@@ -19,7 +19,9 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
         contentBase: './build/resources/main/static/',
         proxy: [{
             context: [
-                '/'
+                '/',
+                '/openapi-resources',
+                '/api-docs',
             ],
             target: `http${options.tls ? 's' : ''}://${options.docker ? 'artemis-server' : 'localhost'}:8080`,
             secure: false,

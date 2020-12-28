@@ -75,6 +75,7 @@
         "smoothscroll-polyfill": "0.4.4",
         "sockjs-client": "1.5.0",
         "split.js": "1.6.2",
+        "swagger-ui-dist": "3.38.0",
         "ts-cacheable": "1.0.2",
         "tslib": "2.0.3",
         "webstomp-client": "1.2.6",

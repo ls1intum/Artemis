@@ -6,6 +6,7 @@ export class ProfileInfo {
     activeProfiles: string[];
     ribbonEnv: string;
     inProduction: boolean;
+    public openApiEnabled?: boolean;
     sentry?: { dsn: string };
     features: ActiveFeatureToggles;
     guidedTourMapping?: GuidedTourMapping;
