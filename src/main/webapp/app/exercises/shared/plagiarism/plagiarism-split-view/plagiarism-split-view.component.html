@@ -4,7 +4,12 @@
 
         <jhi-text-submission-viewer *ngIf="isTextExercise" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionA()"></jhi-text-submission-viewer>
 
-        <jhi-programming-submission-viewer *ngIf="isProgrammingExercise" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionA()"></jhi-programming-submission-viewer>
+        <jhi-programming-submission-viewer
+            *ngIf="isProgrammingExercise"
+            [exercise]="exercise"
+            [matches]="matchesA"
+            [plagiarismSubmission]="getTextSubmissionA()"
+        ></jhi-programming-submission-viewer>
     </div>
 
     <div class="plagiarism-split-pane" jhiPane>
@@ -12,6 +17,11 @@
 
         <jhi-text-submission-viewer *ngIf="isTextExercise" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionB()"></jhi-text-submission-viewer>
 
-        <jhi-programming-submission-viewer *ngIf="isProgrammingExercise" [exercise]="exercise" [plagiarismSubmission]="getTextSubmissionB()"></jhi-programming-submission-viewer>
+        <jhi-programming-submission-viewer
+            *ngIf="isProgrammingExercise"
+            [exercise]="exercise"
+            [matches]="matchesB"
+            [plagiarismSubmission]="getTextSubmissionB()"
+        ></jhi-programming-submission-viewer>
     </div>
 </div>
