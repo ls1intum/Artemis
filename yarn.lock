@@ -8542,10 +8542,10 @@ ng-jhipster@0.16.0:
   dependencies:
     tslib "^2.0.0"
 
-ng-mocks@11.2.7:
-  version "11.2.7"
-  resolved "https://registry.yarnpkg.com/ng-mocks/-/ng-mocks-11.2.7.tgz#979b9f77bebb9c22f98e16d521d6062e3b0f7897"
-  integrity sha512-kj1G6c3CtXD0aofor+VVYkNIaOZ+XMQbppgoYQTauitjxfxZ2Vq0AUCVbVzKdPJsSTUplF6VlG8Yf2O3iATNUw==
+ng-mocks@11.2.8:
+  version "11.2.8"
+  resolved "https://registry.yarnpkg.com/ng-mocks/-/ng-mocks-11.2.8.tgz#fc641b9c350860980cefa3d31e596925f7e1812a"
+  integrity sha512-kQMQUedPkoemIgGP20j/yZujEK3uvMFeE8LIrBBL1r1OpwJ59iFlzET+a5CfgBrMV3DzEp2KM9FtxcjDViQycQ==
 
 ng-pick-datetime@7.0.0:
   version "7.0.0"
