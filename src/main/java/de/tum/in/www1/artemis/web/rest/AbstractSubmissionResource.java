@@ -48,7 +48,7 @@ public abstract class AbstractSubmissionResource {
      * @param assessedByTutor if the submission was assessed by calling tutor
      * @return the ResponseEntity with status 200 (OK) and the list of submissions in body
      */
-    protected ResponseEntity<List<Submission>> getAllSubmissions(Long exerciseId, boolean submittedOnly, boolean assessedByTutor) {
+    protected ResponseEntity<List<Submission>> getAllSubmissions(Long exerciseId, boolean submittedOnly, boolean assessedByTutor, Long correctionRound) {
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);
 
@@ -64,8 +64,7 @@ public abstract class AbstractSubmissionResource {
         final boolean examMode = exercise.hasExerciseGroup();
         List<Submission> submissions;
         if (assessedByTutor) {
-            // TODO SE: change this so not only submissions from 1st correctionRound are fetched
-            submissions = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user, examMode, 1L);
+            submissions = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user, examMode, correctionRound);
         }
         else {
             submissions = submissionService.getAllSubmissionsForExercise(exerciseId, submittedOnly, examMode);

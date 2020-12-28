@@ -153,10 +153,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @GetMapping(value = "/exercises/{exerciseId}/{correctionRound}/modeling-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
-    public ResponseEntity<List<Submission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor) {
+    public ResponseEntity<List<Submission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @PathVariable Long correctionRound,
+            @RequestParam(defaultValue = "false") boolean submittedOnly, @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all modeling upload submissions");
-        return super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor);
+        return super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor, correctionRound);
     }
 
     /**
