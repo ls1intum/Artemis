@@ -117,6 +117,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     Optional<StudentParticipation> findByExerciseIdAndTeamIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     /**
+     * todo SE, NR: maybe re-add
+     * 'and not exists (select prs from participation.results prs where prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))'
+     *
      * Find all participations of submissions that are submitted and do not already have a manual result and do not belong to test runs.
      * No manual result means that no user has started an assessment for the corresponding submission yet.
      *
@@ -133,11 +136,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             where participation.exercise.id = :#{#exerciseId}
             and
               :#{#correctionRound} = (SELECT COUNT(r)
-                          FROM Result r where
-                              r.submission.id = 11L
-                              )
+                             FROM Result r where r.assessor IS NOT NULL
+                                     AND r.rated = TRUE
+                                     AND r.submission = submission
+                                     AND r.completionDate IS NOT NULL
+                                     AND (participation.exercise.dueDate IS NULL OR r.submission.submissionDate <= participation.exercise.dueDate))
             and not exists (select prs from participation.results prs where prs.assessor.id = participation.student.id)
-            and not exists (select prs from participation.results prs where prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
             and submission.submitted = true
             and submission.id = (select max(id) from participation.submissions)
             """)

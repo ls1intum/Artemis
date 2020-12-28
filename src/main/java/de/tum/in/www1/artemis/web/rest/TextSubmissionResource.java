@@ -265,7 +265,7 @@ public class TextSubmissionResource {
 
         final TextSubmission textSubmission;
         if (lockSubmission) {
-            textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise, exercise.hasExerciseGroup(), correctionRound);
+            textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise, exercise.hasExerciseGroup(), correctionRound - 1);
             textAssessmentService.prepareSubmissionForAssessment(textSubmission);
         }
         else {
@@ -276,7 +276,7 @@ public class TextSubmissionResource {
             }
             else {
                 optionalTextSubmission = this.textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, exercise.hasExerciseGroup(),
-                        correctionRound);
+                        correctionRound - 1);
             }
             if (optionalTextSubmission.isEmpty()) {
                 return notFound();
