@@ -29,7 +29,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -159,16 +158,13 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    // TODO: @Transactional is a workaround, we should try to find a different solution
-    @Transactional(readOnly = true) // ok because of workaround
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         final var programmingExercise = participation.getProgrammingExercise();
         final var projectKey = programmingExercise.getProjectKey();
         final var planKey = participation.getBuildPlanId();
-        // TODO: properly handle the case that programmingExercise.templateParticipation is a proxy object, ideally we can completely omit the templateRepoUrl and use a different
-        // way to replace the old with the new URL in JenkinsService.updatePlanRepository
-        if (programmingExercise.getTemplateParticipation() != null && !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
-            Hibernate.initialize(programmingExercise.getTemplateParticipation());
+        // Note: this should not happen, we explicitly log it as error to simplify error handling
+        if (programmingExercise.getTemplateParticipation() == null || !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
+            log.error("configureBuildPlan will fail with a NullPointerException because participation.programmingExercise.templateParticipation is null or not initialized!");
         }
         final var templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
         updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, null /* not needed */, participation.getRepositoryUrl(), templateRepoUrl, Optional.empty());

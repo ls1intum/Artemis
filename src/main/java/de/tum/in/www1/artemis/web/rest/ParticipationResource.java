@@ -163,47 +163,41 @@ public class ParticipationResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExerciseStudentParticipation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
-        Exercise exercise;
+        ProgrammingExercise programmingExercise;
         try {
-            exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+            final var exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+            if (!(exercise instanceof ProgrammingExercise)) {
+                // error case with empty body
+                log.info("Exercise with participationId {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "notProgrammingExercise",
+                        "Exercise is not an instance of ProgrammingExercise. Ignoring the request to resume participation")).build();
+            }
+            programmingExercise = (ProgrammingExercise) exercise;
         }
         catch (EntityNotFoundException e) {
             log.info("Request to resume participation of non-existing Exercise with participationId {}.", exerciseId);
             throw new BadRequestAlertException(e.getMessage(), "exercise", "exerciseNotFound");
         }
 
-        ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise,
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise,
                 principal.getName());
+        // explicitly set the exercise here to make sure that
+        participation.setProgrammingExercise(programmingExercise);
 
         User user = userService.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
-        if (exercise instanceof ProgrammingExercise) {
-
-            // users cannot resume the programming exercises if test run after due date or semi automatic grading is active and the due date has passed
-            var pExercise = (ProgrammingExercise) exercise;
-            if ((pExercise.getDueDate() != null && ZonedDateTime.now().isAfter(pExercise.getDueDate())
-                    && (pExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || pExercise.getAssessmentType() != AssessmentType.AUTOMATIC))) {
-                return forbidden();
-            }
-
-            participation = participationService.resumeExercise(participation);
-            // Note: in this case we might need an empty commit to make sure the build plan works correctly for subsequent student commits
-            participation = participationService.performEmptyCommit(participation);
-            if (participation != null) {
-                addLatestResultToParticipation(participation);
-                participation.getExercise().filterSensitiveInformation();
-                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getParticipant().getName()))
-                        .body(participation);
-            }
+        // users cannot resume the programming exercises if test run after due date or semi automatic grading is active and the due date has passed
+        if ((programmingExercise.getDueDate() != null && ZonedDateTime.now().isAfter(programmingExercise.getDueDate())
+                && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC))) {
+            return forbidden();
         }
-        // error case
-        log.info("Exercise with participationId {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
-        // remove sensitive information before sending participation to the client
-        if (participation != null && participation.getExercise() != null) {
-            participation.getExercise().filterSensitiveInformation();
-        }
-        return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "notProgrammingExercise",
-                "Exercise is not an instance of ProgrammingExercise. Ignoring the request to resume participation")).body(participation);
+
+        participation = participationService.resumeExercise(participation);
+        // Note: in this case we might need an empty commit to make sure the build plan works correctly for subsequent student commits
+        participation = participationService.performEmptyCommit(participation);
+        addLatestResultToParticipation(participation);
+        participation.getExercise().filterSensitiveInformation();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getParticipant().getName())).body(participation);
     }
 
     /**

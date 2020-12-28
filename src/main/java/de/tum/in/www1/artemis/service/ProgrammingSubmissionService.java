@@ -140,6 +140,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
+
+            // Refetch the programming exercise with the template participation and assign it to programmingExerciseParticipation to make sure it is initialized (and not a proxy)
+            final var programmingExercise = programmingExerciseRepository
+                    .findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseParticipation.getProgrammingExercise().getId()).get();
+            programmingExerciseParticipation.setProgrammingExercise(programmingExercise);
+
             participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             try {
@@ -411,6 +417,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
         try {
             if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
                     || !programmingExerciseParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
+
+                // Refetch the programming exercise with the template participation and assign it to programmingExerciseParticipation to make sure it is initialized (and not a
+                // proxy)
+                final var programmingExercise = programmingExerciseRepository
+                        .findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseParticipation.getProgrammingExercise().getId()).get();
+                programmingExerciseParticipation.setProgrammingExercise(programmingExercise);
+
                 // in this case, we first have to resume the exercise: this includes that we again setup the build plan properly before we trigger it
                 participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
                 // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly

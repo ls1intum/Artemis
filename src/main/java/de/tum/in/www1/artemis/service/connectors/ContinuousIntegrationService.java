@@ -53,6 +53,8 @@ public interface ContinuousIntegrationService {
      * Configure the build plan with the given participation on the CI system. Common configurations: - update the repository in the build plan - set appropriate user permissions -
      * initialize/enable the build plan so that it works
      *
+     * **Important**: make sure that participation.programmingExercise.templateParticipation is initialized, otherwise an org.hibernate.LazyInitializationException can occur
+     *
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
      */
     void configureBuildPlan(ProgrammingExerciseParticipation participation);
