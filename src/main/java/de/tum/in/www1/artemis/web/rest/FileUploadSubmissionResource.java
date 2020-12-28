@@ -189,6 +189,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      *
      * @param exerciseId the id of the exercise
      * @param lockSubmission specifies if the submission should be locked for assessor
+     * @param correctionRound the correctionround for which we want to find the submission
      * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/{correctionRound}/file-upload-submission-without-assessment")
@@ -219,11 +220,11 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         final FileUploadSubmission fileUploadSubmission;
         if (lockSubmission) {
             fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise,
-                    fileUploadExercise.hasExerciseGroup(), correctionRound);
+                    fileUploadExercise.hasExerciseGroup(), correctionRound - 1);
         }
         else {
             Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService
-                    .getRandomFileUploadSubmissionEligibleForNewAssessment((FileUploadExercise) fileUploadExercise, fileUploadExercise.hasExerciseGroup(), correctionRound);
+                    .getRandomFileUploadSubmissionEligibleForNewAssessment((FileUploadExercise) fileUploadExercise, fileUploadExercise.hasExerciseGroup(), correctionRound - 1);
 
             if (optionalFileUploadSubmission.isEmpty()) {
                 return notFound();

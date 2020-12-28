@@ -225,11 +225,11 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         final ModelingSubmission modelingSubmission;
         if (lockSubmission) {
-            modelingSubmission = modelingSubmissionService.lockModelingSubmissionWithoutResult((ModelingExercise) exercise, exercise.hasExerciseGroup(), correctionRound);
+            modelingSubmission = modelingSubmissionService.lockModelingSubmissionWithoutResult((ModelingExercise) exercise, exercise.hasExerciseGroup(), correctionRound - 1);
         }
         else {
             final Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService
-                    .getRandomModelingSubmissionEligibleForNewAssessment((ModelingExercise) exercise, exercise.hasExerciseGroup(), correctionRound);
+                    .getRandomModelingSubmissionEligibleForNewAssessment((ModelingExercise) exercise, exercise.hasExerciseGroup(), correctionRound - 1);
             if (optionalModelingSubmission.isEmpty()) {
                 return notFound();
             }
