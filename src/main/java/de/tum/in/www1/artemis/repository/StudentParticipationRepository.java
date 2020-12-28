@@ -132,7 +132,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch result.feedbacks feedbacks
             where participation.exercise.id = :#{#exerciseId}
             and
-            1L = :#{#correctionRound}
+                :#{#correctionRound} = (SELECT COUNT(r)
+                            FROM Result r where r.submission = submission)
             and not exists (select prs from participation.results prs where prs.assessor.id = participation.student.id)
             and not exists (select prs from participation.results prs where prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
             and submission.submitted = true

@@ -272,7 +272,7 @@ public class TextSubmissionResource {
             Optional<TextSubmission> optionalTextSubmission;
             if (skipAssessmentOrderOptimization) {
                 optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, true, exercise.hasExerciseGroup(),
-                        correctionRound);
+                        correctionRound - 1);
             }
             else {
                 optionalTextSubmission = this.textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, exercise.hasExerciseGroup(),

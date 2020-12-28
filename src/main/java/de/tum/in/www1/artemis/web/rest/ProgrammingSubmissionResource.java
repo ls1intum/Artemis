@@ -390,6 +390,7 @@ public class ProgrammingSubmissionResource {
      *
      * @param exerciseId the id of the exercise
      * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
+     * @param correctionRound the correctionround for which we want to find the submission
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/{correctionRound}/programming-submission-without-assessment")
@@ -414,11 +415,11 @@ public class ProgrammingSubmissionResource {
 
         final ProgrammingSubmission programmingSubmission;
         if (lockSubmission) {
-            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmissionWithoutResult(programmingExercise, correctionRound);
+            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmissionWithoutResult(programmingExercise, correctionRound - 1);
         }
         else {
             Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionService.getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise,
-                    programmingExercise.hasExerciseGroup(), correctionRound);
+                    programmingExercise.hasExerciseGroup(), correctionRound - 1);
             if (optionalProgrammingSubmission.isEmpty()) {
                 return notFound();
             }
