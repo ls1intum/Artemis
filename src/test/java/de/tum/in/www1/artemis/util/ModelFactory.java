@@ -539,6 +539,26 @@ public class ModelFactory {
         return feedbacks;
     }
 
+    public static List<Feedback> generateManualFeedback() {
+        List<Feedback> feedbacks = new ArrayList<>();
+        Feedback positiveFeedback = new Feedback();
+        positiveFeedback.setCredits(2D);
+        positiveFeedback.setText("good");
+        positiveFeedback.setType(FeedbackType.MANUAL);
+        feedbacks.add(positiveFeedback);
+        Feedback negativeFeedback = new Feedback();
+        negativeFeedback.setCredits(-1D);
+        negativeFeedback.setText("bad");
+        negativeFeedback.setType(FeedbackType.MANUAL);
+        feedbacks.add(negativeFeedback);
+        Feedback unrefFeedback = new Feedback();
+        unrefFeedback.setCredits(-1D);
+        unrefFeedback.setText("no reference");
+        unrefFeedback.setType(FeedbackType.MANUAL_UNREFERENCED);
+        feedbacks.add(unrefFeedback);
+        return feedbacks;
+    }
+
     public static List<Feedback> generateStaticCodeAnalysisFeedbackList(int numOfFeedback) {
         List<Feedback> feedbackList = new ArrayList<>();
         for (int i = 0; i < numOfFeedback; i++) {

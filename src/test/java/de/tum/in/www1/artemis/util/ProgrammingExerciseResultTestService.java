@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +12,8 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -142,6 +141,28 @@ public class ProgrammingExerciseResultTestService {
         var expectedNoOfLogs = getNumberOfBuildLogs(resultNotification);
         assertThat(((ProgrammingSubmission) optionalResult.get().getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
         assertThat(submissionWithLogs.get().getBuildLogEntries()).hasSize(expectedNoOfLogs);
+    }
+
+    // Test
+    public void shouldGenerateNewManualResultIfManualAssessmentExists(Object resultNotification) {
+        var programmingSubmission = database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
+        programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1",
+                AssessmentType.SEMI_AUTOMATIC, true);
+
+        List<Feedback> feedback = ModelFactory.generateManualFeedback();
+        feedback = database.feedbackRepo.saveAll(feedback);
+        programmingSubmission.getFirstResult().addFeedbacks(feedback);
+        database.resultRepo.save(programmingSubmission.getFirstResult());
+
+        final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+
+        assertThat(optionalResult).isPresent();
+
+        var result = optionalResult.get();
+
+        assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        assertThat(result.getFeedbacks()).hasSize(6);
+        assertThat(result.getFeedbacks().stream().filter((fb) -> fb.getType() == FeedbackType.AUTOMATIC).count()).isEqualTo(3);
     }
 
     private int getNumberOfBuildLogs(Object resultNotification) {

@@ -254,7 +254,7 @@ public class Feedback extends DomainObject {
      * Copies an automatic feedback to be used for the manual result of a programming exercise
      * @return Copy of the automatic feedback without its original ID
      */
-    public Feedback copyProgrammingAutomaticFeedbackForManualResult() {
+    public Feedback copyFeedback() {
         var feedback = new Feedback();
         feedback.setDetailText(getDetailText());
         feedback.setType(getType());
