@@ -206,13 +206,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     this.exam = this.exercise?.exerciseGroup?.exam;
                 }
                 // TODO write loop over all correctionRounds
-                this.getAllTutorAssessedSubmissionsForCorrectionRound(1);
+                this.getAllTutorAssessedSubmissionsForAllCorrectionRounds();
 
+                this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
                 // 1. We don't want to assess submissions before the exercise due date
                 // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
                 if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
-                    // TODO write loop over all correctionRounds
-                    this.getSubmissionWithoutAssessmentForCorrectionround(1);
+                    this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
                 }
             },
             (response: string) => this.onError(response),
@@ -283,6 +283,21 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     }
 
     /**
+     * get all submissions for all correction rounds which the tutor has assessed.
+     * If not in examMode, correctionrounds defaults to 1, as more than 1 is currently not supported.
+     * @private
+     */
+    private getAllTutorAssessedSubmissionsForAllCorrectionRounds(): void {
+        if (this.isExamMode) {
+            for (let i = 1; i <= this.exam!.numberOfCorrectionRoundsInExam!; i++) {
+                this.getAllTutorAssessedSubmissionsForCorrectionRound(i);
+            }
+        } else {
+            this.getAllTutorAssessedSubmissionsForCorrectionRound(1);
+        }
+    }
+
+    /**
      * Get all the submissions from the server for which the current user is the assessor for the specified correctionround, which is the case for started or completed assessments. All these submissions get listed
      * in the exercise dashboard.
      */
@@ -342,6 +357,21 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     };
 
     /**
+     * Get all submissions that dont have an assessment for all correctionrounds
+     * If not in examMode correctionrounds defaults to 1.
+     * @private
+     */
+    private getSubmissionWithoutAssessmentForAllCorrectionrounds(): void {
+        if (this.isExamMode) {
+            for (let i = 1; i <= this.exam!.numberOfCorrectionRoundsInExam!; i++) {
+                this.getSubmissionWithoutAssessmentForCorrectionround(i);
+            }
+        } else {
+            this.getSubmissionWithoutAssessmentForCorrectionround(1);
+        }
+    }
+
+    /**
      * Get a submission from the server that does not have an assessment for the given correctionround yet (if there is one). The submission gets added to the end of the list of submissions in the exercise
      * dashboard and the user can start the assessment. Note, that the number of started but unfinished assessments is limited per user and course. If the user reached this limit,
      * the server will respond with a BAD REQUEST response here.
@@ -354,7 +384,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId, 'head', correctionRound);
                 break;
             case ExerciseType.MODELING:
-                console.log('unassessed for textexercises!');
+                console.log('unassessed for modelingexercise!');
                 submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId, undefined, correctionRound);
                 break;
             case ExerciseType.FILE_UPLOAD:
