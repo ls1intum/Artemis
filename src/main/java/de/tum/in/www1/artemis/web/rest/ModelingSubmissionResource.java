@@ -203,10 +203,11 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
 
         log.debug("REST request to get a modeling submission without assessment");
-        final Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        final Exercise exercise = exerciseService.findOne(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
         final User user = userService.getUserWithGroupsAndAuthorities();
+
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
@@ -225,11 +226,11 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         final ModelingSubmission modelingSubmission;
         if (lockSubmission) {
-            modelingSubmission = modelingSubmissionService.lockModelingSubmissionWithoutResult((ModelingExercise) exercise, exercise.hasExerciseGroup(), correctionRound - 1);
+            modelingSubmission = modelingSubmissionService.lockModelingSubmissionWithoutResult((ModelingExercise) exercise, exercise.hasExerciseGroup(), correctionRound);
         }
         else {
             final Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService
-                    .getRandomModelingSubmissionEligibleForNewAssessment((ModelingExercise) exercise, exercise.hasExerciseGroup(), correctionRound - 1);
+                    .getRandomModelingSubmissionEligibleForNewAssessment((ModelingExercise) exercise, exercise.hasExerciseGroup(), correctionRound);
             if (optionalModelingSubmission.isEmpty()) {
                 return notFound();
             }

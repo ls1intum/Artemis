@@ -289,11 +289,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     private getAllTutorAssessedSubmissionsForAllCorrectionRounds(): void {
         if (this.isExamMode) {
-            for (let i = 1; i <= this.exam!.numberOfCorrectionRoundsInExam!; i++) {
+            for (let i = 0; i < this.exam!.numberOfCorrectionRoundsInExam!; i++) {
                 this.getAllTutorAssessedSubmissionsForCorrectionRound(i);
             }
         } else {
-            this.getAllTutorAssessedSubmissionsForCorrectionRound(1);
+            this.getAllTutorAssessedSubmissionsForCorrectionRound(0);
         }
     }
 
@@ -363,11 +363,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     private getSubmissionWithoutAssessmentForAllCorrectionrounds(): void {
         if (this.isExamMode) {
-            for (let i = 1; i <= this.exam!.numberOfCorrectionRoundsInExam!; i++) {
+            for (let i = 0; i < this.exam!.numberOfCorrectionRoundsInExam!; i++) {
                 this.getSubmissionWithoutAssessmentForCorrectionround(i);
             }
         } else {
-            this.getSubmissionWithoutAssessmentForCorrectionround(1);
+            this.getSubmissionWithoutAssessmentForCorrectionround(0);
         }
     }
 

@@ -417,11 +417,11 @@ public class ProgrammingSubmissionResource {
 
         final ProgrammingSubmission programmingSubmission;
         if (lockSubmission) {
-            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmissionWithoutResult(programmingExercise, correctionRound - 1);
+            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmissionWithoutResult(programmingExercise, correctionRound);
         }
         else {
             Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionService.getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise,
-                    programmingExercise.hasExerciseGroup(), correctionRound - 1);
+                    programmingExercise.hasExerciseGroup(), correctionRound);
             if (optionalProgrammingSubmission.isEmpty()) {
                 return notFound();
             }
