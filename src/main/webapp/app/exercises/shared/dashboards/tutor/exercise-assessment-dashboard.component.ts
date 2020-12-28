@@ -205,8 +205,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     this.isExamMode = true;
                     this.exam = this.exercise?.exerciseGroup?.exam;
                 }
-
-                this.getAllTutorAssessedSubmissions();
+                // TODO write loop over all correctionRounds
+                this.getAllTutorAssessedSubmissionsForCorrectionRound(1);
 
                 // 1. We don't want to assess submissions before the exercise due date
                 // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
@@ -283,10 +283,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     }
 
     /**
-     * Get all the submissions from the server for which the current user is the assessor, which is the case for started or completed assessments. All these submissions get listed
+     * Get all the submissions from the server for which the current user is the assessor for the specified correctionround, which is the case for started or completed assessments. All these submissions get listed
      * in the exercise dashboard.
      */
-    private getAllTutorAssessedSubmissions(): void {
+    private getAllTutorAssessedSubmissionsForCorrectionRound(correctionRound: number): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
         if (this.isTestRun) {
             submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId);
