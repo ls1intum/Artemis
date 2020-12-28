@@ -5,7 +5,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Result } from 'app/entities/result.model';
-import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 
@@ -41,13 +41,22 @@ export class SubmissionService {
                 filter((res) => !!res.body),
                 tap((res) =>
                     res.body!.forEach((submission) => {
-                        // reconnect results to submissions
-                        if (getLatestSubmissionResult(submission)) {
-                            getLatestSubmissionResult(submission)!.submission = submission;
-                        }
+                        this.reconnectSubmissionAndResult(submission);
                     }),
                 ),
             );
+    }
+
+    /**
+     * reconnect submission and result
+     * @param submission
+     */
+    private reconnectSubmissionAndResult(submission: Submission) {
+        const result = getLatestSubmissionResult(submission);
+        if (result) {
+            setLatestSubmissionResult(submission, result);
+            result.submission = submission;
+        }
     }
 
     convertResultsDateFromServer(results?: Result[]) {
@@ -67,6 +76,7 @@ export class SubmissionService {
             submissions.forEach((submission: Submission) => {
                 if (submission !== null) {
                     submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : undefined;
+                    this.reconnectSubmissionAndResult(submission);
                     convertedSubmissions.push(submission);
                 }
             });

@@ -132,6 +132,8 @@ public class UserService {
 
         try {
             if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminPassword.isPresent()) {
+                // authenticate so that db queries are possible
+                SecurityUtils.setAuthorizationObject();
                 Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(artemisInternalAdminUsername.get());
                 if (existingInternalAdmin.isPresent()) {
                     log.info("Update internal admin user " + artemisInternalAdminUsername.get());
@@ -269,6 +271,7 @@ public class UserService {
      */
     public User save(User user) {
         clearUserCaches(user);
+        log.debug("Save user " + user);
         return userRepository.save(user);
     }
 
@@ -872,6 +875,7 @@ public class UserService {
             loggedInUser.addGuidedTourSetting(setting);
             guidedTourSettingsRepository.save(setting);
         }
+        // TODO: do we really need to save the user here, or is it enough if we save in the guidedTourSettingsRepository?
         return save(loggedInUser);
     }
 

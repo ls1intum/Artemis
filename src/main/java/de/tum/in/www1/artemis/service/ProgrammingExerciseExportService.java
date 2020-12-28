@@ -7,6 +7,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -71,6 +74,8 @@ public class ProgrammingExerciseExportService {
     private final ZipFileService zipFileService;
 
     private final UrlService urlService;
+
+    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             ZipFileService zipFileService, UrlService urlService) {
@@ -184,7 +189,7 @@ public class ProgrammingExerciseExportService {
 
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
         log.info("Download repositories for JPlag programming comparison with " + numberOfParticipations + " participations");
-        downloadRepositories(programmingExercise);
+        List<Repository> repositories = downloadRepositories(programmingExercise);
         log.info("Downloading repositories done");
 
         final var projectKey = programmingExercise.getProjectKey();
@@ -206,9 +211,7 @@ public class ProgrammingExerciseExportService {
         JPlagResult result = jplag.run();
         log.info("JPlag programming comparison finished with " + result.getComparisons().size() + " comparisons");
 
-        log.info("Will cleanup repositories");
-        cleanupRepositories(programmingExercise);
-        log.info("Cleanup repositories done");
+        cleanupResourcesAsync(programmingExercise, repositories);
 
         TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(result);
         textPlagiarismResult.setExerciseId(programmingExercise.getId());
@@ -216,6 +219,16 @@ public class ProgrammingExerciseExportService {
         log.info("JPlag programming comparison for " + numberOfParticipations + " participations done in " + TimeLogUtil.formatDurationFrom(start));
 
         return textPlagiarismResult;
+    }
+
+    private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories) {
+        executor.schedule(() -> {
+            log.info("Will delete local repositories");
+            deleteLocalRepositories(repositories);
+            // delete project root folder in the repos download folder
+            deleteReposDownloadProjectRootDirectory(programmingExercise);
+            log.info("Delete repositories done");
+        }, 10, TimeUnit.SECONDS);
     }
 
     /**
@@ -236,7 +249,7 @@ public class ProgrammingExerciseExportService {
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
 
         log.info("Download repositories for JPlag programming comparison with " + numberOfParticipations + " participations");
-        downloadRepositories(programmingExercise);
+        List<Repository> repositories = downloadRepositories(programmingExercise);
         log.info("Downloading repositories done");
 
         final var output = "output";
@@ -281,14 +294,10 @@ public class ProgrammingExerciseExportService {
             FileSystemUtils.deleteRecursively(outputFolderFile);
         }
 
-        log.info("Will cleanup repositories");
-        cleanupRepositories(programmingExercise);
-        log.info("Cleanup repositories done");
+        cleanupResourcesAsync(programmingExercise, repositories);
 
-        // TODO: we should delete two remaining root folders <project-key>
-
-        log.info("Schedule deletion of zip file in 5 minutes");
-        fileService.scheduleForDeletion(zipFilePath, 5);
+        log.info("Schedule deletion of zip file in 1 minute");
+        fileService.scheduleForDeletion(zipFilePath, 1);
 
         log.info("JPlag programming report for " + numberOfParticipations + " participations done in " + TimeLogUtil.formatDurationFrom(start));
 
@@ -305,32 +314,16 @@ public class ProgrammingExerciseExportService {
         };
     }
 
-    private void cleanupRepositories(ProgrammingExercise programmingExercise) {
-        programmingExercise.getStudentParticipations().parallelStream().forEach(participation -> {
-            var programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
+    private void deleteLocalRepositories(List<Repository> repositories) {
+        repositories.parallelStream().forEach(repository -> {
+            var localPath = repository.getLocalPath();
             try {
-                if (programmingExerciseParticipation.getRepositoryUrlAsUrl() == null) {
-                    return;
-                }
-                Repository repo = gitService.getOrCheckoutRepositoryForJPlag(programmingExerciseParticipation, REPO_DOWNLOAD_CLONE_PATH);
-                deleteTempLocalRepository(repo);
+                deleteTempLocalRepository(repository);
             }
-            catch (GitException | GitAPIException | InterruptedException ex) {
-                log.error("cleanup student repository " + programmingExerciseParticipation.getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle()
-                        + "' did not work as expected: " + ex.getMessage());
+            catch (GitException ex) {
+                log.error("delete repository " + localPath + " did not work as expected: " + ex.getMessage());
             }
         });
-        try {
-            Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), REPO_DOWNLOAD_CLONE_PATH);
-            deleteTempLocalRepository(templateRepo);
-        }
-        catch (GitException | GitAPIException | InterruptedException ex) {
-            log.error("cleanup template repository " + programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle()
-                    + "' did not work as expected: " + ex.getMessage());
-        }
-
-        // delete project root folder in the repos download folder
-        deleteReposDownloadProjectRootDirectory(programmingExercise);
     }
 
     private void deleteReposDownloadProjectRootDirectory(ProgrammingExercise programmingExercise) {
@@ -340,12 +333,13 @@ public class ProgrammingExerciseExportService {
             log.info("Delete project root directory " + projectPath.toFile());
             FileUtils.deleteDirectory(projectPath.toFile());
         }
-        catch (IOException e) {
-            log.warn("The project root directory '" + projectPath.toString() + "' could not be deleted.");
+        catch (IOException ex) {
+            log.warn("The project root directory '" + projectPath.toString() + "' could not be deleted.", ex);
         }
     }
 
-    private void downloadRepositories(ProgrammingExercise programmingExercise) {
+    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise) {
+        List<Repository> downloadedRepositores = new ArrayList<>();
         programmingExercise.getStudentParticipations().parallelStream().forEach(participation -> {
             var programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
             try {
@@ -355,8 +349,7 @@ public class ProgrammingExerciseExportService {
                 }
                 Repository repo = gitService.getOrCheckoutRepositoryForJPlag(programmingExerciseParticipation, REPO_DOWNLOAD_CLONE_PATH);
                 gitService.resetToOriginMaster(repo); // start with clean state
-
-                repo.close();
+                downloadedRepositores.add(repo);
             }
             catch (GitException | GitAPIException | InterruptedException ex) {
                 log.error("clone student repository " + programmingExerciseParticipation.getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle()
@@ -367,14 +360,15 @@ public class ProgrammingExerciseExportService {
         // clone the template repo
         try {
             Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), REPO_DOWNLOAD_CLONE_PATH);
-
             gitService.resetToOriginMaster(templateRepo); // start with clean state
-            templateRepo.close();
+            downloadedRepositores.add(templateRepo);
         }
         catch (GitException | GitAPIException | InterruptedException ex) {
             log.error("clone template repository " + programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle()
                     + "' did not work as expected: " + ex.getMessage());
         }
+
+        return downloadedRepositores;
     }
 
     /**
@@ -456,10 +450,6 @@ public class ProgrammingExerciseExportService {
         // We can always delete the repository as it won't be used by the student (separate path)
         if (repository != null) {
             try {
-                // if repository is not closed, it causes weird IO issues when trying to delete the repository again
-                // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
-                repository.close();
-
                 log.info("Delete temporary repository " + repository.getLocalPath().toString());
                 gitService.deleteLocalRepository(repository);
             }
