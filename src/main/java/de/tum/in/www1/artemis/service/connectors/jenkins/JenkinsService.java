@@ -190,9 +190,9 @@ public class JenkinsService implements ContinuousIntegrationService {
         headers.setContentType(MediaType.APPLICATION_XML);
         final var entity = new HttpEntity(writeXmlToString(jobXmlDocument), headers);
 
-        URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(JENKINS_SERVER_URL.toString(), buildProjectKey, repoProjectKey).build(true).toUri();
+        URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(JENKINS_SERVER_URL.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
 
-        final var errorMessage = "Error trying to configure build plan in Jenkins " + repoProjectKey;
+        final var errorMessage = "Error trying to configure build plan in Jenkins " + buildPlanKey;
         try {
             final var response = restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
             if (response.getStatusCode() != HttpStatus.OK) {
