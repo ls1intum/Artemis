@@ -111,6 +111,7 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
                 this.chartTime = now.add(this.currentPeriod, 'months').format('MMMM YYYY');
                 break;
             case SpanType.QUARTER:
+                const prefix = this.translateService.instant('calendar_week');
                 startDate = moment().subtract(11 + 12 * -this.currentPeriod, 'weeks');
                 endDate = this.currentPeriod !== 0 ? moment().subtract(12 * -this.currentPeriod, 'weeks') : moment();
                 let currentWeek;
@@ -119,7 +120,7 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
                         .subtract(11 + 12 * -this.currentPeriod - i, 'weeks')
                         .isoWeekday(1)
                         .isoWeek();
-                    this.barChartLabels[i] = '' + currentWeek;
+                    this.barChartLabels[i] = prefix + ' ' + currentWeek;
                 }
                 this.chartTime = startDate.isoWeekday(1).format('DD.MM.YYYY') + ' - ' + endDate.isoWeekday(7).format('DD.MM.YYYY');
                 break;
