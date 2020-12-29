@@ -33,8 +33,6 @@ import de.tum.in.www1.artemis.service.UserService;
 @RequestMapping("/api")
 public class StudentScoreResource {
 
-    // private static final String ENTITY_NAME = "studentScores";
-
     private final Logger log = LoggerFactory.getLogger(StudentScoreResource.class);
 
     private final StudentScoreService studentScoreService;

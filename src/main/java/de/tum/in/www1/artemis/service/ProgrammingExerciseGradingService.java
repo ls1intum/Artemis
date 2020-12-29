@@ -60,12 +60,10 @@ public class ProgrammingExerciseGradingService {
 
     private final AuditEventRepository auditEventRepository;
 
-    private final StudentScoreService studentScoreService;
-
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
-            ResultService resultService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository, StudentScoreService studentScoreService) {
+            ResultService resultService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.participationService = participationService;
@@ -77,7 +75,6 @@ public class ProgrammingExerciseGradingService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.resultService = resultService;
         this.auditEventRepository = auditEventRepository;
-        this.studentScoreService = studentScoreService;
     }
 
     /**
@@ -116,9 +113,6 @@ public class ProgrammingExerciseGradingService {
             Submission tmpSubmission = result.getSubmission();
             result = resultRepository.save(result);
             result.setSubmission(tmpSubmission);
-
-            // update StudentScore
-            studentScoreService.updateResult(result);
 
             // If the solution participation was updated, also trigger the template participation build.
             if (isSolutionParticipation) {
