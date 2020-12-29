@@ -734,7 +734,8 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId);
 
         if (optionalProgrammingExercise.isEmpty()) {
             return notFound();
@@ -775,7 +776,7 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
-        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId);
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationLatestResultById(exerciseId);
         if (programmingExerciseOpt.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
             Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -808,7 +809,8 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId);
         if (optionalProgrammingExercise.isEmpty()) {
             return notFound();
         }
@@ -847,7 +849,8 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> combineTemplateRepositoryCommits(@PathVariable long exerciseId) {
         log.debug("REST request to combine the commits of the template repository of ProgrammingExercise with id: {}", exerciseId);
 
-        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId);
         if (programmingExerciseOptional.isEmpty()) {
             return notFound();
         }
@@ -990,7 +993,8 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable long exerciseId) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
 
-        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId);
         if (programmingExerciseOptional.isEmpty()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "programmingExerciseNotFound", "The programming exercise does not exist"))
                     .body(null);
@@ -1046,7 +1050,7 @@ public class ProgrammingExerciseResource {
     @GetMapping(Endpoints.TEST_CASE_STATE)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExerciseTestCaseStateDTO> hasAtLeastOneStudentResult(@PathVariable long exerciseId) {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId);
         if (programmingExercise.isEmpty()) {
             return notFound();
         }
