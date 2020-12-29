@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -44,7 +43,6 @@ public abstract class ExerciseImportService {
      * @param importedExercise The imported Exercise
      * @return Returns the importedExercise. If the type casting fails, returns null.
      */
-    @Transactional
     public abstract Exercise importExercise(final Exercise templateExercise, final Exercise importedExercise);
 
     void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise) {
