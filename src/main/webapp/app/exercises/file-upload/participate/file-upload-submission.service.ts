@@ -7,7 +7,6 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { createRequestOption } from 'app/shared/util/request-util';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 
 export type EntityResponseType = HttpResponse<FileUploadSubmission>;
 
@@ -70,7 +69,7 @@ export class FileUploadSubmissionService {
         if (lock) {
             url += '?lock=true';
         }
-        return this.http.get<FileUploadSubmission>(url).pipe(map((res: ModelingSubmission) => this.convertItemFromServer(res)));
+        return this.http.get<FileUploadSubmission>(url).pipe(map((res: FileUploadSubmission) => this.convertItemFromServer(res)));
     }
 
     /**
