@@ -5,9 +5,8 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.transaction.Transactional;
-
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -103,7 +102,7 @@ public class LectureService {
      * Attachments and Lecture Units are not explicitly deleted, as the delete operation is cascaded by the database.
      * @param lecture the lecture to be deleted
      */
-    @Transactional
+    @Transactional // ok
     public void delete(Lecture lecture) {
         Optional<Lecture> lectureToDeleteOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId());
         if (lectureToDeleteOptional.isEmpty()) {

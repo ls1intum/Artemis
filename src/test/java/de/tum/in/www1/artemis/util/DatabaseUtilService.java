@@ -1140,13 +1140,26 @@ public class DatabaseUtilService {
         if (existingParticipation.isPresent()) {
             return existingParticipation.get();
         }
-        ProgrammingExerciseStudentParticipation participation = preconfigurationOfParticipation(exercise, login);
+        ProgrammingExerciseStudentParticipation participation = configureIndividualParticipation(exercise, login);
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
         participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).get();
+    }
 
+    public ProgrammingExerciseStudentParticipation addTeamParticipationForProgrammingExercise(ProgrammingExercise exercise, Team team) {
+
+        final var existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndTeamId(exercise.getId(), team.getId());
+        if (existingParticipation.isPresent()) {
+            return existingParticipation.get();
+        }
+        ProgrammingExerciseStudentParticipation participation = configureTeamParticipation(exercise, team);
+        final var repoName = (exercise.getProjectKey() + "-" + team.getShortName()).toLowerCase();
+        participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
+        participation = programmingExerciseStudentParticipationRepo.save(participation);
+
+        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).get();
     }
 
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExerciseForLocalRepo(ProgrammingExercise exercise, String login, URL localRepoPath) {
@@ -1154,7 +1167,7 @@ public class DatabaseUtilService {
         if (existingParticipation.isPresent()) {
             return existingParticipation.get();
         }
-        ProgrammingExerciseStudentParticipation participation = preconfigurationOfParticipation(exercise, login);
+        ProgrammingExerciseStudentParticipation participation = configureIndividualParticipation(exercise, login);
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
         participation.setRepositoryUrl(String.format(localRepoPath.toString() + "%s/%s.git", exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
@@ -1162,12 +1175,23 @@ public class DatabaseUtilService {
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).get();
     }
 
-    private ProgrammingExerciseStudentParticipation preconfigurationOfParticipation(ProgrammingExercise exercise, String login) {
+    private ProgrammingExerciseStudentParticipation configureIndividualParticipation(ProgrammingExercise exercise, String login) {
         final var user = getUserByLogin(login);
         var participation = new ProgrammingExerciseStudentParticipation();
         final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
         participation.setInitializationDate(ZonedDateTime.now());
         participation.setParticipant(user);
+        participation.setBuildPlanId(buildPlanId);
+        participation.setProgrammingExercise(exercise);
+        participation.setInitializationState(InitializationState.INITIALIZED);
+        return participation;
+    }
+
+    private ProgrammingExerciseStudentParticipation configureTeamParticipation(ProgrammingExercise exercise, Team team) {
+        var participation = new ProgrammingExerciseStudentParticipation();
+        final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + team.getShortName().toUpperCase();
+        participation.setInitializationDate(ZonedDateTime.now());
+        participation.setParticipant(team);
         participation.setBuildPlanId(buildPlanId);
         participation.setProgrammingExercise(exercise);
         participation.setInitializationState(InitializationState.INITIALIZED);
