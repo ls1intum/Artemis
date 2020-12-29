@@ -91,14 +91,6 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
                 this.percentageLateAssessmentProgressOfCorrectionRound[index] = Math.floor((numberOfAssessments.late / this.numberOfSubmissions.late) * 100);
             }
         }
-        /*  if (this.numberOfSubmissions?.inTime !== 0) {
-           this.percentageInTimeAssessmentProgress = Math.floor((this.totalNumberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
-          }
-        if (this.numberOfSubmissions?.late !== 0) {
-            this.percentageLateAssessmentProgress = Math.floor((this.totalNumberOfAssessments.late / this.numberOfSubmissions.late) * 100);
-        }
-        *
-       */
     }
 
     /**
