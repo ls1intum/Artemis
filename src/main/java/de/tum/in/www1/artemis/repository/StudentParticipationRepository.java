@@ -195,7 +195,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     // TODO SE: use correctionRound
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch r.assessor a
-            WHERE p.exercise.id = :#{#exerciseId} and 1L = :#{#correctionRound}
+            WHERE p.exercise.id = :#{#exerciseId} and 0L = :#{#correctionRound}
             AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)
             """)
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(long exerciseId,

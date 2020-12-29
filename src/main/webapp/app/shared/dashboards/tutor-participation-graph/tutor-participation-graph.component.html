@@ -16,7 +16,7 @@
             <div class="stacked-item">
                 <jhi-progress-bar
                     [tooltip]="'artemisApp.assessmentDashboard.assessStudentsSubmissions' | translate"
-                    [percentage]="[i]"
+                    [percentage]="percentageInTimeAssessmentProgressOfCorrectionRound[i]"
                     [numerator]="stat.inTime"
                     [denominator]="numberOfSubmissions.inTime"
                 >
