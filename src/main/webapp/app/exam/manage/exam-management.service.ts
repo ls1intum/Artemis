@@ -70,18 +70,6 @@ export class ExamManagementService {
     }
 
     /**
-     * Query exams of the given course via get request.
-     * @param courseId The course id.
-     * @param req The query request options.
-     */
-    query(courseId: number, req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams`, { params: options, observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
-    }
-
-    /**
      * Find all exams for the given course.
      * @param courseId The course id.
      */
