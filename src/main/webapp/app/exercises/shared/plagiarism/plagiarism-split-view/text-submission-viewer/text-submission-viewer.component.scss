@@ -2,7 +2,20 @@
     height: 100%;
     overflow-y: auto;
     padding: 0.5rem;
-    white-space: pre;
+    white-space: pre-wrap;
+
+    &.no-file {
+        opacity: 0.5;
+    }
+
+    &.is-code {
+        font-family: monospace;
+    }
+}
+
+.plagiarism-match {
+    color: dodgerblue;
+    font-weight: bold;
 }
 
 .plagiarism-submission-loader {

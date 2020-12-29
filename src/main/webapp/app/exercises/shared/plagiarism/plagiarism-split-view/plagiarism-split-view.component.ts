@@ -28,8 +28,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     public split: Split.Instance;
 
     public isModelingExercise: boolean;
-    public isProgrammingExercise: boolean;
-    public isTextExercise: boolean;
+    public isProgrammingOrTextExercise: boolean;
 
     public matchesA: Map<string, { from: TextSubmissionElement; to: TextSubmissionElement }[]>;
     public matchesB: Map<string, { from: TextSubmissionElement; to: TextSubmissionElement }[]>;
@@ -56,11 +55,10 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
             const exercise = changes.exercise.currentValue;
 
             this.isModelingExercise = exercise.type === ExerciseType.MODELING;
-            this.isProgrammingExercise = exercise.type === ExerciseType.PROGRAMMING;
-            this.isTextExercise = exercise.type === ExerciseType.TEXT;
+            this.isProgrammingOrTextExercise = exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT;
         }
 
-        if (changes.comparison) {
+        if (changes.comparison && this.isProgrammingOrTextExercise) {
             this.parseTextMatches(changes.comparison.currentValue as PlagiarismComparison<TextSubmissionElement>);
         }
     }
@@ -70,8 +68,8 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
         this.matchesB = new Map();
 
         matches.forEach(({ startA, startB, length }) => {
-            const fileA = submissionA.elements[startA].file;
-            const fileB = submissionB.elements[startB].file;
+            const fileA = submissionA.elements[startA].file || 'none';
+            const fileB = submissionB.elements[startB].file || 'none';
 
             if (!this.matchesA.has(fileA)) {
                 this.matchesA.set(fileA, []);
@@ -86,12 +84,12 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
             fileMatchesA.push({
                 from: submissionA.elements[startA],
-                to: submissionA.elements[startA + length],
+                to: submissionA.elements[startA + length - 1],
             });
 
             fileMatchesB.push({
                 from: submissionB.elements[startB],
-                to: submissionB.elements[startB + length],
+                to: submissionB.elements[startB + length - 1],
             });
         });
     }
