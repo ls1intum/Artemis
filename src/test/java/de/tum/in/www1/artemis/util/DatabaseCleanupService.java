@@ -9,11 +9,11 @@ import javax.persistence.EntityManager;
 import javax.persistence.JoinTable;
 import javax.persistence.Table;
 import javax.persistence.metamodel.ManagedType;
-import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Test utility service that allows to truncate all tables in the test database.
