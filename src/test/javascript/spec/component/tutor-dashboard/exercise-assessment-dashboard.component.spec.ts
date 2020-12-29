@@ -51,14 +51,21 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let comp: ExerciseAssessmentDashboardComponent;
     let fixture: ComponentFixture<ExerciseAssessmentDashboardComponent>;
     let modelingSubmissionService: ModelingSubmissionService;
-    let modelingSubmissionStub: SinonStub;
+    let modelingSubmissionStubWithAssessment: SinonStub;
+    let modelingSubmissionStubWithoutAssessment: SinonStub;
     let guidedTourService: GuidedTourService;
-
+    const result1 = { id: 40 };
+    const result2 = { id: 50 };
     const exercise = { id: 20, type: ExerciseType.MODELING, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as ModelingExercise;
     const submission = { id: 30 } as ModelingSubmission;
+    const submissionAssessed = { id: 30, results: [result1, result2] } as ModelingSubmission;
     const stats = {
         numberOfSubmissions: { inTime: 12, late: 5 },
         totalNumberOfAssessments: { inTime: 9, late: 1 },
+        numberOfAssessmentsOfCorrectionRounds: [
+            { inTime: 1, late: 1 },
+            { inTime: 8, late: 0 },
+        ],
     } as StatsForDashboard;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
 
@@ -128,44 +135,60 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
                 comp.exerciseId = exercise.id!;
 
-                modelingSubmissionStub = stub(modelingSubmissionService, 'getModelingSubmissionForExerciseWithoutAssessment');
+                modelingSubmissionStubWithoutAssessment = stub(modelingSubmissionService, 'getModelingSubmissionForExerciseWithoutAssessment');
+                modelingSubmissionStubWithAssessment = stub(modelingSubmissionService, 'getModelingSubmissionsForExercise');
             });
     });
 
     afterEach(() => {
-        modelingSubmissionStub.restore();
+        modelingSubmissionStubWithoutAssessment.restore();
+        modelingSubmissionStubWithAssessment.restore();
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
         const guidedTourMapping = {} as GuidedTourMapping;
         spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(true);
         guidedTourService.guidedTourMapping = guidedTourMapping;
-        modelingSubmissionStub.returns(of(submission));
+        modelingSubmissionStubWithoutAssessment.returns(of(submission));
 
         comp.loadAll();
 
-        expect(modelingSubmissionStub).to.have.been.calledOnceWithExactly(exercise.id);
+        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(exercise.id);
         expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).to.equal(submission);
+        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)?.latestResult).to.equal(undefined);
         expect(comp.submissionLockLimitReached).to.be.false;
     });
 
     it('should not set unassessedSubmission if lock limit is reached', () => {
-        modelingSubmissionStub.returns(throwError(lockLimitErrorResponse));
+        modelingSubmissionStubWithoutAssessment.returns(throwError(lockLimitErrorResponse));
 
         comp.loadAll();
 
-        expect(modelingSubmissionStub).to.have.been.calledOnceWithExactly(exercise.id);
+        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(exercise.id);
         expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).to.be.undefined;
         expect(comp.submissionLockLimitReached).to.be.true;
     });
 
     it('should have correct percentages calculated', () => {
-        modelingSubmissionStub.returns(of(submission));
+        modelingSubmissionStubWithoutAssessment.returns(of(submission));
 
         comp.loadAll();
 
-        expect(modelingSubmissionStub).to.have.been.calledOnceWithExactly(exercise.id);
+        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(exercise.id);
+        expect(comp.numberOfAssessmentsOfCorrectionRounds[0].inTime).to.equal(1);
+        expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).to.equal(8);
         expect(comp.totalAssessmentPercentage.inTime).to.equal(75);
         expect(comp.totalAssessmentPercentage.late).to.equal(20);
+    });
+
+    it('should  set assessed Submission and latest result', () => {
+        modelingSubmissionStubWithoutAssessment.returns(of(submissionAssessed));
+        modelingSubmissionStubWithAssessment.returns(of([submission]));
+
+        comp.loadAll();
+        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(exercise.id);
+        expect(modelingSubmissionStubWithAssessment).to.have.been.calledOnceWithExactly(exercise.id);
+        //expect(comp.submissionsByCorrectionRound?.get(1)).to.equal(submissionAssessed);
+        //expect(comp.submissionsByCorrectionRound?.get(1)![0]?.latestResult).to.equal(result2);
     });
 });
