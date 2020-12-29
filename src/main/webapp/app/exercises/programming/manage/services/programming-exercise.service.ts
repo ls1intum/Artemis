@@ -12,6 +12,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { Moment } from 'moment';
+import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -49,11 +50,24 @@ export class ProgrammingExerciseService {
     }
 
     /**
+     * Check plagiarism with JPlag
+     *
+     * @param exerciseId
+     */
+    checkPlagiarism(exerciseId: number): Observable<TextPlagiarismResult> {
+        return this.http
+            .get<TextPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
+                observe: 'response',
+            })
+            .pipe(map((response: HttpResponse<TextPlagiarismResult>) => response.body!));
+    }
+
+    /**
      * Check for plagiarism
      * @param exerciseId of the programming exercise
      */
-    checkPlagiarism(exerciseId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
+    checkPlagiarismJPlagReport(exerciseId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/check-plagiarism-jplag-report`, {
             observe: 'response',
             responseType: 'blob',
         });

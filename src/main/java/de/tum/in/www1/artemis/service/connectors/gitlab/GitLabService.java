@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -330,14 +330,24 @@ public class GitLabService extends AbstractVersionControlService {
             }
         }
         final var instructors = userService.getInstructors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        final var teachingAssistants = userService.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        final var tutors = userService.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         for (final var instructor : instructors) {
-            final var userId = gitLabUserManagementService.getUserId(instructor.getLogin());
-            gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), MAINTAINER);
+            try {
+                final var userId = gitLabUserManagementService.getUserId(instructor.getLogin());
+                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), MAINTAINER);
+            }
+            catch (GitLabException ignored) {
+                // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
+            }
         }
-        for (final var ta : teachingAssistants) {
-            final var userId = gitLabUserManagementService.getUserId(ta.getLogin());
-            gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), GUEST);
+        for (final var tutor : tutors) {
+            try {
+                final var userId = gitLabUserManagementService.getUserId(tutor.getLogin());
+                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), GUEST);
+            }
+            catch (GitLabException ignored) {
+                // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
+            }
         }
     }
 
@@ -389,7 +399,7 @@ public class GitLabService extends AbstractVersionControlService {
                 throw new GitLabException(errorMessage + "; response (" + response.getStatusCode() + ") was: " + response.getBody());
             }
         }
-        catch (HttpClientErrorException e) {
+        catch (RestClientException e) {
             defaultExceptionHandling(errorMessage, e);
         }
 
@@ -397,7 +407,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName)
+    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName, String targetPath)
             throws VersionControlException {
         return forkRepository(sourceProjectKey, sourceRepositoryName, targetProjectKey, targetRepositoryName);
     }
@@ -434,8 +444,8 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
-    private void defaultExceptionHandling(String message, HttpClientErrorException exception) {
-        message = message + "; response was: " + exception.getResponseBodyAsString();
+    private void defaultExceptionHandling(String message, RestClientException exception) {
+        message = message + "; response was: " + exception.getMessage();
         log.error(message);
         throw new GitLabException(message, exception);
     }
@@ -482,14 +492,14 @@ public class GitLabService extends AbstractVersionControlService {
             final var path = projectKey + "/" + repositorySlug;
             final var urlString = GITLAB_SERVER_URL + "/" + path + ".git";
 
-            stirngToURL(urlString);
+            stringToURL(urlString);
         }
 
         private GitLabRepositoryUrl(String urlString) {
-            stirngToURL(urlString);
+            stringToURL(urlString);
         }
 
-        private void stirngToURL(String urlString) {
+        private void stringToURL(String urlString) {
             try {
                 this.url = new URL(urlString);
             }

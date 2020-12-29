@@ -36,11 +36,11 @@
                     <td>{{ notification.expireDate | artemisDate }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
-                            <button type="submit" [routerLink]="['./', notification.id]" class="btn btn-info btn-sm">
+                            <button id="viewButton" type="submit" [routerLink]="['./', notification.id]" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="'eye'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                             </button>
-                            <button type="submit" [routerLink]="['./', notification.id, 'edit']" queryParamsHandling="merge" class="btn btn-primary btn-sm">
+                            <button id="editButton" type="submit" [routerLink]="['./', notification.id, 'edit']" queryParamsHandling="merge" class="btn btn-primary btn-sm">
                                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </button>
@@ -65,6 +65,7 @@
         </div>
         <div class="row justify-content-center">
             <ngb-pagination
+                id="pagination"
                 [collectionSize]="totalItems"
                 [(page)]="page"
                 [pageSize]="itemsPerPage"

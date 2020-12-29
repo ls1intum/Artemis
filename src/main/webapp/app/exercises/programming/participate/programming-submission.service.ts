@@ -9,7 +9,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { SubmissionType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -566,12 +566,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     private convertArrayResponse(res: HttpResponse<ProgrammingSubmission[]>): HttpResponse<ProgrammingSubmission[]> {
-        const jsonResponse: ProgrammingSubmission[] = res.body!;
-        const body: ProgrammingSubmission[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push({ ...jsonResponse[i] });
+        const submissions = res.body!;
+        const convertedSubmissions: ProgrammingSubmission[] = [];
+        for (const submission of submissions) {
+            const latestResult = getLatestSubmissionResult(submission);
+            setLatestSubmissionResult(submission, latestResult);
+            convertedSubmissions.push({ ...submission });
         }
-        return res.clone({ body });
+        return res.clone({ body: convertedSubmissions });
     }
 
     /**

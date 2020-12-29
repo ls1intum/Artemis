@@ -14,7 +14,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
-import { getLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -110,9 +110,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     tutor?: User;
 
     exerciseForGuidedTour?: Exercise;
-
-    // todo NR SE remove after refactoring hmtl function calls
-    getLatestSubmissionResult = getLatestSubmissionResult;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -316,8 +313,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
                 this.submissions = submissions.map((submission) => {
                     submission.participation!.submissions = [submission];
+                    setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     return submission;
                 });
+                //         setLatestResult(submissions);
             });
     }
 
@@ -326,12 +325,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     private reconnectEntities = (submissions: Submission[]) => {
         return submissions.map((submission: Submission) => {
-            const tmpResult = getLatestSubmissionResult(submission);
-            if (tmpResult) {
+            const latestResult = getLatestSubmissionResult(submission);
+            if (latestResult) {
                 // reconnect some associations
-                tmpResult!.submission = submission;
-                tmpResult!.participation = submission.participation;
-                submission.participation!.results = [tmpResult!];
+                latestResult.submission = submission;
+                latestResult.participation = submission.participation;
+                submission.participation!.results = [latestResult];
             }
             return submission;
         });

@@ -12,13 +12,14 @@ module.exports = {
             },
         },
     },
+    collectCoverageFrom: ['src/main/webapp/**/*.{js,jsx,ts,tsx}', '!src/main/webapp/**/*.module.{js,jsx,ts,tsx}'],
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should be increase to 80%
-            statements: 69,
-            branches: 45,
-            functions: 52,
-            lines: 68,
+            statements: 56,
+            branches: 38,
+            functions: 45,
+            lines: 55,
         },
     },
     preset: 'jest-preset-angular',
@@ -26,6 +27,7 @@ module.exports = {
     modulePaths: ['<rootDir>/src/main/webapp/'],
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
     rootDir: '../../../',
+    modulePathIgnorePatterns: [],
     testMatch: [
         '<rootDir>/src/test/javascript/spec/component/**/*.ts',
         '<rootDir>/src/test/javascript/spec/directive/**/*.ts',

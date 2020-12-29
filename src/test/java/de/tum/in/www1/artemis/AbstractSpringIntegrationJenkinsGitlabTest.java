@@ -1,12 +1,18 @@
 package de.tum.in.www1.artemis;
 
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +38,6 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
-import de.tum.in.www1.artemis.util.Verifiable;
 
 @SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
         "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
@@ -88,48 +93,116 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public List<Verifiable> mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans)
-            throws IOException, URISyntaxException, GitAPIException {
-        // TODO: implement
-        return null;
+    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception {
+
+        final var sourceProjectKey = sourceExercise.getProjectKey();
+        final var targetProjectKey = exerciseToBeImported.getProjectKey();
+
+        final var sourceTemplateRepoName = sourceExercise.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var sourceSolutionRepoName = sourceExercise.generateRepositoryName(RepositoryType.SOLUTION);
+        final var sourceTestsRepoName = sourceExercise.generateRepositoryName(RepositoryType.TESTS);
+
+        final var targetTemplateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var targetSolutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
+        final var targetTestsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
+
+        gitlabRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
+        jenkinsRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
+
+        // Mock ProgramingExerciseImportService::importRepositories
+        gitlabRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
+        gitlabRequestMockProvider.mockForkRepository(sourceProjectKey, targetProjectKey, sourceTemplateRepoName, targetTemplateRepoName, HttpStatus.CREATED);
+        gitlabRequestMockProvider.mockForkRepository(sourceProjectKey, targetProjectKey, sourceSolutionRepoName, targetSolutionRepoName, HttpStatus.CREATED);
+        gitlabRequestMockProvider.mockForkRepository(sourceProjectKey, targetProjectKey, sourceTestsRepoName, targetTestsRepoName, HttpStatus.CREATED);
+        gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
+        gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
+        gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
+
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+
+        if (!recreateBuildPlans) {
+            String templateBuildPlanId = targetProjectKey + "-" + TEMPLATE.getName();
+            String solutionBuildPlanId = targetProjectKey + "-" + SOLUTION.getName();
+
+            // Mocks ProgramingExerciseImportService::cloneAndEnableAllBuildPlans
+            jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
+            jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
+            jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
+            jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, templateBuildPlanId);
+            jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, solutionBuildPlanId);
+
+            // Mocks ProgramingExerciseImportService::updatePlanRepositoriesInBuildPlans
+            mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, ASSIGNMENT_REPO_NAME, targetTemplateRepoName, List.of(ASSIGNMENT_REPO_NAME));
+            mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, TEST_REPO_NAME, targetTestsRepoName, List.of());
+            mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, ASSIGNMENT_REPO_NAME, targetSolutionRepoName, List.of());
+            mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, TEST_REPO_NAME, targetTestsRepoName, List.of());
+        }
+        else {
+            // Mocks for recreating the build plans
+            jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
+            jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey);
+            jenkinsRequestMockProvider.mockTriggerBuild();
+        }
     }
 
     @Override
     public void mockForkRepositoryForParticipation(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
-        // TODO: implement
+        gitlabRequestMockProvider.mockForkRepositoryForParticipation(exercise, username, status);
     }
 
     @Override
-    public List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
-            throws IOException, URISyntaxException {
-        // TODO: implement
-        return null;
+    public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists, HttpStatus status)
+            throws Exception {
+        // Step 1a)
+        gitlabRequestMockProvider.mockForkRepositoryForParticipation(exercise, username, status);
+        // Step 1b)
+        gitlabRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists);
+        // Step 2a)
+        jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
+        // Step 2b)
+        jenkinsRequestMockProvider.mockConfigureBuildPlan(exercise, username);
+        // Note: Step 2c) is not needed in the Jenkins setup
+        // Step 1c)
+        gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
+    }
+
+    @Override
+    public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception {
+        // Step 2a)
+        jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
+        // Step 2b)
+        jenkinsRequestMockProvider.mockConfigureBuildPlan(exercise, username);
+        // Note: Step 2c) is not needed in the Jenkins setup
     }
 
     @Override
     public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException {
-        // TODO: implement
+        final var projectKey = exercise.getProjectKey();
+        final var repoName = projectKey.toLowerCase() + "-" + username;
+        mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, repoName, List.of());
     }
 
     @Override
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String bambooRepoName, String bitbucketRepoName, List<String> triggeredBy)
+    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy)
             throws IOException, URISyntaxException {
-        // TODO: implement
+        jenkinsRequestMockProvider.mockUpdatePlanRepository(exercise.getProjectKey(), planName);
     }
 
     @Override
-    public void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) throws URISyntaxException {
-        // TODO: implement
+    public void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) throws Exception {
+        final var repositorySlug = (exercise.getProjectKey() + "-" + team.getParticipantIdentifier()).toLowerCase();
+        gitlabRequestMockProvider.mockRemoveMemberFromRepository(repositorySlug, firstStudent);
     }
 
     @Override
-    public void mockRepositoryWritePermissions(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws URISyntaxException {
-        // TODO: implement
+    public void mockRepositoryWritePermissions(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws Exception {
+        final var repositorySlug = (exercise.getProjectKey() + "-" + team.getParticipantIdentifier()).toLowerCase();
+        gitlabRequestMockProvider.mockAddMemberToRepository(repositorySlug, newStudent);
     }
 
     @Override
     public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) throws MalformedURLException, URISyntaxException, JsonProcessingException {
-        // TODO: implement
+        // Not necessary for the core functionality
     }
 
     @Override

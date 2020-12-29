@@ -412,13 +412,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         request.getList("/api/complaints", HttpStatus.FORBIDDEN, ComplaintResponse.class, params);
     }
 
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void getComplaintById() throws Exception {
-        complaintRepo.save(complaint);
-        request.get("/api/complaints/" + complaint.getId(), HttpStatus.OK, Complaint.class);
-    }
-
     private void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback) {
         assertThat(sentFeedback.size()).as("contains the same amount of feedback").isEqualTo(storedFeedback.size());
         Result storedFeedbackResult = new Result();

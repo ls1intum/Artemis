@@ -216,23 +216,8 @@ public class ParticipationService {
             participation.setExercise(exercise);
         }
 
-        // specific to programming exercises
         if (exercise instanceof ProgrammingExercise) {
-            ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
-            programmingExerciseStudentParticipation = forkRepository(programmingExerciseStudentParticipation);
-            programmingExerciseStudentParticipation = configureRepository((ProgrammingExercise) exercise, programmingExerciseStudentParticipation);
-            programmingExerciseStudentParticipation = copyBuildPlan(programmingExerciseStudentParticipation);
-            // Restore programming exercise that got removed due to saving the programmingExerciseStudentParticipation
-            programmingExerciseStudentParticipation.setProgrammingExercise((ProgrammingExercise) exercise);
-            programmingExerciseStudentParticipation = configureBuildPlan(programmingExerciseStudentParticipation);
-            // we might need to perform an empty commit (depends on the CI system), we perform this here, because it should not trigger a new programming submission
-            programmingExerciseStudentParticipation = performEmptyCommit(programmingExerciseStudentParticipation);
-            // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
-            programmingExerciseStudentParticipation = configureRepositoryWebHook(programmingExerciseStudentParticipation);
-            programmingExerciseStudentParticipation.setInitializationState(INITIALIZED);
-            programmingExerciseStudentParticipation.setInitializationDate(ZonedDateTime.now());
-            // after saving, we need to make sure the object that is used after the if statement is the right one
-            participation = programmingExerciseStudentParticipation;
+            participation = startProgrammingExercise((ProgrammingExercise) exercise, (ProgrammingExerciseStudentParticipation) participation);
         }
         else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
             if (participation.getInitializationState() == null || participation.getInitializationState() == UNINITIALIZED || participation.getInitializationState() == FINISHED) {
@@ -254,6 +239,35 @@ public class ParticipationService {
             }
         }
         return save(participation);
+    }
+
+    /**
+     * Start a programming exercise participation (which does not exist yet) by creating and configuring a student git repository (step 1) and a student build plan (step 2)
+     * based on the templates in the given programming exercise
+     *
+     * @param exercise the programming exercise that the currently active user (student) wants to start
+     * @param participation inactive participation
+     * @return started participation
+     */
+    private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
+        // Step 1a) create the student repository (based on the template repository)
+        participation = forkRepository(participation);
+        // Step 1b) configure the student repository (e.g. access right, etc.)
+        participation = configureRepository(exercise, participation);
+        // Step 2a) create the build plan (based on the BASE build plan)
+        participation = copyBuildPlan(participation);
+        // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
+        participation = configureBuildPlan(participation);
+        // Step 2c) we might need to perform an empty commit (as a workaround, depending on the CI system) here, because it should not trigger a new programming submission
+        // (when the web hook was already initialized, see below)
+        participation = performEmptyCommit(participation);
+        // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
+        // Step 1c) configure the web hook of the student repository
+        participation = configureRepositoryWebHook(participation);
+        participation.setInitializationState(INITIALIZED);
+        participation.setInitializationDate(ZonedDateTime.now());
+        // after saving, we need to make sure the object that is used after the if statement is the right one
+        return participation;
     }
 
     /**
@@ -474,20 +488,25 @@ public class ParticipationService {
      * @param participationId of submission
      * @return List<submission>
      */
-    public List<Submission> getSubmissionsWithParticipationId(long participationId) {
-        return submissionRepository.findAllWithResultsByParticipationId(participationId);
+    public List<Submission> getSubmissionsWithResultsAndAssessorsByParticipationId(long participationId) {
+        return submissionRepository.findAllWithResultsAndAssessorByParticipationId(participationId);
     }
 
     /**
-     * Service method to resume inactive participation (with previously deleted build plan)
+     * Resume an inactive programming exercise participation (with previously deleted build plan) by creating and configuring a student build plan (step 2)
+     * based on the template (BASE) in the corresponding programming exercise, also compare {@link #startProgrammingExercise}
      *
      * @param participation inactive participation
      * @return resumed participation
      */
-    public ProgrammingExerciseStudentParticipation resumeExercise(ProgrammingExerciseStudentParticipation participation) {
+    public ProgrammingExerciseStudentParticipation resumeProgrammingExercise(ProgrammingExerciseStudentParticipation participation) {
+        // this method assumes that the student git repository already exists (compare startProgrammingExercise) so steps 1, 2 and 5 are not necessary
+        // Step 2a) create the build plan (based on the BASE build plan)
         participation = copyBuildPlan(participation);
+        // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
         participation = configureBuildPlan(participation);
-        // Note: the repository webhook already exists so we don't need to set it up again
+        // Note: the repository webhook (step 1c) already exists so we don't need to set it up again, the empty commit hook (step 2c) is also not necessary here
+        // and must be handled by the calling method in case it would be necessary
         participation.setInitializationState(INITIALIZED);
         participation = save(participation);
         if (participation.getInitializationDate() == null) {
@@ -922,6 +941,21 @@ public class ParticipationService {
             return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
         }
         return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
+    }
+
+    /**
+     * Get all exercise participations belonging to exercise and student.
+     *
+     * @param exercise  the exercise
+     * @param studentId the id of student
+     * @return the list of exercise participations belonging to exercise and student
+     */
+    public List<StudentParticipation> findByExerciseAndStudentId(Exercise exercise, Long studentId) {
+        if (exercise.isTeamMode()) {
+            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
+            return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), team.getId())).orElse(List.of());
+        }
+        return studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), studentId);
     }
 
     /**

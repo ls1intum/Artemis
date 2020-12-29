@@ -10,8 +10,6 @@ import static org.mockito.Mockito.doReturn;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -45,7 +43,6 @@ import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
-import de.tum.in.www1.artemis.util.Verifiable;
 
 @SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
         "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
@@ -91,44 +88,57 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
+    public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists, HttpStatus status)
             throws IOException, URISyntaxException {
-        final var verifications = new LinkedList<Verifiable>();
+        // Step 1a)
+        bitbucketRequestMockProvider.mockForkRepositoryForParticipation(exercise, username, status);
+        // Step 1b)
         bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists);
+        // Step 2a)
         bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
+        // Step 2b)
+        // Note: no need to mock empty commit (Step 2c) because this is done on a git repository
         mockUpdatePlanRepositoryForParticipation(exercise, username);
-        bambooRequestMockProvider.mockEnablePlan(exercise.getProjectKey(), username);
+        // Step 1c)
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
-        return verifications;
+    }
+
+    @Override
+    public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
+            throws IOException, URISyntaxException {
+        // Step 2a)
+        bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
+        // Step 2b)
+        mockUpdatePlanRepositoryForParticipation(exercise, username);
     }
 
     @Override
     public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var bitbucketRepoName = projectKey.toLowerCase() + "-" + username;
-
         mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, bitbucketRepoName, List.of());
+        bambooRequestMockProvider.mockEnablePlan(exercise.getProjectKey(), username);
     }
 
     @Override
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String bambooRepoName, String bitbucketRepoName, List<String> triggeredBy)
+    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy)
             throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var buildPlanKey = (projectKey + "-" + planName).toUpperCase();
 
         final var bambooRepositoryAssignment = new BambooRepositoryDTO(296200357L, ASSIGNMENT_REPO_NAME);
         final var bambooRepositoryTests = new BambooRepositoryDTO(296200356L, TEST_REPO_NAME);
-        final var bitbucketRepository = new BitbucketRepositoryDTO("id", bitbucketRepoName, projectKey, "ssh:cloneUrl");
+        final var bitbucketRepository = new BitbucketRepositoryDTO("id", repoNameInVcs, projectKey, "ssh:cloneUrl");
 
         bambooRequestMockProvider.mockGetBuildPlanRepositoryList(buildPlanKey);
 
-        bitbucketRequestMockProvider.mockGetBitbucketRepository(exercise, bitbucketRepoName, bitbucketRepository);
+        bitbucketRequestMockProvider.mockGetBitbucketRepository(exercise, repoNameInVcs, bitbucketRepository);
 
         var applicationLinksToBeReturned = bambooRequestMockProvider.createApplicationLink();
         var applicationLink = applicationLinksToBeReturned.getApplicationLinks().get(0);
         bambooRequestMockProvider.mockGetApplicationLinks(applicationLinksToBeReturned);
 
-        if (ASSIGNMENT_REPO_NAME.equals(bambooRepoName)) {
+        if (ASSIGNMENT_REPO_NAME.equals(repoNameInCI)) {
             bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAssignment, bitbucketRepository, applicationLink);
         }
         else {
@@ -173,9 +183,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public List<Verifiable> mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans)
+    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans)
             throws IOException, URISyntaxException, GitAPIException {
-        final var verifications = new ArrayList<Verifiable>();
         final var projectKey = exerciseToBeImported.getProjectKey();
         final var templateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
@@ -220,8 +229,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
             // Mocks for recreating the build plans
             mockBambooBuildPlanCreation(exerciseToBeImported);
         }
-
-        return verifications;
     }
 
     @Override

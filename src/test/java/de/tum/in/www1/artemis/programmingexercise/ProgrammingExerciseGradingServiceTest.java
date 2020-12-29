@@ -111,12 +111,13 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @ValueSource(booleans = { false, true })
     @ParameterizedTest(name = "shouldRecalculateScoreBasedOnTestCasesWeight [withZeroTotalScore = {0}]")
     public void shouldRecalculateScoreBasedOnTestCasesWeight(boolean withZeroTotalScore) {
-        setTotalScoreToZero(withZeroTotalScore);
+        setTotalScoreToZero(withZeroTotalScore, false);
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test4").positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
         result.assessmentType(AssessmentType.AUTOMATIC);
@@ -131,10 +132,45 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(result.isSuccessful()).isFalse();
     }
 
+    @Test
+    public void shouldRecalculateScoreBasedOnTestCasesWeight_zeroPointWithBonus() {
+        setTotalScoreToZero(true, true);
+
+        // Make new testCase for bonus
+        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream().collect(Collectors.toList());
+        testCases.add(
+                new ProgrammingExerciseTestCase().testName("test4").weight(1.0).active(true).exercise(programmingExercise).afterDueDate(false).bonusMultiplier(1D).bonusPoints(1D));
+        testCaseRepository.saveAll(testCases);
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        // one successful test that gives 2 points -> 1 normal and 1 bonus point for solving the test correctly
+        feedbacks.add(new Feedback().text("test4").positive(true).type(FeedbackType.AUTOMATIC));
+        result.feedbacks(feedbacks);
+        result.successful(false);
+        result.assessmentType(AssessmentType.AUTOMATIC);
+        Long scoreBeforeUpdate = result.getScore();
+
+        gradingService.updateResult(result, programmingExercise, true);
+
+        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
+        assertThat(result.getScore()).isEqualTo(40L);
+        assertThat(result.isSuccessful()).isFalse();
+
+        // additional successful test case that gives 1 point (1 normal point, 0 bonus points for solving the test)
+        result.addFeedback(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        scoreBeforeUpdate = result.getScore();
+
+        gradingService.updateResult(result, programmingExercise, true);
+
+        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
+        assertThat(result.getScore()).isEqualTo(60L);
+        assertThat(result.isSuccessful()).isFalse();
+    }
+
     @ValueSource(booleans = { false, true })
     @ParameterizedTest(name = "shouldRecalculateScoreWithTestCaseBonusButNoExerciseBonus [withZeroTotalScore = {0}]")
     public void shouldRecalculateScoreWithTestCaseBonusButNoExerciseBonus(boolean withZeroTotalScore) {
-        setTotalScoreToZero(withZeroTotalScore);
+        setTotalScoreToZero(withZeroTotalScore, false);
         // Set up test cases with bonus
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
@@ -288,7 +324,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @ValueSource(booleans = { false, true })
     @ParameterizedTest(name = "shouldRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassed [withZeroTotalScore = {0}]")
     public void shouldRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassed(boolean withZeroTotalScore) {
-        setTotalScoreToZero(withZeroTotalScore);
+        setTotalScoreToZero(withZeroTotalScore, false);
 
         // Set programming exercise due date in future.
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(10));
@@ -318,7 +354,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @ValueSource(booleans = { false, true })
     @ParameterizedTest(name = "shouldNotRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassedForNonStudentParticipation [withZeroTotalScore = {0}]")
     public void shouldNotRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassedForNonStudentParticipation(boolean withZeroTotalScore) {
-        setTotalScoreToZero(withZeroTotalScore);
+        setTotalScoreToZero(withZeroTotalScore, false);
 
         // Set programming exercise due date in future.
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(10));
@@ -347,7 +383,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @ValueSource(booleans = { false, true })
     @ParameterizedTest(name = "shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed [withZeroTotalScore = {0}]")
     public void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed(boolean withZeroTotalScore) {
-        setTotalScoreToZero(withZeroTotalScore);
+        setTotalScoreToZero(withZeroTotalScore, false);
 
         // Set programming exercise due date in past.
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(10));
@@ -377,7 +413,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @ValueSource(booleans = { false, true })
     @ParameterizedTest(name = "shouldGenerateZeroScoreIfThereAreNoTestCasesBeforeDueDate [withZeroTotalScore = {0}]")
     public void shouldGenerateZeroScoreIfThereAreNoTestCasesBeforeDueDate(boolean withZeroTotalScore) {
-        setTotalScoreToZero(withZeroTotalScore);
+        setTotalScoreToZero(withZeroTotalScore, false);
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -392,7 +428,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @ValueSource(booleans = { false, true })
     @ParameterizedTest(name = "shouldGenerateZeroScoreIfThereAreNoTestCasesBeforeDueDateWithSCA [withZeroTotalScore = {0}]")
     public void shouldGenerateZeroScoreIfThereAreNoTestCasesBeforeDueDateWithSCA(boolean withZeroTotalScore) {
-        setTotalScoreToZero(withZeroTotalScore);
+        setTotalScoreToZero(withZeroTotalScore, false);
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -435,7 +471,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @ParameterizedTest(name = "shouldReEvaluateScoreOfTheCorrectResults [withZeroTotalScore = {0}]")
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldReEvaluateScoreOfTheCorrectResults(boolean withZeroTotalScore) throws Exception {
-        setTotalScoreToZero(withZeroTotalScore);
+        setTotalScoreToZero(withZeroTotalScore, false);
 
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -654,7 +690,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @ValueSource(booleans = { false, true })
     @ParameterizedTest(name = "shouldRemoveInvisibleStaticCodeAnalysisFeedbackOnGrading [withZeroTotalScore = {0}]")
     public void shouldRemoveInvisibleStaticCodeAnalysisFeedbackOnGrading(boolean withZeroTotalScore) throws Exception {
-        setTotalScoreToZero(withZeroTotalScore);
+        setTotalScoreToZero(withZeroTotalScore, false);
 
         var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
         var result1 = new Result().participation(participation1).resultString("x of y passed").successful(false).rated(true).score(100L);
@@ -682,7 +718,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @ParameterizedTest(name = "shouldCalculateScoreWithStaticCodeAnalysisPenaltiesWithoutCaps [withZeroTotalScore = {0}]")
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldCalculateScoreWithStaticCodeAnalysisPenaltiesWithoutCaps(boolean withZeroTotalScore) {
-        setTotalScoreToZero(withZeroTotalScore);
+        setTotalScoreToZero(withZeroTotalScore, false);
         activateAllTestCases(false, withZeroTotalScore);
 
         // Remove category penalty limits
@@ -823,7 +859,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @ParameterizedTest(name = "shouldCalculateScoreWithStaticCodeAnalysisPenalties [withZeroTotalScore = {0}]")
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldCalculateScoreWithStaticCodeAnalysisPenalties(boolean withZeroTotalScore) {
-        setTotalScoreToZero(withZeroTotalScore);
+        setTotalScoreToZero(withZeroTotalScore, false);
         activateAllTestCases(false, withZeroTotalScore);
 
         var participations = createTestParticipationsWithResults();
@@ -874,7 +910,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @ValueSource(booleans = { false, true })
     @ParameterizedTest(name = "shouldCalculateCorrectStatistics [withZeroTotalScore = {0}]")
     public void shouldCalculateCorrectStatistics(boolean withZeroTotalScore) {
-        setTotalScoreToZero(withZeroTotalScore);
+        setTotalScoreToZero(withZeroTotalScore, false);
         activateAllTestCases(false, withZeroTotalScore);
         createTestParticipationsWithResults();
 
@@ -899,10 +935,15 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
     }
 
-    private void setTotalScoreToZero(boolean setTotalScoreToZero) {
+    private void setTotalScoreToZero(boolean setTotalScoreToZero, boolean withBonus) {
         if (setTotalScoreToZero) {
             programmingExercise.setMaxScore(0.0);
-            programmingExercise.setBonusPoints(0.0);
+            if (withBonus) {
+                programmingExercise.setBonusPoints(5.0);
+            }
+            else {
+                programmingExercise.setBonusPoints(0.0);
+            }
             programmingExerciseSCAEnabled.setMaxScore(0.0);
             programmingExerciseSCAEnabled.setBonusPoints(0.0);
             for (var category : programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories()) {
