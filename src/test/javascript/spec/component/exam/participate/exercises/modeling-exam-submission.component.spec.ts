@@ -1,25 +1,22 @@
 import { ChangeDetectorRef } from '@angular/core';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By, SafeHtml } from '@angular/platform-browser';
-import { Course } from 'app/entities/course.model';
 import { UMLModel } from '@ls1intum/apollon';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { Course } from 'app/entities/course.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
+import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { ArtemisTestModule } from '../../../../test.module';
-import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { TranslatePipe } from '@ngx-translate/core';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
-import { before } from 'lodash';
-import { reset } from 'sinon';
+import { ArtemisTestModule } from '../../../../test.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -74,10 +71,9 @@ describe('ModelingExamSubmissionComponent', () => {
         });
 
         it('should show exercise title if any', () => {
-            const title = 'Test Title';
-            comp.exercise.title = title;
+            comp.exercise.title = 'Test Title';
             fixture.detectChanges();
-            const el = fixture.debugElement.query((de) => de.nativeElement.textContent === title);
+            const el = fixture.debugElement.query((de) => de.nativeElement.textContent === comp.exercise.title);
             expect(el).to.exist;
         });
 

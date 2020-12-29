@@ -112,28 +112,30 @@ describe('ModelingAssessmentComponent', () => {
         expect(el).to.exist;
     });
 
-    it('should display score display with right values', () => {
-        comp.displayPoints = true;
-        const totalScore = 40;
-        comp.totalScore = totalScore;
-        const maxScore = 66;
-        comp.maxScore = maxScore;
-        fixture.detectChanges();
-        const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
-        expect(scoreDisplay).to.exist;
-        expect(scoreDisplay.componentInstance.score).to.equal(totalScore);
-        expect(scoreDisplay.componentInstance.maxScore).to.equal(maxScore);
-    });
+    describe('score display', () => {
+        let totalScore: number;
+        let maxScore: number;
+        beforeEach(() => {
+            totalScore = 40;
+            comp.totalScore = totalScore;
+            maxScore = 66;
+            comp.maxScore = maxScore;
+        });
+        it('should display score display with right values', () => {
+            comp.displayPoints = true;
+            fixture.detectChanges();
+            const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
+            expect(scoreDisplay).to.exist;
+            expect(scoreDisplay.componentInstance.score).to.equal(totalScore);
+            expect(scoreDisplay.componentInstance.maxScore).to.equal(maxScore);
+        });
 
-    it('should not display score if displayPoints wrong', () => {
-        comp.displayPoints = false;
-        const totalScore = 40;
-        comp.totalScore = totalScore;
-        const maxScore = 66;
-        comp.maxScore = maxScore;
-        fixture.detectChanges();
-        const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
-        expect(scoreDisplay).to.not.exist;
+        it('should not display score if displayPoints wrong', () => {
+            comp.displayPoints = false;
+            fixture.detectChanges();
+            const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
+            expect(scoreDisplay).to.not.exist;
+        });
     });
 
     it('should display explanation editor if there is an explanation', () => {
