@@ -198,15 +198,8 @@ public class BambooService implements ContinuousIntegrationService {
         // NOTE: we cannot use official the REST API, e.g. restTemplate.delete(bambooServerUrl + "/rest/api/latest/plan/" + buildPlanId) here,
         // because then the build plan is not deleted directly and subsequent calls to create build plans with the same id might fail
 
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("selectedBuilds", buildPlanId);
-        parameters.add("confirm", "true");
-        parameters.add("bamboo.successReturnMode", "json");
-
-        String requestUrl = bambooServerUrl + "/admin/deleteBuilds.action";
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
-        // TODO: in order to do error handling, we have to read the return value of this REST call
-        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
+        executeDelete("selectedBuilds", buildPlanId);
+        log.info("Delete bamboo build plan " + buildPlanId + " was successful.");
     }
 
     /**
@@ -254,7 +247,7 @@ public class BambooService implements ContinuousIntegrationService {
         // because then the build plans are not deleted directly and subsequent calls to create build plans with the same id might fail
 
         // in normal cases this list should be empty, because all build plans have been deleted before
-        List<BambooBuildPlanDTO> buildPlans = getBuildPlans(projectKey);
+        final var buildPlans = getBuildPlans(projectKey);
         for (var buildPlan : buildPlans) {
             try {
                 deleteBuildPlan(projectKey, buildPlan.getKey());
@@ -264,8 +257,13 @@ public class BambooService implements ContinuousIntegrationService {
             }
         }
 
+        executeDelete("selectedProjects", projectKey);
+        log.info("Delete bamboo project " + projectKey + " was successful.");
+    }
+
+    private void executeDelete(String elementKey, String elementValue) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("selectedProjects", projectKey);
+        parameters.add(elementKey, elementValue);
         parameters.add("confirm", "true");
         parameters.add("bamboo.successReturnMode", "json");
 
@@ -273,8 +271,6 @@ public class BambooService implements ContinuousIntegrationService {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
         // TODO: in order to do error handling, we have to read the return value of this REST call
         var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
-
-        log.info("Delete bamboo project " + projectKey + " was successful.");
     }
 
     /**
