@@ -125,9 +125,10 @@ public class Result extends DomainObject {
      *
      * @param totalScore total amount of scored points between 0 and maxScore
      * @param maxScore   maximum score reachable at corresponding exercise
+     * @param exercise   corresponding exercise
      */
-    public void setResultString(Double totalScore, @Nullable Double maxScore) {
-        resultString = createResultString(totalScore, maxScore);
+    public void setResultString(Double totalScore, @Nullable Double maxScore, Exercise exercise) {
+        resultString = createResultString(totalScore, maxScore, exercise);
     }
 
     /**
@@ -135,15 +136,19 @@ public class Result extends DomainObject {
      *
      * @param totalScore total amount of scored points
      * @param maxScore   maximum score reachable at corresponding exercise
+     * @param exercise   corresponding exercise
      * @return String with result string in this format "2 of 13 points" or "2 points"
      */
-    public String createResultString(Double totalScore, @Nullable Double maxScore) {
+    public String createResultString(Double totalScore, @Nullable Double maxScore, Exercise exercise) {
         DecimalFormat formatter = new DecimalFormat("#.##");
         if (maxScore == null) {
             return formatter.format(totalScore) + " points";
         }
         else {
-            // TODO: rene: for 0 point and 0 bonusPoint exercises the resultString would be e.g. '2 of 100 Points'
+            if (exercise.isZeroPointExercise()) {
+                totalScore = 0.0;
+                maxScore = 0.0;
+            }
             return formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points";
         }
     }
@@ -465,7 +470,7 @@ public class Result extends DomainObject {
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission));
             // update result string
-            setResultString(quizExercise.getScoreInPointsForSubmission(quizSubmission), quizExercise.getMaxTotalScore().doubleValue());
+            setResultString(quizExercise.getScoreInPointsForSubmission(quizSubmission), quizExercise.getMaxTotalScore().doubleValue(), quizExercise);
         }
     }
 

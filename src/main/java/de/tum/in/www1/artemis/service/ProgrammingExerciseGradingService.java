@@ -557,7 +557,7 @@ public class ProgrammingExerciseGradingService {
         double maxScore = exercise.getMaxScoreRespectingZeroPointExercises();
         double points = programmingAssessmentService.calculateTotalScore(result);
         result.setScore(points, maxScore);
-        return resultString + ", " + result.createResultString(points, maxScore);
+        return resultString + ", " + result.createResultString(points, maxScore, exercise);
     }
 
     /**

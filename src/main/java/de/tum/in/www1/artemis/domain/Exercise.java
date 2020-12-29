@@ -846,4 +846,18 @@ public abstract class Exercise extends DomainObject {
         return PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES;
     }
 
+    /**
+     * Returns whether the exercise is a zero point exercise or not.
+     * @return true or false
+     */
+    @JsonIgnore
+    public boolean isZeroPointExercise() {
+        boolean hasNormalPoints = Objects.requireNonNullElse(getMaxScore(), 0.0) > 0.0;
+        boolean hasBonusPoints = Objects.requireNonNullElse(getBonusPoints(), 0.0) > 0.0;
+        if (!hasNormalPoints && !hasBonusPoints) {
+            return true;
+        }
+        return false;
+    }
+
 }

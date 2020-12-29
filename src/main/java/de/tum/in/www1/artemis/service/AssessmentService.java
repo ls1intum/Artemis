@@ -84,7 +84,7 @@ public class AssessmentService {
         double totalScore = calculateTotalScore(calculatedScore, maxPoints);
         // Set score and resultString according to maxScore, to establish results with score > 100%
         result.setScore(totalScore, maxPointsRespectingZeroPoints);
-        result.setResultString(totalScore, maxPointsRespectingZeroPoints);
+        result.setResultString(totalScore, maxPointsRespectingZeroPoints, exercise);
         return resultRepository.save(result);
     }
 
@@ -128,7 +128,7 @@ public class AssessmentService {
              * student has achieved have changed
              */
             String[] resultStringParts = originalResult.getResultString().split(", ");
-            resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, maxPointsRespectingZeroPoints);
+            resultStringParts[resultStringParts.length - 1] = originalResult.createResultString(points, maxPointsRespectingZeroPoints, exercise);
             originalResult.setResultString(String.join(", ", resultStringParts));
             return resultRepository.save(originalResult);
         }
