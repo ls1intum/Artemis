@@ -125,6 +125,16 @@ public class Result extends DomainObject {
      *
      * @param totalScore total amount of scored points between 0 and maxScore
      * @param maxScore   maximum score reachable at corresponding exercise
+     */
+    public void setResultString(Double totalScore, @Nullable Double maxScore) {
+        resultString = createResultString(totalScore, maxScore, null);
+    }
+
+    /**
+     * Sets the resultString attribute
+     *
+     * @param totalScore total amount of scored points between 0 and maxScore
+     * @param maxScore   maximum score reachable at corresponding exercise
      * @param exercise   corresponding exercise
      */
     public void setResultString(Double totalScore, @Nullable Double maxScore, Exercise exercise) {
@@ -145,7 +155,7 @@ public class Result extends DomainObject {
             return formatter.format(totalScore) + " points";
         }
         else {
-            if (exercise.isZeroPointExercise()) {
+            if (exercise != null && exercise.isZeroPointExercise()) {
                 totalScore = 0.0;
                 maxScore = 0.0;
             }

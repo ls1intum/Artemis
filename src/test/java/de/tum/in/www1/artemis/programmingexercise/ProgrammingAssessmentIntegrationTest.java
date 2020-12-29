@@ -86,7 +86,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         manualResult.rated(true);
 
         double points = programmingAssessmentService.calculateTotalScore(manualResult);
-        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxScore()));
+        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxScore(), programmingExercise));
 
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
@@ -364,7 +364,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         manualResult.setFeedbacks(feedbacks);
         double points = programmingAssessmentService.calculateTotalScore(manualResult);
         long score = (long) ((points / programmingExercise.getMaxScoreRespectingZeroPointExercises()) * 100.0);
-        manualResult.resultString(manualResult.createResultString(points, programmingExercise.getMaxScoreRespectingZeroPointExercises()));
+        manualResult.resultString(manualResult.createResultString(points, programmingExercise.getMaxScoreRespectingZeroPointExercises(), programmingExercise));
         manualResult.score(score);
         manualResult.rated(true);
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
@@ -382,7 +382,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
         manualResult.setFeedbacks(feedbacks);
         double points = programmingAssessmentService.calculateTotalScore(manualResult);
-        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxScore()));
+        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxScore(), programmingExercise));
         // As maxScore is 100 points, 1 point is 1%
         manualResult.score((long) points);
         manualResult.rated(true);
@@ -397,7 +397,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
         points = programmingAssessmentService.calculateTotalScore(manualResult);
         manualResult.score((long) points);
-        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxScore()));
+        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxScore(), programmingExercise));
 
         response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult, Result.class,
                 HttpStatus.OK);
@@ -419,7 +419,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         double points = programmingAssessmentService.calculateTotalScore(manualResult);
         // As maxScore is 100 points, 1 point is 1%
         manualResult.score((long) points);
-        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxScore()));
+        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxScore(), programmingExercise));
 
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
                 Result.class, HttpStatus.OK);
@@ -503,7 +503,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         manualResult.setFeedbacks(manualResult.getFeedbacks().subList(0, 1));
         double points = programmingAssessmentService.calculateTotalScore(manualResult);
         manualResult.setScore((long) points);
-        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxScore()));
+        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxScore(), programmingExercise));
         manualResult = resultRepository.save(manualResult);
 
         Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
