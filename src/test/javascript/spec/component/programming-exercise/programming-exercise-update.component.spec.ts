@@ -5,7 +5,6 @@ import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { stub } from 'sinon';
 import { of } from 'rxjs';
 import * as moment from 'moment';
-
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -125,15 +124,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
             spyOn(exerciseGroupService, 'find').and.returnValue(of(new HttpResponse({ body: exerciseGroup })));
-            const programmingLanguageFeature: ProgrammingLanguageFeature = {
-                programmingLanguage: ProgrammingLanguage.JAVA,
-                sequentialTestRuns: true,
-                staticCodeAnalysis: true,
-                plagiarismCheckSupported: true,
-                packageNameRequired: true,
-                checkoutSolutionRepositoryAllowed: true,
-                projectTypes: [ProjectType.ECLIPSE, ProjectType.MAVEN],
-            };
+            const programmingLanguageFeature = getProgrammingLanguageFeature(ProgrammingLanguage.JAVA);
             spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(of(programmingLanguageFeature));
 
             // WHEN
@@ -165,15 +156,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should not be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
             spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
-            const programmingLanguageFeature: ProgrammingLanguageFeature = {
-                programmingLanguage: ProgrammingLanguage.JAVA,
-                sequentialTestRuns: true,
-                staticCodeAnalysis: true,
-                plagiarismCheckSupported: true,
-                packageNameRequired: true,
-                checkoutSolutionRepositoryAllowed: true,
-                projectTypes: [ProjectType.ECLIPSE, ProjectType.MAVEN],
-            };
+            const programmingLanguageFeature: ProgrammingLanguageFeature = getProgrammingLanguageFeature(ProgrammingLanguage.JAVA);
             spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(of(programmingLanguageFeature));
 
             // WHEN
@@ -202,24 +185,15 @@ describe('ProgrammingExercise Management Update Component', () => {
             route.data = of({ programmingExercise: expectedProgrammingExercise });
         });
 
-        it('Should activate sca on Swift', fakeAsync(() => {
+        it('Should activate SCA for Swift', fakeAsync(() => {
             // GIVEN
             spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
-            const programmingLanguageFeature: ProgrammingLanguageFeature = {
-                programmingLanguage: ProgrammingLanguage.SWIFT,
-                sequentialTestRuns: false,
-                staticCodeAnalysis: true,
-                plagiarismCheckSupported: false,
-                packageNameRequired: true,
-                checkoutSolutionRepositoryAllowed: false,
-                projectTypes: [],
-            };
-            // spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(of(programmingLanguageFeature));
+            const programmingLanguageFeature = getProgrammingLanguageFeature(ProgrammingLanguage.SWIFT);
             stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').returns(programmingLanguageFeature);
 
             // WHEN
             fixture.detectChanges();
-            tick(1000);
+            tick();
             comp.onProgrammingLanguageChange(ProgrammingLanguage.SWIFT);
 
             // THEN
@@ -227,6 +201,49 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.programmingExercise).toEqual(expectedProgrammingExercise);
             expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.SWIFT);
             expect(comp.staticCodeAnalysisAllowed).toEqual(true);
+            expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForSwift);
+        }));
+
+        it('Should activate SCA for Java', fakeAsync(() => {
+            // GIVEN
+            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
+            const programmingLanguageFeature = getProgrammingLanguageFeature(ProgrammingLanguage.JAVA);
+            stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').returns(programmingLanguageFeature);
+
+            // WHEN
+            fixture.detectChanges();
+            tick();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.JAVA);
+
+            // THEN
+            expect(comp.programmingExercise).toEqual(expectedProgrammingExercise);
+            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.JAVA);
+            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
+            expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForJavaKotlin);
         }));
     });
 });
+
+const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage) => {
+    if (programmingLanguage === ProgrammingLanguage.SWIFT) {
+        return {
+            programmingLanguage: ProgrammingLanguage.SWIFT,
+            sequentialTestRuns: false,
+            staticCodeAnalysis: true,
+            plagiarismCheckSupported: false,
+            packageNameRequired: true,
+            checkoutSolutionRepositoryAllowed: false,
+            projectTypes: [],
+        } as ProgrammingLanguageFeature;
+    } else {
+        return {
+            programmingLanguage: ProgrammingLanguage.JAVA,
+            sequentialTestRuns: true,
+            staticCodeAnalysis: true,
+            plagiarismCheckSupported: true,
+            packageNameRequired: true,
+            checkoutSolutionRepositoryAllowed: true,
+            projectTypes: [ProjectType.ECLIPSE, ProjectType.MAVEN],
+        } as ProgrammingLanguageFeature;
+    }
+};
