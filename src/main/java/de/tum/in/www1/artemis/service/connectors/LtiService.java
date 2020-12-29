@@ -305,7 +305,7 @@ public class LtiService {
             Set<String> groups = user.getGroups();
             groups.add(courseStudentGroupName);
             user.setGroups(groups);
-            userService.save(user);
+            userService.saveUser(user);
 
             if (!user.getLogin().startsWith("edx")) {
                 // try to sync with authentication service for actual users (not for edx users)
