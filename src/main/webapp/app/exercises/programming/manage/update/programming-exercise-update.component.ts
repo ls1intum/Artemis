@@ -417,6 +417,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (!this.recreateBuildPlans || !this.updateTemplate) {
             this.programmingExercise.staticCodeAnalysisEnabled = this.originalStaticCodeAnalysisEnabled;
         }
+
+        if (!this.programmingExercise.staticCodeAnalysisEnabled) {
+            this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
+        }
     }
 
     /**
