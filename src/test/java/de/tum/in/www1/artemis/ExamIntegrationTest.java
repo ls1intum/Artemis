@@ -1186,6 +1186,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         database.changeUser("instructor1");
+        final var exerciseWithNoUsers = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        exerciseRepo.save(exerciseWithNoUsers);
         var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
 
         // Compare generated results to data in ExamScoresDTO
@@ -1372,6 +1374,17 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         final var exam = examRepository.save(exam1);
         final var latestIndividualExamEndDate = examService.getLatestIndividualExamEndDate(exam.getId());
         assertThat(latestIndividualExamEndDate.isEqual(exam.getEndDate())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllIndividualExamEndDates_noStartDate() {
+        final var now = ZonedDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+        exam1.setStartDate(null);
+        exam1.setEndDate(now);
+        final var exam = examRepository.save(exam1);
+        final var individualExamEndDates = examService.getAllIndividualExamEndDates(exam);
+        assertThat(individualExamEndDates).isNull();
     }
 
     @Test
