@@ -330,14 +330,24 @@ public class GitLabService extends AbstractVersionControlService {
             }
         }
         final var instructors = userService.getInstructors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        final var teachingAssistants = userService.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        final var tutors = userService.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         for (final var instructor : instructors) {
-            final var userId = gitLabUserManagementService.getUserId(instructor.getLogin());
-            gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), MAINTAINER);
+            try {
+                final var userId = gitLabUserManagementService.getUserId(instructor.getLogin());
+                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), MAINTAINER);
+            }
+            catch (GitLabException ignored) {
+                // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
+            }
         }
-        for (final var ta : teachingAssistants) {
-            final var userId = gitLabUserManagementService.getUserId(ta.getLogin());
-            gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), GUEST);
+        for (final var tutor : tutors) {
+            try {
+                final var userId = gitLabUserManagementService.getUserId(tutor.getLogin());
+                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), GUEST);
+            }
+            catch (GitLabException ignored) {
+                // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
+            }
         }
     }
 

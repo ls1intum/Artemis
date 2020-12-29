@@ -5,9 +5,8 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.transaction.Transactional;
-
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
