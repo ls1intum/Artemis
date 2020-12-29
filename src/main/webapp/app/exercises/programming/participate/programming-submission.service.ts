@@ -537,7 +537,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param exerciseId the id of the exercise
      * @param req request parameters
      */
-    getProgrammingSubmissionsForExercise(
+    getProgrammingSubmissionsForExerciseByCorrectionRound(
         exerciseId: number,
         req: { submittedOnly?: boolean; assessedByTutor?: boolean },
         correctionRound: number,
@@ -549,14 +549,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 params: options,
                 observe: 'response',
             })
-            .map((res: HttpResponse<ProgrammingSubmission[]>) => this.convertArrayResponse(res));
+            .map((res: HttpResponse<ProgrammingSubmission[]>) => ProgrammingSubmissionService.convertArrayResponse(res));
     }
 
     /**
      * Returns next programming submission without assessment from the server
      * @param exerciseId the id of the exercise
      */
-    getProgrammingSubmissionForExerciseWithoutAssessment(exerciseId: number, lock = false, correctionRound?: number): Observable<ProgrammingSubmission> {
+    getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, lock = false, correctionRound?: number): Observable<ProgrammingSubmission> {
         correctionRound = correctionRound ? correctionRound : 0;
         let url = `api/exercises/${exerciseId}/round/${correctionRound}/programming-submission-without-assessment`;
         if (lock) {
@@ -573,17 +573,17 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return this.http.get<Participation>(`api/programming-submissions/${participationId}/lock`);
     }
 
-    private convertArrayResponse(res: HttpResponse<ProgrammingSubmission[]>): HttpResponse<ProgrammingSubmission[]> {
+    private static convertArrayResponse(res: HttpResponse<ProgrammingSubmission[]>): HttpResponse<ProgrammingSubmission[]> {
         const submissions = res.body!;
         const convertedSubmissions: ProgrammingSubmission[] = [];
         for (const submission of submissions) {
-            this.convertItemFromServer(submission);
+            ProgrammingSubmissionService.convertItemFromServer(submission);
             convertedSubmissions.push({ ...submission });
         }
         return res.clone({ body: convertedSubmissions });
     }
 
-    private convertItemFromServer(programmingSubmission: ProgrammingSubmission): ProgrammingSubmission {
+    private static convertItemFromServer(programmingSubmission: ProgrammingSubmission): ProgrammingSubmission {
         const convertedProgrammingSubmission = Object.assign({}, programmingSubmission);
         setLatestSubmissionResult(convertedProgrammingSubmission, getLatestSubmissionResult(convertedProgrammingSubmission));
         return convertedProgrammingSubmission;

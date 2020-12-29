@@ -131,7 +131,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     }
 
     private loadOptimalSubmission(exerciseId: number): void {
-        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(exerciseId, true).subscribe(
+        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true).subscribe(
             (submission: FileUploadSubmission) => {
                 this.initializePropertiesFromSubmission(submission);
                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -284,7 +284,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     assessNextOptimal() {
         this.generalFeedback = new Feedback();
         this.referencedFeedback = [];
-        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exercise.id!).subscribe(
+        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!).subscribe(
             (response: FileUploadSubmission) => {
                 this.unassessedSubmission = response;
                 this.router.onSameUrlNavigation = 'reload';

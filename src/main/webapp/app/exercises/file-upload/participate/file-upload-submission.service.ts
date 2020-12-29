@@ -7,7 +7,6 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { createRequestOption } from 'app/shared/util/request-util';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 
 export type EntityResponseType = HttpResponse<FileUploadSubmission>;
 
@@ -22,7 +21,7 @@ export class FileUploadSubmissionService {
      * @param submissionFile the file submitted that will for the exercise
      */
     update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFile: Blob | File): Observable<EntityResponseType> {
-        const copy = this.convert(fileUploadSubmission);
+        const copy = FileUploadSubmissionService.convert(fileUploadSubmission);
         const formData = new FormData();
         const submissionBlob = new Blob([stringifyCircular(copy)], { type: 'application/json' });
         formData.append('file', submissionFile);
@@ -50,8 +49,9 @@ export class FileUploadSubmissionService {
      * Returns File Upload submissions for exercise from the server
      * @param exerciseId the id of the exercise
      * @param req request parameters
+     * @correctionRound correctionRound for which to get the Submissions
      */
-    getFileUploadSubmissionsForExercise(
+    getFileUploadSubmissionsForExerciseByCorrectionRound(
         exerciseId: number,
         req: { submittedOnly?: boolean; assessedByTutor?: boolean },
         correctionRound?: number,
@@ -70,13 +70,13 @@ export class FileUploadSubmissionService {
      * Returns next File Upload submission without assessment from the server
      * @param exerciseId the id of the exercise
      */
-    getFileUploadSubmissionForExerciseWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound?: number): Observable<FileUploadSubmission> {
+    getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound?: number): Observable<FileUploadSubmission> {
         correctionRound = correctionRound ? correctionRound : 0;
         let url = `api/exercises/${exerciseId}/round/${correctionRound}/file-upload-submission-without-assessment`;
         if (lock) {
             url += '?lock=true';
         }
-        return this.http.get<FileUploadSubmission>(url).pipe(map((res: ModelingSubmission) => this.convertItemFromServer(res)));
+        return this.http.get<FileUploadSubmission>(url).pipe(map((res: FileUploadSubmission) => FileUploadSubmissionService.convertItemFromServer(res)));
     }
 
     /**
@@ -88,7 +88,7 @@ export class FileUploadSubmissionService {
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: FileUploadSubmission = this.convertItemFromServer(res.body!);
+        const body: FileUploadSubmission = FileUploadSubmissionService.convertItemFromServer(res.body!);
         return res.clone({ body });
     }
 
@@ -96,7 +96,7 @@ export class FileUploadSubmissionService {
         const jsonResponse: FileUploadSubmission[] = res.body!;
         const body: FileUploadSubmission[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
+            body.push(FileUploadSubmissionService.convertItemFromServer(jsonResponse[i]));
         }
         return res.clone({ body });
     }
@@ -104,7 +104,7 @@ export class FileUploadSubmissionService {
     /**
      * Convert a returned JSON object to FileUploadSubmission.
      */
-    private convertItemFromServer(fileUploadSubmission: FileUploadSubmission): FileUploadSubmission {
+    private static convertItemFromServer(fileUploadSubmission: FileUploadSubmission): FileUploadSubmission {
         const convertedFileUploadSubmission = Object.assign({}, fileUploadSubmission);
         setLatestSubmissionResult(convertedFileUploadSubmission, getLatestSubmissionResult(convertedFileUploadSubmission));
         return convertedFileUploadSubmission;
@@ -113,7 +113,7 @@ export class FileUploadSubmissionService {
     /**
      * Convert a FileUploadSubmission to a JSON which can be sent to the server.
      */
-    private convert(fileUploadSubmission: FileUploadSubmission): FileUploadSubmission {
+    private static convert(fileUploadSubmission: FileUploadSubmission): FileUploadSubmission {
         return Object.assign({}, fileUploadSubmission);
     }
 }

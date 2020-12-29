@@ -63,7 +63,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
 
     private getSubmissions(): void {
         this.textSubmissionService
-            .getTextSubmissionsForExercise(this.exercise.id!, { submittedOnly: true })
+            .getTextSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
             .map((response: HttpResponse<TextSubmission[]>) =>
                 response.body!.map((submission: TextSubmission) => {
                     const tmpResult = getLatestSubmissionResult(submission);

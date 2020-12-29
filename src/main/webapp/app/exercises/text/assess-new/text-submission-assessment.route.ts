@@ -42,7 +42,7 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
 
         if (exerciseId) {
             return this.textSubmissionService
-                .getTextSubmissionForExerciseWithoutAssessment(exerciseId, 'lock')
+                .getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, 'lock')
                 .map((submission) => <StudentParticipation>submission.participation)
                 .catch(() => Observable.of(undefined));
         }

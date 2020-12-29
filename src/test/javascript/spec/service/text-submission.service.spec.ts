@@ -87,7 +87,7 @@ describe('TextSubmission Service', () => {
     });
 
     it('should not parse jwt from header', async () => {
-        service.getTextSubmissionForExerciseWithoutAssessment(1).subscribe((textSubmission) => {
+        service.getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(1).subscribe((textSubmission) => {
             expect(textSubmission.atheneTextAssessmentTrackingToken).to.be.null;
         });
 
@@ -96,7 +96,7 @@ describe('TextSubmission Service', () => {
     });
 
     it('should parse jwt from header', async () => {
-        service.getTextSubmissionForExerciseWithoutAssessment(1).subscribe((textSubmission) => {
+        service.getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(1).subscribe((textSubmission) => {
             expect(textSubmission.atheneTextAssessmentTrackingToken).to.equal('12345');
         });
 
@@ -110,7 +110,7 @@ describe('TextSubmission Service', () => {
         const returnedFromService = [elemDefault];
         const expected = returnedFromService;
         service
-            .getTextSubmissionsForExercise(exerciseId, {})
+            .getTextSubmissionsForExerciseByCorrectionRound(exerciseId, {})
             .pipe(take(1))
             .subscribe((resp) => (mockResponse = resp));
         const req = httpMock.expectOne({ method: 'GET' });

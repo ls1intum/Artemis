@@ -40,7 +40,7 @@ export class TextSubmissionService {
             .pipe(map((res: HttpResponse<TextSubmission>) => res.body!));
     }
 
-    getTextSubmissionsForExercise(
+    getTextSubmissionsForExerciseByCorrectionRound(
         exerciseId: number,
         req: { submittedOnly?: boolean; assessedByTutor?: boolean },
         correctionRound?: number,
@@ -61,7 +61,7 @@ export class TextSubmissionService {
      * @param option 'head': Do not optimize assessment order. Only used to check if assessments available.
      * @param correctionRound: The correction round for which we want to get a new assessment
      */
-    getTextSubmissionForExerciseWithoutAssessment(exerciseId: number, option?: 'lock' | 'head', correctionRound?: number): Observable<TextSubmission> {
+    getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, option?: 'lock' | 'head', correctionRound?: number): Observable<TextSubmission> {
         correctionRound = correctionRound ? correctionRound : 0;
         console.log('get text submissionwithou assessemnt');
         let url = `api/exercises/${exerciseId}/round/${correctionRound}/text-submission-without-assessment`;

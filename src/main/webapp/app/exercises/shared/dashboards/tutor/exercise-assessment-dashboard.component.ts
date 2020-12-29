@@ -309,16 +309,28 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             // TODO: This could be one generic endpoint.
             switch (this.exercise.type) {
                 case ExerciseType.TEXT:
-                    submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.textSubmissionService.getTextSubmissionsForExerciseByCorrectionRound(this.exerciseId, { assessedByTutor: true }, correctionRound);
                     break;
                 case ExerciseType.MODELING:
-                    submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExerciseByCorrectionRound(
+                        this.exerciseId,
+                        { assessedByTutor: true },
+                        correctionRound,
+                    );
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(this.exerciseId, { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExerciseByCorrectionRound(
+                        this.exerciseId,
+                        { assessedByTutor: true },
+                        correctionRound,
+                    );
                     break;
                 case ExerciseType.PROGRAMMING:
-                    submissionsObservable = this.programmingSubmissionService.getProgrammingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.programmingSubmissionService.getProgrammingSubmissionsForExerciseByCorrectionRound(
+                        this.exerciseId,
+                        { assessedByTutor: true },
+                        correctionRound,
+                    );
                     break;
             }
         }
@@ -381,17 +393,29 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
                 console.log('unassessed for textexercises!');
-                submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId, 'head', correctionRound);
+                submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exerciseId, 'head', correctionRound);
                 break;
             case ExerciseType.MODELING:
                 console.log('unassessed for modelingexercise!');
-                submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId, undefined, correctionRound);
+                submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(
+                    this.exerciseId,
+                    undefined,
+                    correctionRound,
+                );
                 break;
             case ExerciseType.FILE_UPLOAD:
-                submissionObservable = this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exerciseId, undefined, correctionRound);
+                submissionObservable = this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(
+                    this.exerciseId,
+                    undefined,
+                    correctionRound,
+                );
                 break;
             case ExerciseType.PROGRAMMING:
-                submissionObservable = this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exerciseId, undefined, correctionRound);
+                submissionObservable = this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(
+                    this.exerciseId,
+                    undefined,
+                    correctionRound,
+                );
                 break;
         }
 
