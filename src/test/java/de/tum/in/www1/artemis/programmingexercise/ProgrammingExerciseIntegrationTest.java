@@ -115,7 +115,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
         programmingExerciseInExam = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
-        programmingExerciseInExam = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseInExam.getId()).get();
+        programmingExerciseInExam = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseInExam.getId())
+                .get();
 
         participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
@@ -1044,7 +1045,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateTestCases_asInstrutor() throws Exception {
         bambooRequestMockProvider.enableMockingOfRequests();
-        programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).get();
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         final var updates = testCases.stream().map(testCase -> {
@@ -1112,7 +1113,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void resetTestCaseWeights_asInstructor() throws Exception {
         bambooRequestMockProvider.enableMockingOfRequests();
-        programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).get();
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         final var endpoint = ProgrammingExerciseGradingResource.RESET.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).forEach(test -> {

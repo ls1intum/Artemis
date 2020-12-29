@@ -131,7 +131,6 @@ public class BitbucketRequestMockProvider {
         final var projectKey = exercise.getProjectKey();
         final var templateRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var clonedRepoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
-
         mockForkRepository(projectKey, projectKey, templateRepoName, clonedRepoName, status);
     }
 
