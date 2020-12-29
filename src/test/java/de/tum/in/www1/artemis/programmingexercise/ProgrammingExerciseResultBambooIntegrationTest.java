@@ -56,6 +56,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldStoreFeedbackForResultWithSwiftStaticCodeAnalysisReport() {
         var programmingLanguage = ProgrammingLanguage.SWIFT;
+        programmingExerciseResultTestService.setupForProgrammingLanguage(programmingLanguage);
         var notification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), programmingLanguage);
         var scaReports = notification.getBuild().getJobs().get(0).getStaticCodeAnalysisReports();
         // SwiftLint has only one category at the moment
