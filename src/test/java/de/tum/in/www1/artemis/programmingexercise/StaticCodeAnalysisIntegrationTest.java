@@ -109,7 +109,6 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(swiftEx.getId());
         assertThat(categories.size()).isEqualTo(6);
         assertThat(categories.stream().filter(c -> c.getState() == CategoryState.FEEDBACK).count()).isEqualTo(1);
-        assertThat(swiftEx).isEqualTo(categories.iterator().next().getExercise());
     }
 
     @Test
