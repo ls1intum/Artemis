@@ -464,10 +464,15 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.NOT_FOUND);
     }
 
-    // TODO: add 3 more test cases how to resume an exercise:
-    // 1. Invoke the REST Call for a new programming submission (which happens as part of the webhook after pushing code to git)
-    // 2. Trigger one build of the participation
+    // TODO: add several more test cases for resuming a programming exercise:
+    // 1. Invoke the REST Call from the VCS for a new programming submission (which happens as part of the webhook after pushing code to git)
+    // notifyPush, see postSubmission(...) in ProgrammingSubmissionAndResultIntegrationTest
+    // 2. Trigger one build of the participation (also see ProgrammingSubmissionAndResultIntegrationTest)
+    // 2a: request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
+    // 2b: request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
+    // 2c: request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-failed-build", null, HttpStatus.OK, new HttpHeaders());
     // 3. Trigger all builds of the corresponding exercise
+    // @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build-all")
 
     // TEST
     public void resumeProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
