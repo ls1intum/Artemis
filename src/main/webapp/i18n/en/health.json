@@ -11,6 +11,7 @@
             "error": "Error"
         },
         "indicator": {
+            "clientConfigServer": "Client Config Server",
             "discoveryComposite": "Discovery Composite",
             "refreshScope": "Microservice Refresh Scope",
             "configServer": "Microservice Config Server",
