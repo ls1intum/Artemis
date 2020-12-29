@@ -154,7 +154,7 @@ public class StatisticsService {
     private Integer[] createResultArrayForDay(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
         for (Map<String, Object> map : outcome) {
             int hour = ((ZonedDateTime) map.get("day")).getHour();
-            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : 0;
             for (int i = 0; i < 24; i++) {
                 if (hour == endDate.minusHours(i).getHour()) {
                     result[endDate.getHour() - i] += amount;
@@ -176,7 +176,7 @@ public class StatisticsService {
     private Integer[] createResultArrayForWeek(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
         for (Map<String, Object> map : outcome) {
             ZonedDateTime date = (ZonedDateTime) map.get("day");
-            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : 0;
             for (int i = 0; i < 7; i++) {
                 if (date.getDayOfMonth() == endDate.minusDays(i).getDayOfMonth()) {
                     result[6 - i] += amount;
@@ -198,7 +198,7 @@ public class StatisticsService {
     private Integer[] createResultArrayForMonth(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
         for (Map<String, Object> map : outcome) {
             ZonedDateTime date = (ZonedDateTime) map.get("day");
-            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : 0;
             for (int i = 0; i < result.length; i++) {
                 if (date.getDayOfMonth() == endDate.minusDays(i).getDayOfMonth()) {
                     result[result.length - 1 - i] += amount;
@@ -221,7 +221,7 @@ public class StatisticsService {
         int week;
         for (Map<String, Object> map : outcome) {
             ZonedDateTime date = (ZonedDateTime) map.get("day");
-            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : 0;
             week = getWeekOfDate(date);
             for (int i = 0; i < result.length; i++) {
                 if (week == getWeekOfDate(endDate.minusWeeks(i))) {
@@ -244,7 +244,7 @@ public class StatisticsService {
     private Integer[] createResultArrayForYear(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
         for (Map<String, Object> map : outcome) {
             ZonedDateTime date = (ZonedDateTime) map.get("day");
-            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : null;
+            Integer amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : 0;
             for (int i = 0; i < 12; i++) {
                 if (date.getMonth() == endDate.minusMonths(i).getMonth()) {
                     result[11 - i] += amount;

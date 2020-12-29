@@ -31,7 +31,7 @@ public class UserStatisticsIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "admin1", roles = "ADMIN")
-    public void GetDataForEachSpanEachGraph() throws Exception {
+    public void getDataForEachSpanEachGraph() throws Exception {
         SpanType[] spans = SpanType.values();
         GraphType[] graphs = GraphType.values();
         Integer periodIndex = 0;
