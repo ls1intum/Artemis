@@ -5,6 +5,9 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 import static java.time.ZonedDateTime.now;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
@@ -22,6 +25,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -791,6 +797,59 @@ public class CourseResource {
 
         courseService.delete(course);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, course.getTitle())).build();
+    }
+
+    /**
+     * PUT /courses/{courseId} : archive an existing course asynchronously. This method starts the process of archiving all course exercises, submissions and results in a large
+     * zip file. It immediately returns and runs this task asynchronously. When the task is done, the course is marked as archived, which means the zip file can be downloaded.
+     *
+     * @param courseId        the id of the course
+     * @return                empty
+     */
+    @PutMapping("/courses/{courseId}/archive")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Void> archiveCourse(@PathVariable Long courseId) {
+        // TODOs Course Exercises
+        // 1) Get the course with all exercises and iterate over each exercise
+        // 2) Fetch all student participations for the exercise
+        // 3) For programming exercises: Download all source code repositories (those will be deleted in the VCS repository in a second step when the zip file was downloaded)
+        // and zip each repository, also download exercise, tests and solution repos (we will not delete those), but add them for consistency
+        // 4) For other exercises: Store the submissions (e.g. model --> json, text --> txt, file --> file, quiz --> json) in the file system
+        // Note: in the first version, we do not store the results with feedback and other meta data, as those will stay available in Artemis, the main focus is to allow
+        // instructors to download student repos in order to delete those on Bitbucket/Gitlab
+
+        // TODO: send websocket updates about the progress of this operation to the user
+
+        // TODOs Exams
+        // 1) Get all exams with their exercises of the course and do the same as above
+
+        // Note: Lectures are not part of the archive at the moment and will be included in a future version
+        // 1) Get all lectures (attachments) of the course and store them in a folder
+
+        // Note: Questions and answers are not part of the archive at the moment and will be included in a future version
+        // 1) Get all questions and answers for exercises and lectures and store those in structured text files
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     *
+     * @param courseId
+     * @return
+     * @throws URISyntaxException
+     */
+    @GetMapping("/courses/{courseId}/download-archive")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Resource> downloadCourseArchive(@PathVariable Long courseId) throws FileNotFoundException {
+        // TODO: download the previously generated zip file from the filesystem
+        // the path is stored in the course table
+        File zipFile = null;
+        if (zipFile == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "There was an error on the server and the zip file could not be created.")).body(null);
+        }
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 
     /**
