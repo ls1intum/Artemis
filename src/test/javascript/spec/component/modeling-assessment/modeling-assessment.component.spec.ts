@@ -2,16 +2,14 @@ import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { ApollonEditor, UMLDiagramType, UMLElement, UMLModel, UMLRelationship, Selection } from '@ls1intum/apollon';
+import { ApollonEditor, UMLDiagramType, UMLElement, UMLModel, UMLRelationship } from '@ls1intum/apollon';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import * as chai from 'chai';
 import { MockModule } from 'ng-mocks';
-import { Subject } from 'rxjs';
 import * as sinon from 'sinon';
-import { stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 
