@@ -193,7 +193,7 @@ public class GitService {
             }
         }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.get()))
                 // TODO: double check if the home directoy works like this
-                .setHomeDirectory(new java.io.File("~")).build(new JGitKeyCache());
+                .setHomeDirectory(new java.io.File(System.getProperty("user.home"))).build(new JGitKeyCache());
         sshCallback = transport -> {
             SshTransport sshTransport = (SshTransport) transport;
             sshTransport.setSshSessionFactory(sshSessionFactory);

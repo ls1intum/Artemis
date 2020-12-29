@@ -4,6 +4,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Objects;
 
 public class VcsRepositoryUrl {
 
@@ -34,6 +35,21 @@ public class VcsRepositoryUrl {
         var newUri = new URI("ssh", "git", uri.getHost(), 7999, uri.getPath().replace("/scm", ""), null, uri.getFragment());
         System.out.println("ssh uri: " + newUri);
         return newUri;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        VcsRepositoryUrl that = (VcsRepositoryUrl) o;
+        return Objects.equals(username, that.username) && Objects.equals(url, that.url);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(username, url);
     }
 
     @Override
