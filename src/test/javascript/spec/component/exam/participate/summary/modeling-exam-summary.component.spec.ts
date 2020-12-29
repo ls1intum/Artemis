@@ -35,7 +35,6 @@ describe('ModelingExamSummaryComponent', () => {
     });
 
     it('should show no submission when there is no uml model', () => {
-        comp.ngOnInit();
         fixture.detectChanges();
         const el = fixture.debugElement.query((de) => de.nativeElement.textContent === 'No submission');
         expect(el).to.be.not.null;
@@ -49,7 +48,6 @@ describe('ModelingExamSummaryComponent', () => {
         course.isAtLeastInstructor = true;
         comp.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         comp.submission = mockSubmission;
-        comp.ngOnInit();
         fixture.detectChanges();
         const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent));
         expect(modelingEditor).to.exist;
