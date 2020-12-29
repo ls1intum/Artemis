@@ -55,6 +55,11 @@ describe('Exam Management Component', () => {
         courseManagementService = TestBed.inject(CourseManagementService);
     });
 
+    afterEach(function () {
+        // completely restore all fakes created through the sandbox
+        sinon.restore();
+    });
+
     it('Should call findAllExamsForCourse on init', () => {
         // GIVEN
         const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
