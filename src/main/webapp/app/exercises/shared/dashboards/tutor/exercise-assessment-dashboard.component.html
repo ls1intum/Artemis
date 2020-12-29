@@ -301,14 +301,11 @@
                             </tr>
                             <tr
                                 *ngIf="
-                                    unassessedSubmissionByCorrectionRound &&
-                                    unassessedSubmissionByCorrectionRound.get(correctionRound + 1)?.id > 0 &&
-                                    !exercise.teamMode &&
-                                    !isTestRun
+                                    unassessedSubmissionByCorrectionRound && unassessedSubmissionByCorrectionRound.get(correctionRound)?.id > 0 && !exercise.teamMode && !isTestRun
                                 "
                             >
                                 <td></td>
-                                <td>{{ unassessedSubmissionByCorrectionRound.get(correctionRound + 1)?.submissionDate | artemisDate }}</td>
+                                <td>{{ unassessedSubmissionByCorrectionRound.get(correctionRound)?.submissionDate | artemisDate }}</td>
                                 <td></td>
                                 <td>{{ 'artemisApp.exerciseAssessmentDashboard.new' | translate }}</td>
                                 <td></td>
