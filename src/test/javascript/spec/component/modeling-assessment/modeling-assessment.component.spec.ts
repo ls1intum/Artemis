@@ -99,11 +99,6 @@ describe('ModelingAssessmentComponent', () => {
         sinon.restore();
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(ModelingAssessmentComponent).to.be.ok;
-    });
-
     it('should show  title if any', () => {
         const title = 'Test Title';
         comp.title = title;

@@ -7,7 +7,6 @@ import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exerc
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import * as chai from 'chai';
 import { MockComponent } from 'ng-mocks';
-import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
@@ -28,10 +27,6 @@ describe('ModelingExamSummaryComponent', () => {
                 fixture = TestBed.createComponent(ModelingExamSummaryComponent);
                 comp = fixture.componentInstance;
             });
-    });
-
-    afterEach(function () {
-        sinon.restore();
     });
 
     it('should initialize', () => {
@@ -58,10 +53,11 @@ describe('ModelingExamSummaryComponent', () => {
         fixture.detectChanges();
         const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent));
         expect(modelingEditor).to.exist;
-        expect(modelingEditor.componentInstance.umlModel).to.deep.equal({ model: true });
-        expect(modelingEditor.componentInstance.readOnly).to.equal(true);
-        expect(modelingEditor.componentInstance.withExplanation).to.equal(mockSubmission.explanationText);
-        expect(modelingEditor.componentInstance.explanation).to.equal(mockSubmission.explanationText);
-        expect(modelingEditor.componentInstance.diagramType).to.equal(UMLDiagramType.ClassDiagram);
+        const modelingEditorComponent = modelingEditor.componentInstance;
+        expect(modelingEditorComponent.diagramType).to.equal(UMLDiagramType.ClassDiagram);
+        expect(modelingEditorComponent.umlModel).to.deep.equal({ model: true });
+        expect(modelingEditorComponent.readOnly).to.equal(true);
+        expect(modelingEditorComponent.withExplanation).to.equal(mockSubmission.explanationText);
+        expect(modelingEditorComponent.explanation).to.equal(mockSubmission.explanationText);
     });
 });
