@@ -240,8 +240,8 @@
                     <table
                         class="table table-striped exercise-table"
                         *ngIf="
-                            (unassessedSubmissionByCorrectionRound && unassessedSubmissionByCorrectionRound.get(correctionRound + 1)?.id > 0) ||
-                                submissionsByCorrectionRound.get(correctionRound + 1)?.length > 0;
+                            (unassessedSubmissionByCorrectionRound && unassessedSubmissionByCorrectionRound.get(correctionRound)?.id > 0) ||
+                                submissionsByCorrectionRound.get(correctionRound)?.length > 0;
                             else noSubmissions
                         "
                     >
@@ -257,7 +257,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr *ngFor="let submission of submissionsByCorrectionRound.get(correctionRound + 1); let i = index">
+                            <tr *ngFor="let submission of submissionsByCorrectionRound.get(correctionRound); let i = index">
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ submission.submissionDate | artemisDate }}</td>
                                 <td>

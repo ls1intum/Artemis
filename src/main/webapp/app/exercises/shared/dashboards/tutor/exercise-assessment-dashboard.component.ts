@@ -335,7 +335,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     return submission;
                 });
-                this.submissionsByCorrectionRound!.set(1, sub); // todo NR
+                this.submissionsByCorrectionRound!.set(0, sub); // todo NR
             });
     }
 
