@@ -57,7 +57,6 @@ import io.github.jhipster.security.RandomUtil;
  * Service class for managing users.
  */
 @Service
-@Transactional
 public class UserService {
 
     private final Logger log = LoggerFactory.getLogger(UserService.class);
@@ -140,7 +139,7 @@ public class UserService {
                     existingInternalAdmin.get().setPassword(passwordEncoder().encode(artemisInternalAdminPassword.get()));
                     // needs to be mutable --> new HashSet<>(Set.of(...))
                     existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(USER))));
-                    save(existingInternalAdmin.get());
+                    saveUser(existingInternalAdmin.get());
                     updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getGroups());
                 }
                 else {
@@ -242,7 +241,7 @@ public class UserService {
     public void activateUser(User user) {
         user.setActivated(true);
         user.setActivationKey(null);
-        save(user);
+        saveUser(user);
         log.info("Activated user: {}", user);
     }
 
@@ -258,7 +257,7 @@ public class UserService {
             user.setPassword(passwordEncoder().encode(newPassword));
             user.setResetKey(null);
             user.setResetDate(null);
-            save(user);
+            saveUser(user);
             optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, null, null, true));
             return user;
         });
@@ -269,7 +268,7 @@ public class UserService {
      * @param user the user object that will be saved into the database
      * @return the saved and potentially updated user object
      */
-    public User save(User user) {
+    public User saveUser(User user) {
         clearUserCaches(user);
         log.debug("Save user " + user);
         return userRepository.save(user);
@@ -284,7 +283,7 @@ public class UserService {
         return userRepository.findOneByEmailIgnoreCase(mail).filter(User::getActivated).map(user -> {
             user.setResetKey(RandomUtil.generateResetKey());
             user.setResetDate(Instant.now());
-            return save(user);
+            return saveUser(user);
         });
     }
 
@@ -324,7 +323,7 @@ public class UserService {
         Set<Authority> authorities = new HashSet<>();
         authorityRepository.findById(USER).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
-        newUser = save(newUser);
+        newUser = saveUser(newUser);
         // we need to save first so that the user can be found in the database in the subsequent method
         createUserInExternalSystems(newUser);
         log.debug("Created Information for User: {}", newUser);
@@ -456,7 +455,7 @@ public class UserService {
         final var authorities = new HashSet<>(Set.of(authority));
         newUser.setAuthorities(authorities);
 
-        save(newUser);
+        saveUser(newUser);
         log.debug("Created user: {}", newUser);
         return newUser;
     }
@@ -497,7 +496,7 @@ public class UserService {
         }
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
-        save(user);
+        saveUser(user);
 
         createUserInExternalSystems(user);
         addUserToGroupsInternal(user, userDTO.getGroups());
@@ -531,7 +530,7 @@ public class UserService {
             user.setEmail(email.toLowerCase());
             user.setLangKey(langKey);
             user.setImageUrl(imageUrl);
-            save(user);
+            saveUser(user);
             log.info("Changed Information for User: {}", user);
             optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, null, null, true));
         });
@@ -560,7 +559,7 @@ public class UserService {
         Set<Authority> managedAuthorities = user.getAuthorities();
         managedAuthorities.clear();
         updatedUserDTO.getAuthorities().stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get).forEach(managedAuthorities::add);
-        user = save(user);
+        user = saveUser(user);
 
         updateUserInConnectorsAndAuthProvider(user, oldGroups);
 
@@ -592,6 +591,7 @@ public class UserService {
      * Delete user based on login string
      * @param login user login string
      */
+    @Transactional // ok because entities are deleted
     public void deleteUser(String login) {
         // Delete the user in the connected VCS if necessary (e.g. for GitLab)
         optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.deleteUser(login));
@@ -602,6 +602,7 @@ public class UserService {
         });
     }
 
+    @Transactional // ok because entities are deleted
     private void deleteUser(User user) {
         // TODO: before we can delete the user, we need to make sure that all associated objects are deleted as well (or the connection to user is set to null)
         // 1) All participation connected to the user (as student)
@@ -632,7 +633,7 @@ public class UserService {
             }
             String encryptedPassword = passwordEncoder().encode(newPassword);
             user.setPassword(encryptedPassword);
-            save(user);
+            saveUser(user);
             optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, null, null, true));
             log.debug("Changed password for User: {}", user);
         });
@@ -806,12 +807,11 @@ public class UserService {
 
     /**
      * Update user notification read date for current user
-     * @return currently logged in user
+     * @param userId the user for which the notification read date should be updated
      */
-    public User updateUserNotificationReadDate() {
-        User loggedInUser = getUserWithGroupsAndAuthorities();
-        userRepository.updateUserNotificationReadDate(loggedInUser.getId(), ZonedDateTime.now());
-        return loggedInUser;
+    @Transactional // ok because of modifying query
+    public void updateUserNotificationReadDate(long userId) {
+        userRepository.updateUserNotificationReadDate(userId, ZonedDateTime.now());
     }
 
     /**
@@ -876,7 +876,7 @@ public class UserService {
             guidedTourSettingsRepository.save(setting);
         }
         // TODO: do we really need to save the user here, or is it enough if we save in the guidedTourSettingsRepository?
-        return save(loggedInUser);
+        return saveUser(loggedInUser);
     }
 
     /**
@@ -893,7 +893,7 @@ public class UserService {
                 break;
             }
         }
-        return save(loggedInUser);
+        return saveUser(loggedInUser);
     }
 
     /**
@@ -922,7 +922,7 @@ public class UserService {
         log.info("Found " + users.size() + " users with group " + groupName);
         for (User user : users) {
             user.getGroups().remove(groupName);
-            save(user);
+            saveUser(user);
         }
     }
 
@@ -957,7 +957,7 @@ public class UserService {
         if (!user.getGroups().contains(group)) {
             user.getGroups().add(group);
             user.setAuthorities(buildAuthorities(user));
-            save(user);
+            saveUser(user);
         }
     }
 
@@ -981,7 +981,7 @@ public class UserService {
 
         if (userChanged) {
             // we only save if this is needed
-            save(user);
+            saveUser(user);
         }
     }
 
@@ -1036,7 +1036,7 @@ public class UserService {
         if (user.getGroups().contains(group)) {
             user.getGroups().remove(group);
             user.setAuthorities(buildAuthorities(user));
-            save(user);
+            saveUser(user);
         }
     }
 
