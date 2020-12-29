@@ -7,7 +7,9 @@ import java.util.List;
  * This DTO contains the information for a students progress in achieving a learning goal
  * The learning goal progress is calculated from the performance in a subset of the connected lecture units
  */
-public class LearningGoalProgress {
+public class IndividualLearningGoalProgress {
+
+    public Long studentId;
 
     public Long learningGoalId;
 
@@ -20,12 +22,12 @@ public class LearningGoalProgress {
     /**
      * the students progress in the connected lecture units that were used for the progress calculation
      */
-    public List<LectureUnitProgress> progressInLectureUnits = new ArrayList<>();
+    public List<IndividualLectureUnitProgress> progressInLectureUnits = new ArrayList<>();
 
     /**
      * This DTO contains the information for a students progress in completing a lecture unit
      */
-    public static class LectureUnitProgress {
+    public static class IndividualLectureUnitProgress {
 
         public Long lectureUnitId;
 

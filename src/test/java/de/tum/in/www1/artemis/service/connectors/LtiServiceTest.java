@@ -216,7 +216,7 @@ public class LtiServiceTest {
         assertThat("ff30145d6884eeb2c1cef50298939383".equals(ltiUserId.getLtiUserId()));
         assertThat("some.outcome.service.url.com".equals(ltiOutcomeUrl.getUrl()));
         assertThat("someResultSourceId".equals(ltiOutcomeUrl.getSourcedId()));
-        verify(userService, times(1)).save(user);
+        verify(userService, times(1)).saveUser(user);
         verify(artemisAuthenticationProvider, times(1)).addUserToGroup(user, courseStudentGroupName);
         verify(ltiOutcomeUrlRepository, times(1)).save(ltiOutcomeUrl);
     }
