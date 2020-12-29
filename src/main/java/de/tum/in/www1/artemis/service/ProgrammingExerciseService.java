@@ -122,10 +122,10 @@ public class ProgrammingExerciseService {
      * @param programmingExercise The programmingExercise that should be setup
      * @return The newly setup exercise
      * @throws InterruptedException If something during the communication with the remote Git repository went wrong
-     * @throws GitAPIException      If something during the communication with the remote Git repositroy went wrong
+     * @throws GitAPIException      If something during the communication with the remote Git repository went wrong
      * @throws IOException          If the template files couldn't be read
      */
-    @Transactional
+    @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final var user = userService.getUser();
@@ -195,12 +195,14 @@ public class ProgrammingExerciseService {
      * @param programmingExercise the new programming exercise
      */
     public void connectBaseParticipationsToExerciseAndSave(ProgrammingExercise programmingExercise) {
-        final var templateParticipation = programmingExercise.getTemplateParticipation();
-        final var solutionParticipation = programmingExercise.getSolutionParticipation();
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        var solutionParticipation = programmingExercise.getSolutionParticipation();
         templateParticipation.setProgrammingExercise(programmingExercise);
         solutionParticipation.setProgrammingExercise(programmingExercise);
-        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+        templateParticipation = templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        solutionParticipation = solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+        programmingExercise.setTemplateParticipation(templateParticipation);
+        programmingExercise.setSolutionParticipation(solutionParticipation);
     }
 
     private void setURLsAndBuildPlanIDsForNewExercise(ProgrammingExercise programmingExercise) {
