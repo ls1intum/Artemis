@@ -3,6 +3,7 @@ import { HttpResponse } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
+import { stub } from 'sinon';
 import * as moment from 'moment';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -26,7 +27,7 @@ import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programmin
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 
 describe('ProgrammingExercise Management Update Component', () => {
-    const programmingLanguageFeature: ProgrammingLanguageFeature = {
+    const javaFeatures: ProgrammingLanguageFeature = {
         programmingLanguage: ProgrammingLanguage.JAVA,
         sequentialTestRuns: true,
         staticCodeAnalysis: true,
@@ -35,6 +36,17 @@ describe('ProgrammingExercise Management Update Component', () => {
         checkoutSolutionRepositoryAllowed: true,
         projectTypes: [ProjectType.ECLIPSE, ProjectType.MAVEN],
     };
+    const haskellFeatures: ProgrammingLanguageFeature = {
+        programmingLanguage: ProgrammingLanguage.HASKELL,
+        sequentialTestRuns: false,
+        staticCodeAnalysis: false,
+        plagiarismCheckSupported: false,
+        packageNameRequired: false,
+        checkoutSolutionRepositoryAllowed: true,
+        projectTypes: [],
+    };
+    const courseId = 1;
+    const course = { id: courseId } as Course;
 
     let comp: ProgrammingExerciseUpdateComponent;
     let fixture: ComponentFixture<ProgrammingExerciseUpdateComponent>;
@@ -113,7 +125,6 @@ describe('ProgrammingExercise Management Update Component', () => {
     });
 
     describe('exam mode', () => {
-        const courseId = 1;
         const examId = 1;
         const groupId = 1;
         const exerciseGroup = new ExerciseGroup();
@@ -131,7 +142,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
             spyOn(exerciseGroupService, 'find').and.returnValue(of(new HttpResponse({ body: exerciseGroup })));
-            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(programmingLanguageFeature);
+            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(javaFeatures);
 
             // WHEN
             comp.ngOnInit();
@@ -146,9 +157,6 @@ describe('ProgrammingExercise Management Update Component', () => {
     });
 
     describe('course mode', () => {
-        const courseId = 1;
-        const course = new Course();
-        course.id = courseId;
         const expectedProgrammingExercise = new ProgrammingExercise(undefined, undefined);
         expectedProgrammingExercise.course = course;
 
@@ -162,7 +170,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should not be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
             spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
-            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(programmingLanguageFeature);
+            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(javaFeatures);
 
             // WHEN
             comp.ngOnInit();
@@ -176,64 +184,136 @@ describe('ProgrammingExercise Management Update Component', () => {
         }));
     });
 
-    describe('import with SCA', () => {
-        const maxPenalty = 50;
-        const courseId = 1;
-        const course = new Course();
-        course.id = courseId;
-        let programmingExercise: ProgrammingExercise;
-        let route: ActivatedRoute;
-
+    describe('programming language switch', () => {
         beforeEach(() => {
-            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
-            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(programmingLanguageFeature);
-
-            programmingExercise = new ProgrammingExercise(undefined, undefined);
-            programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
-            route = TestBed.inject(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });
-            route.url = of([{ path: 'import' } as UrlSegment]);
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
+            spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').and.returnValue(true);
+            const getFeaturesStub = stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.withArgs(ProgrammingLanguage.JAVA).returns(javaFeatures);
+            getFeaturesStub.withArgs(ProgrammingLanguage.HASKELL).returns(haskellFeatures);
         });
 
-        it('Should activate recreate build plans and update template when sca changes', fakeAsync(() => {
-            programmingExercise.staticCodeAnalysisEnabled = false;
-            route.data = of({ programmingExercise });
+        it('Should reset sca settings if new programming language does not support sca', fakeAsync(() => {
             comp.ngOnInit();
             fixture.detectChanges();
             tick();
 
+            // Activate sca
             let scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
-            let maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
-            const recreateBuildPlanCheckbox = fixture.nativeElement.querySelector('#field_recreateBuildPlans');
-            const updateTemplateCheckbox = fixture.nativeElement.querySelector('#field_updateTemplateFiles');
-
-            expect(comp.isImport).toBeTruthy();
-            expect(comp.originalStaticCodeAnalysisEnabled).toBeFalsy();
-            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalsy();
-            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeFalsy();
-            expect(scaCheckbox.checked).toBeFalsy();
-            expect(maxPenaltyInput).toBeFalsy();
-            expect(recreateBuildPlanCheckbox.checked).toBeFalsy();
-            expect(updateTemplateCheckbox.checked).toBeFalsy();
-            expect(comp.programmingExercise).toEqual(programmingExercise);
-            expect(courseService.find).toHaveBeenCalledWith(courseId);
-
             scaCheckbox.click();
             scaCheckbox.dispatchEvent(new Event('input'));
             fixture.detectChanges();
             tick();
-            scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
-            maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
-            maxPenaltyInput.value = maxPenalty;
+
+            // Set a max penalty
+            const maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
+            maxPenaltyInput.value = 50;
             maxPenaltyInput.dispatchEvent(new Event('input'));
             fixture.detectChanges();
             tick();
 
             expect(scaCheckbox.checked).toBeTruthy();
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeTruthy();
-            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toEqual(maxPenalty);
-            expect(comp.recreateBuildPlans).toBeTruthy();
-            expect(comp.updateTemplate).toBeTruthy();
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(50);
+
+            // Switch to another programming language not supporting sca
+            const languageInput = fixture.nativeElement.querySelector('#field_programmingLanguage');
+            languageInput.value = ProgrammingLanguage.HASKELL;
+            languageInput.dispatchEvent(new Event('change'));
+            fixture.detectChanges();
+            tick();
+            scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
+
+            expect(scaCheckbox).toBeFalsy();
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalsy();
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
+            expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.HASKELL);
         }));
+    });
+
+    describe('import with static code analysis', () => {
+        let route: ActivatedRoute;
+
+        beforeEach(() => {
+            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
+            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(javaFeatures);
+
+            route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'import' } as UrlSegment]);
+        });
+
+        it.each([
+            [true, 80],
+            [false, undefined],
+        ])(
+            'Should activate recreate build plans and update template when sca changes',
+            fakeAsync((scaActivatedOriginal: boolean, maxPenalty: number | undefined) => {
+                const newMaxPenalty = 50;
+                const programmingExercise = new ProgrammingExercise(undefined, undefined);
+                programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+                programmingExercise.staticCodeAnalysisEnabled = scaActivatedOriginal;
+                programmingExercise.maxStaticCodeAnalysisPenalty = maxPenalty;
+                route.data = of({ programmingExercise });
+                comp.ngOnInit();
+                fixture.detectChanges();
+                tick();
+
+                let scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
+                let maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
+                const recreateBuildPlanCheckbox = fixture.nativeElement.querySelector('#field_recreateBuildPlans');
+                const updateTemplateCheckbox = fixture.nativeElement.querySelector('#field_updateTemplateFiles');
+
+                expect(comp.isImport).toBeTruthy();
+                expect(comp.originalStaticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
+                expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(maxPenalty);
+                expect(scaCheckbox.checked).toBe(scaActivatedOriginal);
+                expect(!!maxPenaltyInput).toBe(scaActivatedOriginal);
+                expect(recreateBuildPlanCheckbox.checked).toBeFalsy();
+                expect(updateTemplateCheckbox.checked).toBeFalsy();
+                expect(comp.programmingExercise).toEqual(programmingExercise);
+                expect(courseService.find).toHaveBeenCalledWith(courseId);
+
+                // Activate SCA and set a max penalty
+                scaCheckbox.click();
+                scaCheckbox.dispatchEvent(new Event('input'));
+                fixture.detectChanges();
+                tick();
+                scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
+
+                // SCA penalty field disappears or appears after the sca checkbox click
+                maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
+                if (scaActivatedOriginal) {
+                    expect(maxPenaltyInput).toBeFalsy();
+                } else {
+                    maxPenaltyInput.value = newMaxPenalty;
+                    maxPenaltyInput.dispatchEvent(new Event('input'));
+                    fixture.detectChanges();
+                    tick();
+                }
+
+                // Recreate build plan and template update should be automatically selected
+                expect(scaCheckbox.checked).toBe(!scaActivatedOriginal);
+                expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(!scaActivatedOriginal);
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toEqual(scaActivatedOriginal ? undefined : newMaxPenalty);
+                expect(comp.recreateBuildPlans).toBeTruthy();
+                expect(comp.updateTemplate).toBeTruthy();
+
+                // Deactivate recreation of build plans
+                recreateBuildPlanCheckbox.click();
+                recreateBuildPlanCheckbox.dispatchEvent(new Event('input'));
+                fixture.detectChanges();
+                tick();
+
+                // SCA should revert to the state of the original exercise, maxPenalty will revert to undefined
+                expect(comp.programmingExercise.staticCodeAnalysisEnabled).toEqual(comp.originalStaticCodeAnalysisEnabled);
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
+            }),
+        );
     });
 });
