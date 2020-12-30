@@ -61,7 +61,7 @@
                         </div>
                     </ng-container>
                 </div>
-                <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise"> </jhi-programming-exercise-plans-and-repositories-preview>
+                <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise"></jhi-programming-exercise-plans-and-repositories-preview>
                 <div *ngIf="!isExamMode" class="form-group-narrow position-relative">
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories">Categories</label>
@@ -146,7 +146,7 @@
                         </label>
                         <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.timelineTooltip"></jhi-help-icon>
                     </div>
-                    <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise" [isExamMode]="isExamMode"> </jhi-programming-exercise-lifecycle>
+                    <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise" [isExamMode]="isExamMode"></jhi-programming-exercise-lifecycle>
                 </div>
                 <div class="row">
                     <div class="col">
@@ -327,7 +327,7 @@
                 </div>
                 <div class="form-group-narrow">
                     <div class="form-check">
-                        <label class="form-check-label" for="field_allowOfflineIde">
+                        <label [class]="!validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOfflineIde">
                             <input
                                 class="form-check-input"
                                 type="checkbox"
@@ -336,13 +336,20 @@
                                 [(ngModel)]="programmingExercise.allowOfflineIde"
                                 checked
                             />
-                            <span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde">Allow Offline IDE</span>
+                            <span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title">Allow Offline IDE</span>
+                            <fa-icon
+                                *ngIf="!validIdeSelection()"
+                                [icon]="'question-circle'"
+                                class="text-danger"
+                                [placement]="'top'"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.allowOfflineIde.alert' | translate }}"
+                            ></fa-icon>
                         </label>
                     </div>
                 </div>
                 <div class="form-group-narrow">
                     <div class="form-check">
-                        <label class="form-check-label" for="field_allowOnlineEditor">
+                        <label [class]="!validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineEditor">
                             <input
                                 class="form-check-input"
                                 type="checkbox"
@@ -351,7 +358,14 @@
                                 [(ngModel)]="programmingExercise.allowOnlineEditor"
                                 checked
                             />
-                            <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span>
+                            <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title">Allow Online Editor</span>
+                            <fa-icon
+                                *ngIf="!validIdeSelection()"
+                                [icon]="'question-circle'"
+                                class="text-danger"
+                                [placement]="'top'"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineEditor.alert' | translate }}"
+                            ></fa-icon>
                         </label>
                     </div>
                 </div>
@@ -439,7 +453,7 @@
                 <jhi-button
                     id="save-entity"
                     [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-                    [disabled]="editForm.form.invalid"
+                    [disabled]="editForm.form.invalid || !validIdeSelection()"
                     [isLoading]="isSaving"
                     [icon]="'save'"
                     [title]="submitButtonTitle"

@@ -116,13 +116,13 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
-        String buildPlanId = participation.getBuildPlanId();
-        URL repositoryUrl = participation.getRepositoryUrlAsUrl();
-        String planProject = getProjectKeyFromBuildPlanId(buildPlanId);
-        String planKey = participation.getBuildPlanId();
-        updatePlanRepository(planProject, planKey, ASSIGNMENT_REPO_NAME, urlService.getProjectKeyFromUrl(repositoryUrl), repositoryUrl.toString(),
-                participation.getProgrammingExercise().getTemplateRepositoryUrl(), Optional.empty());
-        enablePlan(planProject, planKey);
+        final var buildPlanId = participation.getBuildPlanId();
+        final var repositoryUrl = participation.getRepositoryUrlAsUrl();
+        final var projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
+        final var planKey = participation.getBuildPlanId();
+        final var repoProjectName = urlService.getProjectKeyFromUrl(repositoryUrl);
+        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, Optional.empty());
+        enablePlan(projectKey, planKey);
     }
 
     @Override
@@ -486,12 +486,11 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String bambooProject, String buildPlanKey, String bambooRepositoryName, String repoProjectName, String repoUrl, String templateRepositoryUrl,
+    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
         try {
-            final var repositoryName = versionControlService.get().getRepositoryName(new URL(repoUrl));
-            continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, buildPlanKey, bambooRepositoryName, repoProjectName, repositoryName,
-                    optionalTriggeredByRepositories);
+            final var vcsRepoName = versionControlService.get().getRepositoryName(new URL(newRepoUrl));
+            continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, optionalTriggeredByRepositories);
         }
         catch (MalformedURLException e) {
             throw new BambooException(e.getMessage(), e);

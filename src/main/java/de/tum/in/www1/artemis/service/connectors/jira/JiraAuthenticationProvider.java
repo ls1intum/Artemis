@@ -165,7 +165,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             if (!user.getActivated()) {
                 userService.activateUser(user);
             }
-            return userService.save(user);
+            return userService.saveUser(user);
         }
         else {
             throw new InternalAuthenticationServiceException("JIRA Authentication failed for user " + username);

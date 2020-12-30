@@ -5,7 +5,8 @@ import { Observable } from 'rxjs';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { map } from 'rxjs/operators';
-import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-progress-dtos.model';
+import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
+import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 
 type EntityResponseType = HttpResponse<LearningGoal>;
 type EntityArrayResponseType = HttpResponse<LearningGoal[]>;
@@ -23,7 +24,11 @@ export class LearningGoalService {
     }
 
     getProgress(learningGoalId: number, courseId: number) {
-        return this.httpClient.get<LearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/progress`, { observe: 'response' });
+        return this.httpClient.get<IndividualLearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/individual-progress`, { observe: 'response' });
+    }
+
+    getCourseProgress(learningGoalId: number, courseId: number) {
+        return this.httpClient.get<CourseLearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/course-progress`, { observe: 'response' });
     }
 
     findById(learningGoalId: number, courseId: number) {

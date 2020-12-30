@@ -197,6 +197,12 @@ public class Team extends AbstractAuditingEntity implements Participant {
     }
 
     @Override
+    @JsonIgnore
+    public Set<User> getParticipants() {
+        return getStudents();
+    }
+
+    @Override
     public String toString() {
         return "Team{" + "id=" + getId() + ", name='" + getName() + "'" + ", shortName='" + getShortName() + "'" + ", image='" + getImage() + "'" + "}";
     }
