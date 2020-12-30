@@ -42,7 +42,16 @@ import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { User } from 'app/core/user/user.model';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -52,20 +61,64 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     ace.acequire('ace/ext/modelist.js');
     let comp: ExerciseAssessmentDashboardComponent;
     let fixture: ComponentFixture<ExerciseAssessmentDashboardComponent>;
+
     let modelingSubmissionService: ModelingSubmissionService;
     let modelingSubmissionStubWithAssessment: SinonStub;
     let modelingSubmissionStubWithoutAssessment: SinonStub;
+
+    let textSubmissionService: TextSubmissionService;
+    let textSubmissionStubWithAssessment: SinonStub;
+    let textSubmissionStubWithoutAssessment: SinonStub;
+
+    let fileUploadSubmissionService: FileUploadSubmissionService;
+    let fileUploadSubmissionStubWithAssessment: SinonStub;
+    let fileUploadSubmissionStubWithoutAssessment: SinonStub;
+
+    let programmingSubmissionService: ProgrammingSubmissionService;
+    let programmingSubmissionStubWithAssessment: SinonStub;
+    let programmingSubmissionStubWithoutAssessment: SinonStub;
+
+    let exerciseService: ExerciseService;
+    let exerciseServiceGetForTutorsStub: SinonStub;
+    let exerciseServiceGetStatsForTutorsStub: SinonStub;
+
     let guidedTourService: GuidedTourService;
     const result1 = { id: 40 };
     const result2 = { id: 50 };
-    const result3 = { id: 60, completionDate: moment('2019-06-17T09:30:17.761+02:00'), AssessmentType: 'MANUAL' };
     const exam = { id: 90, numberOfCorrectionRoundsInExam: 2 };
     const exerciseGroup = { id: 80, exam: exam };
-    const exercise = { id: 20, exerciseGroup: exerciseGroup, type: ExerciseType.MODELING, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as ModelingExercise;
-    const submission = { id: 30 } as ModelingSubmission;
-    const doneSubmission = { id: 99, latestResult: result1, results: [result1] };
+    const programmingExercise = {
+        id: 20,
+        exerciseGroup: exerciseGroup,
+        type: ExerciseType.PROGRAMMING,
+        tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+    } as ProgrammingExercise;
+    const modelingExercise = {
+        id: 20,
+        exerciseGroup: exerciseGroup,
+        type: ExerciseType.MODELING,
+        tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+    } as ModelingExercise;
+    const textExercise = { id: 20, exerciseGroup: exerciseGroup, type: ExerciseType.TEXT, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as TextExercise;
+    const fileUploadExercise = {
+        id: 20,
+        exerciseGroup: exerciseGroup,
+        type: ExerciseType.FILE_UPLOAD,
+        tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+    } as FileUploadExercise;
+
     const participation = { id: 70, submissions: [] };
-    const submissionAssessed = { id: 30, results: [result1, result2], participation: participation } as ModelingSubmission;
+
+    const modelingSubmission = { id: 30 } as ModelingSubmission;
+    const fileUploadSubmission = { id: 30 } as FileUploadSubmission;
+    const textSubmission = { id: 30 } as TextSubmission;
+    const programmingSubmission = { id: 30 } as ProgrammingSubmission;
+
+    const modelingSubmissionAssessed = { id: 30, results: [result1, result2], participation: participation } as ModelingSubmission;
+    const fileUploadSubmissionAssessed = { id: 30, results: [result1, result2], participation: participation } as FileUploadSubmission;
+    const textSubmissionAssessed = { id: 30, results: [result1, result2], participation: participation } as TextSubmission;
+    const programmingSubmissionAssessed = { id: 30, results: [result1, result2], participation: participation } as ProgrammingSubmission;
+
     const numberOfAssessmentsOfCorrectionRounds = [
         { inTime: 1, late: 1 },
         { inTime: 8, late: 0 },
@@ -76,6 +129,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         numberOfAssessmentsOfCorrectionRounds: numberOfAssessmentsOfCorrectionRounds,
     } as StatsForDashboard;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
+    const router = new MockRouter();
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -106,30 +160,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 JhiLanguageHelper,
                 DeviceDetectorService,
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
-                { provide: Router, useClass: MockRouter },
+                { provide: Router, useValue: router },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                {
-                    provide: ExerciseService,
-                    useValue: {
-                        getForTutors() {
-                            return {
-                                subscribe: (fn: (value: any) => void) =>
-                                    fn({
-                                        body: exercise,
-                                    }),
-                            };
-                        },
-                        getStatsForTutors() {
-                            return {
-                                subscribe: (fn: (value: any) => void) =>
-                                    fn({
-                                        body: stats,
-                                    }),
-                            };
-                        },
-                    },
-                },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -139,31 +172,74 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 comp = fixture.componentInstance;
 
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
+                textSubmissionService = TestBed.inject(TextSubmissionService);
+                fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
+                exerciseService = TestBed.inject(ExerciseService);
+                programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
+
+                exerciseServiceGetForTutorsStub = stub(exerciseService, 'getForTutors');
+                exerciseServiceGetStatsForTutorsStub = stub(exerciseService, 'getStatsForTutors');
+
+                exerciseServiceGetForTutorsStub.returns(of(new HttpResponse({ body: modelingExercise, headers: new HttpHeaders() })));
+                exerciseServiceGetStatsForTutorsStub.returns(of(new HttpResponse({ body: stats, headers: new HttpHeaders() })));
+
                 guidedTourService = TestBed.inject(GuidedTourService);
 
-                comp.exerciseId = exercise.id!;
+                comp.exerciseId = modelingExercise.id!;
 
                 modelingSubmissionStubWithoutAssessment = stub(modelingSubmissionService, 'getModelingSubmissionForExerciseWithoutAssessment');
                 modelingSubmissionStubWithAssessment = stub(modelingSubmissionService, 'getModelingSubmissionsForExercise');
+
+                textSubmissionStubWithoutAssessment = stub(textSubmissionService, 'getTextSubmissionForExerciseWithoutAssessment');
+                textSubmissionStubWithAssessment = stub(textSubmissionService, 'getTextSubmissionsForExercise');
+
+                fileUploadSubmissionStubWithAssessment = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExercise');
+                fileUploadSubmissionStubWithoutAssessment = stub(fileUploadSubmissionService, 'getFileUploadSubmissionForExerciseWithoutAssessment');
+
+                programmingSubmissionStubWithoutAssessment = stub(programmingSubmissionService, 'getProgrammingSubmissionForExerciseWithoutAssessment');
+                programmingSubmissionStubWithAssessment = stub(programmingSubmissionService, 'getProgrammingSubmissionsForExercise');
+
+                textSubmissionStubWithoutAssessment.returns(of(textSubmission));
+                textSubmissionStubWithAssessment.returns(of(textSubmissionAssessed));
+
+                fileUploadSubmissionStubWithAssessment.returns(of(fileUploadSubmissionAssessed));
+                fileUploadSubmissionStubWithoutAssessment.returns(of(fileUploadSubmission));
+
+                programmingSubmissionStubWithAssessment.returns(of(programmingSubmissionAssessed));
+                programmingSubmissionStubWithoutAssessment.returns(of(programmingSubmission));
+
+                modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [modelingSubmissionAssessed], headers: new HttpHeaders() })));
+                modelingSubmissionStubWithoutAssessment.returns(of(modelingSubmission));
             });
     });
 
     afterEach(() => {
         modelingSubmissionStubWithoutAssessment.restore();
         modelingSubmissionStubWithAssessment.restore();
+
+        textSubmissionStubWithoutAssessment.restore();
+        textSubmissionStubWithAssessment.restore();
+
+        fileUploadSubmissionStubWithAssessment.restore();
+        fileUploadSubmissionStubWithoutAssessment.restore();
+
+        programmingSubmissionStubWithAssessment.restore();
+        programmingSubmissionStubWithoutAssessment.restore();
+
+        exerciseServiceGetForTutorsStub.restore();
+        exerciseServiceGetStatsForTutorsStub.restore();
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
         const guidedTourMapping = {} as GuidedTourMapping;
         spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(true);
         guidedTourService.guidedTourMapping = guidedTourMapping;
-        modelingSubmissionStubWithoutAssessment.returns(of(submission));
         modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 
         comp.loadAll();
 
-        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(exercise.id);
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).to.equal(submission);
+        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(modelingExercise.id);
+        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).to.equal(modelingSubmission);
         expect(comp.unassessedSubmissionByCorrectionRound?.get(1)?.latestResult).to.equal(undefined);
         expect(comp.submissionLockLimitReached).to.be.false;
         expect(comp.submissionsByCorrectionRound?.get(1)!.length).to.equal(0);
@@ -175,19 +251,18 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.loadAll();
 
-        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(exercise.id);
+        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(modelingExercise.id);
         expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).to.be.undefined;
         expect(comp.submissionLockLimitReached).to.be.true;
         expect(comp.submissionsByCorrectionRound?.get(1)!.length).to.equal(0);
     });
 
     it('should have correct percentages calculated', () => {
-        modelingSubmissionStubWithoutAssessment.returns(of(submission));
         modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 
         comp.loadAll();
 
-        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(exercise.id);
+        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(modelingExercise.id);
         expect(comp.numberOfAssessmentsOfCorrectionRounds[0].inTime).to.equal(1);
         expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).to.equal(8);
         expect(comp.totalAssessmentPercentage.inTime).to.equal(75);
@@ -196,20 +271,15 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should  set assessed Submission and latest result', () => {
-        modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [submissionAssessed], headers: new HttpHeaders() })));
-        modelingSubmissionStubWithoutAssessment.returns(of(submission));
-
         comp.loadAll();
 
         expect(modelingSubmissionStubWithoutAssessment).to.have.been.called;
-        expect(comp.submissionsByCorrectionRound?.get(1)![0]).to.equal(submissionAssessed);
+        expect(comp.submissionsByCorrectionRound?.get(1)![0]).to.equal(modelingSubmissionAssessed);
         expect(comp.submissionsByCorrectionRound?.get(1)![0]?.participation!.submissions![0]).to.equal(comp.submissionsByCorrectionRound?.get(1)![0]);
         expect(comp.submissionsByCorrectionRound?.get(1)![0]?.latestResult).to.equal(result2);
     });
 
     it('should set exam and stats properties', () => {
-        modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [submissionAssessed], headers: new HttpHeaders() })));
-        modelingSubmissionStubWithoutAssessment.returns(of(submission));
         expect(comp.exam).to.be.undefined;
 
         comp.loadAll();
@@ -221,22 +291,43 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should calculateStatus DRAFT', () => {
-        modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [submissionAssessed], headers: new HttpHeaders() })));
-        modelingSubmissionStubWithoutAssessment.returns(of(submission));
-        comp.loadAll();
-        expect(submission.latestResult).to.be.undefined;
-        expect(comp.calculateStatus(submission)).to.be.equal('DRAFT');
+        expect(modelingSubmission.latestResult).to.be.undefined;
+        expect(comp.calculateStatus(modelingSubmission)).to.be.equal('DRAFT');
     });
 
-    it('should calculateStatus DONE', () => {
-        modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [submissionAssessed], headers: new HttpHeaders() })));
-        modelingSubmissionStubWithoutAssessment.returns(of(submission));
-        comp.loadAll();
-        console.log(submission);
-        submission.results = [result3];
-        submission.latestResult = result3;
-        console.log(submission);
-        // TODO fix completiondate
-        expect(comp.calculateStatus(submission)).to.be.equal('DONE');
+    describe('test calls for all exercise types', () => {
+        it('fileuploadSubmission', () => {
+            modelingSubmissionStubWithoutAssessment.returns(throwError(lockLimitErrorResponse));
+            modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
+
+            exerciseServiceGetForTutorsStub.returns(of(new HttpResponse({ body: fileUploadExercise, headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            expect(fileUploadSubmissionStubWithAssessment).to.have.been.called;
+            expect(fileUploadSubmissionStubWithoutAssessment).to.have.been.called;
+        });
+
+        it('textSubmission', () => {
+            modelingSubmissionStubWithoutAssessment.returns(throwError(lockLimitErrorResponse));
+
+            exerciseServiceGetForTutorsStub.returns(of(new HttpResponse({ body: textExercise, headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            expect(textSubmissionStubWithoutAssessment).to.have.been.called;
+            expect(textSubmissionStubWithAssessment).to.have.been.called;
+        });
+
+        it('programmingSubmission', () => {
+            modelingSubmissionStubWithoutAssessment.returns(throwError(lockLimitErrorResponse));
+
+            exerciseServiceGetForTutorsStub.returns(of(new HttpResponse({ body: programmingExercise, headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            expect(programmingSubmissionStubWithAssessment).to.have.been.called;
+            expect(programmingSubmissionStubWithoutAssessment).to.have.been.called;
+        });
     });
 });
