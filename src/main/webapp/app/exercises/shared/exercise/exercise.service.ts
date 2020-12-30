@@ -12,6 +12,7 @@ import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { LtiConfiguration } from 'app/entities/lti-configuration.model';
+import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exercise-statistics-dto.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -310,6 +311,24 @@ export class ExerciseService {
      */
     getStatsForInstructors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
         return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-instructor-dashboard`, { observe: 'response' });
+    }
+
+    /**
+     * Retrieves useful statistics for course exercises
+     *
+     * Gets the {@link CourseExerciseStatisticsDTO} for each exercise proved in <code>exerciseIds</code>. Either the results of the last submission or the results of the last rated
+     * submission are considered for a student/team, depending on the value of <code>onlyConsiderRatedResults</code>
+     * @param onlyConsiderRatedResults - either the results of the last submission or the results of the last rated submission are considered
+     * @param exerciseIds - list of exercise ids (must be belong to the same course)
+     */
+    getCourseExerciseStatistics(exerciseIds: number[], onlyConsiderRatedResults: boolean): Observable<HttpResponse<CourseExerciseStatisticsDTO[]>> {
+        let params = new HttpParams();
+        params = params.append('exerciseIds', exerciseIds.join(', '));
+        params = params.append('onlyConsiderRatedResults', onlyConsiderRatedResults.toString());
+        return this.http.get<CourseExerciseStatisticsDTO[]>(`${this.resourceUrl}/exercises/course-exercise-statistics`, {
+            params,
+            observe: 'response',
+        });
     }
 }
 

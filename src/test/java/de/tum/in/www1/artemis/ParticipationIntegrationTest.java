@@ -284,10 +284,11 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void resumeProgrammingExerciseParticipation() throws Exception {
-        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise, database.getUserByLogin("student1"));
         participationRepo.save(participation);
-        request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/resume-programming-participation", null,
-                ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
+        var updatedParticipation = request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/resume-programming-participation",
+                null, ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
+        assertThat(updatedParticipation.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
     }
 
     @Test

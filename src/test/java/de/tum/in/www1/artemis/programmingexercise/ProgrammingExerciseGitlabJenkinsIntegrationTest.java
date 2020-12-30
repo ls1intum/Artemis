@@ -112,22 +112,31 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseTestService.createProgrammingExercise_noTutors_created();
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(ExerciseMode.class)
     @WithMockUser(username = studentLogin, roles = "USER")
-    public void startProgrammingExercise_student_correctInitializationState() throws Exception {
-        programmingExerciseTestService.startProgrammingExercise_student_correctInitializationState();
+    public void startProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
+        programmingExerciseTestService.startProgrammingExercise_correctInitializationState(exerciseMode);
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExerciseMode.class)
+    @WithMockUser(username = studentLogin, roles = "USER")
+    public void resumeProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
+        programmingExerciseTestService.resumeProgrammingExercise_correctInitializationState(exerciseMode);
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExerciseMode.class)
+    @WithMockUser(username = studentLogin, roles = "USER")
+    public void resumeProgrammingExercise_doesNotExist(ExerciseMode exerciseMode) throws Exception {
+        programmingExerciseTestService.resumeProgrammingExercise_doesNotExist(exerciseMode);
     }
 
     @Test
     @WithMockUser(username = studentLogin, roles = "USER")
     public void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
         programmingExerciseTestService.startProgrammingExerciseStudentRetrieveEmptyArtifactPage();
-    }
-
-    @Test
-    @WithMockUser(username = studentLogin, roles = "USER")
-    public void startProgrammingExercise_team_correctInitializationState() throws Exception {
-        programmingExerciseTestService.startProgrammingExercise_team_correctInitializationState();
     }
 
     @Test

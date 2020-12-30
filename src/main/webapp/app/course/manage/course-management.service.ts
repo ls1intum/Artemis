@@ -267,6 +267,7 @@ export class CourseManagementService {
                             latestResult.participation = submission.participation;
                             submission.participation!.results = [latestResult!];
                             setLatestSubmissionResult(submission, latestResult);
+
                         }
                     }),
                 ),
