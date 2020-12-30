@@ -60,8 +60,8 @@ describe('Plagiarism Split View Component', () => {
             exercise: { currentValue: textExercise } as SimpleChange,
         });
 
-        expect(comp.isTextExercise).toEqual(true);
-        expect(comp.isProgrammingOrTextExercise).toEqual(false);
+        expect(comp.isProgrammingOrTextExercise).toEqual(true);
+        expect(comp.isModelingExercise).toEqual(false);
     });
 
     it('should subscribe to the split control subject', () => {
