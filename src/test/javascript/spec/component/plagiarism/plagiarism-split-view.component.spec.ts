@@ -52,8 +52,7 @@ describe('Plagiarism Split View Component', () => {
         });
 
         expect(comp.isModelingExercise).toEqual(true);
-        expect(comp.isTextExercise).toEqual(false);
-        expect(comp.isProgrammingExercise).toEqual(false);
+        expect(comp.isProgrammingOrTextExercise).toEqual(false);
     });
 
     it('checks type of text exercise', () => {
@@ -62,8 +61,7 @@ describe('Plagiarism Split View Component', () => {
         });
 
         expect(comp.isTextExercise).toEqual(true);
-        expect(comp.isProgrammingExercise).toEqual(false);
-        expect(comp.isModelingExercise).toEqual(false);
+        expect(comp.isProgrammingOrTextExercise).toEqual(false);
     });
 
     it('should subscribe to the split control subject', () => {
