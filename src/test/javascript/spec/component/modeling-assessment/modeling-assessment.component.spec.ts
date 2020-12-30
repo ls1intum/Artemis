@@ -12,6 +12,9 @@ import { MockModule } from 'ng-mocks';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { TranslatePipe } from '@ngx-translate/core';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -85,7 +88,7 @@ describe('ModelingAssessmentComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(FormsModule)],
-            declarations: [ModelingAssessmentComponent, ScoreDisplayComponent, ModelingExplanationEditorComponent],
+            declarations: [ModelingAssessmentComponent, ScoreDisplayComponent, ModelingExplanationEditorComponent, MockDirective(NgbTooltip), MockPipe(TranslatePipe)],
             schemas: [],
         })
             .compileComponents()
