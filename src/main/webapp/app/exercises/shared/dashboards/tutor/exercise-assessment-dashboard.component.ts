@@ -410,7 +410,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      * @param submission Submission which to check
      */
     calculateStatus(submission: Submission) {
-        const tmpResult = getLatestSubmissionResult(submission);
+        const tmpResult = submission.latestResult;
         if (tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!)) {
             return 'DONE';
         }

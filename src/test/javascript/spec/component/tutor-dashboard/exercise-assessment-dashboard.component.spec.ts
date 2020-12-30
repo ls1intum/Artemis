@@ -9,7 +9,7 @@ import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-ro
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-
+import * as moment from 'moment';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { of, throwError } from 'rxjs';
@@ -42,6 +42,7 @@ import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { User } from 'app/core/user/user.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -57,10 +58,12 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let guidedTourService: GuidedTourService;
     const result1 = { id: 40 };
     const result2 = { id: 50 };
+    const result3 = { id: 60, completionDate: moment('2019-06-17T09:30:17.761+02:00'), AssessmentType: 'MANUAL' };
     const exam = { id: 90, numberOfCorrectionRoundsInExam: 2 };
     const exerciseGroup = { id: 80, exam: exam };
     const exercise = { id: 20, exerciseGroup: exerciseGroup, type: ExerciseType.MODELING, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as ModelingExercise;
     const submission = { id: 30 } as ModelingSubmission;
+    const doneSubmission = { id: 99, latestResult: result1, results: [result1] };
     const participation = { id: 70, submissions: [] };
     const submissionAssessed = { id: 30, results: [result1, result2], participation: participation } as ModelingSubmission;
     const numberOfAssessmentsOfCorrectionRounds = [
@@ -215,5 +218,25 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.exam).to.equal(exam);
         expect(comp.exam?.numberOfCorrectionRoundsInExam).to.equal(numberOfAssessmentsOfCorrectionRounds.length);
         expect(comp.numberOfAssessmentsOfCorrectionRounds).to.equal(numberOfAssessmentsOfCorrectionRounds);
+    });
+
+    it('should calculateStatus DRAFT', () => {
+        modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [submissionAssessed], headers: new HttpHeaders() })));
+        modelingSubmissionStubWithoutAssessment.returns(of(submission));
+        comp.loadAll();
+        expect(submission.latestResult).to.be.undefined;
+        expect(comp.calculateStatus(submission)).to.be.equal('DRAFT');
+    });
+
+    it('should calculateStatus DONE', () => {
+        modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [submissionAssessed], headers: new HttpHeaders() })));
+        modelingSubmissionStubWithoutAssessment.returns(of(submission));
+        comp.loadAll();
+        console.log(submission);
+        submission.results = [result3];
+        submission.latestResult = result3;
+        console.log(submission);
+        // TODO fix completiondate
+        expect(comp.calculateStatus(submission)).to.be.equal('DONE');
     });
 });
