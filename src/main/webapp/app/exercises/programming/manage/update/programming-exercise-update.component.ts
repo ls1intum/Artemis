@@ -267,7 +267,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             });
             this.isExamMode = false;
         }
-        this.programmingExercise.id = undefined;
         this.programmingExercise.dueDate = undefined;
         this.programmingExercise.projectKey = undefined;
         this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
