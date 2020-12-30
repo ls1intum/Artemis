@@ -12,7 +12,6 @@ import javax.persistence.EntityManager;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -453,21 +452,11 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
         assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(3.0);
 
-        boolean foundProgressWithCorrectNumbers = false;
-        for (CourseLearningGoalProgress.CourseLectureUnitProgress courseLectureUnitProgress : courseLearningGoalProgress.progressInLectureUnits) {
-            if (courseLectureUnitProgress.participationRate.equals(80.0) && courseLectureUnitProgress.noOfParticipants.equals(4)
-                    && courseLectureUnitProgress.averageScoreAchievedByStudentInLectureUnit.equals(30.0)) {
-                foundProgressWithCorrectNumbers = true;
-                break;
-            }
-        }
-
-        assertThat(foundProgressWithCorrectNumbers).isTrue();
+        assertThatSpecificCourseLectureUnitProgressExists(courseLearningGoalProgress, 80.0, 4, 30);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    @RepeatedTest(100)
     public void getLearningGoalCourseProgressIndividualTest_asInstructorOne() throws Exception {
         cleanUpInitialParticipations();
         User student1 = userRepository.findOneByLogin("student1").get();
@@ -493,10 +482,15 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
         assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(3.0);
 
+        assertThatSpecificCourseLectureUnitProgressExists(courseLearningGoalProgress, 20.0, 4, 30.0);
+    }
+
+    public void assertThatSpecificCourseLectureUnitProgressExists(CourseLearningGoalProgress courseLearningGoalProgress, double expectedParticipationRate,
+            int expectedNoOfParticipants, double expectedAverageScore) {
         boolean foundProgressWithCorrectNumbers = false;
         for (CourseLearningGoalProgress.CourseLectureUnitProgress courseLectureUnitProgress : courseLearningGoalProgress.progressInLectureUnits) {
-            if (courseLectureUnitProgress.participationRate.equals(20.0) && courseLectureUnitProgress.noOfParticipants.equals(4)
-                    && courseLectureUnitProgress.averageScoreAchievedByStudentInLectureUnit.equals(30.0)) {
+            if (courseLectureUnitProgress.participationRate.equals(expectedParticipationRate) && courseLectureUnitProgress.noOfParticipants.equals(expectedNoOfParticipants)
+                    && courseLectureUnitProgress.averageScoreAchievedByStudentInLectureUnit.equals(expectedAverageScore)) {
                 foundProgressWithCorrectNumbers = true;
                 break;
             }
