@@ -479,7 +479,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void resumeProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
-        var participation = createStudentParticipation(exerciseMode);
+        var participation = createStudentParticipationWithSubmission(exerciseMode);
 
         // These will be updated when the participation is resumed.
         participation.setInitializationState(InitializationState.INACTIVE);
@@ -499,7 +499,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
-        var participation = createStudentParticipation(exerciseMode);
+        var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
 
         mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
@@ -529,7 +529,7 @@ public class ProgrammingExerciseTestService {
     }
 
     public void resumeProgrammingExerciseByTriggeringBuild_correctInitializationState(ExerciseMode exerciseMode, SubmissionType submissionType) throws Exception {
-        var participation = createStudentParticipation(exerciseMode);
+        var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
 
         // Mocks ProgrammingSubmissionResource::triggerBuild
@@ -549,7 +549,7 @@ public class ProgrammingExerciseTestService {
     }
 
     public void resumeProgrammingExerciseByTriggeringFailedBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
-        var participation = createStudentParticipation(exerciseMode);
+        var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
         mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
 
@@ -568,8 +568,8 @@ public class ProgrammingExerciseTestService {
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
     }
 
-    private ProgrammingExerciseStudentParticipation createStudentParticipation(ExerciseMode exerciseMode) throws Exception {
-        final Course course = setupCourseWithProgrammingExercise(exerciseMode);
+    private ProgrammingExerciseStudentParticipation createStudentParticipationWithSubmission(ExerciseMode exerciseMode) throws Exception {
+        setupCourseWithProgrammingExercise(exerciseMode);
         User user = userRepo.findOneByLogin(ProgrammingExerciseTestService.studentLogin).orElseThrow();
 
         ProgrammingExerciseStudentParticipation participation;
@@ -584,6 +584,14 @@ public class ProgrammingExerciseTestService {
             // prepare for the mock scenario, so that the empty commit will work properly
             participation.setRepositoryUrl(getMockFileRepositoryUrl(studentRepo).getURL().toString());
         }
+
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
+        submission.setSubmitted(true);
+        submission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
+        submission.setType(SubmissionType.MANUAL);
+        database.addSubmission(participation, submission);
+
         return participation;
     }
 
