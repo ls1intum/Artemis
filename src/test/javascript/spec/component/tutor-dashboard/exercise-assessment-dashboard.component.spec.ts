@@ -57,17 +57,20 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let guidedTourService: GuidedTourService;
     const result1 = { id: 40 };
     const result2 = { id: 50 };
-    const exercise = { id: 20, type: ExerciseType.MODELING, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as ModelingExercise;
+    const exam = { id: 90, numberOfCorrectionRoundsInExam: 2 };
+    const exerciseGroup = { id: 80, exam: exam };
+    const exercise = { id: 20, exerciseGroup: exerciseGroup, type: ExerciseType.MODELING, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as ModelingExercise;
     const submission = { id: 30 } as ModelingSubmission;
     const participation = { id: 70, submissions: [] };
     const submissionAssessed = { id: 30, results: [result1, result2], participation: participation } as ModelingSubmission;
+    const numberOfAssessmentsOfCorrectionRounds = [
+        { inTime: 1, late: 1 },
+        { inTime: 8, late: 0 },
+    ];
     const stats = {
         numberOfSubmissions: { inTime: 12, late: 5 },
         totalNumberOfAssessments: { inTime: 9, late: 1 },
-        numberOfAssessmentsOfCorrectionRounds: [
-            { inTime: 1, late: 1 },
-            { inTime: 8, late: 0 },
-        ],
+        numberOfAssessmentsOfCorrectionRounds: numberOfAssessmentsOfCorrectionRounds,
     } as StatsForDashboard;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
 
@@ -198,5 +201,18 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.submissionsByCorrectionRound?.get(1)![0]).to.equal(submissionAssessed);
         expect(comp.submissionsByCorrectionRound?.get(1)![0]?.participation!.submissions![0]).to.equal(comp.submissionsByCorrectionRound?.get(1)![0]);
         expect(comp.submissionsByCorrectionRound?.get(1)![0]?.latestResult).to.equal(result2);
+    });
+
+    it('should set exam and stats properties', () => {
+        modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [submissionAssessed], headers: new HttpHeaders() })));
+        modelingSubmissionStubWithoutAssessment.returns(of(submission));
+        expect(comp.exam).to.be.undefined;
+
+        comp.loadAll();
+
+        expect(comp.exercise).to.not.be.undefined;
+        expect(comp.exam).to.equal(exam);
+        expect(comp.exam?.numberOfCorrectionRoundsInExam).to.equal(numberOfAssessmentsOfCorrectionRounds.length);
+        expect(comp.numberOfAssessmentsOfCorrectionRounds).to.equal(numberOfAssessmentsOfCorrectionRounds);
     });
 });
