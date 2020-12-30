@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
+import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
@@ -52,6 +53,8 @@ import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entiti
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Complaint } from 'app/entities/complaint.model';
+import { extractedErrorFiles } from '../../helpers/sample/build-logs';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -87,6 +90,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     const result2 = { id: 50 };
     const exam = { id: 90, numberOfCorrectionRoundsInExam: 2 };
     const exerciseGroup = { id: 80, exam: exam };
+    const exercise = {
+        id: 20,
+        exerciseGroup: exerciseGroup,
+        tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+    } as ProgrammingExercise;
     const programmingExercise = {
         id: 20,
         exerciseGroup: exerciseGroup,
@@ -119,6 +127,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     const textSubmissionAssessed = { id: 30, results: [result1, result2], participation: participation } as TextSubmission;
     const programmingSubmissionAssessed = { id: 30, results: [result1, result2], participation: participation } as ProgrammingSubmission;
 
+    const complaint = { id: 33, result: { id: 44, submission: textSubmission } } as Complaint;
+
     const numberOfAssessmentsOfCorrectionRounds = [
         { inTime: 1, late: 1 },
         { inTime: 8, late: 0 },
@@ -130,6 +140,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     } as StatsForDashboard;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
     const router = new MockRouter();
+    const navigateSpy = sinon.spy(router, 'navigate');
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -328,6 +339,42 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             expect(programmingSubmissionStubWithAssessment).to.have.been.called;
             expect(programmingSubmissionStubWithoutAssessment).to.have.been.called;
+        });
+    });
+
+    it('should viewComplaint', () => {
+        const openAssessmentEditor = stub(comp, 'openAssessmentEditor');
+        comp.viewComplaint(complaint);
+        expect(openAssessmentEditor).to.have.been.called;
+    });
+
+    it('should return asProgrammingExercise', () => {
+        const castedExercise = comp.asProgrammingExercise(exercise);
+        expect(castedExercise).to.be.equal(exercise as ProgrammingExercise);
+    });
+
+    describe('test navigate back', () => {
+        const courseId = 4;
+
+        it('should navigate back when not in exammode', () => {
+            comp.courseId = 4;
+            comp.back();
+            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/tutor-dashboard`]);
+        });
+        it('should navigate back in exammode and not testRun', () => {
+            comp.courseId = 4;
+            comp.isExamMode = true;
+            comp.isTestRun = true;
+            comp.exercise = exercise;
+            comp.back();
+            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/exams/${exercise!.exerciseGroup!.exam!.id}/test-runs/assess`]);
+        });
+        it('should navigate back in exammode and testRun', () => {
+            comp.courseId = 4;
+            comp.isExamMode = true;
+            comp.exercise = exercise;
+            comp.back();
+            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/exams/${exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
         });
     });
 });
