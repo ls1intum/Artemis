@@ -74,11 +74,11 @@ public class ProgrammingExerciseResultTestService {
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipationStaticCodeAnalysis;
 
     public void setup() {
-        database.addUsers(10, 2, 2);
         setupForProgrammingLanguage(ProgrammingLanguage.JAVA);
     }
 
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
+        database.addUsers(10, 2, 2);
         Course course = database.addCourseWithOneProgrammingExercise(false, programmingLanguage);
         programmingExercise = programmingExerciseRepository.findAll().get(0);
         programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, programmingLanguage);

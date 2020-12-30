@@ -73,10 +73,13 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseTestService.createProgrammingExercise_validExercise_bonusPointsIsNull();
     }
 
-    @Test
+    // TODO: Add template for Swift
+    @ParameterizedTest
+    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createProgrammingExercise_validExercise_withStaticCodeAnalysis() throws Exception {
-        programmingExerciseTestService.createProgrammingExercise_validExercise_withStaticCodeAnalysis();
+    public void createProgrammingExercise_validExercise_withStaticCodeAnalysis(ProgrammingLanguage language) throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_validExercise_withStaticCodeAnalysis(language,
+                programmingLanguageFeatureService.getProgrammingLanguageFeatures(language));
     }
 
     @Test

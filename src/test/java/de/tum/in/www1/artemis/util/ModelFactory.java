@@ -93,27 +93,45 @@ public class ModelFactory {
     }
 
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
+        return generateProgrammingExercise(releaseDate, dueDate, course, ProgrammingLanguage.JAVA);
+    }
+
+    public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course, ProgrammingLanguage programmingLanguage) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise = (ProgrammingExercise) populateExercise(programmingExercise, releaseDate, dueDate, null, course);
-        populateProgrammingExercise(programmingExercise);
+        populateProgrammingExercise(programmingExercise, programmingLanguage);
         return programmingExercise;
     }
 
     public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup) {
+        return generateProgrammingExerciseForExam(exerciseGroup, ProgrammingLanguage.JAVA);
+    }
+
+    public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup, ProgrammingLanguage programmingLanguage) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise = (ProgrammingExercise) populateExerciseForExam(programmingExercise, exerciseGroup);
-        populateProgrammingExercise(programmingExercise);
+        populateProgrammingExercise(programmingExercise, programmingLanguage);
         return programmingExercise;
     }
 
-    private static void populateProgrammingExercise(ProgrammingExercise programmingExercise) {
+    private static void populateProgrammingExercise(ProgrammingExercise programmingExercise, ProgrammingLanguage programmingLanguage) {
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        programmingExercise.setProjectType(ProjectType.ECLIPSE);
-        programmingExercise.setPackageName("de.test");
+        programmingExercise.setProgrammingLanguage(programmingLanguage);
+        if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            programmingExercise.setProjectType(ProjectType.ECLIPSE);
+        }
+        else {
+            programmingExercise.setProjectType(null);
+        }
+        if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+            programmingExercise.setPackageName("swiftTest");
+        }
+        else {
+            programmingExercise.setPackageName("de.test");
+        }
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
         String testRepoUrl = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUrl(testRepoUrl);

@@ -1612,8 +1612,13 @@ public class DatabaseUtilService {
         if (enableStaticCodeAnalysis) {
             programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
         }
-        // Note: package name not allowed for Swift, no separators are allowed
-        programmingExercise.setPackageName("de.test");
+        // Note: no separators are allowed for Swift package names
+        if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+            programmingExercise.setPackageName("swiftTest");
+        }
+        else {
+            programmingExercise.setPackageName("de.test");
+        }
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
@@ -1703,7 +1708,11 @@ public class DatabaseUtilService {
     }
 
     public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories() {
-        Course course = addCourseWithOneProgrammingExercise(true);
+        return addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage.JAVA);
+    }
+
+    public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) {
+        Course course = addCourseWithOneProgrammingExercise(true, programmingLanguage);
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
