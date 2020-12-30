@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Objects;
 
@@ -27,15 +25,6 @@ public class VcsRepositoryUrl {
 
     public URL getURL() {
         return this.url;
-    }
-
-    public URI getSshUri() throws URISyntaxException {
-        // ssh://git@bitbucket.ase.in.tum.de:7999/pgdp2021w07h02/pgdp2021w07h02-ga27yox.git
-        // TODO: use ssh-template-clone-url from yml file
-        var uri = url.toURI();
-        var newUri = new URI("ssh", "git", uri.getHost(), 7999, uri.getPath().replace("/scm", ""), null, uri.getFragment());
-        System.out.println("ssh uri: " + newUri);
-        return newUri;
     }
 
     @Override

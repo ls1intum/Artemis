@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -72,6 +73,9 @@ public class GitService {
 
     @Value("${artemis.version-control.ssh-password:#{null}}")
     private Optional<String> gitSshPrivateKeyPassphrase;
+
+    @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")
+    private Optional<String> sshUrlTemplate;
 
     @Value("${artemis.repo-clone-path}")
     private String repoClonePath;
@@ -194,9 +198,7 @@ public class GitService {
             public Map<String, List<String>> getMultiValuedOptions() {
                 return Collections.emptyMap();
             }
-        }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.get()))
-                // TODO: double check if the home directoy works like this
-                .setHomeDirectory(new java.io.File(System.getProperty("user.home"))).build(new JGitKeyCache());
+        }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.get())).setHomeDirectory(new java.io.File(System.getProperty("user.home"))).build(new JGitKeyCache());
         sshCallback = transport -> {
             SshTransport sshTransport = (SshTransport) transport;
             sshTransport.setSshSessionFactory(sshSessionFactory);
@@ -208,8 +210,19 @@ public class GitService {
         // password is optional and will only be applied if the ssh private key was encrypted using a password
     }
 
-    private String getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
-        return useSsh() ? vcsRepositoryUrl.getSshUri().toString() : vcsRepositoryUrl.getURL().toString();
+    private String getGitUriAsString(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
+        return useSsh() ? getSshUri(vcsRepositoryUrl).toString() : vcsRepositoryUrl.getURL().toString();
+    }
+
+    private URI getSshUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
+        URI templateUri = new URI(sshUrlTemplate.get());
+        // Example Bitbucket: ssh://git@bitbucket.ase.in.tum.de:7999/se2021w07h02/se2021w07h02-ga27yox.git
+        // Example Gitlab: ssh://git@gitlab.ase.in.tum.de:2222/se2021w07h02/se2021w07h02-ga27yox.git
+        var repositoryUri = vcsRepositoryUrl.getURL().toURI();
+        var newUri = new URI(templateUri.getScheme(), templateUri.getUserInfo(), templateUri.getHost(), templateUri.getPort(), repositoryUri.getPath().replace("/scm", ""), null,
+                repositoryUri.getFragment());
+        System.out.println("ssh uri: " + newUri);
+        return newUri;
     }
 
     /**
@@ -341,7 +354,7 @@ public class GitService {
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
-                Git result = Git.cloneRepository().setTransportConfigCallback(sshCallback).setURI(getGitUri(repoUrl)).setDirectory(localPath.toFile()).call();
+                Git result = Git.cloneRepository().setTransportConfigCallback(sshCallback).setURI(getGitUriAsString(repoUrl)).setDirectory(localPath.toFile()).call();
                 result.close();
             }
             catch (GitAPIException | RuntimeException | IOException | URISyntaxException e) {
@@ -443,7 +456,7 @@ public class GitService {
     public void pushSourceToTargetRepo(Repository sourceRepo, VcsRepositoryUrl targetRepoUrl) throws GitAPIException {
         Git git = new Git(sourceRepo);
         try {
-            git.remoteAdd().setName("target").setUri(new URIish(getGitUri(targetRepoUrl))).call();
+            git.remoteAdd().setName("target").setUri(new URIish(getGitUriAsString(targetRepoUrl))).call();
             log.debug("pushSourceToTargetRepo -> Push " + targetRepoUrl.getURL().toString());
             git.push().setRemote("target").setTransportConfigCallback(sshCallback).call();
             git.remoteRemove().setRemoteName("target").call();
@@ -774,7 +787,7 @@ public class GitService {
                 throw new IllegalStateException();
             }
         }
-        // This exception occurrs when there was no change to the repo and a commit is done, so it is ignored.
+        // This exception occurs when there was no change to the repo and a commit is done, so it is ignored.
         catch (JGitInternalException ex) {
             log.debug("Did not combine the repository {} as there were no changes to commit. Exception: {}", repo, ex.getMessage());
         }
@@ -802,39 +815,9 @@ public class GitService {
     }
 
     /**
-     * Deletes a local repository folder for a Participation (expected in default path).
-     *
-     * @param participation Participation Object.
-     * @throws IOException if the deletion of the repository failed.
-     */
-    public void deleteLocalRepository(ProgrammingExerciseParticipation participation) throws IOException {
-        deleteLocalRepository(participation, repoClonePath);
-    }
-
-    /**
-     * Deletes a local repository folder for a Participation.
-     *
-     * @param participation Participation Object.
-     * @param targetPath path where the repo is located on disk
-     * @throws IOException if the deletion of the repository failed.
-     */
-    public void deleteLocalRepository(ProgrammingExerciseParticipation participation, String targetPath) throws IOException {
-        Path repoPath = new java.io.File(targetPath + folderNameForRepositoryUrl(participation.getVcsRepositoryUrl())).toPath();
-        cachedRepositories.remove(repoPath);
-        if (Files.exists(repoPath)) {
-            FileUtils.deleteDirectory(repoPath.toFile());
-            log.debug("Deleted Repository at " + repoPath);
-        }
-        else {
-            log.info("Cannot delete local repository at " + repoPath + " because it does not exist!");
-        }
-    }
-
-    /**
      * Deletes a local repository folder for a repoUrl (expected in default path).
      *
      * @param repoUrl url of the repository.
-     * @throws IOException if the deletion of the repository failed.
      */
     public void deleteLocalRepository(VcsRepositoryUrl repoUrl) {
         deleteLocalRepository(repoUrl, repoClonePath);
@@ -845,7 +828,6 @@ public class GitService {
      *
      * @param repoUrl url of the repository.
      * @param targetPath path where the repo is located on disk
-     * @throws IOException if the deletion of the repository failed.
      */
     public void deleteLocalRepository(VcsRepositoryUrl repoUrl, String targetPath) {
         Path repoPath = new java.io.File(targetPath + folderNameForRepositoryUrl(repoUrl)).toPath();
@@ -923,7 +905,7 @@ public class GitService {
      * Stashes not submitted/committed changes of the repo.
      *
      * @param repo student repo of a participation in a programming exercise
-     * @throws GitAPIException
+     * @throws GitAPIException if the git operation does not work
      */
     public void stashChanges(Repository repo) throws GitAPIException {
         Git git = new Git(repo);
