@@ -854,10 +854,7 @@ public abstract class Exercise extends DomainObject {
     public boolean isZeroPointExercise() {
         boolean hasNormalPoints = Objects.requireNonNullElse(getMaxScore(), 0.0) > 0.0;
         boolean hasBonusPoints = Objects.requireNonNullElse(getBonusPoints(), 0.0) > 0.0;
-        if (!hasNormalPoints && !hasBonusPoints) {
-            return true;
-        }
-        return false;
+        return !hasNormalPoints && !hasBonusPoints;
     }
 
 }
