@@ -26,9 +26,16 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     resizeOptions: { initialWidth: string; maxWidth?: number };
     @Input()
     showHelpButton = true;
+    @Input()
+    withExplanation = false;
+    @Input()
+    explanation: string;
 
     @Output()
     private onModelChanged: EventEmitter<UMLModel> = new EventEmitter<UMLModel>();
+
+    @Output()
+    explanationChange = new EventEmitter();
 
     private apollonEditor?: ApollonEditor;
     private modelSubscription: number;
@@ -239,5 +246,11 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
         } else if (docElement.msFullscreenElement !== undefined) {
             return docElement.msFullscreenElement;
         }
+    }
+
+    // Emit explanation change when textarea input changes
+    onExplanationInput(newValue: string) {
+        this.explanationChange.emit(newValue);
+        this.explanation = newValue;
     }
 }
