@@ -154,13 +154,11 @@ public class Result extends DomainObject {
         if (maxScore == null) {
             return formatter.format(totalScore) + " points";
         }
-        else {
-            if (exercise != null && exercise.isZeroPointExercise()) {
-                totalScore = 0.0;
-                maxScore = 0.0;
-            }
-            return formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points";
+        if (exercise != null && exercise.isZeroPointExercise()) {
+            totalScore = 0.0;
+            maxScore = 0.0;
         }
+        return formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points";
     }
 
     public ZonedDateTime getCompletionDate() {
