@@ -42,52 +42,60 @@ public class ComplaintResponseService {
         this.authorizationCheckService = authorizationCheckService;
     }
 
-    /**
-     * Create a new complaint response and update the 'accepted' flag of the corresponding complaint.
-     *
-     * @param complaintResponse the complaint response to create
-     * @return the saved complaint response
-     */
     public ComplaintResponse createComplaintResponse(ComplaintResponse complaintResponse) {
         if (complaintResponse.getId() != null) {
             throw new BadRequestAlertException("A new complaint response cannot already have an id", ENTITY_NAME, "idexists");
         }
         if (complaintResponse.getComplaint() == null || complaintResponse.getComplaint().getId() == null) {
-            throw new BadRequestAlertException("A complaint response can be only associated to a complaint", ENTITY_NAME, "noresultid");
+            throw new BadRequestAlertException("A complaint response can be only associated to a complaint", ENTITY_NAME, "complaintnotconnected");
         }
-
         Long complaintId = complaintResponse.getComplaint().getId();
-
-        // Do not trust user input
         Optional<Complaint> originalComplaintOptional = complaintRepository.findByIdWithEagerAssessor(complaintId);
         if (originalComplaintOptional.isEmpty()) {
-            throw new BadRequestAlertException("The complaint you are referring to does not exist", ENTITY_NAME, "noresult");
+            throw new BadRequestAlertException("The complaint you are referring to does not exist", ENTITY_NAME, "complaintmissing");
         }
-
         Complaint originalComplaint = originalComplaintOptional.get();
-
         if (complaintResponseRepository.findByComplaint_Id(originalComplaint.getId()).isPresent()) {
             throw new BadRequestAlertException("The complaint you are referring to does already have a response", ENTITY_NAME, "complaintresponseexists");
         }
-
         Result originalResult = originalComplaint.getResult();
         User assessor = originalResult.getAssessor();
         User reviewer = this.userService.getUser();
-
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
         if (!isUserAuthorizedToRespondToComplaint(studentParticipation, originalComplaint, assessor, reviewer)) {
             throw new AccessForbiddenException("Insufficient permission for creating a complaint response");
         }
-
-        originalComplaint.setAccepted(complaintResponse.getComplaint().isAccepted());
-        originalComplaint = complaintRepository.save(originalComplaint);
-
-        complaintResponse.setSubmittedTime(ZonedDateTime.now());
+        complaintResponse.setCreatedTime(ZonedDateTime.now());
         complaintResponse.setReviewer(reviewer);
-        // make sure the original complaint from the database is connected to the complaint response as we take it out later one and
-        // potential changes on the client side (e.g. remove student id) should not be saved
         complaintResponse.setComplaint(originalComplaint);
         return complaintResponseRepository.save(complaintResponse);
+    }
+
+    public ComplaintResponse updateComplaintResponse(ComplaintResponse updatedComplaintResponse) {
+        if (updatedComplaintResponse.getId() == null) {
+            throw new BadRequestAlertException("To update a complaint response it needs an id", ENTITY_NAME, "idmissing");
+        }
+        Optional<ComplaintResponse> originalComplaintResponseOptional = complaintResponseRepository.findById(updatedComplaintResponse.getId());
+        if (originalComplaintResponseOptional.isEmpty()) {
+            throw new BadRequestAlertException("The complaint response you are referring to does not exist", ENTITY_NAME, "complaintresponsemissing");
+        }
+        ComplaintResponse originalComplaintResponse = originalComplaintResponseOptional.get();
+        User user = this.userService.getUser();
+        if (!user.equals(originalComplaintResponse.getReviewer())) {
+            throw new AccessForbiddenException("Only the user who created the complaint response can also update it");
+        }
+        Optional<Complaint> originalComplaintOptional = complaintRepository.findById(originalComplaintResponse.getComplaint().getId());
+        if (originalComplaintOptional.isEmpty()) {
+            throw new BadRequestAlertException("The complaint you are referring to does not exist", ENTITY_NAME, "complaintmissing");
+        }
+        Complaint originalComplaint = originalComplaintOptional.get();
+        originalComplaint.setAccepted(updatedComplaintResponse.getComplaint().isAccepted()); // accepted or denied
+        originalComplaint = complaintRepository.save(originalComplaint);
+
+        originalComplaintResponse.setSubmittedTime(ZonedDateTime.now());
+        originalComplaintResponse.setResponseText(updatedComplaintResponse.getResponseText());
+        originalComplaintResponse.setComplaint(originalComplaint);
+        return complaintResponseRepository.save(originalComplaintResponse);
     }
 
     /**

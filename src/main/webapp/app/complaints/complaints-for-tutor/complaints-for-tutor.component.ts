@@ -28,15 +28,23 @@ export class ComplaintsForTutorComponent implements OnInit {
     ngOnInit(): void {
         this.complaintText = this.complaint.complaintText;
         this.handled = this.complaint.accepted !== undefined;
-        if (this.handled) {
-            this.complaintResponseService.findByComplaintId(this.complaint.id!).subscribe((complaintResponse) => {
-                if (complaintResponse.body) {
-                    this.complaintResponse = complaintResponse.body;
-                }
-            });
+
+        debugger;
+        if (this.complaint.complaintResponse) {
+            this.complaintResponse = this.complaint.complaintResponse;
+        } else {
+            const newComplaintResponse = new ComplaintResponse();
+            newComplaintResponse.complaint = this.complaint;
+            this.complaintResponseService.create(newComplaintResponse).subscribe(
+                (response) => {
+                    this.complaintResponse = response.body!;
+                },
+                (err: HttpErrorResponse) => {
+                    this.onError(err.message);
+                },
+            );
         }
     }
-
     respondToComplaint(acceptComplaint: boolean): void {
         if (!this.complaintResponse.responseText || this.complaintResponse.responseText.length <= 0) {
             this.jhiAlertService.error('artemisApp.complaintResponse.noText');
@@ -47,6 +55,7 @@ export class ComplaintsForTutorComponent implements OnInit {
         }
         this.complaint.accepted = acceptComplaint;
         this.complaintResponse.complaint = this.complaint;
+        this.complaintResponse.complaint.complaintResponse = undefined; // breaking circular structure
         if (acceptComplaint && this.complaint.complaintType === ComplaintType.COMPLAINT) {
             // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
             // The complaint is sent along with the assessment update by the parent to avoid additional requests.
@@ -54,7 +63,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.handled = true;
         } else {
             // If the complaint was rejected or it was a more feedback request, just the complaint response is created.
-            this.complaintResponseService.create(this.complaintResponse).subscribe(
+            this.complaintResponseService.update(this.complaintResponse).subscribe(
                 (response) => {
                     this.handled = true;
                     // eslint-disable-next-line chai-friendly/no-unused-expressions

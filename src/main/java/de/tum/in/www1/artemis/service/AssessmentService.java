@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,7 +108,7 @@ public class AssessmentService {
             throw new BadRequestAlertException("Feedbacks and complaint response must not be null.", "AssessmentUpdate", "notnull");
         }
         // Save the complaint response
-        ComplaintResponse complaintResponse = complaintResponseService.createComplaintResponse(assessmentUpdate.getComplaintResponse());
+        ComplaintResponse complaintResponse = complaintResponseService.updateComplaintResponse(assessmentUpdate.getComplaintResponse());
 
         try {
             // Store the original result with the complaint

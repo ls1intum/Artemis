@@ -84,6 +84,22 @@ public class ComplaintResponseResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaintResponse.getId().toString())).body(savedComplaintResponse);
     }
 
+    @PutMapping("/complaint-responses")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ComplaintResponse> updateComplaintResponse(@RequestBody ComplaintResponse complaintResponse) throws URISyntaxException {
+        log.debug("REST request to update ComplaintResponse: {}", complaintResponse);
+        ComplaintResponse updatedComplaintResponse = complaintResponseService.updateComplaintResponse(complaintResponse);
+
+        // To build correct creation alert on the client we must check which type is the complaint to apply correct i18n key.
+        String entityName = complaintResponse.getComplaint().getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_RESPONSE_ENITY_NAME : ENTITY_NAME;
+
+        // always remove the student from the complaint as we don't need it in the corresponding client use case
+        complaintResponse.getComplaint().filterSensitiveInformation();
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, entityName, updatedComplaintResponse.getId().toString()))
+                .body(updatedComplaintResponse);
+    }
+
     /**
      * Get /complaint-responses/complaint/:id get a complaint response associated with the complaint "id"
      *

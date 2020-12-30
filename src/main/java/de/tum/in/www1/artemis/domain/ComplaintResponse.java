@@ -8,7 +8,9 @@ import javax.validation.constraints.Size;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * A ComplaintResponse.
@@ -23,15 +25,41 @@ public class ComplaintResponse extends DomainObject {
     @Size(max = 2000)
     private String responseText;
 
+    /**
+     * will be set as soon as the reviewer has submitted his complaint evaluation
+     */
     @Column(name = "submitted_time")
     private ZonedDateTime submittedTime;
 
+    /**
+     * will be set as soon as the evaluation of a complaint by a reviewer begins (possibly null for old complaint responses befor this column was added)
+     */
+    // ToDo add created time to liquibase (currently manually set via sql)
+    @Column(name = "created_time")
+    private ZonedDateTime createdTime;
+
+    @Transient
+    private boolean isCurrentlyLocked;
+
     @OneToOne
     @JoinColumn(unique = true)
+    @JsonIgnoreProperties("complaintResponse")
     private Complaint complaint;
 
     @ManyToOne
     private User reviewer;
+
+    @JsonProperty("isCurrentlyLocked")
+    public boolean isCurrentlyLocked() {
+        if (createdTime == null) {
+            return false;
+        }
+
+        // ToDo load lock time for complaints from yaml file
+        ZonedDateTime lockedUntil = createdTime.plusHours(7);
+
+        return ZonedDateTime.now().isBefore(lockedUntil);
+    }
 
     public String getResponseText() {
         return responseText;
@@ -66,6 +94,14 @@ public class ComplaintResponse extends DomainObject {
     public ComplaintResponse complaint(Complaint complaint) {
         this.complaint = complaint;
         return this;
+    }
+
+    public ZonedDateTime getCreatedTime() {
+        return createdTime;
+    }
+
+    public void setCreatedTime(ZonedDateTime createdTime) {
+        this.createdTime = createdTime;
     }
 
     public void setComplaint(Complaint complaint) {

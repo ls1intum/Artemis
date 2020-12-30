@@ -21,6 +21,13 @@ export class ComplaintResponseService {
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
+    update(complaintResponse: ComplaintResponse): Observable<EntityResponseType> {
+        const copy = this.convertDateFromClient(complaintResponse);
+        return this.http
+            .put<ComplaintResponse>(this.resourceUrl, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+    }
+
     findByComplaintId(complaintId: number): Observable<EntityResponseType> {
         return this.http
             .get<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}`, { observe: 'response' })
