@@ -219,10 +219,8 @@ public class GitService {
         // Example Bitbucket: ssh://git@bitbucket.ase.in.tum.de:7999/se2021w07h02/se2021w07h02-ga27yox.git
         // Example Gitlab: ssh://git@gitlab.ase.in.tum.de:2222/se2021w07h02/se2021w07h02-ga27yox.git
         var repositoryUri = vcsRepositoryUrl.getURL().toURI();
-        var newUri = new URI(templateUri.getScheme(), templateUri.getUserInfo(), templateUri.getHost(), templateUri.getPort(), repositoryUri.getPath().replace("/scm", ""), null,
+        return new URI(templateUri.getScheme(), templateUri.getUserInfo(), templateUri.getHost(), templateUri.getPort(), repositoryUri.getPath().replace("/scm", ""), null,
                 repositoryUri.getFragment());
-        System.out.println("ssh uri: " + newUri);
-        return newUri;
     }
 
     /**
@@ -350,11 +348,12 @@ public class GitService {
             }
             // Clone repository.
             try {
-                log.debug("Cloning from " + repoUrl + " to " + localPath);
+                var gitUriAsString = getGitUriAsString(repoUrl);
+                log.debug("Cloning from " + gitUriAsString + " to " + localPath);
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
-                Git result = Git.cloneRepository().setTransportConfigCallback(sshCallback).setURI(getGitUriAsString(repoUrl)).setDirectory(localPath.toFile()).call();
+                Git result = Git.cloneRepository().setTransportConfigCallback(sshCallback).setURI(gitUriAsString).setDirectory(localPath.toFile()).call();
                 result.close();
             }
             catch (GitAPIException | RuntimeException | IOException | URISyntaxException e) {
