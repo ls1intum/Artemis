@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
@@ -255,6 +256,16 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockGetBuildLogs(ProgrammingExerciseStudentParticipation participation, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> logs)
             throws URISyntaxException, JsonProcessingException {
         bambooRequestMockProvider.mockGetBuildLogs(participation.getBuildPlanId(), logs);
+    }
+
+    @Override
+    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) throws URISyntaxException, JsonProcessingException {
+        bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, repositorySlug, hash);
+    }
+
+    @Override
+    public void mockTriggerBuild(ProgrammingExerciseParticipation participation) throws Exception {
+        bambooRequestMockProvider.mockTriggerBuild(participation);
     }
 
     @Override

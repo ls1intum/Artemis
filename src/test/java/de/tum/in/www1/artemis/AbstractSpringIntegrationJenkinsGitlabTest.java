@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
@@ -209,6 +210,16 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     public void mockGetBuildLogs(ProgrammingExerciseStudentParticipation participation, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> logs)
             throws URISyntaxException, JsonProcessingException {
         // TODO: implement
+    }
+
+    @Override
+    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
+        // Not needed in Gitlab
+    }
+
+    @Override
+    public void mockTriggerBuild(ProgrammingExerciseParticipation participation) throws Exception {
+        jenkinsRequestMockProvider.mockTriggerBuild();
     }
 
     @Override

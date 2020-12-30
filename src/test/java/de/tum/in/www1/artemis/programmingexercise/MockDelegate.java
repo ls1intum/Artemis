@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 
@@ -48,6 +49,10 @@ public interface MockDelegate {
     void mockGetProjectKeyFromUrl(String projectKey, URL url);
 
     void mockGetProjectKeyFromAnyUrl(String projectKey);
+
+    void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) throws URISyntaxException, JsonProcessingException;
+
+    void mockTriggerBuild(ProgrammingExerciseParticipation participation) throws Exception;
 
     void resetMockProvider();
 }
