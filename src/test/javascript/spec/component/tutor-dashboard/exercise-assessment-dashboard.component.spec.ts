@@ -197,6 +197,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         modelingSubmissionStubWithoutAssessment.returns(of(submission));
 
         comp.loadAll();
+
         expect(modelingSubmissionStubWithoutAssessment).to.have.been.called;
         expect(comp.submissionsByCorrectionRound?.get(1)![0]).to.equal(submissionAssessed);
         expect(comp.submissionsByCorrectionRound?.get(1)![0]?.participation!.submissions![0]).to.equal(comp.submissionsByCorrectionRound?.get(1)![0]);

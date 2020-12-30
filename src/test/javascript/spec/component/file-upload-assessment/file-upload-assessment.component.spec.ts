@@ -127,9 +127,8 @@ describe('FileUploadAssessmentComponent', () => {
         comp.result.exampleResult = false;
         comp.result.hasComplaint = false;
         setLatestSubmissionResult(comp.submission, comp.result);
-        getLatestSubmissionResult(comp.submission);
         comp.submission.participation!.submissions = [comp.submission];
-        comp.submission.participation!.results = [getLatestSubmissionResult(comp.submission)!];
+        comp.submission.participation!.results = [comp.submission.latestResult!];
         comp.isAssessor = true;
         comp.isAtLeastInstructor = true;
         comp.assessmentsAreValid = true;
