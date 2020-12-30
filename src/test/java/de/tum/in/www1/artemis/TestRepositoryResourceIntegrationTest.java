@@ -46,15 +46,15 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     private ProgrammingExercise programmingExercise;
 
-    private String currentLocalFileName = "currentFileName";
+    private final String currentLocalFileName = "currentFileName";
 
-    private String currentLocalFileContent = "testContent";
+    private final String currentLocalFileContent = "testContent";
 
-    private String currentLocalFolderName = "currentFolderName";
+    private final String currentLocalFolderName = "currentFolderName";
 
-    private String newLocalFileName = "newFileName";
+    private final String newLocalFileName = "newFileName";
 
-    private String newLocalFolderName = "newFolderName";
+    private final String newLocalFolderName = "newFolderName";
 
     LocalRepository testRepo = new LocalRepository();
 
@@ -73,7 +73,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
         // add folder to the repository folder
         filePath = Paths.get(testRepo.localRepoFile + "/" + currentLocalFolderName);
-        var folder = Files.createDirectory(filePath).toFile();
+        Files.createDirectory(filePath).toFile();
 
         var testRepoUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.localRepoFile);
         programmingExercise.setTestRepositoryUrl(testRepoUrl.toString());

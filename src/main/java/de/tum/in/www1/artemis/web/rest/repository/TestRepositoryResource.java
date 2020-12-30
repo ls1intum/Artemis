@@ -51,7 +51,6 @@ public class TestRepositoryResource extends RepositoryResource {
     Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws IllegalAccessException, InterruptedException, GitAPIException {
         final var exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
         final var repoUrl = exercise.getVcsTestRepositoryUrl();
-
         return repositoryService.checkoutRepositoryByName(exercise, repoUrl, pullOnGet);
     }
 

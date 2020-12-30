@@ -26,27 +26,23 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 
 /**
- * Service that provides utilites for managing files in a git repository.
+ * Service that provides utilities for managing files in a git repository.
  */
 @Service
 public class RepositoryService {
 
-    private GitService gitService;
+    private final GitService gitService;
 
-    private AuthorizationCheckService authCheckService;
+    private final AuthorizationCheckService authCheckService;
 
-    private UserService userService;
-
-    private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+    private final UserService userService;
 
     private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserService userService, ParticipationService participationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+    public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserService userService) {
         this.gitService = gitService;
         this.authCheckService = authCheckService;
         this.userService = userService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     /**
@@ -61,7 +57,7 @@ public class RepositoryService {
         Map<String, FileType> fileList = new HashMap<>();
 
         while (iterator.hasNext()) {
-            Map.Entry<File, FileType> pair = (Map.Entry<File, FileType>) iterator.next();
+            Map.Entry<File, FileType> pair = iterator.next();
             fileList.put(pair.getKey().toString(), pair.getValue());
         }
 
@@ -73,7 +69,6 @@ public class RepositoryService {
      *
      * @param repository in which the requested files are located
      * @return Files with code or an exception is thrown
-     * @throws IOException if a file cannot be found, is corrupt, etc.
      */
     public Map<String, String> getFilesWithContent(Repository repository) {
         var files = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey)
@@ -125,7 +120,7 @@ public class RepositoryService {
                 .collect(Collectors.toList());
 
         Map<String, File> templateRepoFiles = gitService.listFilesAndFolders(templateRepository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE)
-                .collect(Collectors.toMap(entry -> entry.getKey().toString(), entry -> entry.getKey()));
+                .collect(Collectors.toMap(entry -> entry.getKey().toString(), Map.Entry::getKey));
 
         repoFiles.forEach(file -> {
             String fileName = file.toString();
@@ -160,6 +155,13 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the file can't be stored, the repository is unavailable, etc.
      */
     public void createFile(Repository repository, String filename, InputStream inputStream) throws IOException {
+        File file = checkIfFileExistsInRepository(repository, filename);
+        Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        repository.setContent(null); // invalidate cache
+        inputStream.close();
+    }
+
+    private File checkIfFileExistsInRepository(Repository repository, String filename) throws FileAlreadyExistsException {
         if (gitService.getFileByName(repository, filename).isPresent()) {
             throw new FileAlreadyExistsException("file already exists");
         }
@@ -168,10 +170,7 @@ public class RepositoryService {
         if (!repository.isValidFile(file)) {
             throw new IllegalArgumentException();
         }
-
-        Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        repository.setContent(null); // invalidate cache
-        inputStream.close();
+        return file;
     }
 
     /**
@@ -183,13 +182,7 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the folder can't be stored, the repository is unavailable, etc.
      */
     public void createFolder(Repository repository, String folderName, InputStream inputStream) throws IOException {
-        if (gitService.getFileByName(repository, folderName).isPresent()) {
-            throw new FileAlreadyExistsException("file already exists");
-        }
-        File file = new File(new java.io.File(repository.getLocalPath() + File.separator + folderName), repository);
-        if (!repository.isValidFile(file)) {
-            throw new IllegalArgumentException();
-        }
+        checkIfFileExistsInRepository(repository, folderName);
         Files.createDirectory(Paths.get(repository.getLocalPath() + File.separator + folderName));
         // We need to add an empty keep file so that the folder can be added to the git repository
         File keep = new File(new java.io.File(repository.getLocalPath() + File.separator + folderName + File.separator + ".keep"), repository);
@@ -282,7 +275,6 @@ public class RepositoryService {
      * @param repositoryUrl of the repository to check the status for.
      * @return a dto to determine the status of the repository.
      * @throws InterruptedException if the repository can't be checked out on the server.
-     * @throws IOException if the repository status can't be retrieved.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
     public boolean isClean(VcsRepositoryUrl repositoryUrl) throws GitAPIException, InterruptedException {
@@ -297,7 +289,6 @@ public class RepositoryService {
      * @param repoUrl of the repository on the server.
      * @param pullOnCheckout if true pulls after checking out the git repository.
      * @return the repository if available.
-     * @throws IOException if the repository can't be checked out.
      * @throws GitAPIException if the repository can't be checked out.
      * @throws IllegalAccessException if the user does not have access to the repository.
      * @throws InterruptedException if the repository can't be checked out.
