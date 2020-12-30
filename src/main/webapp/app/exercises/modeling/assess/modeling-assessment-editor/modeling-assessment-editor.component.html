@@ -34,6 +34,7 @@
             [feedbacks]="result?.feedbacks"
             [highlightedElements]="highlightedElements"
             (feedbackChanged)="onFeedbackChanged($event)"
+            [explanation]="submission.explanationText"
         ></jhi-modeling-assessment>
         <jhi-collapsable-assessment-instructions
             *ngIf="modelingExercise"

@@ -9,7 +9,7 @@ import { of } from 'rxjs';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { ActivatedRoute } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
-import { LearningGoalProgress, LectureUnitProgress } from 'app/course/learning-goals/learning-goal-progress-dtos.model';
+import { IndividualLearningGoalProgress, IndividualLectureUnitProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
 import { Component, Input } from '@angular/core';
 import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
 import { HttpResponse } from '@angular/common/http';
@@ -22,7 +22,7 @@ const expect = chai.expect;
 @Component({ selector: 'jhi-learning-goal-card', template: '<div><ng-content></ng-content></div>' })
 class LearningGoalCardStubComponent {
     @Input() learningGoal: LearningGoal;
-    @Input() learningGoalProgress: LearningGoalProgress;
+    @Input() learningGoalProgress: IndividualLearningGoalProgress;
 }
 
 class MockActivatedRoute {
@@ -82,10 +82,10 @@ describe('CourseLearningGoals', () => {
         learningGoal.id = 1;
         learningGoal.description = 'test';
         learningGoal.lectureUnits = [textUnit];
-        const learningUnitProgress = new LectureUnitProgress();
+        const learningUnitProgress = new IndividualLectureUnitProgress();
         learningUnitProgress.lectureUnitId = 1;
         learningUnitProgress.totalPointsAchievableByStudentsInLectureUnit = 10;
-        const learningGoalProgress = new LearningGoalProgress();
+        const learningGoalProgress = new IndividualLearningGoalProgress();
         learningGoalProgress.learningGoalId = 1;
         learningGoalProgress.learningGoalTitle = 'test';
         learningGoalProgress.pointsAchievedByStudentInLearningGoal = 5;
@@ -96,7 +96,7 @@ describe('CourseLearningGoals', () => {
             body: [learningGoal, new LearningGoal()],
             status: 200,
         });
-        const learningGoalProgressResponse: HttpResponse<LearningGoalProgress> = new HttpResponse({
+        const learningGoalProgressResponse: HttpResponse<IndividualLearningGoalProgress> = new HttpResponse({
             body: learningGoalProgress,
             status: 200,
         });
