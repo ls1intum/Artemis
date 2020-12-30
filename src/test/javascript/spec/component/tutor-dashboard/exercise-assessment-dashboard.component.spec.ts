@@ -13,7 +13,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, HttpHeaders } from '@angular/common/http';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
@@ -41,6 +41,7 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
+import { User } from 'app/core/user/user.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -58,7 +59,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     const result2 = { id: 50 };
     const exercise = { id: 20, type: ExerciseType.MODELING, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as ModelingExercise;
     const submission = { id: 30 } as ModelingSubmission;
-    const submissionAssessed = { id: 30, results: [result1, result2] } as ModelingSubmission;
+    const participation = { id: 70, submissions: [] };
+    const submissionAssessed = { id: 30, results: [result1, result2], participation: participation } as ModelingSubmission;
     const stats = {
         numberOfSubmissions: { inTime: 12, late: 5 },
         totalNumberOfAssessments: { inTime: 9, late: 1 },
@@ -150,6 +152,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(true);
         guidedTourService.guidedTourMapping = guidedTourMapping;
         modelingSubmissionStubWithoutAssessment.returns(of(submission));
+        modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 
         comp.loadAll();
 
@@ -157,20 +160,24 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).to.equal(submission);
         expect(comp.unassessedSubmissionByCorrectionRound?.get(1)?.latestResult).to.equal(undefined);
         expect(comp.submissionLockLimitReached).to.be.false;
+        expect(comp.submissionsByCorrectionRound?.get(1)!.length).to.equal(0);
     });
 
     it('should not set unassessedSubmission if lock limit is reached', () => {
         modelingSubmissionStubWithoutAssessment.returns(throwError(lockLimitErrorResponse));
+        modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 
         comp.loadAll();
 
         expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(exercise.id);
         expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).to.be.undefined;
         expect(comp.submissionLockLimitReached).to.be.true;
+        expect(comp.submissionsByCorrectionRound?.get(1)!.length).to.equal(0);
     });
 
     it('should have correct percentages calculated', () => {
         modelingSubmissionStubWithoutAssessment.returns(of(submission));
+        modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 
         comp.loadAll();
 
@@ -179,16 +186,17 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).to.equal(8);
         expect(comp.totalAssessmentPercentage.inTime).to.equal(75);
         expect(comp.totalAssessmentPercentage.late).to.equal(20);
+        expect(comp.submissionsByCorrectionRound?.get(1)!.length).to.equal(0);
     });
 
     it('should  set assessed Submission and latest result', () => {
-        modelingSubmissionStubWithoutAssessment.returns(of(submissionAssessed));
-        modelingSubmissionStubWithAssessment.returns(of([submission]));
+        modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [submissionAssessed], headers: new HttpHeaders() })));
+        modelingSubmissionStubWithoutAssessment.returns(of(submission));
 
         comp.loadAll();
-        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(exercise.id);
-        expect(modelingSubmissionStubWithAssessment).to.have.been.calledOnceWithExactly(exercise.id);
-        //expect(comp.submissionsByCorrectionRound?.get(1)).to.equal(submissionAssessed);
-        //expect(comp.submissionsByCorrectionRound?.get(1)![0]?.latestResult).to.equal(result2);
+        expect(modelingSubmissionStubWithoutAssessment).to.have.been.called;
+        expect(comp.submissionsByCorrectionRound?.get(1)![0]).to.equal(submissionAssessed);
+        expect(comp.submissionsByCorrectionRound?.get(1)![0]?.participation!.submissions![0]).to.equal(comp.submissionsByCorrectionRound?.get(1)![0]);
+        expect(comp.submissionsByCorrectionRound?.get(1)![0]?.latestResult).to.equal(result2);
     });
 });
