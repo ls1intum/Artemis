@@ -10,11 +10,10 @@ import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-ro
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import * as moment from 'moment';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpResponse, HttpHeaders } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
@@ -42,19 +41,19 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
-import { User } from 'app/core/user/user.model';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Complaint } from 'app/entities/complaint.model';
-import { extractedErrorFiles } from '../../helpers/sample/build-logs';
+import { Language } from 'app/entities/tutor-group.model';
+import { SubmissionExerciseType } from 'app/entities/submission.model';
+import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -84,6 +83,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let exerciseService: ExerciseService;
     let exerciseServiceGetForTutorsStub: SinonStub;
     let exerciseServiceGetStatsForTutorsStub: SinonStub;
+
+    let tutorParticipationService: TutorParticipationService;
+    let tutorParticipationServiceCreateStub: SinonStub;
 
     let guidedTourService: GuidedTourService;
     const result1 = { id: 40 };
@@ -124,7 +126,13 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     const modelingSubmissionAssessed = { id: 30, results: [result1, result2], participation: participation } as ModelingSubmission;
     const fileUploadSubmissionAssessed = { id: 30, results: [result1, result2], participation: participation } as FileUploadSubmission;
-    const textSubmissionAssessed = { id: 30, results: [result1, result2], participation: participation } as TextSubmission;
+    const textSubmissionAssessed = {
+        id: 30,
+        submissionExerciseType: SubmissionExerciseType.TEXT,
+        language: Language.GERMAN,
+        results: [result1, result2],
+        participation: participation,
+    } as TextSubmission;
     const programmingSubmissionAssessed = { id: 30, results: [result1, result2], participation: participation } as ProgrammingSubmission;
 
     const complaint = { id: 33, result: { id: 44, submission: textSubmission } } as Complaint;
@@ -187,6 +195,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
                 exerciseService = TestBed.inject(ExerciseService);
                 programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
+
+                tutorParticipationService = TestBed.inject(TutorParticipationService);
 
                 exerciseServiceGetForTutorsStub = stub(exerciseService, 'getForTutors');
                 exerciseServiceGetStatsForTutorsStub = stub(exerciseService, 'getStatsForTutors');
@@ -304,6 +314,34 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     it('should calculateStatus DRAFT', () => {
         expect(modelingSubmission.latestResult).to.be.undefined;
         expect(comp.calculateStatus(modelingSubmission)).to.be.equal('DRAFT');
+    });
+
+    describe('test languages', () => {
+        it('should call languge unknown', () => {
+            expect(comp.language(modelingSubmission)).to.be.equal('UNKNOWN');
+        });
+
+        it('should call languge correct', () => {
+            expect(comp.language(textSubmission)).to.be.equal('UNKNOWN');
+            expect(comp.language(textSubmissionAssessed)).to.be.equal(Language.GERMAN);
+        });
+    });
+
+    it('should call hasBeenCompletedByTutor', () => {
+        comp.exampleSubmissionsCompletedByTutor = [{ id: 1 }, { id: 2 }];
+        expect(comp.hasBeenCompletedByTutor(1)).to.equal(true);
+    });
+
+    it('should call readInstruction', () => {
+        tutorParticipationServiceCreateStub = stub(tutorParticipationService, 'create');
+        const tutorParticipation = { id: 1, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS };
+        tutorParticipationServiceCreateStub.returns(of(new HttpResponse({ body: tutorParticipation, headers: new HttpHeaders() })));
+
+        expect(comp.tutorParticipation).to.equal(undefined);
+        comp.readInstruction();
+
+        expect(comp.tutorParticipation).to.equal(tutorParticipation);
+        expect(comp.tutorParticipationStatus).to.equal(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
     });
 
     describe('test calls for all exercise types', () => {
