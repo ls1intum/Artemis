@@ -90,7 +90,8 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
-        return this.exam?.numberOfCorrectionRoundsInExam! < 3 && this.exam?.numberOfCorrectionRoundsInExam! > 0;
+        // TODO set 2 back to 3 so 2 correction rounds will be possible again
+        return this.exam?.numberOfCorrectionRoundsInExam! < 2 && this.exam?.numberOfCorrectionRoundsInExam! > 0;
     }
 
     get isValidStartDate(): boolean {
