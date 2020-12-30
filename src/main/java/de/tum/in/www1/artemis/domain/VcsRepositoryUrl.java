@@ -43,8 +43,9 @@ public class VcsRepositoryUrl {
         if (this == o) {
             return true;
         }
-        // we explicitly allow subclasses here (to avoid issues when comparing sub classes with the same url)
-        if (o == null || getClass().isAssignableFrom(o.getClass()) || o.getClass().isAssignableFrom(getClass())) {
+        // we explicitly allow subclasses (i.e. o is a subclass of this) here (to avoid issues when comparing sub classes with the same url)
+        // Note that this also includes the null check
+        if (!(o instanceof VcsRepositoryUrl)) {
             return false;
         }
         VcsRepositoryUrl that = (VcsRepositoryUrl) o;

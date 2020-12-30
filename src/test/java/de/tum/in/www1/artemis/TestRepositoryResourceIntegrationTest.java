@@ -52,10 +52,6 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     private final String currentLocalFolderName = "currentFolderName";
 
-    private final String newLocalFileName = "newFileName";
-
-    private final String newLocalFolderName = "newFolderName";
-
     LocalRepository testRepo = new LocalRepository();
 
     @BeforeEach
@@ -140,6 +136,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void testRenameFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        String newLocalFileName = "newFileName";
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + newLocalFileName))).isFalse();
         FileMove fileMove = new FileMove();
         fileMove.setCurrentFilePath(currentLocalFileName);
@@ -154,6 +151,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void testRenameFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFolderName))).isTrue();
+        String newLocalFolderName = "newFolderName";
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + newLocalFolderName))).isFalse();
         FileMove fileMove = new FileMove();
         fileMove.setCurrentFilePath(currentLocalFolderName);
@@ -189,7 +187,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     }
 
     private List<FileSubmission> getFileSubmissions() {
-        List<FileSubmission> fileSubmissions = new ArrayList();
+        List<FileSubmission> fileSubmissions = new ArrayList<>();
         FileSubmission fileSubmission = new FileSubmission();
         fileSubmission.setFileName(currentLocalFileName);
         fileSubmission.setFileContent("updatedFileContent");
