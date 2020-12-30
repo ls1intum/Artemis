@@ -399,6 +399,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.back();
             expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/tutor-dashboard`]);
         });
+
         it('should navigate back in exammode and not testRun', () => {
             comp.courseId = 4;
             comp.isExamMode = true;
@@ -407,12 +408,76 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.back();
             expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/exams/${exercise!.exerciseGroup!.exam!.id}/test-runs/assess`]);
         });
+
         it('should navigate back in exammode and testRun', () => {
             comp.courseId = 4;
             comp.isExamMode = true;
             comp.exercise = exercise;
             comp.back();
             expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/exams/${exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
+        });
+    });
+
+    describe('openExampleSubmission', () => {
+        const courseId = 4;
+        it('should not openExampleSubmission', () => {
+            const submission = { id: 8 };
+            comp.openExampleSubmission(submission!.id);
+            expect(navigateSpy).to.have.not.been.called;
+        });
+
+        it('should openExampleSubmission', () => {
+            comp.exercise = exercise;
+            comp.exercise.type = ExerciseType.PROGRAMMING;
+            comp.courseId = 4;
+            comp.exercise = exercise;
+            const submission = { id: 8 };
+            comp.openExampleSubmission(submission!.id, true, true);
+            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/example-submissions/${submission.id}`]);
+        });
+    });
+
+    describe('openAssessmentEditor', () => {
+        const courseId = 4;
+        it('should not openExampleSubmission', () => {
+            const submission = { id: 8 };
+            comp.openAssessmentEditor(submission);
+            expect(navigateSpy).to.have.not.been.called;
+        });
+
+        it('should openExampleSubmission with modelingExercise', () => {
+            comp.exercise = exercise;
+            comp.exercise.type = ExerciseType.MODELING;
+            comp.courseId = 4;
+            comp.exercise = exercise;
+            const submission = { id: 8 };
+            comp.openAssessmentEditor(submission);
+
+            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submission.id}/assessment`]);
+        });
+
+        it('should openExampleSubmission with programmingExercise', () => {
+            comp.exercise = exercise;
+            comp.exercise.type = ExerciseType.PROGRAMMING;
+            comp.courseId = 4;
+            comp.exercise = exercise;
+            const participationId = 3;
+            const submission = { id: 8, participation: { id: participationId } };
+
+            comp.openAssessmentEditor(submission);
+            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/code-editor/${participationId}/assessment`]);
+        });
+        it('should openExampleSubmission with programmingExercise and isTestRun', () => {
+            comp.exercise = exercise;
+            comp.exercise.type = ExerciseType.PROGRAMMING;
+            comp.courseId = 4;
+            comp.exercise = exercise;
+            comp.isTestRun = true;
+            const participationId = 3;
+            const submission = { id: 8, participation: { id: participationId } };
+
+            comp.openAssessmentEditor(submission);
+            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/code-editor/${participationId}/assessment`]);
         });
     });
 });
