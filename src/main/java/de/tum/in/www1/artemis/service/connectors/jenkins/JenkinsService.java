@@ -50,6 +50,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.FeedbackService;
@@ -81,6 +82,8 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     private final ResultRepository resultRepository;
 
     private final JenkinsServer jenkinsServer;
@@ -91,11 +94,13 @@ public class JenkinsService implements ContinuousIntegrationService {
     private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
     public JenkinsService(JenkinsBuildPlanCreator jenkinsBuildPlanCreator, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackService feedbackService, ResultRepository resultRepository) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, FeedbackService feedbackService,
+            ResultRepository resultRepository) {
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.feedbackService = feedbackService;
         this.resultRepository = resultRepository;
     }
@@ -158,37 +163,39 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
-        final var projectKey = participation.getProgrammingExercise().getProjectKey();
+        // Refetch the programming exercise with the template participation and assign it to programmingExerciseParticipation to make sure it is initialized (and not a proxy)
+        final var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(participation.getProgrammingExercise().getId()).get();
+        participation.setProgrammingExercise(programmingExercise);
+        final var projectKey = programmingExercise.getProjectKey();
         final var planKey = participation.getBuildPlanId();
-        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, null /* not important */, participation.getRepositoryUrl(),
-                participation.getProgrammingExercise().getTemplateRepositoryUrl(), Optional.empty());
+        final var templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
+        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, null /* not needed */, participation.getRepositoryUrl(), templateRepoUrl, Optional.empty());
         enablePlan(projectKey, planKey);
     }
 
-    // TODO this was a bad design choice. We should only have one configureBuildPlan method i.m.o
     @Override
-    public void updatePlanRepository(String projectKey, String planName, String repoNameInCI, String vcsProject, String vcsRepositoryUrl, String templateRepositoryUrl,
-            Optional<List<String>> triggeredBy) {
+    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
+            Optional<List<String>> optionalTriggeredByRepositories) {
 
         // remove potential username from repo URL. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URL
-        final var repoUrl = vcsRepositoryUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
-        final var jobXmlDocument = getJobXmlForBuildPlanWith(projectKey, planName);
+        final var repoUrl = newRepoUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
+        final var jobXmlDocument = getJobXmlForBuildPlanWith(buildProjectKey, buildPlanKey);
 
         try {
-            replaceScriptParameters(jobXmlDocument, repoUrl, templateRepositoryUrl);
+            replaceScriptParameters(jobXmlDocument, ciRepoName, repoUrl, existingRepoUrl);
         }
         catch (IllegalArgumentException e) {
-            log.info("Falling back to old Jenkins setup replacement");
-            replaceRemoteURLs(jobXmlDocument, repoUrl, repoNameInCI);
+            log.info("Falling back to old Jenkins setup replacement for build xml");
+            replaceRemoteURLs(jobXmlDocument, repoUrl, ciRepoName);
         }
 
         final var headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_XML);
         final var entity = new HttpEntity(writeXmlToString(jobXmlDocument), headers);
 
-        URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(JENKINS_SERVER_URL.toString(), projectKey, planName).build(true).toUri();
+        URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(JENKINS_SERVER_URL.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
 
-        final var errorMessage = "Error trying to configure build plan in Jenkins " + planName;
+        final var errorMessage = "Error trying to configure build plan in Jenkins " + buildPlanKey;
         try {
             final var response = restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
             if (response.getStatusCode() != HttpStatus.OK) {
@@ -201,7 +208,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
     }
 
-    private void replaceScriptParameters(Document jobXmlDocument, String repoUrl, String baseRepoUrl) throws IllegalArgumentException {
+    private void replaceScriptParameters(Document jobXmlDocument, String ciRepoName, String repoUrl, String baseRepoUrl) throws IllegalArgumentException {
         final var scriptNode = findScriptNode(jobXmlDocument);
         if (scriptNode == null || scriptNode.getFirstChild() == null) {
             log.debug("Pipeline Script not found");
@@ -210,12 +217,13 @@ public class JenkinsService implements ContinuousIntegrationService {
 
         String pipeLineScript = scriptNode.getFirstChild().getTextContent().trim();
         // If the script does not start with "pipeline" or the special comment,
-        // it is not actually a pipeline script, but a deprecated programming exercise with an old configuration
+        // it is not actually a pipeline script, but a deprecated programming exercise with an old build xml configuration
         if (!pipeLineScript.startsWith("pipeline") && !pipeLineScript.startsWith(PIPELINE_SCRIPT_DETECTION_COMMENT)) {
             log.debug("Pipeline Script not found");
             throw new IllegalArgumentException("Pipeline Script not found");
         }
         // Replace repo URL
+        // TODO: properly replace the baseRepoUrl with repoUrl by looking up the ciRepoName in the pipelineScript
         pipeLineScript = pipeLineScript.replace(baseRepoUrl, repoUrl);
 
         scriptNode.getFirstChild().setTextContent(pipeLineScript);
