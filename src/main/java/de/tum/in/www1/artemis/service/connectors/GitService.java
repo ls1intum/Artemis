@@ -206,7 +206,7 @@ public class GitService {
     }
 
     private boolean useSsh() {
-        return gitSshPrivateKeyPath.isPresent();
+        return gitSshPrivateKeyPath.isPresent() && sshUrlTemplate.isPresent();
         // password is optional and will only be applied if the ssh private key was encrypted using a password
     }
 
@@ -218,9 +218,11 @@ public class GitService {
         URI templateUri = new URI(sshUrlTemplate.get());
         // Example Bitbucket: ssh://git@bitbucket.ase.in.tum.de:7999/se2021w07h02/se2021w07h02-ga27yox.git
         // Example Gitlab: ssh://git@gitlab.ase.in.tum.de:2222/se2021w07h02/se2021w07h02-ga27yox.git
-        var repositoryUri = vcsRepositoryUrl.getURL().toURI();
-        return new URI(templateUri.getScheme(), templateUri.getUserInfo(), templateUri.getHost(), templateUri.getPort(), repositoryUri.getPath().replace("/scm", ""), null,
-                repositoryUri.getFragment());
+        final var repositoryUri = vcsRepositoryUrl.getURL().toURI();
+        // Bitbucket repository urls (until now mainly used with username and password authentication) include "/scm" in the url, which cannot be used in ssh urls,
+        // therefore we need to replace it here
+        final var path = repositoryUri.getPath().replace("/scm", "");
+        return new URI(templateUri.getScheme(), templateUri.getUserInfo(), templateUri.getHost(), templateUri.getPort(), path, null, repositoryUri.getFragment());
     }
 
     /**
