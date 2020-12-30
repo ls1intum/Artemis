@@ -17,7 +17,7 @@
             },
             "view": "Bewertung ansehen",
             "model": "Modell",
-            "explanationText": "Erklärungstext",
+            "explanationText": "Erklärung",
             "modelingEditor": "Modellierungseditor",
             "problemStatement": "<strong>Problemstellung:</strong>",
             "maxScore": "<strong>Max. Punktzahl: {{maxScore}}</strong>",
