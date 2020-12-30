@@ -92,7 +92,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
     private void upgradeTemplateFiles(ProgrammingExercise exercise, RepositoryType repositoryType) {
         try {
             String templateDir = repositoryType == RepositoryType.TESTS ? "test/projectTemplate" : repositoryType.getName();
-            Resource[] templatePoms = getTemplateResources(exercise, templateDir, POM_FILE);
+            Resource[] templatePoms = getTemplateResources(exercise, templateDir + "/**/" + POM_FILE);
             Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURL(repositoryType), true);
             List<File> repositoryPoms = gitService.listFiles(repository).stream().filter(file -> POM_FILE.equals(file.getName())).collect(Collectors.toList());
 
@@ -109,7 +109,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
                 // Add latest static code analysis tool configurations or remove configurations
                 if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
-                    Resource[] staticCodeAnalysisResources = getTemplateResources(exercise, templateDir, SCA_CONFIG_FOLDER + "/**/*.*");
+                    Resource[] staticCodeAnalysisResources = getTemplateResources(exercise, "test/" + SCA_CONFIG_FOLDER + "/**/*.*");
                     fileService.copyResources(staticCodeAnalysisResources, "java/test", repository.getLocalPath().toAbsolutePath().toString(), true);
                 }
                 else {
@@ -125,17 +125,17 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         }
     }
 
-    private Resource[] getTemplateResources(ProgrammingExercise exercise, String templateFolder, String filePattern) {
+    private Resource[] getTemplateResources(ProgrammingExercise exercise, String filePattern) {
         // Get general template poms
         String programmingLanguageTemplate = programmingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage());
-        String templatePomPath = programmingLanguageTemplate + "/" + templateFolder + "/**/" + filePattern;
+        String templatePomPath = programmingLanguageTemplate + "/" + filePattern;
 
         Resource[] templatePoms = resourceLoaderService.getResources(templatePomPath);
 
         // Get project type specific template poms
         if (exercise.getProjectType() != null) {
             String projectTypeTemplate = programmingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType());
-            String projectTypePomPath = projectTypeTemplate + "/" + templateFolder + "/**/" + filePattern;
+            String projectTypePomPath = projectTypeTemplate + "/" + filePattern;
 
             Resource[] projectTypePoms = resourceLoaderService.getResources(projectTypePomPath);
 
@@ -167,17 +167,20 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
             upgradePlugin(repoModel, templateModel, "org.apache.maven.plugins", "maven-surefire-plugin");
             upgradePlugin(repoModel, templateModel, "org.apache.maven.plugins", "maven-failsafe-plugin");
 
-            // Update SCA Plugins
-            // TODO: Make selection of SCA plugins more generic using the enum
+            // Update SCA Plugins and properties
             if (scaEnabled) {
                 upgradePlugin(repoModel, templateModel, "com.github.spotbugs", "spotbugs-maven-plugin");
                 upgradePlugin(repoModel, templateModel, "org.apache.maven.plugins", "maven-checkstyle-plugin");
                 upgradePlugin(repoModel, templateModel, "org.apache.maven.plugins", "maven-pmd-plugin");
+                upgradeProperty(repoModel, "scaConfigDirectory", "${project.basedir}/staticCodeAnalysisConfig");
+                upgradeProperty(repoModel, "analyzeTests", "false");
             }
             else {
                 removePlugin(repoModel, "com.github.spotbugs", "spotbugs-maven-plugin");
                 removePlugin(repoModel, "org.apache.maven.plugins", "maven-checkstyle-plugin");
                 removePlugin(repoModel, "org.apache.maven.plugins", "maven-pmd-plugin");
+                repoModel.getProperties().remove("scaConfigDirectory");
+                repoModel.getProperties().remove("analyzeTests");
             }
 
             // Replace JUnit4 with AJTS
@@ -216,6 +219,12 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         var newDependency = findDependency(templateModel, groupId, artifactId);
         if (oldDependency.isEmpty() && newDependency.isPresent()) {
             targetModel.addDependency(newDependency.get());
+        }
+    }
+
+    private void upgradeProperty(Model targetModel, String key, String value) {
+        if (!targetModel.getProperties().containsKey(key)) {
+            targetModel.addProperty(key, value);
         }
     }
 
