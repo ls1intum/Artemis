@@ -105,12 +105,15 @@ public class GitService {
         // 2. username + personal access token (if available)
         // 3. username + password
         if (useSsh()) {
+            log.info("GitService will use ssh keys as authentication method to interact with remote git repositories");
             configureSsh();
         }
         else if (gitToken.isPresent()) {
+            log.info("GitService will use username + token as authentication method to interact with remote git repositories");
             CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitToken.get()));
         }
         else {
+            log.info("GitService will use username + password as authentication method to interact with remote git repositories");
             CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
         }
     }
