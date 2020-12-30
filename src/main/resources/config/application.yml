@@ -144,6 +144,13 @@ spring:
         port: 5701 # The hazelcast port that this instance runs on and where other instances are expected
         localInstances: false # Whether the other instances are expected locally (in dev mode) or external
 
+springdoc:
+    api-docs:
+        path: /api-docs
+    swagger-ui:
+        path: /api.html
+        operationsSorter: method
+
 server:
     servlet:
         session:
@@ -180,7 +187,7 @@ jhipster:
         name: 'artemisApp'
     # By default CORS is disabled. Uncomment to enable.
     #cors:
-        #allowed-origins: "*"
+        #allowed-origin-patterns: "*"
         #allowed-methods: "*"
         #allowed-headers: "*"
         #exposed-headers: "Authorization,Link,X-Total-Count"
