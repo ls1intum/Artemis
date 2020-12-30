@@ -260,7 +260,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
     }
 
     private void deleteFileIfPresent(Repository repository, String fileName) throws IOException {
-        Optional<File> optionalFile = gitService.listFiles(repository).stream().filter(file -> fileName.equals(file.getName())).findFirst();
+        Optional<File> optionalFile = gitService.listFilesAndFolders(repository).keySet().stream().filter(file -> fileName.equals(file.getName())).findFirst();
         if (optionalFile.isPresent()) {
             repositoryService.deleteFile(repository, optionalFile.get().toString());
         }
