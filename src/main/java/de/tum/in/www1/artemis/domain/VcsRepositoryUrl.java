@@ -13,6 +13,7 @@ public class VcsRepositoryUrl {
     protected URL url;
 
     protected VcsRepositoryUrl() {
+        // NOTE: this constructor should not be used and only exists to prevent compile errors
     }
 
     public VcsRepositoryUrl(String spec) throws MalformedURLException {
@@ -39,10 +40,13 @@ public class VcsRepositoryUrl {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        // we explicitly allow subclasses here (to avoid issues when comparing sub classes with the same url)
+        if (o == null || getClass().isAssignableFrom(o.getClass()) || o.getClass().isAssignableFrom(getClass())) {
             return false;
+        }
         VcsRepositoryUrl that = (VcsRepositoryUrl) o;
         return Objects.equals(username, that.username) && Objects.equals(url, that.url);
     }
@@ -54,6 +58,11 @@ public class VcsRepositoryUrl {
 
     @Override
     public String toString() {
-        return this.url.toString();
+        if (this.url != null) {
+            return this.url.toString();
+        }
+        else {
+            return "VcsRepositoryUrl: empty";
+        }
     }
 }

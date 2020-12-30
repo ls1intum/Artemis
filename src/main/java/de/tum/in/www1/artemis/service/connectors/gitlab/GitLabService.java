@@ -268,7 +268,7 @@ public class GitLabService extends AbstractVersionControlService {
     @Override
     public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
-        final var repositoryName = urlService.getRepositorySlugFromUrl(repositoryUrl);
+        final var repositoryName = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         try {
             gitlab.getProjectApi().deleteProject(repositoryId);
         }
@@ -374,7 +374,7 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public String getRepositoryName(VcsRepositoryUrl repositoryUrl) {
-        return urlService.getRepositorySlugFromUrl(repositoryUrl);
+        return urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
     }
 
     @Override
@@ -492,7 +492,6 @@ public class GitLabService extends AbstractVersionControlService {
     public final class GitLabRepositoryUrl extends VcsRepositoryUrl {
 
         public GitLabRepositoryUrl(String projectKey, String repositorySlug) {
-            super();
             final var path = projectKey + "/" + repositorySlug;
             final var urlString = gitlabServerUrl + "/" + path + ".git";
 

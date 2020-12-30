@@ -111,8 +111,8 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
-        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromUrl(sourceCodeRepositoryURL),
-                urlService.getRepositorySlugFromUrl(testRepositoryURL), urlService.getRepositorySlugFromUrl(solutionRepositoryURL));
+        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromRepositoryUrl(sourceCodeRepositoryURL),
+                urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL));
     }
 
     @Override
@@ -121,7 +121,7 @@ public class BambooService implements ContinuousIntegrationService {
         final var repositoryUrl = participation.getVcsRepositoryUrl();
         final var projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
         final var planKey = participation.getBuildPlanId();
-        final var repoProjectName = urlService.getProjectKeyFromUrl(repositoryUrl);
+        final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, Optional.empty());
         enablePlan(projectKey, planKey);
     }

@@ -198,7 +198,7 @@ public class ProgrammingExerciseExportService {
         final var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
         final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
 
-        final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
+        final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
 
         JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
         options.setBaseCodeSubmissionName(templateRepoName);
@@ -264,7 +264,7 @@ public class ProgrammingExerciseExportService {
         final var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
         final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
 
-        final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
+        final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
 
         JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
         options.setBaseCodeSubmissionName(templateRepoName);

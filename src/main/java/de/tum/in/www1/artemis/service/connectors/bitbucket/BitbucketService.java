@@ -117,17 +117,17 @@ public class BitbucketService extends AbstractVersionControlService {
             }
         }
 
-        protectBranches(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl));
+        protectBranches(urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl));
     }
 
     @Override
     public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user) {
-        giveWritePermission(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl), user.getLogin());
+        giveWritePermission(urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl), user.getLogin());
     }
 
     @Override
     public void removeMemberFromRepository(VcsRepositoryUrl repositoryUrl, User user) {
-        removeStudentRepositoryAccess(repositoryUrl, urlService.getProjectKeyFromUrl(repositoryUrl), user.getLogin());
+        removeStudentRepositoryAccess(repositoryUrl, urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), user.getLogin());
     }
 
     /**
@@ -165,8 +165,8 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     protected void addWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName) {
-        if (!webHookExists(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl))) {
-            createWebHook(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl), notificationUrl, webHookName);
+        if (!webHookExists(urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl))) {
+            createWebHook(urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl), notificationUrl, webHookName);
         }
     }
 
@@ -191,7 +191,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
-        deleteRepositoryImpl(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl));
+        deleteRepositoryImpl(urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl));
     }
 
     @Override
@@ -378,8 +378,7 @@ public class BitbucketService extends AbstractVersionControlService {
      */
     // TODO: Refactor to also use setStudentRepositoryPermission.
     private void giveWritePermission(String projectKey, String repositorySlug, String username) throws BitbucketException {
-        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";// NAME&PERMISSION
-        String url = baseUrl + username + "&permission=REPO_WRITE";
+        String url = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=" + username + "&permission=REPO_WRITE";
 
         try {
             /*
@@ -685,8 +684,8 @@ public class BitbucketService extends AbstractVersionControlService {
         String projectKey;
         String repositorySlug;
         try {
-            projectKey = urlService.getProjectKeyFromUrl(repositoryUrl);
-            repositorySlug = urlService.getRepositorySlugFromUrl(repositoryUrl);
+            projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+            repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         }
         catch (BitbucketException e) {
             // Either the project Key or the repository slug could not be extracted, therefore this can't be a valid URL
@@ -754,8 +753,8 @@ public class BitbucketService extends AbstractVersionControlService {
             else {
                 repositoryURL = new VcsRepositoryUrl(cloneLinks.get(0).get("href").asText());
             }
-            final var projectKey = urlService.getProjectKeyFromUrl(repositoryURL);
-            final var slug = urlService.getRepositorySlugFromUrl(repositoryURL);
+            final var projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryURL);
+            final var slug = urlService.getRepositorySlugFromRepositoryUrl(repositoryURL);
             final var uriBuilder = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI())
                     .pathSegment("rest", "api", "1.0", "projects", projectKey, "repos", slug, "commits", hash).build();
             final var commitInfo = restTemplate.exchange(uriBuilder.toUri(), HttpMethod.GET, null, JsonNode.class).getBody();
@@ -778,13 +777,12 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public String getRepositoryName(VcsRepositoryUrl repositoryUrl) {
-        return urlService.getRepositorySlugFromUrl(repositoryUrl);
+        return urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
     }
 
     public final class BitbucketRepositoryUrl extends VcsRepositoryUrl {
 
         public BitbucketRepositoryUrl(String projectKey, String repositorySlug) {
-            super();
             final var urlString = bitbucketServerUrl.getProtocol() + "://" + bitbucketServerUrl.getAuthority() + buildRepositoryPath(projectKey, repositorySlug);
             try {
                 this.url = new URL(urlString);

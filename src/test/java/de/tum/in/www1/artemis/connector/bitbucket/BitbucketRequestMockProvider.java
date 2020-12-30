@@ -227,7 +227,7 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockRepositoryUrlIsValid(final VcsRepositoryUrl repositoryUrl, final String projectKey, final boolean isValid) throws URISyntaxException {
-        final var repositoryName = urlService.getRepositorySlugFromUrl(repositoryUrl);
+        final var repositoryName = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).pathSegment("repos")
                 .pathSegment(repositoryName).build().toUri();
 

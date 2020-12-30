@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.util;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
+import java.net.URL;
+
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -74,12 +76,24 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     @Override
-    public void mockGetRepositorySlugFromUrl(String repositorySlug, VcsRepositoryUrl url) {
+    public void mockGetRepositorySlugFromRepositoryUrl(String repositorySlug, VcsRepositoryUrl repositoryUrl) {
+        // we convert this to URL to make sure the mock is properly hit, as there could be problems with objects such as VcsRepositoryUrl and its subclasses
+        doReturn(repositorySlug).when(urlService).getRepositorySlugFromUrl(repositoryUrl.getURL());
+    }
+
+    @Override
+    public void mockGetRepositorySlugFromUrl(String repositorySlug, URL url) {
         doReturn(repositorySlug).when(urlService).getRepositorySlugFromUrl(url);
     }
 
     @Override
-    public void mockGetProjectKeyFromUrl(String projectKey, VcsRepositoryUrl url) {
+    public void mockGetProjectKeyFromRepositoryUrl(String projectKey, VcsRepositoryUrl repositoryUrl) {
+        // we convert this to URL to make sure the mock is properly hit, as there could be problems with objects such as VcsRepositoryUrl and its subclasses
+        doReturn(projectKey).when(urlService).getProjectKeyFromUrl(repositoryUrl.getURL());
+    }
+
+    @Override
+    public void mockGetProjectKeyFromUrl(String projectKey, URL url) {
         doReturn(projectKey).when(urlService).getProjectKeyFromUrl(url);
     }
 
