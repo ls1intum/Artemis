@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
@@ -22,6 +23,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     handled: boolean;
     complaintResponse: ComplaintResponse = new ComplaintResponse();
     ComplaintType = ComplaintType;
+    isLoading = false;
 
     constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
 
@@ -29,20 +31,28 @@ export class ComplaintsForTutorComponent implements OnInit {
         this.complaintText = this.complaint.complaintText;
         this.handled = this.complaint.accepted !== undefined;
 
-        debugger;
         if (this.complaint.complaintResponse) {
             this.complaintResponse = this.complaint.complaintResponse;
         } else {
             const newComplaintResponse = new ComplaintResponse();
             newComplaintResponse.complaint = this.complaint;
-            this.complaintResponseService.create(newComplaintResponse).subscribe(
-                (response) => {
-                    this.complaintResponse = response.body!;
-                },
-                (err: HttpErrorResponse) => {
-                    this.onError(err.message);
-                },
-            );
+            this.isLoading = true;
+            this.complaintResponseService
+                .create(newComplaintResponse)
+                .pipe(
+                    finalize(() => {
+                        this.isLoading = false;
+                    }),
+                )
+                .subscribe(
+                    (response) => {
+                        this.complaintResponse = response.body!;
+                        this.complaint = this.complaintResponse.complaint!;
+                    },
+                    (err: HttpErrorResponse) => {
+                        this.onError(err.message);
+                    },
+                );
         }
     }
     respondToComplaint(acceptComplaint: boolean): void {
@@ -53,29 +63,40 @@ export class ComplaintsForTutorComponent implements OnInit {
         if (!this.isAllowedToRespond) {
             return;
         }
-        this.complaint.accepted = acceptComplaint;
+
         this.complaintResponse.complaint = this.complaint;
         this.complaintResponse.complaint.complaintResponse = undefined; // breaking circular structure
+        this.complaintResponse.complaint!.accepted = acceptComplaint;
+
         if (acceptComplaint && this.complaint.complaintType === ComplaintType.COMPLAINT) {
             // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
             // The complaint is sent along with the assessment update by the parent to avoid additional requests.
             this.updateAssessmentAfterComplaint.emit(this.complaintResponse);
             this.handled = true;
         } else {
-            // If the complaint was rejected or it was a more feedback request, just the complaint response is created.
-            this.complaintResponseService.update(this.complaintResponse).subscribe(
-                (response) => {
-                    this.handled = true;
-                    // eslint-disable-next-line chai-friendly/no-unused-expressions
-                    this.complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                        ? this.jhiAlertService.success('artemisApp.moreFeedbackResponse.created')
-                        : this.jhiAlertService.success('artemisApp.complaintResponse.created');
-                    this.complaintResponse = response.body!;
-                },
-                (err: HttpErrorResponse) => {
-                    this.onError(err.message);
-                },
-            );
+            // If the complaint was rejected or it was a more feedback request, just the complaint response is updated.
+            this.isLoading = true;
+            this.complaintResponseService
+                .update(this.complaintResponse)
+                .pipe(
+                    finalize(() => {
+                        this.isLoading = false;
+                    }),
+                )
+                .subscribe(
+                    (response) => {
+                        this.handled = true;
+                        // eslint-disable-next-line chai-friendly/no-unused-expressions
+                        this.complaint.complaintType === ComplaintType.MORE_FEEDBACK
+                            ? this.jhiAlertService.success('artemisApp.moreFeedbackResponse.created')
+                            : this.jhiAlertService.success('artemisApp.complaintResponse.created');
+                        this.complaintResponse = response.body!;
+                        this.complaint = this.complaintResponse.complaint!;
+                    },
+                    (err: HttpErrorResponse) => {
+                        this.onError(err.message);
+                    },
+                );
         }
     }
 

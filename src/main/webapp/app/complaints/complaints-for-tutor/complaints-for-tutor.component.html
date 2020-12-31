@@ -1,5 +1,13 @@
-<h3>{{ complaint.complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.review' | translate) : ('artemisApp.complaint.review' | translate) }}</h3>
-<div class="col-12 mt-2" [class.px-0]="zeroIndent">
+<div *ngIf="isLoading" class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">{{ 'loading' | translate }}</span>
+    </div>
+</div>
+
+<h3 *ngIf="!isLoading">
+    {{ complaint.complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.review' | translate) : ('artemisApp.complaint.review' | translate) }}
+</h3>
+<div class="col-12 mt-2" [class.px-0]="zeroIndent" *ngIf="!isLoading">
     <div class="alert alert-info" *ngIf="handled">
         {{
             complaint.complaintType === ComplaintType.MORE_FEEDBACK
