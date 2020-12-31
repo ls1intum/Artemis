@@ -68,7 +68,7 @@ public class GitService {
     @Value("${artemis.version-control.token:#{null}}")
     private Optional<String> gitToken;
 
-    @Value("${artemis.version-control.ssh-private-key-path:#{null}}")
+    @Value("${artemis.version-control.ssh-private-key-folder-path:#{null}}")
     private Optional<String> gitSshPrivateKeyPath;
 
     @Value("${artemis.version-control.ssh-password:#{null}}")
