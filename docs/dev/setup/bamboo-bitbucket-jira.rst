@@ -228,12 +228,14 @@ under ``localhost:7990``.
    
     You first have to create a SSH key (locally), e.g. using ``ssh-keygen`` (more information on how to create a SSH key can be found e.g. at `ssh.com <https://www.ssh.com/ssh/keygen/>`__ or at `atlassian.com <https://confluence.atlassian.com/bitbucketserver076/creating-ssh-keys-1026534841.html>`__).
 
+    The list of supported ciphers can be found at `Apache Mina <https://github.com/apache/mina-sshd>`__.
+
     It is recommended to use a password to secure the private key, but it is not mandatory.
 
-    Please note that the private key file **must** be named ``ìd_rsa``.
+    Please note that the private key file **must** be named ``ìd_rsa``, ``id_dsa``, ``id_ecdsa`` or ``id_ed25519``, depending on the ciphers used.
 
     You now have to extract the public key and add it to Bitbucket.
-    Open the public key file (usually called ``id_rsa.pub``) and copy it's content (you can also use ``cat id_rsa.pub`` to show the public key).
+    Open the public key file (usually called ``id_rsa.pub`` (when using RSA)) and copy it's content (you can also use ``cat id_rsa.pub`` to show the public key).
 
     Navigate to ``BITBUCKET-URL/plugins/servlet/ssh/account/keys`` and add the SSH key by pasting the content of the public key.
    
