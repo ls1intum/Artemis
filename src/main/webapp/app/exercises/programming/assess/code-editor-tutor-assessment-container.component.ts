@@ -503,7 +503,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             relevantMaxPoints = 0;
         }
         // When no maxScore or bonus points are set, then show only the achieved score in the beginning but 0 of 0 points
-        return `, ${totalScore} of ${relevantMaxPoints} points`;
+        return `${totalScore} of ${relevantMaxPoints} points`;
     }
 
     private setAttributesForManualResult(totalScore: number) {
@@ -513,7 +513,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResult!.hasFeedback = true;
         // Append the automatic result string which the manual result holds with the score part, to create the manual result string
         if (this.isFirstAssessment) {
-            this.manualResult!.resultString += this.createResultString(totalScore);
+            this.manualResult!.resultString += ', ' + this.createResultString(totalScore);
             this.isFirstAssessment = false;
         } else {
             /* Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated,
