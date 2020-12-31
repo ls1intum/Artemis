@@ -44,7 +44,7 @@ public class Complaint extends DomainObject {
     private String resultBeforeComplaint;
 
     @OneToOne(mappedBy = "complaint")
-    @JsonIgnoreProperties("complaint")
+    @JsonIgnoreProperties(value = "complaint", allowGetters = true)
     private ComplaintResponse complaintResponse;
 
     @OneToOne

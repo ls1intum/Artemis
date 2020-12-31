@@ -80,21 +80,27 @@ public class ComplaintResponseService {
             throw new BadRequestAlertException("The complaint response you are referring to does not exist", ENTITY_NAME, "complaintresponsemissing");
         }
         ComplaintResponse originalComplaintResponse = originalComplaintResponseOptional.get();
-        User user = this.userService.getUser();
-        if (!user.equals(originalComplaintResponse.getReviewer())) {
-            throw new AccessForbiddenException("Only the user who created the complaint response can also update it");
-        }
-        Optional<Complaint> originalComplaintOptional = complaintRepository.findById(originalComplaintResponse.getComplaint().getId());
+        Optional<Complaint> originalComplaintOptional = complaintRepository.findByIdWithEagerAssessor(originalComplaintResponse.getComplaint().getId());
         if (originalComplaintOptional.isEmpty()) {
             throw new BadRequestAlertException("The complaint you are referring to does not exist", ENTITY_NAME, "complaintmissing");
         }
         Complaint originalComplaint = originalComplaintOptional.get();
+
+        Result originalResult = originalComplaint.getResult();
+        User assessor = originalResult.getAssessor();
+        User reviewer = this.userService.getUser();
+        StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
+        if (!isUserAuthorizedToRespondToComplaint(studentParticipation, originalComplaint, assessor, reviewer)) {
+            throw new AccessForbiddenException("Insufficient permission for updating a complaint response");
+        }
+
         originalComplaint.setAccepted(updatedComplaintResponse.getComplaint().isAccepted()); // accepted or denied
         originalComplaint = complaintRepository.save(originalComplaint);
 
         originalComplaintResponse.setSubmittedTime(ZonedDateTime.now());
         originalComplaintResponse.setResponseText(updatedComplaintResponse.getResponseText());
         originalComplaintResponse.setComplaint(originalComplaint);
+        originalComplaintResponse.setReviewer(reviewer);
         return complaintResponseRepository.save(originalComplaintResponse);
     }
 

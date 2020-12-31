@@ -43,7 +43,7 @@ public class ComplaintResponse extends DomainObject {
 
     @OneToOne
     @JoinColumn(unique = true)
-    @JsonIgnoreProperties("complaintResponse")
+    @JsonIgnoreProperties(value = "complaintResponse", allowSetters = true)
     private Complaint complaint;
 
     @ManyToOne
