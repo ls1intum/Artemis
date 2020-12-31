@@ -294,7 +294,7 @@ public class ProgrammingExerciseImportService {
         newExercise.setAttachments(null);
         newExercise.setNumberOfMoreFeedbackRequests(null);
         newExercise.setNumberOfComplaints(null);
-        newExercise.setNumberOfAssessments(null);
+        newExercise.setTotalNumberOfAssessments(null);
         newExercise.setTutorParticipations(null);
         newExercise.setExampleSubmissions(null);
         newExercise.setStudentQuestions(null);

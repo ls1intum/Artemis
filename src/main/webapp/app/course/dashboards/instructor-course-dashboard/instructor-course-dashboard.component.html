@@ -25,8 +25,8 @@
                                 <b>{{ 'artemisApp.instructorCourseDashboard.tutors' | translate }}:</b> {{ stats.tutorLeaderboardEntries.length }}
                             </li>
                             <li>
-                                <b>{{ 'artemisApp.instructorCourseDashboard.assessments' | translate }}:</b> {{ stats.numberOfAssessments.total }} ({{
-                                    stats.numberOfSubmissions.total - stats.numberOfAssessments.total
+                                <b>{{ 'artemisApp.instructorCourseDashboard.assessments' | translate }}:</b> {{ stats.totalNumberOfAssessments.total }} ({{
+                                    stats.numberOfSubmissions.total - stats.totalNumberOfAssessments.total
                                 }}
                                 {{ 'artemisApp.instructorCourseDashboard.open' | translate }})
                             </li>
@@ -124,15 +124,15 @@
                                 <div
                                     class="progress-bar"
                                     role="progressbar"
-                                    [ngClass]="calculateClass(exercise.numberOfAssessments.inTime, exercise.numberOfSubmissions.inTime)"
-                                    [style.width]="calculatePercentage(exercise.numberOfAssessments.inTime, exercise.numberOfSubmissions.inTime) + '%'"
-                                    attr.aria-valuenow="{{ calculatePercentage(exercise.numberOfAssessments.inTime, exercise.numberOfSubmissions.inTime) }}"
+                                    [ngClass]="calculateClass(exercise.totalNumberOfAssessments.inTime, exercise.numberOfSubmissions.inTime)"
+                                    [style.width]="calculatePercentage(exercise.totalNumberOfAssessments.inTime, exercise.numberOfSubmissions.inTime) + '%'"
+                                    attr.aria-valuenow="{{ calculatePercentage(exercise.totalNumberOfAssessments.inTime, exercise.numberOfSubmissions.inTime) }}"
                                     aria-valuemin="0"
                                     aria-valuemax="100"
                                 >
                                     <span class="justify-content-center d-flex position-absolute w-100 text-dark">
-                                        {{ exercise.numberOfAssessments.inTime }} / {{ exercise.numberOfSubmissions.inTime }} ({{
-                                            calculatePercentage(exercise.numberOfAssessments.inTime, exercise.numberOfSubmissions.inTime)
+                                        {{ exercise.totalNumberOfAssessments.inTime }} / {{ exercise.numberOfSubmissions.inTime }} ({{
+                                            calculatePercentage(exercise.totalNumberOfAssessments.inTime, exercise.numberOfSubmissions.inTime)
                                         }}%)
                                     </span>
                                 </div>
@@ -142,15 +142,15 @@
                                 <div
                                     class="progress-bar"
                                     role="progressbar"
-                                    [ngClass]="calculateClass(exercise.numberOfAssessments.late, exercise.numberOfSubmissions.late)"
-                                    [style.width]="calculatePercentage(exercise.numberOfAssessments.late, exercise.numberOfSubmissions.late) + '%'"
-                                    attr.aria-valuenow="{{ calculatePercentage(exercise.numberOfAssessments.late, exercise.numberOfSubmissions.late) }}"
+                                    [ngClass]="calculateClass(exercise.totalNumberOfAssessments.late, exercise.numberOfSubmissions.late)"
+                                    [style.width]="calculatePercentage(exercise.totalNumberOfAssessments.late, exercise.numberOfSubmissions.late) + '%'"
+                                    attr.aria-valuenow="{{ calculatePercentage(exercise.totalNumberOfAssessments.late, exercise.numberOfSubmissions.late) }}"
                                     aria-valuemin="0"
                                     aria-valuemax="100"
                                 >
                                     <span class="justify-content-center d-flex position-absolute w-100 text-dark">
-                                        {{ exercise.numberOfAssessments.late }} / {{ exercise.numberOfSubmissions.late }} ({{
-                                            calculatePercentage(exercise.numberOfAssessments.late, exercise.numberOfSubmissions.late)
+                                        {{ exercise.totalNumberOfAssessments.late }} / {{ exercise.numberOfSubmissions.late }} ({{
+                                            calculatePercentage(exercise.totalNumberOfAssessments.late, exercise.numberOfSubmissions.late)
                                         }}%)
                                     </span>
                                 </div>

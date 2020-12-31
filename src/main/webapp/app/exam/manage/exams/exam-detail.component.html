@@ -70,6 +70,11 @@
                     <span *ngIf="exam.numberOfExercisesInExam">{{ exam.numberOfExercisesInExam }}</span>
                     <span *ngIf="!exam.numberOfExercisesInExam" jhiTranslate="artemisApp.exam.notSet"></span>
                 </dd>
+                <dt><span jhiTranslate="artemisApp.examManagement.numberOfCorrectionRoundsInExam">Number of correction rounds in exam</span></dt>
+                <dd>
+                    <span *ngIf="exam.numberOfCorrectionRoundsInExam">{{ exam.numberOfCorrectionRoundsInExam }}</span>
+                    <span *ngIf="!exam.numberOfCorrectionRoundsInExam" jhiTranslate="artemisApp.exam.notSet"></span>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.randomizeQuestionOrder">Randomize order of exercise groups</span></dt>
                 <dd>
                     <span>{{ exam.randomizeExerciseOrder }}</span>
