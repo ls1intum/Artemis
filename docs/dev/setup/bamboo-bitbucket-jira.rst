@@ -220,6 +220,27 @@ under ``localhost:7990``.
         .. figure:: bamboo-bitbucket-jira/bamboo_xsrf_disable.png
            :align: center
 
+11. Add a SSH key for the admin user
+
+    Artemis can clone/push the repositories during setup and for the online code editor using SSH.
+    If the SSH key is not present, the username + token will be used as fallback (and all git operations will use HTTP(S) instead of SSH).
+    If the token is also not present, the username + password will be used as fallback (again, using HTTP(S)).
+   
+    You first have to create a SSH key (locally), e.g. using ``ssh-keygen`` (more information on how to create a SSH key can be found e.g. `here <https://www.ssh.com/ssh/keygen/>`__).
+
+    It is recommended to use a password to secure the private key, but it is not mandatory.
+
+    Please note that the private key file **must** be named ``ìd_rsa``.
+
+    You now have to extract the public key and add it to Bitbucket.
+    Open the public key file (usually called ``id_rsa.pub``) and copy it's content (you can also use ``cat id_rsa.pub`` to show the public key).
+
+    Navigate to ``BITBUCKET-URL/plugins/servlet/ssh/account/keys`` and add the SSH key by pasting the content of the public key.
+   
+    ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename). It will be used in the configuration of Artemis to specify where Artemis should look for the key and store the ``known_hosts`` file.
+
+    ``<ssh-key-password>`` is the password used to secure the private key. It is also needed for the configuration of Artemis, but can be omitted if no password was set (e.g. for development environments).
+
 Configure Artemis
 -----------------
 
@@ -245,6 +266,8 @@ Configure Artemis
                user:  <bitbucket-admin-user>
                password: <bitbuckt-admin-password>
                token: <bitbucket-admin-token>
+               ssh-private-key-path: <ssh-key-path>
+               ssh-password: <ssh-key-password>
            continuous-integration:
                url: http://localhost:8085
                user:  <bamboo-admin-user>
