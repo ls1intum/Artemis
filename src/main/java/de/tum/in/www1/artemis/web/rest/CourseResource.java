@@ -746,7 +746,7 @@ public class CourseResource {
         stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
         // no examMode here, so its the same as totalNumberOfAssessments
-        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = { totalNumberOfAssessments };
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
         final long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
