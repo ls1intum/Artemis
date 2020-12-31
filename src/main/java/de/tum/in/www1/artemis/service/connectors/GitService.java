@@ -71,7 +71,7 @@ public class GitService {
     @Value("${artemis.version-control.ssh-private-key-folder-path:#{null}}")
     private Optional<String> gitSshPrivateKeyPath;
 
-    @Value("${artemis.version-control.ssh-password:#{null}}")
+    @Value("${artemis.version-control.ssh-private-key-password:#{null}}")
     private Optional<String> gitSshPrivateKeyPassphrase;
 
     @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")

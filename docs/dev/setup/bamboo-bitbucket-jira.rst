@@ -241,7 +241,7 @@ under ``localhost:7990``.
 
     ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename). It will be used in the configuration of Artemis to specify where Artemis should look for the key and store the ``known_hosts`` file.
 
-    ``<ssh-key-password>`` is the password used to secure the private key. It is also needed for the configuration of Artemis, but can be omitted if no password was set (e.g. for development environments).
+    ``<ssh-private-key-password>`` is the password used to secure the private key. It is also needed for the configuration of Artemis, but can be omitted if no password was set (e.g. for development environments).
 
 Configure Artemis
 -----------------
@@ -269,7 +269,7 @@ Configure Artemis
                password: <bitbuckt-admin-password>
                token: <bitbucket-admin-token>
                ssh-private-key-folder-path: <ssh-private-key-folder-path>
-               ssh-password: <ssh-key-password>
+               ssh-private-key-password: <ssh-private-key-password>
            continuous-integration:
                url: http://localhost:8085
                user:  <bamboo-admin-user>
