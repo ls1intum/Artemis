@@ -226,7 +226,7 @@ under ``localhost:7990``.
     If the SSH key is not present, the username + token will be used as fallback (and all git operations will use HTTP(S) instead of SSH).
     If the token is also not present, the username + password will be used as fallback (again, using HTTP(S)).
    
-    You first have to create a SSH key (locally), e.g. using ``ssh-keygen`` (more information on how to create a SSH key can be found e.g. `here <https://www.ssh.com/ssh/keygen/>`__).
+    You first have to create a SSH key (locally), e.g. using ``ssh-keygen`` (more information on how to create a SSH key can be found e.g. at `ssh.com <https://www.ssh.com/ssh/keygen/>`__ or at `atlassian.com <https://confluence.atlassian.com/bitbucketserver076/creating-ssh-keys-1026534841.html>`__).
 
     It is recommended to use a password to secure the private key, but it is not mandatory.
 
