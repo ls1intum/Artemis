@@ -157,6 +157,13 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         programmingExerciseTestService.resumeProgrammingExerciseByTriggeringFailedBuild_correctInitializationState(exerciseMode);
     }
 
+    @ParameterizedTest
+    @EnumSource(ExerciseMode.class)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void resumeProgrammingExerciseByTriggeringInstructorBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
+        programmingExerciseTestService.resumeProgrammingExerciseByTriggeringInstructorBuild_correctInitializationState(exerciseMode);
+    }
+
     @Test
     @WithMockUser(username = studentLogin, roles = "USER")
     public void startProgrammingExerciseStudentSubmissionFailedWithBuildlog() throws Exception {

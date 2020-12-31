@@ -19,6 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.ProgrammingExerciseTestService;
 
@@ -131,6 +132,41 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = studentLogin, roles = "USER")
     public void resumeProgrammingExercise_doesNotExist(ExerciseMode exerciseMode) throws Exception {
         programmingExerciseTestService.resumeProgrammingExercise_doesNotExist(exerciseMode);
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExerciseMode.class)
+    @WithMockUser(username = studentLogin, roles = "USER")
+    public void resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
+        programmingExerciseTestService.resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(exerciseMode);
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExerciseMode.class)
+    @WithMockUser(username = studentLogin, roles = "USER")
+    public void resumeProgrammingExerciseByTriggeringBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
+        programmingExerciseTestService.resumeProgrammingExerciseByTriggeringBuild_correctInitializationState(exerciseMode, null);
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExerciseMode.class)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void resumeProgrammingExerciseByTriggeringBuildAsInstructor_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
+        programmingExerciseTestService.resumeProgrammingExerciseByTriggeringBuild_correctInitializationState(exerciseMode, SubmissionType.INSTRUCTOR);
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExerciseMode.class)
+    @WithMockUser(username = studentLogin, roles = "USER")
+    public void resumeProgrammingExerciseByTriggeringFailedBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
+        programmingExerciseTestService.resumeProgrammingExerciseByTriggeringFailedBuild_correctInitializationState(exerciseMode);
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExerciseMode.class)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void resumeProgrammingExerciseByTriggeringInstructorBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
+        programmingExerciseTestService.resumeProgrammingExerciseByTriggeringInstructorBuild_correctInitializationState(exerciseMode);
     }
 
     @Test

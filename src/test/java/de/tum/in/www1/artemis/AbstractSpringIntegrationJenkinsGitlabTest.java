@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
@@ -218,8 +217,28 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockTriggerBuild(ProgrammingExerciseParticipation participation) throws Exception {
-        jenkinsRequestMockProvider.mockTriggerBuild();
+    public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
+
+    }
+
+    @Override
+    public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
+
+    }
+
+    @Override
+    public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
+
+    }
+
+    @Override
+    public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception {
+
+    }
+
+    @Override
+    public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
+
     }
 
     @Override

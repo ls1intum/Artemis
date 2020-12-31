@@ -3,12 +3,10 @@ package de.tum.in.www1.artemis.util;
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.*;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_REQUEST;
-import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
@@ -468,12 +466,6 @@ public class ProgrammingExerciseTestService {
     }
 
     // TODO: add several more test cases for resuming a programming exercise:
-    // 1. Invoke the REST Call from the VCS for a new programming submission (which happens as part of the webhook after pushing code to git)
-    // notifyPush, see postSubmission(...) in ProgrammingSubmissionAndResultIntegrationTest
-    // 2. Trigger one build of the participation (also see ProgrammingSubmissionAndResultIntegrationTest)
-    // 2a: request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
-    // 2b: request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
-    // 2c: request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-failed-build", null, HttpStatus.OK, new HttpHeaders());
     // 3. Trigger all builds of the corresponding exercise
     // @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build-all")
 
@@ -503,12 +495,7 @@ public class ProgrammingExerciseTestService {
         var participant = participation.getParticipant();
 
         mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
-
-        // Mocks ProgrammingSubmissionService::notifyPush()
-        final String slug = "test201904bprogrammingexercise6-exercise-testuser";
-        final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        mockDelegate.mockFetchCommitInfo(participation.getProgrammingExercise().getProjectKey(), slug, hash);
-        mockDelegate.mockTriggerBuild(participation);
+        mockDelegate.mockNotifyPush(participation);
 
         // These will be updated when pushing a commit
         participation.setInitializationState(InitializationState.INACTIVE);
@@ -532,9 +519,12 @@ public class ProgrammingExerciseTestService {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
 
-        // Mocks ProgrammingSubmissionResource::triggerBuild
-        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
-        mockDelegate.mockTriggerBuild(participation);
+        mockDelegate.mockTriggerParticipationBuild(participation);
+
+        // These will be updated when triggering a build
+        participation.setInitializationState(InitializationState.INACTIVE);
+        participation.setBuildPlanId(null);
+        participationService.save(participation);
 
         // Construct trigger-build url and execute request
         submissionType = submissionType == null ? SubmissionType.MANUAL : submissionType;
@@ -551,15 +541,30 @@ public class ProgrammingExerciseTestService {
     public void resumeProgrammingExerciseByTriggeringFailedBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
-        mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
 
-        // Mocks ProgrammingSubmissionResource::triggerBuild
-        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
-        mockDelegate.mockTriggerBuild(participation);
+        mockDelegate.mockTriggerFailedBuild(participation);
+
+        // These will be updated triggering a failed build
+        participation.setInitializationState(InitializationState.INACTIVE);
+        participation.setBuildPlanId(null);
+        participationService.save(participation);
 
         // Construct trigger-build url and execute request
         String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
+
+        // Fetch updated participation and assert
+        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationService.findOne(participation.getId());
+        assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
+        assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
+                .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
+    }
+
+    public void resumeProgrammingExerciseByTriggeringInstructorBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
+        var participation = createStudentParticipationWithSubmission(exerciseMode);
+        var participant = participation.getParticipant();
+
+        request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all", null, HttpStatus.OK, new HttpHeaders());
 
         // Fetch updated participation and assert
         ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationService.findOne(participation.getId());

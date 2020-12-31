@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -32,8 +34,8 @@ import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
@@ -264,7 +266,50 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockTriggerBuild(ProgrammingExerciseParticipation participation) throws Exception {
+    public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
+        final var projectKey = participation.getProgrammingExercise().getProjectKey();
+        final var planName = BuildPlanType.TEMPLATE.getName();
+        final var username = participation.getParticipantIdentifier();
+        bambooRequestMockProvider.mockCopyBuildPlan(projectKey, planName, projectKey, username.toUpperCase(), true);
+    }
+
+    @Override
+    public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
+        final var buildPlanId = participation.getBuildPlanId();
+        final var repositoryUrl = participation.getRepositoryUrlAsUrl();
+        final var projectKey = buildPlanId.split("-")[0];
+        final var planKey = participation.getBuildPlanId();
+        final var repoProjectName = urlService.getProjectKeyFromUrl(repositoryUrl);
+        bambooRequestMockProvider.mockUpdatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */,
+                Optional.empty());
+
+        // Isn't mockEnablePlan() written incorrectly since projectKey isn't even used by the bamboo service?
+        var splitted = buildPlanId.split("-");
+        bambooRequestMockProvider.mockEnablePlan(splitted[0], splitted[1]);
+    }
+
+    @Override
+    public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
+        bambooRequestMockProvider.mockGetBuildPlan(null, null);
+        mockCopyBuildPlan(participation);
+        mockConfigureBuildPlan(participation);
+        bambooRequestMockProvider.mockTriggerBuild(participation);
+    }
+
+    @Override
+    public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception {
+        final String slug = "test201904bprogrammingexercise6-exercise-testuser";
+        final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        mockFetchCommitInfo(participation.getProgrammingExercise().getProjectKey(), slug, hash);
+        bambooRequestMockProvider.mockTriggerBuild(participation);
+    }
+
+    @Override
+    public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
+        mockCopyBuildPlan(participation);
+        mockConfigureBuildPlan(participation);
         bambooRequestMockProvider.mockTriggerBuild(participation);
     }
 
