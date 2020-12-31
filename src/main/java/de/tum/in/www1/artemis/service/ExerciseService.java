@@ -402,8 +402,8 @@ public class ExerciseService {
      * Calculates the number of assessments done for each correction round.
      *
      * @param exercise the exercise for which we want to calculate the # of assessments for each correction round
-     * @param examMode
-     * @param totalNumberOfAssessments: so total number of assessments sum up over all correction rounds
+     * @param examMode states whether or not the the function is called in the exam mode
+     * @param totalNumberOfAssessments so total number of assessments sum up over all correction rounds
      * @return the number of assessments for each correction rounds
      */
     public DueDateStat[] calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(Exercise exercise, boolean examMode, DueDateStat totalNumberOfAssessments) {
