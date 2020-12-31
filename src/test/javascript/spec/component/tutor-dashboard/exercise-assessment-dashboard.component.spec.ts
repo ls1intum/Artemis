@@ -54,6 +54,10 @@ import { Complaint } from 'app/entities/complaint.model';
 import { Language } from 'app/entities/tutor-group.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
+import { Participation } from 'app/entities/participation/participation.model';
+import { Result } from 'app/entities/result.model';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -88,52 +92,52 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let tutorParticipationServiceCreateStub: SinonStub;
 
     let guidedTourService: GuidedTourService;
-    const result1 = { id: 40 };
-    const result2 = { id: 50 };
-    const exam = { id: 90, numberOfCorrectionRoundsInExam: 2 };
-    const exerciseGroup = { id: 80, exam: exam };
+    const result1 = { id: 40 } as Result;
+    const result2 = { id: 50 } as Result;
+    const exam = { id: 90, numberOfCorrectionRoundsInExam: 2 } as Exam;
+    const exerciseGroup = { id: 80, exam } as ExerciseGroup;
     const exercise = {
         id: 20,
-        exerciseGroup: exerciseGroup,
+        exerciseGroup,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
     } as ProgrammingExercise;
     const programmingExercise = {
         id: 20,
-        exerciseGroup: exerciseGroup,
+        exerciseGroup,
         type: ExerciseType.PROGRAMMING,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
     } as ProgrammingExercise;
     const modelingExercise = {
         id: 20,
-        exerciseGroup: exerciseGroup,
+        exerciseGroup,
         type: ExerciseType.MODELING,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
     } as ModelingExercise;
-    const textExercise = { id: 20, exerciseGroup: exerciseGroup, type: ExerciseType.TEXT, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as TextExercise;
+    const textExercise = { id: 20, exerciseGroup, type: ExerciseType.TEXT, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as TextExercise;
     const fileUploadExercise = {
         id: 20,
-        exerciseGroup: exerciseGroup,
+        exerciseGroup,
         type: ExerciseType.FILE_UPLOAD,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
     } as FileUploadExercise;
 
-    const participation = { id: 70, submissions: [] };
+    const participation = { id: 70, submissions: [] } as Participation;
 
     const modelingSubmission = { id: 30 } as ModelingSubmission;
     const fileUploadSubmission = { id: 30 } as FileUploadSubmission;
     const textSubmission = { id: 30 } as TextSubmission;
     const programmingSubmission = { id: 30 } as ProgrammingSubmission;
 
-    const modelingSubmissionAssessed = { id: 30, results: [result1, result2], participation: participation } as ModelingSubmission;
-    const fileUploadSubmissionAssessed = { id: 30, results: [result1, result2], participation: participation } as FileUploadSubmission;
+    const modelingSubmissionAssessed = { id: 30, results: [result1, result2], participation } as ModelingSubmission;
+    const fileUploadSubmissionAssessed = { id: 30, results: [result1, result2], participation } as FileUploadSubmission;
     const textSubmissionAssessed = {
         id: 30,
         submissionExerciseType: SubmissionExerciseType.TEXT,
         language: Language.GERMAN,
         results: [result1, result2],
-        participation: participation,
+        participation,
     } as TextSubmission;
-    const programmingSubmissionAssessed = { id: 30, results: [result1, result2], participation: participation } as ProgrammingSubmission;
+    const programmingSubmissionAssessed = { id: 30, results: [result1, result2], participation } as ProgrammingSubmission;
 
     const complaint = { id: 33, result: { id: 44, submission: textSubmission } } as Complaint;
 
@@ -144,7 +148,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     const stats = {
         numberOfSubmissions: { inTime: 12, late: 5 },
         totalNumberOfAssessments: { inTime: 9, late: 1 },
-        numberOfAssessmentsOfCorrectionRounds: numberOfAssessmentsOfCorrectionRounds,
+        numberOfAssessmentsOfCorrectionRounds,
     } as StatsForDashboard;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
     const router = new MockRouter();

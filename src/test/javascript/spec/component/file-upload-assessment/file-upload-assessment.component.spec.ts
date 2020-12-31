@@ -25,7 +25,7 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+import { setLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Result } from 'app/entities/result.model';

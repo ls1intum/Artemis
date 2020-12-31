@@ -24,8 +24,8 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
-import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -403,6 +403,7 @@ public class ExerciseService {
      *
      * @param exercise the exercise for which we want to calculate the # of assessments for each correction round
      * @param examMode
+     * @param totalNumberOfAssessments: so total number of assessments sum up over all correction rounds
      * @return the number of assessments for each correction rounds
      */
     public DueDateStat[] calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(Exercise exercise, boolean examMode, DueDateStat totalNumberOfAssessments) {
