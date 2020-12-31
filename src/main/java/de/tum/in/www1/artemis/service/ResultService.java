@@ -37,8 +37,6 @@ public class ResultService {
 
     private final FeedbackRepository feedbackRepository;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final WebsocketMessagingService websocketMessagingService;
 
     private final ComplaintResponseRepository complaintResponseRepository;
@@ -50,15 +48,13 @@ public class ResultService {
     private final ComplaintRepository complaintRepository;
 
     public ResultService(UserService userService, ResultRepository resultRepository, LtiService ltiService, ObjectMapper objectMapper, FeedbackRepository feedbackRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, WebsocketMessagingService websocketMessagingService,
-            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
-            RatingRepository ratingRepository) {
+            WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
+            ComplaintRepository complaintRepository, RatingRepository ratingRepository) {
         this.userService = userService;
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
         this.objectMapper = objectMapper;
         this.feedbackRepository = feedbackRepository;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.complaintResponseRepository = complaintResponseRepository;
         this.submissionRepository = submissionRepository;

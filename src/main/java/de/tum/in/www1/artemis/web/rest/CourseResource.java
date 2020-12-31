@@ -583,7 +583,7 @@ public class CourseResource {
         stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
         // no examMode here, so its the same as totalNumberOfAssessments
-        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = { totalNumberOfAssessments };
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
         stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));

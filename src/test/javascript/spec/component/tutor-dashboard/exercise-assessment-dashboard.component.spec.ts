@@ -424,13 +424,14 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     describe('openExampleSubmission', () => {
         const courseId = 4;
-        /*
+
         it('should not openExampleSubmission', () => {
+            navigateSpy.resetHistory();
             const submission = { id: 8 };
             comp.openExampleSubmission(submission!.id);
             expect(navigateSpy).to.have.not.been.called;
         });
-    */
+
         it('should openExampleSubmission', () => {
             comp.exercise = exercise;
             comp.exercise.type = ExerciseType.PROGRAMMING;
@@ -444,13 +445,13 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     describe('openAssessmentEditor', () => {
         const courseId = 4;
-        /*
         it('should not openExampleSubmission', () => {
+            navigateSpy.resetHistory();
             const submission = { id: 8 };
             comp.openAssessmentEditor(submission);
             expect(navigateSpy).to.have.not.been.called;
         });
-*/
+
         it('should openExampleSubmission with modelingExercise', () => {
             comp.exercise = exercise;
             comp.exercise.type = ExerciseType.MODELING;
@@ -472,16 +473,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             comp.openAssessmentEditor(submission);
             expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/code-editor/${participationId}/assessment`]);
-        });
-        it('should openExampleSubmission with programmingExercise and isTestRun', () => {
-            comp.exercise = exercise;
-            comp.exercise.type = ExerciseType.PROGRAMMING;
-            comp.courseId = 4;
-            comp.exercise = exercise;
             comp.isTestRun = true;
-            const participationId = 3;
-            const submission = { id: 8, participation: { id: participationId } };
-
             comp.openAssessmentEditor(submission);
             expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/code-editor/${participationId}/assessment`]);
         });
