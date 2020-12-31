@@ -335,7 +335,6 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             return;
         }
 
-        // this.totalScore = credits.reduce((a, b) => a! + b!, 0)!;
         const relevantMaxPoints = getMaxPointsRespectingZeroPointExercises(this.exercise);
         const maxPoints = this.exercise.maxScore! > 0 ? relevantMaxPoints + (this.exercise.bonusPoints! ?? 0.0) : relevantMaxPoints;
         const creditsTotalScore = credits.reduce((a, b) => a! + b!, 0)!;

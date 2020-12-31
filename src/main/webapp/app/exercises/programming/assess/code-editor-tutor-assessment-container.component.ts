@@ -496,6 +496,16 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
+    private createResultString(totalScore: number): string {
+        let relevantMaxPoints = getMaxPointsRespectingZeroPointExercises(this.exercise);
+        if (!this.exercise.maxScore && !this.exercise.bonusPoints) {
+            totalScore = 0;
+            relevantMaxPoints = 0;
+        }
+        // When no maxScore or bonus points are set, then show only the achieved score in the beginning but 0 of 0 points
+        return `, ${totalScore} of ${relevantMaxPoints} points`;
+    }
+
     private setAttributesForManualResult(totalScore: number) {
         this.setFeedbacksForManualResult();
         // Manual result is always rated and has feedback
@@ -503,17 +513,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResult!.hasFeedback = true;
         // Append the automatic result string which the manual result holds with the score part, to create the manual result string
         if (this.isFirstAssessment) {
-            // TODO: rene: change the resultString depending on bonusPoints?
-            this.manualResult!.resultString += this.exercise.maxScore ? `, ${totalScore} of ${this.exercise.maxScore} points` : `, ${totalScore} points`;
+            this.manualResult!.resultString += this.createResultString(totalScore);
             this.isFirstAssessment = false;
         } else {
             /* Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated,
              * as the points the student has achieved have changed
              */
             const resultStringParts: string[] = this.manualResult!.resultString!.split(', ');
-            // When no maxScore is set, then show only the achieved points
-            // TODO: rene: change the resultString depending on bonusPoints?
-            resultStringParts[resultStringParts.length - 1] = this.exercise.maxScore ? `${totalScore} of ${this.exercise.maxScore} points` : `${totalScore} points`;
+            resultStringParts[resultStringParts.length - 1] = this.createResultString(totalScore);
             this.manualResult!.resultString = resultStringParts.join(', ');
         }
         const relevantMaxPoints = getMaxPointsRespectingZeroPointExercises(this.exercise);

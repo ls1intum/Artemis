@@ -110,7 +110,6 @@ export class StudentExamDetailComponent implements OnInit {
                 exercise.studentParticipations[0].results?.length &&
                 exercise.studentParticipations[0].results.length > 0
             ) {
-                // TODO: rene: is it possible to have only bonusPoint exams?
                 this.achievedTotalScore += (exercise.studentParticipations[0].results[0].score! * exercise.maxScore!) / 100;
                 this.achievedTotalScore = this.rounding(this.achievedTotalScore);
             }
