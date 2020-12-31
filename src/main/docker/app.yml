@@ -4,7 +4,7 @@ services:
         image: artemis
         environment:
             - _JAVA_OPTIONS=-Xmx512m -Xms256m
-            - SPRING_PROFILES_ACTIVE=prod,swagger
+            - SPRING_PROFILES_ACTIVE=prod,openapi
             - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
             - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/artemis?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
             - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
