@@ -45,7 +45,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     }
 
     @ParameterizedTest
-    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
+    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA" })
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(ProgrammingLanguage programmingLanguage) {
         programmingExerciseResultTestService.setupForProgrammingLanguage(programmingLanguage);
