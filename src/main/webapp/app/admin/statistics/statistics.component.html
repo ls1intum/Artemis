@@ -11,8 +11,11 @@
             <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.MONTH">
                 <input type="radio" name="options" id="option3" (click)="onTabChanged(SpanType.MONTH)" />{{ 'statistics.span.month' | translate }}
             </label>
+            <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.QUARTER">
+                <input type="radio" name="options" id="option4" (click)="onTabChanged(SpanType.QUARTER)" />{{ 'statistics.span.quarter' | translate }}
+            </label>
             <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.YEAR">
-                <input type="radio" name="options" id="option4" (click)="onTabChanged(SpanType.YEAR)" />{{ 'statistics.span.year' | translate }}
+                <input type="radio" name="options" id="option5" (click)="onTabChanged(SpanType.YEAR)" />{{ 'statistics.span.year' | translate }}
             </label>
         </div>
     </div>
