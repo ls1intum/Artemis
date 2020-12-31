@@ -211,7 +211,11 @@ public class GitService {
     }
 
     private String getGitUriAsString(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
-        return useSsh() ? getSshUri(vcsRepositoryUrl).toString() : vcsRepositoryUrl.getURL().toString();
+        return getGitUri(vcsRepositoryUrl).toString();
+    }
+
+    private URI getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
+        return useSsh() ? getSshUri(vcsRepositoryUrl) : vcsRepositoryUrl.getURL().toURI();
     }
 
     private URI getSshUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
@@ -442,6 +446,7 @@ public class GitService {
         Git git = new Git(repo);
         git.commit().setMessage(message).setAllowEmpty(true).setCommitter(name, email).call();
         log.debug("commitAndPush -> Push " + repo.getLocalPath());
+        setRemoteUrl(git, repo);
         git.push().setTransportConfigCallback(sshCallback).call();
         git.close();
     }
@@ -492,6 +497,7 @@ public class GitService {
      */
     public void reset(Repository repo, String ref) throws GitAPIException {
         Git git = new Git(repo);
+        setRemoteUrl(git, repo);
         git.reset().setMode(ResetCommand.ResetType.HARD).setRef(ref).call();
         git.close();
     }
@@ -505,8 +511,19 @@ public class GitService {
     public void fetchAll(Repository repo) throws GitAPIException {
         Git git = new Git(repo);
         log.debug("Fetch " + repo.getLocalPath());
+        setRemoteUrl(git, repo);
         git.fetch().setForceUpdate(true).setRemoveDeletedRefs(true).setTransportConfigCallback(sshCallback).call();
         git.close();
+    }
+
+    private void setRemoteUrl(Git git, Repository repo) throws GitAPIException {
+        // Note: we reset the remote url, because it might have changed from https to ssh or ssh to https
+        try {
+            git.remoteSetUrl().setRemoteUri(new URIish(getGitUriAsString(repo.getParticipation().getVcsRepositoryUrl()))).call();
+        }
+        catch (URISyntaxException e) {
+            log.warn("Cannot set the remote url due to the following exception: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -520,6 +537,7 @@ public class GitService {
             // flush cache of files
             repo.setContent(null);
             log.debug("Pull ignore conflicts " + repo.getLocalPath());
+            setRemoteUrl(git, repo);
             git.pull().setTransportConfigCallback(sshCallback).call();
         }
         catch (GitAPIException ex) {
@@ -540,6 +558,7 @@ public class GitService {
         // flush cache of files
         repo.setContent(null);
         log.debug("Pull " + repo.getLocalPath());
+        setRemoteUrl(git, repo);
         return git.pull().setTransportConfigCallback(sshCallback).call();
     }
 
@@ -573,9 +592,9 @@ public class GitService {
         Collection<Ref> refs;
         try {
             log.debug("getLastCommitHash " + repoUrl);
-            refs = Git.lsRemoteRepository().setRemote(repoUrl.getURL().toString()).setTransportConfigCallback(sshCallback).call();
+            refs = Git.lsRemoteRepository().setRemote(getGitUriAsString(repoUrl)).setTransportConfigCallback(sshCallback).call();
         }
-        catch (GitAPIException ex) {
+        catch (GitAPIException | URISyntaxException ex) {
             throw new EntityNotFoundException("Could not retrieve the last commit hash for repoUrl " + repoUrl + " due to the following exception: " + ex);
         }
         for (Ref ref : refs) {
@@ -624,8 +643,6 @@ public class GitService {
             }
             log.debug("Last commit hash is {}", commitHash);
 
-            git.close();
-
             reset(repository, commitHash);
 
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
@@ -646,6 +663,7 @@ public class GitService {
     public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise) {
         try {
             Git studentGit = new Git(repository);
+            setRemoteUrl(studentGit, repository);
             // Get last commit hash from template repo
             ObjectId latestHash = getLastCommitHash(programmingExercise.getVcsTemplateRepositoryUrl());
 
