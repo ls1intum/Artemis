@@ -144,16 +144,16 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(templateRepository.localRepoFile.toPath()), any())).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(), true);
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(studentRepository.localRepoFile.toPath()), any())).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(), true);
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(studentRepository.localRepoFile.toPath()), any())).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(), false);
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(studentRepository.localRepoFile.toPath()), any())).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository((ProgrammingExerciseParticipation) participation);
 
         logs.add(buildLogEntry);
@@ -272,7 +272,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(solutionRepository.localRepoFile.toPath()), any())).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(programmingExercise.getSolutionParticipation().getVcsRepositoryUrl(), true);
 
         var files = request.getMap(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files", HttpStatus.OK, String.class, FileType.class);

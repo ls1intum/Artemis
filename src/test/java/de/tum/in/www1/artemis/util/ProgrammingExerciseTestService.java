@@ -5,8 +5,6 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoi
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
@@ -188,11 +186,11 @@ public class ProgrammingExerciseTestService {
         doReturn(testRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, testRepoName);
         doReturn(solutionRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, solutionRepoName);
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(exerciseRepository.localRepoFile.toPath()), any())).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(exerciseRepoTestUrl, true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(testRepository.localRepoFile.toPath()), any())).when(gitService).getOrCheckoutRepository(testRepoTestUrl,
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoTestUrl,
                 true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(solutionRepository.localRepoFile.toPath()), any())).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(solutionRepoTestUrl, true);
 
         // we need separate mocks with VcsRepositoryUrl here because MockFileRepositoryUrl and VcsRepositoryUrl do not seem to be compatible here
@@ -214,8 +212,8 @@ public class ProgrammingExerciseTestService {
         String participantRepoName = projectKey.toLowerCase() + "-" + participantName;
         var participantRepoTestUrl = getMockFileRepositoryUrl(studentRepo);
         doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, participantRepoName);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(studentRepo.localRepoFile.toPath()), any())).when(gitService)
-                .getOrCheckoutRepository(participantRepoTestUrl, true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participantRepoTestUrl,
+                true);
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(participantRepoName, participantRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, participantRepoTestUrl);
     }
