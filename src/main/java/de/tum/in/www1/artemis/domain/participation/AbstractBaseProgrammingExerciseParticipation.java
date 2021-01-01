@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.participation;
 
-import java.net.MalformedURLException;
-
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -10,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @MappedSuperclass
@@ -39,21 +36,6 @@ public abstract class AbstractBaseProgrammingExerciseParticipation extends Parti
 
     public void setBuildPlanId(String buildPlanId) {
         this.buildPlanId = buildPlanId;
-    }
-
-    @JsonIgnore
-    public VcsRepositoryUrl getVcsRepositoryUrl() {
-        if (repositoryUrl == null) {
-            return null;
-        }
-
-        try {
-            return new VcsRepositoryUrl(repositoryUrl);
-        }
-        catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     @Override

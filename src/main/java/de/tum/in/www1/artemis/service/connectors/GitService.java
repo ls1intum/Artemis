@@ -102,12 +102,15 @@ public class GitService {
         this.zipFileService = zipFileService;
     }
 
+    /**
+     * initialize the GitService, in particular which authentication mechanism should be used
+     * Artemis uses the following order for authentication:
+     * 1. ssh key (if available)
+     * 2. username + personal access token (if available)
+     * 3. username + password
+     */
     @PostConstruct
     public void init() {
-        // Artemis uses the following order for authentication:
-        // 1. ssh key (if available)
-        // 2. username + personal access token (if available)
-        // 3. username + password
         if (useSsh()) {
             log.info("GitService will use ssh keys as authentication method to interact with remote git repositories");
             configureSsh();

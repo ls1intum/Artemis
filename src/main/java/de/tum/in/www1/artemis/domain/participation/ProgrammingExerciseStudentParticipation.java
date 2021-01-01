@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.participation;
 
-import java.net.MalformedURLException;
-
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -12,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity
@@ -44,20 +41,9 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         this.buildPlanId = buildPlanId;
     }
 
-    @JsonIgnore
-    public VcsRepositoryUrl getVcsRepositoryUrl() {
-        try {
-            return new VcsRepositoryUrl(repositoryUrl);
-        }
-        catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     @Override
     @JsonIgnore
-    // TODO: this is a helper method to avoid casts in other classes that want to access the underlying exercise
+    // NOTE: this is a helper method to avoid casts in other classes that want to access the underlying exercise
     public ProgrammingExercise getProgrammingExercise() {
         Exercise exercise = getExercise();
         if (exercise instanceof ProgrammingExercise) { // this should always be the case except exercise is null
