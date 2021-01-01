@@ -1,6 +1,6 @@
 import { Course } from 'app/entities/course.model';
 import * as sinon from 'sinon';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
@@ -14,16 +14,16 @@ import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
+import * as _ from 'lodash';
 
 describe('ApollonDiagramList Component', () => {
     let apollonDiagramService: ApollonDiagramService;
     let fixture: ComponentFixture<ApollonDiagramListComponent>;
     const sandbox = sinon.createSandbox();
-
     const course: Course = { id: 123 } as Course;
 
     beforeEach(() => {
-        const route = ({ params: of({ courseId: 123 }), queryParamMap: of(convertToParamMap({ testRun: false })) } as any) as ActivatedRoute;
+        const route = ({ params: of({ courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any) as ActivatedRoute;
 
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -41,7 +41,7 @@ describe('ApollonDiagramList Component', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ApollonDiagramListComponent);
-                apollonDiagramService = TestBed.inject(ApollonDiagramService);
+                apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
             });
     });
 
@@ -50,26 +50,30 @@ describe('ApollonDiagramList Component', () => {
     });
 
     it('ngOnInit', () => {
-        sandbox.stub(apollonDiagramService, 'getDiagramsByCourse').resolves({});
-        // nothing to test in ngOnInit
-        expect(true).toBeTruthy();
+        const apollonDiagrams: ApollonDiagram[] = [new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!), new ApollonDiagram(UMLDiagramType.ActivityDiagram, course.id!)];
+        const response: HttpResponse<ApollonDiagram[]> = new HttpResponse({ body: apollonDiagrams });
+        sandbox.stub(apollonDiagramService, 'getDiagramsByCourse').returns(of(response));
+
+        // test
+        fixture.componentInstance.ngOnInit();
+        expect(_.isEqual(fixture.componentInstance.apollonDiagrams, apollonDiagrams)).toBeTruthy();
     });
 
-    it('delete', fakeAsync(() => {
+    it('delete', () => {
+        // setup
+        const response: HttpResponse<void> = new HttpResponse();
+        sandbox.stub(apollonDiagramService, 'delete').returns(of(response));
+
         const apollonDiagrams = [];
         for (let i = 0; i < 3; i++) {
             const apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
             apollonDiagram.id = i;
             apollonDiagrams.push(apollonDiagram);
         }
+
         const diagramToDelete = apollonDiagrams[0];
         fixture.componentInstance.apollonDiagrams = apollonDiagrams;
-        sandbox
-            .stub(apollonDiagramService, 'delete')
-            .withArgs(diagramToDelete.id!, course.id!)
-            .returns(of({} as HttpResponse<void>));
         fixture.componentInstance.delete(diagramToDelete);
-        tick(500);
         expect(fixture.componentInstance.apollonDiagrams.find((diagram) => diagram.id === diagramToDelete.id)).toBeFalsy();
-    }));
+    });
 });
