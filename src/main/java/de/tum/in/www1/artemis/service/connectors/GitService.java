@@ -517,11 +517,16 @@ public class GitService {
     }
 
     private void setRemoteUrl(Git git, Repository repo) throws GitAPIException {
+        if (repo == null || repo.getRemoteRepositoryUrl() == null) {
+            log.warn("Cannot set remoteUrl because it is null!");
+            return;
+        }
         // Note: we reset the remote url, because it might have changed from https to ssh or ssh to https
         try {
-            git.remoteSetUrl().setRemoteUri(new URIish(getGitUriAsString(repo.getRemoteRepositoryUrl()))).call();
+            var remoteUri = getGitUriAsString(repo.getRemoteRepositoryUrl());
+            git.remoteSetUrl().setRemoteUri(new URIish(remoteUri)).call();
         }
-        catch (URISyntaxException e) {
+        catch (Exception e) {
             log.warn("Cannot set the remote url due to the following exception: " + e.getMessage(), e);
         }
     }
