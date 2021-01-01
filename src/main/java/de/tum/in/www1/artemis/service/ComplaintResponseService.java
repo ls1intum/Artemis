@@ -42,6 +42,12 @@ public class ComplaintResponseService {
         this.authorizationCheckService = authorizationCheckService;
     }
 
+    /**
+     * Saves a complaint response to the database
+     * @param complaintResponse - complaint response to create
+     * @return the persisted complaint response
+     */
+    // Todo Make sure this method creates a fresh complaint response and not just use the given one
     public ComplaintResponse createComplaintResponse(ComplaintResponse complaintResponse) {
         if (complaintResponse.getId() != null) {
             throw new BadRequestAlertException("A new complaint response cannot already have an id", ENTITY_NAME, "idexists");
@@ -71,6 +77,11 @@ public class ComplaintResponseService {
         return complaintResponseRepository.save(complaintResponse);
     }
 
+    /**
+     * Updates an existing complaint response
+     * @param updatedComplaintResponse - changed complaint response
+     * @return updated complaint response
+     */
     public ComplaintResponse updateComplaintResponse(ComplaintResponse updatedComplaintResponse) {
         if (updatedComplaintResponse.getId() == null) {
             throw new BadRequestAlertException("To update a complaint response it needs an id", ENTITY_NAME, "idmissing");

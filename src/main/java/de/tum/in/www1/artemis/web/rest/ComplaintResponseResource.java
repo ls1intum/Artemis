@@ -84,9 +84,15 @@ public class ComplaintResponseResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaintResponse.getId().toString())).body(savedComplaintResponse);
     }
 
+    /**
+     * PUT /complaint-response: update an existing complaint response
+     *
+     * @param complaintResponse the complaint response to update
+     * @return the ResponseEntity with status 200 (OK) and with the body of the updated complaint response
+     */
     @PutMapping("/complaint-responses")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ComplaintResponse> updateComplaintResponse(@RequestBody ComplaintResponse complaintResponse) throws URISyntaxException {
+    public ResponseEntity<ComplaintResponse> updateComplaintResponse(@RequestBody ComplaintResponse complaintResponse) {
         log.debug("REST request to update ComplaintResponse: {}", complaintResponse);
         ComplaintResponse updatedComplaintResponse = complaintResponseService.updateComplaintResponse(complaintResponse);
 

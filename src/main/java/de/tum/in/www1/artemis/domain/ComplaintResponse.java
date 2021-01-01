@@ -49,6 +49,10 @@ public class ComplaintResponse extends DomainObject {
     @ManyToOne
     private User reviewer;
 
+    /**
+     * Calculates if the complaint response is still time locked or not
+     * @return true if complaint response is time locked, false otherwise
+     */
     @JsonProperty("isCurrentlyLocked")
     public boolean isCurrentlyLocked() {
         if (createdTime == null) {
