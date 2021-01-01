@@ -126,7 +126,8 @@ public class GitService {
     }
 
     private void configureSsh() {
-        CredentialsProvider.setDefault(new CredentialsProvider() {
+
+        var credentialsProvider = new CredentialsProvider() {
 
             @Override
             public boolean isInteractive() {
@@ -148,9 +149,11 @@ public class GitService {
                 }
                 return true;
             }
-        });
+        };
 
-        var sshSessionFactory = new SshdSessionFactoryBuilder().setKeyPasswordProvider(credentialsProvider -> new KeyPasswordProvider() {
+        CredentialsProvider.setDefault(credentialsProvider);
+
+        var sshSessionFactory = new SshdSessionFactoryBuilder().setKeyPasswordProvider(keyPasswordProvider -> new KeyPasswordProvider() {
 
             @Override
             public char[] getPassphrase(URIish uri, int attempt) {
@@ -202,9 +205,15 @@ public class GitService {
                 return Collections.emptyMap();
             }
         }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.get())).setHomeDirectory(new java.io.File(System.getProperty("user.home"))).build(new JGitKeyCache());
+
         sshCallback = transport -> {
-            SshTransport sshTransport = (SshTransport) transport;
-            sshTransport.setSshSessionFactory(sshSessionFactory);
+            if (transport instanceof SshTransport) {
+                SshTransport sshTransport = (SshTransport) transport;
+                sshTransport.setSshSessionFactory(sshSessionFactory);
+            }
+            else {
+                log.error("Cannot use ssh properly because of mismatch of Jgit transport object: " + transport);
+            }
         };
     }
 
@@ -449,7 +458,7 @@ public class GitService {
         Git git = new Git(repo);
         git.commit().setMessage(message).setAllowEmpty(true).setCommitter(name, email).call();
         log.debug("commitAndPush -> Push " + repo.getLocalPath());
-        setRemoteUrl(git, repo);
+        setRemoteUrl(repo);
         git.push().setTransportConfigCallback(sshCallback).call();
         git.close();
     }
@@ -500,7 +509,7 @@ public class GitService {
      */
     public void reset(Repository repo, String ref) throws GitAPIException {
         Git git = new Git(repo);
-        setRemoteUrl(git, repo);
+        setRemoteUrl(repo);
         git.reset().setMode(ResetCommand.ResetType.HARD).setRef(ref).call();
         git.close();
     }
@@ -514,20 +523,30 @@ public class GitService {
     public void fetchAll(Repository repo) throws GitAPIException {
         Git git = new Git(repo);
         log.debug("Fetch " + repo.getLocalPath());
-        setRemoteUrl(git, repo);
+        setRemoteUrl(repo);
         git.fetch().setForceUpdate(true).setRemoveDeletedRefs(true).setTransportConfigCallback(sshCallback).call();
         git.close();
     }
 
-    private void setRemoteUrl(Git git, Repository repo) throws GitAPIException {
+    /**
+     * Change the remote repository url to the currently used authentication mechanism (either ssh or https)
+     *
+     * @param repo the git repository for which the remote url should be change
+     */
+    private void setRemoteUrl(Repository repo) {
         if (repo == null || repo.getRemoteRepositoryUrl() == null) {
             log.warn("Cannot set remoteUrl because it is null!");
             return;
         }
         // Note: we reset the remote url, because it might have changed from https to ssh or ssh to https
         try {
-            var remoteUri = getGitUriAsString(repo.getRemoteRepositoryUrl());
-            git.remoteSetUrl().setRemoteUri(new URIish(remoteUri)).call();
+            var existingRemoteUrl = repo.getConfig().getString("remote", "origin", "url");
+            var newRemoteUrl = getGitUriAsString(repo.getRemoteRepositoryUrl());
+            if (!Objects.equals(newRemoteUrl, existingRemoteUrl)) {
+                log.info("Replace existing remote url " + existingRemoteUrl + " with new remote url " + newRemoteUrl);
+                repo.getConfig().setString("remote", "origin", "url", newRemoteUrl);
+                log.info("New remote url: " + repo.getConfig().getString("remote", "origin", "url"));
+            }
         }
         catch (Exception e) {
             log.warn("Cannot set the remote url due to the following exception: " + e.getMessage(), e);
@@ -545,7 +564,7 @@ public class GitService {
             // flush cache of files
             repo.setContent(null);
             log.debug("Pull ignore conflicts " + repo.getLocalPath());
-            setRemoteUrl(git, repo);
+            setRemoteUrl(repo);
             git.pull().setTransportConfigCallback(sshCallback).call();
         }
         catch (GitAPIException ex) {
@@ -566,7 +585,7 @@ public class GitService {
         // flush cache of files
         repo.setContent(null);
         log.debug("Pull " + repo.getLocalPath());
-        setRemoteUrl(git, repo);
+        setRemoteUrl(repo);
         return git.pull().setTransportConfigCallback(sshCallback).call();
     }
 
@@ -671,7 +690,7 @@ public class GitService {
     public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise) {
         try {
             Git studentGit = new Git(repository);
-            setRemoteUrl(studentGit, repository);
+            setRemoteUrl(repository);
             // Get last commit hash from template repo
             ObjectId latestHash = getLastCommitHash(programmingExercise.getVcsTemplateRepositoryUrl());
 
