@@ -9,7 +9,6 @@ import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { JhiAlertService } from 'ng-jhipster';
-import { downloadFile } from 'app/shared/util/download.util';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
@@ -179,6 +178,26 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             include: selection,
         });
         const png = await convertRenderedSVGToPNG(svg);
-        downloadFile(png, `${this.apollonDiagram!.title}.png`);
+        this.download(png);
+    }
+
+    /**
+     * Automatically trigger the download of a file.
+     *
+     * @param {Blob | File} file A `Blob` or `File` object which should be downloaded.
+     */
+    private download(file: Blob | File) {
+        const anchor = document.createElement('a');
+        document.body.appendChild(anchor);
+        const url = window.URL.createObjectURL(file);
+        anchor.href = url;
+        anchor.download = `${this.apollonDiagram!.title}.png`;
+        anchor.click();
+
+        // Async revoke of ObjectURL to prevent failure on larger files.
+        setTimeout(() => {
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(anchor);
+        }, 0);
     }
 }
