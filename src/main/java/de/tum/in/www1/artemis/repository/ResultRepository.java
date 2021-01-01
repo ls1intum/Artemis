@@ -92,8 +92,26 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("SELECT COUNT(DISTINCT p) FROM StudentParticipation p left join p.results r WHERE p.exercise.id = :exerciseId AND r.assessor IS NOT NULL AND r.rated = TRUE AND r.submission.submitted = TRUE AND r.completionDate IS NOT NULL AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
     long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
-    @Query("SELECT COUNT(DISTINCT p) FROM StudentParticipation p left join p.results r WHERE p.exercise.id = :exerciseId AND r.assessor IS NOT NULL AND r.rated = FALSE AND r.completionDate IS NOT NULL AND p.exercise.dueDate IS NOT NULL AND r.submission.submissionDate > p.exercise.dueDate")
-    long countNumberOfFinishedLateAssessmentsForExercise(@Param("exerciseId") Long exerciseId);
+    /**
+     * @param exerciseId
+     * @param correctionRound
+     * @return the number of completed assessments for the specified correction round of an exam exercise
+     */
+    @Query("""
+               SELECT COUNT(DISTINCT p)
+               FROM StudentParticipation p WHERE p.exercise.id = :exerciseId AND
+                            (SELECT COUNT(r)
+                            FROM Result r
+                            WHERE r.assessor IS NOT NULL
+                                AND r.rated = TRUE
+                                AND r.submission = (select max(id) from p.submissions)
+                                AND r.submission.submitted = TRUE
+                                AND r.completionDate IS NOT NULL
+                                AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
+                                AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)
+                            ) = :correctionRound
+            """)
+    long countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("correctionRound") Long correctionRound);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
     List<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(Long exerciseId);

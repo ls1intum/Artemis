@@ -6,7 +6,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class SyntaxTreeNonterminal extends UMLElement {
 
-    public final static String SYNTAX_TREE_NONTERMINAL_TYPE = "SyntaxTreeNonterminal";
+    public static final String SYNTAX_TREE_NONTERMINAL_TYPE = "SyntaxTreeNonterminal";
 
     private final String name;
 

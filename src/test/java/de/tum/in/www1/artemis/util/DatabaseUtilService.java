@@ -833,6 +833,7 @@ public class DatabaseUtilService {
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
+        exam.setNumberOfCorrectionRoundsInExam(1);
         examRepository.save(exam);
         return exam;
     }
@@ -1208,7 +1209,7 @@ public class DatabaseUtilService {
         result.setSubmission(submission);
         submission.addResult(result);
         var savedSubmission = submissionRepository.save(submission);
-        return submissionRepository.findWithEagerResultsById(savedSubmission.getId()).orElseThrow();
+        return submissionRepository.findWithEagerResultsAndAssessorById(savedSubmission.getId()).orElseThrow();
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
