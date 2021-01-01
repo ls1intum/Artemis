@@ -36,6 +36,8 @@ management:
         health:
             show-details: when_authorized
             roles: 'ROLE_ADMIN'
+            probes:
+                enabled: true
         jhimetrics:
             enabled: true
     info:
@@ -46,8 +48,8 @@ management:
             enabled: false # When using the MailService, configure an SMTP server and set this to true
         ldap:
             enabled: false # Disabled to prevent periodic health checks that lead to null pointer exceptions if the ldap is not configured or not active
-        probes:
-            enabled: true
+        config:
+            enabled: false # Disabled because we do not use a Spring Cloud Config Server
     metrics:
         export:
             # Prometheus is the default metrics server

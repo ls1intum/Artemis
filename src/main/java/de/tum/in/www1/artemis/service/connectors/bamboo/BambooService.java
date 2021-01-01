@@ -65,7 +65,7 @@ public class BambooService implements ContinuousIntegrationService {
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
     // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
-    private final static Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
+    private static final Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
 
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;

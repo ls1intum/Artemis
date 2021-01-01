@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
@@ -26,6 +27,10 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInt
  */
 @Configuration
 public class RestTemplateConfiguration {
+
+    private static final int CONNECTION_TIMEOUT = 20 * 1000;
+
+    private static final int READ_TIMEOUT = 20 * 1000;
 
     @Bean
     @Profile("gitlab")
@@ -62,7 +67,7 @@ public class RestTemplateConfiguration {
 
     @NotNull
     private RestTemplate initializeRestTemplateWithInterceptors(ClientHttpRequestInterceptor interceptor) {
-        final var restTemplate = new RestTemplate();
+        final var restTemplate = createRestTemplate();
         var interceptors = restTemplate.getInterceptors();
         if (interceptors.isEmpty()) {
             interceptors = new ArrayList<>();
@@ -86,6 +91,13 @@ public class RestTemplateConfiguration {
     @Bean
     @Primary
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        return createRestTemplate();
+    }
+
+    private RestTemplate createRestTemplate() {
+        var requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setReadTimeout(READ_TIMEOUT);
+        requestFactory.setConnectTimeout(CONNECTION_TIMEOUT);
+        return new RestTemplate(requestFactory);
     }
 }
