@@ -50,22 +50,24 @@ public class GitLabService extends AbstractVersionControlService {
     private static final String GITLAB_API_BASE = "/api/v4";
 
     @Value("${artemis.version-control.url}")
-    private URL GITLAB_SERVER_URL;
+    private URL gitlabServerUrl;
 
     @Value("${artemis.lti.user-prefix-edx:#{null}}")
-    private Optional<String> USER_PREFIX_EDX;
+    private Optional<String> userPrefixEdx;
 
     @Value("${artemis.lti.user-prefix-u4i:#{null}}")
-    private Optional<String> USER_PREFIX_U4I;
+    private Optional<String> userPrefixU4I;
 
     @Value("${artemis.version-control.ci-token}")
-    private String CI_TOKEN;
+    private String ciToken;
 
-    private String BASE_API;
+    private String baseApi;
 
     private final UserService userService;
 
     private final RestTemplate restTemplate;
+
+    private final RestTemplate shortTimeoutRestTemplate;
 
     private final GitLabUserManagementService gitLabUserManagementService;
 
@@ -75,10 +77,11 @@ public class GitLabService extends AbstractVersionControlService {
 
     private final ScheduledExecutorService scheduler;
 
-    public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, GitLabApi gitlab,
-            GitLabUserManagementService gitLabUserManagementService, UrlService urlService) {
+    public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, UrlService urlService,
+            @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, GitLabUserManagementService gitLabUserManagementService) {
         this.userService = userService;
         this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.gitlab = gitlab;
         this.gitLabUserManagementService = gitLabUserManagementService;
         this.urlService = urlService;
@@ -87,7 +90,7 @@ public class GitLabService extends AbstractVersionControlService {
 
     @PostConstruct
     public void init() {
-        this.BASE_API = GITLAB_SERVER_URL + GITLAB_API_BASE;
+        this.baseApi = gitlabServerUrl + GITLAB_API_BASE;
     }
 
     @Override
@@ -98,7 +101,7 @@ public class GitLabService extends AbstractVersionControlService {
             // TODO: does it really make sense to potentially create a user here? Should we not rather create this user when the user is created in the internal Artemis database?
 
             // Automatically created users
-            if ((USER_PREFIX_EDX.isPresent() && username.startsWith(USER_PREFIX_EDX.get())) || (USER_PREFIX_U4I.isPresent() && username.startsWith((USER_PREFIX_U4I.get())))) {
+            if ((userPrefixEdx.isPresent() && username.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && username.startsWith((userPrefixU4I.get())))) {
                 if (!userExists(username)) {
                     gitLabUserManagementService.importUser(user);
                 }
@@ -218,9 +221,9 @@ public class GitLabService extends AbstractVersionControlService {
         final var templatePlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getTemplateParticipation().getBuildPlanId());
         final var solutionPlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getSolutionParticipation().getBuildPlanId());
         if (templatePlanNotificationUrl.isPresent() && solutionPlanNotificationUrl.isPresent()) {
-            addAuthenticatedWebHook(exercise.getTemplateRepositoryUrlAsUrl(), templatePlanNotificationUrl.get(), "Artemis Exercise WebHook", CI_TOKEN);
-            addAuthenticatedWebHook(exercise.getSolutionRepositoryUrlAsUrl(), solutionPlanNotificationUrl.get(), "Artemis Solution WebHook", CI_TOKEN);
-            addAuthenticatedWebHook(exercise.getTestRepositoryUrlAsUrl(), solutionPlanNotificationUrl.get(), "Artemis Tests WebHook", CI_TOKEN);
+            addAuthenticatedWebHook(exercise.getTemplateRepositoryUrlAsUrl(), templatePlanNotificationUrl.get(), "Artemis Exercise WebHook", ciToken);
+            addAuthenticatedWebHook(exercise.getSolutionRepositoryUrlAsUrl(), solutionPlanNotificationUrl.get(), "Artemis Solution WebHook", ciToken);
+            addAuthenticatedWebHook(exercise.getTestRepositoryUrlAsUrl(), solutionPlanNotificationUrl.get(), "Artemis Tests WebHook", ciToken);
         }
     }
 
@@ -232,7 +235,7 @@ public class GitLabService extends AbstractVersionControlService {
             // Optional webhook from the version control system to the continuous integration system
             // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regurlarly)
             getContinuousIntegrationService().getWebHookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId())
-                    .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getRepositoryUrlAsUrl(), hookUrl, "Artemis trigger to CI", CI_TOKEN));
+                    .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getRepositoryUrlAsUrl(), hookUrl, "Artemis trigger to CI", ciToken));
         }
     }
 
@@ -388,7 +391,7 @@ public class GitLabService extends AbstractVersionControlService {
             throws VersionControlException {
         final var originalNamespace = sourceProjectKey + "%2F" + sourceRepositoryName.toLowerCase();
         final var targetRepoSlug = (targetProjectKey + "-" + targetRepositoryName).toLowerCase();
-        final var builder = Endpoints.FORK.buildEndpoint(BASE_API, originalNamespace);
+        final var builder = Endpoints.FORK.buildEndpoint(baseApi, originalNamespace);
         final var body = Map.of("namespace", targetProjectKey, "path", targetRepoSlug, "name", targetRepoSlug);
 
         final var errorMessage = "Couldn't fork repository " + originalNamespace + " into " + targetRepoSlug;
@@ -431,13 +434,13 @@ public class GitLabService extends AbstractVersionControlService {
     @Override
     public ConnectorHealth health() {
         try {
-            final var uri = Endpoints.HEALTH.buildEndpoint(GITLAB_SERVER_URL.toString()).build().toUri();
-            final var healthResponse = restTemplate.getForObject(uri, JsonNode.class);
+            final var uri = Endpoints.HEALTH.buildEndpoint(gitlabServerUrl.toString()).build().toUri();
+            final var healthResponse = shortTimeoutRestTemplate.getForObject(uri, JsonNode.class);
             final var status = healthResponse.get("status").asText();
             if (!status.equals("ok")) {
-                return new ConnectorHealth(false, Map.of("status", status, "url", GITLAB_SERVER_URL));
+                return new ConnectorHealth(false, Map.of("status", status, "url", gitlabServerUrl));
             }
-            return new ConnectorHealth(true, Map.of("url", GITLAB_SERVER_URL));
+            return new ConnectorHealth(true, Map.of("url", gitlabServerUrl));
         }
         catch (Exception emAll) {
             return new ConnectorHealth(emAll);
@@ -490,7 +493,7 @@ public class GitLabService extends AbstractVersionControlService {
         public GitLabRepositoryUrl(String projectKey, String repositorySlug) {
             super();
             final var path = projectKey + "/" + repositorySlug;
-            final var urlString = GITLAB_SERVER_URL + "/" + path + ".git";
+            final var urlString = gitlabServerUrl + "/" + path + ".git";
 
             stringToURL(urlString);
         }
