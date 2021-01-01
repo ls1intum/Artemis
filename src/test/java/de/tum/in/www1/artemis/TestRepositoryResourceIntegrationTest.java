@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.reset;
 
@@ -42,8 +44,6 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private Course course;
-
     private ProgrammingExercise programmingExercise;
 
     private final String currentLocalFileName = "currentFileName";
@@ -57,7 +57,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     @BeforeEach
     public void setup() throws Exception {
         database.addUsers(0, 0, 1);
-        course = database.addEmptyCourse();
+        Course course = database.addEmptyCourse();
         programmingExercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
 
@@ -73,8 +73,8 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
         var testRepoUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.localRepoFile);
         programmingExercise.setTestRepositoryUrl(testRepoUrl.toString());
-        doReturn(gitService.getRepositoryByLocalPath(testRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(testRepoUrl, true);
-        doReturn(gitService.getRepositoryByLocalPath(testRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(testRepoUrl, false);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(testRepo.localRepoFile.toPath()), any())).when(gitService).getOrCheckoutRepository(testRepoUrl, true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(testRepo.localRepoFile.toPath()), any())).when(gitService).getOrCheckoutRepository(testRepoUrl, false);
     }
 
     @AfterEach
@@ -236,7 +236,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
         // Create a commit for the local and the remote repository
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
-        var remote = gitService.getRepositoryByLocalPath(testRepo.originRepoFile.toPath());
+        var remoteRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.originRepoFile.toPath(), null);
 
         // Create file in the remote repository
         Path filePath = Paths.get(testRepo.originRepoFile + "/" + fileName);
@@ -247,7 +247,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + fileName))).isFalse();
 
         // Stage all changes and make a second commit in the remote repository
-        gitService.stageAllChanges(remote);
+        gitService.stageAllChanges(remoteRepository);
         testRepo.originGit.commit().setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
 
         // Checks if the current commit is not equal on the local and the remote repository
@@ -266,8 +266,8 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void testResetToLastCommit() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         String fileName = "testFile";
-        var localRepo = gitService.getRepositoryByLocalPath(testRepo.localRepoFile.toPath());
-        var remoteRepo = gitService.getRepositoryByLocalPath(testRepo.originRepoFile.toPath());
+        var localRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
+        var remoteRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.originRepoFile.toPath(), null);
 
         // Check status of git before the commit
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);

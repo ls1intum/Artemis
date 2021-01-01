@@ -144,16 +144,16 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
 
-        doReturn(gitService.getRepositoryByLocalPath(templateRepository.localRepoFile.toPath())).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(templateRepository.localRepoFile.toPath()), any())).when(gitService)
                 .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(), true);
 
-        doReturn(gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath())).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(studentRepository.localRepoFile.toPath()), any())).when(gitService)
                 .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(), true);
 
-        doReturn(gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath())).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(studentRepository.localRepoFile.toPath()), any())).when(gitService)
                 .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(), false);
 
-        doReturn(gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath())).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(studentRepository.localRepoFile.toPath()), any())).when(gitService)
                 .getOrCheckoutRepository((ProgrammingExerciseParticipation) participation);
 
         logs.add(buildLogEntry);
@@ -272,7 +272,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId());
 
-        doReturn(gitService.getRepositoryByLocalPath(solutionRepository.localRepoFile.toPath())).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(eq(solutionRepository.localRepoFile.toPath()), any())).when(gitService)
                 .getOrCheckoutRepository(programmingExercise.getSolutionParticipation().getVcsRepositoryUrl(), true);
 
         var files = request.getMap(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files", HttpStatus.OK, String.class, FileType.class);
@@ -397,7 +397,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         // Create a commit for the local and the remote repository
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.OK, null);
-        var remote = gitService.getRepositoryByLocalPath(studentRepository.originRepoFile.toPath());
+        var remoteRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.originRepoFile.toPath(), null);
 
         // Create file in the remote repository
         Path filePath = Paths.get(studentRepository.originRepoFile + "/" + fileName);
@@ -408,7 +408,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + fileName))).isFalse();
 
         // Stage all changes and make a second commit in the remote repository
-        gitService.stageAllChanges(remote);
+        gitService.stageAllChanges(remoteRepository);
         studentRepository.originGit.commit().setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
 
         // Checks if the current commit is not equal on the local and the remote repository
@@ -427,8 +427,8 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @WithMockUser(username = "student1", roles = "USER")
     public void testResetToLastCommit() throws Exception {
         String fileName = "testFile";
-        var localRepo = gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath());
-        var remoteRepo = gitService.getRepositoryByLocalPath(studentRepository.originRepoFile.toPath());
+        var localRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null);
+        var remoteRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.originRepoFile.toPath(), null);
 
         // Check status of git before the commit
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
@@ -603,7 +603,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     void testStashChanges() throws Exception {
         // Make initial commit and save files afterwards
         initialCommitAndSaveFiles(HttpStatus.OK);
-        Repository localRepo = gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath());
+        Repository localRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null);
 
         // Stash changes
         gitService.stashChanges(localRepo);

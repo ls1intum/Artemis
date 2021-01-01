@@ -329,7 +329,7 @@ public class GitService {
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, Path localPath, boolean pullOnGet) throws InterruptedException, GitAPIException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
-        Repository repository = getRepositoryByLocalPath(localPath);
+        Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, repoUrl);
         // Note: in case the actual git repository in the file system is corrupt (e.g. by accident), we will get an exception here
         // the exception will then delete the folder, so that the next attempt would be successful.
         if (repository != null) {
@@ -373,18 +373,19 @@ public class GitService {
                 // make sure that cloneInProgress is released
                 cloneInProgressOperations.remove(localPath);
             }
-            return getRepositoryByLocalPath(localPath);
+            return getExistingCheckedOutRepositoryByLocalPath(localPath, repoUrl);
         }
     }
 
     /**
-     * Get a git repository that is checked out on the server. Throws immediately an exception if the localPath does not exist. Will first try to retrieve a cached repository from
-     * cachedRepositories. Side effect: This method caches retrieved repositories in a HashMap, so continuous retrievals can be avoided (reduces load).
+     * Get an existing git repository that is checked out on the server. Returns immediately null if the localPath does not exist. Will first try to retrieve a cached repository
+     * from cachedRepositories. Side effect: This method caches retrieved repositories in a HashMap, so continuous retrievals can be avoided (reduces load).
      *
      * @param localPath to git repo on server.
-     * @return the git repository in the localPath or null if it does not exist on the server.
+     * @param remoteRepositoryUrl the remote repository url for the git repository, will be added to the Repository object for later use, can be null
+     * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getRepositoryByLocalPath(Path localPath) {
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUrl remoteRepositoryUrl) {
         // Check if there is a folder with the provided path of the git repository.
         if (!Files.exists(localPath)) {
             // In this case we should remove the repository if cached, because it can't exist anymore.
@@ -403,8 +404,7 @@ public class GitService {
             builder.setGitDir(new java.io.File(localPath + "/.git")).readEnvironment() // scan environment GIT_* variables
                     .findGitDir().setup();
             // Create the JGit repository object
-            Repository repository = new Repository(builder);
-            repository.setLocalPath(localPath);
+            Repository repository = new Repository(builder, localPath, remoteRepositoryUrl);
             // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
             // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
             // and https://git-scm.com/docs/git-gc for an explanation of the parameter
@@ -519,7 +519,7 @@ public class GitService {
     private void setRemoteUrl(Git git, Repository repo) throws GitAPIException {
         // Note: we reset the remote url, because it might have changed from https to ssh or ssh to https
         try {
-            git.remoteSetUrl().setRemoteUri(new URIish(getGitUriAsString(repo.getParticipation().getVcsRepositoryUrl()))).call();
+            git.remoteSetUrl().setRemoteUri(new URIish(getGitUriAsString(repo.getRemoteRepositoryUrl()))).call();
         }
         catch (URISyntaxException e) {
             log.warn("Cannot set the remote url due to the following exception: " + e.getMessage(), e);

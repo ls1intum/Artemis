@@ -25,13 +25,13 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 @Service
 public class GitUtilService {
 
-    private final String repoRoot = "./repos";
+    private final String localRepositoryRoot = "./repos";
 
-    private final String remoteRoot = ".";
+    private final String remoteRepositoryRoot = ".";
 
-    private final String repositoryName = "test-repository";
+    private final String localRepositoryName = "test-repository";
 
-    private final String remoteName = "scm/test-repository";
+    private final String remoteRepositoryName = "scm/test-repository";
 
     public enum FILES {
         FILE1, FILE2, FILE3
@@ -50,48 +50,41 @@ public class GitUtilService {
 
     private Git localGit;
 
-    public Repository initRepo() {
+    public void initRepo() {
         try {
             deleteRepos();
-            Git remoteGit = Git.init().setDirectory(new File(remoteRoot + "/" + remoteName)).call();
-            new File(remoteRoot + "/" + remoteName + "/" + FILES.FILE1).createNewFile();
-            new File(remoteRoot + "/" + remoteName + "/" + FILES.FILE2).createNewFile();
-            new File(remoteRoot + "/" + remoteName + "/" + FILES.FILE3).createNewFile();
+            Git remoteGit = Git.init().setDirectory(new File(remoteRepositoryRoot + "/" + remoteRepositoryName)).call();
+            new File(remoteRepositoryRoot + "/" + remoteRepositoryName + "/" + FILES.FILE1).createNewFile();
+            new File(remoteRepositoryRoot + "/" + remoteRepositoryName + "/" + FILES.FILE2).createNewFile();
+            new File(remoteRepositoryRoot + "/" + remoteRepositoryName + "/" + FILES.FILE3).createNewFile();
             remoteGit.add().addFilepattern(".").call();
             remoteGit.commit().setMessage("initial commit").call();
 
             // TODO: use a temp folder instead
-            localGit = Git.cloneRepository().setURI(System.getProperty("user.dir") + "/" + remoteRoot + "/" + remoteName + "/.git")
-                    .setDirectory(new File(repoRoot + "/" + repositoryName)).call();
+            localGit = Git.cloneRepository().setURI(System.getProperty("user.dir") + "/" + remoteRepositoryRoot + "/" + remoteRepositoryName + "/.git")
+                    .setDirectory(new File(localRepositoryRoot + "/" + localRepositoryName)).call();
 
-            FileRepositoryBuilder builder = new FileRepositoryBuilder();
-            builder.setGitDir(new java.io.File(repoRoot + "/" + repositoryName + "/.git")).readEnvironment() // scan environment GIT_* variables
-                    .findGitDir().setup();
-            localRepo = new Repository(builder);
-
-            builder = new FileRepositoryBuilder();
-            builder.setGitDir(new java.io.File(remoteRoot + "/" + remoteName + "/.git")).readEnvironment() // scan environment GIT_* variables
-                    .findGitDir().setup();
-            remoteRepo = new Repository(builder);
+            reinitializeLocalRepository();
+            reinitializeRemoteRepository();
         }
         catch (IOException | GitAPIException ex) {
             System.out.println(ex);
         }
-        return null;
     }
 
-    public void reinitializeRepo(REPOS repo) throws IOException {
+    public void reinitializeLocalRepository() throws IOException {
+        localRepo = initializeRepo(localRepositoryRoot, localRepositoryName);
+    }
+
+    public void reinitializeRemoteRepository() throws IOException {
+        remoteRepo = initializeRepo(remoteRepositoryRoot, remoteRepositoryName);
+    }
+
+    private Repository initializeRepo(String repositoryRoot, String repositoryName) throws IOException {
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        if (repo == REPOS.LOCAL) {
-            builder.setGitDir(new java.io.File(repoRoot + "/" + repositoryName + "/.git")).readEnvironment() // scan environment GIT_* variables
-                    .findGitDir().setup();
-            localRepo = new Repository(builder);
-        }
-        else {
-            builder.setGitDir(new java.io.File(remoteRoot + "/" + remoteName + "/.git")).readEnvironment() // scan environment GIT_* variables
-                    .findGitDir().setup();
-            remoteRepo = new Repository(builder);
-        }
+        var remoteRepoFile = new java.io.File(repositoryRoot + "/" + repositoryName + "/.git");
+        builder.setGitDir(remoteRepoFile).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
+        return new Repository(builder, remoteRepoFile.toPath(), null);
     }
 
     public void deleteRepos() {
@@ -105,8 +98,8 @@ public class GitUtilService {
             if (localGit != null) {
                 localGit.close();
             }
-            FileUtils.deleteDirectory(new File(repoRoot + "/" + repositoryName));
-            FileUtils.deleteDirectory(new File(remoteRoot + "/" + remoteName));
+            FileUtils.deleteDirectory(new File(localRepositoryRoot + "/" + localRepositoryName));
+            FileUtils.deleteDirectory(new File(remoteRepositoryRoot + "/" + remoteRepositoryName));
             localRepo = null;
             remoteRepo = null;
         }
@@ -201,7 +194,7 @@ public class GitUtilService {
     }
 
     public String getCompleteRepoPathStringByType(REPOS repo) {
-        return repo == REPOS.LOCAL ? repoRoot + "/" + repositoryName : remoteRoot + "/" + remoteName;
+        return repo == REPOS.LOCAL ? localRepositoryRoot + "/" + localRepositoryName : remoteRepositoryRoot + "/" + remoteRepositoryName;
     }
 
     public Path getCompleteRepoPathByType(REPOS repo) {
@@ -218,7 +211,7 @@ public class GitUtilService {
     }
 
     public String getLocalRepoPathStringByType(REPOS repo) {
-        return repo == REPOS.LOCAL ? repositoryName : remoteName;
+        return repo == REPOS.LOCAL ? localRepositoryName : remoteRepositoryName;
     }
 
     public Path getLocalRepoPathByType(REPOS repo) {

@@ -69,7 +69,7 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
         gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath3);
         localGit.commit().setMessage("add test3.json").setAuthor("test", "test@test.com").call();
 
-        var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
+        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         doReturn(repository).when(gitService).getOrCheckoutRepository(any(VcsRepositoryUrl.class), anyBoolean(), anyString());
         doNothing().when(gitService).fetchAll(any());
         var objectId = localGit.reflog().call().iterator().next().getNewId();

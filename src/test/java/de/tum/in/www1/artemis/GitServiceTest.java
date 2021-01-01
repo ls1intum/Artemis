@@ -62,7 +62,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         var localPath = gitUtilService.getLocalRepoUrlByType(GitUtilService.REPOS.REMOTE);
         gitUtilService.deleteRepo(GitUtilService.REPOS.LOCAL);
         gitService.getOrCheckoutRepository(localPath, true);
-        gitUtilService.reinitializeRepo(GitUtilService.REPOS.LOCAL);
+        gitUtilService.reinitializeLocalRepository();
 
         assertThat(gitUtilService.isLocalEqualToRemote()).isTrue();
     }
