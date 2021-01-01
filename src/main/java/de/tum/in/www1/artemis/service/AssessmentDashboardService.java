@@ -54,19 +54,23 @@ public class AssessmentDashboardService {
         for (Exercise exercise : exercises) {
 
             DueDateStat numberOfSubmissions;
-            DueDateStat numberOfAssessments;
+            DueDateStat totalNumberOfAssessments;
 
             if (exercise instanceof ProgrammingExercise) {
                 numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
-                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
+                totalNumberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
             }
             else {
                 numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId(), examMode);
-                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), examMode);
+                totalNumberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), examMode);
             }
 
             exercise.setNumberOfSubmissions(numberOfSubmissions);
-            exercise.setNumberOfAssessments(numberOfAssessments);
+            exercise.setTotalNumberOfAssessments(totalNumberOfAssessments);
+
+            final DueDateStat[] numberOfAssessmentsOfCorrectionRounds = exerciseService.calculateNrOfAssessmentsOfCorrectionRoundsForDashboard(exercise, examMode,
+                    totalNumberOfAssessments);
+            exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
             exerciseService.calculateNrOfOpenComplaints(exercise, examMode);
 

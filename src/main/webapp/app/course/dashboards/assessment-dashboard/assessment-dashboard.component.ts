@@ -33,7 +33,8 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
     finishedExercises: Exercise[] = [];
     exercises: Exercise[] = [];
     numberOfSubmissions = new DueDateStat();
-    numberOfAssessments = new DueDateStat();
+    totalNumberOfAssessments = new DueDateStat();
+    numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
     numberOfTutorAssessments = 0;
     numberOfComplaints = 0;
     numberOfOpenComplaints = 0;
@@ -131,7 +132,8 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                 (res: HttpResponse<StatsForDashboard>) => {
                     this.stats = StatsForDashboard.from(res.body!);
                     this.numberOfSubmissions = this.stats.numberOfSubmissions;
-                    this.numberOfAssessments = this.stats.numberOfAssessments;
+                    this.totalNumberOfAssessments = this.stats.totalNumberOfAssessments;
+                    this.numberOfAssessmentsOfCorrectionRounds = this.stats.numberOfAssessmentsOfCorrectionRounds;
                     this.numberOfComplaints = this.stats.numberOfComplaints;
                     this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
                     this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
@@ -149,7 +151,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                     }
 
                     if (this.numberOfSubmissions.total > 0) {
-                        this.totalAssessmentPercentage = Math.floor((this.numberOfAssessments.total / this.numberOfSubmissions.total) * 100);
+                        this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / this.numberOfSubmissions.total) * 100);
                     }
                 },
                 (response: string) => this.onError(response),
@@ -162,7 +164,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
             const [finishedExercises, unfinishedExercises] = partition(
                 exercises,
                 (exercise) =>
-                    exercise.numberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime &&
+                    exercise.totalNumberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime &&
                     exercise.numberOfOpenComplaints === 0 &&
                     exercise.numberOfOpenMoreFeedbackRequests === 0,
             );

@@ -10,8 +10,6 @@ import static org.mockito.Mockito.doNothing;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -40,7 +38,6 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
-import de.tum.in.www1.artemis.util.Verifiable;
 
 @SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
         "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
@@ -96,9 +93,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public List<Verifiable> mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans)
-            throws Exception {
-        final var verifications = new ArrayList<Verifiable>();
+    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception {
 
         final var sourceProjectKey = sourceExercise.getProjectKey();
         final var targetProjectKey = exerciseToBeImported.getProjectKey();
@@ -148,8 +143,6 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
             jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey);
             jenkinsRequestMockProvider.mockTriggerBuild();
         }
-
-        return verifications;
     }
 
     @Override
@@ -158,21 +151,34 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception {
-        final var verifications = new LinkedList<Verifiable>();
+    public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists, HttpStatus status)
+            throws Exception {
+        // Step 1a)
+        gitlabRequestMockProvider.mockForkRepositoryForParticipation(exercise, username, status);
+        // Step 1b)
         gitlabRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists);
+        // Step 2a)
         jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
+        // Step 2b)
         jenkinsRequestMockProvider.mockConfigureBuildPlan(exercise, username);
+        // Note: Step 2c) is not needed in the Jenkins setup
+        // Step 1c)
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
-        gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
-        return verifications;
+    }
+
+    @Override
+    public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception {
+        // Step 2a)
+        jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
+        // Step 2b)
+        jenkinsRequestMockProvider.mockConfigureBuildPlan(exercise, username);
+        // Note: Step 2c) is not needed in the Jenkins setup
     }
 
     @Override
     public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var repoName = projectKey.toLowerCase() + "-" + username;
-
         mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, repoName, List.of());
     }
 

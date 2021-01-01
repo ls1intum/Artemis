@@ -30,94 +30,16 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
-import de.tum.in.www1.artemis.domain.Attachment;
-import de.tum.in.www1.artemis.domain.Authority;
-import de.tum.in.www1.artemis.domain.Complaint;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ExampleSubmission;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ExerciseHint;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.domain.FileUploadSubmission;
-import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.GradingInstruction;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.StudentQuestion;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
-import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
-import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
-import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
-import de.tum.in.www1.artemis.domain.quiz.DragItem;
-import de.tum.in.www1.artemis.domain.quiz.DropLocation;
-import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
-import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceSubmittedAnswer;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerMapping;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSolution;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSpot;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
-import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
-import de.tum.in.www1.artemis.repository.AttachmentRepository;
-import de.tum.in.www1.artemis.repository.AuthorityRepository;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
-import de.tum.in.www1.artemis.repository.ExerciseHintRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
-import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
-import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TextBlockRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
@@ -338,6 +260,12 @@ public class DatabaseUtilService {
 
     public List<Team> addTeamsForExercise(Exercise exercise, int numberOfTeams, User owner) {
         return addTeamsForExercise(exercise, "team", numberOfTeams, owner);
+    }
+
+    public List<Team> addTeamsForExerciseFixedTeamSize(Exercise exercise, int numberOfTeams, User owner, int noOfStudentsPerTeam) {
+        List<Team> teams = ModelFactory.generateTeamsForExerciseFixedTeamSize(exercise, "team", "student", numberOfTeams, owner, null, "R", noOfStudentsPerTeam);
+        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
+        return teamRepo.saveAll(teams);
     }
 
     public Team addTeamForExercise(Exercise exercise, User owner) {
@@ -905,6 +833,7 @@ public class DatabaseUtilService {
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
+        exam.setNumberOfCorrectionRoundsInExam(1);
         examRepository.save(exam);
         return exam;
     }
@@ -1140,13 +1069,26 @@ public class DatabaseUtilService {
         if (existingParticipation.isPresent()) {
             return existingParticipation.get();
         }
-        ProgrammingExerciseStudentParticipation participation = preconfigurationOfParticipation(exercise, login);
+        ProgrammingExerciseStudentParticipation participation = configureIndividualParticipation(exercise, login);
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
         participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).get();
+    }
 
+    public ProgrammingExerciseStudentParticipation addTeamParticipationForProgrammingExercise(ProgrammingExercise exercise, Team team) {
+
+        final var existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndTeamId(exercise.getId(), team.getId());
+        if (existingParticipation.isPresent()) {
+            return existingParticipation.get();
+        }
+        ProgrammingExerciseStudentParticipation participation = configureTeamParticipation(exercise, team);
+        final var repoName = (exercise.getProjectKey() + "-" + team.getShortName()).toLowerCase();
+        participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
+        participation = programmingExerciseStudentParticipationRepo.save(participation);
+
+        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).get();
     }
 
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExerciseForLocalRepo(ProgrammingExercise exercise, String login, URL localRepoPath) {
@@ -1154,7 +1096,7 @@ public class DatabaseUtilService {
         if (existingParticipation.isPresent()) {
             return existingParticipation.get();
         }
-        ProgrammingExerciseStudentParticipation participation = preconfigurationOfParticipation(exercise, login);
+        ProgrammingExerciseStudentParticipation participation = configureIndividualParticipation(exercise, login);
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
         participation.setRepositoryUrl(String.format(localRepoPath.toString() + "%s/%s.git", exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
@@ -1162,12 +1104,23 @@ public class DatabaseUtilService {
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).get();
     }
 
-    private ProgrammingExerciseStudentParticipation preconfigurationOfParticipation(ProgrammingExercise exercise, String login) {
+    private ProgrammingExerciseStudentParticipation configureIndividualParticipation(ProgrammingExercise exercise, String login) {
         final var user = getUserByLogin(login);
         var participation = new ProgrammingExerciseStudentParticipation();
         final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
         participation.setInitializationDate(ZonedDateTime.now());
         participation.setParticipant(user);
+        participation.setBuildPlanId(buildPlanId);
+        participation.setProgrammingExercise(exercise);
+        participation.setInitializationState(InitializationState.INITIALIZED);
+        return participation;
+    }
+
+    private ProgrammingExerciseStudentParticipation configureTeamParticipation(ProgrammingExercise exercise, Team team) {
+        var participation = new ProgrammingExerciseStudentParticipation();
+        final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + team.getShortName().toUpperCase();
+        participation.setInitializationDate(ZonedDateTime.now());
+        participation.setParticipant(team);
         participation.setBuildPlanId(buildPlanId);
         participation.setProgrammingExercise(exercise);
         participation.setInitializationState(InitializationState.INITIALIZED);
@@ -1256,7 +1209,7 @@ public class DatabaseUtilService {
         result.setSubmission(submission);
         submission.addResult(result);
         var savedSubmission = submissionRepository.save(submission);
-        return submissionRepository.findWithEagerResultsById(savedSubmission.getId()).orElseThrow();
+        return submissionRepository.findWithEagerResultsAndAssessorById(savedSubmission.getId()).orElseThrow();
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
