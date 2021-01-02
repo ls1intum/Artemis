@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import java.time.Instant;
@@ -86,7 +85,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         database.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
         doReturn(ContinuousIntegrationService.BuildStatus.BUILDING).when(continuousIntegrationService).getBuildStatus(any());
-        doReturn(participation.getBuildPlanId()).when(continuousIntegrationService).copyBuildPlan(anyString(), anyString(), anyString(), anyString(), anyString(), anyBoolean());
+        // doReturn(participation.getBuildPlanId()).when(continuousIntegrationService).copyBuildPlan(anyString(), anyString(), anyString(), anyString(), anyString(), anyBoolean());
         doNothing().when(continuousIntegrationService).deleteBuildPlan(any(), any());
         doNothing().when(continuousIntegrationService).deleteProject(any());
 
