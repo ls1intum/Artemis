@@ -44,6 +44,11 @@ import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Exercise extends DomainObject {
 
+    /**
+     * Placeholder point value for the score calculation of zero-point exercises to avoid the score always being 0.
+     */
+    public static final double PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES = 100.0;
+
     @Column(name = "title")
     @JsonView(QuizView.Before.class)
     private String title;
@@ -821,11 +826,6 @@ public abstract class Exercise extends DomainObject {
             return mappedColumnName;
         }
     }
-
-    /**
-     * Placeholder point value for the score calculation of zero-point exercises to avoid the score always being 0.
-     */
-    public static final double PLACEHOLDER_POINTS_FOR_ZERO_POINT_EXERCISES = 100.0;
 
     /**
      * Returns the maximum amount of regular points for the given exercise or a replacement point amount if the exercise has zero points (neither regular nor bonus points).
