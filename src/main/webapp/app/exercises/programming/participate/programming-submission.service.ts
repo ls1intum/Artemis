@@ -540,7 +540,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     getProgrammingSubmissionsForExerciseByCorrectionRound(
         exerciseId: number,
         req: { submittedOnly?: boolean; assessedByTutor?: boolean },
-        correctionRound: number,
+        correctionRound?: number,
     ): Observable<HttpResponse<ProgrammingSubmission[]>> {
         correctionRound = correctionRound ? correctionRound : 0;
         const options = createRequestOption(req);

@@ -391,6 +391,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     private getSubmissionWithoutAssessmentForCorrectionround(correctionRound: number): void {
         let submissionObservable: Observable<Submission> = of();
+        console.log('');
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
                 console.log('unassessed for textexercises!');
