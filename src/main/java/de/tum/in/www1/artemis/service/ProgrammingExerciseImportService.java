@@ -38,7 +38,7 @@ public class ProgrammingExerciseImportService {
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportService.class);
 
     @Value("${artemis.repo-download-clone-path}")
-    private String REPO_DOWNLOAD_CLONE_PATH;
+    private String repoDownloadClonePath;
 
     private final ExerciseHintService exerciseHintService;
 
@@ -140,10 +140,12 @@ public class ProgrammingExerciseImportService {
         // Copy all repositories
         final var reposToCopy = List.of(Pair.of(RepositoryType.TEMPLATE, templateExercise.getTemplateRepositoryName()),
                 Pair.of(RepositoryType.SOLUTION, templateExercise.getSolutionRepositoryName()), Pair.of(RepositoryType.TESTS, templateExercise.getTestRepositoryName()));
-        reposToCopy.forEach(
-                repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName(), REPO_DOWNLOAD_CLONE_PATH));
+
+        // create a unique folder to prevent issues in follow-up requests
+        var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
+        reposToCopy.forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName(), targetPath));
         // Delete source project folder which contained all cloned source repos
-        Path projectPath = new File(REPO_DOWNLOAD_CLONE_PATH + sourceProjectKey).toPath();
+        Path projectPath = new File(targetPath + sourceProjectKey).toPath();
         try {
             FileUtils.deleteDirectory(projectPath.toFile());
         }

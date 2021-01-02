@@ -65,6 +65,10 @@ public class ProgrammingExerciseExportService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportService.class);
 
+    // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
+    @Value("${artemis.repo-download-clone-path}")
+    private String repoDownloadClonePath;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final FileService fileService;
@@ -85,10 +89,6 @@ public class ProgrammingExerciseExportService {
         this.zipFileService = zipFileService;
         this.urlService = urlService;
     }
-
-    // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
-    @Value("${artemis.repo-download-clone-path}")
-    private String REPO_DOWNLOAD_CLONE_PATH;
 
     /**
      * Get participations of programming exercises of a requested list of students packed together in one zip file.
@@ -111,7 +111,7 @@ public class ProgrammingExerciseExportService {
             log.info("Request to export the repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle()
                     + "' of the following students or teams: " + participations.stream().map(StudentParticipation::getParticipantIdentifier).collect(Collectors.joining(", ")));
         }
-
+        final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
         List<Path> pathsToZippedRepoFiles = Collections.synchronizedList(new ArrayList<>());
         participations.parallelStream().forEach(participation -> {
             Repository repo = null;
@@ -120,8 +120,8 @@ public class ProgrammingExerciseExportService {
                     log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
                     return;
                 }
-                repo = gitService.getOrCheckoutRepository(participation, REPO_DOWNLOAD_CLONE_PATH);
-                repo = zipRepositoryForParticipation(repo, programmingExercise, participation, repositoryExportOptions, pathsToZippedRepoFiles);
+                repo = gitService.getOrCheckoutRepository(participation, targetPath);
+                repo = zipRepositoryForParticipation(repo, programmingExercise, participation, repositoryExportOptions, pathsToZippedRepoFiles, targetPath);
             }
             catch (IOException | GitException | GitAPIException | InterruptedException ex) {
                 log.error("export student repository " + participation.getVcsRepositoryUrl() + " in exercise '" + programmingExercise.getTitle() + "' did not work as expected: "
@@ -133,7 +133,7 @@ public class ProgrammingExerciseExportService {
         });
 
         // delete project root folder
-        deleteReposDownloadProjectRootDirectory(programmingExercise);
+        deleteReposDownloadProjectRootDirectory(programmingExercise, targetPath);
 
         if (pathsToZippedRepoFiles.isEmpty()) {
             log.warn("The zip file could not be created. Ignoring the request to export repositories for exercise " + programmingExercise.getTitle());
@@ -190,12 +190,13 @@ public class ProgrammingExerciseExportService {
 
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
         log.info("Download repositories for JPlag programming comparison with " + numberOfParticipations + " participations");
-        List<Repository> repositories = downloadRepositories(programmingExercise);
+        final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
+        List<Repository> repositories = downloadRepositories(programmingExercise, targetPath);
         log.info("Downloading repositories done");
 
         final var projectKey = programmingExercise.getProjectKey();
 
-        final var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
+        final var repoFolder = Path.of(targetPath, projectKey).toString();
         final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
 
         final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
@@ -212,7 +213,7 @@ public class ProgrammingExerciseExportService {
         JPlagResult result = jplag.run();
         log.info("JPlag programming comparison finished with " + result.getComparisons().size() + " comparisons");
 
-        cleanupResourcesAsync(programmingExercise, repositories);
+        cleanupResourcesAsync(programmingExercise, repositories, targetPath);
 
         TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(result);
         textPlagiarismResult.setExerciseId(programmingExercise.getId());
@@ -222,12 +223,12 @@ public class ProgrammingExerciseExportService {
         return textPlagiarismResult;
     }
 
-    private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories) {
+    private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories, final String targetPath) {
         executor.schedule(() -> {
             log.info("Will delete local repositories");
             deleteLocalRepositories(repositories);
             // delete project root folder in the repos download folder
-            deleteReposDownloadProjectRootDirectory(programmingExercise);
+            deleteReposDownloadProjectRootDirectory(programmingExercise, targetPath);
             log.info("Delete repositories done");
         }, 10, TimeUnit.SECONDS);
     }
@@ -250,18 +251,18 @@ public class ProgrammingExerciseExportService {
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
 
         log.info("Download repositories for JPlag programming comparison with " + numberOfParticipations + " participations");
-        List<Repository> repositories = downloadRepositories(programmingExercise);
+        final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
+        List<Repository> repositories = downloadRepositories(programmingExercise, targetPath);
         log.info("Downloading repositories done");
 
         final var output = "output";
         final var projectKey = programmingExercise.getProjectKey();
-
-        final var outputFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey + "-" + output;
+        final var outputFolder = Paths.get(targetPath, projectKey + "-" + output).toString();
         final var outputFolderFile = new File(outputFolder);
 
         outputFolderFile.mkdirs();
 
-        final var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
+        final var repoFolder = Paths.get(targetPath, projectKey).toString();
         final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
 
         final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
@@ -284,8 +285,8 @@ public class ProgrammingExerciseExportService {
 
         log.info("JPlag report done. Will zip it now");
 
-        final var zipFilePath = Paths.get(REPO_DOWNLOAD_CLONE_PATH, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
-                + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + "-Jplag-Analysis-Output.zip");
+        final var zipFilePath = Paths.get(targetPath, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getShortName() + "-"
+                + System.currentTimeMillis() + "-Jplag-Analysis-Output.zip");
         zipFileService.createZipFileWithFolderContent(zipFilePath, Paths.get(outputFolder));
 
         log.info("JPlag report zipped. Delete report output folder");
@@ -295,7 +296,7 @@ public class ProgrammingExerciseExportService {
             FileSystemUtils.deleteRecursively(outputFolderFile);
         }
 
-        cleanupResourcesAsync(programmingExercise, repositories);
+        cleanupResourcesAsync(programmingExercise, repositories, targetPath);
 
         log.info("Schedule deletion of zip file in 1 minute");
         fileService.scheduleForDeletion(zipFilePath, 1);
@@ -327,9 +328,9 @@ public class ProgrammingExerciseExportService {
         });
     }
 
-    private void deleteReposDownloadProjectRootDirectory(ProgrammingExercise programmingExercise) {
+    private void deleteReposDownloadProjectRootDirectory(ProgrammingExercise programmingExercise, String targetPath) {
         final String projectDirName = programmingExercise.getProjectKey();
-        Path projectPath = new File(REPO_DOWNLOAD_CLONE_PATH + projectDirName).toPath();
+        Path projectPath = Paths.get(targetPath, projectDirName);
         try {
             log.info("Delete project root directory " + projectPath.toFile());
             FileUtils.deleteDirectory(projectPath.toFile());
@@ -339,7 +340,7 @@ public class ProgrammingExerciseExportService {
         }
     }
 
-    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise) {
+    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, String targetPath) {
         List<Repository> downloadedRepositories = new ArrayList<>();
         programmingExercise.getStudentParticipations().parallelStream().forEach(participation -> {
             var programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
@@ -348,7 +349,7 @@ public class ProgrammingExerciseExportService {
                     log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
                     return;
                 }
-                Repository repo = gitService.getOrCheckoutRepositoryForJPlag(programmingExerciseParticipation, REPO_DOWNLOAD_CLONE_PATH);
+                Repository repo = gitService.getOrCheckoutRepositoryForJPlag(programmingExerciseParticipation, targetPath);
                 gitService.resetToOriginMaster(repo); // start with clean state
                 downloadedRepositories.add(repo);
             }
@@ -360,7 +361,7 @@ public class ProgrammingExerciseExportService {
 
         // clone the template repo
         try {
-            Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), REPO_DOWNLOAD_CLONE_PATH);
+            Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath);
             gitService.resetToOriginMaster(templateRepo); // start with clean state
             downloadedRepositories.add(templateRepo);
         }
@@ -381,11 +382,12 @@ public class ProgrammingExerciseExportService {
      * @param participation The participation, for which the repository should get zipped
      * @param repositoryExportOptions The options, that should get applied to the zipeed repo
      * @param pathsToZippedRepos A list of already zipped repos. The path of the newly zip file will get added to this list
+     * @param targetPath the path in which the zip repository should be stored
      * @return The checked out and zipped repository
-     * @throws IOException
+     * @throws IOException if the creation of the zip file fails
      */
     private Repository zipRepositoryForParticipation(final Repository repository, final ProgrammingExercise programmingExercise,
-            final ProgrammingExerciseStudentParticipation participation, final RepositoryExportOptionsDTO repositoryExportOptions, List<Path> pathsToZippedRepos)
+            final ProgrammingExerciseStudentParticipation participation, final RepositoryExportOptionsDTO repositoryExportOptions, List<Path> pathsToZippedRepos, String targetPath)
             throws IOException {
         gitService.resetToOriginMaster(repository); // start with clean state
 
@@ -415,7 +417,7 @@ public class ProgrammingExerciseExportService {
         }
 
         log.debug("Create temporary zip file for repository " + repository.getLocalPath().toString());
-        Path zippedRepoFile = gitService.zipRepository(repository, REPO_DOWNLOAD_CLONE_PATH, repositoryExportOptions.isHideStudentNameInZippedFolder());
+        Path zippedRepoFile = gitService.zipRepository(repository, targetPath, repositoryExportOptions.isHideStudentNameInZippedFolder());
         pathsToZippedRepos.add(zippedRepoFile);
 
         // if repository is not closed, it causes weird IO issues when trying to delete the repository again
