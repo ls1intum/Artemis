@@ -311,9 +311,7 @@
                                 <td>{{ 'artemisApp.exerciseAssessmentDashboard.new' | translate }}</td>
                                 <td></td>
                                 <td *ngIf="exercise.type === ExerciseType.TEXT">
-                                    {{
-                                        'artemisApp.exerciseAssessmentDashboard.languages.' + language(unassessedSubmissionByCorrectionRound.get(correctionRound + 1)!) | translate
-                                    }}
+                                    {{ 'artemisApp.exerciseAssessmentDashboard.languages.' + language(unassessedSubmissionByCorrectionRound.get(correctionRound)!) | translate }}
                                 </td>
                                 <td>
                                     <button

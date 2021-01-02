@@ -346,7 +346,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     return submission;
                 });
-                this.submissionsByCorrectionRound!.set(0, sub); // todo NR
+                console.log('Assessed submission for correctionround and tutor:', correctionRound, sub);
+
+                this.submissionsByCorrectionRound!.set(correctionRound, sub); // todo NR
             });
     }
 
@@ -420,6 +422,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
         submissionObservable.subscribe(
             (submission: Submission) => {
+                console.log('unassessed submission for correctionround:', correctionRound, submission);
                 if (submission) {
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     this.unassessedSubmissionByCorrectionRound!.set(correctionRound, submission);
