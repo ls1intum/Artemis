@@ -514,19 +514,19 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         return valA - valB;
     };
 
-    valForState = (s: StaticCodeAnalysisCategoryState) => (s == StaticCodeAnalysisCategoryState.Inactive ? 0 : s == StaticCodeAnalysisCategoryState.Feedback ? 1 : 2);
+    valForState = (s: StaticCodeAnalysisCategoryState) => (s === StaticCodeAnalysisCategoryState.Inactive ? 0 : s === StaticCodeAnalysisCategoryState.Feedback ? 1 : 2);
 
     compareCategoryState = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
         return this.valForState(rowA.state) - this.valForState(rowB.state);
     };
 
     comparePenalty = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
-        const valForPenalty = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state == StaticCodeAnalysisCategoryState.Graded ? c.penalty : 0);
+        const valForPenalty = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state === StaticCodeAnalysisCategoryState.Graded ? c.penalty : 0);
         return valForPenalty(rowA) - valForPenalty(rowB);
     };
 
     compareMaxPenalty = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
-        const valForMaxPenalty = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state == StaticCodeAnalysisCategoryState.Graded ? c.maxPenalty : 0);
+        const valForMaxPenalty = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state === StaticCodeAnalysisCategoryState.Graded ? c.maxPenalty : 0);
         return valForMaxPenalty(rowA) - valForMaxPenalty(rowB);
     };
 

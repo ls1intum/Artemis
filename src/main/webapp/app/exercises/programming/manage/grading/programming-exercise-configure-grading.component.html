@@ -80,7 +80,13 @@
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Weight</span>
-                                        <fa-icon [icon]="iconForSortPropField('testCases', 'weight')"></fa-icon>
+                                        <fa-icon [icon]="iconForSortPropField('testCases', 'weight')"></fa-icon><fa-icon
+                                        [icon]="'question-circle'"
+                                        class="text-secondary ml-2"
+                                        placement="bottom"
+                                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.weight' | translate"
+                                        container="body"
+                                    ></fa-icon>
                                     </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
@@ -95,7 +101,13 @@
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Bonus Multiplier</span>
-                                        <fa-icon [icon]="iconForSortPropField('testCases', 'bonusMultiplier')"></fa-icon>
+                                        <fa-icon [icon]="iconForSortPropField('testCases', 'bonusMultiplier')"></fa-icon><fa-icon
+                                        [icon]="'question-circle'"
+                                        class="text-secondary ml-2"
+                                        placement="bottom"
+                                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusMultiplier' | translate"
+                                        container="body"
+                                    ></fa-icon>
                                     </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
@@ -111,6 +123,13 @@
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Bonus Points</span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'bonusPoints')"></fa-icon>
+                                        <fa-icon
+                                            [icon]="'question-circle'"
+                                            class="text-secondary ml-2"
+                                            placement="bottom"
+                                            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusPoints' | translate"
+                                            container="body"
+                                        ></fa-icon>
                                     </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
@@ -319,6 +338,13 @@
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Detected Issues</span>
                                         <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'detectedIssues')"></fa-icon>
+                                        <fa-icon
+                                            [icon]="'question-circle'"
+                                            class="text-secondary ml-2"
+                                            placement="bottom"
+                                            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.detectedIssues' | translate"
+                                            container="body"
+                                        ></fa-icon>
                                     </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-row="row">

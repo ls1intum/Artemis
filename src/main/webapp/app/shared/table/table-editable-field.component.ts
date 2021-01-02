@@ -24,7 +24,7 @@ import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 export class TableEditableFieldComponent {
     @ViewChild('editingInput', { static: false }) editingInput: ElementRef;
 
-    @Input id: string;
+    @Input() id: string;
     @Input() set value(value: any) {
         this.inputValue = value;
     }
