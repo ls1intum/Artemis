@@ -493,6 +493,34 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         return this.gradingStatistics?.categoryIssuesMap ? this.gradingStatistics.categoryIssuesMap[categoryName] : undefined;
     }
 
+    tableSorts = { testCases: [{ prop: 'testName', dir: 'asc' }] };
+    onSort(table: 'testCases', config: any) {
+        this.tableSorts[table] = config.sorts;
+    }
+
+    iconForSortPropField(table: 'testCases', prop: string) {
+        const propSort = this.tableSorts[table].find((e) => e.prop === prop);
+        if (!propSort) {
+            return 'sort';
+        }
+        return propSort.dir === 'asc' ? 'sort-up' : 'sort-down';
+    }
+
+    sort(table: 'testCases', prop: string) {
+        const propSort = this.tableSorts[table].find((e) => e.prop === prop);
+        if (propSort) {
+            propSort.dir = propSort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.tableSorts[table] = [{ prop, dir: 'asc' }];
+        }
+    }
+
+    comparePassedPercent(_: any, __: any, rowA: ProgrammingExerciseTestCase, rowB: ProgrammingExerciseTestCase) {
+        const statsA = this.getTestCaseStats(rowA.testName!);
+        const statsB = this.getTestCaseStats(rowB.testName!);
+        return (statsA?.numPassed ?? 0) - (statsB?.numPassed ?? 0);
+    }
+
     /**
      * Load the static code analysis categories
      * @private
