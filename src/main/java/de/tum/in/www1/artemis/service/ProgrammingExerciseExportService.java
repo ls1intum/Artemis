@@ -340,7 +340,7 @@ public class ProgrammingExerciseExportService {
     }
 
     private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise) {
-        List<Repository> downloadedRepositores = new ArrayList<>();
+        List<Repository> downloadedRepositories = new ArrayList<>();
         programmingExercise.getStudentParticipations().parallelStream().forEach(participation -> {
             var programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
             try {
@@ -350,7 +350,7 @@ public class ProgrammingExerciseExportService {
                 }
                 Repository repo = gitService.getOrCheckoutRepositoryForJPlag(programmingExerciseParticipation, REPO_DOWNLOAD_CLONE_PATH);
                 gitService.resetToOriginMaster(repo); // start with clean state
-                downloadedRepositores.add(repo);
+                downloadedRepositories.add(repo);
             }
             catch (GitException | GitAPIException | InterruptedException ex) {
                 log.error("clone student repository " + programmingExerciseParticipation.getVcsRepositoryUrl() + " in exercise '" + programmingExercise.getTitle()
@@ -362,14 +362,14 @@ public class ProgrammingExerciseExportService {
         try {
             Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), REPO_DOWNLOAD_CLONE_PATH);
             gitService.resetToOriginMaster(templateRepo); // start with clean state
-            downloadedRepositores.add(templateRepo);
+            downloadedRepositories.add(templateRepo);
         }
         catch (GitException | GitAPIException | InterruptedException ex) {
             log.error("clone template repository " + programmingExercise.getTemplateParticipation().getVcsRepositoryUrl() + " in exercise '" + programmingExercise.getTitle()
                     + "' did not work as expected: " + ex.getMessage());
         }
 
-        return downloadedRepositores;
+        return downloadedRepositories;
     }
 
     /**

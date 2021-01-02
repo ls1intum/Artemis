@@ -284,7 +284,7 @@ public class BitbucketService extends AbstractVersionControlService {
         try {
             var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepositoryName.toLowerCase());
             // checkout the source repo to a different folder than the default one. This avoids a possible conflict state.
-            Repository sourceRepo = gitService.getOrCheckoutRepository(sourceRepoUrl, true, targetPath);
+            Repository sourceRepo = gitService.getOrCheckoutRepository(sourceRepoUrl, targetPath, true);
             // create target repo
             createRepository(targetProjectKey, targetRepoSlug);
             var targetRepoUrl = getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);

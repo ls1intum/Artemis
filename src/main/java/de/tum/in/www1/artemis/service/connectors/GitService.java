@@ -266,7 +266,7 @@ public class GitService {
      */
     public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, String targetPath) throws InterruptedException, GitAPIException {
         var repoUrl = participation.getVcsRepositoryUrl();
-        Repository repository = getOrCheckoutRepository(repoUrl, true, targetPath);
+        Repository repository = getOrCheckoutRepository(repoUrl, targetPath, true);
         repository.setParticipation(participation);
         return repository;
     }
@@ -289,8 +289,7 @@ public class GitService {
         String repoFolderName = folderNameForRepositoryUrl(repoUrl);
 
         // Replace the exercise name in the repository folder name with the participation ID.
-        // This is necessary to be able to refer back to the correct participation after the
-        // JPlag detection run.
+        // This is necessary to be able to refer back to the correct participation after the JPlag detection run.
         String updatedRepoFolderName = repoFolderName.replaceAll("/[a-zA-Z0-9]*-", "/" + participation.getId() + "-");
         Path localPath = Path.of(targetPath, updatedRepoFolderName);
 
@@ -311,20 +310,20 @@ public class GitService {
      * @throws GitAPIException if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, boolean pullOnGet) throws InterruptedException, GitAPIException {
-        return getOrCheckoutRepository(repoUrl, pullOnGet, repoClonePath);
+        return getOrCheckoutRepository(repoUrl, repoClonePath, pullOnGet);
     }
 
     /**
      * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
      *
      * @param repoUrl   The remote repository.
-     * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @param targetPath path where the repo is located on disk
+     * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @return the repository if it could be checked out.
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, boolean pullOnGet, String targetPath) throws InterruptedException, GitAPIException {
+    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, String targetPath, boolean pullOnGet) throws InterruptedException, GitAPIException {
         Path localPath = new java.io.File(targetPath + folderNameForRepositoryUrl(repoUrl)).toPath();
         return getOrCheckoutRepository(repoUrl, localPath, pullOnGet);
     }
