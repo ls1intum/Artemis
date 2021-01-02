@@ -265,7 +265,6 @@ public class StatisticsService {
     * @return A List<Map<String, Object>> analogue to other database calls
     */
     private List<Map<String, Object>> convertMapList(SpanType span, List<Map<String, Object>> result, ZonedDateTime startDate, GraphType graphType) {
-        List<Map<String, Object>> returnList = new ArrayList<>();
         Map<Object, List<String>> users = new HashMap<>();
         for (Map<String, Object> listElement : result) {
             Object index;
@@ -301,6 +300,11 @@ public class StatisticsService {
                 usersInSameSlot.add(username);
             }
         }
+        return fillMapList(users, span, startDate);
+    }
+
+    private List<Map<String, Object>> fillMapList(Map<Object, List<String>> users, SpanType span, ZonedDateTime startDate) {
+        List<Map<String, Object>> returnList = new ArrayList<>();
         users.forEach((k, v) -> {
             Object start;
             if (span == SpanType.DAY) {
