@@ -85,7 +85,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         database.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
         doReturn(ContinuousIntegrationService.BuildStatus.BUILDING).when(continuousIntegrationService).getBuildStatus(any());
-        // doReturn(participation.getBuildPlanId()).when(continuousIntegrationService).copyBuildPlan(anyString(), anyString(), anyString(), anyString(), anyString(), anyBoolean());
+        doReturn(participation.getBuildPlanId()).when(continuousIntegrationService).copyBuildPlan(anyString(), anyString(), anyString(), anyString(), anyString(), anyBoolean());
         doNothing().when(continuousIntegrationService).deleteBuildPlan(any(), any());
         doNothing().when(continuousIntegrationService).deleteProject(any());
 
