@@ -200,6 +200,7 @@
             "examStudentReviewEnd": "Ende der Klausureinsicht",
             "maxPoints": "Anzahl an erreichbaren Punkten",
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
+            "numberOfCorrectionRoundsInExam": "Anzahl der Korrektur Runden der Klausur",
             "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",
             "startText": "Klausurbeginn Text",
             "endText": "Klausurende Text",

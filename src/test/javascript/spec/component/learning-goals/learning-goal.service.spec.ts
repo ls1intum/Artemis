@@ -8,7 +8,7 @@ import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-progress-dtos.model';
+import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 
 chai.use(sinonChai);
@@ -19,7 +19,7 @@ describe('LearningGoalService', () => {
     let learningGoalService: LearningGoalService;
     let httpTestingController: HttpTestingController;
     let defaultLearningGoal: LearningGoal;
-    let defaultLearningGoalProgress: LearningGoalProgress;
+    let defaultLearningGoalProgress: IndividualLearningGoalProgress;
     let expectedResultLearningGoal: any;
     let expectedResultLearningGoalProgress: any;
 
@@ -38,7 +38,7 @@ describe('LearningGoalService', () => {
             ],
         });
         expectedResultLearningGoal = {} as HttpResponse<LearningGoal>;
-        expectedResultLearningGoalProgress = {} as HttpResponse<LearningGoalProgress>;
+        expectedResultLearningGoalProgress = {} as HttpResponse<IndividualLearningGoalProgress>;
 
         testBed = getTestBed();
         learningGoalService = testBed.get(LearningGoalService);
@@ -49,7 +49,7 @@ describe('LearningGoalService', () => {
         defaultLearningGoal.title = 'title';
         defaultLearningGoal.description = 'description';
 
-        defaultLearningGoalProgress = new LearningGoalProgress();
+        defaultLearningGoalProgress = new IndividualLearningGoalProgress();
         defaultLearningGoalProgress.learningGoalId = 0;
         defaultLearningGoalProgress.learningGoalTitle = 'title';
     });

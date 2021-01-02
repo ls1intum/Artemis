@@ -123,10 +123,10 @@ public class ProgrammingExerciseService {
      * @param programmingExercise The programmingExercise that should be setup
      * @return The newly setup exercise
      * @throws InterruptedException If something during the communication with the remote Git repository went wrong
-     * @throws GitAPIException      If something during the communication with the remote Git repositroy went wrong
+     * @throws GitAPIException      If something during the communication with the remote Git repository went wrong
      * @throws IOException          If the template files couldn't be read
      */
-    @Transactional
+    @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final var user = userService.getUser();
@@ -196,12 +196,14 @@ public class ProgrammingExerciseService {
      * @param programmingExercise the new programming exercise
      */
     public void connectBaseParticipationsToExerciseAndSave(ProgrammingExercise programmingExercise) {
-        final var templateParticipation = programmingExercise.getTemplateParticipation();
-        final var solutionParticipation = programmingExercise.getSolutionParticipation();
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        var solutionParticipation = programmingExercise.getSolutionParticipation();
         templateParticipation.setProgrammingExercise(programmingExercise);
         solutionParticipation.setProgrammingExercise(programmingExercise);
-        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+        templateParticipation = templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        solutionParticipation = solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+        programmingExercise.setTemplateParticipation(templateParticipation);
+        programmingExercise.setSolutionParticipation(solutionParticipation);
     }
 
     private void setURLsAndBuildPlanIDsForNewExercise(ProgrammingExercise programmingExercise) {
@@ -450,7 +452,16 @@ public class ProgrammingExerciseService {
 
                     try {
                         Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
-                        fileService.copyResources(projectTypeTestFileResources, projectTypePrefix, packagePath, false);
+                        // filter non existing resources to avoid exceptions
+                        List<Resource> existingProjectTypeTestFileResources = new ArrayList<>();
+                        for (Resource resource : projectTypeTestFileResources) {
+                            if (resource.exists()) {
+                                existingProjectTypeTestFileResources.add(resource);
+                            }
+                        }
+                        if (!existingProjectTypeTestFileResources.isEmpty()) {
+                            fileService.copyResources(existingProjectTypeTestFileResources.toArray(new Resource[] {}), projectTypePrefix, packagePath, false);
+                        }
                     }
                     catch (FileNotFoundException ignored) {
                     }
@@ -605,7 +616,8 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     public ProgrammingExercise findWithTemplateParticipationAndSolutionParticipationById(Long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
         if (programmingExercise.isPresent()) {
             return programmingExercise.get();
         }
@@ -622,7 +634,7 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     public ProgrammingExercise findWithTemplateAndSolutionParticipationWithResultsById(Long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationLatestResultById(programmingExerciseId);
         if (programmingExercise.isPresent()) {
             return programmingExercise.get();
         }
@@ -695,7 +707,8 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement, @Nullable String notificationText)
             throws EntityNotFoundException, IllegalAccessException {
-        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
         if (programmingExerciseOpt.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise not found with id: " + programmingExerciseId);
         }
@@ -799,7 +812,8 @@ public class ProgrammingExerciseService {
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
         // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId).get();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
+                .get();
         final var templateRepositoryUrlAsUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
         final var solutionRepositoryUrlAsUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
         final var testRepositoryUrlAsUrl = programmingExercise.getTestRepositoryUrlAsUrl();

@@ -7,7 +7,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { forkJoin, Subject } from 'rxjs';
-import { LearningGoalProgress } from 'app/course/learning-goals/learning-goal-progress-dtos.model';
+import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 
 @Component({
     selector: 'jhi-learning-goal-management',
@@ -18,7 +18,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     courseId: number;
     isLoading = false;
     learningGoals: LearningGoal[] = [];
-    learningGoalIdToLearningGoalProgress = new Map<number, LearningGoalProgress>();
+    learningGoalIdToLearningGoalCourseProgress = new Map<number, CourseLearningGoalProgress>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -51,8 +51,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         );
     }
 
-    getLearningGoalProgress(learningGoal: LearningGoal) {
-        return this.learningGoalIdToLearningGoalProgress.get(learningGoal.id!);
+    getLearningGoalCourseProgress(learningGoal: LearningGoal) {
+        return this.learningGoalIdToLearningGoalCourseProgress.get(learningGoal.id!);
     }
 
     loadData() {
@@ -63,7 +63,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 this.learningGoals = res.body!;
 
                 const progressObservable = this.learningGoals.map((lg) => {
-                    return this.learningGoalService.getProgress(lg.id!, this.courseId);
+                    return this.learningGoalService.getCourseProgress(lg.id!, this.courseId);
                 });
 
                 return forkJoin(progressObservable);
@@ -77,7 +77,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 (learningGoalProgressResponses) => {
                     for (const learningGoalProgressResponse of learningGoalProgressResponses) {
                         const learningGoalProgress = learningGoalProgressResponse.body!;
-                        this.learningGoalIdToLearningGoalProgress.set(learningGoalProgress.learningGoalId, learningGoalProgress);
+                        this.learningGoalIdToLearningGoalCourseProgress.set(learningGoalProgress.learningGoalId, learningGoalProgress);
                     }
                 },
                 (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),

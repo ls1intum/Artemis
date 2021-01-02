@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLNode extends UMLContainerElement {
 
-    public final static String UML_NODE_TYPE = "DeploymentNode";
+    public static final String UML_NODE_TYPE = "DeploymentNode";
 
     private final String name;
 
