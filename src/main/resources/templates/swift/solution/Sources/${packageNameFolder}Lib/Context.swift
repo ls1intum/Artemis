@@ -20,6 +20,7 @@ public class Context {
         return sortAlgorithm
     }
 
+    /// Runs the configured sort algorithm.
     public func sort() {
         sortAlgorithm.performSort(&self.dates)
     }

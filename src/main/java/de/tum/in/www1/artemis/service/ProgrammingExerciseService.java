@@ -468,6 +468,7 @@ public class ProgrammingExerciseService {
                 }
 
                 // Copy static code analysis config files
+                // TODO: rene: SWIFT - if we keep the parent folder, we need to enable showing the hidden .swiftlint.yml file otherwise the OE shows an empty folder
                 if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                     String staticCodeAnalysisConfigPath = templatePath + "/staticCodeAnalysisConfig/**/*.*";
                     Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
