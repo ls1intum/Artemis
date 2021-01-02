@@ -284,6 +284,11 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
+        if (participation.getBuildPlanId() == null) {
+            log.warn("Cannot get the build status, because the build plan for the participation " + participation + " was cleaned up already!");
+            // The build plan does not exist, the build status cannot be retrieved
+            return null;
+        }
         final var buildPlan = getBuildPlan(participation.getBuildPlanId(), false, true);
 
         if (buildPlan == null) {
@@ -331,10 +336,13 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * get the build plan for the given planKey
      * @param planKey the unique Bamboo build plan identifier
-     * @param expand whether the expaned version of the build plan is needed
+     * @param expand whether the expanded version of the build plan is needed
      * @return the build plan
      */
     private BambooBuildPlanDTO getBuildPlan(String planKey, boolean expand, boolean logNotFound) {
+        if (planKey == null) {
+            return null;
+        }
         try {
             String requestUrl = bambooServerUrl + "/rest/api/latest/plan/" + planKey;
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
