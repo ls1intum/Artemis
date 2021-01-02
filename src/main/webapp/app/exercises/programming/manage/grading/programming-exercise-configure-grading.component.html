@@ -59,8 +59,8 @@
                             [footerHeight]="50"
                             [rowHeight]="'auto'"
                             [rows]="filteredTestCases"
-                            [sorts]="tableSorts.testCases"
                             [rowClass]="getRowClass"
+                            [sorts]="tableSorts.testCases"
                             (sort)="onSort('testCases', $event)"
                         >
                             <ngx-datatable-column name="Test Name" prop="testName">
@@ -210,8 +210,16 @@
                             [footerHeight]="50"
                             [rowHeight]="'auto'"
                             [rows]="staticCodeAnalysisCategories"
+                            [sorts]="tableSorts.codeAnalysis"
+                            (sort)="onSort('codeAnalysis', $event)"
                         >
                             <ngx-datatable-column name="Category" prop="name">
+                                <ng-template ngx-datatable-header-template>
+                                    <span class="datatable-header-cell-wrapper" (click)="sort('codeAnalysis', 'name')">
+                                        <span class="datatable-header-cell-label bold sortable">Category</span>
+                                        <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'name')"></fa-icon>
+                                    </span>
+                                </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value">
                                     <fa-icon [icon]="'square'" [styles]="{ color: categoryColors[value] || 'white' }" class="mr-2"></fa-icon>
                                     {{ value }}
@@ -219,14 +227,17 @@
                             </ngx-datatable-column>
                             <ngx-datatable-column name="State" prop="state">
                                 <ng-template ngx-datatable-header-template>
-                                    <span>State</span
-                                    ><fa-icon
-                                        [icon]="'question-circle'"
-                                        class="text-secondary ml-2"
-                                        placement="bottom"
-                                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.state' | translate"
-                                        container="body"
-                                    ></fa-icon>
+                                    <span class="datatable-header-cell-wrapper" (click)="sort('codeAnalysis', 'state')">
+                                        <span class="datatable-header-cell-label bold sortable">State</span>
+                                        <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'state')"></fa-icon>
+                                        <fa-icon
+                                            [icon]="'question-circle'"
+                                            class="text-secondary ml-2"
+                                            placement="bottom"
+                                            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.state' | translate"
+                                            container="body"
+                                        ></fa-icon>
+                                    </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                                     <select [ngModel]="value" class="p-1" (change)="updateEditedCategoryField(row, EditableField.STATE)($event.target.value)">
@@ -236,14 +247,17 @@
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Penalty" prop="penalty">
                                 <ng-template ngx-datatable-header-template>
-                                    <span>Penalty</span
-                                    ><fa-icon
-                                        [icon]="'question-circle'"
-                                        class="text-secondary ml-2"
-                                        placement="bottom"
-                                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.penalty' | translate"
-                                        container="body"
-                                    ></fa-icon>
+                                    <span class="datatable-header-cell-wrapper" (click)="sort('codeAnalysis', 'penalty')">
+                                        <span class="datatable-header-cell-label bold sortable">Penalty</span>
+                                        <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'penalty')"></fa-icon>
+                                        <fa-icon
+                                            [icon]="'question-circle'"
+                                            class="text-secondary ml-2"
+                                            placement="bottom"
+                                            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.penalty' | translate"
+                                            container="body"
+                                        ></fa-icon>
+                                    </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                                     <jhi-table-editable-field
@@ -257,14 +271,17 @@
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Max Penalty" prop="maxPenalty">
                                 <ng-template ngx-datatable-header-template>
-                                    <span>Max Penalty</span
-                                    ><fa-icon
-                                        [icon]="'question-circle'"
-                                        class="text-secondary ml-2"
-                                        placement="bottom"
-                                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.maxPenalty' | translate"
-                                        container="body"
-                                    ></fa-icon>
+                                    <span class="datatable-header-cell-wrapper" (click)="sort('codeAnalysis', 'maxPenalty')">
+                                        <span class="datatable-header-cell-label bold sortable">Max Penalty</span>
+                                        <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'maxPenalty')"></fa-icon>
+                                        <fa-icon
+                                            [icon]="'question-circle'"
+                                            class="text-secondary ml-2"
+                                            placement="bottom"
+                                            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.maxPenalty' | translate"
+                                            container="body"
+                                        ></fa-icon>
+                                    </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                                     <jhi-table-editable-field
@@ -276,7 +293,13 @@
                                     <span *ngIf="row.state === CategoryState.Inactive" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
                                 </ng-template>
                             </ngx-datatable-column>
-                            <ngx-datatable-column name="Detected Issues">
+                            <ngx-datatable-column name="Detected Issues" prop="detectedIssues" [comparator]="compareDetectedIssues">
+                                <ng-template ngx-datatable-header-template>
+                                    <span class="datatable-header-cell-wrapper" (click)="sort('codeAnalysis', 'detectedIssues')">
+                                        <span class="datatable-header-cell-label bold sortable">Detected Issues</span>
+                                        <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'detectedIssues')"></fa-icon>
+                                    </span>
+                                </ng-template>
                                 <ng-template ngx-datatable-cell-template let-row="row">
                                     <jhi-category-issues-chart
                                         [category]="row"

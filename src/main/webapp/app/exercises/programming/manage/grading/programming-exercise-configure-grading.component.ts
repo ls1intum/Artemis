@@ -493,12 +493,12 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         return this.gradingStatistics?.categoryIssuesMap ? this.gradingStatistics.categoryIssuesMap[categoryName] : undefined;
     }
 
-    tableSorts = { testCases: [{ prop: 'testName', dir: 'asc' }] };
-    onSort(table: 'testCases', config: any) {
+    tableSorts = { testCases: [{ prop: 'testName', dir: 'asc' }], codeAnalysis: [{ prop: 'name', dir: 'asc' }] };
+    onSort(table: 'testCases' | 'codeAnalysis', config: any) {
         this.tableSorts[table] = config.sorts;
     }
 
-    iconForSortPropField(table: 'testCases', prop: string) {
+    iconForSortPropField(table: 'testCases' | 'codeAnalysis', prop: string) {
         const propSort = this.tableSorts[table].find((e) => e.prop === prop);
         if (!propSort) {
             return 'sort';
@@ -506,7 +506,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         return propSort.dir === 'asc' ? 'sort-up' : 'sort-down';
     }
 
-    sort(table: 'testCases', prop: string) {
+    sort(table: 'testCases' | 'codeAnalysis', prop: string) {
         const propSort = this.tableSorts[table].find((e) => e.prop === prop);
         if (propSort) {
             propSort.dir = propSort.dir === 'asc' ? 'desc' : 'asc';
@@ -519,6 +519,14 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         const statsA = this.getTestCaseStats(rowA.testName!);
         const statsB = this.getTestCaseStats(rowB.testName!);
         return (statsA?.numPassed ?? 0) - (statsB?.numPassed ?? 0);
+    }
+
+    compareDetectedIssues(_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) {
+        const issuesA = this.getIssuesMap(rowA.name);
+        const issuesB = this.getIssuesMap(rowB.name);
+        const totalIssuesA = Object.values(issuesA ?? {}).reduce((sum, n) => sum + n, 0);
+        const totalIssuesB = Object.values(issuesB ?? {}).reduce((sum, n) => sum + n, 0);
+        return totalIssuesA - totalIssuesB;
     }
 
     /**
