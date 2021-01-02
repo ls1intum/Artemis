@@ -40,24 +40,24 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() {
         programmingExerciseResultTestService.setup();
-        var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of());
+        var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), ProgrammingLanguage.JAVA);
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification);
     }
 
     @ParameterizedTest
-    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA" })
+    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA" }) // TODO: add Swift if it is available for Jenkins
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(ProgrammingLanguage programmingLanguage) {
         programmingExerciseResultTestService.setupForProgrammingLanguage(programmingLanguage);
-        var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
-        programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification, ProgrammingLanguage.JAVA);
+        var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), programmingLanguage);
+        programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification, programmingLanguage);
     }
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldGenerateNewManualResultIfManualAssessmentExists() {
         programmingExerciseResultTestService.setup();
-        var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of());
+        var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), ProgrammingLanguage.JAVA);
         programmingExerciseResultTestService.shouldGenerateNewManualResultIfManualAssessmentExists(notification);
     }
 }

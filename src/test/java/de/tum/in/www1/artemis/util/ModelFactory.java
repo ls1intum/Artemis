@@ -769,9 +769,10 @@ public class ModelFactory {
      * @param repoName name of the repository
      * @param successfulTestNames names of successful tests
      * @param failedTestNames names of failed tests
+     * @param programmingLanguage programming language to use
      * @return TestResultDTO with dummy data
      */
-    public static TestResultsDTO generateTestResultDTO(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
+    public static TestResultsDTO generateTestResultDTO(String repoName, List<String> successfulTestNames, List<String> failedTestNames, ProgrammingLanguage programmingLanguage) {
         var notification = new TestResultsDTO();
 
         var testSuite = new TestsuiteDTO();
@@ -801,7 +802,7 @@ public class ModelFactory {
         commitDTO.setHash(TestConstants.COMMIT_HASH_STRING);
         commitDTO.setRepositorySlug(repoName);
 
-        var reports = generateStaticCodeAnalysisReports(ProgrammingLanguage.JAVA);
+        var reports = generateStaticCodeAnalysisReports(programmingLanguage);
 
         notification.setCommits(List.of(commitDTO));
         notification.setResults(List.of(testSuite));
