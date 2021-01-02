@@ -65,7 +65,16 @@
         <div class="row flex-nowrap">
             <div class="col editor-container-outer">
                 <div class="row editor-container-inner">
-                    <jhi-modeling-editor class="col-12" *ngIf="!assessmentMode" [umlModel]="umlModel" [diagramType]="exercise.diagramType" [readOnly]="readOnly">
+                    <jhi-modeling-editor
+                        class="col-12"
+                        *ngIf="!assessmentMode"
+                        [umlModel]="umlModel"
+                        [diagramType]="exercise.diagramType"
+                        [readOnly]="readOnly"
+                        [explanation]="explanationText"
+                        (explanationChange)="explanationChanged($event)"
+                        [withExplanation]="true"
+                    >
                     </jhi-modeling-editor>
 
                     <jhi-modeling-assessment

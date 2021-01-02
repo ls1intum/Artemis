@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 
 public class UMLObject extends UMLElement {
 
-    public final static String UML_OBJECT_TYPE = "ObjectName";
+    public static final String UML_OBJECT_TYPE = "ObjectName";
 
     private final String name;
 

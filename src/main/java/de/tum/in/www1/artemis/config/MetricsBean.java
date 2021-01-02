@@ -1,37 +1,89 @@
 package de.tum.in.www1.artemis.config;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthContributor;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.actuate.health.NamedContributor;
 import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
+import org.springframework.core.env.Environment;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
 import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 
-import de.tum.in.www1.artemis.config.websocket.WebsocketConfiguration;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 
 @Component
 public class MetricsBean {
 
-    private final String ARTEMIS_HEALTH_NAME = "artemis.health";
+    private final Logger log = LoggerFactory.getLogger(MetricsBean.class);
 
-    private final String ARTEMIS_HEALTH_DESCRIPTION = "Artemis Health Indicator";
+    private static final String ARTEMIS_HEALTH_NAME = "artemis.health";
 
-    private final String ARTEMIS_HEALTH_TAG = "healthindicator";
+    private static final String ARTEMIS_HEALTH_DESCRIPTION = "Artemis Health Indicator";
 
-    public MetricsBean(MeterRegistry meterRegistry, WebsocketConfiguration websocketConfiguration, List<HealthContributor> healthContributors) {
-        // Publish the number of currently (via WebSockets) connected users
-        Gauge.builder("artemis.instance.websocket.users", websocketConfiguration.subProtocolWebSocketHandler(), MetricsBean::extractWebsocketUserCount).strongReference(true)
-                .description("Number of users connected to this Artemis instance").register(meterRegistry);
+    private static final String ARTEMIS_HEALTH_TAG = "healthindicator";
 
-        // Publish the health status for each HealthContributor
-        // The health status gets published as one Gauge with name ARTEMIS_HEALTH_NAME that has several values (one for each HealthIndicator), using different values for the
-        // ARTEMIS_HEALTH_TAG tag
+    private static final int LOGGING_DELAY_SECONDS = 10;
+
+    private final MeterRegistry meterRegistry;
+
+    private final Environment env;
+
+    private final TaskScheduler taskScheduler;
+
+    private final WebSocketMessageBrokerStats webSocketStats;
+
+    private final SimpUserRegistry userRegistry;
+
+    private final WebSocketHandler webSocketHandler;
+
+    public MetricsBean(MeterRegistry meterRegistry, Environment env, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
+            WebSocketHandler websocketHandler, List<HealthContributor> healthContributors) {
+        this.meterRegistry = meterRegistry;
+        this.env = env;
+        this.taskScheduler = taskScheduler;
+        this.webSocketStats = webSocketStats;
+        this.userRegistry = userRegistry;
+        this.webSocketHandler = websocketHandler;
+        registerHealthContributors(healthContributors);
+        registerWebsocketMetrics();
+    }
+
+    /**
+     * initialize the websocket logging
+     */
+    @PostConstruct
+    public void init() {
+        // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
+        // later one, e.g. in the code editor. Therefore we call this method here directly to get a reference and adapt the logging period!
+        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+        // Note: this mechanism prevents that this is logged during testing
+        if (activeProfiles.contains("websocketLog")) {
+            webSocketStats.setLoggingPeriod(LOGGING_DELAY_SECONDS * 1000);
+            taskScheduler.scheduleAtFixedRate(() -> {
+                final var connectedUsers = userRegistry.getUsers();
+                final var subscriptionCount = connectedUsers.stream().flatMap(simpUser -> simpUser.getSessions().stream()).map(simpSession -> simpSession.getSubscriptions().size())
+                        .reduce(0, Integer::sum);
+                log.info("Currently connect users " + connectedUsers.size() + " with active websocket subscriptions: " + subscriptionCount);
+            }, LOGGING_DELAY_SECONDS * 1000);
+        }
+    }
+
+    private void registerHealthContributors(List<HealthContributor> healthContributors) {
+        // Publish the health status for each HealthContributor one Gauge with name ARTEMIS_HEALTH_NAME that has several values (one for each HealthIndicator),
+        // using different values for the ARTEMIS_HEALTH_TAG tag
         for (HealthContributor healthContributor : healthContributors) {
             // For most HealthContributors, there is only one HealthIndicator that can directly be published.
             // The health status gets mapped to a double value, as only doubles can be returned by a Gauge.
@@ -52,8 +104,13 @@ public class MetricsBean {
                     }
                 }
             }
-
         }
+    }
+
+    private void registerWebsocketMetrics() {
+        // Publish the number of currently (via WebSockets) connected users
+        Gauge.builder("artemis.instance.websocket.users", webSocketHandler, MetricsBean::extractWebsocketUserCount).strongReference(true)
+                .description("Number of users connected to this Artemis instance").register(meterRegistry);
     }
 
     private static double extractWebsocketUserCount(WebSocketHandler webSocketHandler) {

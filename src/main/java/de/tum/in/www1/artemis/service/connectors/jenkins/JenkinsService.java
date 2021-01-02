@@ -71,7 +71,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     private static final String PIPELINE_SCRIPT_DETECTION_COMMENT = "// ARTEMIS: JenkinsPipeline";
 
     @Value("${artemis.continuous-integration.url}")
-    private URL JENKINS_SERVER_URL;
+    private URL jenkinsServerUrl;
 
     @Value("${jenkins.use-crumb:#{true}}")
     private boolean useCrumb;
@@ -79,6 +79,8 @@ public class JenkinsService implements ContinuousIntegrationService {
     private final JenkinsBuildPlanCreator jenkinsBuildPlanCreator;
 
     private final RestTemplate restTemplate;
+
+    private final RestTemplate shortTimeoutRestTemplate;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
@@ -95,8 +97,9 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     public JenkinsService(JenkinsBuildPlanCreator jenkinsBuildPlanCreator, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, FeedbackService feedbackService,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -193,7 +196,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         headers.setContentType(MediaType.APPLICATION_XML);
         final var entity = new HttpEntity(writeXmlToString(jobXmlDocument), headers);
 
-        URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(JENKINS_SERVER_URL.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
+        URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(jenkinsServerUrl.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
 
         final var errorMessage = "Error trying to configure build plan in Jenkins " + buildPlanKey;
         try {
@@ -380,7 +383,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
-        return Optional.of(JENKINS_SERVER_URL + "/project/" + projectKey + "/" + buildPlanId);
+        return Optional.of(jenkinsServerUrl + "/project/" + projectKey + "/" + buildPlanId);
     }
 
     @NotNull
@@ -453,7 +456,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
-        final var url = Endpoint.LAST_BUILD.buildEndpoint(JENKINS_SERVER_URL.toString(), projectKey, planKey).build(true).toString();
+        final var url = Endpoint.LAST_BUILD.buildEndpoint(jenkinsServerUrl.toString(), projectKey, planKey).build(true).toString();
         try {
             final var jobStatus = restTemplate.getForObject(url, JsonNode.class);
             return jobStatus.get("building").asBoolean() ? BuildStatus.BUILDING : BuildStatus.INACTIVE;
@@ -693,14 +696,12 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public ConnectorHealth health() {
         try {
-            final var isRunning = jenkinsServer.isRunning();
-            if (!isRunning) {
-                return new ConnectorHealth(new JenkinsException("Jenkins Server is down!"));
-            }
-            return new ConnectorHealth(true, Map.of("url", JENKINS_SERVER_URL));
+            // Note: we simply check if the login page is reachable
+            shortTimeoutRestTemplate.getForObject(jenkinsServerUrl + "/login", String.class);
+            return new ConnectorHealth(true, Map.of("url", jenkinsServerUrl));
         }
         catch (Exception emAll) {
-            return new ConnectorHealth(emAll);
+            return new ConnectorHealth(new JenkinsException("Jenkins Server is down!"));
         }
     }
 
@@ -771,7 +772,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private <T> T post(Endpoint endpoint, HttpStatus allowedStatus, String messageInCaseOfError, Class<T> responseType, Object... args) {
-        final var builder = endpoint.buildEndpoint(JENKINS_SERVER_URL.toString(), args);
+        final var builder = endpoint.buildEndpoint(jenkinsServerUrl.toString(), args);
         try {
             final var response = restTemplate.postForEntity(builder.build(true).toString(), null, responseType);
             if (response.getStatusCode() != allowedStatus) {

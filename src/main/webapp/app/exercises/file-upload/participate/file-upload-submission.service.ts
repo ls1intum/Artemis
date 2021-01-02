@@ -69,7 +69,7 @@ export class FileUploadSubmissionService {
         if (lock) {
             url += '?lock=true';
         }
-        return this.http.get<FileUploadSubmission>(url);
+        return this.http.get<FileUploadSubmission>(url).pipe(map((res: FileUploadSubmission) => this.convertItemFromServer(res)));
     }
 
     /**

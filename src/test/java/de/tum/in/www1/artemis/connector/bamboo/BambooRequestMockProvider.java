@@ -55,10 +55,16 @@ public class BambooRequestMockProvider {
 
     private final RestTemplate restTemplate;
 
+    private final RestTemplate shortTimeoutRestTemplate;
+
     private MockRestServiceServer mockServer;
 
-    public BambooRequestMockProvider(@Qualifier("bambooRestTemplate") RestTemplate restTemplate) {
+    private MockRestServiceServer mockServerShortTimeout;
+
+    public BambooRequestMockProvider(@Qualifier("bambooRestTemplate") RestTemplate restTemplate,
+            @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
     public void enableMockingOfRequests() {
@@ -69,6 +75,10 @@ public class BambooRequestMockProvider {
         MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
         builder.ignoreExpectOrder(ignoreExpectOrder);
         mockServer = builder.build();
+
+        MockRestServiceServer.MockRestServiceServerBuilder builderShortTimeout = MockRestServiceServer.bindTo(shortTimeoutRestTemplate);
+        builderShortTimeout.ignoreExpectOrder(ignoreExpectOrder);
+        mockServerShortTimeout = builderShortTimeout.build();
     }
 
     public void reset() {
@@ -471,7 +481,7 @@ public class BambooRequestMockProvider {
     public void mockHealth(String state, HttpStatus httpStatus) throws URISyntaxException, JsonProcessingException {
         var response = Map.of("state", state);
         var uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/server").build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+        mockServerShortTimeout.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(httpStatus).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 }
