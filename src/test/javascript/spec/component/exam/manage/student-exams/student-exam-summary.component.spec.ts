@@ -41,6 +41,6 @@ describe('StudentExamSummaryComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).to.be.ok;
-        expect(component.studentExam).to.deep.equal(studentExam);
+        expect(component.studentExam).to.deep.equal(studentExamValue);
     });
 });
