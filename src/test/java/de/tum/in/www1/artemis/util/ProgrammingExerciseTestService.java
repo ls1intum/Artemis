@@ -465,10 +465,6 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.NOT_FOUND);
     }
 
-    // TODO: add several more test cases for resuming a programming exercise:
-    // 3. Trigger all builds of the corresponding exercise
-    // @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build-all")
-
     // TEST
     public void resumeProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
