@@ -65,7 +65,7 @@ public class BambooService implements ContinuousIntegrationService {
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
     // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
-    private final static Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
+    private static final Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
 
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;
@@ -89,13 +89,16 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final RestTemplate restTemplate;
 
+    private final RestTemplate shortTimeoutRestTemplate;
+
     private final ObjectMapper mapper;
 
     private final UrlService urlService;
 
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackService feedbackService,
-            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, ObjectMapper mapper, UrlService urlService, ResultRepository resultRepository) {
+            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
+            UrlService urlService, ResultRepository resultRepository) {
         this.gitService = gitService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
@@ -103,6 +106,7 @@ public class BambooService implements ContinuousIntegrationService {
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.feedbackService = feedbackService;
         this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.mapper = mapper;
         this.urlService = urlService;
         this.resultRepository = resultRepository;
@@ -284,6 +288,11 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
+        if (participation.getBuildPlanId() == null) {
+            log.warn("Cannot get the build status, because the build plan for the participation " + participation + " was cleaned up already!");
+            // The build plan does not exist, the build status cannot be retrieved
+            return null;
+        }
         final var buildPlan = getBuildPlan(participation.getBuildPlanId(), false, true);
 
         if (buildPlan == null) {
@@ -331,10 +340,13 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * get the build plan for the given planKey
      * @param planKey the unique Bamboo build plan identifier
-     * @param expand whether the expaned version of the build plan is needed
+     * @param expand whether the expanded version of the build plan is needed
      * @return the build plan
      */
     private BambooBuildPlanDTO getBuildPlan(String planKey, boolean expand, boolean logNotFound) {
+        if (planKey == null) {
+            return null;
+        }
         try {
             String requestUrl = bambooServerUrl + "/rest/api/latest/plan/" + planKey;
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
@@ -617,7 +629,7 @@ public class BambooService implements ContinuousIntegrationService {
     public ConnectorHealth health() {
         ConnectorHealth health;
         try {
-            final var status = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/server", HttpMethod.GET, null, JsonNode.class);
+            final var status = shortTimeoutRestTemplate.exchange(bambooServerUrl + "/rest/api/latest/server", HttpMethod.GET, null, JsonNode.class);
             health = status.getBody().get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
         }
         catch (Exception emAll) {
@@ -886,10 +898,20 @@ public class BambooService implements ContinuousIntegrationService {
                 continue;
             }
 
-            // Replace some unnecessary information and hide complex details to make it easier to read the important information
-            logString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
+            // filter unnecessary Swift logs
+            if (logString.contains("Unable to find image") || logString.contains(": Pull") || logString.contains(": Waiting") || logString.contains(": Verifying")
+                    || logString.contains(": Download") || logString.startsWith("Digest:") || logString.startsWith("Status:") || logString.contains("github.com")) {
+                continue;
+            }
 
-            filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), logString, unfilteredBuildLog.getProgrammingSubmission()));
+            // Replace some unnecessary information and hide complex details to make it easier to read the important information
+            final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
+
+            // Avoid duplicate log entries
+            var existingLog = filteredBuildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
+            if (existingLog.isEmpty()) {
+                filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), shortenedLogString, unfilteredBuildLog.getProgrammingSubmission()));
+            }
         }
 
         return filteredBuildLogs;

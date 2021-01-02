@@ -62,7 +62,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     exerciseId: number;
     numberOfTutorAssessments = 0;
     numberOfSubmissions = new DueDateStat();
-    numberOfAssessments = new DueDateStat();
+    totalNumberOfAssessments = new DueDateStat();
+    numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
     numberOfComplaints = 0;
     numberOfOpenComplaints = 0;
     numberOfTutorComplaints = 0;
@@ -72,8 +73,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     totalAssessmentPercentage = new DueDateStat();
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
-    submissions: Submission[] = [];
-    unassessedSubmission?: Submission;
+    submissionsByCorrectionRound: Map<number, Submission[]> = new Map<number, Submission[]>();
+    unassessedSubmissionByCorrectionRound?: Map<number, Submission> = new Map<number, Submission>();
     exampleSubmissionsToReview: ExampleSubmission[] = [];
     exampleSubmissionsToAssess: ExampleSubmission[] = [];
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
@@ -204,7 +205,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     this.exam = this.exercise?.exerciseGroup?.exam;
                 }
 
-                this.getTutorAssessedSubmissions();
+                this.getAllTutorAssessedSubmissions();
 
                 // 1. We don't want to assess submissions before the exercise due date
                 // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
@@ -235,7 +236,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             (res: HttpResponse<StatsForDashboard>) => {
                 this.statsForDashboard = StatsForDashboard.from(res.body!);
                 this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
-                this.numberOfAssessments = this.statsForDashboard.numberOfAssessments;
+                this.totalNumberOfAssessments = this.statsForDashboard.totalNumberOfAssessments;
+                this.numberOfAssessmentsOfCorrectionRounds = this.statsForDashboard.numberOfAssessmentsOfCorrectionRounds;
                 this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
                 this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
                 this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
@@ -252,12 +254,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 }
 
                 if (this.numberOfSubmissions.inTime > 0) {
-                    this.totalAssessmentPercentage.inTime = Math.floor((this.numberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
+                    this.totalAssessmentPercentage.inTime = Math.floor((this.totalNumberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
                 } else {
                     this.totalAssessmentPercentage.inTime = 100;
                 }
                 if (this.numberOfSubmissions.late > 0) {
-                    this.totalAssessmentPercentage.late = Math.floor((this.numberOfAssessments.late / this.numberOfSubmissions.late) * 100);
+                    this.totalAssessmentPercentage.late = Math.floor((this.totalNumberOfAssessments.late / this.numberOfSubmissions.late) * 100);
                 } else {
                     this.totalAssessmentPercentage.late = 100;
                 }
@@ -282,7 +284,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      * Get all the submissions from the server for which the current user is the assessor, which is the case for started or completed assessments. All these submissions get listed
      * in the exercise dashboard.
      */
-    private getTutorAssessedSubmissions(): void {
+    private getAllTutorAssessedSubmissions(): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
         if (this.isTestRun) {
             submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId);
@@ -311,12 +313,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             )
             .subscribe((submissions: Submission[]) => {
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
-                this.submissions = submissions.map((submission) => {
+                const sub = submissions.map((submission) => {
                     submission.participation!.submissions = [submission];
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     return submission;
                 });
-                //         setLatestResult(submissions);
+                this.submissionsByCorrectionRound!.set(1, sub); // todo NR
             });
     }
 
@@ -328,9 +330,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             const latestResult = getLatestSubmissionResult(submission);
             if (latestResult) {
                 // reconnect some associations
-                latestResult.submission = submission;
-                latestResult.participation = submission.participation;
-                submission.participation!.results = [latestResult];
+                latestResult!.submission = submission;
+                latestResult!.participation = submission.participation;
+                submission.participation!.results = [latestResult!];
+                setLatestSubmissionResult(submission, latestResult);
             }
             return submission;
         });
@@ -360,13 +363,16 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
         submissionObservable.subscribe(
             (submission: Submission) => {
-                this.unassessedSubmission = submission;
+                if (submission) {
+                    setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
+                    this.unassessedSubmissionByCorrectionRound!.set(1, submission);
+                }
                 this.submissionLockLimitReached = false;
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    this.unassessedSubmission = undefined;
+                    this.unassessedSubmissionByCorrectionRound = new Map<number, Submission>();
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.submissionLockLimitReached = true;
                 } else {
@@ -404,7 +410,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      * @param submission Submission which to check
      */
     calculateStatus(submission: Submission) {
-        const tmpResult = getLatestSubmissionResult(submission);
+        const tmpResult = submission.latestResult;
         if (tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!)) {
             return 'DONE';
         }
