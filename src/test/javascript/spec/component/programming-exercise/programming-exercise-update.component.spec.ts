@@ -1,9 +1,10 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
+import { stub } from 'sinon';
 import { of } from 'rxjs';
 import * as moment from 'moment';
-
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -25,6 +26,7 @@ import {
 describe('ProgrammingExercise Management Update Component', () => {
     let comp: ProgrammingExerciseUpdateComponent;
     let fixture: ComponentFixture<ProgrammingExerciseUpdateComponent>;
+    let debugElement: DebugElement;
     let programmingExerciseService: ProgrammingExerciseService;
     let courseService: CourseManagementService;
     let exerciseGroupService: ExerciseGroupService;
@@ -46,10 +48,11 @@ describe('ProgrammingExercise Management Update Component', () => {
 
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
         comp = fixture.componentInstance;
-        programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-        courseService = fixture.debugElement.injector.get(CourseManagementService);
-        exerciseGroupService = fixture.debugElement.injector.get(ExerciseGroupService);
-        programmingExerciseFeatureService = fixture.debugElement.injector.get(ProgrammingLanguageFeatureService);
+        debugElement = fixture.debugElement;
+        programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
+        courseService = debugElement.injector.get(CourseManagementService);
+        exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
+        programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
     });
 
     describe('save', () => {
@@ -121,15 +124,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
             spyOn(exerciseGroupService, 'find').and.returnValue(of(new HttpResponse({ body: exerciseGroup })));
-            const programmingLanguageFeature: ProgrammingLanguageFeature = {
-                programmingLanguage: ProgrammingLanguage.JAVA,
-                sequentialTestRuns: true,
-                staticCodeAnalysis: true,
-                plagiarismCheckSupported: true,
-                packageNameRequired: true,
-                checkoutSolutionRepositoryAllowed: true,
-                projectTypes: [ProjectType.ECLIPSE, ProjectType.MAVEN],
-            };
+            const programmingLanguageFeature = getProgrammingLanguageFeature(ProgrammingLanguage.JAVA);
             spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(of(programmingLanguageFeature));
 
             // WHEN
@@ -161,15 +156,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should not be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
             spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
-            const programmingLanguageFeature: ProgrammingLanguageFeature = {
-                programmingLanguage: ProgrammingLanguage.JAVA,
-                sequentialTestRuns: true,
-                staticCodeAnalysis: true,
-                plagiarismCheckSupported: true,
-                packageNameRequired: true,
-                checkoutSolutionRepositoryAllowed: true,
-                projectTypes: [ProjectType.ECLIPSE, ProjectType.MAVEN],
-            };
+            const programmingLanguageFeature: ProgrammingLanguageFeature = getProgrammingLanguageFeature(ProgrammingLanguage.JAVA);
             spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(of(programmingLanguageFeature));
 
             // WHEN
@@ -183,4 +170,80 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.isExamMode).toBeFalsy();
         }));
     });
+
+    describe('static code analysis', () => {
+        const courseId = 2;
+        const course = { id: courseId } as Course;
+        const expectedProgrammingExercise = new ProgrammingExercise(course, undefined);
+        expectedProgrammingExercise.id = 1;
+        expectedProgrammingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: expectedProgrammingExercise });
+        });
+
+        it('Should activate SCA for Swift', fakeAsync(() => {
+            // GIVEN
+            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
+            const programmingLanguageFeature = getProgrammingLanguageFeature(ProgrammingLanguage.SWIFT);
+            stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').returns(programmingLanguageFeature);
+
+            // WHEN
+            fixture.detectChanges();
+            tick();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.SWIFT);
+
+            // THEN
+            expect(courseService.find).toHaveBeenCalledWith(courseId);
+            expect(comp.programmingExercise).toEqual(expectedProgrammingExercise);
+            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.SWIFT);
+            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
+            expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForSwift);
+        }));
+
+        it('Should activate SCA for Java', fakeAsync(() => {
+            // GIVEN
+            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
+            const programmingLanguageFeature = getProgrammingLanguageFeature(ProgrammingLanguage.JAVA);
+            stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').returns(programmingLanguageFeature);
+
+            // WHEN
+            fixture.detectChanges();
+            tick();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.JAVA);
+
+            // THEN
+            expect(comp.programmingExercise).toEqual(expectedProgrammingExercise);
+            expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.JAVA);
+            expect(comp.staticCodeAnalysisAllowed).toEqual(true);
+            expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForJavaKotlin);
+        }));
+    });
 });
+
+const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage) => {
+    if (programmingLanguage === ProgrammingLanguage.SWIFT) {
+        return {
+            programmingLanguage: ProgrammingLanguage.SWIFT,
+            sequentialTestRuns: false,
+            staticCodeAnalysis: true,
+            plagiarismCheckSupported: false,
+            packageNameRequired: true,
+            checkoutSolutionRepositoryAllowed: false,
+            projectTypes: [],
+        } as ProgrammingLanguageFeature;
+    } else {
+        return {
+            programmingLanguage: ProgrammingLanguage.JAVA,
+            sequentialTestRuns: true,
+            staticCodeAnalysis: true,
+            plagiarismCheckSupported: true,
+            packageNameRequired: true,
+            checkoutSolutionRepositoryAllowed: true,
+            projectTypes: [ProjectType.ECLIPSE, ProjectType.MAVEN],
+        } as ProgrammingLanguageFeature;
+    }
+};
