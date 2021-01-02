@@ -254,8 +254,14 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createProgrammingExercise_validExercise_withStaticCodeAnalysis() throws Exception {
+    public void createProgrammingExercise_validExercise_withStaticCodeAnalysis(ProgrammingLanguage language, ProgrammingLanguageFeature programmingLanguageFeature)
+            throws Exception {
         exercise.setStaticCodeAnalysisEnabled(true);
+        exercise.setProgrammingLanguage(language);
+        if (language == ProgrammingLanguage.SWIFT) {
+            exercise.setPackageName("swiftTest");
+        }
+        exercise.setProjectType(programmingLanguageFeature.getProjectTypes().size() > 0 ? programmingLanguageFeature.getProjectTypes().get(0) : null);
         mockDelegate.mockConnectorRequestsForSetup(exercise);
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
 
@@ -284,20 +290,15 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans) throws Exception {
-        boolean staticCodeAnalysisEnabled = programmingLanguage == ProgrammingLanguage.JAVA;
+        boolean staticCodeAnalysisEnabled = programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.SWIFT;
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
-        sourceExercise.setProgrammingLanguage(programmingLanguage);
-        if (programmingLanguage == ProgrammingLanguage.SWIFT) {
-            sourceExercise.setPackageName("swiftTest");
-        }
+        ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
         sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         database.addTestCasesToProgrammingExercise(sourceExercise);
         database.addHintsToExercise(sourceExercise);
         database.addHintsToProblemStatement(sourceExercise);
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
-        exerciseToBeImported.setProgrammingLanguage(programmingLanguage);
         exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, recreateBuildPlans);
