@@ -446,6 +446,10 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
+        if (participation.getBuildPlanId() == null) {
+            // The build plan does not exist, the build status cannot be retrieved
+            return null;
+        }
         final var isQueued = getJob(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId()).isInQueue();
         if (isQueued) {
             return BuildStatus.QUEUED;
@@ -455,7 +459,6 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var url = Endpoint.LAST_BUILD.buildEndpoint(jenkinsServerUrl.toString(), projectKey, planKey).build(true).toString();
         try {
             final var jobStatus = restTemplate.getForObject(url, JsonNode.class);
-
             return jobStatus.get("building").asBoolean() ? BuildStatus.BUILDING : BuildStatus.INACTIVE;
         }
         catch (HttpClientErrorException e) {
@@ -732,6 +735,10 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private JobWithDetails getJob(String projectKey, String jobName) {
+        if (projectKey == null || jobName == null) {
+            log.warn("Cannot get the job, because projectKey " + projectKey + " or jobName " + jobName + " is null");
+            return null;
+        }
         final var folder = getFolderJob(projectKey);
         try {
             return jenkinsServer.getJob(folder, jobName);
