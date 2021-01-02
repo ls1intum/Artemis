@@ -89,6 +89,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         doNothing().when(continuousIntegrationService).deleteBuildPlan(any(), any());
         doNothing().when(continuousIntegrationService).deleteProject(any());
 
+        bambooRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.mockGetBuildPlan(participation.getBuildPlanId(), new BambooBuildPlanDTO());
 
         // Try to access 5 different endpoints with programming feature toggle enabled
