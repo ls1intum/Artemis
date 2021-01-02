@@ -83,7 +83,11 @@
                                     </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <jhi-table-editable-field [value]="value" [onValueUpdate]="updateEditedField(row, EditableField.WEIGHT)"></jhi-table-editable-field>
+                                    <jhi-table-editable-field
+                                        [id]="row.id + '-weight'"
+                                        [value]="value"
+                                        [onValueUpdate]="updateEditedField(row, EditableField.WEIGHT)"
+                                    ></jhi-table-editable-field>
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Bonus Multiplier" prop="bonusMultiplier">
@@ -94,7 +98,11 @@
                                     </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <jhi-table-editable-field [value]="value" [onValueUpdate]="updateEditedField(row, EditableField.BONUS_MULTIPLIER)"></jhi-table-editable-field>
+                                    <jhi-table-editable-field
+                                        [id]="row.id + '-bonusmultiplier'"
+                                        [value]="value"
+                                        [onValueUpdate]="updateEditedField(row, EditableField.BONUS_MULTIPLIER)"
+                                    ></jhi-table-editable-field>
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Bonus Points" prop="bonusPoints">
@@ -105,7 +113,11 @@
                                     </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <jhi-table-editable-field [value]="value" [onValueUpdate]="updateEditedField(row, EditableField.BONUS_POINTS)"></jhi-table-editable-field>
+                                    <jhi-table-editable-field
+                                        [id]="row.id + '-bonuspoints'"
+                                        [value]="value"
+                                        [onValueUpdate]="updateEditedField(row, EditableField.BONUS_POINTS)"
+                                    ></jhi-table-editable-field>
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="After Due Date" prop="afterDueDate" sortable="false">
@@ -225,7 +237,7 @@
                                     {{ value }}
                                 </ng-template>
                             </ngx-datatable-column>
-                            <ngx-datatable-column name="State" prop="state">
+                            <ngx-datatable-column name="State" prop="state" [comparator]="compareCategoryState">
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">State</span>
@@ -240,12 +252,17 @@
                                     </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <select [ngModel]="value" class="p-1" (change)="updateEditedCategoryField(row, EditableField.STATE)($event.target.value)">
+                                    <select
+                                        [id]="row.id + '-state'"
+                                        [ngModel]="value"
+                                        class="p-1"
+                                        (change)="updateEditedCategoryField(row, EditableField.STATE)($event.target.value)"
+                                    >
                                         <option *ngFor="let s of categoryStateList" [value]="s.value">{{ s.name }}</option>
                                     </select>
                                 </ng-template>
                             </ngx-datatable-column>
-                            <ngx-datatable-column name="Penalty" prop="penalty">
+                            <ngx-datatable-column name="Penalty" prop="penalty" [comparator]="comparePenalty">
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Penalty</span>
@@ -262,6 +279,7 @@
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                                     <jhi-table-editable-field
                                         *ngIf="row.state === CategoryState.Graded"
+                                        [id]="row.id + '-penalty'"
                                         [value]="value"
                                         [onValueUpdate]="updateEditedCategoryField(row, EditableField.PENALTY)"
                                     ></jhi-table-editable-field>
@@ -269,7 +287,7 @@
                                     <span *ngIf="row.state === CategoryState.Inactive" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
                                 </ng-template>
                             </ngx-datatable-column>
-                            <ngx-datatable-column name="Max Penalty" prop="maxPenalty">
+                            <ngx-datatable-column name="Max Penalty" prop="maxPenalty" [comparator]="compareMaxPenalty">
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Max Penalty</span>
@@ -286,6 +304,7 @@
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                                     <jhi-table-editable-field
                                         *ngIf="row.state === CategoryState.Graded"
+                                        [id]="row.id + '-maxpenalty'"
                                         [value]="value"
                                         [onValueUpdate]="updateEditedCategoryField(row, EditableField.MAX_PENALTY)"
                                     ></jhi-table-editable-field>

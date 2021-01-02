@@ -509,9 +509,25 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     comparePassedPercent = (_: any, __: any, rowA: ProgrammingExerciseTestCase, rowB: ProgrammingExerciseTestCase) => {
         const statsA = this.getTestCaseStats(rowA.testName!);
         const statsB = this.getTestCaseStats(rowB.testName!);
-        const valA = statsA?.numPassed ?? 0 - (statsA?.numFailed ?? 0);
-        const valB = statsB?.numPassed ?? 0 - (statsB?.numFailed ?? 0);
+        const valA = (statsA?.numPassed ?? 0) - (statsA?.numFailed ?? 0);
+        const valB = (statsB?.numPassed ?? 0) - (statsB?.numFailed ?? 0);
         return valA - valB;
+    };
+
+    valForState = (s: StaticCodeAnalysisCategoryState) => (s == StaticCodeAnalysisCategoryState.Inactive ? 0 : s == StaticCodeAnalysisCategoryState.Feedback ? 1 : 2);
+
+    compareCategoryState = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
+        return this.valForState(rowA.state) - this.valForState(rowB.state);
+    };
+
+    comparePenalty = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
+        const valForPenalty = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state == StaticCodeAnalysisCategoryState.Graded ? c.penalty : 0);
+        return valForPenalty(rowA) - valForPenalty(rowB);
+    };
+
+    compareMaxPenalty = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
+        const valForMaxPenalty = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state == StaticCodeAnalysisCategoryState.Graded ? c.maxPenalty : 0);
+        return valForMaxPenalty(rowA) - valForMaxPenalty(rowB);
     };
 
     compareDetectedIssues = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
@@ -519,7 +535,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         const issuesB = this.getIssuesMap(rowB.name);
         const totalIssuesA = Object.values(issuesA ?? {}).reduce((sum, n) => sum + n, 0);
         const totalIssuesB = Object.values(issuesB ?? {}).reduce((sum, n) => sum + n, 0);
-        return totalIssuesA - totalIssuesB;
+        return totalIssuesA !== totalIssuesB ? totalIssuesA - totalIssuesB : this.compareCategoryState(_, __, rowA, rowB);
     };
 
     /**
