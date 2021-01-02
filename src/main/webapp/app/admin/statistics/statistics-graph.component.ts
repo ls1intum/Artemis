@@ -131,12 +131,6 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
         }
     }
 
-    onTabChanged(span: SpanType): void {
-        this.currentSpan = span;
-        this.barChartLabels = [];
-        this.currentPeriod = 0;
-        this.initializeChart();
-    }
     private getMonths(): string[] {
         const currentMonth = moment().month();
         const year = [

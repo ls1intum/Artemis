@@ -5,7 +5,6 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -14,7 +13,6 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MomentModule } from 'ngx-moment';
 import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
-import { StatisticsService } from 'app/admin/statistics/statistics.service';
 import { StatisticsGraphComponent } from 'app/admin/statistics/statistics-graph.component';
 import { SpanType } from 'app/entities/statistics.model';
 
@@ -24,8 +22,6 @@ const expect = chai.expect;
 describe('StatisticsComponent', () => {
     let fixture: ComponentFixture<StatisticsComponent>;
     let component: StatisticsComponent;
-    let service: StatisticsService;
-    let guidedTourService: GuidedTourService;
 
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
@@ -47,8 +43,6 @@ describe('StatisticsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(StatisticsComponent);
                 component = fixture.componentInstance;
-                service = TestBed.inject(StatisticsService);
-                guidedTourService = TestBed.inject(GuidedTourService);
             });
     }));
 
