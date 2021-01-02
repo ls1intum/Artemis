@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
@@ -291,7 +292,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     @Override
     public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
-        bambooRequestMockProvider.mockGetBuildPlan(null, null);
+        String buildPlanId = participation.getBuildPlanId();
+        bambooRequestMockProvider.mockGetBuildPlan(buildPlanId, buildPlanId != null ? new BambooBuildPlanDTO() : null);
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
         bambooRequestMockProvider.mockTriggerBuild(participation);
@@ -307,6 +309,14 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
+        mockCopyBuildPlan(participation);
+        mockConfigureBuildPlan(participation);
+        bambooRequestMockProvider.mockTriggerBuild(participation);
+    }
+
+    @Override
+    public void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws Exception {
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);

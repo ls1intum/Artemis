@@ -538,7 +538,7 @@ public class ProgrammingExerciseTestService {
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
     }
 
-    public void resumeProgrammingExerciseByTriggeringFailedBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
+    public void resumeProgrammingExerciseByTriggeringFailedBuild_correctInitializationState(ExerciseMode exerciseMode, boolean buildPlanExists) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
 
@@ -546,8 +546,14 @@ public class ProgrammingExerciseTestService {
 
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);
-        participation.setBuildPlanId(null);
+        participation.setBuildPlanId(!buildPlanExists ? null : participation.getBuildPlanId());
         participationService.save(participation);
+
+        if (!buildPlanExists) {
+            mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
+            participation = request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/resume-programming-participation", null,
+                    ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
+        }
 
         // Construct trigger-build url and execute request
         String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
@@ -563,6 +569,15 @@ public class ProgrammingExerciseTestService {
     public void resumeProgrammingExerciseByTriggeringInstructorBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
+
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId());
+        mockDelegate.mockTriggerInstructorBuildAll(participation);
+
+        // These will be updated triggering a failed build
+        participation.setInitializationState(InitializationState.INACTIVE);
+        participation.setBuildPlanId(null);
+        participationService.save(participation);
 
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all", null, HttpStatus.OK, new HttpHeaders());
 

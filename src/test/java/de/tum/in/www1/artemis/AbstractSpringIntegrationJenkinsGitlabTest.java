@@ -4,8 +4,10 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -218,27 +220,46 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
-
+        final var projectKey = participation.getProgrammingExercise().getProjectKey();
+        jenkinsRequestMockProvider.mockCopyBuildPlan(projectKey, projectKey);
     }
 
     @Override
     public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
-
+        jenkinsRequestMockProvider.mockConfigureBuildPlan(participation.getProgrammingExercise(), participation.getParticipantIdentifier());
     }
 
     @Override
     public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
-
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
+        jenkinsRequestMockProvider.mockGetBuildStatus(participation);
+        mockCopyBuildPlan(participation);
+        mockConfigureBuildPlan(participation);
+        jenkinsRequestMockProvider.mockTriggerBuild();
     }
 
     @Override
     public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception {
-
+        final String slug = "test201904bprogrammingexercise6-exercise-testuser";
+        final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        mockFetchCommitInfo(participation.getProgrammingExercise().getProjectKey(), slug, hash);
+        jenkinsRequestMockProvider.mockTriggerBuild();
     }
 
     @Override
     public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
+        mockCopyBuildPlan(participation);
+        mockConfigureBuildPlan(participation);
+        jenkinsRequestMockProvider.mockTriggerBuild();
+    }
 
+    @Override
+    public void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws Exception {
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
+        mockCopyBuildPlan(participation);
+        mockConfigureBuildPlan(participation);
+        jenkinsRequestMockProvider.mockTriggerBuild();
     }
 
     @Override
