@@ -1,12 +1,16 @@
 ﻿import Foundation
 
 public class MergeSort: SortStrategy {
-    // Wrapper method for the real algorithm.
+    /**
+     Sorts dates with MergeSort.
+
+     - Parameter input: the List of Dates to be sorted
+    */
     public func performSort(_ input: inout [Date]) {
         mergesort(&input, 0, input.count - 1)
     }
 
-    // Recursive merge sort method
+    /// Recursive merge sort method
     private func mergesort(_ input: inout [Date], _ low: Int, _ high: Int) {
         if (high - low) < 1 {
             return
@@ -17,7 +21,7 @@ public class MergeSort: SortStrategy {
         merge(&input, low, mid, high)
     }
 
-    // Merge method
+    /// Merge method
     private func merge(_ input: inout [Date], _ low: Int, _ middle: Int, _ high: Int) {
         var temp: [Date] = [Date]()
         var leftIndex: Int = low
