@@ -22,7 +22,6 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -559,7 +558,6 @@ public class ProgrammingExerciseTestService {
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
     }
 
-    @Timeout(5)
     public void resumeProgrammingExerciseByTriggeringInstructorBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
@@ -884,7 +882,6 @@ public class ProgrammingExerciseTestService {
         final var username = team.getParticipantIdentifier();
         mockDelegate.mockForkRepositoryForParticipation(exercise, username, HttpStatus.CREATED);
         final var projectKey = exercise.getProjectKey();
-        final var repoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
         mockDelegate.mockRepositoryWritePermissions(team, team.getStudents().stream().findFirst().get(), exercise, HttpStatus.BAD_REQUEST);
 
         // Start participation
@@ -892,9 +889,7 @@ public class ProgrammingExerciseTestService {
             participationService.startExercise(exercise, team, false);
         }
         catch (VersionControlException e) {
-            // We cannot compare exception messages because each vcs has their
-            // own. Maybe simply checking that the exception is not empty is
-            // enough?
+            // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
             assertThat(e.getMessage()).isNotEmpty();
         }
     }
@@ -944,7 +939,6 @@ public class ProgrammingExerciseTestService {
     }
 
     public List<DiffEntry> getChanges(Repository repository, RevCommit commit) throws Exception {
-
         try (ObjectReader reader = repository.newObjectReader()) {
             CanonicalTreeParser oldTreeIter = new CanonicalTreeParser();
             oldTreeIter.reset(reader, commit.getParents()[0].getTree());
