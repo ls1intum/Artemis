@@ -679,8 +679,8 @@ public class FileService implements DisposableBean {
      * create a unique path by appending a folder named with the current milliseconds (e.g. 1609579674868) of the system
      * Note: the method also tries to create the mentioned folder
      *
-     * @param path the original path, e.g. /opt/artemis/repos-download/
-     * @return the unique path as string, e.g. /opt/artemis/repos-download/1609579674868/
+     * @param path the original path, e.g. /opt/artemis/repos-download
+     * @return the unique path as string, e.g. /opt/artemis/repos-download/1609579674868
      */
     public String getUniquePathString(String path) {
         return getUniquePath(path).toString();
@@ -690,11 +690,11 @@ public class FileService implements DisposableBean {
      * create a unique path by appending a folder named with the current milliseconds (e.g. 1609579674868) of the system
      * Note: the method also tries to create the mentioned folder
      *
-     * @param path the original path, e.g. /opt/artemis/repos-download/
-     * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868/
+     * @param path the original path, e.g. /opt/artemis/repos-download
+     * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
      */
     public Path getUniquePath(String path) {
-        var uniquePath = Path.of(path, String.valueOf(System.currentTimeMillis()));
+        var uniquePath = Paths.get(path, String.valueOf(System.currentTimeMillis()));
         if (!Files.exists(uniquePath) && Files.isDirectory(uniquePath)) {
             try {
                 Files.createDirectories(uniquePath);

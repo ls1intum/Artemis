@@ -94,6 +94,8 @@ public class GitService {
 
     private TransportConfigCallback sshCallback;
 
+    private static final int JGIT_TIMEOUT_IN_SECONDS = 5;
+
     public GitService(ZipFileService zipFileService) {
         log.info("file.encoding=" + System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding=" + System.getProperty("sun.jnu.encoding"));
@@ -209,6 +211,7 @@ public class GitService {
         sshCallback = transport -> {
             if (transport instanceof SshTransport) {
                 SshTransport sshTransport = (SshTransport) transport;
+                transport.setTimeout(JGIT_TIMEOUT_IN_SECONDS);
                 sshTransport.setSshSessionFactory(sshSessionFactory);
             }
             else {
@@ -324,7 +327,7 @@ public class GitService {
      * @throws GitAPIException if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, String targetPath, boolean pullOnGet) throws InterruptedException, GitAPIException {
-        Path localPath = new java.io.File(targetPath + folderNameForRepositoryUrl(repoUrl)).toPath();
+        Path localPath = Paths.get(targetPath, folderNameForRepositoryUrl(repoUrl));
         return getOrCheckoutRepository(repoUrl, localPath, pullOnGet);
     }
 
@@ -412,16 +415,15 @@ public class GitService {
         try {
             // Open the repository from the filesystem
             FileRepositoryBuilder builder = new FileRepositoryBuilder();
-            builder.setGitDir(new java.io.File(localPath + "/.git")).readEnvironment() // scan environment GIT_* variables
-                    .findGitDir().setup();
+            final var gitPath = localPath.resolve(".git");
+            builder.setGitDir(gitPath.toFile()).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
             // Create the JGit repository object
             Repository repository = new Repository(builder, localPath, remoteRepositoryUrl);
             // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
             // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
             // and https://git-scm.com/docs/git-gc for an explanation of the parameter
             repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
-            // Cache the JGit repository object for later use
-            // Avoids the expensive re-opening of local repositories
+            // Cache the JGit repository object for later use: avoids the expensive re-opening of local repositories
             cachedRepositories.put(localPath, repository);
             return repository;
         }

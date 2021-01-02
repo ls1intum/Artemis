@@ -195,8 +195,7 @@ public class ProgrammingExerciseExportService {
         log.info("Downloading repositories done");
 
         final var projectKey = programmingExercise.getProjectKey();
-
-        final var repoFolder = Path.of(targetPath, projectKey).toString();
+        final var repoFolder = Paths.get(targetPath, projectKey).toString();
         final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
 
         final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
@@ -221,16 +220,6 @@ public class ProgrammingExerciseExportService {
         log.info("JPlag programming comparison for " + numberOfParticipations + " participations done in " + TimeLogUtil.formatDurationFrom(start));
 
         return textPlagiarismResult;
-    }
-
-    private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories, final String targetPath) {
-        executor.schedule(() -> {
-            log.info("Will delete local repositories");
-            deleteLocalRepositories(repositories);
-            // delete project root folder in the repos download folder
-            deleteReposDownloadProjectRootDirectory(programmingExercise, targetPath);
-            log.info("Delete repositories done");
-        }, 10, TimeUnit.SECONDS);
     }
 
     /**
@@ -304,6 +293,16 @@ public class ProgrammingExerciseExportService {
         log.info("JPlag programming report for " + numberOfParticipations + " participations done in " + TimeLogUtil.formatDurationFrom(start));
 
         return new File(zipFilePath.toString());
+    }
+
+    private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories, final String targetPath) {
+        executor.schedule(() -> {
+            log.info("Will delete local repositories");
+            deleteLocalRepositories(repositories);
+            // delete project root folder in the repos download folder
+            deleteReposDownloadProjectRootDirectory(programmingExercise, targetPath);
+            log.info("Delete repositories done");
+        }, 10, TimeUnit.SECONDS);
     }
 
     private LanguageOption getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
