@@ -90,7 +90,8 @@ export abstract class Exercise implements BaseEntity {
 
     // transient objects which might not be set
     public numberOfSubmissions?: DueDateStat;
-    public numberOfAssessments?: DueDateStat;
+    public totalNumberOfAssessments?: DueDateStat;
+    public numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()]; // Array with number of assessments for each correction round
     public numberOfComplaints?: number;
     public numberOfOpenComplaints?: number;
     public numberOfMoreFeedbackRequests?: number;

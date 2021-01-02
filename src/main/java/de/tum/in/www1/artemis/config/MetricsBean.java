@@ -29,11 +29,11 @@ public class MetricsBean {
 
     private final Logger log = LoggerFactory.getLogger(MetricsBean.class);
 
-    private final static String ARTEMIS_HEALTH_NAME = "artemis.health";
+    private static final String ARTEMIS_HEALTH_NAME = "artemis.health";
 
-    private final static String ARTEMIS_HEALTH_DESCRIPTION = "Artemis Health Indicator";
+    private static final String ARTEMIS_HEALTH_DESCRIPTION = "Artemis Health Indicator";
 
-    private final static String ARTEMIS_HEALTH_TAG = "healthindicator";
+    private static final String ARTEMIS_HEALTH_TAG = "healthindicator";
 
     private static final int LOGGING_DELAY_SECONDS = 10;
 

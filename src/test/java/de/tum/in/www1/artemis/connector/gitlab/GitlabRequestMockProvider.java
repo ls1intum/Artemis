@@ -50,6 +50,10 @@ public class GitlabRequestMockProvider {
 
     private MockRestServiceServer mockServer;
 
+    private final RestTemplate shortTimeoutRestTemplate;
+
+    private MockRestServiceServer mockServerShortTimeout;
+
     @SpyBean
     @InjectMocks
     private GitLabApi gitLabApi;
@@ -69,12 +73,15 @@ public class GitlabRequestMockProvider {
     @Mock
     private ProtectedBranchesApi protectedBranchesApi;
 
-    public GitlabRequestMockProvider(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate) {
+    public GitlabRequestMockProvider(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate,
+            @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
     public void enableMockingOfRequests() {
         mockServer = MockRestServiceServer.createServer(restTemplate);
+        mockServerShortTimeout = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
         MockitoAnnotations.openMocks(this);
     }
 
@@ -95,7 +102,7 @@ public class GitlabRequestMockProvider {
     /**
      * Method to mock the getUser method to return mocked users with their id's
      *
-     * @throws GitLabApiException
+     * @throws GitLabApiException in case of git lab api errors
      */
     public void mockGetUserID() throws GitLabApiException {
         User instructor = new User();
@@ -250,7 +257,7 @@ public class GitlabRequestMockProvider {
     public void mockHealth(String healthStatus, HttpStatus httpStatus) throws URISyntaxException, JsonProcessingException {
         final var uri = UriComponentsBuilder.fromUri(gitlabServerUrl.toURI()).path("/-/liveness").build().toUri();
         final var response = new ObjectMapper().writeValueAsString(Map.of("status", healthStatus));
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(httpStatus).contentType(MediaType.APPLICATION_JSON).body(response));
+        mockServerShortTimeout.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(httpStatus).contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
     public void mockRemoveMemberFromRepository(String repositoryId, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {

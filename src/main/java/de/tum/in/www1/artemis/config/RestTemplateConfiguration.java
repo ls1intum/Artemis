@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
@@ -27,42 +28,81 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInt
 @Configuration
 public class RestTemplateConfiguration {
 
+    private static final int SHORT_CONNECTION_TIMEOUT = 5 * 1000;
+
+    private static final int SHORT_READ_TIMEOUT = 5 * 1000;
+
     @Bean
     @Profile("gitlab")
     @Autowired
     public RestTemplate gitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
-        return initializeRestTemplateWithInterceptors(gitlabInterceptor);
+        return initializeRestTemplateWithInterceptors(gitlabInterceptor, createRestTemplate());
     }
 
     @Bean
     @Profile("jenkins")
     @Autowired
     public RestTemplate jenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
-        return initializeRestTemplateWithInterceptors(jenkinsInterceptor);
+        return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createRestTemplate());
     }
 
     @Bean
     @Profile("jira")
     @Autowired
     public RestTemplate jiraRestTemplate(JiraAuthorizationInterceptor jiraAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(jiraAuthorizationInterceptor);
+        return initializeRestTemplateWithInterceptors(jiraAuthorizationInterceptor, createRestTemplate());
     }
 
     @Bean
     @Profile("bitbucket")
     public RestTemplate bitbucketRestTemplate(BitbucketAuthorizationInterceptor bitbucketAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(bitbucketAuthorizationInterceptor);
+        return initializeRestTemplateWithInterceptors(bitbucketAuthorizationInterceptor, createRestTemplate());
     }
 
     @Bean
     @Profile("bamboo")
     public RestTemplate bambooRestTemplate(BambooAuthorizationInterceptor bambooAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(bambooAuthorizationInterceptor);
+        return initializeRestTemplateWithInterceptors(bambooAuthorizationInterceptor, createRestTemplate());
+    }
+
+    // Note: for certain requests, e.g. health(), we would like to have shorter timeouts, therefore we need additional rest templates, because
+    // it is recommended to keep the timeout settings constant per rest template
+
+    @Bean
+    @Profile("gitlab")
+    @Autowired
+    public RestTemplate shortTimeoutGitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
+        return initializeRestTemplateWithInterceptors(gitlabInterceptor, createShortTimeoutRestTemplate());
+    }
+
+    @Bean
+    @Profile("jenkins")
+    @Autowired
+    public RestTemplate shortTimeoutJenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
+        return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createShortTimeoutRestTemplate());
+    }
+
+    @Bean
+    @Profile("jira")
+    @Autowired
+    public RestTemplate shortTimeoutJiraRestTemplate(JiraAuthorizationInterceptor jiraAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(jiraAuthorizationInterceptor, createShortTimeoutRestTemplate());
+    }
+
+    @Bean
+    @Profile("bitbucket")
+    public RestTemplate shortTimeoutBitbucketRestTemplate(BitbucketAuthorizationInterceptor bitbucketAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(bitbucketAuthorizationInterceptor, createShortTimeoutRestTemplate());
+    }
+
+    @Bean
+    @Profile("bamboo")
+    public RestTemplate shortTimeoutBambooRestTemplate(BambooAuthorizationInterceptor bambooAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(bambooAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     @NotNull
-    private RestTemplate initializeRestTemplateWithInterceptors(ClientHttpRequestInterceptor interceptor) {
-        final var restTemplate = new RestTemplate();
+    private RestTemplate initializeRestTemplateWithInterceptors(ClientHttpRequestInterceptor interceptor, RestTemplate restTemplate) {
         var interceptors = restTemplate.getInterceptors();
         if (interceptors.isEmpty()) {
             interceptors = new ArrayList<>();
@@ -86,6 +126,17 @@ public class RestTemplateConfiguration {
     @Bean
     @Primary
     public RestTemplate restTemplate() {
+        return createRestTemplate();
+    }
+
+    private RestTemplate createShortTimeoutRestTemplate() {
+        var requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setReadTimeout(SHORT_READ_TIMEOUT);
+        requestFactory.setConnectTimeout(SHORT_CONNECTION_TIMEOUT);
+        return new RestTemplate(requestFactory);
+    }
+
+    private RestTemplate createRestTemplate() {
         return new RestTemplate();
     }
 }
