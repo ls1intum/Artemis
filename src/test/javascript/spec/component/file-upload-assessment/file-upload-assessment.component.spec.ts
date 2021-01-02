@@ -2,6 +2,8 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
+import { of, throwError } from 'rxjs';
+import { cloneDeep } from 'lodash';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
@@ -16,7 +18,7 @@ import { FileUploadAssessmentComponent } from 'app/exercises/file-upload/assess/
 import { DebugElement } from '@angular/core';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -25,17 +27,18 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+import { getFirstResult, getLatestSubmissionResult, setLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Result } from 'app/entities/result.model';
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { routes } from 'app/exercises/file-upload/assess/file-upload-assessment.route';
 import { By } from '@angular/platform-browser';
-import { throwError } from 'rxjs';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { Complaint } from 'app/entities/complaint.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 
 chai.use(sinonChai);
 
@@ -45,6 +48,8 @@ describe('FileUploadAssessmentComponent', () => {
     let comp: FileUploadAssessmentComponent;
     let fixture: ComponentFixture<FileUploadAssessmentComponent>;
     let fileUploadSubmissionService: FileUploadSubmissionService;
+    let accountService: AccountService;
+    let complaintService: ComplaintService;
     let getFileUploadSubmissionForExerciseWithoutAssessmentStub: SinonStub;
     let debugElement: DebugElement;
     let router: Router;
@@ -80,10 +85,13 @@ describe('FileUploadAssessmentComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(FileUploadAssessmentComponent);
                 comp = fixture.componentInstance;
+                comp.userId = 1;
                 comp.exercise = exercise;
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
                 fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
+                accountService = TestBed.inject(AccountService);
+                complaintService = TestBed.inject(ComplaintService);
                 getFileUploadSubmissionForExerciseWithoutAssessmentStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionForExerciseWithoutAssessment');
 
                 fixture.ngZone!.run(() => {
@@ -105,27 +113,8 @@ describe('FileUploadAssessmentComponent', () => {
         tick();
 
         comp.userId = 99;
-        comp.submission = {
-            submissionExerciseType: SubmissionExerciseType.FILE_UPLOAD,
-            id: 2278,
-            submitted: true,
-            type: SubmissionType.MANUAL,
-            submissionDate: moment('2019-07-09T10:47:33.244Z'),
-            participation: ({ type: ParticipationType.STUDENT, exercise } as unknown) as Participation,
-        } as FileUploadSubmission;
-        comp.result = new Result();
-        comp.result.id = 2374;
-        comp.result.resultString = '1 of 12 points';
-        comp.result.completionDate = moment('2019-07-09T11:51:23.251Z');
-        comp.result.successful = false;
-        comp.result.score = 1;
-        comp.result.rated = true;
-        comp.result.hasFeedback = false;
-        comp.result.submission = comp.submission;
-        comp.result.participation = undefined;
-        comp.result.assessmentType = AssessmentType.MANUAL;
-        comp.result.exampleResult = false;
-        comp.result.hasComplaint = false;
+        comp.submission = createSubmission(exercise);
+        comp.result = createResult(comp.submission);
         setLatestSubmissionResult(comp.submission, comp.result);
         getLatestSubmissionResult(comp.submission);
         comp.submission.participation!.submissions = [comp.submission];
@@ -137,7 +126,84 @@ describe('FileUploadAssessmentComponent', () => {
 
         fixture.detectChanges();
 
+        expect(getFirstResult(comp.submission)).to.equal(comp.result);
         const assessNextButton = debugElement.query(By.css('#assessNextButton'));
         expect(assessNextButton).to.exist;
     }));
+
+    it('should load submission', fakeAsync(() => {
+        const submission = createSubmission(exercise);
+        const result = createResult(submission);
+        result.hasComplaint = true;
+        const complaint = new Complaint();
+        complaint.id = 0;
+        complaint.complaintText = 'complaint';
+        complaint.resultBeforeComplaint = 'result';
+        stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
+        stub(accountService, 'isAtLeastInstructorInCourse').returns(false);
+        stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
+        comp.submission = submission;
+        comp.result = result;
+        setLatestSubmissionResult(comp.submission, comp.result);
+
+        fixture.detectChanges();
+        tick();
+        expect(comp.submission).to.equal(submission);
+        expect(comp.complaint).to.equal(complaint);
+        expect(comp.result.feedbacks).to.be.empty;
+        expect(comp.busy).to.be.false;
+    }));
+
+    it('should load correct feedbacks and update general feedback', fakeAsync(() => {
+        const submission = createSubmission(exercise);
+        const result = createResult(submission);
+        result.hasFeedback = true;
+        const feedback1 = new Feedback();
+        feedback1.type = FeedbackType.AUTOMATIC;
+        const feedback2 = new Feedback();
+        feedback2.credits = 10;
+        feedback2.type = FeedbackType.AUTOMATIC;
+        const feedbacks = [feedback1, feedback2];
+        result.feedbacks = cloneDeep(feedbacks);
+        stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
+        stub(accountService, 'isAtLeastInstructorInCourse').returns(false);
+        comp.submission = submission;
+        comp.result = result;
+        setLatestSubmissionResult(comp.submission, comp.result);
+
+        fixture.detectChanges();
+        tick();
+        expect(comp.generalFeedback).to.deep.equal(feedbacks[0]);
+        expect(comp.referencedFeedback.length).to.equal(1);
+        expect(comp.busy).to.be.false;
+        expect(comp.totalScore).to.equal(10);
+    }));
 });
+
+const createSubmission = (exercise: FileUploadExercise) => {
+    return {
+        submissionExerciseType: SubmissionExerciseType.FILE_UPLOAD,
+        id: 2278,
+        submitted: true,
+        type: SubmissionType.MANUAL,
+        submissionDate: moment('2019-07-09T10:47:33.244Z'),
+        participation: ({ type: ParticipationType.STUDENT, exercise } as unknown) as Participation,
+    } as FileUploadSubmission;
+};
+
+const createResult = (submission: FileUploadSubmission) => {
+    const result = new Result();
+    result.id = 2374;
+    result.resultString = '1 of 12 points';
+    result.completionDate = moment('2019-07-09T11:51:23.251Z');
+    result.successful = false;
+    result.score = 1;
+    result.rated = true;
+    result.hasFeedback = false;
+    result.submission = submission;
+    result.participation = undefined;
+    result.assessmentType = AssessmentType.MANUAL;
+    result.exampleResult = false;
+    result.hasComplaint = false;
+    return result;
+};
