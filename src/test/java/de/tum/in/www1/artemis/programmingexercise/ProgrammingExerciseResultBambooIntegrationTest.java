@@ -28,6 +28,8 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
 
     @BeforeEach
     void setup() {
+        programmingExerciseResultTestService.setup();
+
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
     }
@@ -40,7 +42,6 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() {
-        programmingExerciseResultTestService.setup();
         var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of());
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification);
     }
@@ -67,7 +68,6 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldStoreBuildLogsForSubmission() {
-        programmingExerciseResultTestService.setup();
         var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
         programmingExerciseResultTestService.shouldStoreBuildLogsForSubmission(resultNotification);
     }
@@ -75,7 +75,6 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldGenerateNewManualResultIfManualAssessmentExists() {
-        programmingExerciseResultTestService.setup();
         var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of());
         programmingExerciseResultTestService.shouldGenerateNewManualResultIfManualAssessmentExists(notification);
     }

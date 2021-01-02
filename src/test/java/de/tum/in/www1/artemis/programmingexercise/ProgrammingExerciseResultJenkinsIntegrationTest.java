@@ -27,6 +27,8 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
 
     @BeforeEach
     void setup() {
+        programmingExerciseResultTestService.setup();
+
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
     }
@@ -39,7 +41,6 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() {
-        programmingExerciseResultTestService.setup();
         var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), ProgrammingLanguage.JAVA);
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification);
     }
@@ -56,7 +57,6 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldGenerateNewManualResultIfManualAssessmentExists() {
-        programmingExerciseResultTestService.setup();
         var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), ProgrammingLanguage.JAVA);
         programmingExerciseResultTestService.shouldGenerateNewManualResultIfManualAssessmentExists(notification);
     }
