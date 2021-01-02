@@ -549,6 +549,14 @@ public class GitService {
                 }
             }
 
+            // TODO: rene: idea: ask in setup to include hidden files? only allow for tutors and instructors?
+            // Current problem: .swiftlint.yml gets filtered out
+            /*
+             * Uncomment to show hidden files // Filter for hidden config files, e.g. '.swiftlint.yml' Iterator<java.io.File> hiddenFiles =
+             * FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), HiddenFileFilter.HIDDEN, HiddenFileFilter.HIDDEN); while (hiddenFiles.hasNext()) { File nextFile = new
+             * File(hiddenFiles.next(), repo); if (nextFile.isFile() && nextFile.getName().contains(".swiftlint")) { files.put(nextFile, FileType.FILE); } }
+             */
+
             // Cache the list of files
             // Avoid expensive rescanning
             repo.setContent(files);
