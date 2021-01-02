@@ -49,5 +49,19 @@ public interface MockDelegate {
 
     void mockGetProjectKeyFromAnyUrl(String projectKey);
 
+    void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) throws URISyntaxException, JsonProcessingException;
+
+    void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception;
+
+    void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception;
+
+    void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception;
+
+    void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception;
+
+    void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws Exception;
+
+    void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws Exception;
+
     void resetMockProvider();
 }
