@@ -18,14 +18,14 @@ describe('StudentExamSummaryComponent', () => {
     let fixture: ComponentFixture<StudentExamSummaryComponent>;
     let component: StudentExamSummaryComponent;
 
-    const course = { id: 1 } as Course;
-    const exam = { course: course, id: 2 } as Exam;
-    const studentExam = { exam: exam, id: 3 } as StudentExam;
+    const courseValue = { id: 1 } as Course;
+    const examValue = { course: courseValue, id: 2 } as Exam;
+    const studentExamValue = { exam: examValue, id: 3 } as StudentExam;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
             declarations: [StudentExamSummaryComponent, MockDirective(ExamParticipationSummaryComponent)],
-            providers: [{ provide: ActivatedRoute, useValue: { data: of({ studentExam: studentExam }) } }],
+            providers: [{ provide: ActivatedRoute, useValue: { data: of({ studentExam: studentExamValue }) } }],
         })
             .compileComponents()
             .then(() => {
