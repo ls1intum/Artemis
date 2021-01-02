@@ -11,14 +11,20 @@ import { ChartDataSets } from 'chart.js';
         <div>
             <div>
                 <h4>Weight Distribution</h4>
-                <p>The distribution of test case weights in the exercise. <br/> Hover over a colored block to see the test-case details.</p>
+                <p>
+                    The distribution of test case weights in the exercise. <br />
+                    Hover over a colored block to see the test-case details.
+                </p>
             </div>
             <div class="bg-light">
                 <jhi-chart [preset]="weightChartPreset" [datasets]="weightChartDatasets"></jhi-chart>
             </div>
             <div class="mt-4">
                 <h4>Total Points</h4>
-                <p>The percentage of points given to students according to a specific test case. <br/> Hover over a colored block to see the test-case details.</p>
+                <p>
+                    The percentage of points given to students according to a specific test case. <br />
+                    Hover over a colored block to see the test-case details.
+                </p>
             </div>
             <div class="bg-light" style="height: 100px">
                 <jhi-chart [preset]="pointsChartPreset" [datasets]="pointsChartDatasets"></jhi-chart>
@@ -69,14 +75,13 @@ export class TestCaseDistributionChartComponent implements OnChanges {
             };
         });
 
-        if (this.weightChartDatasets.length != testCaseScores.length) {
-
+        if (this.weightChartDatasets.length !== testCaseScores.length) {
             const testCaseColors = {};
 
             this.weightChartDatasets = [];
             this.pointsChartDatasets = [];
 
-            for (let i in testCaseScores) {
+            for (let i = 0; i < testCaseScores.length; i++) {
                 const element = testCaseScores[i];
 
                 const label = element.label;
@@ -86,25 +91,25 @@ export class TestCaseDistributionChartComponent implements OnChanges {
                 testCaseColors[label] = backgroundColor;
 
                 this.weightChartDatasets.push({
-                    label, backgroundColor, hoverBackgroundColor, data: [
-                        element.relWeight,
-                        element.relScore,
-                    ],
+                    label,
+                    backgroundColor,
+                    hoverBackgroundColor,
+                    data: [element.relWeight, element.relScore],
                 });
 
                 this.pointsChartDatasets.push({
-                    label, backgroundColor, hoverBackgroundColor, data: [
-                        element.relPoints,
-                    ],
+                    label,
+                    backgroundColor,
+                    hoverBackgroundColor,
+                    data: [element.relPoints],
                 });
             }
 
             // update colors for test case table
             this.testCaseColorsChange.emit(testCaseColors);
         } else {
-            
             // update values in-place
-            for (let i in testCaseScores) {
+            for (let i = 0; i < testCaseScores.length; i++) {
                 const element = testCaseScores[i];
                 this.weightChartDatasets[i].data![0] = element.relWeight;
                 this.weightChartDatasets[i].data![1] = element.relScore;
