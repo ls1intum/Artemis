@@ -506,28 +506,21 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         return propSort.dir === 'asc' ? 'sort-up' : 'sort-down';
     }
 
-    sort(table: 'testCases' | 'codeAnalysis', prop: string) {
-        const propSort = this.tableSorts[table].find((e) => e.prop === prop);
-        if (propSort) {
-            propSort.dir = propSort.dir === 'asc' ? 'desc' : 'asc';
-        } else {
-            this.tableSorts[table] = [{ prop, dir: 'asc' }];
-        }
-    }
-
-    comparePassedPercent(_: any, __: any, rowA: ProgrammingExerciseTestCase, rowB: ProgrammingExerciseTestCase) {
+    comparePassedPercent = (_: any, __: any, rowA: ProgrammingExerciseTestCase, rowB: ProgrammingExerciseTestCase) => {
         const statsA = this.getTestCaseStats(rowA.testName!);
         const statsB = this.getTestCaseStats(rowB.testName!);
-        return (statsA?.numPassed ?? 0) - (statsB?.numPassed ?? 0);
-    }
+        const valA = statsA?.numPassed ?? 0 - (statsA?.numFailed ?? 0);
+        const valB = statsB?.numPassed ?? 0 - (statsB?.numFailed ?? 0);
+        return valA - valB;
+    };
 
-    compareDetectedIssues(_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) {
+    compareDetectedIssues = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
         const issuesA = this.getIssuesMap(rowA.name);
         const issuesB = this.getIssuesMap(rowB.name);
         const totalIssuesA = Object.values(issuesA ?? {}).reduce((sum, n) => sum + n, 0);
         const totalIssuesB = Object.values(issuesB ?? {}).reduce((sum, n) => sum + n, 0);
         return totalIssuesA - totalIssuesB;
-    }
+    };
 
     /**
      * Load the static code analysis categories

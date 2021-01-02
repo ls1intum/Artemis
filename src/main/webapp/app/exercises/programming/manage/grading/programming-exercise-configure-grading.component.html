@@ -64,8 +64,8 @@
                             (sort)="onSort('testCases', $event)"
                         >
                             <ngx-datatable-column name="Test Name" prop="testName">
-                                <ng-template ngx-datatable-header-template>
-                                    <span class="datatable-header-cell-wrapper" (click)="sort('testCases', 'testName')">
+                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Test Name</span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'testName')"></fa-icon>
                                     </span>
@@ -76,8 +76,8 @@
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Weight" prop="weight">
-                                <ng-template ngx-datatable-header-template>
-                                    <span class="datatable-header-cell-wrapper" (click)="sort('testCases', 'weight')">
+                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Weight</span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'weight')"></fa-icon>
                                     </span>
@@ -87,8 +87,8 @@
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Bonus Multiplier" prop="bonusMultiplier">
-                                <ng-template ngx-datatable-header-template>
-                                    <span class="datatable-header-cell-wrapper" (click)="sort('testCases', 'bonusMultiplier')">
+                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Bonus Multiplier</span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'bonusMultiplier')"></fa-icon>
                                     </span>
@@ -98,8 +98,8 @@
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Bonus Points" prop="bonusPoints">
-                                <ng-template ngx-datatable-header-template>
-                                    <span class="datatable-header-cell-wrapper" (click)="sort('testCases', 'bonusPoints')">
+                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Bonus Points</span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'bonusPoints')"></fa-icon>
                                     </span>
@@ -149,8 +149,8 @@
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Passed %" prop="passedPercent" [comparator]="comparePassedPercent">
-                                <ng-template ngx-datatable-header-template>
-                                    <span class="datatable-header-cell-wrapper" (click)="sort('testCases', 'passedPercent')">
+                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Passed %</span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'passedPercent')"></fa-icon>
                                     </span>
@@ -214,8 +214,8 @@
                             (sort)="onSort('codeAnalysis', $event)"
                         >
                             <ngx-datatable-column name="Category" prop="name">
-                                <ng-template ngx-datatable-header-template>
-                                    <span class="datatable-header-cell-wrapper" (click)="sort('codeAnalysis', 'name')">
+                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Category</span>
                                         <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'name')"></fa-icon>
                                     </span>
@@ -226,8 +226,8 @@
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="State" prop="state">
-                                <ng-template ngx-datatable-header-template>
-                                    <span class="datatable-header-cell-wrapper" (click)="sort('codeAnalysis', 'state')">
+                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">State</span>
                                         <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'state')"></fa-icon>
                                         <fa-icon
@@ -246,8 +246,8 @@
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Penalty" prop="penalty">
-                                <ng-template ngx-datatable-header-template>
-                                    <span class="datatable-header-cell-wrapper" (click)="sort('codeAnalysis', 'penalty')">
+                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Penalty</span>
                                         <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'penalty')"></fa-icon>
                                         <fa-icon
@@ -270,8 +270,8 @@
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Max Penalty" prop="maxPenalty">
-                                <ng-template ngx-datatable-header-template>
-                                    <span class="datatable-header-cell-wrapper" (click)="sort('codeAnalysis', 'maxPenalty')">
+                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Max Penalty</span>
                                         <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'maxPenalty')"></fa-icon>
                                         <fa-icon
@@ -294,8 +294,8 @@
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Detected Issues" prop="detectedIssues" [comparator]="compareDetectedIssues">
-                                <ng-template ngx-datatable-header-template>
-                                    <span class="datatable-header-cell-wrapper" (click)="sort('codeAnalysis', 'detectedIssues')">
+                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Detected Issues</span>
                                         <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'detectedIssues')"></fa-icon>
                                     </span>
