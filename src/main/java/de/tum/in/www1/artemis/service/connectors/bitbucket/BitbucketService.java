@@ -68,13 +68,17 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private final RestTemplate restTemplate;
 
+    private final RestTemplate shortTimeoutRestTemplate;
+
     private final UrlService urlService;
 
     private final GitService gitService;
 
-    public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UrlService urlService, GitService gitService) {
+    public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate,
+            @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, UrlService urlService, GitService gitService) {
         this.userService = userService;
         this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.urlService = urlService;
         this.gitService = gitService;
     }
@@ -560,7 +564,7 @@ public class BitbucketService extends AbstractVersionControlService {
     public ConnectorHealth health() {
         ConnectorHealth health;
         try {
-            final var status = restTemplate.getForObject(bitbucketServerUrl + "/status", JsonNode.class);
+            final var status = shortTimeoutRestTemplate.getForObject(bitbucketServerUrl + "/status", JsonNode.class);
             health = status.get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
         }
         catch (Exception emAll) {

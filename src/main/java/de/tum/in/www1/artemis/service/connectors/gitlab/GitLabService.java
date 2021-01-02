@@ -68,6 +68,8 @@ public class GitLabService extends AbstractVersionControlService {
 
     private final RestTemplate restTemplate;
 
+    private final RestTemplate shortTimeoutRestTemplate;
+
     private final GitLabUserManagementService gitLabUserManagementService;
 
     private final GitLabApi gitlab;
@@ -76,10 +78,11 @@ public class GitLabService extends AbstractVersionControlService {
 
     private final ScheduledExecutorService scheduler;
 
-    public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, GitLabApi gitlab,
-            GitLabUserManagementService gitLabUserManagementService, UrlService urlService) {
+    public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, UrlService urlService,
+            @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, GitLabUserManagementService gitLabUserManagementService) {
         this.userService = userService;
         this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.gitlab = gitlab;
         this.gitLabUserManagementService = gitLabUserManagementService;
         this.urlService = urlService;
@@ -436,7 +439,7 @@ public class GitLabService extends AbstractVersionControlService {
     public ConnectorHealth health() {
         try {
             final var uri = Endpoints.HEALTH.buildEndpoint(gitlabServerUrl.toString()).build().toUri();
-            final var healthResponse = restTemplate.getForObject(uri, JsonNode.class);
+            final var healthResponse = shortTimeoutRestTemplate.getForObject(uri, JsonNode.class);
             final var status = healthResponse.get("status").asText();
             if (!status.equals("ok")) {
                 return new ConnectorHealth(false, Map.of("status", status, "url", gitlabServerUrl));

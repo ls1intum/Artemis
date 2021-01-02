@@ -714,7 +714,7 @@ the following steps:
 
     .. code:: yaml
 
-       jenkins::
+       jenkins:
            use-crumb: false
 
 Build agents

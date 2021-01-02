@@ -105,15 +105,15 @@ public class ProgrammingExerciseTestService {
 
     public ProgrammingExercise examExercise;
 
-    public final static int numberOfStudents = 2;
+    public static final int numberOfStudents = 2;
 
-    public final static String studentLogin = "student1";
+    public static final String studentLogin = "student1";
 
-    public final static String teamShortName = "team1";
+    public static final String teamShortName = "team1";
 
-    public final static String REPOBASEURL = "/api/repository/";
+    public static final String REPOBASEURL = "/api/repository/";
 
-    public final static String PARTICIPATIONBASEURL = "/api/participations/";
+    public static final String PARTICIPATIONBASEURL = "/api/participations/";
 
     public LocalRepository exerciseRepo = new LocalRepository();
 
