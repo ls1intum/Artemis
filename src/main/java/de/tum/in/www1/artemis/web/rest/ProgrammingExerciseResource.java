@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1016,9 +1017,9 @@ public class ProgrammingExerciseResource {
         var testRepoURL = programmingExercise.getVcsTestRepositoryUrl();
 
         try {
-            String testsPath = "test" + File.separator + programmingExercise.getPackageFolderName();
+            String testsPath = Paths.get("test", programmingExercise.getPackageFolderName()).toString();
             // Atm we only have one folder that can have structural tests, but this could change.
-            testsPath = programmingExercise.hasSequentialTestRuns() ? "structural" + File.separator + testsPath : testsPath;
+            testsPath = programmingExercise.hasSequentialTestRuns() ? Paths.get("structural", testsPath).toString() : testsPath;
             boolean didGenerateOracle = programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath, user);
 
             if (didGenerateOracle) {

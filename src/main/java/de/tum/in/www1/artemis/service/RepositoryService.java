@@ -166,7 +166,7 @@ public class RepositoryService {
             throw new FileAlreadyExistsException("file already exists");
         }
 
-        File file = new File(new java.io.File(repository.getLocalPath() + File.separator + filename), repository);
+        File file = new File(Paths.get(repository.getLocalPath().toString(), filename).toFile(), repository);
         if (!repository.isValidFile(file)) {
             throw new IllegalArgumentException();
         }
@@ -183,9 +183,9 @@ public class RepositoryService {
      */
     public void createFolder(Repository repository, String folderName, InputStream inputStream) throws IOException {
         checkIfFileExistsInRepository(repository, folderName);
-        Files.createDirectory(Paths.get(repository.getLocalPath() + File.separator + folderName));
+        Files.createDirectory(repository.getLocalPath().resolve(folderName));
         // We need to add an empty keep file so that the folder can be added to the git repository
-        File keep = new File(new java.io.File(repository.getLocalPath() + File.separator + folderName + File.separator + ".keep"), repository);
+        File keep = new File(repository.getLocalPath().resolve(folderName).resolve(".keep"), repository);
         Files.copy(inputStream, keep.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setContent(null); // invalidate cache
         inputStream.close();
@@ -201,18 +201,18 @@ public class RepositoryService {
      * @throws IllegalArgumentException if the new filename is not allowed (e.g. contains .. or /../)
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
-        Optional<File> file = gitService.getFileByName(repository, fileMove.getCurrentFilePath());
-        if (file.isEmpty()) {
+        Optional<File> existingFile = gitService.getFileByName(repository, fileMove.getCurrentFilePath());
+        if (existingFile.isEmpty()) {
             throw new FileNotFoundException();
         }
-        if (!repository.isValidFile(file.get())) {
+        if (!repository.isValidFile(existingFile.get())) {
             throw new IllegalArgumentException();
         }
-        File newFile = new File(new java.io.File(file.get().toPath().getParent().toString() + File.separator + fileMove.getNewFilename()), repository);
+        File newFile = new File(existingFile.get().toPath().getParent().resolve(fileMove.getNewFilename()), repository);
         if (gitService.getFileByName(repository, newFile.getName()).isPresent()) {
             throw new FileAlreadyExistsException("file already exists");
         }
-        boolean isRenamed = file.get().renameTo(newFile);
+        boolean isRenamed = existingFile.get().renameTo(newFile);
         if (!isRenamed) {
             throw new FileNotFoundException();
         }

@@ -291,7 +291,7 @@ public class GitService {
         // Replace the exercise name in the repository folder name with the participation ID.
         // This is necessary to be able to refer back to the correct participation after the JPlag detection run.
         String updatedRepoFolderName = repoFolderName.replaceAll("/[a-zA-Z0-9]*-", "/" + participation.getId() + "-");
-        Path localPath = Path.of(targetPath, updatedRepoFolderName);
+        Path localPath = Paths.get(targetPath, updatedRepoFolderName);
 
         Repository repository = getOrCheckoutRepository(repoUrl, localPath, true);
         repository.setParticipation(participation);
@@ -902,7 +902,8 @@ public class GitService {
          * This will split the repositoryUrl e.g. http://artemis-admin@localhost:7990/scm/TC1SCHEDULER1/tc1scheduler1-artemis-admin.git into a string array e.g. ["http", "",
          * "artemis-admin@localhost:7990", "scm", "TC1SCHEDULER1", "tc1scheduler1-artemis-admin.git"]
          */
-        String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split(File.separator);
+        // TODO: rework this implementation, we should instead use java URL to handle this better
+        String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split("/");
         ProgrammingExercise exercise = repo.getParticipation().getProgrammingExercise();
         String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName().replaceAll("\\s", "");
         String zipRepoName;

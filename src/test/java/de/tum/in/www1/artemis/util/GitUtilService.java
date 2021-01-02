@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -103,7 +104,7 @@ public class GitUtilService {
             localRepo = null;
             remoteRepo = null;
         }
-        catch (IOException ex) {
+        catch (IOException ignored) {
         }
     }
 
@@ -113,7 +114,7 @@ public class GitUtilService {
             FileUtils.deleteDirectory(new File(repoPath));
             setRepositoryToNull(repo);
         }
-        catch (IOException ex) {
+        catch (IOException ignored) {
         }
     }
 
@@ -122,7 +123,7 @@ public class GitUtilService {
             Git git = new Git(getRepoByType(repo));
             return git.reflog().call();
         }
-        catch (GitAPIException ex) {
+        catch (GitAPIException ignored) {
         }
         return null;
     }
@@ -132,24 +133,26 @@ public class GitUtilService {
             Git git = new Git(getRepoByType(repo));
             return git.log().call();
         }
-        catch (GitAPIException ex) {
+        catch (GitAPIException ignored) {
         }
         return null;
     }
 
     public void updateFile(REPOS repo, FILES fileToUpdate, String content) {
         try {
-            PrintWriter writer = new PrintWriter(getCompleteRepoPathStringByType(repo) + File.separator + fileToUpdate, "UTF-8");
+            var fileName = Paths.get(getCompleteRepoPathStringByType(repo), fileToUpdate.toString()).toString();
+            PrintWriter writer = new PrintWriter(fileName, StandardCharsets.UTF_8);
             writer.print(content);
             writer.close();
         }
-        catch (FileNotFoundException | UnsupportedEncodingException ex) {
+        catch (IOException ignored) {
         }
     }
 
     public String getFileContent(REPOS repo, FILES fileToRead) {
         try {
-            byte[] encoded = Files.readAllBytes(Paths.get(getCompleteRepoPathStringByType(repo) + File.separator + fileToRead));
+            var path = Paths.get(getCompleteRepoPathStringByType(repo), fileToRead.toString());
+            byte[] encoded = Files.readAllBytes(path);
             return new String(encoded, Charset.defaultCharset());
         }
         catch (IOException ex) {
@@ -163,7 +166,7 @@ public class GitUtilService {
             git.add().addFilepattern(".").call();
             git.commit().setMessage("new commit").call();
         }
-        catch (GitAPIException ex) {
+        catch (GitAPIException ignored) {
         }
     }
 
@@ -205,7 +208,7 @@ public class GitUtilService {
         try {
             return new URL("http://" + getCompleteRepoPathStringByType(repo));
         }
-        catch (MalformedURLException ex) {
+        catch (MalformedURLException ignored) {
         }
         return null;
     }
@@ -222,7 +225,7 @@ public class GitUtilService {
         try {
             return new VcsRepositoryUrl("file://" + System.getProperty("user.dir") + "/" + getLocalRepoPathByType(repo));
         }
-        catch (MalformedURLException ex) {
+        catch (MalformedURLException ignored) {
         }
         return null;
     }

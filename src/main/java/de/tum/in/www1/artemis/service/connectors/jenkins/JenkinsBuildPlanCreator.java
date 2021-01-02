@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -122,7 +122,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     @Override
     public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
             boolean isStaticCodeAnalysisEnabled) {
-        final var resourcePath = Path.of("templates", "jenkins", "config.xml");
+        final var resourcePath = Paths.get("templates", "jenkins", "config.xml");
 
         String pipeLineScript = getPipelineScript(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled);
         pipeLineScript = pipeLineScript.replace("'", "&apos;");
