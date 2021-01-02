@@ -33,7 +33,12 @@
         <jhi-fullscreen>
             <div class="row flex-grow-1">
                 <div *ngIf="submission && (isActive || isLate) && !result" class="col-12 editor-large">
-                    <jhi-modeling-editor [umlModel]="umlModel" [diagramType]="modelingExercise.diagramType"></jhi-modeling-editor>
+                    <jhi-modeling-editor
+                        [umlModel]="umlModel"
+                        [diagramType]="modelingExercise.diagramType"
+                        [withExplanation]="true"
+                        [(explanation)]="explanation"
+                    ></jhi-modeling-editor>
                     <jhi-team-submission-sync
                         *ngIf="modelingExercise.teamMode"
                         [exerciseType]="modelingExercise.type"
@@ -43,17 +48,21 @@
                     ></jhi-team-submission-sync>
                 </div>
                 <div *ngIf="(!isActive || result) && modelingExercise" class="col-9">
-                    <jhi-modeling-assessment
-                        [model]="umlModel"
-                        [feedbacks]="assessmentResult?.feedbacks"
-                        [diagramType]="modelingExercise.diagramType"
-                        [maxScore]="modelingExercise.maxScore"
-                        [readOnly]="true"
-                        [enablePopups]="false"
-                        [displayPoints]="false"
-                        (selectionChanged)="onSelectionChanged($event)"
-                    ></jhi-modeling-assessment>
+                    <div class="flex flex-column h-100">
+                        <jhi-modeling-assessment
+                            [model]="umlModel"
+                            [feedbacks]="assessmentResult?.feedbacks"
+                            [diagramType]="modelingExercise.diagramType"
+                            [maxScore]="modelingExercise.maxScore"
+                            [readOnly]="true"
+                            [enablePopups]="false"
+                            [displayPoints]="false"
+                            (selectionChanged)="onSelectionChanged($event)"
+                            [explanation]="explanation"
+                        ></jhi-modeling-assessment>
+                    </div>
                 </div>
+
                 <div class="col-3 pt-5" *ngIf="submission?.submitted && (!isActive || result)">
                     <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title">Assessment</h4>
                     <div class="alert alert-info" *ngIf="generalFeedbackText && generalFeedbackText.length >= 0">

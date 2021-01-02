@@ -66,7 +66,7 @@ In addition, you have to start Artemis with the profiles ``gitlab`` and
 
 ::
 
-   --spring.profiles.active=dev,jenkins,gitlab,artemis
+   --spring.profiles.active=dev,jenkins,gitlab,artemis,scheduling
 
 Please read :doc:`../setup` for more details.
 
@@ -691,7 +691,7 @@ the following steps:
 
     .. code:: yaml
 
-       jenkins::
+       jenkins:
            use-crumb: false
 
 Build agents

@@ -208,7 +208,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 // TODO write loop over all correctionRounds
                 this.getAllTutorAssessedSubmissionsForAllCorrectionRounds();
 
-                this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
                 // 1. We don't want to assess submissions before the exercise due date
                 // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
                 if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
@@ -468,7 +467,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      * @param submission Submission which to check
      */
     calculateStatus(submission: Submission) {
-        const tmpResult = getLatestSubmissionResult(submission);
+        const tmpResult = submission.latestResult;
         if (tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!)) {
             return 'DONE';
         }

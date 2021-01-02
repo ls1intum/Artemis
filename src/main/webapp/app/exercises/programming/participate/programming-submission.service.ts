@@ -577,13 +577,13 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         const submissions = res.body!;
         const convertedSubmissions: ProgrammingSubmission[] = [];
         for (const submission of submissions) {
-            ProgrammingSubmissionService.convertItemFromServer(submission);
+            this.convertItemWithLatestSubmissionResultFromServer(submission);
             convertedSubmissions.push({ ...submission });
         }
         return res.clone({ body: convertedSubmissions });
     }
 
-    private static convertItemFromServer(programmingSubmission: ProgrammingSubmission): ProgrammingSubmission {
+    private static convertItemWithLatestSubmissionResultFromServer(programmingSubmission: ProgrammingSubmission): ProgrammingSubmission {
         const convertedProgrammingSubmission = Object.assign({}, programmingSubmission);
         setLatestSubmissionResult(convertedProgrammingSubmission, getLatestSubmissionResult(convertedProgrammingSubmission));
         return convertedProgrammingSubmission;

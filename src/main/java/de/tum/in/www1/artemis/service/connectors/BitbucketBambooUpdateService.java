@@ -66,7 +66,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
     }
 
     @Override
-    public void updatePlanRepository(String bambooProject, String buildPlanKey, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository,
+    public void updatePlanRepository(String bambooProjectKey, String buildPlanKey, String bambooRepositoryName, String bitbucketProjectKey, String bitbucketRepositoryName,
             Optional<List<String>> optionalTriggeredByRepositories) {
         try {
             log.debug("Update plan repository for build plan " + buildPlanKey);
@@ -76,7 +76,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
                         + " to the student repository : Could not find assignment nor Assignment repository");
             }
 
-            updateBambooPlanRepository(bambooRepository, bitbucketRepository, bitbucketProject, buildPlanKey);
+            updateBambooPlanRepository(bambooRepository, bitbucketRepositoryName, bitbucketProjectKey, buildPlanKey);
 
             // Overwrite triggers if needed, incl workaround for different repo names, triggered by is present means that the exercise (the BASE build plan) is imported from a
             // previous exercise

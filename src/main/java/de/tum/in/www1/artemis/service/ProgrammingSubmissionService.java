@@ -140,7 +140,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
-            participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
+
+            participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             try {
                 continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
@@ -231,7 +232,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public void triggerInstructorBuildForExercise(Long exerciseId) throws EntityNotFoundException {
         // Async can't access the authentication object. We need to do any security checks before this point.
         SecurityUtils.setAuthorizationObject();
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId);
         if (optionalProgrammingExercise.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
         }
@@ -302,6 +304,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public ProgrammingSubmission createSubmissionWithLastCommitHashForParticipation(ProgrammingExerciseParticipation participation, SubmissionType submissionType)
             throws IllegalStateException {
         ObjectId lastCommitHash = getLastCommitHashForParticipation(participation);
+        // TODO: we should not create a new submission here, but simply use the existing one with the last CommitHash
         return createSubmissionWithCommitHashAndSubmissionType(participation, lastCommitHash, submissionType);
     }
 
@@ -346,7 +349,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 .findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
         // If no commitHash is provided, use the last commitHash for the test repository.
         if (commitHash == null) {
-            Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+            Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
+                    .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
             if (programmingExercise.isEmpty()) {
                 throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " not found.");
             }
@@ -410,8 +414,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
         try {
             if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
                     || !programmingExerciseParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
+
                 // in this case, we first have to resume the exercise: this includes that we again setup the build plan properly before we trigger it
-                participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
+                participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
                 // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             }
             continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
@@ -500,7 +505,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws EntityNotFoundException if the programming exercise does not exist.
      */
     public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
         if (optionalProgrammingExercise.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " not found.");
         }
@@ -679,7 +685,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     @Override
     protected Result lockSubmission(Submission submission) {
         Result automaticResult = submission.getLatestResult();
-        List<Feedback> automaticFeedbacks = automaticResult.getFeedbacks().stream().map(Feedback::copyProgrammingAutomaticFeedbackForManualResult).collect(Collectors.toList());
+        List<Feedback> automaticFeedbacks = automaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
         // Create a new result (manual result) and a new submission for it and set assessor and type to manual
         ProgrammingSubmission newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);

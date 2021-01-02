@@ -52,6 +52,8 @@ public class BitbucketRequestMockProvider {
 
     private final RestTemplate restTemplate;
 
+    private final RestTemplate shortTimeoutRestTemplate;
+
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
@@ -59,11 +61,15 @@ public class BitbucketRequestMockProvider {
 
     private MockRestServiceServer mockServer;
 
+    private MockRestServiceServer mockServerShortTimeout;
+
     private final UserService userService;
 
-    public BitbucketRequestMockProvider(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate) {
+    public BitbucketRequestMockProvider(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate,
+            @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.userService = userService;
         this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
     public void enableMockingOfRequests() {
@@ -74,6 +80,10 @@ public class BitbucketRequestMockProvider {
         MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
         builder.ignoreExpectOrder(ignoreExpectOrder);
         mockServer = builder.build();
+
+        MockRestServiceServer.MockRestServiceServerBuilder builderShortTimeout = MockRestServiceServer.bindTo(shortTimeoutRestTemplate);
+        builderShortTimeout.ignoreExpectOrder(ignoreExpectOrder);
+        mockServerShortTimeout = builderShortTimeout.build();
     }
 
     public void reset() {
@@ -130,7 +140,6 @@ public class BitbucketRequestMockProvider {
         final var projectKey = exercise.getProjectKey();
         final var templateRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var clonedRepoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
-
         mockForkRepository(projectKey, projectKey, templateRepoName, clonedRepoName, status);
     }
 
@@ -329,7 +338,7 @@ public class BitbucketRequestMockProvider {
     public void mockHealth(String state, HttpStatus httpStatus) throws URISyntaxException, JsonProcessingException {
         var response = Map.of("state", state);
         var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/status").build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+        mockServerShortTimeout.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(httpStatus).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 

@@ -271,14 +271,9 @@ public class ResultService {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds.intValue()];
 
         for (int i = 1; i <= correctionRounds.intValue(); i++) {
-            if (exercise instanceof ProgrammingExercise) {
-                correctionRoundsDataStats[i - 1] = new DueDateStat(
-                        programmingExerciseRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), (long) i), 0L);
-            }
-            else {
-                correctionRoundsDataStats[i - 1] = new DueDateStat(
-                        resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), (long) i), 0L);
-            }
+            correctionRoundsDataStats[i - 1] = new DueDateStat(
+                    resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), (long) i), 0L);
+
         }
 
         // todo NR, SE: Will be removed in followup PR

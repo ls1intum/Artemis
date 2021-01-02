@@ -65,7 +65,7 @@ public class BambooService implements ContinuousIntegrationService {
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
     // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
-    private final static Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
+    private static final Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
 
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;
@@ -89,13 +89,16 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final RestTemplate restTemplate;
 
+    private final RestTemplate shortTimeoutRestTemplate;
+
     private final ObjectMapper mapper;
 
     private final UrlService urlService;
 
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackService feedbackService,
-            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, ObjectMapper mapper, UrlService urlService, ResultRepository resultRepository) {
+            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
+            UrlService urlService, ResultRepository resultRepository) {
         this.gitService = gitService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
@@ -103,6 +106,7 @@ public class BambooService implements ContinuousIntegrationService {
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.feedbackService = feedbackService;
         this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.mapper = mapper;
         this.urlService = urlService;
         this.resultRepository = resultRepository;
@@ -116,13 +120,13 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
-        String buildPlanId = participation.getBuildPlanId();
-        URL repositoryUrl = participation.getRepositoryUrlAsUrl();
-        String planProject = getProjectKeyFromBuildPlanId(buildPlanId);
-        String planKey = participation.getBuildPlanId();
-        updatePlanRepository(planProject, planKey, ASSIGNMENT_REPO_NAME, urlService.getProjectKeyFromUrl(repositoryUrl), repositoryUrl.toString(),
-                participation.getProgrammingExercise().getTemplateRepositoryUrl(), Optional.empty());
-        enablePlan(planProject, planKey);
+        final var buildPlanId = participation.getBuildPlanId();
+        final var repositoryUrl = participation.getRepositoryUrlAsUrl();
+        final var projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
+        final var planKey = participation.getBuildPlanId();
+        final var repoProjectName = urlService.getProjectKeyFromUrl(repositoryUrl);
+        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, Optional.empty());
+        enablePlan(projectKey, planKey);
     }
 
     @Override
@@ -486,12 +490,11 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String bambooProject, String buildPlanKey, String bambooRepositoryName, String repoProjectName, String repoUrl, String templateRepositoryUrl,
+    public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
         try {
-            final var repositoryName = versionControlService.get().getRepositoryName(new URL(repoUrl));
-            continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, buildPlanKey, bambooRepositoryName, repoProjectName, repositoryName,
-                    optionalTriggeredByRepositories);
+            final var vcsRepoName = versionControlService.get().getRepositoryName(new URL(newRepoUrl));
+            continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, optionalTriggeredByRepositories);
         }
         catch (MalformedURLException e) {
             throw new BambooException(e.getMessage(), e);
@@ -618,7 +621,7 @@ public class BambooService implements ContinuousIntegrationService {
     public ConnectorHealth health() {
         ConnectorHealth health;
         try {
-            final var status = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/server", HttpMethod.GET, null, JsonNode.class);
+            final var status = shortTimeoutRestTemplate.exchange(bambooServerUrl + "/rest/api/latest/server", HttpMethod.GET, null, JsonNode.class);
             health = status.getBody().get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
         }
         catch (Exception emAll) {

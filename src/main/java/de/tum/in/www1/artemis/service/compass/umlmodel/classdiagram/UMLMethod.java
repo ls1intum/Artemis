@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLMethod extends UMLElement {
 
-    public final static String UML_METHOD_TYPE = "ClassMethod";
+    public static final String UML_METHOD_TYPE = "ClassMethod";
 
     private UMLElement parentElement;
 
