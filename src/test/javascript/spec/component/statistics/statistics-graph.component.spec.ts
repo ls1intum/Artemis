@@ -16,6 +16,7 @@ import { of } from 'rxjs/internal/observable/of';
 import * as moment from 'moment';
 import { SimpleChange } from '@angular/core';
 import { ChartsModule } from 'ng2-charts';
+import { HttpTestingController } from '@angular/common/http/testing';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -24,6 +25,7 @@ describe('StatisticsGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsGraphComponent>;
     let component: StatisticsGraphComponent;
     let service: StatisticsService;
+    let httpMock: HttpTestingController;
 
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
@@ -40,6 +42,7 @@ describe('StatisticsGraphComponent', () => {
                 fixture = TestBed.createComponent(StatisticsGraphComponent);
                 component = fixture.componentInstance;
                 service = TestBed.inject(StatisticsService);
+                httpMock = TestBed.get(HttpTestingController);
             });
     }));
 
@@ -95,12 +98,13 @@ describe('StatisticsGraphComponent', () => {
         for (let i = 0; i < 24; i++) {
             graphData[i] = i + 1;
         }
-        spyOn(service, 'getChartData').and.returnValue(of(graphData));
 
         component.ngOnChanges(changes);
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush([...graphData]);
         tick();
 
-        expect(component.dataForSpanType).to.equal(graphData);
+        expect(component.dataForSpanType).to.deep.equal(graphData);
         expect(component.currentSpan).to.equal(SpanType.DAY);
     }));
 
