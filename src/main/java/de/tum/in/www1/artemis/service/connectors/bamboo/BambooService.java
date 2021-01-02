@@ -65,7 +65,7 @@ public class BambooService implements ContinuousIntegrationService {
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
     // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
-    private final static Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
+    private static final Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
 
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;
@@ -89,13 +89,16 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final RestTemplate restTemplate;
 
+    private final RestTemplate shortTimeoutRestTemplate;
+
     private final ObjectMapper mapper;
 
     private final UrlService urlService;
 
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackService feedbackService,
-            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, ObjectMapper mapper, UrlService urlService, ResultRepository resultRepository) {
+            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
+            UrlService urlService, ResultRepository resultRepository) {
         this.gitService = gitService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
@@ -103,6 +106,7 @@ public class BambooService implements ContinuousIntegrationService {
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.feedbackService = feedbackService;
         this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.mapper = mapper;
         this.urlService = urlService;
         this.resultRepository = resultRepository;
@@ -625,7 +629,7 @@ public class BambooService implements ContinuousIntegrationService {
     public ConnectorHealth health() {
         ConnectorHealth health;
         try {
-            final var status = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/server", HttpMethod.GET, null, JsonNode.class);
+            final var status = shortTimeoutRestTemplate.exchange(bambooServerUrl + "/rest/api/latest/server", HttpMethod.GET, null, JsonNode.class);
             health = status.getBody().get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
         }
         catch (Exception emAll) {

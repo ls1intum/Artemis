@@ -107,7 +107,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
      * @return list of found users that match the search criteria
      */
-    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     @Query("select user from User user where user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%")
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
 
@@ -115,7 +115,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select user from User user")
     Page<User> findAllWithGroups(Pageable pageable);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     @Query("select user from User user where user.login like %:#{#searchTerm}% or user.email like %:#{#searchTerm}% "
             + "or user.lastName like %:#{#searchTerm}% or user.firstName like %:#{#searchTerm}%")
     Page<User> searchByLoginOrNameWithGroups(@Param("searchTerm") String searchTerm, Pageable pageable);

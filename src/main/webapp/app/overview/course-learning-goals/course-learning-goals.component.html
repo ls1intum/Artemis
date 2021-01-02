@@ -5,6 +5,7 @@
 </div>
 
 <div *ngIf="!isLoading" class="card-deck">
+    <h2 *ngIf="learningGoals && learningGoals.length > 0" class="text-center">{{ 'artemisApp.learningGoal.title' | translate }}</h2>
     <jhi-learning-goal-card
         class="mx-auto"
         *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"

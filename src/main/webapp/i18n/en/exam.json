@@ -201,6 +201,7 @@
             "examStudentReviewEnd": "End of Student Review",
             "maxPoints": "Maximum number of points in exam",
             "numberOfExercisesInExam": "Number of exercises in exam",
+            "numberOfCorrectionRoundsInExam": "Number of correction rounds in exam",
             "randomizeQuestionOrder": "Randomize order of exercise groups",
             "startText": "Exam start text",
             "endText": "Exam end text",

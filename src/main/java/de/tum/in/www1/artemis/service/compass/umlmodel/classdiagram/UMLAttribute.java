@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLAttribute extends UMLElement {
 
-    public final static String UML_ATTRIBUTE_TYPE = "ClassAttribute";
+    public static final String UML_ATTRIBUTE_TYPE = "ClassAttribute";
 
     private UMLElement parentElement;
 

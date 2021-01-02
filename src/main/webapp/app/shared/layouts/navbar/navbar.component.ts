@@ -33,6 +33,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isNavbarCollapsed: boolean;
     isTourAvailable: boolean;
     languages: string[];
+    openApiEnabled?: boolean;
     modalRef: NgbModalRef;
     version: string;
     currAccount?: User;
@@ -70,6 +71,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
+                this.openApiEnabled = profileInfo.openApiEnabled;
                 this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
             }
         });

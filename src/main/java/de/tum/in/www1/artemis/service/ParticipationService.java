@@ -296,7 +296,7 @@ public class ParticipationService {
             }
             submission.setSubmissionDate(ZonedDateTime.now());
             // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
-            submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
+            submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).get();
             if (submission.getLatestResult() == null) {
                 Result result = new Result();
                 result.setParticipation(submission.getParticipation());
