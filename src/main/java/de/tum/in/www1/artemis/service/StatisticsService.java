@@ -303,6 +303,10 @@ public class StatisticsService {
         return fillMapList(users, span, startDate);
     }
 
+    /**
+     * Helper class for the ConvertMapList method, which takes the users in the same timeslot as well as some attributed needed
+     * for calculation to convert these into a Map List which is then returned
+     */
     private List<Map<String, Object>> fillMapList(Map<Object, List<String>> users, SpanType span, ZonedDateTime startDate) {
         List<Map<String, Object>> returnList = new ArrayList<>();
         users.forEach((k, v) -> {
