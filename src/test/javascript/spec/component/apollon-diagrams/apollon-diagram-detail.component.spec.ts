@@ -16,10 +16,8 @@ import { ApollonDiagramDetailComponent } from 'app/exercises/quiz/manage/apollon
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
-import * as testClassDiagram from './quiz-exercise-generator/test-models/class-diagram.json';
+import * as testClassDiagram from './exercise-generation/test-models/class-diagram.json';
 import { UMLModel } from '@ls1intum/apollon';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisTestModule } from '../../test.module';
 import { ElementRef } from '@angular/core';
 import { Text } from '@ls1intum/apollon/lib/utils/svg/text';
 
@@ -41,7 +39,7 @@ describe('ApollonDiagramDetail Component', () => {
         diagram.jsonRepresentation = JSON.stringify(testClassDiagram);
 
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, ArtemisTestModule, ArtemisSharedModule],
+            imports: [HttpClientTestingModule],
             declarations: [ApollonDiagramDetailComponent],
             providers: [
                 JhiAlertService,
