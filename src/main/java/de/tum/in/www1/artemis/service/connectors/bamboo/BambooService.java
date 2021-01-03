@@ -113,18 +113,19 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, URL sourceCodeRepositoryURL, URL testRepositoryURL, URL solutionRepositoryURL) {
-        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromUrl(sourceCodeRepositoryURL),
-                urlService.getRepositorySlugFromUrl(testRepositoryURL), urlService.getRepositorySlugFromUrl(solutionRepositoryURL));
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
+            VcsRepositoryUrl solutionRepositoryURL) {
+        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromRepositoryUrl(sourceCodeRepositoryURL),
+                urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL));
     }
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         final var buildPlanId = participation.getBuildPlanId();
-        final var repositoryUrl = participation.getRepositoryUrlAsUrl();
+        final var repositoryUrl = participation.getVcsRepositoryUrl();
         final var projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
         final var planKey = participation.getBuildPlanId();
-        final var repoProjectName = urlService.getProjectKeyFromUrl(repositoryUrl);
+        final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, Optional.empty());
         enablePlan(projectKey, planKey);
     }
@@ -136,7 +137,7 @@ public class BambooService implements ContinuousIntegrationService {
         if (isEmptyCommitNecessary) {
             try {
                 ProgrammingExercise exercise = participation.getProgrammingExercise();
-                URL repositoryUrl = participation.getRepositoryUrlAsUrl();
+                var repositoryUrl = participation.getVcsRepositoryUrl();
                 Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, true);
                 // we set user to null to make sure the Artemis user is used to create the setup commit, this is important to filter this commit later in
                 // notifyPush in ProgrammingSubmissionService
@@ -201,15 +202,8 @@ public class BambooService implements ContinuousIntegrationService {
         // NOTE: we cannot use official the REST API, e.g. restTemplate.delete(bambooServerUrl + "/rest/api/latest/plan/" + buildPlanId) here,
         // because then the build plan is not deleted directly and subsequent calls to create build plans with the same id might fail
 
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("selectedBuilds", buildPlanId);
-        parameters.add("confirm", "true");
-        parameters.add("bamboo.successReturnMode", "json");
-
-        String requestUrl = bambooServerUrl + "/admin/deleteBuilds.action";
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
-        // TODO: in order to do error handling, we have to read the return value of this REST call
-        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
+        executeDelete("selectedBuilds", buildPlanId);
+        log.info("Delete bamboo build plan " + buildPlanId + " was successful.");
     }
 
     /**
@@ -257,7 +251,7 @@ public class BambooService implements ContinuousIntegrationService {
         // because then the build plans are not deleted directly and subsequent calls to create build plans with the same id might fail
 
         // in normal cases this list should be empty, because all build plans have been deleted before
-        List<BambooBuildPlanDTO> buildPlans = getBuildPlans(projectKey);
+        final var buildPlans = getBuildPlans(projectKey);
         for (var buildPlan : buildPlans) {
             try {
                 deleteBuildPlan(projectKey, buildPlan.getKey());
@@ -267,8 +261,13 @@ public class BambooService implements ContinuousIntegrationService {
             }
         }
 
+        executeDelete("selectedProjects", projectKey);
+        log.info("Delete bamboo project " + projectKey + " was successful.");
+    }
+
+    private void executeDelete(String elementKey, String elementValue) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("selectedProjects", projectKey);
+        parameters.add(elementKey, elementValue);
         parameters.add("confirm", "true");
         parameters.add("bamboo.successReturnMode", "json");
 
@@ -276,8 +275,6 @@ public class BambooService implements ContinuousIntegrationService {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
         // TODO: in order to do error handling, we have to read the return value of this REST call
         var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
-
-        log.info("Delete bamboo project " + projectKey + " was successful.");
     }
 
     /**
@@ -288,6 +285,11 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
+        if (participation.getBuildPlanId() == null) {
+            log.warn("Cannot get the build status, because the build plan for the participation " + participation + " was cleaned up already!");
+            // The build plan does not exist, the build status cannot be retrieved
+            return null;
+        }
         final var buildPlan = getBuildPlan(participation.getBuildPlanId(), false, true);
 
         if (buildPlan == null) {
@@ -335,10 +337,13 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * get the build plan for the given planKey
      * @param planKey the unique Bamboo build plan identifier
-     * @param expand whether the expaned version of the build plan is needed
+     * @param expand whether the expanded version of the build plan is needed
      * @return the build plan
      */
     private BambooBuildPlanDTO getBuildPlan(String planKey, boolean expand, boolean logNotFound) {
+        if (planKey == null) {
+            return null;
+        }
         try {
             String requestUrl = bambooServerUrl + "/rest/api/latest/plan/" + planKey;
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
@@ -493,7 +498,7 @@ public class BambooService implements ContinuousIntegrationService {
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
         try {
-            final var vcsRepoName = versionControlService.get().getRepositoryName(new URL(newRepoUrl));
+            final var vcsRepoName = versionControlService.get().getRepositoryName(new VcsRepositoryUrl(newRepoUrl));
             continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, optionalTriggeredByRepositories);
         }
         catch (MalformedURLException e) {
@@ -890,10 +895,20 @@ public class BambooService implements ContinuousIntegrationService {
                 continue;
             }
 
-            // Replace some unnecessary information and hide complex details to make it easier to read the important information
-            logString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
+            // filter unnecessary Swift logs
+            if (logString.contains("Unable to find image") || logString.contains(": Pull") || logString.contains(": Waiting") || logString.contains(": Verifying")
+                    || logString.contains(": Download") || logString.startsWith("Digest:") || logString.startsWith("Status:") || logString.contains("github.com")) {
+                continue;
+            }
 
-            filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), logString, unfilteredBuildLog.getProgrammingSubmission()));
+            // Replace some unnecessary information and hide complex details to make it easier to read the important information
+            final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
+
+            // Avoid duplicate log entries
+            var existingLog = filteredBuildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
+            if (existingLog.isEmpty()) {
+                filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), shortenedLogString, unfilteredBuildLog.getProgrammingSubmission()));
+            }
         }
 
         return filteredBuildLogs;

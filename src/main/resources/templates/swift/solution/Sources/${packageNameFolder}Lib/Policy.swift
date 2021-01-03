@@ -7,6 +7,7 @@ public class Policy {
         self.context = context
     }
 
+    /// Chooses a strategy depending on the number of date objects.
     public func configure() {
         if self.context.getDates().count > 10 {
             print("More than 10 dates, choosing merge sort!")

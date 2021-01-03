@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.nio.file.Paths;
+
 import javax.persistence.*;
 
 import org.apache.commons.lang3.math.NumberUtils;
@@ -52,7 +54,7 @@ public class FileUploadSubmission extends Submission {
      * @return path where submission for file upload exercise is stored
      */
     public static String buildFilePath(Long exerciseId, Long submissionId) {
-        return FilePathService.getFileUploadExercisesFilepath() + exerciseId + File.separator + submissionId + File.separator;
+        return Paths.get(FilePathService.getFileUploadExercisesFilePath(), String.valueOf(exerciseId), String.valueOf(submissionId)).toString();
     }
 
     public void setFilePath(String filePath) {

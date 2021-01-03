@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest.repository;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.net.URL;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,17 +78,17 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
                 && !examSubmissionService.isAllowedToSubmit(programmingExercise, user)) {
             throw new IllegalAccessException();
         }
-        URL repositoryUrl = programmingParticipation.getRepositoryUrlAsUrl();
+        var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
         return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
     }
 
     @Override
-    URL getRepositoryUrl(Long participationId) throws IllegalArgumentException {
+    VcsRepositoryUrl getRepositoryUrl(Long participationId) throws IllegalArgumentException {
         Participation participation = participationService.findParticipation(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
         }
-        return ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
+        return ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl();
     }
 
     @Override
