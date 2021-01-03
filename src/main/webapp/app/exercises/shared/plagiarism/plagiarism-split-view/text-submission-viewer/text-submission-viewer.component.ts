@@ -20,11 +20,41 @@ export class TextSubmissionViewerComponent implements OnChanges {
     @Input() matches: Map<string, { from: TextSubmissionElement; to: TextSubmissionElement }[]>;
     @Input() plagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>;
 
+    /**
+     * Name of the currently selected file.
+     */
     public currentFile: string;
+
+    /**
+     * Content of the currently selected file.
+     */
     public fileContent: string;
+
+    /**
+     * List of files the given submission consists of.
+     * `null` for text exercises.
+     */
     public files: string[];
+
+    /**
+     * True, if the given exercise is of type 'programming'.
+     */
     public isProgrammingExercise: boolean;
+
+    /**
+     * True, if the file content for the given submission is being loaded.
+     */
     public loading: boolean;
+
+    /**
+     * Token that marks the beginning of a highlighted match.
+     */
+    public tokenStart = '<span class="plagiarism-match">';
+
+    /**
+     * Token that marks the end of a highlighted match.
+     */
+    public tokenEnd = '</span>';
 
     constructor(private repositoryService: CodeEditorRepositoryFileService, private textSubmissionService: TextSubmissionService) {}
 
@@ -92,10 +122,21 @@ export class TextSubmissionViewerComponent implements OnChanges {
     parseFileRows(fileContent: string) {
         const rows = fileContent.split('\n');
         const matches = this.getMatchesForCurrentFile();
+        const offsets = new Array(rows.length).fill(0);
 
         matches.forEach(({ from, to }) => {
-            rows[from.line - 1] = this.insertToken(rows[from.line - 1], '<span class="plagiarism-match">', from.column - 1);
-            rows[to.line - 1] = this.insertToken(rows[to.line - 1], '</span>', to.column + to.length - 1);
+            const idxLineFrom = from.line - 1;
+            const idxLineTo = to.line - 1;
+
+            const idxColumnFrom = from.column - 1 + offsets[idxLineFrom];
+
+            rows[idxLineFrom] = this.insertToken(rows[idxLineFrom], this.tokenStart, idxColumnFrom);
+            offsets[idxLineFrom] += this.tokenStart.length;
+
+            const idxColumnTo = to.column + to.length - 1 + offsets[idxLineTo];
+
+            rows[idxLineTo] = this.insertToken(rows[idxLineTo], this.tokenEnd, idxColumnTo);
+            offsets[idxLineTo] += this.tokenEnd.length;
         });
 
         return rows.join('\n');
