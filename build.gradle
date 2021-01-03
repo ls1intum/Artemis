@@ -139,7 +139,7 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.90
-                minimum = 0.82
+                minimum = 0.83
             }
             limit {
                 counter = "CLASS"
@@ -170,6 +170,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r"
+    implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:5.10.0.202012080955-r"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"

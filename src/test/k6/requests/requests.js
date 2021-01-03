@@ -147,6 +147,12 @@ export function Artemis(authToken, xsrftoken) {
                 socket.send('CONNECT\nX-XSRF-TOKEN:' + xsrftoken + '\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000');
             });
 
+            socket.on('error', function (e) {
+                if (e.error() !== 'websocket: close sent') {
+                    console.log('Websocket error occurred: ', e.error());
+                }
+            });
+
             doOnSocket(socket);
         });
     };

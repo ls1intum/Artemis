@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,6 +19,7 @@ import org.w3c.dom.Document;
 
 import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
@@ -87,16 +87,18 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         this.artemisNotificationUrl = ARTEMIS_SERVER_URL + "/api" + Constants.NEW_RESULT_RESOURCE_PATH;
     }
 
-    public String getPipelineScript(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
+    public String getPipelineScript(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
+            boolean isStaticCodeAnalysisEnabled) {
         var pipelinePath = getResourcePath(programmingLanguage, isStaticCodeAnalysisEnabled);
         var replacements = getReplacements(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled);
         return replacePipelineScriptParameters(pipelinePath, replacements);
     }
 
-    private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
+    private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
+            boolean isStaticCodeAnalysisEnabled) {
         Map<String, String> replacements = new HashMap<>();
-        replacements.put(REPLACE_TEST_REPO, testRepositoryURL.toString());
-        replacements.put(REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString());
+        replacements.put(REPLACE_TEST_REPO, testRepositoryURL.getURL().toString());
+        replacements.put(REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.getURL().toString());
         replacements.put(REPLACE_GIT_CREDENTIALS, gitCredentialsKey);
         replacements.put(REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH);
         replacements.put(REPLACE_TESTS_CHECKOUT_PATH, Constants.TESTS_CHECKOUT_PATH);
@@ -118,8 +120,9 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     }
 
     @Override
-    public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
-        final var resourcePath = Path.of("templates", "jenkins", "config.xml");
+    public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
+            boolean isStaticCodeAnalysisEnabled) {
+        final var resourcePath = Paths.get("templates", "jenkins", "config.xml");
 
         String pipeLineScript = getPipelineScript(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled);
         pipeLineScript = pipeLineScript.replace("'", "&apos;");

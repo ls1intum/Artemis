@@ -8,7 +8,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class PetriNetArc extends UMLElement {
 
-    public final static String PETRI_NET_ARC_TYPE = "PetriNetArc";
+    public static final String PETRI_NET_ARC_TYPE = "PetriNetArc";
 
     private final UMLElement source;
 

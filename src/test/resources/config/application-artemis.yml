@@ -3,8 +3,8 @@
 # ===================================================================
 
 artemis:
-    repo-clone-path: ./repos/
-    repo-download-clone-path: ./repos-download/
+    repo-clone-path: ./repos/server-integration-test
+    repo-download-clone-path: ./repos-download/server-integration-test
     encryption-password: fake-password
     user-management:
         use-external: true
@@ -30,6 +30,8 @@ artemis:
         url: https://version-control.fake.fake
         token: fake-token
         ci-token: fake-Token
+        ssh-template-clone-url: ssh://git@version-control.fake.fake:1111/
+        ssh-keys-url-path: /plugins/servlet/ssh/account/keys
     continuous-integration:
         user: fake-username
         password: fake-password
@@ -39,7 +41,7 @@ artemis:
         empty-commit-necessary: true
         secret-push-token: fake-token-hash
         vcs-credentials: fake-key
-        artemis-authentication-token-key: fake-Key
+        artemis-authentication-token-key: fake-key
         artemis-authentication-token-value: fake-token
     lti:
         id: artemis_lti
