@@ -1,11 +1,12 @@
-import { Component, OnInit, ElementRef, Input } from '@angular/core';
+import { Component, ElementRef, Input } from '@angular/core';
+import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
 
 @Component({
     selector: 'jhi-fullscreen',
     templateUrl: './fullscreen.component.html',
     styleUrls: ['./fullscreen.scss'],
 })
-export class FullscreenComponent implements OnInit {
+export class FullscreenComponent {
     buttonIcon = 'compress';
 
     @Input()
@@ -17,69 +18,18 @@ export class FullscreenComponent implements OnInit {
     constructor(private fullScreenWrapper: ElementRef) {}
 
     /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
-     */
-    ngOnInit(): void {}
-
-    /**
-     * enter full screen
-     */
-    private enterFullscreen() {
-        const element: any = this.fullScreenWrapper.nativeElement;
-        // requestFullscreen for different browser types
-        if (element.requestFullscreen) {
-            element.requestFullscreen();
-        } else if (element.mozRequestFullScreen) {
-            element.mozRequestFullScreen();
-        } else if (element.msRequestFullscreen) {
-            element.msRequestFullscreen();
-        } else if (element.webkitRequestFullscreen) {
-            element.webkitRequestFullscreen();
-        }
-    }
-
-    /**
-     * exit fullscreen
-     */
-    private exitFullscreen() {
-        const docElement = document as any;
-        // exit fullscreen for different browser types
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (docElement.mozCancelFullScreen) {
-            docElement.mozCancelFullScreen();
-        } else if (docElement.msRequestFullscreen) {
-            docElement.msRequestFullscreen();
-        } else if (docElement.webkitExitFullscreen) {
-            docElement.webkitExitFullscreen();
-        }
-    }
-
-    /**
-     * checks if this component is the current fullscreen component
-     */
-    isFullScreen() {
-        const docElement = document as any;
-        // check if this component is the current fullscreen component for different browser types
-        if (docElement.fullscreenElement !== undefined) {
-            return docElement.fullscreenElement;
-        } else if (docElement.webkitFullscreenElement !== undefined) {
-            return docElement.webkitFullscreenElement;
-        } else if (docElement.mozFullScreenElement !== undefined) {
-            return docElement.mozFullScreenElement;
-        } else if (docElement.msFullscreenElement !== undefined) {
-            return docElement.msFullscreenElement;
-        }
-    }
-
-    /**
      * check current state and toggle fullscreen
      */
     toggleFullscreen() {
         if (this.isFullScreen()) {
-            this.exitFullscreen();
+            exitFullscreen();
         } else {
-            this.enterFullscreen();
+            const element: any = this.fullScreenWrapper.nativeElement;
+            enterFullscreen(element);
         }
+    }
+
+    isFullScreen() {
+        return isFullScreen();
     }
 }
