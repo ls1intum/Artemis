@@ -275,9 +275,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
               :#{#correctionRound} + 1L  = (SELECT COUNT(r)
                              FROM Result r2 where r2.assessor IS NOT NULL
                                     AND r2.submission = s
-                                    AND r2.rated = TRUE
-                                    AND r.completionDate IS NOT NULL
-                                    AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate))
+                                    AND (p.exercise.dueDate IS NULL OR r2.submission.submissionDate <= p.exercise.dueDate))
                 AND EXISTS (SELECT s FROM Submission s
                     WHERE s.participation.id = p.id
                     AND s.submitted = TRUE

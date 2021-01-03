@@ -276,7 +276,7 @@
                                     <ng-container *ngIf="(isTestRun && complaints.length === 0) || !isTestRun">
                                         <ng-container>
                                             <button
-                                                *ngIf="submission != undefined && calculateStatus(submission) === 'DRAFT'; else continueButton"
+                                                *ngIf="submission && calculateStatus(submission) === 'DRAFT'; else continueButton"
                                                 (click)="openAssessmentEditor(submission)"
                                                 class="btn btn-warning btn-sm"
                                             >
@@ -285,11 +285,7 @@
                                                 }}
                                             </button>
                                             <ng-template #continueButton>
-                                                <button
-                                                    *ngIf="submission !== null && submission.latestResult !== null && submission.latestResult !== undefined"
-                                                    (click)="openAssessmentEditor(submission)"
-                                                    class="btn btn-primary btn-sm"
-                                                >
+                                                <button *ngIf="submission && submission.latestResult" (click)="openAssessmentEditor(submission)" class="btn btn-primary btn-sm">
                                                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{
                                                         'artemisApp.exerciseAssessmentDashboard.openAssessment' | translate
                                                     }}

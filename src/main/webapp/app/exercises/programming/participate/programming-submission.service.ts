@@ -13,8 +13,6 @@ import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionType } 
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { Participation } from 'app/entities/participation/participation.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.

@@ -137,7 +137,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * GET /exercises/{exerciseId}/modeling-submissions: get all modeling submissions by exercise id. If the parameter assessedByTutor is true, this method will return
+     * GET /exercises/{exerciseId}/round/{correctionRound}/modeling-submissions: get all modeling submissions by exercise id and correction round.
+     * If the parameter assessedByTutor is true, this method will return
      * only return all the modeling submissions where the tutor has a result associated.
      * In case of exam exercise, it filters out all test run submissions.
      *

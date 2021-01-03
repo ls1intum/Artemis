@@ -297,7 +297,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     }
 
     /**
-     * Get all the submissions from the server for which the current user is the assessor for the specified correctionround, which is the case for started or completed assessments. All these submissions get listed
+     * Get all the submissions from the server for which the current user is the assessor for the specified correctionround,
+     * which is the case for started or completed assessments. All these submissions get listed
      * in the exercise dashboard.
      */
     private getAllTutorAssessedSubmissionsForCorrectionRound(correctionRound: number): void {
@@ -385,8 +386,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     }
 
     /**
-     * Get a submission from the server that does not have an assessment for the given correctionround yet (if there is one). The submission gets added to the end of the list of submissions in the exercise
-     * dashboard and the user can start the assessment. Note, that the number of started but unfinished assessments is limited per user and course. If the user reached this limit,
+     * Get a submission from the server that does not have an assessment for the given correctionround yet (if there is one).
+     * The submission gets added to the end of the list of submissions in the exercise
+     * dashboard and the user can start the assessment. Note, that the number of started but unfinished assessments is limited per user and course.
+     * If the user reached this limit,
      * the server will respond with a BAD REQUEST response here.
      */
     private getSubmissionWithoutAssessmentForCorrectionround(correctionRound: number): void {
@@ -433,8 +436,14 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    this.unassessedSubmissionByCorrectionRound = new Map<number, Submission>();
+                    console.log('on 404: ', this.unassessedSubmissionByCorrectionRound, correctionRound);
+                    if (!this.unassessedSubmissionByCorrectionRound) {
+                        this.unassessedSubmissionByCorrectionRound = new Map<number, Submission>();
+                    } else {
+                        this.unassessedSubmissionByCorrectionRound.delete(correctionRound);
+                    }
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    console.log('submissionLimit reached');
                     this.submissionLockLimitReached = true;
                 } else {
                     this.onError(error.message);
