@@ -11,7 +11,7 @@ foundIncludeDirs=`grep -m 1 'INCLUDEDIRS\s*=' assignment/Makefile`
 echo "Include: $foundIncludeDirs"
 
 foundSource=`grep -m 1 'SOURCE\s*=' assignment/Makefile`
-# foundSource="$foundSource $shadowFilePath"
+foundSource="$foundSource $shadowFilePath"
 echo "Source: $foundSource"
 
 rm -f assignment/GNUmakefile
