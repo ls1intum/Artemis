@@ -86,6 +86,9 @@ public class Exam extends DomainObject {
     @Column(name = "number_of_exercises_in_exam")
     private Integer numberOfExercisesInExam;
 
+    @Column(name = "number_of_correction_rounds", columnDefinition = "integer default 1")
+    private Integer numberOfCorrectionRoundsInExam;
+
     @Column(name = "examiner")
     private String examiner;
 
@@ -229,6 +232,14 @@ public class Exam extends DomainObject {
 
     public void setNumberOfExercisesInExam(Integer numberOfExercisesInExam) {
         this.numberOfExercisesInExam = numberOfExercisesInExam;
+    }
+
+    public Integer getNumberOfCorrectionRoundsInExam() {
+        return numberOfCorrectionRoundsInExam;
+    }
+
+    public void setNumberOfCorrectionRoundsInExam(Integer numberOfCorrectionRoundsInExam) {
+        this.numberOfCorrectionRoundsInExam = numberOfCorrectionRoundsInExam;
     }
 
     public Boolean getRandomizeExerciseOrder() {

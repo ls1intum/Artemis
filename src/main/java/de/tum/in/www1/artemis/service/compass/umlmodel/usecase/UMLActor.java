@@ -6,7 +6,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLActor extends UMLElement {
 
-    public final static String UML_ACTOR_TYPE = "UseCaseActor";
+    public static final String UML_ACTOR_TYPE = "UseCaseActor";
 
     private final String name;
 
