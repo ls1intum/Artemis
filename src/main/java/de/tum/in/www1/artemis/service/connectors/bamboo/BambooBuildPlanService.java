@@ -297,8 +297,8 @@ public class BambooBuildPlanService {
                 // 1_some_description.sh --> "some description"
                 String fileName = resource.getFilename();
                 if (fileName != null) {
-                    final var descriptionElements = Arrays.stream((fileName.split("\\.")[0] // cut .sh suffix
-                            .split("_"))).collect(Collectors.toList());
+                    final var descriptionElements = Arrays.stream(fileName.split("\\.")[0] // cut .sh suffix
+                            .split("_")).collect(Collectors.toList());
                     descriptionElements.remove(0);  // Remove the index prefix: 1 some description --> some description
                     final var scriptDescription = String.join(" ", descriptionElements);
                     try (final var inputStream = resource.getInputStream()) {
