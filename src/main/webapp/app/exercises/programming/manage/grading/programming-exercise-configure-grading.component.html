@@ -157,7 +157,7 @@
                                         <ng-template #popoverContent>
                                             <div class="d-flex flex-column run-after-due-date-disabled">
                                                 <pre jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.runAfterDueDateDisabled"></pre>
-                                                <a [routerLink]="['/course/', this.courseId, 'programming-exercise', this.exercise.id!, 'edit']" class="ml-auto">
+                                                <a [routerLink]="['/course-management/', this.courseId, 'programming-exercises', this.exercise.id!, 'edit']" class="ml-auto">
                                                     <jhi-button [icon]="'arrow-right'" placement="top" ngbTooltip="{{ 'entity.action.edit' | translate }}"></jhi-button>
                                                 </a>
                                             </div>
