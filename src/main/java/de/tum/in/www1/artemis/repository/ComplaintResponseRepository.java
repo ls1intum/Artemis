@@ -24,7 +24,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints response associated to course courseId
      */
-    long countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(Long courseId, ComplaintType complaintType);
+    long countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(Long courseId, ComplaintType complaintType);
 
     /**
      * This magic method counts the number of complaints responses by complaint type associated to a exercise id
@@ -33,14 +33,15 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints response associated to exercise exerciseId
      */
-    long countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(long exerciseId, ComplaintType complaintType);
+
+    long countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(long exerciseId, ComplaintType complaintType);
 
     /**
-     * Similar to {@link ComplaintResponseRepository#countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType}
+     * Similar to {@link ComplaintResponseRepository#countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull}
      * but ignores test run submissions
      * @param exerciseId - the id of the course we want to filter by
      * @param complaintType - complaint type we want to filter by
-     * @return  number of complaints associated to exercise exerciseId without test runs
+     * @return number of complaints associated to exercise exerciseId without test runs
      */
     @Query("""
             SELECT COUNT (DISTINCT p) FROM StudentParticipation p
@@ -51,7 +52,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
                             WHERE EXISTS (SELECT r.id FROM s.results r
                                 WHERE r.id = c.result.id) AND c.complaintType = :#{#complaintType}
                                 AND EXISTS (SELECT cr FROM ComplaintResponse cr
-                                    WHERE cr.complaint.id = c.id)))
+                                    WHERE cr.complaint.id = c.id AND cr.submittedTime IS NOT NULL)))
             AND NOT EXISTS (SELECT prs FROM p.results prs
             WHERE prs.assessor.id = p.student.id)
             """)

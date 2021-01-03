@@ -1,7 +1,9 @@
-import { Component, EventEmitter, Input, Output, HostBinding } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { Submission } from 'app/entities/submission.model';
 
 /**
  * The <jhi-assessment-layout> component provides the basic layout for an assessment page.
@@ -33,8 +35,9 @@ export class AssessmentLayoutComponent {
 
     @Input() result: Result | null;
     @Input() assessmentsAreValid: boolean;
-    ComplaintType = ComplaintType;
     @Input() complaint: Complaint | null;
+    @Input() exercise: Exercise | undefined;
+    @Input() submission: Submission | undefined;
     @Input() hasAssessmentDueDatePassed: boolean;
 
     @Output() save = new EventEmitter<void>();

@@ -1,5 +1,8 @@
 {
     "artemisApp": {
+        "errors": {
+            "complaintLock": "The complaint is still locked by {{user}} until {{lockEnd}}!"
+        },
         "complaint": {
             "title": "Complaint",
             "info": "The complaint limit refers to open and rejected complaints. If your complaint is accepted it will not count towards your total number of complaints.",

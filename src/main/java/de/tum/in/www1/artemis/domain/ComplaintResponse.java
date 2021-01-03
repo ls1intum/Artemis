@@ -32,14 +32,16 @@ public class ComplaintResponse extends DomainObject {
     private ZonedDateTime submittedTime;
 
     /**
-     * will be set as soon as the evaluation of a complaint by a reviewer begins (possibly null for old complaint responses befor this column was added)
+     * will be set as soon as the evaluation of a complaint by a reviewer begins (possibly null for old complaint responses before this column was added)
      */
-    // ToDo add created time to liquibase (currently manually set via sql)
     @Column(name = "created_time")
     private ZonedDateTime createdTime;
 
     @Transient
     private boolean isCurrentlyLocked;
+
+    @Transient
+    private ZonedDateTime lockEndDate;
 
     @OneToOne
     @JoinColumn(unique = true)
@@ -60,9 +62,18 @@ public class ComplaintResponse extends DomainObject {
         }
 
         // ToDo load lock time for complaints from yaml file
-        ZonedDateTime lockedUntil = createdTime.plusHours(7);
+        ZonedDateTime lockedUntil = createdTime.plusMinutes(3);
 
         return ZonedDateTime.now().isBefore(lockedUntil);
+    }
+
+    @JsonProperty("lockEndDate")
+    public ZonedDateTime lockEndDate() {
+        if (createdTime == null) {
+            return null;
+        }
+
+        return createdTime.plusMinutes(3);
     }
 
     public String getResponseText() {

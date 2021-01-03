@@ -56,5 +56,6 @@ import { CircularProgressBarComponent } from 'app/shared/circular-progress-bar/c
         JhiConnectionStatusComponent,
         ChartComponent,
     ],
+    providers: [ArtemisDatePipe],
 })
 export class ArtemisSharedModule {}

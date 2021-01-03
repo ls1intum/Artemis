@@ -6,6 +6,8 @@ import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
 
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
+import { Exercise } from 'app/entities/exercise.model';
 
 export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
@@ -21,7 +23,31 @@ export class ComplaintService implements IComplaintService {
     private apiUrl = SERVER_API_URL + 'api';
     private resourceUrl = this.apiUrl + '/complaints';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService) {}
+
+    isComplaintLockedForLoggedInUser(complaint: Complaint, exercise: Exercise) {
+        if (complaint.complaintResponse) {
+            return this.complaintResponseService.isComplaintResponseLockedForLoggedInUser(complaint.complaintResponse, exercise);
+        } else {
+            return false;
+        }
+    }
+
+    isComplaintLockedByLoggedInUser(complaint: Complaint) {
+        if (complaint.complaintResponse) {
+            return this.complaintResponseService.isComplaintResponseLockedByLoggedInUser(complaint.complaintResponse);
+        } else {
+            return false;
+        }
+    }
+
+    isComplaintLocked(complaint: Complaint) {
+        if (complaint.complaintResponse) {
+            return complaint.complaintResponse.isCurrentlyLocked;
+        } else {
+            return false;
+        }
+    }
 
     /**
      * Create a new complaint.

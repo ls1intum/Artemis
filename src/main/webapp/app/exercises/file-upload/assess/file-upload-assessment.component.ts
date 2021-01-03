@@ -6,6 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 import interact from 'interactjs';
 import * as moment from 'moment';
+import { now } from 'moment';
 import * as $ from 'jquery';
 import { Interactable } from '@interactjs/core/Interactable';
 import { Location } from '@angular/common';
@@ -28,7 +29,6 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { now } from 'moment';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
@@ -494,9 +494,14 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                     this.jhiAlertService.clear();
                     this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
                 },
-                () => {
+                (httpErrorResponse: HttpErrorResponse) => {
                     this.jhiAlertService.clear();
-                    this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
+                    const error = httpErrorResponse.error;
+                    if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                        this.jhiAlertService.error(error.message, error.params);
+                    } else {
+                        this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
+                    }
                 },
             );
     }

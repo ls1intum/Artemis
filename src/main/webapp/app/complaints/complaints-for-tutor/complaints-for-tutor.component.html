@@ -7,6 +7,7 @@
 <h3 *ngIf="!isLoading">
     {{ complaint.complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.review' | translate) : ('artemisApp.complaint.review' | translate) }}
 </h3>
+
 <div class="col-12 mt-2" [class.px-0]="zeroIndent" *ngIf="!isLoading">
     <div class="alert alert-info" *ngIf="handled">
         {{
@@ -15,7 +16,10 @@
                 : ('artemisApp.complaint.complaintAlreadyHandled' | translate)
         }}
     </div>
-
+    <div class="alert alert-info" *ngIf="isLockedForLoggedInUser && !handled">
+        The complaint response is locked by {{ this.complaintResponse!.reviewer!.login! }} until {{ this.complaintResponse.lockEndDate | artemisDate }}
+    </div>
+    <button *ngIf="showRemoveLockButton" (click)="removeLock()">REMOVE LOCK</button>
     <div class="row">
         <div class="col-12 col-md-6">
             <h4>
@@ -44,13 +48,21 @@
                         : ('artemisApp.complaintResponse.title' | translate)
                 }}
             </h3>
-            <textarea class="col-12 px-1" rows="4" maxlength="2000" [(ngModel)]="complaintResponse.responseText" [readonly]="handled" [disabled]="handled"></textarea>
+            <textarea
+                class="col-12 px-1"
+                rows="4"
+                maxlength="2000"
+                [(ngModel)]="complaintResponse.responseText"
+                [readonly]="handled"
+                [disabled]="handled || isLockedForLoggedInUser"
+            ></textarea>
             <div *ngIf="!handled && complaint.complaintType === ComplaintType.COMPLAINT" class="row justify-content-end">
                 <div class="col-12 col-lg-6">
                     <button
                         type="button"
                         class="btn btn-success btn-block"
                         (click)="respondToComplaint(true)"
+                        [disabled]="isLockedForLoggedInUser"
                         title="{{ 'artemisApp.complaintResponse.updateAssessmentTooltip' | translate }}"
                     >
                         {{ 'artemisApp.complaintResponse.updateAssessment' | translate }}
@@ -61,6 +73,7 @@
                         type="button"
                         class="btn btn-danger btn-block"
                         (click)="respondToComplaint(false)"
+                        [disabled]="isLockedForLoggedInUser"
                         title="{{ 'artemisApp.complaintResponse.rejectComplaintTooltip' | translate }}"
                     >
                         {{ 'artemisApp.complaintResponse.rejectComplaint' | translate }}
@@ -73,6 +86,7 @@
                     <button
                         type="button"
                         class="btn btn-success btn-block"
+                        [disabled]="isLockedForLoggedInUser"
                         (click)="respondToComplaint(true)"
                         title="{{ 'artemisApp.moreFeedbackResponse.sendResponseTooltip' | translate }}"
                     >

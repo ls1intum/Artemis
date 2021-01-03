@@ -36,6 +36,7 @@ import { Exam } from 'app/entities/exam.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { Result } from 'app/entities/result.model';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -129,6 +130,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         private programmingSubmissionService: ProgrammingSubmissionService,
         private modalService: NgbModal,
         private guidedTourService: GuidedTourService,
+        private artemisDatePipe: ArtemisDatePipe,
     ) {}
 
     /**
@@ -409,12 +411,33 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      * Calculates the status of a submission by inspecting the result
      * @param submission Submission which to check
      */
-    calculateStatus(submission: Submission) {
+    calculateSubmissionStatus(submission: Submission) {
         const tmpResult = submission.latestResult;
         if (tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!)) {
             return 'DONE';
         }
         return 'DRAFT';
+    }
+
+    calculateComplaintStatus(complaint: Complaint) {
+        // a complaint is handled if it is either accepted or denied and a complaint response exists
+        const handled = complaint.accepted !== undefined && complaint.complaintResponse !== undefined;
+        if (handled) {
+            // handled
+            return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.complaintEvaluated');
+        } else {
+            if (this.complaintService.isComplaintLocked(complaint)) {
+                if (this.complaintService.isComplaintLockedByLoggedInUser(complaint)) {
+                    return `This complaint is locked by you until ${this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate)}`;
+                } else {
+                    return `This complaint is locked by ${complaint.complaintResponse?.reviewer?.login} until ${this.artemisDatePipe.transform(
+                        complaint.complaintResponse?.lockEndDate,
+                    )}`;
+                }
+            } else {
+                return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.complaintNotEvaluated');
+            }
+        }
     }
 
     /**
@@ -438,6 +461,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         }
 
         this.router.navigate([route], { queryParams });
+    }
+
+    isComplaintLocked(complaint: Complaint) {
+        return this.complaintService.isComplaintLockedForLoggedInUser(complaint, this.exercise);
     }
 
     /**
