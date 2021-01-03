@@ -437,9 +437,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
                     console.log('on 404: ', this.unassessedSubmissionByCorrectionRound, correctionRound);
-                    if (!this.unassessedSubmissionByCorrectionRound) {
-                        this.unassessedSubmissionByCorrectionRound = new Map<number, Submission>();
-                    } else {
+                    if (this.unassessedSubmissionByCorrectionRound) {
                         this.unassessedSubmissionByCorrectionRound.delete(correctionRound);
                     }
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {

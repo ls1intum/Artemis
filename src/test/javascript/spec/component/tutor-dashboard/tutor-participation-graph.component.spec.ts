@@ -154,7 +154,7 @@ describe('TutorParticipationGraphComponent', () => {
             expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound[0]).to.equal(75);
             expect(comp.percentageLateAssessmentProgressOfCorrectionRound[0]).to.equal(50);
 
-            var secondCorrectionDueDateStat = new DueDateStat();
+            const secondCorrectionDueDateStat = new DueDateStat();
             secondCorrectionDueDateStat.inTime = 2;
             secondCorrectionDueDateStat.late = 1;
             comp.numberOfAssessmentsOfCorrectionRounds = [comp.totalNumberOfAssessments, secondCorrectionDueDateStat];
