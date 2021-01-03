@@ -179,8 +179,13 @@ public class BambooBuildPlanService {
                             new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
                 }
             }
-            case PYTHON, C -> {
+            case PYTHON -> {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "test-reports/*results.xml");
+            }
+            case C -> {
+                Stage stage = createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "test-reports/*results.xml");
+                defaultJob.finalTasks(new ScriptTask().description("cleanup").inlineBody("sudo rm -rf tests/\nsudo rm -rf assignment/\nsudo rm -rf test-reports/"));
+                return stage;
             }
             case HASKELL -> {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "**/test-reports/*.xml");
@@ -290,8 +295,9 @@ public class BambooBuildPlanService {
             scriptResources.sort(Comparator.comparing(Resource::getFilename));
             for (final var resource : scriptResources) {
                 // 1_some_description.sh --> "some description"
-                if (resource.getFilename() != null) {
-                    final var descriptionElements = Arrays.stream((resource.getFilename().split("\\.")[0] // cut .sh suffix
+                String fileName = resource.getFilename();
+                if (fileName != null) {
+                    final var descriptionElements = Arrays.stream((fileName.split("\\.")[0] // cut .sh suffix
                             .split("_"))).collect(Collectors.toList());
                     descriptionElements.remove(0);  // Remove the index prefix: 1 some description --> some description
                     final var scriptDescription = String.join(" ", descriptionElements);
