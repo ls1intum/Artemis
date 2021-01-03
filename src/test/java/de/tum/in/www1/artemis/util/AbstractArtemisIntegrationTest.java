@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -75,8 +76,20 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     @Override
+    public void mockGetRepositorySlugFromRepositoryUrl(String repositorySlug, VcsRepositoryUrl repositoryUrl) {
+        // we convert this to URL to make sure the mock is properly hit, as there could be problems with objects such as VcsRepositoryUrl and its subclasses
+        doReturn(repositorySlug).when(urlService).getRepositorySlugFromUrl(repositoryUrl.getURL());
+    }
+
+    @Override
     public void mockGetRepositorySlugFromUrl(String repositorySlug, URL url) {
         doReturn(repositorySlug).when(urlService).getRepositorySlugFromUrl(url);
+    }
+
+    @Override
+    public void mockGetProjectKeyFromRepositoryUrl(String projectKey, VcsRepositoryUrl repositoryUrl) {
+        // we convert this to URL to make sure the mock is properly hit, as there could be problems with objects such as VcsRepositoryUrl and its subclasses
+        doReturn(projectKey).when(urlService).getProjectKeyFromUrl(repositoryUrl.getURL());
     }
 
     @Override

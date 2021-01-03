@@ -103,10 +103,6 @@ public class CacheConfiguration {
         Config config = new Config();
         config.setInstanceName(instanceName);
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-        config.getNetworkConfig().getJoin().getAutoDetectionConfig().setEnabled(false);
-        // Always enable TcpIp config: There has to be at least one join-config and we can not use multicast as this creates unwanted clusters
-        // If registration == null -> this will never connect to any instance as no other ip addresses are added
-        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
 
         // Allows using @SpringAware and therefore Spring Services in distributed tasks
         config.setManagedContext(new SpringManagedContext(applicationContext));

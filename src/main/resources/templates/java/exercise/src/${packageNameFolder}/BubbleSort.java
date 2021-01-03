@@ -5,7 +5,7 @@ import java.util.*;
 public class BubbleSort {
 
     /**
-     * Sortes dates with BubbleSort.
+     * Sorts dates with BubbleSort.
      *
      * @param input the List of Dates to be sorted
      */

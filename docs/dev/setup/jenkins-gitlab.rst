@@ -51,6 +51,8 @@ will be explained below in the corresponding sections.
            password: <gitlab-admin-password>
            token: <token>
            ci-token: <ci-token>
+           ssh-private-key-folder-path: <ssh-private-key-folder-path>
+           ssh-private-key-password: <ssh-private-key-password>
        continuous-integration:
            user: <jenkins-admin-user>
            password: <jenkins-admin-password>
@@ -288,6 +290,27 @@ Gitlab Access Token
 
     The issue with more details can be found `here <https://gitlab.com/gitlab-org/omnibus-gitlab/-/issues/4166>`__.
 
+15. Add a SSH key for the admin user.
+
+    Artemis can clone/push the repositories during setup and for the online code editor using SSH.
+    If the SSH key is not present, the username + token will be used as fallback (and all git operations will use HTTP(S) instead of SSH).
+
+    You first have to create a SSH key (locally), e.g. using ``ssh-keygen`` (more information on how to create a SSH key can be found e.g. at `ssh.com <https://www.ssh.com/ssh/keygen/>`__ or at `gitlab.com <https://docs.gitlab.com/ee/ssh/#rsa-ssh-keys>`__).
+
+    The list of supported ciphers can be found at `Apache Mina <https://github.com/apache/mina-sshd>`__.
+
+    It is recommended to use a password to secure the private key, but it is not mandatory.
+
+    Please note that the private key file **must** be named ``ìd_rsa``, ``id_dsa``, ``id_ecdsa`` or ``id_ed25519``, depending on the ciphers used.
+
+    You now have to extract the public key and add it to Gitlab.
+    Open the public key file (usually called ``id_rsa.pub`` (when using RSA)) and copy it's content (you can also use ``cat id_rsa.pub`` to show the public key).
+
+    Navigate to ``GITLAB-URL/-/profile/keys`` and add the SSH key by pasting the content of the public key.
+
+    ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename). It will be used in the configuration of Artemis to specify where Artemis should look for the key and store the ``known_hosts`` file.
+
+    ``<ssh-private-key-password>`` is the password used to secure the private key. It is also needed for the configuration of Artemis, but can be omitted if no password was set (e.g. for development environments).
 
 Reconfigure Gitlab
 
@@ -691,7 +714,7 @@ the following steps:
 
     .. code:: yaml
 
-       jenkins::
+       jenkins:
            use-crumb: false
 
 Build agents

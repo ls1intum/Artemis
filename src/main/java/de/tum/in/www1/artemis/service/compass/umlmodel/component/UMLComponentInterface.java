@@ -9,9 +9,9 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLComponentInterface extends UMLElement {
 
-    public final static String UML_COMPONENT_INTERFACE_TYPE = "ComponentInterface";
+    public static final String UML_COMPONENT_INTERFACE_TYPE = "ComponentInterface";
 
-    public final static String UML_DEPLOYMENT_INTERFACE_TYPE = "DeploymentInterface";
+    public static final String UML_DEPLOYMENT_INTERFACE_TYPE = "DeploymentInterface";
 
     private final String name;
 

@@ -4,13 +4,14 @@ import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/d
 export class StatsForDashboard {
     public numberOfStudents = 0;
     public numberOfSubmissions = new DueDateStat();
-    public numberOfAssessments = new DueDateStat();
+    public totalNumberOfAssessments = new DueDateStat();
     public numberOfAutomaticAssistedAssessments = new DueDateStat();
     public numberOfComplaints = 0;
     public numberOfOpenComplaints = 0;
     public numberOfMoreFeedbackRequests = 0;
     public numberOfOpenMoreFeedbackRequests = 0;
     public numberOfAssessmentLocks = 0;
+    public numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()]; // Array with number of assessments for each correction round
 
     public tutorLeaderboardEntries: TutorLeaderboardElement[] = [];
 
@@ -25,7 +26,7 @@ export class StatsForDashboard {
     static from(object: StatsForDashboard): StatsForDashboard {
         const stats = Object.assign(new StatsForDashboard(), object);
         stats.numberOfSubmissions = Object.assign(new DueDateStat(), stats.numberOfSubmissions);
-        stats.numberOfAssessments = Object.assign(new DueDateStat(), stats.numberOfAssessments);
+        stats.totalNumberOfAssessments = Object.assign(new DueDateStat(), stats.totalNumberOfAssessments);
         stats.numberOfAutomaticAssistedAssessments = Object.assign(new DueDateStat(), stats.numberOfAutomaticAssistedAssessments);
         return stats;
     }

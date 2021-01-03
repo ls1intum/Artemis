@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -65,7 +66,7 @@ public class FileResource {
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
     // NOTE: this list has to be the same as in file-uploader.service.ts
-    private List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip"));
+    private final List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip"));
 
     public void addAllowedFileExtension(String fileExtension) {
         this.allowedFileExtensions.add(fileExtension);
@@ -113,7 +114,7 @@ public class FileResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
     public ResponseEntity<byte[]> getTempFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return responseEntityForFilePath(FilePathService.getTempFilepath() + filename);
+        return responseEntityForFilePath(FilePathService.getTempFilePath(), filename);
     }
 
     /**
@@ -142,7 +143,7 @@ public class FileResource {
     @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return responseEntityForFilePath(FilePathService.getMarkdownFilepath() + filename);
+        return responseEntityForFilePath(FilePathService.getMarkdownFilePath(), filename);
     }
 
     /**
@@ -191,7 +192,7 @@ public class FileResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return responseEntityForFilePath(FilePathService.getDragAndDropBackgroundFilepath() + filename);
+        return responseEntityForFilePath(FilePathService.getDragAndDropBackgroundFilePath(), filename);
     }
 
     /**
@@ -205,7 +206,7 @@ public class FileResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return responseEntityForFilePath(FilePathService.getDragItemFilepath() + filename);
+        return responseEntityForFilePath(FilePathService.getDragItemFilePath(), filename);
     }
 
     /**
@@ -247,7 +248,7 @@ public class FileResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<byte[]> getCourseIcon(@PathVariable Long courseId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return responseEntityForFilePath(FilePathService.getCourseIconFilepath() + filename);
+        return responseEntityForFilePath(FilePathService.getCourseIconFilePath(), filename);
     }
 
     /**
@@ -288,7 +289,7 @@ public class FileResource {
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding lecture";
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
-        return buildFileResponse(FilePathService.getLectureAttachmentFilepath() + optionalLecture.get().getId(), filename);
+        return buildFileResponse(Paths.get(FilePathService.getLectureAttachmentFilePath(), String.valueOf(optionalLecture.get().getId())).toString(), filename);
     }
 
     /**
@@ -313,7 +314,7 @@ public class FileResource {
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding attachmentUnit";
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
-        return buildFileResponse(FilePathService.getAttachmentUnitFilePath() + optionalAttachmentUnit.get().getId(), filename);
+        return buildFileResponse(Paths.get(FilePathService.getAttachmentUnitFilePath(), String.valueOf(optionalAttachmentUnit.get().getId())).toString(), filename);
     }
 
     /**
@@ -356,12 +357,12 @@ public class FileResource {
 
         // set the appropriate values depending on the use case
         if (markdown) {
-            filePath = FilePathService.getMarkdownFilepath();
+            filePath = FilePathService.getMarkdownFilePath();
             fileNameAddition = "Markdown_";
             responsePath.append("/api/files/markdown/");
         }
         else {
-            filePath = FilePathService.getTempFilepath();
+            filePath = FilePathService.getTempFilePath();
             fileNameAddition = "Temp_";
             responsePath.append("/api/files/temp/");
         }
@@ -389,7 +390,7 @@ public class FileResource {
                     filename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8)
                             + "." + fileExtension;
                 }
-                String path = filePath + filename;
+                String path = Paths.get(filePath, filename).toString();
 
                 newFile = new File(path);
                 if (keepFileName && newFile.exists()) {
@@ -422,7 +423,7 @@ public class FileResource {
      */
     private ResponseEntity<byte[]> buildFileResponse(String path, String filename) {
         try {
-            var actualPath = path + (path.endsWith(File.separator) ? filename : File.separator + filename);
+            var actualPath = Paths.get(path, filename).toString();
             var file = fileService.getFileForPath(actualPath);
             if (file == null) {
                 return ResponseEntity.notFound().build();
@@ -454,9 +455,10 @@ public class FileResource {
      * @param path the path for the file to read
      * @return ResponseEntity with status 200 and the file as byte stream, status 404 if the file doesn't exist, or status 500 if there is an error while reading the file
      */
-    private ResponseEntity<byte[]> responseEntityForFilePath(String path) {
+    private ResponseEntity<byte[]> responseEntityForFilePath(String path, String filename) {
         try {
-            var file = fileService.getFileForPath(path);
+            var actualPath = Paths.get(path, filename).toString();
+            var file = fileService.getFileForPath(actualPath);
             if (file == null) {
                 return ResponseEntity.notFound().build();
             }

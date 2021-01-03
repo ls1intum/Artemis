@@ -171,10 +171,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 WHERE s.participation.id = p.id
                 AND s.submitted = TRUE
                 AND EXISTS (SELECT r.assessor FROM s.results r
-                    WHERE r.assessor IS NOT NULL
-                    AND r.completionDate IS NOT NULL))
+                        WHERE r.assessor IS NOT NULL
+                        AND r.completionDate IS NOT NULL))
             AND NOT EXISTS (SELECT prs FROM p.results prs
-                WHERE prs.assessor.id = p.student.id)
+                            WHERE prs.assessor.id = p.student.id)
             """)
     long countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 

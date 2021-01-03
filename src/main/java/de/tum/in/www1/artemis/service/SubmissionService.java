@@ -203,7 +203,7 @@ public class SubmissionService {
      * @return the submission with the given id
      */
     public Submission findOneWithEagerResults(long submissionId) {
-        return submissionRepository.findWithEagerResultsById(submissionId)
+        return submissionRepository.findWithEagerResultsAndAssessorById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
 

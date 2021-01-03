@@ -32,7 +32,7 @@ public class ProgrammingExerciseSimulationIntegrationTest extends AbstractSpring
 
     private Course course;
 
-    private final static int numberOfStudents = 2;
+    private static final int numberOfStudents = 2;
 
     @BeforeEach
     public void setup() {

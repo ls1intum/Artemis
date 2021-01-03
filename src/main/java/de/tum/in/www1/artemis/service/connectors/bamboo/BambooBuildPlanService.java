@@ -152,13 +152,12 @@ public class BambooBuildPlanService {
          */
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
+        // Do not run the builds in extra docker containers if the dev-profile is active
+        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+            defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage));
+        }
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
-                // Do not run the builds in extra docker containers if the dev-profile is active
-                if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                    defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage));
-                }
-
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
                     // Create artifacts and a final task for the execution of static code analysis
                     List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA);
@@ -181,16 +180,30 @@ public class BambooBuildPlanService {
                 }
             }
             case PYTHON, C -> {
-                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "test-reports/*results.xml");
+                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "test-reports/*results.xml");
             }
             case HASKELL -> {
-                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/test-reports/*.xml");
+                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "**/test-reports/*.xml");
             }
             case VHDL, ASSEMBLER -> {
-                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/result.xml");
+                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "**/result.xml");
             }
             case SWIFT -> {
-                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/tests.xml");
+                final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/tests.xml");
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns, false);
+                tasks.add(0, checkoutTask);
+                defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask);
+                if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
+                    // Create artifacts and a final task for the execution of static code analysis
+                    // TODO: change to SWIFT -> requires change in sca-parser
+                    List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.SWIFT);
+                    Artifact[] artifacts = staticCodeAnalysisTools.stream()
+                            .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
+                    defaultJob.artifacts(artifacts);
+                    var scaTasks = readScriptTasksFromTemplate(programmingLanguage, false, true);
+                    defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
+                }
+                return defaultStage.jobs(defaultJob);
             }
             // this is needed, otherwise the compiler complaints with missing return statement
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
@@ -198,13 +211,9 @@ public class BambooBuildPlanService {
     }
 
     private Stage createDefaultStage(ProgrammingLanguage programmingLanguage, boolean sequentialBuildRuns, VcsCheckoutTask checkoutTask, Stage defaultStage, Job defaultJob,
-            Collection<String> activeProfiles, String resultDirectories) {
-        // Do not run the builds in extra docker containers if the dev-profile is active
-        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-            defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage));
-        }
+            String resultDirectories) {
         final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories(resultDirectories);
-        var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns);
+        var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns, false);
         tasks.add(0, checkoutTask);
         return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
     }
@@ -272,8 +281,9 @@ public class BambooBuildPlanService {
         return new PlanPermissions(new PlanIdentifier(bambooProjectKey, bambooPlanKey)).permissions(permissions);
     }
 
-    private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns) {
-        final var directoryPattern = "templates/bamboo/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
+    private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns, final boolean getScaTasks) {
+        final var directoryPattern = "templates/bamboo/" + programmingLanguage.name().toLowerCase()
+                + (getScaTasks ? "/staticCodeAnalysisRuns/" : sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
         try {
             List<Task<?, ?>> tasks = new ArrayList<>();
             final var scriptResources = Arrays.asList(resourceLoaderService.getResources(directoryPattern));
