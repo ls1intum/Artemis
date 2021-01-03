@@ -272,8 +272,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p left join fetch p.submissions s left join fetch s.results r
                 WHERE p.exercise.id = :#{#exerciseId}
-                            and
-              :#{#correctionRound} + 1L  = (SELECT COUNT(r)
+                            AND s.id = (select max(id) from p.submissions)
+                            AND :#{#correctionRound} + 1L  = (SELECT COUNT(r)
                              FROM Result r2 where r2.assessor IS NOT NULL
                                     AND r2.submission = s
                                     AND (p.exercise.dueDate IS NULL OR r2.submission.submissionDate <= p.exercise.dueDate))
