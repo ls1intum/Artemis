@@ -40,7 +40,6 @@ describe('ExerciseGroupUpdateComponent', () => {
     let fixture: ComponentFixture<ExerciseGroupUpdateComponent>;
     let service: ExerciseGroupService;
     const mockRouter = new MockRouter();
-    let mockActivatedRoute: any;
     let alertServiceStub: SinonStub;
     let alertService: JhiAlertService;
 
@@ -65,7 +64,6 @@ describe('ExerciseGroupUpdateComponent', () => {
         component = fixture.componentInstance;
         service = TestBed.inject(ExerciseGroupService);
         alertService = TestBed.inject(JhiAlertService);
-        mockActivatedRoute = sinon.createStubInstance(ActivatedRoute);
     });
 
     // Always initialized and bind before tests
