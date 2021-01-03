@@ -151,9 +151,9 @@ public class SubmissionService {
     public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(Long exerciseId, User tutor, boolean examMode, Long correctionRound) {
         List<T> submissions;
         if (examMode) {
-            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor,
-                    correctionRound);
+            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
+                    .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound.intValue()) != null)
                     .collect(toList());
         }
         else {
@@ -161,6 +161,7 @@ public class SubmissionService {
         }
 
         submissions.forEach(submission -> submission.getLatestResult().setSubmission(null));
+
         return submissions;
     }
 

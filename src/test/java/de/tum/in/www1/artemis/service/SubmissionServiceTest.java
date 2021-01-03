@@ -253,7 +253,6 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(submissionListTutor2CorrectionRound0.size()).isEqualTo(0);
         assertThat(submissionListTutor1CorrectionRound1.size()).isEqualTo(0);
         assertThat(submissionListTutor2CorrectionRound1.size()).isEqualTo(1);
-        assertThat(submissionListTutor1CorrectionRound1.get(0)).isEqualTo(submission1);
 
     }
 
@@ -275,7 +274,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Result resultForSecondCorrectionWithLock;
 
         resultForSecondCorrectionWithLock = submissionService.saveNewEmptyResult(submission1);
-        resultForSecondCorrectionWithLock.setAssessor(tutor1);
+        resultForSecondCorrectionWithLock.setAssessor(tutor2);
         resultForSecondCorrectionWithLock.setAssessmentType(AssessmentType.MANUAL);
         resultRepository.save(resultForSecondCorrectionWithLock);
 
@@ -301,7 +300,6 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(submissionListTutor2CorrectionRound0.size()).isEqualTo(0);
         assertThat(submissionListTutor1CorrectionRound1.size()).isEqualTo(0);
         assertThat(submissionListTutor2CorrectionRound1.size()).isEqualTo(1);
-        assertThat(submissionListTutor1CorrectionRound1.get(0)).isEqualTo(submission1);
     }
 
 }
