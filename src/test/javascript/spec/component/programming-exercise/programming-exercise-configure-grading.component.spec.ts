@@ -628,9 +628,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         headerElement.nativeElement.click();
         fixture.detectChanges();
 
-        let sortIcon = getElement(headerElement, 'fa-icon').attributes['ng-reflect-icon'].value;
+        const sortIcon = getElement(headerElement, 'fa-icon').attributes['ng-reflect-icon'].value;
 
-        expect(comp.tableSorts[table]).to.deep.equal([{ prop: prop, dir: dir }]);
+        expect(comp.tableSorts[table]).to.deep.equal([{ prop, dir }]);
         expect(sortIcon).to.equal(dir === 'asc' ? 'sort-up' : 'sort-down');
     };
 
