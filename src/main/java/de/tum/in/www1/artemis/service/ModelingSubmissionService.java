@@ -75,6 +75,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * Get a modeling submission of the given exercise that still needs to be assessed, assign the automatic result of Compass to it and lock the submission to prevent other tutors from receiving and assessing it.
      *
      * @param modelingExercise the exercise the submission should belong to
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a locked modeling submission that needs an assessment
      */
@@ -94,6 +95,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * "Connection is read-only" from hibernate when saving the result in CompassService#assessAutomatically.
      *
      * @param modelingExercise the modeling exercise for which we want to get a modeling submission without result
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a modeling submission without any result
      */

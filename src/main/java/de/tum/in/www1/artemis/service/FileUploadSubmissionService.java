@@ -74,6 +74,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param fileUploadExercise the exercise for which we want to retrieve a submission without manual result
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
@@ -210,6 +211,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      * Get a file upload submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
      *
      * @param fileUploadExercise the exercise the submission should belong to
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a locked file upload submission that needs an assessment
      */

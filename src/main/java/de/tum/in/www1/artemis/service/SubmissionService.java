@@ -142,6 +142,7 @@ public class SubmissionService {
      * Given an exercise id and a tutor id, it returns all the submissions where the tutor has a result associated.
      *
      * @param exerciseId - the id of the exercise we are looking for
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param tutor - the tutor we are interested in
      * @param examMode - flag should be set to ignore the test run submissions
      * @param <T> the submission type
@@ -169,6 +170,7 @@ public class SubmissionService {
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param exercise the exercise for which we want to retrieve a submission without manual result
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */

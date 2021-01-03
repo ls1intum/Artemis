@@ -602,6 +602,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * submissions
      *
      * @param exerciseId    - the id of the exercise we are interested into
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
      * @param examMode - set flag to ignore test run submissions for exam exercises
      * @return a list of programming submissions for the given exercise id
@@ -629,6 +630,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
@@ -672,6 +674,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * Get a programming submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
      *
      * @param exercise the exercise the submission should belong to
+     * @param correctionRound - the correction round we want our submission to have results for
      * @return a locked programming submission that needs an assessment
      */
     public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise, long correctionRound) {

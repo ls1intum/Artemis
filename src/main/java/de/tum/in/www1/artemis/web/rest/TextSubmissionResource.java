@@ -174,11 +174,12 @@ public class TextSubmissionResource {
     }
 
     /**
-     * GET /text-submissions : get all the textSubmissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
-     * assessed by the tutor who is doing the call.
+     * GET /text-submissions : get all the textSubmissions for an exercise. It is possible to filter, to receive only the one that have been already submitted,
+     * or only the one assessed by the tutor who is doing the call.
      * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId exerciseID  for which all submissions should be returned
+     * @param correctionRound get submission with results in the correction round
      * @param submittedOnly mark if only submitted Submissions should be returned
      * @param assessedByTutor mark if only assessed Submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body

@@ -148,6 +148,7 @@ public class TextSubmissionService extends SubmissionService {
      * assessment for the corresponding submission yet.
      *
      * @param textExercise the exercise for which we want to retrieve a submission without manual result
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
@@ -160,6 +161,7 @@ public class TextSubmissionService extends SubmissionService {
      * assessment for the corresponding submission yet.
      *
      * @param textExercise the exercise for which we want to retrieve a submission without manual result
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param skipAssessmentQueue skip using the assessment queue and do NOT optimize the assessment order (default: false)
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
@@ -209,6 +211,7 @@ public class TextSubmissionService extends SubmissionService {
      * Given an exercise id and a tutor id, it returns all the text submissions where the tutor has a result associated
      *
      * @param exerciseId - the id of the exercise we are looking for
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param tutor - the tutor we are interested in
      * @param examMode - flag should be set to ignore the test run submissions
      * @return a list of text Submissions
@@ -222,6 +225,7 @@ public class TextSubmissionService extends SubmissionService {
      * Given an exerciseId, returns all the submissions for that exercise, including their results. Submissions can be filtered to include only already submitted submissions
      *
      * @param exerciseId    - the id of the exercise we are interested into
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
      * @param examMode - set flag to ignore test run submissions
      * @return a list of text submissions for the given exercise id
@@ -271,6 +275,7 @@ public class TextSubmissionService extends SubmissionService {
      * Find a text submission of the given exercise that still needs to be assessed and lock it to prevent other tutors from receiving and assessing it.
      *
      * @param textExercise the exercise the submission should belong to
+     * @param correctionRound get submission with results in the correction round
      * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a locked modeling submission that needs an assessment
      */

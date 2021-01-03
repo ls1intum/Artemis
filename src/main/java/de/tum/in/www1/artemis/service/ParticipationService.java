@@ -1004,6 +1004,7 @@ public class ParticipationService {
      * No manual result means that no user has started an assessment for the corresponding submission yet.
      *
      * @param exerciseId the id of the exercise the participations should belong to
+     * @param correctionRound - the correction round we want our submission to have results for
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
     public List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(Long exerciseId, Long correctionRound) {

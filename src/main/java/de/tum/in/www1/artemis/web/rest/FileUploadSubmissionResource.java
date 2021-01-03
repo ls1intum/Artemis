@@ -171,6 +171,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId the id of the exercise
+     * @param correctionRound get submission with results for the given correction round
      * @param submittedOnly if only submitted submissions should be returned
      * @param assessedByTutor if the submission was assessed by calling tutor
      * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
