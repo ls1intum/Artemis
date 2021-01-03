@@ -113,7 +113,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
     it('should get Submissions', () => {
         // test getSubmissions
         const filterSubmissionsSpy = spyOn(component, 'filterSubmissions');
-        const modelingSubmissionServiceSpy = spyOn(modelingSubmissionService, 'getModelingSubmissionsForExercise').and.returnValue(
+        const modelingSubmissionServiceSpy = spyOn(modelingSubmissionService, 'getModelingSubmissionsForExerciseByCorrectionRound').and.returnValue(
             of(new HttpResponse({ body: [modelingSubmission] })),
         );
 

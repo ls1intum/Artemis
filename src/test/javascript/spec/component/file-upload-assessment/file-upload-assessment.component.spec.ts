@@ -84,7 +84,10 @@ describe('FileUploadAssessmentComponent', () => {
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
                 fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
-                getFileUploadSubmissionForExerciseWithoutAssessmentStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionForExerciseWithoutAssessment');
+                getFileUploadSubmissionForExerciseWithoutAssessmentStub = stub(
+                    fileUploadSubmissionService,
+                    'getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment',
+                );
 
                 fixture.ngZone!.run(() => {
                     router.initialNavigation();

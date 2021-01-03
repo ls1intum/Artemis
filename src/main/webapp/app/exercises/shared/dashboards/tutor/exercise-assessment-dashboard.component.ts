@@ -347,7 +347,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     return submission;
                 });
-                console.log('Assessed submission for correctionround and tutor:', correctionRound, sub);
 
                 this.submissionsByCorrectionRound!.set(correctionRound, sub); // todo NR
             });
@@ -394,14 +393,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     private getSubmissionWithoutAssessmentForCorrectionround(correctionRound: number): void {
         let submissionObservable: Observable<Submission> = of();
-        console.log('');
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
-                console.log('unassessed for textexercises!');
                 submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exerciseId, 'head', correctionRound);
                 break;
             case ExerciseType.MODELING:
-                console.log('unassessed for modelingexercise!');
                 submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(
                     this.exerciseId,
                     undefined,
@@ -426,7 +422,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
         submissionObservable.subscribe(
             (submission: Submission) => {
-                console.log('unassessed submission for correctionround:', correctionRound, submission);
                 if (submission) {
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     this.unassessedSubmissionByCorrectionRound!.set(correctionRound, submission);
@@ -436,12 +431,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    console.log('on 404: ', this.unassessedSubmissionByCorrectionRound, correctionRound);
                     if (this.unassessedSubmissionByCorrectionRound) {
                         this.unassessedSubmissionByCorrectionRound.delete(correctionRound);
                     }
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    console.log('submissionLimit reached');
                     this.submissionLockLimitReached = true;
                 } else {
                     this.onError(error.message);

@@ -168,9 +168,10 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 );
                 findByResultIdStub = stub(complaintService, 'findByResultId').returns(of({ body: complaint } as HttpResponse<Complaint>));
                 getIdentityStub = stub(accountService, 'identity').returns(new Promise((promise) => promise(user)));
-                getProgrammingSubmissionForExerciseWithoutAssessmentStub = stub(programmingSubmissionService, 'getProgrammingSubmissionForExerciseWithoutAssessment').returns(
-                    of(unassessedSubmission),
-                );
+                getProgrammingSubmissionForExerciseWithoutAssessmentStub = stub(
+                    programmingSubmissionService,
+                    'getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment',
+                ).returns(of(unassessedSubmission));
 
                 findWithParticipationsStub = stub(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
                 findWithParticipationsStub.returns(of({ body: exercise }));
