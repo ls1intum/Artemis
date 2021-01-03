@@ -2,7 +2,7 @@
     height: 100%;
     overflow-y: auto;
     padding: 0.5rem;
-    white-space: pre;
+    white-space: pre-wrap;
     word-wrap: normal;
 
     &.no-file {
@@ -11,6 +11,7 @@
 
     &.is-code {
         font-family: monospace;
+        white-space: pre;
     }
 }
 
