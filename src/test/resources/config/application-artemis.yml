@@ -3,8 +3,8 @@
 # ===================================================================
 
 artemis:
-    repo-clone-path: ./repos/
-    repo-download-clone-path: ./repos-download/
+    repo-clone-path: ./repos/server-integration-test
+    repo-download-clone-path: ./repos-download/server-integration-test
     encryption-password: fake-password
     user-management:
         use-external: true

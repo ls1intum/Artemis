@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.util;
 
 import java.io.*;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -26,13 +25,13 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 @Service
 public class GitUtilService {
 
-    private final String localRepositoryRoot = "./repos";
+    // Note: the first string has to be same as artemis.repo-clone-path (see src/test/resources/config/application-artemis.yml) because here local git repos will be cloned
+    private final Path localPath = Paths.get("./repos/server-integration-test").resolve("test-repository");
 
-    private final String remoteRepositoryRoot = ".";
+    private final Path remotePath = Files.createTempDirectory("remotegittest").resolve("scm/test-repository");
 
-    private final String localRepositoryName = "test-repository";
-
-    private final String remoteRepositoryName = "scm/test-repository";
+    public GitUtilService() throws IOException {
+    }
 
     public enum FILES {
         FILE1, FILE2, FILE3
@@ -51,19 +50,22 @@ public class GitUtilService {
 
     private Git localGit;
 
+    private Git remoteGit;
+
     public void initRepo() {
         try {
             deleteRepos();
-            Git remoteGit = Git.init().setDirectory(new File(remoteRepositoryRoot + "/" + remoteRepositoryName)).call();
-            new File(remoteRepositoryRoot + "/" + remoteRepositoryName + "/" + FILES.FILE1).createNewFile();
-            new File(remoteRepositoryRoot + "/" + remoteRepositoryName + "/" + FILES.FILE2).createNewFile();
-            new File(remoteRepositoryRoot + "/" + remoteRepositoryName + "/" + FILES.FILE3).createNewFile();
+
+            remoteGit = Git.init().setDirectory(remotePath.toFile()).call();
+
+            // create some files in the remote repository and clone them
+            remotePath.resolve(FILES.FILE1.toString()).toFile().createNewFile();
+            remotePath.resolve(FILES.FILE2.toString()).toFile().createNewFile();
+            remotePath.resolve(FILES.FILE3.toString()).toFile().createNewFile();
             remoteGit.add().addFilepattern(".").call();
             remoteGit.commit().setMessage("initial commit").call();
 
-            // TODO: use a temp folder instead
-            localGit = Git.cloneRepository().setURI(System.getProperty("user.dir") + "/" + remoteRepositoryRoot + "/" + remoteRepositoryName + "/.git")
-                    .setDirectory(new File(localRepositoryRoot + "/" + localRepositoryName)).call();
+            localGit = Git.cloneRepository().setURI(remotePath.toString()).setDirectory(localPath.toFile()).call();
 
             reinitializeLocalRepository();
             reinitializeRemoteRepository();
@@ -74,18 +76,17 @@ public class GitUtilService {
     }
 
     public void reinitializeLocalRepository() throws IOException {
-        localRepo = initializeRepo(localRepositoryRoot, localRepositoryName);
+        localRepo = initializeRepo(localPath);
     }
 
     public void reinitializeRemoteRepository() throws IOException {
-        remoteRepo = initializeRepo(remoteRepositoryRoot, remoteRepositoryName);
+        remoteRepo = initializeRepo(remotePath);
     }
 
-    private Repository initializeRepo(String repositoryRoot, String repositoryName) throws IOException {
+    private Repository initializeRepo(Path path) throws IOException {
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        var remoteRepoFile = new java.io.File(repositoryRoot + "/" + repositoryName + "/.git");
-        builder.setGitDir(remoteRepoFile).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
-        return new Repository(builder, remoteRepoFile.toPath(), null);
+        builder.setGitDir(path.resolve(".git").toFile()).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
+        return new Repository(builder, path, null);
     }
 
     public void deleteRepos() {
@@ -99,8 +100,11 @@ public class GitUtilService {
             if (localGit != null) {
                 localGit.close();
             }
-            FileUtils.deleteDirectory(new File(localRepositoryRoot + "/" + localRepositoryName));
-            FileUtils.deleteDirectory(new File(remoteRepositoryRoot + "/" + remoteRepositoryName));
+            if (remoteGit != null) {
+                remoteGit.close();
+            }
+            FileUtils.deleteDirectory(localPath.toFile());
+            FileUtils.deleteDirectory(remotePath.toFile());
             localRepo = null;
             remoteRepo = null;
         }
@@ -180,7 +184,6 @@ public class GitUtilService {
         String fileContentRemote3 = getFileContent(REPOS.REMOTE, GitUtilService.FILES.FILE3);
 
         return fileContentLocal1.equals(fileContentRemote1) && fileContentLocal2.equals(fileContentRemote2) && fileContentLocal3.equals(fileContentRemote3);
-
     }
 
     public void setRepositoryToNull(REPOS repo) {
@@ -197,33 +200,12 @@ public class GitUtilService {
     }
 
     public String getCompleteRepoPathStringByType(REPOS repo) {
-        return repo == REPOS.LOCAL ? localRepositoryRoot + "/" + localRepositoryName : remoteRepositoryRoot + "/" + remoteRepositoryName;
+        return repo == REPOS.LOCAL ? localPath.toString() : remotePath.toString();
     }
 
-    public Path getCompleteRepoPathByType(REPOS repo) {
-        return Paths.get(getCompleteRepoPathStringByType(repo));
-    }
-
-    public URL getCompleteRepoUrlByType(REPOS repo) {
+    public VcsRepositoryUrl getRepoUrlByType(REPOS repo) {
         try {
-            return new URL("http://" + getCompleteRepoPathStringByType(repo));
-        }
-        catch (MalformedURLException ignored) {
-        }
-        return null;
-    }
-
-    public String getLocalRepoPathStringByType(REPOS repo) {
-        return repo == REPOS.LOCAL ? localRepositoryName : remoteRepositoryName;
-    }
-
-    public Path getLocalRepoPathByType(REPOS repo) {
-        return Paths.get(getLocalRepoPathStringByType(repo));
-    }
-
-    public VcsRepositoryUrl getLocalRepoUrlByType(REPOS repo) {
-        try {
-            return new VcsRepositoryUrl("file://" + System.getProperty("user.dir") + "/" + getLocalRepoPathByType(repo));
+            return new VcsRepositoryUrl("file://" + getCompleteRepoPathStringByType(repo));
         }
         catch (MalformedURLException ignored) {
         }

@@ -49,21 +49,23 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @Test
     public void checkoutRepositoryAlreadyOnServer() throws GitAPIException, InterruptedException {
-        var localPath = gitUtilService.getLocalRepoUrlByType(GitUtilService.REPOS.REMOTE);
+        var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
         String newFileContent = "const a = arr.reduce(sum)";
         gitUtilService.updateFile(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1, newFileContent);
-        gitService.getOrCheckoutRepository(localPath, true);
+        // Note: the test updates the file, but does not commit the update to the remote repository...
+        gitService.getOrCheckoutRepository(repoUrl, true);
 
         assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1)).isEqualTo(newFileContent);
+        // ... therefore it is NOT available in the local repository
+        assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1)).isNotEqualTo(newFileContent);
     }
 
     @Test
     public void checkoutRepositoryNotOnServer() throws GitAPIException, InterruptedException, IOException {
-        var localPath = gitUtilService.getLocalRepoUrlByType(GitUtilService.REPOS.REMOTE);
+        var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
         gitUtilService.deleteRepo(GitUtilService.REPOS.LOCAL);
-        gitService.getOrCheckoutRepository(localPath, true);
         gitUtilService.reinitializeLocalRepository();
-
+        gitService.getOrCheckoutRepository(repoUrl, true);
         assertThat(gitUtilService.isLocalEqualToRemote()).isTrue();
     }
 
