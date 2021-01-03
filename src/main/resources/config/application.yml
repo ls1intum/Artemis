@@ -142,7 +142,7 @@ spring:
             password: guest
             addresses: "" # Comma separated list of hosts and ports of the brokers (e.g. "localhost:61613,localhost:61614")
     hazelcast:
-        interface: "" # The interface to bind to, if non is set, all interfaces will be bound
+        interface: "127.0.0.1" # The interface to bind to, if non is set, all interfaces will be bound
         port: 5701 # The hazelcast port that this instance runs on and where other instances are expected
         localInstances: false # Whether the other instances are expected locally (in dev mode) or external
 

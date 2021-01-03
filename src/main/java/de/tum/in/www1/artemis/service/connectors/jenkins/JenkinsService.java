@@ -40,10 +40,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.FolderJob;
 import com.offbytwo.jenkins.model.JobWithDetails;
 
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -109,7 +106,8 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL, URL solutionRepositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
+            VcsRepositoryUrl solutionRepositoryURL) {
         try {
             // TODO support sequential test runs
             final var configBuilder = builderFor(exercise.getProgrammingLanguage());
@@ -446,6 +444,10 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
+        if (participation.getBuildPlanId() == null) {
+            // The build plan does not exist, the build status cannot be retrieved
+            return null;
+        }
         final var isQueued = getJob(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId()).isInQueue();
         if (isQueued) {
             return BuildStatus.QUEUED;
@@ -455,7 +457,6 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var url = Endpoint.LAST_BUILD.buildEndpoint(jenkinsServerUrl.toString(), projectKey, planKey).build(true).toString();
         try {
             final var jobStatus = restTemplate.getForObject(url, JsonNode.class);
-
             return jobStatus.get("building").asBoolean() ? BuildStatus.BUILDING : BuildStatus.INACTIVE;
         }
         catch (HttpClientErrorException e) {
@@ -732,6 +733,10 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private JobWithDetails getJob(String projectKey, String jobName) {
+        if (projectKey == null || jobName == null) {
+            log.warn("Cannot get the job, because projectKey " + projectKey + " or jobName " + jobName + " is null");
+            return null;
+        }
         final var folder = getFolderJob(projectKey);
         try {
             return jenkinsServer.getJob(folder, jobName);
