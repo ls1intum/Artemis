@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.AfterEach;
@@ -95,7 +96,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         MockMultipartFile file = new MockMultipartFile("file", "icon.png", "application/json", "some data".getBytes());
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
-        String iconPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getCourseIconFilepath(), course.getId());
+        String iconPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getCourseIconFilePath(), course.getId());
 
         course.setCourseIcon(iconPath);
         courseRepo.save(course);
@@ -115,7 +116,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         MockMultipartFile file = new MockMultipartFile("file", "background.png", "application/json", "some data".getBytes());
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
-        String backgroundPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getDragAndDropBackgroundFilepath(), dragAndDropQuestion.getId());
+        String backgroundPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getDragAndDropBackgroundFilePath(), dragAndDropQuestion.getId());
 
         dragAndDropQuestion.setBackgroundFilePath(backgroundPath);
         courseRepo.save(course);
@@ -137,7 +138,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         MockMultipartFile file = new MockMultipartFile("file", "background.png", "application/json", "some data".getBytes());
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
-        String dragItemPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getDragItemFilepath(), dragItem.getId());
+        String dragItemPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getDragItemFilePath(), dragItem.getId());
 
         dragItem.setPictureFilePath(dragItemPath);
         courseRepo.save(course);
@@ -224,8 +225,8 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
         String responsePath = response.get("path").asText();
         // move file from temp folder to correct folder
-        String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, FilePathService.getLectureAttachmentFilepath() + lecture.getId() + File.separator,
-                lecture.getId(), true);
+        var targetFolder = Paths.get(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId())).toString();
+        String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, targetFolder, lecture.getId(), true);
 
         attachment.setLink(attachmentPath);
         lecture.addAttachments(attachment);

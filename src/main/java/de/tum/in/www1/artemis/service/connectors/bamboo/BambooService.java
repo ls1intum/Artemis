@@ -113,18 +113,19 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, URL sourceCodeRepositoryURL, URL testRepositoryURL, URL solutionRepositoryURL) {
-        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromUrl(sourceCodeRepositoryURL),
-                urlService.getRepositorySlugFromUrl(testRepositoryURL), urlService.getRepositorySlugFromUrl(solutionRepositoryURL));
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
+            VcsRepositoryUrl solutionRepositoryURL) {
+        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromRepositoryUrl(sourceCodeRepositoryURL),
+                urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL));
     }
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         final var buildPlanId = participation.getBuildPlanId();
-        final var repositoryUrl = participation.getRepositoryUrlAsUrl();
+        final var repositoryUrl = participation.getVcsRepositoryUrl();
         final var projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
         final var planKey = participation.getBuildPlanId();
-        final var repoProjectName = urlService.getProjectKeyFromUrl(repositoryUrl);
+        final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, Optional.empty());
         enablePlan(projectKey, planKey);
     }
@@ -136,7 +137,7 @@ public class BambooService implements ContinuousIntegrationService {
         if (isEmptyCommitNecessary) {
             try {
                 ProgrammingExercise exercise = participation.getProgrammingExercise();
-                URL repositoryUrl = participation.getRepositoryUrlAsUrl();
+                var repositoryUrl = participation.getVcsRepositoryUrl();
                 Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, true);
                 // we set user to null to make sure the Artemis user is used to create the setup commit, this is important to filter this commit later in
                 // notifyPush in ProgrammingSubmissionService
@@ -201,15 +202,8 @@ public class BambooService implements ContinuousIntegrationService {
         // NOTE: we cannot use official the REST API, e.g. restTemplate.delete(bambooServerUrl + "/rest/api/latest/plan/" + buildPlanId) here,
         // because then the build plan is not deleted directly and subsequent calls to create build plans with the same id might fail
 
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("selectedBuilds", buildPlanId);
-        parameters.add("confirm", "true");
-        parameters.add("bamboo.successReturnMode", "json");
-
-        String requestUrl = bambooServerUrl + "/admin/deleteBuilds.action";
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
-        // TODO: in order to do error handling, we have to read the return value of this REST call
-        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
+        executeDelete("selectedBuilds", buildPlanId);
+        log.info("Delete bamboo build plan " + buildPlanId + " was successful.");
     }
 
     /**
@@ -257,7 +251,7 @@ public class BambooService implements ContinuousIntegrationService {
         // because then the build plans are not deleted directly and subsequent calls to create build plans with the same id might fail
 
         // in normal cases this list should be empty, because all build plans have been deleted before
-        List<BambooBuildPlanDTO> buildPlans = getBuildPlans(projectKey);
+        final var buildPlans = getBuildPlans(projectKey);
         for (var buildPlan : buildPlans) {
             try {
                 deleteBuildPlan(projectKey, buildPlan.getKey());
@@ -267,8 +261,13 @@ public class BambooService implements ContinuousIntegrationService {
             }
         }
 
+        executeDelete("selectedProjects", projectKey);
+        log.info("Delete bamboo project " + projectKey + " was successful.");
+    }
+
+    private void executeDelete(String elementKey, String elementValue) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("selectedProjects", projectKey);
+        parameters.add(elementKey, elementValue);
         parameters.add("confirm", "true");
         parameters.add("bamboo.successReturnMode", "json");
 
@@ -276,8 +275,6 @@ public class BambooService implements ContinuousIntegrationService {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
         // TODO: in order to do error handling, we have to read the return value of this REST call
         var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
-
-        log.info("Delete bamboo project " + projectKey + " was successful.");
     }
 
     /**
@@ -501,7 +498,7 @@ public class BambooService implements ContinuousIntegrationService {
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
         try {
-            final var vcsRepoName = versionControlService.get().getRepositoryName(new URL(newRepoUrl));
+            final var vcsRepoName = versionControlService.get().getRepositoryName(new VcsRepositoryUrl(newRepoUrl));
             continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, optionalTriggeredByRepositories);
         }
         catch (MalformedURLException e) {
