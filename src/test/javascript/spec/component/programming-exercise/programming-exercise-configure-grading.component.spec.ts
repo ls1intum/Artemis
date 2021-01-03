@@ -623,4 +623,62 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         fixture.destroy();
         flush();
     }));
+
+    const sortAndTestTable = (table: string) => (headerElement: DebugElement, prop: string, dir: string) => {
+        headerElement.nativeElement.click();
+        fixture.detectChanges();
+
+        let sortIcon = getElement(headerElement, 'fa-icon').attributes['ng-reflect-icon'].value;
+
+        expect(comp.tableSorts[table]).to.deep.equal([{ prop: prop, dir: dir }]);
+        expect(sortIcon).to.equal(dir === 'asc' ? 'sort-up' : 'sort-down');
+    };
+
+    it('should sort test-case table', fakeAsync(() => {
+        initGradingComponent();
+
+        fixture.detectChanges();
+
+        const table = debugElement.query(By.css(testCaseTableId));
+        const headerColumns = table.queryAll(By.css('.datatable-header-cell-wrapper'));
+
+        const sortAndTest = sortAndTestTable('testCases');
+
+        const weightHeader = headerColumns[1];
+        sortAndTest(weightHeader, 'weight', 'asc');
+        sortAndTest(weightHeader, 'weight', 'desc');
+
+        const passedPercentHeader = headerColumns[6];
+        sortAndTest(passedPercentHeader, 'passedPercent', 'asc');
+        sortAndTest(passedPercentHeader, 'passedPercent', 'desc');
+
+        tick();
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should sort code-analysis table', fakeAsync(() => {
+        initGradingComponent({ tab: 'code-analysis' });
+
+        fixture.detectChanges();
+
+        const table = debugElement.query(By.css(codeAnalysisTableId));
+        const headerColumns = table.queryAll(By.css('.datatable-header-cell-wrapper'));
+
+        const sortAndTest = sortAndTestTable('codeAnalysis');
+
+        const penaltyHeader = headerColumns[2];
+        sortAndTest(penaltyHeader, 'penalty', 'asc');
+
+        const maxPenaltyHeader = headerColumns[3];
+        sortAndTest(maxPenaltyHeader, 'maxPenalty', 'asc');
+
+        const detectedIssuesHeader = headerColumns[4];
+        sortAndTest(detectedIssuesHeader, 'detectedIssues', 'asc');
+        sortAndTest(detectedIssuesHeader, 'detectedIssues', 'desc');
+
+        tick();
+        fixture.destroy();
+        flush();
+    }));
 });
