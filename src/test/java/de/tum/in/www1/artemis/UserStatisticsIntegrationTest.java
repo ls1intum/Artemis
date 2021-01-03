@@ -27,7 +27,7 @@ public class UserStatisticsIntegrationTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(10, 0, 0);
+        database.addUsers(12, 0, 0);
 
         var course = database.addCourseWithOneModelingExercise();
         var now = ZonedDateTime.now();
@@ -35,9 +35,9 @@ public class UserStatisticsIntegrationTest extends AbstractSpringIntegrationBamb
         course.addExercises(textExercise);
         textExerciseRepository.save(textExercise);
 
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= 12; i++) {
             TextSubmission textSubmission = new TextSubmission();
-            textSubmission.submissionDate(now);
+            textSubmission.submissionDate(ZonedDateTime.now().minusMonths(i - 1).withDayOfMonth(10));
             database.addSubmission(textExercise, textSubmission, "student" + i);
         }
     }
