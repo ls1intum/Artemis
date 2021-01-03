@@ -152,7 +152,19 @@
                 },
                 "charts": {
                     "title": "Charts",
-                    "preview": "Preview"
+                    "preview": "Preview",
+                    "testCaseWeights": {
+                        "title": "Weight Distribution",
+                        "description": "The distribution of test case weights in the exercise.<br/>Hover over a colored block to see the test-case details."
+                    },
+                    "testCasePoints": {
+                        "title": "Total Points",
+                        "description": "The percentage of points given to students according to a specific test case.<br/>Hover over a colored block to see the test-case details."
+                    },
+                    "categoryDistribution": {
+                        "title": "Category Distribution",
+                        "description": "The distribution of categories across the metrices 'Penalty', 'Issues' and 'Points'. Hover over a colored block to see the category details."
+                    }
                 },
                 "help": {
                     "state": "Determines whether issues in this category should be shown to the students and used for grading.",

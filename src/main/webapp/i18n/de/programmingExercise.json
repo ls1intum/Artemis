@@ -152,7 +152,19 @@
                 },
                 "charts": {
                     "title": "Diagramme",
-                    "preview": "Vorschau"
+                    "preview": "Vorschau",
+                    "testCaseWeights": {
+                        "title": "Gewichtungs-Verteilung",
+                        "description": "Die Verteilung der Gewichtungen der Testfälle auf die Aufgabe.<br/>Bewege die Maus über einen farbigen Abschnitt um mehr Details zu sehen."
+                    },
+                    "testCasePoints": {
+                        "title": "Punkte-Verteilung",
+                        "description": "Der prozentuale Anteil von verteilten Punkten für ein bestimmten Testfall.<br/>Bewege die Maus über einen farbigen Abschnitt um mehr Details zu sehen."
+                    },
+                    "categoryDistribution": {
+                        "title": "Kategorie-Verteilung",
+                        "description": "Die Verteilung der Kategorien in Bezug auf 'Penalty', 'Issues' und 'Punkte'.<br/>Bewege die Maus über einen farbigen Abschnitt um mehr Details zu sehen."
+                    }
                 },
                 "help": {
                     "state": "Gibt an ob Issues in dieser Kategorie den Studenten angezeigt und bewertet werden sollen.",
