@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLArtifact extends UMLElement {
 
-    public final static String UML_ARTIFACT_TYPE = "DeploymentArtifact";
+    public static final String UML_ARTIFACT_TYPE = "DeploymentArtifact";
 
     private final String name;
 

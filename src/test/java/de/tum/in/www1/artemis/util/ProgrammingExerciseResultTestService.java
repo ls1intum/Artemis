@@ -75,9 +75,13 @@ public class ProgrammingExerciseResultTestService {
 
     public void setup() {
         database.addUsers(10, 2, 2);
-        Course course = database.addCourseWithOneProgrammingExercise();
+        setupForProgrammingLanguage(ProgrammingLanguage.JAVA);
+    }
+
+    public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
+        Course course = database.addCourseWithOneProgrammingExercise(false, programmingLanguage);
         programmingExercise = programmingExerciseRepository.findAll().get(0);
-        programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true);
+        programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
@@ -110,7 +114,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification) {
+    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification, ProgrammingLanguage programmingLanguage) {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
         final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
 
@@ -129,7 +133,7 @@ public class ProgrammingExerciseResultTestService {
         var result = optionalResult.get();
         assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(savedResult.getFeedbacks());
         assertThat(result.getFeedbacks().stream().filter(Feedback::isStaticCodeAnalysisFeedback).count())
-                .isEqualTo(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA).size());
+                .isEqualTo(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage).size());
     }
 
     // Test

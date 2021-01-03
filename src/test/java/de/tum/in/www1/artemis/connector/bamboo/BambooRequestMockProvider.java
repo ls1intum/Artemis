@@ -10,9 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
@@ -20,9 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.util.LinkedMultiValueMap;
@@ -33,6 +29,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -51,14 +48,23 @@ public class BambooRequestMockProvider {
     private String vcsApplicationLinkName;
 
     @Autowired
+    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
+
+    @Autowired
     private ObjectMapper mapper;
 
     private final RestTemplate restTemplate;
 
+    private final RestTemplate shortTimeoutRestTemplate;
+
     private MockRestServiceServer mockServer;
 
-    public BambooRequestMockProvider(@Qualifier("bambooRestTemplate") RestTemplate restTemplate) {
+    private MockRestServiceServer mockServerShortTimeout;
+
+    public BambooRequestMockProvider(@Qualifier("bambooRestTemplate") RestTemplate restTemplate,
+            @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
     public void enableMockingOfRequests() {
@@ -69,6 +75,10 @@ public class BambooRequestMockProvider {
         MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
         builder.ignoreExpectOrder(ignoreExpectOrder);
         mockServer = builder.build();
+
+        MockRestServiceServer.MockRestServiceServerBuilder builderShortTimeout = MockRestServiceServer.bindTo(shortTimeoutRestTemplate);
+        builderShortTimeout.ignoreExpectOrder(ignoreExpectOrder);
+        mockServerShortTimeout = builderShortTimeout.build();
     }
 
     public void reset() {
@@ -92,7 +102,7 @@ public class BambooRequestMockProvider {
      *
      * @param exercise the programming exercise that might already exist
      * @param exists   whether the programming exercise with the same title exists
-     * @throws IOException an IO exception when reading test files
+     * @throws IOException        an IO exception when reading test files
      * @throws URISyntaxException exceptions related to URI handling in test REST calls
      */
     public void mockCheckIfProjectExists(ProgrammingExercise exercise, final boolean exists) throws IOException, URISyntaxException {
@@ -159,8 +169,9 @@ public class BambooRequestMockProvider {
         }
     }
 
-    public void mockGetBuildPlan(String buildPlanId, BambooBuildPlanDTO buildPlanToBeReturned) throws URISyntaxException, JsonProcessingException {
-        final var uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/plan/").pathSegment(buildPlanId).build().toUri();
+    public void mockGetBuildPlan(String buildPlanId, BambooBuildPlanDTO buildPlanToBeReturned) throws JsonProcessingException {
+        String requestUrl = bambooServerUrl + "/rest/api/latest/plan/" + buildPlanId;
+        URI uri = UriComponentsBuilder.fromUriString(requestUrl).build().toUri();
         if (buildPlanToBeReturned != null) {
             mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
                     .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(buildPlanToBeReturned)));
@@ -229,6 +240,22 @@ public class BambooRequestMockProvider {
 
         URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/chain/admin/config/updateRepository.action").queryParams(parameters).build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockUpdatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
+            Optional<List<String>> optionalTriggeredByRepositories) throws URISyntaxException, IOException {
+        mockGetBuildPlanRepositoryList(buildPlanKey);
+
+        bitbucketRequestMockProvider.mockGetBitbucketRepository(repoProjectKey, buildPlanKey.toLowerCase());
+
+        BambooRepositoryDTO bambooRepository = new BambooRepositoryDTO(Long.parseLong("296200357"), ciRepoName);
+        BitbucketRepositoryDTO bitbucketRepository = new BitbucketRepositoryDTO("asd", buildPlanKey.toLowerCase(), repoProjectKey, "ssh:cloneUrl");
+
+        ApplicationLinksDTO applicationLinksToBeReturned = createApplicationLink();
+        mockGetApplicationLinks(applicationLinksToBeReturned);
+        var applicationLink = applicationLinksToBeReturned.getApplicationLinks().get(0);
+
+        mockUpdateRepository(buildPlanKey, bambooRepository, bitbucketRepository, applicationLink);
     }
 
     public ApplicationLinksDTO createApplicationLink() {
@@ -373,12 +400,13 @@ public class BambooRequestMockProvider {
 
     /**
      * configures mock REST request for copying a build plan
-     * @param sourceProjectKey the source Bamboo project key
-     * @param sourcePlanName the source Bamboo build plan name
-     * @param targetProjectKey the target Bamboo project key
-     * @param targetPlanName the target Bamboo build plan name
+     *
+     * @param sourceProjectKey    the source Bamboo project key
+     * @param sourcePlanName      the source Bamboo build plan name
+     * @param targetProjectKey    the target Bamboo project key
+     * @param targetPlanName      the target Bamboo build plan name
      * @param targetProjectExists whether the target project already exists
-     * @throws URISyntaxException can happen due to wrong URL handling
+     * @throws URISyntaxException      can happen due to wrong URL handling
      * @throws JsonProcessingException can happen due to wrong response handling
      */
     public void mockCopyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName, boolean targetProjectExists)
@@ -453,7 +481,7 @@ public class BambooRequestMockProvider {
     public void mockHealth(String state, HttpStatus httpStatus) throws URISyntaxException, JsonProcessingException {
         var response = Map.of("state", state);
         var uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/server").build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+        mockServerShortTimeout.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(httpStatus).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 }
