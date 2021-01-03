@@ -170,6 +170,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r"
+    implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:5.10.0.202012080955-r"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"

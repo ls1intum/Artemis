@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.springframework.stereotype.Service;
 
@@ -30,7 +31,7 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
         String filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
         String[] apiFilePathParts = ((FileUploadSubmission) submission).getFilePath().split("/");
 
-        Path submissionPath = Path.of(filePath, apiFilePathParts[apiFilePathParts.length - 1]);
+        Path submissionPath = Paths.get(filePath, apiFilePathParts[apiFilePathParts.length - 1]);
 
         if (!submissionPath.toFile().exists()) { // throw if submission file does not exist
             throw new IOException("Could not find uploaded file for submission.");

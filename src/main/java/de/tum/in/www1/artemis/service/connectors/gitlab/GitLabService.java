@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 
 import org.gitlab4j.api.GitLabApi;
@@ -94,7 +95,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void configureRepository(ProgrammingExercise exercise, URL repositoryUrl, Set<User> users, boolean allowAccess) {
+    public void configureRepository(ProgrammingExercise exercise, VcsRepositoryUrl repositoryUrl, Set<User> users, boolean allowAccess) {
         for (User user : users) {
             String username = user.getLogin();
 
@@ -117,7 +118,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void addMemberToRepository(URL repositoryUrl, User user) {
+    public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         final var userId = gitLabUserManagementService.getUserId(user.getLogin());
 
@@ -136,7 +137,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void removeMemberFromRepository(URL repositoryUrl, User user) {
+    public void removeMemberFromRepository(VcsRepositoryUrl repositoryUrl, User user) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         final var userId = gitLabUserManagementService.getUserId(user.getLogin());
 
@@ -155,7 +156,7 @@ public class GitLabService extends AbstractVersionControlService {
      * @param branch            The name of the branch to protect (e.g "master")
      * @throws VersionControlException      If the communication with the VCS fails.
      */
-    private void protectBranch(URL repositoryUrl, String branch) {
+    private void protectBranch(VcsRepositoryUrl repositoryUrl, String branch) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         // we have to first unprotect the branch in order to set the correct access level, this is the case, because the master branch is protected for maintainers by default
         // Unprotect the branch in 8 seconds first and then protect the branch in 12 seconds.
@@ -185,7 +186,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void unprotectBranch(URL repositoryUrl, String branch) throws VersionControlException {
+    public void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) throws VersionControlException {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         // Unprotect the branch in 10 seconds. We do this to wait on any async calls to Gitlab and make sure that the branch really exists before unprotecting it.
         unprotectBranch(repositoryId, branch, 10L, TimeUnit.SECONDS);
@@ -221,9 +222,9 @@ public class GitLabService extends AbstractVersionControlService {
         final var templatePlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getTemplateParticipation().getBuildPlanId());
         final var solutionPlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getSolutionParticipation().getBuildPlanId());
         if (templatePlanNotificationUrl.isPresent() && solutionPlanNotificationUrl.isPresent()) {
-            addAuthenticatedWebHook(exercise.getTemplateRepositoryUrlAsUrl(), templatePlanNotificationUrl.get(), "Artemis Exercise WebHook", ciToken);
-            addAuthenticatedWebHook(exercise.getSolutionRepositoryUrlAsUrl(), solutionPlanNotificationUrl.get(), "Artemis Solution WebHook", ciToken);
-            addAuthenticatedWebHook(exercise.getTestRepositoryUrlAsUrl(), solutionPlanNotificationUrl.get(), "Artemis Tests WebHook", ciToken);
+            addAuthenticatedWebHook(exercise.getVcsTemplateRepositoryUrl(), templatePlanNotificationUrl.get(), "Artemis Exercise WebHook", ciToken);
+            addAuthenticatedWebHook(exercise.getVcsSolutionRepositoryUrl(), solutionPlanNotificationUrl.get(), "Artemis Solution WebHook", ciToken);
+            addAuthenticatedWebHook(exercise.getVcsTestRepositoryUrl(), solutionPlanNotificationUrl.get(), "Artemis Tests WebHook", ciToken);
         }
     }
 
@@ -235,17 +236,17 @@ public class GitLabService extends AbstractVersionControlService {
             // Optional webhook from the version control system to the continuous integration system
             // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regurlarly)
             getContinuousIntegrationService().getWebHookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId())
-                    .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getRepositoryUrlAsUrl(), hookUrl, "Artemis trigger to CI", ciToken));
+                    .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getVcsRepositoryUrl(), hookUrl, "Artemis trigger to CI", ciToken));
         }
     }
 
     @Override
-    protected void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
+    protected void addWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName) {
         addAuthenticatedWebHook(repositoryUrl, notificationUrl, webHookName, "noSecretNeeded");
     }
 
     @Override
-    protected void addAuthenticatedWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
+    protected void addAuthenticatedWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false);
 
@@ -268,9 +269,9 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void deleteRepository(URL repositoryUrl) {
+    public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
-        final var repositoryName = urlService.getRepositorySlugFromUrl(repositoryUrl);
+        final var repositoryName = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         try {
             gitlab.getProjectApi().deleteProject(repositoryId);
         }
@@ -285,13 +286,16 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public Boolean repositoryUrlIsValid(URL repositoryUrl) {
+    public Boolean repositoryUrlIsValid(@Nullable VcsRepositoryUrl repositoryUrl) {
+        if (repositoryUrl == null || repositoryUrl.getURL() == null) {
+            return false;
+        }
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         try {
             gitlab.getProjectApi().getProject(repositoryId);
         }
         catch (Exception emAll) {
-            log.warn("Invalid repository URL " + repositoryUrl);
+            log.warn("Invalid repository VcsRepositoryUrl " + repositoryUrl);
             return false;
         }
 
@@ -372,8 +376,8 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public String getRepositoryName(URL repositoryUrl) {
-        return urlService.getRepositorySlugFromUrl(repositoryUrl);
+    public String getRepositoryName(VcsRepositoryUrl repositoryUrl) {
+        return urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
     }
 
     @Override
@@ -412,15 +416,16 @@ public class GitLabService extends AbstractVersionControlService {
     @Override
     public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName, String targetPath)
             throws VersionControlException {
+        // in this case we simply fork the repository as there are no limitations known in Gitlab for creating forks
         return forkRepository(sourceProjectKey, sourceRepositoryName, targetProjectKey, targetRepositoryName);
     }
 
     @Override
-    public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, Set<User> users) {
+    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) {
         users.forEach(user -> setRepositoryPermission(repositoryUrl, user.getLogin(), GUEST));
     }
 
-    private void setRepositoryPermission(URL repositoryUrl, String username, AccessLevel accessLevel) {
+    private void setRepositoryPermission(VcsRepositoryUrl repositoryUrl, String username, AccessLevel accessLevel) {
         final var userId = gitLabUserManagementService.getUserId(username);
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         try {
@@ -462,8 +467,8 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
-    private String getPathIDFromRepositoryURL(URL repository) {
-        final var namespaces = repository.toString().split("/");
+    private String getPathIDFromRepositoryURL(VcsRepositoryUrl repositoryUrl) {
+        final var namespaces = repositoryUrl.getURL().toString().split("/");
         final var last = namespaces.length - 1;
 
         return namespaces[last - 1] + "/" + namespaces[last].replace(".git", "");
@@ -477,7 +482,7 @@ public class GitLabService extends AbstractVersionControlService {
         GROUPS("groups"), NAMESPACES("namespaces", "<groupId>"), DELETE_GROUP("groups", "<groupId>"), DELETE_PROJECT("projects", "<projectId>"), PROJECTS("projects"),
         GET_PROJECT("projects", "<projectId>"), FORK("projects", "<projectId>", "fork"), HEALTH("-", "liveness");
 
-        private List<String> pathSegments;
+        private final List<String> pathSegments;
 
         Endpoints(String... pathSegments) {
             this.pathSegments = Arrays.asList(pathSegments);
@@ -491,7 +496,6 @@ public class GitLabService extends AbstractVersionControlService {
     public final class GitLabRepositoryUrl extends VcsRepositoryUrl {
 
         public GitLabRepositoryUrl(String projectKey, String repositorySlug) {
-            super();
             final var path = projectKey + "/" + repositorySlug;
             final var urlString = gitlabServerUrl + "/" + path + ".git";
 
