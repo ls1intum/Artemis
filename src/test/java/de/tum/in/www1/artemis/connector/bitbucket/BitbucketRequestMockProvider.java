@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.UserService;
@@ -236,8 +237,8 @@ public class BitbucketRequestMockProvider {
                 .andExpect(content().contentType("application/vnd.atl.bitbucket.bulk+json")).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockRepositoryUrlIsValid(final URL repositoryUrl, final String projectKey, final boolean isValid) throws URISyntaxException {
-        final var repositoryName = urlService.getRepositorySlugFromUrl(repositoryUrl);
+    public void mockRepositoryUrlIsValid(final VcsRepositoryUrl repositoryUrl, final String projectKey, final boolean isValid) throws URISyntaxException {
+        final var repositoryName = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).pathSegment("repos")
                 .pathSegment(repositoryName).build().toUri();
 

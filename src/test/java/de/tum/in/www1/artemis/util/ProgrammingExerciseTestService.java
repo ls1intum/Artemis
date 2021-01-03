@@ -186,17 +186,21 @@ public class ProgrammingExerciseTestService {
         doReturn(testRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, testRepoName);
         doReturn(solutionRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, solutionRepoName);
 
-        doReturn(gitService.getRepositoryByLocalPath(exerciseRepository.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(exerciseRepoTestUrl.getURL(), true);
-        doReturn(gitService.getRepositoryByLocalPath(testRepository.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(testRepoTestUrl.getURL(), true);
-        doReturn(gitService.getRepositoryByLocalPath(solutionRepository.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(solutionRepoTestUrl.getURL(), true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepository.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(exerciseRepoTestUrl, true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoTestUrl,
+                true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(solutionRepoTestUrl, true);
 
-        mockDelegate.mockGetRepositorySlugFromUrl(exerciseRepoName, exerciseRepoTestUrl.getURL());
-        mockDelegate.mockGetRepositorySlugFromUrl(testRepoName, testRepoTestUrl.getURL());
-        mockDelegate.mockGetRepositorySlugFromUrl(solutionRepoName, solutionRepoTestUrl.getURL());
+        // we need separate mocks with VcsRepositoryUrl here because MockFileRepositoryUrl and VcsRepositoryUrl do not seem to be compatible here
+        mockDelegate.mockGetRepositorySlugFromRepositoryUrl(exerciseRepoName, exerciseRepoTestUrl);
+        mockDelegate.mockGetRepositorySlugFromRepositoryUrl(testRepoName, testRepoTestUrl);
+        mockDelegate.mockGetRepositorySlugFromRepositoryUrl(solutionRepoName, solutionRepoTestUrl);
 
-        mockDelegate.mockGetProjectKeyFromUrl(projectKey, exerciseRepoTestUrl.getURL());
-        mockDelegate.mockGetProjectKeyFromUrl(projectKey, testRepoTestUrl.getURL());
-        mockDelegate.mockGetProjectKeyFromUrl(projectKey, solutionRepoTestUrl.getURL());
+        mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, exerciseRepoTestUrl);
+        mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, testRepoTestUrl);
+        mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, solutionRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromAnyUrl(projectKey);
     }
 
@@ -208,9 +212,10 @@ public class ProgrammingExerciseTestService {
         String participantRepoName = projectKey.toLowerCase() + "-" + participantName;
         var participantRepoTestUrl = getMockFileRepositoryUrl(studentRepo);
         doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, participantRepoName);
-        doReturn(gitService.getRepositoryByLocalPath(studentRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(participantRepoTestUrl.getURL(), true);
-        mockDelegate.mockGetRepositorySlugFromUrl(participantRepoName, participantRepoTestUrl.getURL());
-        mockDelegate.mockGetProjectKeyFromUrl(projectKey, participantRepoTestUrl.getURL());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participantRepoTestUrl,
+                true);
+        mockDelegate.mockGetRepositorySlugFromRepositoryUrl(participantRepoName, participantRepoTestUrl);
+        mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, participantRepoTestUrl);
     }
 
     public MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) throws MalformedURLException {

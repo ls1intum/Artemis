@@ -277,10 +277,10 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     @Override
     public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
         final var buildPlanId = participation.getBuildPlanId();
-        final var repositoryUrl = participation.getRepositoryUrlAsUrl();
+        final var repositoryUrl = participation.getVcsRepositoryUrl();
         final var projectKey = buildPlanId.split("-")[0];
         final var planKey = participation.getBuildPlanId();
-        final var repoProjectName = urlService.getProjectKeyFromUrl(repositoryUrl);
+        final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         bambooRequestMockProvider.mockUpdatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */,
                 Optional.empty());
 

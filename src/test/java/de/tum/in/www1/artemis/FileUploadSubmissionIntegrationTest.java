@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -66,7 +66,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     private FileUploadSubmission lateFileUploadSubmission;
 
-    private MockMultipartFile validFile = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+    private final MockMultipartFile validFile = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
 
     private StudentParticipation participation;
 
@@ -91,13 +91,17 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(value = "student3")
     public void submitFileUploadSubmission() throws Exception {
+        submitFile();
+    }
+
+    private void submitFile() throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         FileUploadSubmission returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission);
-        String actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).concat("file.png");
+        String actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file.png").toString();
         String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
-        var fileBytes = Files.readAllBytes(Path.of(actualFilePath));
+        var fileBytes = Files.readAllBytes(Paths.get(actualFilePath));
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
         checkDetailsHidden(returnedSubmission, true);
     }
@@ -105,25 +109,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(value = "student3")
     public void submitFileUploadSubmissionTwiceSameFile() throws Exception {
-        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
-        FileUploadSubmission returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission);
-        String actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).concat("file.png");
-        String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
-        assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
-        assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
-        var fileBytes = Files.readAllBytes(Path.of(actualFilePath));
-        assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
-        checkDetailsHidden(returnedSubmission, true);
-
-        submission = ModelFactory.generateFileUploadSubmission(false);
-        returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission);
-        actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).concat("file.png");
-        publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
-        assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
-        assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
-        fileBytes = Files.readAllBytes(Path.of(actualFilePath));
-        assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
-        checkDetailsHidden(returnedSubmission, true);
+        submitFile();
+        submitFile();
 
         // TODO: upload a real file from the file system twice with the same and with different names and test both works correctly
     }
@@ -393,7 +380,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
                 submittedFileUploadSubmission, "submission", file, FileUploadSubmission.class, HttpStatus.OK);
 
         final var submissionInDb = fileUploadSubmissionRepository.findById(submittedFileUploadSubmission.getId());
-        assertThat(submissionInDb.isPresent());
+        assertThat(submissionInDb.isPresent()).isTrue();
         assertThat(submissionInDb.get().getFilePath().contains("ffile.png")).isTrue();
     }
 
@@ -419,7 +406,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         long submissionID = fileUploadSubmission.getId();
         FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
 
-        assertThat(receivedSubmission.getId().equals(submissionID));
+        assertThat(receivedSubmission.getId()).isEqualTo(submissionID);
     }
 
     @Test
