@@ -1,6 +1,6 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -27,7 +27,7 @@ describe('StatisticsGraphComponent', () => {
     let service: StatisticsService;
     let httpMock: HttpTestingController;
 
-    beforeEach(fakeAsync(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MomentModule, ChartsModule],
             declarations: [StatisticsGraphComponent, MockComponent(StatisticsGraphComponent), MockPipe(TranslatePipe)],
@@ -44,13 +44,13 @@ describe('StatisticsGraphComponent', () => {
                 service = TestBed.inject(StatisticsService);
                 httpMock = TestBed.get(HttpTestingController);
             });
-    }));
+    });
 
-    afterEach(fakeAsync(() => {
+    afterEach(() => {
         jest.clearAllMocks();
-    }));
+    });
 
-    it('should initialize', fakeAsync(() => {
+    it('should initialize', () => {
         let graphData: number[] = [];
         component.graphType = Graphs.SUBMISSIONS;
         let arrayLength = 0;
@@ -83,14 +83,13 @@ describe('StatisticsGraphComponent', () => {
             spy.and.returnValue(of(graphData));
 
             component.ngOnInit();
-            tick();
 
             expect(component.dataForSpanType).to.equal(graphData);
             expect(component.chartData[0].data).to.equal(graphData);
         }
-    }));
+    });
 
-    it('should initialize after changes', fakeAsync(() => {
+    it('should initialize after changes', () => {
         component.graphType = Graphs.SUBMISSIONS;
         component.currentSpan = SpanType.WEEK;
         const changes = { currentSpan: { currentValue: SpanType.DAY } as SimpleChange };
@@ -102,24 +101,22 @@ describe('StatisticsGraphComponent', () => {
         component.ngOnChanges(changes);
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush([...graphData]);
-        tick();
 
         expect(component.dataForSpanType).to.deep.equal(graphData);
         expect(component.currentSpan).to.equal(SpanType.DAY);
-    }));
+    });
 
-    it('should switch time span', fakeAsync(() => {
+    it('should switch time span', () => {
         component.graphType = Graphs.SUBMISSIONS;
         component.currentSpan = SpanType.WEEK;
         const graphData = [1, 2, 3, 4, 5, 6, 8];
         spyOn(service, 'getChartData').and.returnValue(of(graphData));
 
         fixture.detectChanges();
-        tick();
 
         component.switchTimeSpan(true);
 
         expect(component.dataForSpanType).to.equal(graphData);
         expect(component).to.be.ok;
-    }));
+    });
 });
