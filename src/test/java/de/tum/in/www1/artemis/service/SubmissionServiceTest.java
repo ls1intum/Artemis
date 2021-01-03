@@ -260,7 +260,48 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "tutor1", roles = "TUTOR")
     public void testGetRandomSubmissionEligibleForNewAssessment_OneAssessmentsInSecondCorrectionRoundWithLock() {
-        // todo
+        Optional<Submission> unassessedSubmissionCorrectionRound0;
+        Optional<Submission> unassessedSubmissionCorrectionRound1;
+        List<Submission> submissionListTutor1CorrectionRound0;
+        List<Submission> submissionListTutor2CorrectionRound0;
+        List<Submission> submissionListTutor1CorrectionRound1;
+        List<Submission> submissionListTutor2CorrectionRound1;
+
+        // setup
+        queryTestingBasics();
+
+        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10L, true);
+
+        Result resultForSecondCorrectionWithLock;
+
+        resultForSecondCorrectionWithLock = submissionService.saveNewEmptyResult(submission1);
+        resultForSecondCorrectionWithLock.setAssessor(tutor1);
+        resultForSecondCorrectionWithLock.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.save(resultForSecondCorrectionWithLock);
+
+        // checks
+        unassessedSubmissionCorrectionRound0 = submissionService.getRandomSubmissionEligibleForNewAssessment(examTextExercise, true, 0L);
+        unassessedSubmissionCorrectionRound1 = submissionService.getRandomSubmissionEligibleForNewAssessment(examTextExercise, true, 1L);
+
+        submissionListTutor1CorrectionRound0 = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(examTextExercise.getId(), tutor1, true, 0L);
+        submissionListTutor2CorrectionRound0 = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(examTextExercise.getId(), tutor2, true, 0L);
+        submissionListTutor1CorrectionRound1 = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(examTextExercise.getId(), tutor1, true, 1L);
+        submissionListTutor2CorrectionRound1 = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(examTextExercise.getId(), tutor2, true, 1L);
+
+        assertThat(submission1.getResults().size()).isEqualTo(2L);
+
+        assertThat(examTextExercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam()).isEqualTo(2L);
+
+        assertThat(unassessedSubmissionCorrectionRound0.isPresent()).isTrue();
+        assertThat(unassessedSubmissionCorrectionRound0.get()).isEqualTo(submission2);
+        assertThat(unassessedSubmissionCorrectionRound1.isPresent()).isFalse();
+
+        assertThat(submissionListTutor1CorrectionRound0.size()).isEqualTo(1);
+        assertThat(submissionListTutor1CorrectionRound0.get(0)).isEqualTo(submission1);
+        assertThat(submissionListTutor2CorrectionRound0.size()).isEqualTo(0);
+        assertThat(submissionListTutor1CorrectionRound1.size()).isEqualTo(0);
+        assertThat(submissionListTutor2CorrectionRound1.size()).isEqualTo(1);
+        assertThat(submissionListTutor1CorrectionRound1.get(0)).isEqualTo(submission1);
     }
 
 }

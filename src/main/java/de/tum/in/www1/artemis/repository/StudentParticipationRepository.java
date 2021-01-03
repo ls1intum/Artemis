@@ -268,7 +268,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select participation.id, count(submissions) from StudentParticipation participation left join participation.submissions submissions where participation.team.shortName = :#{#teamShortName} and participation.exercise.course.id = :#{#courseId} group by participation.id")
     List<long[]> countSubmissionsPerParticipationByCourseIdAndTeamShortName(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
 
-    // todo SE
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p left join fetch p.submissions s left join fetch s.results r
                 WHERE p.exercise.id = :#{#exerciseId}
