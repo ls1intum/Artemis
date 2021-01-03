@@ -5,7 +5,7 @@ import { Course } from 'app/entities/course.model';
 import { TestBed } from '@angular/core/testing';
 import * as sinon from 'sinon';
 import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import * as testClassDiagram from './test-models/class-diagram.json';
+import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';

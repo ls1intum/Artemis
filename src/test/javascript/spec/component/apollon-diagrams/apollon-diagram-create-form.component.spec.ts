@@ -15,7 +15,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 
-describe('ApollonDiagramDetail Component', () => {
+describe('ApollonDiagramCreateForm Component', () => {
     let apollonDiagramService: ApollonDiagramService;
     let ngbModal: NgbActiveModal;
     let fixture: ComponentFixture<ApollonDiagramCreateFormComponent>;

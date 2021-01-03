@@ -9,7 +9,7 @@ import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import * as testClassDiagram from './test-models/class-diagram.json';
+import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
 import { Text } from '@ls1intum/apollon/lib/utils/svg/text';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
@@ -33,7 +33,7 @@ Text.size = () => {
     return { width: 0, height: 0 };
 };
 
-describe('ApollonDiagramDetail Component', () => {
+describe('ApollonQuizExerciseGeneration Component', () => {
     let courseManagementService: CourseManagementService;
     let ngbModal: NgbActiveModal;
     let fixture: ComponentFixture<ApollonQuizExerciseGenerationComponent>;
