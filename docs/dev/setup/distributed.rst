@@ -58,7 +58,7 @@ Artemis uses a discovery service to solve the issue (named `JHipster Registry
 <https://www.jhipster.tech/jhipster-registry/>`_).
 
 Discovery service
-^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^
 JHipster registry contains Eureka, the discovery service where all instances can register themselves and fetch the other registered instances.
 
 Eureka can be configured like this within Artemis:
