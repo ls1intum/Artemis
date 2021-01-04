@@ -144,8 +144,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                              FROM Result r where r.assessor IS NOT NULL
                                  AND r.rated = TRUE
                                  AND r.submission = submission
-                                 AND r.completionDate IS NOT NULL AND
-                                 (participation.exercise.dueDate IS NULL OR r.submission.submissionDate <= participation.exercise.dueDate))
+                                 AND r.completionDate IS NOT NULL
+                                 AND r.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')
+                                 AND (participation.exercise.dueDate IS NULL OR r.submission.submissionDate <= participation.exercise.dueDate))
             and not exists (select prs from participation.results prs where prs.assessor.id = participation.student.id)
             and submission.submitted = true
             and submission.id = (select max(id) from participation.submissions)

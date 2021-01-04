@@ -286,12 +286,12 @@
                                             </button>
                                             <ng-template #continueButton>
                                                 <button
-                                                    *ngIf="submission && submission.latestResult && correctionRound == 0"
+                                                    *ngIf="submission && submission.latestResult && correctionRound === 0"
                                                     (click)="openAssessmentEditor(submission)"
                                                     class="btn btn-primary btn-sm"
                                                 >
                                                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                                                    {{ 'artemisApp.exerciseAssessmentDashboard.openAssessment' | translate }}
+                                                    &nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.openAssessment' | translate }}
                                                 </button>
                                             </ng-template>
                                         </ng-container>

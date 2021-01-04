@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
 public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -31,6 +32,9 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     ResultRepository resultRepository;
+
+    @Autowired
+    StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
     SubmissionService submissionService;
@@ -159,7 +163,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(examTextExercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam()).isEqualTo(2L);
 
         assertThat(unassessedSubmissionCorrectionRound0.isPresent()).isTrue();
-        assertThat(unassessedSubmissionCorrectionRound0.get()).isIn(submission2);
+        assertThat(unassessedSubmissionCorrectionRound0.get()).isEqualTo(submission2);
         assertThat(unassessedSubmissionCorrectionRound1.isPresent()).isTrue();
         assertThat(unassessedSubmissionCorrectionRound1.get()).isEqualTo(submission1);
 
