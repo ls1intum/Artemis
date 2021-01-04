@@ -2,9 +2,9 @@ import { group } from 'k6';
 import http from 'k6/http';
 import ws from 'k6/ws';
 
-// Version: 1.1
-// Creator: Firefox
-// Browser: Firefox
+/*****************
+ * TODO: Note: this file seems to be outdated
+ *****************/
 
 export let options = {
     maxRedirects: 0,
@@ -133,7 +133,16 @@ export default function () {
 
             ws.connect(websocketUrl, { tags: { name: websocketEndpoint } }, function (socket) {
                 socket.on('open', function open() {
-                    socket.send('CONNECT\nX-XSRF-TOKEN:' + xsrftoken + '\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000');
+                    socket.send('CONNECT\nX-XSRF-TOKEN:' + xsrftoken + '\naccept-version:1.2\nheart-beat:10000,10000\n\n\u0000');
+                    socket.setInterval(function timeout() {
+                        socket.ping();
+                        // Pinging every 10sec (setInterval)
+                    }, 10000);
+                    // TODO: is ping not the same as the heartbeat?
+                    // Send heartbeat to server so session is kept alive
+                    socket.setInterval(function timeout() {
+                        socket.send('\n');
+                    }, 10000);
                 });
 
                 socket.on('error', function (e) {
@@ -152,11 +161,6 @@ export default function () {
                 function subscribeCourse(courseId, role) {
                     socket.send('SUBSCRIBE\nid:sub-' + getSubscriptionId() + '\ndestination:/topic/course/' + courseId + '/' + role + '\n\n\u0000');
                 }
-
-                socket.setInterval(function timeout() {
-                    socket.ping();
-                    // console.log("Pinging every 10sec (setInterval test)");
-                }, 10000);
 
                 // Send destination and subscription after 1 second
                 socket.setTimeout(function () {
