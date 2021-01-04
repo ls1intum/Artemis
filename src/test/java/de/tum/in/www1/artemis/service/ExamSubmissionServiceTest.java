@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -43,6 +44,9 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     StudentParticipationRepository studentParticipationRepository;
 
+    @Autowired
+    UserRepository userRepository;
+
     private User user;
 
     private Course course;
@@ -55,7 +59,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
 
     @BeforeEach
     void init() {
-        List<User> users = database.addUsers(1, 0, 0);
+        List<User> users = database.addUsers(1, 0, 1);
         user = users.get(0);
         exercise = database.addCourseExamExerciseGroupWithOneTextExercise();
         course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -145,6 +149,24 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         assertThat(result.get()).isEqualTo(forbidden());
         boolean result2 = examSubmissionService.isAllowedToSubmit(exercise, user);
         assertThat(result2).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckSubmissionAllowance_testRun() {
+        final var instructor = userRepository.findOneWithGroupsAndAuthoritiesByLogin("instructor1").get();
+        studentExam.setTestRun(true);
+        studentExam.setUser(instructor);
+        studentExamRepository.save(studentExam);
+        assertThat(examSubmissionService.isAllowedToSubmit(exercise, instructor)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCheckSubmissionAllowance_submittedStudentExam() {
+        studentExam.setSubmitted(true);
+        studentExamRepository.save(studentExam);
+        assertThat(examSubmissionService.isAllowedToSubmit(exercise, user)).isFalse();
     }
 
     @Test

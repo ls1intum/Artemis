@@ -1,10 +1,12 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
-import { stub } from 'sinon';
 import { of } from 'rxjs';
+import { stub } from 'sinon';
 import * as moment from 'moment';
+
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -22,8 +24,13 @@ import {
     ProgrammingLanguageFeature,
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
+import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 
 describe('ProgrammingExercise Management Update Component', () => {
+    const courseId = 1;
+    const course = { id: courseId } as Course;
+
     let comp: ProgrammingExerciseUpdateComponent;
     let fixture: ComponentFixture<ProgrammingExerciseUpdateComponent>;
     let debugElement: DebugElement;
@@ -34,17 +41,14 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ProgrammingExerciseUpdateComponent],
+            imports: [ArtemisTestModule, BrowserAnimationsModule, ArtemisProgrammingExerciseUpdateModule, FormDateTimePickerModule],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
-        })
-            .overrideTemplate(ProgrammingExerciseUpdateComponent, '')
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
         comp = fixture.componentInstance;
@@ -106,7 +110,6 @@ describe('ProgrammingExercise Management Update Component', () => {
     });
 
     describe('exam mode', () => {
-        const courseId = 1;
         const examId = 1;
         const groupId = 1;
         const exerciseGroup = new ExerciseGroup();
@@ -124,8 +127,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
             spyOn(exerciseGroupService, 'find').and.returnValue(of(new HttpResponse({ body: exerciseGroup })));
-            const programmingLanguageFeature = getProgrammingLanguageFeature(ProgrammingLanguage.JAVA);
-            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(of(programmingLanguageFeature));
+            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             // WHEN
             comp.ngOnInit();
@@ -140,9 +142,6 @@ describe('ProgrammingExercise Management Update Component', () => {
     });
 
     describe('course mode', () => {
-        const courseId = 1;
-        const course = new Course();
-        course.id = courseId;
         const expectedProgrammingExercise = new ProgrammingExercise(undefined, undefined);
         expectedProgrammingExercise.course = course;
 
@@ -156,8 +155,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         it('Should not be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
             spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
-            const programmingLanguageFeature: ProgrammingLanguageFeature = getProgrammingLanguageFeature(ProgrammingLanguage.JAVA);
-            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(of(programmingLanguageFeature));
+            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             // WHEN
             comp.ngOnInit();
@@ -171,26 +169,58 @@ describe('ProgrammingExercise Management Update Component', () => {
         }));
     });
 
-    describe('static code analysis', () => {
-        const courseId = 2;
-        const course = { id: courseId } as Course;
-        const expectedProgrammingExercise = new ProgrammingExercise(course, undefined);
-        expectedProgrammingExercise.id = 1;
-        expectedProgrammingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
-
+    describe('programming language change and features', () => {
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });
             route.url = of([{ path: 'new' } as UrlSegment]);
-            route.data = of({ programmingExercise: expectedProgrammingExercise });
+            route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
+            spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').and.returnValue(true);
+            const getFeaturesStub = stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.withArgs(ProgrammingLanguage.JAVA).returns(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+            getFeaturesStub.withArgs(ProgrammingLanguage.HASKELL).returns(getProgrammingLanguageFeature(ProgrammingLanguage.HASKELL));
+            getFeaturesStub.withArgs(ProgrammingLanguage.SWIFT).returns(getProgrammingLanguageFeature(ProgrammingLanguage.SWIFT));
         });
 
-        it('Should activate SCA for Swift', fakeAsync(() => {
-            // GIVEN
-            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
-            const programmingLanguageFeature = getProgrammingLanguageFeature(ProgrammingLanguage.SWIFT);
-            stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').returns(programmingLanguageFeature);
+        it('Should reset sca settings if new programming language does not support sca', fakeAsync(() => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
 
+            // Activate sca
+            let scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
+            scaCheckbox.click();
+            scaCheckbox.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            tick();
+
+            // Set a max penalty
+            const maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
+            maxPenaltyInput.value = 50;
+            maxPenaltyInput.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            tick();
+
+            expect(scaCheckbox.checked).toBeTruthy();
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeTruthy();
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(50);
+
+            // Switch to another programming language not supporting sca
+            const languageInput = fixture.nativeElement.querySelector('#field_programmingLanguage');
+            languageInput.value = ProgrammingLanguage.HASKELL;
+            languageInput.dispatchEvent(new Event('change'));
+            fixture.detectChanges();
+            tick();
+            scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
+
+            expect(scaCheckbox).toBeFalsy();
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalsy();
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
+            expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.HASKELL);
+        }));
+
+        it('Should activate SCA for Swift', fakeAsync(() => {
             // WHEN
             fixture.detectChanges();
             tick();
@@ -198,52 +228,140 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
-            expect(comp.programmingExercise).toEqual(expectedProgrammingExercise);
             expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.SWIFT);
             expect(comp.staticCodeAnalysisAllowed).toEqual(true);
             expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForSwift);
         }));
 
         it('Should activate SCA for Java', fakeAsync(() => {
-            // GIVEN
-            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
-            const programmingLanguageFeature = getProgrammingLanguageFeature(ProgrammingLanguage.JAVA);
-            stub(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').returns(programmingLanguageFeature);
-
             // WHEN
             fixture.detectChanges();
             tick();
             comp.onProgrammingLanguageChange(ProgrammingLanguage.JAVA);
 
             // THEN
-            expect(comp.programmingExercise).toEqual(expectedProgrammingExercise);
             expect(comp.selectedProgrammingLanguage).toEqual(ProgrammingLanguage.JAVA);
             expect(comp.staticCodeAnalysisAllowed).toEqual(true);
             expect(comp.packageNamePattern).toEqual(comp.packageNamePatternForJavaKotlin);
         }));
     });
+
+    describe('import with static code analysis', () => {
+        let route: ActivatedRoute;
+
+        beforeEach(() => {
+            spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
+            spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').and.returnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+            route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'import' } as UrlSegment]);
+        });
+
+        it.each([
+            [true, 80],
+            [false, undefined],
+        ])(
+            'Should activate recreate build plans and update template when sca changes',
+            fakeAsync((scaActivatedOriginal: boolean, maxPenalty: number | undefined) => {
+                const newMaxPenalty = 50;
+                const programmingExercise = new ProgrammingExercise(undefined, undefined);
+                programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+                programmingExercise.staticCodeAnalysisEnabled = scaActivatedOriginal;
+                programmingExercise.maxStaticCodeAnalysisPenalty = maxPenalty;
+                route.data = of({ programmingExercise });
+                comp.ngOnInit();
+                fixture.detectChanges();
+                tick();
+
+                let scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
+                let maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
+                const recreateBuildPlanCheckbox = fixture.nativeElement.querySelector('#field_recreateBuildPlans');
+                const updateTemplateCheckbox = fixture.nativeElement.querySelector('#field_updateTemplateFiles');
+
+                expect(comp.isImport).toBeTruthy();
+                expect(comp.originalStaticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
+                expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(maxPenalty);
+                expect(scaCheckbox.checked).toBe(scaActivatedOriginal);
+                expect(!!maxPenaltyInput).toBe(scaActivatedOriginal);
+                expect(recreateBuildPlanCheckbox.checked).toBeFalsy();
+                expect(updateTemplateCheckbox.checked).toBeFalsy();
+                expect(comp.programmingExercise).toEqual(programmingExercise);
+                expect(courseService.find).toHaveBeenCalledWith(courseId);
+
+                // Activate SCA and set a max penalty
+                scaCheckbox.click();
+                scaCheckbox.dispatchEvent(new Event('input'));
+                fixture.detectChanges();
+                tick();
+                scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
+
+                // SCA penalty field disappears or appears after the sca checkbox click
+                maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
+                if (scaActivatedOriginal) {
+                    expect(maxPenaltyInput).toBeFalsy();
+                } else {
+                    maxPenaltyInput.value = newMaxPenalty;
+                    maxPenaltyInput.dispatchEvent(new Event('input'));
+                    fixture.detectChanges();
+                    tick();
+                }
+
+                // Recreate build plan and template update should be automatically selected
+                expect(scaCheckbox.checked).toBe(!scaActivatedOriginal);
+                expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(!scaActivatedOriginal);
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toEqual(scaActivatedOriginal ? undefined : newMaxPenalty);
+                expect(comp.recreateBuildPlans).toBeTruthy();
+                expect(comp.updateTemplate).toBeTruthy();
+
+                // Deactivate recreation of build plans
+                recreateBuildPlanCheckbox.click();
+                recreateBuildPlanCheckbox.dispatchEvent(new Event('input'));
+                fixture.detectChanges();
+                tick();
+
+                // SCA should revert to the state of the original exercise, maxPenalty will revert to undefined
+                expect(comp.programmingExercise.staticCodeAnalysisEnabled).toEqual(comp.originalStaticCodeAnalysisEnabled);
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
+            }),
+        );
+    });
 });
 
 const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage) => {
-    if (programmingLanguage === ProgrammingLanguage.SWIFT) {
-        return {
-            programmingLanguage: ProgrammingLanguage.SWIFT,
-            sequentialTestRuns: false,
-            staticCodeAnalysis: true,
-            plagiarismCheckSupported: false,
-            packageNameRequired: true,
-            checkoutSolutionRepositoryAllowed: false,
-            projectTypes: [],
-        } as ProgrammingLanguageFeature;
-    } else {
-        return {
-            programmingLanguage: ProgrammingLanguage.JAVA,
-            sequentialTestRuns: true,
-            staticCodeAnalysis: true,
-            plagiarismCheckSupported: true,
-            packageNameRequired: true,
-            checkoutSolutionRepositoryAllowed: true,
-            projectTypes: [ProjectType.ECLIPSE, ProjectType.MAVEN],
-        } as ProgrammingLanguageFeature;
+    switch (programmingLanguage) {
+        case ProgrammingLanguage.SWIFT:
+            return {
+                programmingLanguage: ProgrammingLanguage.SWIFT,
+                sequentialTestRuns: false,
+                staticCodeAnalysis: true,
+                plagiarismCheckSupported: false,
+                packageNameRequired: true,
+                checkoutSolutionRepositoryAllowed: false,
+                projectTypes: [],
+            } as ProgrammingLanguageFeature;
+        case ProgrammingLanguage.JAVA:
+            return {
+                programmingLanguage: ProgrammingLanguage.JAVA,
+                sequentialTestRuns: true,
+                staticCodeAnalysis: true,
+                plagiarismCheckSupported: true,
+                packageNameRequired: true,
+                checkoutSolutionRepositoryAllowed: true,
+                projectTypes: [ProjectType.ECLIPSE, ProjectType.MAVEN],
+            } as ProgrammingLanguageFeature;
+        case ProgrammingLanguage.HASKELL:
+            return {
+                programmingLanguage: ProgrammingLanguage.HASKELL,
+                sequentialTestRuns: false,
+                staticCodeAnalysis: false,
+                plagiarismCheckSupported: false,
+                packageNameRequired: false,
+                checkoutSolutionRepositoryAllowed: true,
+                projectTypes: [],
+            } as ProgrammingLanguageFeature;
+        default:
+            throw new Error();
     }
 };

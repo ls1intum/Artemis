@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.ParticipationTestRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ExamService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -52,6 +54,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     ExamRepository examRepository;
+
+    @Autowired
+    ExamService examService;
 
     @Autowired
     ExerciseGroupRepository exerciseGroupRepository;
@@ -346,6 +351,67 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerateStudentExamsNoDates_badRequest() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+        exam.setStartDate(null);
+        examRepository.save(exam);
+
+        // invoke generate student exams
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerateStudentExamsNoExerciseGroups_badRequest() throws Exception {
+        Exam exam = database.addExamWithExerciseGroup(course1, true);
+        exam.setStartDate(now());
+        exam.setEndDate(now().plusHours(2));
+        exam = examRepository.save(exam);
+
+        // invoke generate student exams
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerateStudentExamsNoExerciseNumber_badRequest() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+        exam.setNumberOfExercisesInExam(null);
+        examRepository.save(exam);
+
+        // invoke generate student exams
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerateStudentExamsNotEnoughExerciseGroups_badRequest() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+        exam.setNumberOfExercisesInExam(exam.getNumberOfExercisesInExam() + 2);
+        examRepository.save(exam);
+
+        // invoke generate student exams
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerateStudentExamsTooManyMandetoryExerciseGroups_badRequest() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+        exam.setNumberOfExercisesInExam(exam.getNumberOfExercisesInExam() - 2);
+        examRepository.save(exam);
+
+        // invoke generate student exams
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1120,6 +1186,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         database.changeUser("instructor1");
+        final var exerciseWithNoUsers = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        exerciseRepo.save(exerciseWithNoUsers);
         var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
 
         // Compare generated results to data in ExamScoresDTO
@@ -1295,5 +1363,84 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroupsOrder", new ArrayList<ExerciseGroup>(), HttpStatus.FORBIDDEN);
         // Get latest individual end date
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/latest-end-date", HttpStatus.FORBIDDEN, ExamInformationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testLatestIndividualEndDate_noStudentExams() {
+        final var now = ZonedDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+        exam1.setStartDate(now.minusHours(2));
+        exam1.setEndDate(now);
+        final var exam = examRepository.save(exam1);
+        final var latestIndividualExamEndDate = examService.getLatestIndividualExamEndDate(exam.getId());
+        assertThat(latestIndividualExamEndDate.isEqual(exam.getEndDate())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllIndividualExamEndDates_noStartDate() {
+        final var now = ZonedDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+        exam1.setStartDate(null);
+        exam1.setEndDate(now);
+        final var exam = examRepository.save(exam1);
+        final var individualExamEndDates = examService.getAllIndividualExamEndDates(exam);
+        assertThat(individualExamEndDates).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllIndividualExamEndDates() {
+        final var now = ZonedDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+        exam1.setStartDate(now.minusHours(2));
+        exam1.setEndDate(now);
+        final var exam = examRepository.save(exam1);
+
+        final var studentExam1 = new StudentExam();
+        studentExam1.setExam(exam);
+        studentExam1.setUser(users.get(0));
+        studentExam1.setWorkingTime(120);
+        studentExam1.setTestRun(false);
+        studentExamRepository.save(studentExam1);
+
+        final var studentExam2 = new StudentExam();
+        studentExam2.setExam(exam);
+        studentExam2.setUser(users.get(0));
+        studentExam2.setWorkingTime(120);
+        studentExam2.setTestRun(false);
+        studentExamRepository.save(studentExam2);
+
+        final var studentExam3 = new StudentExam();
+        studentExam3.setExam(exam);
+        studentExam3.setUser(users.get(0));
+        studentExam3.setWorkingTime(60);
+        studentExam3.setTestRun(false);
+        studentExamRepository.save(studentExam3);
+
+        final var individualWorkingTimes = examService.getAllIndividualExamEndDates(exam.getId());
+        assertThat(individualWorkingTimes.size()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testIsExamOver_GracePeroid() {
+        final var now = ZonedDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+        exam1.setStartDate(now.minusHours(2));
+        exam1.setEndDate(now);
+        exam1.setGracePeriod(180);
+        final var exam = examRepository.save(exam1);
+        final var isOver = examService.isExamOver(exam.getId());
+        assertThat(isOver).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testIsUserRegisteredForExam() {
+        final var now = ZonedDateTime.now();
+        exam1.addRegisteredUser(users.get(0));
+        final var exam = examRepository.save(exam1);
+        final var isUserRegistered = examService.isUserRegisteredForExam(exam.getId(), users.get(0).getId());
+        final var isCurrentUserRegistered = examService.isCurrentUserRegisteredForExam(exam.getId());
+        assertThat(isUserRegistered).isTrue();
+        assertThat(isCurrentUserRegistered).isFalse();
     }
 }
