@@ -23,6 +23,7 @@ pipeline {
                 steps {
                     timestamps {
                         sh '''
+                            rm -rf Sources
                             mv assignment/Sources .
                             rm -rf assignment
                             mkdir assignment
@@ -54,6 +55,7 @@ pipeline {
                 sh '''
                    rm -rf results
                    mkdir results
+                   sed -i 's/<testsuites>//g ; s/<\/testsuites>//g' assignment/tests.xml
                    cp assignment/tests.xml $WORKSPACE/results/ || true
                    '''
                 sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'

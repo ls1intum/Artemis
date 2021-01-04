@@ -1,5 +1,6 @@
 # In order to get the correct console output we need to execute the command within the assignment directory
 # save student's assignment to root
+rm -rf Sources
 mv assignment/Sources .
 # delete and create the assignment dir from scratch
 rm -rf assignment
