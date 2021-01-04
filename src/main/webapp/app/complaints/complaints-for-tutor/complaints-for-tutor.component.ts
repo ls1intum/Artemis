@@ -33,8 +33,9 @@ export class ComplaintsForTutorComponent implements OnInit {
     complaintResponse: ComplaintResponse = new ComplaintResponse();
     ComplaintType = ComplaintType;
     isLoading = false;
-    isLockedForLoggedInUser = false;
+    showLockDuration = false;
     showRemoveLockButton = false;
+    isLockedForLoggedInUser = false;
 
     constructor(
         private complaintService: ComplaintService,
@@ -50,60 +51,74 @@ export class ComplaintsForTutorComponent implements OnInit {
         if (this.complaint) {
             // a complaint is handled if it is either accepted or denied and a complaint response exists
             this.handled = this.complaint.accepted !== undefined && this.complaint.complaintResponse !== undefined;
-
             this.complaintText = this.complaint.complaintText;
             if (this.handled) {
                 // handled complaint --> just display response
                 this.complaintResponse = this.complaint.complaintResponse!;
-                this.decideToShowDeleteLockButtonOrNot();
+                this.showRemoveLockButton = false;
+                this.showLockDuration = false;
             } else {
                 if (this.complaint.complaintResponse) {
-                    // unhandled complaint where a complaint response exists --> update lock if allowed
-                    this.complaintResponse = this.complaint.complaintResponse;
-                    this.isLockedForLoggedInUser = this.complaintResponseService.isComplaintResponseLockedForLoggedInUser(this.complaintResponse, this.exercise!);
-                    if (!this.isLockedForLoggedInUser) {
-                        // update the lock
-                        this.isLoading = true;
-                        this.complaintResponseService
-                            .updateLock(this.complaint.id!)
-                            .pipe(
-                                finalize(() => {
-                                    this.isLoading = false;
-                                }),
-                            )
-                            .subscribe(
-                                (response) => {
-                                    this.complaintResponse = response.body!;
-                                    this.complaint = this.complaintResponse.complaint!;
-                                    this.decideToShowDeleteLockButtonOrNot();
-                                },
-                                (err: HttpErrorResponse) => {
-                                    this.onError(err);
-                                },
-                            );
-                    }
-                } else {
                     // unhandled complaint where no complaint response exists --> create a new initial complaint response
-                    this.isLoading = true;
-                    this.complaintResponseService
-                        .createInitialResponse(this.complaint.id!)
-                        .pipe(
-                            finalize(() => {
-                                this.isLoading = false;
-                            }),
-                        )
-                        .subscribe(
-                            (response) => {
-                                this.complaintResponse = response.body!;
-                                this.complaint = this.complaintResponse.complaint!;
-                                this.decideToShowDeleteLockButtonOrNot();
-                            },
-                            (err: HttpErrorResponse) => {
-                                this.onError(err);
-                            },
-                        );
+                    this.refreshLock();
+                } else {
+                    this.createLock(); // unhandled complaint where a complaint response exists --> update lock if allowed
                 }
             }
+        }
+    }
+
+    private createLock() {
+        this.isLoading = true;
+        this.complaintResponseService
+            .createLock(this.complaint.id!)
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe(
+                (response) => {
+                    this.complaintResponse = response.body!;
+                    this.complaint = this.complaintResponse.complaint!;
+                    this.showRemoveLockButton = true;
+                    this.showLockDuration = true;
+                    this.jhiAlertService.success('artemisApp.locks.acquired');
+                },
+                (err: HttpErrorResponse) => {
+                    this.onError(err);
+                },
+            );
+    }
+
+    private refreshLock() {
+        this.complaintResponse = this.complaint.complaintResponse!;
+        this.showLockDuration = true;
+        // a lock exists we have to check if it affects the currently logged in user
+        this.isLockedForLoggedInUser = this.complaintResponseService.isComplaintResponseLockedForLoggedInUser(this.complaintResponse, this.exercise!);
+        if (!this.isLockedForLoggedInUser) {
+            // update the lock
+            this.isLoading = true;
+            this.complaintResponseService
+                .refreshLock(this.complaint.id!)
+                .pipe(
+                    finalize(() => {
+                        this.isLoading = false;
+                    }),
+                )
+                .subscribe(
+                    (response) => {
+                        this.complaintResponse = response.body!;
+                        this.complaint = this.complaintResponse.complaint!;
+                        this.showRemoveLockButton = true;
+                        this.jhiAlertService.success('artemisApp.locks.acquired');
+                    },
+                    (err: HttpErrorResponse) => {
+                        this.onError(err);
+                    },
+                );
+        } else {
+            this.showRemoveLockButton = false;
         }
     }
 
@@ -114,20 +129,13 @@ export class ComplaintsForTutorComponent implements OnInit {
     removeLock() {
         this.complaintResponseService.removeLock(this.complaint.id!).subscribe(
             () => {
+                this.jhiAlertService.success('artemisApp.locks.lockRemoved');
                 this.navigateBack();
             },
             (err: HttpErrorResponse) => {
                 this.onError(err);
             },
         );
-    }
-
-    decideToShowDeleteLockButtonOrNot() {
-        if (!this.handled && this.complaintResponse?.isCurrentlyLocked && this.complaintResponse?.reviewer?.login === this.accountService.userIdentity?.login) {
-            this.showRemoveLockButton = true;
-        } else {
-            this.showRemoveLockButton = false;
-        }
     }
 
     respondToComplaint(acceptComplaint: boolean): void {
@@ -148,31 +156,40 @@ export class ComplaintsForTutorComponent implements OnInit {
             // The complaint is sent along with the assessment update by the parent to avoid additional requests.
             this.updateAssessmentAfterComplaint.emit(this.complaintResponse);
             this.handled = true;
+            this.showLockDuration = false;
+            this.showRemoveLockButton = false;
         } else {
             // If the complaint was rejected or it was a more feedback request, just the complaint response is updated.
-            this.isLoading = true;
-            this.complaintResponseService
-                .update(this.complaintResponse)
-                .pipe(
-                    finalize(() => {
-                        this.isLoading = false;
-                    }),
-                )
-                .subscribe(
-                    (response) => {
-                        this.handled = true;
-                        // eslint-disable-next-line chai-friendly/no-unused-expressions
-                        this.complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                            ? this.jhiAlertService.success('artemisApp.moreFeedbackResponse.created')
-                            : this.jhiAlertService.success('artemisApp.complaintResponse.created');
-                        this.complaintResponse = response.body!;
-                        this.complaint = this.complaintResponse.complaint!;
-                    },
-                    (err: HttpErrorResponse) => {
-                        this.onError(err);
-                    },
-                );
+            this.resolveComplaint();
         }
+    }
+
+    private resolveComplaint() {
+        this.isLoading = true;
+        this.complaintResponseService
+            .resolveComplaint(this.complaintResponse)
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe(
+                (response) => {
+                    this.handled = true;
+                    // eslint-disable-next-line chai-friendly/no-unused-expressions
+                    this.complaint.complaintType === ComplaintType.MORE_FEEDBACK
+                        ? this.jhiAlertService.success('artemisApp.moreFeedbackResponse.created')
+                        : this.jhiAlertService.success('artemisApp.complaintResponse.created');
+                    this.complaintResponse = response.body!;
+                    this.complaint = this.complaintResponse.complaint!;
+                    this.isLockedForLoggedInUser = false;
+                    this.showLockDuration = false;
+                    this.showRemoveLockButton = false;
+                },
+                (err: HttpErrorResponse) => {
+                    this.onError(err);
+                },
+            );
     }
 
     onError(httpErrorResponse: HttpErrorResponse) {

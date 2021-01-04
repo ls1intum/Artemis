@@ -377,7 +377,7 @@
                                 <td>
                                     <button
                                         *ngIf="complaint.accepted === undefined; else continueButton"
-                                        [disabled]="complaintService.isComplaintLockedForLoggedInUser(complaint, exercise)"
+                                        [disabled]="isComplaintLocked(complaint)"
                                         class="btn btn-success btn-sm"
                                         (click)="viewComplaint(complaint)"
                                     >

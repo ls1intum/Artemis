@@ -1,5 +1,12 @@
 {
     "artemisApp": {
+        "locks": {
+            "acquired": "Du hast jetzt den Lock auf dieses Complaint für 24 Stunden!",
+            "removeButton": "Entferne Lock",
+            "lockRemoved": "Lock von complaint entfernt",
+            "lockInformation": "Gelocked von {{user}} bis {{endDate}}",
+            "lockInformationYou": "Gelocked von DIR bis {{endDate}}"
+        },
         "complaintResponse": {
             "title": "Antwort auf die Beschwerde",
             "created": "Deine Antwort auf die Beschwerde wurde eingereicht",

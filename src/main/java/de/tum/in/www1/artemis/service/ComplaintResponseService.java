@@ -25,8 +25,6 @@ public class ComplaintResponseService {
 
     private final Logger log = LoggerFactory.getLogger(ComplaintResponseResource.class);
 
-    private static final String ENTITY_NAME = "complaintResponse";
-
     private ComplaintRepository complaintRepository;
 
     private ComplaintResponseRepository complaintResponseRepository;
@@ -43,8 +41,16 @@ public class ComplaintResponseService {
         this.authorizationCheckService = authorizationCheckService;
     }
 
+    /**
+     * Removes the empty complaint response and thus the lock for a given complaint
+     *
+     * The empty complaint response acts as a lock. Only the reviewer of the empty complaint response and instructors can resolve the complaint as long as the lock
+     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. This methods removes the current empty complaint response thus removing the lock
+     *
+     * @param complaintId if of the complaint for which to remove the empty response for
+     */
     @Transactional // ok because of modifying query
-    public ComplaintType removeLockOnComplaint(Long complaintId) {
+    public void removeEmptyComplaintResponse(Long complaintId) {
         if (complaintId == null) {
             throw new IllegalArgumentException("Complaint id should not be null");
         }
@@ -76,17 +82,26 @@ public class ComplaintResponseService {
             throw new ComplaintResponseLockedException(complaintFromDatabase.getComplaintResponse());
         }
         complaintResponseRepository.deleteById(complaintFromDatabase.getComplaintResponse().getId());
-
-        return complaintFromDatabase.getComplaintType();
+        log.debug("Removed empty complaint and thus lock for complaint with id : {}", complaintId);
     }
 
     /**
-     * Creates an initial complaint response for a given complaint
-     * @param complaintId - complaint for which to create an initial response for
-     * @return the persisted complaint response
+     * Refreshes the empty complaint response for a given complaint that acts a lock
+     *
+     * The empty complaint response acts as a lock. Only the reviewer of the empty complaint response and instructors can resolve the complaint as long as the lock
+     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. This methods exchanges the current empty complaint response to a new one
+     * thus updating the lock.
+     *
+     * This is possible in two cases:
+     *
+     * Case A: Lock is currently active -> Only the initial reviewer or an instructor can refresh the empty complaint response
+     * Case B: Lock has run out --> Others teaching assistants can refresh the empty complaint response thus acquiring the lock
+     *
+     * @param complaintId if of the complaint for which to refresh the empty response for
+     * @return refreshed empty complaint response
      */
     @Transactional // ok because of modifying query
-    public ComplaintResponse updateLockOnComplaint(Long complaintId) {
+    public ComplaintResponse refreshEmptyComplaintResponse(Long complaintId) {
         if (complaintId == null) {
             throw new IllegalArgumentException("Complaint id should not be null");
         }
@@ -101,38 +116,45 @@ public class ComplaintResponseService {
         if (complaintFromDatabase.getComplaintResponse() == null) {
             throw new IllegalArgumentException("Complaint response does not exists for given complaint");
         }
+        if (complaintFromDatabase.getComplaintResponse().getSubmittedTime() != null) {
+            throw new IllegalArgumentException("Complaint response is already submitted");
+        }
         Result originalResult = complaintFromDatabase.getResult();
         User assessor = originalResult.getAssessor();
         User user = this.userService.getUser();
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
         if (!isUserAuthorizedToRespondToComplaint(studentParticipation, complaintFromDatabase, assessor, user)) {
-            throw new AccessForbiddenException("Insufficient permission for updating the lock on the complaint");
+            throw new AccessForbiddenException("Insufficient permission for refreshing the empty complaint response");
         }
-        // only instructors and the original reviewer can update the lock while it is still running
+        // only instructors and the original reviewer can refresh the lock while it is still running
         if (complaintFromDatabase.getComplaintResponse().isCurrentlyLocked() && !(authorizationCheckService.isAtLeastInstructorForExercise(studentParticipation.getExercise())
                 || complaintFromDatabase.getComplaintResponse().getReviewer().equals(user))) {
             throw new ComplaintResponseLockedException(complaintFromDatabase.getComplaintResponse());
         }
 
-        // delete the old complaint response
         complaintResponseRepository.deleteById(complaintFromDatabase.getComplaintResponse().getId());
         complaintFromDatabase.setComplaintResponse(null);
         complaintResponseRepository.flush();
 
-        ComplaintResponse newComplaintResponse = new ComplaintResponse();
-        newComplaintResponse.setCreatedTime(ZonedDateTime.now());
-        newComplaintResponse.setReviewer(user);
-        newComplaintResponse.setComplaint(complaintFromDatabase);
-        return complaintResponseRepository.save(newComplaintResponse);
-
+        ComplaintResponse refreshedEmptyComplaintResponse = new ComplaintResponse();
+        refreshedEmptyComplaintResponse.setCreatedTime(ZonedDateTime.now()); // start date and time of the lock
+        refreshedEmptyComplaintResponse.setReviewer(user); // owner of the lock
+        refreshedEmptyComplaintResponse.setComplaint(complaintFromDatabase);
+        ComplaintResponse persistedComplaintResponse = complaintResponseRepository.save(refreshedEmptyComplaintResponse);
+        log.debug("Refreshed empty complaint and thus lock for complaint with id : {}", complaintId);
+        return persistedComplaintResponse;
     }
 
     /**
-     * Creates an initial complaint response for a given complaint
-     * @param complaintId - complaint for which to create an initial response for
-     * @return the persisted complaint response
+     * Creates an empty complaint response for a given complaint that acts a lock
+     *
+     * The empty complaint response acts as a lock. Only the creator of the empty complaint response and instructors can resolve the complaint as long as the lock
+     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}
+     *
+     * @param complaintId id of the complaint for which to create an empty complaint response for
+     * @return persisted empty complaint response
      */
-    public ComplaintResponse createInitialComplaintResponse(Long complaintId) {
+    public ComplaintResponse createEmptyComplaintResponse(Long complaintId) {
         if (complaintId == null) {
             throw new IllegalArgumentException("Complaint id should not be null");
         }
@@ -141,30 +163,39 @@ public class ComplaintResponseService {
             throw new IllegalArgumentException("Complaint was not found in database");
         }
         Complaint complaintFromDatabase = complaintFromDatabaseOptional.get();
-        if (complaintResponseRepository.findByComplaint_Id(complaintFromDatabase.getId()).isPresent()) {
+        if (complaintFromDatabase.isAccepted() != null) {
+            throw new IllegalArgumentException("Complaint is already handled");
+        }
+        if (complaintFromDatabase.getComplaintResponse() != null) {
             throw new IllegalArgumentException("Complaint response already exists for given complaint");
         }
         Result originalResult = complaintFromDatabase.getResult();
         User assessor = originalResult.getAssessor();
-        User reviewer = this.userService.getUser();
+        User user = this.userService.getUser();
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
-        if (!isUserAuthorizedToRespondToComplaint(studentParticipation, complaintFromDatabase, assessor, reviewer)) {
-            throw new AccessForbiddenException("Insufficient permission for creating the initial complaint response");
+        if (!isUserAuthorizedToRespondToComplaint(studentParticipation, complaintFromDatabase, assessor, user)) {
+            throw new AccessForbiddenException("Insufficient permission for creating the empty complaint response");
         }
-        ComplaintResponse initialComplainResponse = new ComplaintResponse();
-        initialComplainResponse.setCreatedTime(ZonedDateTime.now());
-        initialComplainResponse.setReviewer(reviewer);
-        initialComplainResponse.setComplaint(complaintFromDatabase);
-        return complaintResponseRepository.save(initialComplainResponse);
+        ComplaintResponse emptyComplaintResponse = new ComplaintResponse();
+        emptyComplaintResponse.setReviewer(user); // owner of the lock
+        emptyComplaintResponse.setComplaint(complaintFromDatabase);
+        emptyComplaintResponse.setCreatedTime(ZonedDateTime.now()); // start date and time of the lock
+        ComplaintResponse persistedComplaintResponse = complaintResponseRepository.save(emptyComplaintResponse);
+        log.debug("Created empty complaint and thus lock for complaint with id : {}", complaintId);
+        return persistedComplaintResponse;
     }
 
     /**
-     * Updates an existing complaint response
-     * @param updatedComplaintResponse - changed complaint response
-     * @return updated complaint response
+     * Resolves a complaint by filling in the empty complaint response attached to it
+     *
+     * The empty complaint response acts as a lock. Only the creator of the empty complaint response and instructors can resolve empty complaint response as long as the lock
+     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. This methods fill in the initial complaint response and either accepts
+     * or denies the associated complaint, thus resolving the complaint
+     *
+     * @param updatedComplaintResponse complaint response containing the information necessary for resolving the complaint
      */
     @Transactional // ok because of modifying query
-    public ComplaintResponse updateComplaintResponse(ComplaintResponse updatedComplaintResponse) {
+    public ComplaintResponse resolveComplaint(ComplaintResponse updatedComplaintResponse) {
         if (updatedComplaintResponse.getId() == null) {
             throw new IllegalArgumentException("The complaint response needs to have an id");
         }
@@ -172,8 +203,11 @@ public class ComplaintResponseService {
         if (complaintResponseFromDatabaseOptional.isEmpty()) {
             throw new IllegalArgumentException("The complaint response was not found in the database");
         }
-        ComplaintResponse complaintResponseFromDatabase = complaintResponseFromDatabaseOptional.get();
-        Optional<Complaint> originalComplaintOptional = complaintRepository.findByIdWithEagerAssessor(complaintResponseFromDatabase.getComplaint().getId());
+        ComplaintResponse emptyComplaintResponseFromDatabase = complaintResponseFromDatabaseOptional.get();
+        if (emptyComplaintResponseFromDatabase.getSubmittedTime() != null || emptyComplaintResponseFromDatabase.getResponseText() != null) {
+            throw new IllegalArgumentException("The complaint response is not empty");
+        }
+        Optional<Complaint> originalComplaintOptional = complaintRepository.findByIdWithEagerAssessor(emptyComplaintResponseFromDatabase.getComplaint().getId());
         if (originalComplaintOptional.isEmpty()) {
             throw new IllegalArgumentException("The complaint was not found in the database");
         }
@@ -187,22 +221,22 @@ public class ComplaintResponseService {
         User user = this.userService.getUser();
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
         if (!isUserAuthorizedToRespondToComplaint(studentParticipation, originalComplaint, assessor, user)) {
-            throw new AccessForbiddenException("Insufficient permission for updating a complaint response");
+            throw new AccessForbiddenException("Insufficient permission for resolving the complaing");
         }
         // only instructors and the original reviewer can ignore the lock on a complaint response
-        if (complaintResponseFromDatabase.isCurrentlyLocked()
-                && !(authorizationCheckService.isAtLeastInstructorForExercise(studentParticipation.getExercise()) || complaintResponseFromDatabase.getReviewer().equals(user))) {
-            throw new ComplaintResponseLockedException(complaintResponseFromDatabase);
+        if (emptyComplaintResponseFromDatabase.isCurrentlyLocked() && !(authorizationCheckService.isAtLeastInstructorForExercise(studentParticipation.getExercise())
+                || emptyComplaintResponseFromDatabase.getReviewer().equals(user))) {
+            throw new ComplaintResponseLockedException(emptyComplaintResponseFromDatabase);
         }
 
         originalComplaint.setAccepted(updatedComplaintResponse.getComplaint().isAccepted()); // accepted or denied
         originalComplaint = complaintRepository.save(originalComplaint);
 
-        complaintResponseFromDatabase.setSubmittedTime(ZonedDateTime.now());
-        complaintResponseFromDatabase.setResponseText(updatedComplaintResponse.getResponseText());
-        complaintResponseFromDatabase.setComplaint(originalComplaint);
-        complaintResponseFromDatabase.setReviewer(user);
-        return complaintResponseRepository.save(complaintResponseFromDatabase);
+        emptyComplaintResponseFromDatabase.setSubmittedTime(ZonedDateTime.now());
+        emptyComplaintResponseFromDatabase.setResponseText(updatedComplaintResponse.getResponseText());
+        emptyComplaintResponseFromDatabase.setComplaint(originalComplaint);
+        emptyComplaintResponseFromDatabase.setReviewer(user);
+        return complaintResponseRepository.save(emptyComplaintResponseFromDatabase);
     }
 
     /**

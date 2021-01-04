@@ -16,29 +16,37 @@ export class ComplaintResponseService {
 
     constructor(private http: HttpClient, private accountService: AccountService) {}
 
+    /**
+     * Checks if a complaint response is locked for the currently logged in user
+     *
+     * A complaint response is never locked for the creator of the complaint response and for instructors
+     *
+     * @param complaintResponse complaint response to check the lock status for
+     * @param exercise exercise used to find out if currently logged in user is instructor
+     */
     isComplaintResponseLockedForLoggedInUser(complaintResponse: ComplaintResponse, exercise: Exercise) {
-        if (complaintResponse.isCurrentlyLocked) {
-            if (complaintResponse.reviewer?.login === this.accountService.userIdentity?.login || this.accountService.isAtLeastInstructorForExercise(exercise)) {
-                return false;
-            } else {
-                return true;
-            }
+        if (complaintResponse.isCurrentlyLocked && complaintResponse.submittedTime === undefined) {
+            return !(complaintResponse.reviewer?.login === this.accountService.userIdentity?.login || this.accountService.isAtLeastInstructorForExercise(exercise));
         } else {
             return false;
         }
     }
 
+    /**
+     * Checks if the lock on a complaint response is active and if the currently logged in user is the creator of the lock
+     * @param complaintResponse complaint response to check
+     */
     isComplaintResponseLockedByLoggedInUser(complaintResponse: ComplaintResponse) {
-        if (complaintResponse.isCurrentlyLocked && complaintResponse.reviewer?.login === this.accountService.userIdentity?.login) {
-            return true;
-        } else {
-            return false;
-        }
+        return !!(
+            complaintResponse.isCurrentlyLocked &&
+            complaintResponse.submittedTime === undefined &&
+            complaintResponse.reviewer?.login === this.accountService.userIdentity?.login
+        );
     }
 
-    updateLock(complaintId: number): Observable<EntityResponseType> {
+    refreshLock(complaintId: number): Observable<EntityResponseType> {
         return this.http
-            .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/update-lock`, {}, { observe: 'response' })
+            .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/refresh-lock`, {}, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
@@ -46,16 +54,16 @@ export class ComplaintResponseService {
         return this.http.delete<void>(`${this.resourceUrl}/complaint/${complaintId}/remove-lock`, { observe: 'response' });
     }
 
-    createInitialResponse(complaintId: number): Observable<EntityResponseType> {
+    createLock(complaintId: number): Observable<EntityResponseType> {
         return this.http
-            .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/create-initial`, {}, { observe: 'response' })
+            .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/create-lock`, {}, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    update(complaintResponse: ComplaintResponse): Observable<EntityResponseType> {
+    resolveComplaint(complaintResponse: ComplaintResponse): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(complaintResponse);
         return this.http
-            .put<ComplaintResponse>(this.resourceUrl, copy, { observe: 'response' })
+            .put<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintResponse.complaint?.id}/resolve`, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 

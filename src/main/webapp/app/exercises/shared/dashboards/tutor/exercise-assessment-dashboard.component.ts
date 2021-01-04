@@ -274,7 +274,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             (response: string) => this.onError(response),
         );
     }
-
     language(submission: Submission): string {
         if (submission.submissionExerciseType === SubmissionExerciseType.TEXT) {
             return (submission as TextSubmission).language || 'UNKNOWN';
@@ -428,11 +427,18 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         } else {
             if (this.complaintService.isComplaintLocked(complaint)) {
                 if (this.complaintService.isComplaintLockedByLoggedInUser(complaint)) {
-                    return `This complaint is locked by you until ${this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate)}`;
+                    const endDate = this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate);
+                    return this.translateService.instant('artemisApp.locks.lockInformationYou', {
+                        endDate,
+                    });
                 } else {
-                    return `This complaint is locked by ${complaint.complaintResponse?.reviewer?.login} until ${this.artemisDatePipe.transform(
-                        complaint.complaintResponse?.lockEndDate,
-                    )}`;
+                    const endDate = this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate);
+                    const user = complaint.complaintResponse?.reviewer?.login;
+
+                    return this.translateService.instant('artemisApp.locks.lockInformation', {
+                        endDate,
+                        user,
+                    });
                 }
             } else {
                 return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.complaintNotEvaluated');

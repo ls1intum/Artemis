@@ -108,7 +108,7 @@ public class AssessmentService {
             throw new BadRequestAlertException("Feedbacks and complaint response must not be null.", "AssessmentUpdate", "notnull");
         }
         // Save the complaint response
-        ComplaintResponse complaintResponse = complaintResponseService.updateComplaintResponse(assessmentUpdate.getComplaintResponse());
+        ComplaintResponse complaintResponse = complaintResponseService.resolveComplaint(assessmentUpdate.getComplaintResponse());
 
         try {
             // Store the original result with the complaint

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.Objects;
 import java.util.Optional;
@@ -9,6 +7,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -62,87 +61,67 @@ public class ComplaintResponseResource {
     }
 
     /**
-     * POST /complaint-responses: create a new initial complaint response for a given complaint
+     * POST /complaint-responses/complaint/:complaintId/create-lock: locks the complaint by creating an empty complaint response
      *
-     * @param complaint the complaint to create the initial response for
-     * @return the ResponseEntity with status 201 (Created) and with body the new complaint response
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @param complaintId - id of the complaint to lock
+     * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
-    @PostMapping("/complaint-responses/complaint/{complaintId}/create-initial")
+    @PostMapping("/complaint-responses/complaint/{complaintId}/create-lock")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ComplaintResponse> createInitialComplaintResponse(@PathVariable long complaintId) throws URISyntaxException {
-        log.debug("REST request to create initial ComplaintResponse for complaint with id: {}", complaintId);
-        ComplaintResponse savedComplaintResponse = complaintResponseService.createInitialComplaintResponse(complaintId);
-
-        // To build correct creation alert on the client we must check which type is the complaint to apply correct i18n key.
-        String entityName = savedComplaintResponse.getComplaint().getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_RESPONSE_ENITY_NAME : ENTITY_NAME;
-
+    public ResponseEntity<ComplaintResponse> lockComplaint(@PathVariable long complaintId) {
+        log.debug("REST request to create empty complaint response for complaint with id: {}", complaintId);
+        ComplaintResponse savedComplaintResponse = complaintResponseService.createEmptyComplaintResponse(complaintId);
         // always remove the student from the complaint as we don't need it in the corresponding client use case
         savedComplaintResponse.getComplaint().filterSensitiveInformation();
-
-        return ResponseEntity.created(new URI("/api/complaint-responses/" + savedComplaintResponse.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaintResponse.getId().toString())).body(savedComplaintResponse);
+        return new ResponseEntity<>(savedComplaintResponse, HttpStatus.CREATED);
     }
 
     /**
-     * POST /complaint-responses: create a new initial complaint response for a given complaint
+     * POST /complaint-responses/complaint/:complaintId/refresh-lock: locks the complaint again by replace the empty complaint response
      *
-     * @param complaint the complaint to create the initial response for
-     * @return the ResponseEntity with status 201 (Created) and with body the new complaint response
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @param complaintId - id of the complaint to lock again
+     * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
-    @PostMapping("/complaint-responses/complaint/{complaintId}/update-lock")
+    @PostMapping("/complaint-responses/complaint/{complaintId}/refresh-lock")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ComplaintResponse> updateComplaintResponseLock(@PathVariable long complaintId) throws URISyntaxException {
-        log.debug("REST request to update the lock on the complaint with the id: {}", complaintId);
-        ComplaintResponse savedComplaintResponse = complaintResponseService.updateLockOnComplaint(complaintId);
-
-        // To build correct creation alert on the client we must check which type is the complaint to apply correct i18n key.
-        String entityName = savedComplaintResponse.getComplaint().getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_RESPONSE_ENITY_NAME : ENTITY_NAME;
-
+    public ResponseEntity<ComplaintResponse> refreshLockOnComplaint(@PathVariable long complaintId) {
+        log.debug("REST request to refresh empty complaint response for complaint with id: {}", complaintId);
+        ComplaintResponse savedComplaintResponse = complaintResponseService.refreshEmptyComplaintResponse(complaintId);
         // always remove the student from the complaint as we don't need it in the corresponding client use case
         savedComplaintResponse.getComplaint().filterSensitiveInformation();
-
-        return ResponseEntity.created(new URI("/api/complaint-responses/" + savedComplaintResponse.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaintResponse.getId().toString())).body(savedComplaintResponse);
+        return new ResponseEntity<>(savedComplaintResponse, HttpStatus.CREATED);
     }
 
     /**
-     * POST /complaint-responses: create a new initial complaint response for a given complaint
+     * DELETE /complaint-responses/complaint/:complaintId/remove-lock: removes the lock on a complaint by removing the empty complaint response
      *
-     * @param complaint the complaint to create the initial response for
-     * @return the ResponseEntity with status 201 (Created) and with body the new complaint response
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @param complaintId - id of the complaint to remove the lock for
+     * @return the ResponseEntity with status 200 (Ok)
      */
     @DeleteMapping("/complaint-responses/complaint/{complaintId}/remove-lock")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> removeComplaintResponseLock(@PathVariable long complaintId) throws URISyntaxException {
+    public ResponseEntity<Void> removeLockFromComplaint(@PathVariable long complaintId) {
         log.debug("REST request to remove the lock on the complaint with the id: {}", complaintId);
-        ComplaintType typeOfRemovedComplaintResponse = complaintResponseService.removeLockOnComplaint(complaintId);
-
-        // To build correct creation alert on the client we must check which type is the complaint to apply correct i18n key.
-        String entityName = typeOfRemovedComplaintResponse == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_RESPONSE_ENITY_NAME : ENTITY_NAME;
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, entityName, "test")).build();
+        complaintResponseService.removeEmptyComplaintResponse(complaintId);
+        return ResponseEntity.ok().build();
     }
 
     /**
-     * PUT /complaint-response: update an existing complaint response
+     * PUT /complaint-responses/complaint/:complaintId/resolve: resolve a complaint by updating the complaint and the associated empty complaint response
      *
-     * @param complaintResponse the complaint response to update
-     * @return the ResponseEntity with status 200 (OK) and with the body of the updated complaint response
+     * @param complaintId - id of the complaint to resolve
+     * @param complaintResponse the complaint response used for resolving the complaint
+     * @return the ResponseEntity with status 200 (Ok) and with body the complaint response used for resolving the complaint
      */
-    @PutMapping("/complaint-responses")
+    @PutMapping("/complaint-responses/complaint/{complaintId}/resolve")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ComplaintResponse> updateExistingComplaintResponse(@RequestBody ComplaintResponse complaintResponse) {
-        log.debug("REST request to update ComplaintResponse: {}", complaintResponse);
-        ComplaintResponse updatedComplaintResponse = complaintResponseService.updateComplaintResponse(complaintResponse);
-
+    public ResponseEntity<ComplaintResponse> resolveComplaint(@RequestBody ComplaintResponse complaintResponse, @PathVariable long complaintId) {
+        log.debug("REST request to resolve the complaint with id: {}", complaintId);
+        ComplaintResponse updatedComplaintResponse = complaintResponseService.resolveComplaint(complaintResponse);
         // To build correct creation alert on the client we must check which type is the complaint to apply correct i18n key.
         String entityName = updatedComplaintResponse.getComplaint().getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_RESPONSE_ENITY_NAME : ENTITY_NAME;
-
         // always remove the student from the complaint as we don't need it in the corresponding client use case
         updatedComplaintResponse.getComplaint().filterSensitiveInformation();
-
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, entityName, updatedComplaintResponse.getId().toString()))
                 .body(updatedComplaintResponse);
     }

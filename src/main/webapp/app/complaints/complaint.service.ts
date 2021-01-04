@@ -25,24 +25,41 @@ export class ComplaintService implements IComplaintService {
 
     constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService) {}
 
+    /**
+     * Checks if a complaint is locked for the currently logged in user
+     *
+     * A complaint is locked if the associated complaint response is locked
+     *
+     * @param complaint complaint to check the lock status for
+     * @param exercise exercise used to find out if currently logged in user is instructor
+     */
     isComplaintLockedForLoggedInUser(complaint: Complaint, exercise: Exercise) {
-        if (complaint.complaintResponse) {
+        if (complaint.complaintResponse && complaint.accepted === undefined) {
             return this.complaintResponseService.isComplaintResponseLockedForLoggedInUser(complaint.complaintResponse, exercise);
         } else {
             return false;
         }
     }
 
+    /**
+     * Checks if the lock on a complaint is active and if the currently logged in user is the creator of the lock
+     * @param complaint complaint to check the lock status for
+     */
     isComplaintLockedByLoggedInUser(complaint: Complaint) {
-        if (complaint.complaintResponse) {
+        debugger;
+        if (complaint.complaintResponse && complaint.accepted === undefined) {
             return this.complaintResponseService.isComplaintResponseLockedByLoggedInUser(complaint.complaintResponse);
         } else {
             return false;
         }
     }
 
+    /**
+     * Checks if a complaint is locked
+     * @param complaint complaint to check lock status for
+     */
     isComplaintLocked(complaint: Complaint) {
-        if (complaint.complaintResponse) {
+        if (complaint.complaintResponse && complaint.accepted === undefined) {
             return complaint.complaintResponse.isCurrentlyLocked;
         } else {
             return false;
