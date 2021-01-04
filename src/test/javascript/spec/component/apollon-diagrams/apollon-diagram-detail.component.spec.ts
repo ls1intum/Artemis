@@ -20,7 +20,6 @@ import * as testClassDiagram from '../../util/modeling/test-models/class-diagram
 import { UMLModel, Selection } from '@ls1intum/apollon';
 import { ElementRef } from '@angular/core';
 import { Text } from '@ls1intum/apollon/lib/utils/svg/text';
-import { convertRenderedSVGToPNG } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {

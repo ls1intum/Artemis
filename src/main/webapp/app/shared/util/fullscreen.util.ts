@@ -1,7 +1,7 @@
 /**
  * checks if this component is the current fullscreen component
  */
-export function isFullScreen() {
+export function isFullScreen(): boolean {
     const docElement = document as any;
     // check if this component is the current fullscreen component for different browser types
     if (docElement.fullscreenElement !== undefined) {
@@ -13,6 +13,7 @@ export function isFullScreen() {
     } else if (docElement.msFullscreenElement !== undefined) {
         return docElement.msFullscreenElement;
     }
+    return false;
 }
 
 /**
