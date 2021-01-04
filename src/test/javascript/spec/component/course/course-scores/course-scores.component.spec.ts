@@ -52,17 +52,18 @@ describe('CourseScoresComponent', () => {
         type: ExerciseType.QUIZ,
         maxScore: 2,
     } as Exercise;
+    const sharedDueDate = moment().add(4, 'minutes');
     const exerciseTwo = {
         title: 'exercise two',
         id: 2,
-        dueDate: moment().add(4, 'minutes'),
+        dueDate: sharedDueDate,
         type: ExerciseType.QUIZ,
         maxScore: 3,
     } as Exercise;
     const exerciseThree = {
         title: 'exercise three',
         id: 3,
-        dueDate: moment().add(4, 'minutes'),
+        dueDate: sharedDueDate,
         type: ExerciseType.FILE_UPLOAD,
         maxScore: 0,
         bonusPoints: 1,

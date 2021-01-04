@@ -70,18 +70,6 @@ export class ExamManagementService {
     }
 
     /**
-     * Query exams of the given course via get request.
-     * @param courseId The course id.
-     * @param req The query request options.
-     */
-    query(courseId: number, req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams`, { params: options, observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
-    }
-
-    /**
      * Find all exams for the given course.
      * @param courseId The course id.
      */
@@ -285,7 +273,7 @@ export class ExamManagementService {
         return this.http.put<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroupsOrder`, exerciseGroups, { observe: 'response' });
     }
 
-    private static convertDateFromClient(exam: Exam): Exam {
+    public static convertDateFromClient(exam: Exam): Exam {
         return Object.assign({}, exam, {
             startDate: exam.startDate && moment(exam.startDate).isValid() ? exam.startDate.toJSON() : undefined,
             endDate: exam.endDate && moment(exam.endDate).isValid() ? exam.endDate.toJSON() : undefined,

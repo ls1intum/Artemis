@@ -29,7 +29,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
-import moment = require('moment');
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { SinonStub, stub } from 'sinon';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
@@ -42,6 +41,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { User } from 'app/core/user/user.model';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import * as moment from 'moment';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -150,7 +150,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             tick(500);
             expect(modelingSubmissionStub).to.have.been.calledOnce;
             expect(component.isLoading).to.be.false;
-            expect(component.complaint).to.be.deep.equal(complaint);
+            expect(component.complaint).to.deep.equal(complaint);
             modelingSubmissionStub.restore();
         }));
 
