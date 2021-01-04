@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_LOCK_DURATION_IN_MINUTES;
+
 import java.time.ZonedDateTime;
 
 import javax.persistence.*;
@@ -61,8 +63,7 @@ public class ComplaintResponse extends DomainObject {
             return false;
         }
 
-        // ToDo load lock time for complaints from yaml file
-        ZonedDateTime lockedUntil = createdTime.plusMinutes(3);
+        ZonedDateTime lockedUntil = createdTime.plusMinutes(COMPLAINT_LOCK_DURATION_IN_MINUTES);
 
         return ZonedDateTime.now().isBefore(lockedUntil);
     }
@@ -73,7 +74,7 @@ public class ComplaintResponse extends DomainObject {
             return null;
         }
 
-        return createdTime.plusMinutes(3);
+        return createdTime.plusMinutes(COMPLAINT_LOCK_DURATION_IN_MINUTES);
     }
 
     public String getResponseText() {
