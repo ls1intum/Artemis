@@ -86,7 +86,7 @@ export function login(username, password) {
     ];
     res = http.batch(req);
     if (res[0].status !== 200) {
-        fail('Failed to login as user ' + username + ' (' + res[0].status + ')! Response was + ' + res[0].body);
+        fail('FAILTEST: failed to login as user ' + username + ' (' + res[0].status + ')! Response was + ' + res[0].body);
     }
     const authToken = JSON.parse(res[0].body).id_token;
     // console.log('GOT authToken ' + authToken + ' for user ' + username);
@@ -144,13 +144,23 @@ export function Artemis(authToken, xsrftoken) {
 
         ws.connect(websocketUrl, { tags: { name: websocketEndpoint } }, function (socket) {
             socket.on('open', function open() {
-                socket.send('CONNECT\nX-XSRF-TOKEN:' + xsrftoken + '\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000');
+                socket.send('CONNECT\nX-XSRF-TOKEN:' + xsrftoken + '\naccept-version:1.2\nheart-beat:10000,10000\n\n\u0000');
+                socket.setInterval(function timeout() {
+                    socket.ping();
+                    // Pinging every 10sec (setInterval)
+                }, 10000);
+                // TODO: is ping not the same as the heartbeat?
+                // Send heartbeat to server so session is kept alive
+                socket.setInterval(function timeout() {
+                    socket.send('\n');
+                }, 10000);
             });
 
             socket.on('error', function (e) {
                 if (e.error() !== 'websocket: close sent') {
-                    console.log('Websocket error occurred: ', e.error());
+                    console.log('Websocket connection closed due to: ', e.error());
                 }
+                // TODO: try to reconnect
             });
 
             doOnSocket(socket);
