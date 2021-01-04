@@ -10,6 +10,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Security;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -23,6 +24,7 @@ import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -128,6 +130,10 @@ public class GitService {
     }
 
     private void configureSsh() {
+
+        // Note: this is an important statement, because otherwise the git operations over ssh might block, because the native random secure number generator is too slow, see e.g.
+        // https://mattnworb.com/post/the-dangers-of-java-security-securerandom
+        Security.insertProviderAt(new BouncyCastleProvider(), 1);   // 1 inserts this provider as the default one
 
         var credentialsProvider = new CredentialsProvider() {
 
