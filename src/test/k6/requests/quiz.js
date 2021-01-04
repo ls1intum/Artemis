@@ -34,7 +34,7 @@ export function createQuizExercise(artemis, course, exerciseGroup = null, startQ
         for (let [key, value] of Object.entries(res[0].headers)) {
             console.log(`${key}: ${value}`);
         }
-        fail('ERROR: Could not create exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
+        fail('FAILTEST: Could not create exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
     const exerciseId = JSON.parse(res[0].body).id;
     console.log('CREATED new quiz exercise, ID=' + exerciseId);
@@ -43,13 +43,13 @@ export function createQuizExercise(artemis, course, exerciseGroup = null, startQ
         console.log('Setting quiz to visible');
         res = artemis.put(QUIZ_EXERCISE(exerciseId) + '/set-visible');
         if (res[0].status !== 200) {
-            fail('Could not set quiz to visible (' + res[0].status + ')! Response was + ' + res[0].body);
+            fail('FAILTEST: Could not set quiz to visible (' + res[0].status + ')! Response was + ' + res[0].body);
         }
 
         console.log('Starting quiz');
         res = artemis.put(QUIZ_EXERCISE(exerciseId) + '/start-now');
         if (res[0].status !== 200) {
-            fail('Could not start quiz (' + res[0].status + ')! Response was + ' + res[0].body);
+            fail('FAILTEST: Could not start quiz (' + res[0].status + ')! Response was + ' + res[0].body);
         }
     }
 
@@ -103,7 +103,7 @@ export function generateQuizQuestions(amount) {
 export function deleteQuizExercise(artemis, exerciseId) {
     const res = artemis.delete(QUIZ_EXERCISE(exerciseId));
     if (res[0].status !== 200) {
-        fail('Could not delete exercise (' + res[0].status + ')! Response was + ' + res[0].body);
+        fail('FAILTEST: Could not delete exercise (' + res[0].status + ')! Response was + ' + res[0].body);
     }
     console.log('DELETED quiz exercise, ID=' + exerciseId);
 }
@@ -111,7 +111,7 @@ export function deleteQuizExercise(artemis, exerciseId) {
 export function getQuizQuestions(artemis, courseId, exerciseId) {
     const res = artemis.get(PARTICIPATION(exerciseId));
     if (res[0].status !== 200) {
-        fail('ERROR: Could not get quiz information (' + res[0].status + ')! response was + ' + res[0].body);
+        fail('FAILTEST: Could not get quiz information (' + res[0].status + ')! response was + ' + res[0].body);
     }
 
     return JSON.parse(res[0].body).exercise.quizQuestions;
@@ -132,7 +132,7 @@ export function submitRandomAnswerRESTExam(artemis, exercise, numberOfQuestions,
         for (let [key, value] of Object.entries(res[0].headers)) {
             console.log(`${key}: ${value}`);
         }
-        fail('ERROR: Could not submit quiz (Exam) via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
+        fail('FAILTEST: Could not submit quiz (Exam) via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
     return answer;
 }
@@ -177,11 +177,11 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
                 for (let [key, value] of Object.entries(res[0].headers)) {
                     console.log(`${key}: ${value}`);
                 }
-                fail('ERROR: Could not submit quiz via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
+                fail('FAILTEST: Could not submit quiz via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
             }
         }
 
-        // Subscribe to callback response from server (response after submitted answer
+        // Subscribe to callback response from server (response after submitted answer)
         socket.setTimeout(function () {
             subscribe();
         }, 5 * 1000);
@@ -196,11 +196,6 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
                 console.log(`Unexpected message ${message} for user ${currentUsername}`);
             }
         });
-
-        // Send heartbeat to server so session is kept alive
-        socket.setInterval(function timeout() {
-            socket.send('\n');
-        }, 10000);
 
         for (let questionCount = 1; questionCount <= 50; questionCount++) {
             // submit new quiz answer
@@ -253,10 +248,5 @@ export function waitForQuizStartAndStart(artemis, exerciseId, timeout, currentUs
                 }
             }
         });
-
-        // Send heartbeat to server so session is kept alive
-        socket.setInterval(function timeout() {
-            socket.send('\n');
-        }, 10000);
     });
 }

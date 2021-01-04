@@ -18,7 +18,7 @@ export function submitRandomModelingAnswerExam(artemis, exercise, submissionId) 
         for (let [key, value] of Object.entries(res[0].headers)) {
             console.log(`${key}: ${value}`);
         }
-        fail('ERROR: Could not submit modeling (Exam) via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
+        fail('FAILTEST: Could not submit modeling (Exam) via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
     return answer;
 }
@@ -40,7 +40,7 @@ export function newModelingExercise(artemis, exerciseGroup) {
         for (let [key, value] of Object.entries(res[0].headers)) {
             console.log(`${key}: ${value}`);
         }
-        fail('ERROR: Could not create modeling exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
+        fail('FAILTEST: Could not create modeling exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
     console.log('SUCCESS: Generated new modeling exercise');
 

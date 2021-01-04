@@ -3,9 +3,9 @@ import http from 'k6/http';
 import ws from 'k6/ws';
 import { Trend } from 'k6/metrics';
 
-// Version: 1.1
-// Creator: Firefox
-// Browser: Firefox
+/*****************
+ * TODO: Note: this file seems to be outdated
+ *****************/
 
 var rest_call_metrics = new Trend('rest_call_metrics');
 

@@ -49,25 +49,23 @@ export function setup() {
     console.log('__ENV.USER_OFFSET: ' + __ENV.USER_OFFSET);
     console.log('__ENV.ONLY_PREPARE: ' + onlyPrepare);
 
-    let artemis, exerciseId, course, userId, textExercise, quizExercise;
-
     const iterations = parseInt(__ENV.ITERATIONS);
 
     if (parseInt(__ENV.COURSE_ID) === 0 || parseInt(__ENV.EXERCISE_ID) === 0) {
         console.log('Creating new course and exercise as no parameters are given');
 
         // Create course
-        artemis = login(adminUsername, adminPassword);
+        const artemisAdmin = login(adminUsername, adminPassword);
 
-        course = newCourse(artemis);
+        const course = newCourse(artemisAdmin);
 
-        createUsersIfNeeded(artemis, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset);
+        createUsersIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset);
 
         const instructorUsername = baseUsername.replace('USERID', '1');
         const instructorPassword = basePassword.replace('USERID', '1');
 
         // Login to Artemis
-        artemis = login(instructorUsername, instructorPassword);
+        const artemis = login(instructorUsername, instructorPassword);
 
         // it might be necessary that the newly created groups or accounts are synced with the version control and continuous integration servers, so we wait for 1 minute
         const timeoutExercise = parseFloat(__ENV.TIMEOUT_EXERCISE);
@@ -77,20 +75,20 @@ export function setup() {
         }
 
         // Create new exam
-        let exam = newExam(artemis, course);
+        const exam = newExam(artemis, course);
 
-        let exerciseGroup1 = newExerciseGroup(artemis, exam);
-        let exerciseGroup2 = newExerciseGroup(artemis, exam);
-        let exerciseGroup3 = newExerciseGroup(artemis, exam);
-        let exerciseGroup4 = newExerciseGroup(artemis, exam);
+        const exerciseGroup1 = newExerciseGroup(artemis, exam);
+        const exerciseGroup2 = newExerciseGroup(artemis, exam);
+        const exerciseGroup3 = newExerciseGroup(artemis, exam);
+        const exerciseGroup4 = newExerciseGroup(artemis, exam);
 
-        let textExercise = newTextExercise(artemis, exerciseGroup1);
+        newTextExercise(artemis, exerciseGroup1);
 
-        let quizExercise = createQuizExercise(artemis, null, exerciseGroup2, false);
+        createQuizExercise(artemis, null, exerciseGroup2, false);
 
-        let modelingExercise = newModelingExercise(artemis, exerciseGroup3);
+        newModelingExercise(artemis, exerciseGroup3);
 
-        let programmingExercise = createProgrammingExercise(artemis, null, 'JAVA', exerciseGroup4);
+        createProgrammingExercise(artemis, null, 'JAVA', exerciseGroup4);
 
         for (let i = 1; i <= iterations; i++) {
             addUserToStudentsInExam(artemis, baseUsername.replace('USERID', i + userOffset), exam);
@@ -157,11 +155,6 @@ export default function (data) {
         const individualEndDate = new Date(parsedStartDate.getTime() + workingTime * 1000);
 
         artemis.websocket(function (socket) {
-            // Send heartbeat to server so session is kept alive
-            socket.setInterval(function timeout() {
-                socket.send('\n');
-            }, 10000);
-
             socket.setInterval(function timeout() {
                 socket.close();
             }, individualEndDate.getTime() - Date.now());
