@@ -102,7 +102,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         StatsForInstructorDashboardDTO statsForInstructorDashboardDTO = request.get("/api/exercises/" + textExercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
                 StatsForInstructorDashboardDTO.class);
         assertThat(statsForInstructorDashboardDTO.getNumberOfSubmissions().getInTime()).isEqualTo(submissions.size() + 1);
-        assertThat(statsForInstructorDashboardDTO.getNumberOfAssessments().getInTime()).isEqualTo(3);
+        assertThat(statsForInstructorDashboardDTO.getTotalNumberOfAssessments().getInTime()).isEqualTo(3);
         assertThat(statsForInstructorDashboardDTO.getNumberOfAutomaticAssistedAssessments().getInTime()).isEqualTo(1);
 
         for (Exercise exercise : course.getExercises()) {
@@ -495,8 +495,8 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
             for (Exercise exercise : course.getExercises()) {
                 StatsForInstructorDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
                         StatsForInstructorDashboardDTO.class);
-                assertThat(stats.getNumberOfAssessments().getInTime()).as("Number of in-time assessments is correct").isEqualTo(0);
-                assertThat(stats.getNumberOfAssessments().getLate()).as("Number of late assessments is correct").isEqualTo(0);
+                assertThat(stats.getTotalNumberOfAssessments().getInTime()).as("Number of in-time assessments is correct").isEqualTo(0);
+                assertThat(stats.getTotalNumberOfAssessments().getLate()).as("Number of late assessments is correct").isEqualTo(0);
 
                 assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(tutors.size());
                 assertThat(stats.getNumberOfOpenComplaints()).as("Number of open complaints should be available to tutor").isNotNull();
@@ -540,8 +540,8 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
             for (Exercise exercise : course.getExercises()) {
                 StatsForInstructorDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-instructor-dashboard", HttpStatus.OK,
                         StatsForInstructorDashboardDTO.class);
-                assertThat(stats.getNumberOfAssessments().getInTime()).as("Number of in-time assessments is correct").isEqualTo(0);
-                assertThat(stats.getNumberOfAssessments().getLate()).as("Number of late assessments is correct").isEqualTo(0);
+                assertThat(stats.getTotalNumberOfAssessments().getInTime()).as("Number of in-time assessments is correct").isEqualTo(0);
+                assertThat(stats.getTotalNumberOfAssessments().getLate()).as("Number of late assessments is correct").isEqualTo(0);
                 assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(tutors.size());
                 assertThat(stats.getNumberOfOpenComplaints()).as("Number of open complaints is zero").isZero();
                 assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).as("Number of open more feedback requests is zero").isZero();

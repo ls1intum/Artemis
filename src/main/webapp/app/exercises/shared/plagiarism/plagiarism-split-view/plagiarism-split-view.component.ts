@@ -28,8 +28,10 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     public split: Split.Instance;
 
     public isModelingExercise: boolean;
-    public isProgrammingExercise: boolean;
-    public isTextExercise: boolean;
+    public isProgrammingOrTextExercise: boolean;
+
+    public matchesA: Map<string, { from: TextSubmissionElement; to: TextSubmissionElement }[]>;
+    public matchesB: Map<string, { from: TextSubmissionElement; to: TextSubmissionElement }[]>;
 
     /**
      * Initialize third party libs inside this lifecycle hook.
@@ -53,9 +55,43 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
             const exercise = changes.exercise.currentValue;
 
             this.isModelingExercise = exercise.type === ExerciseType.MODELING;
-            this.isProgrammingExercise = exercise.type === ExerciseType.PROGRAMMING;
-            this.isTextExercise = exercise.type === ExerciseType.TEXT;
+            this.isProgrammingOrTextExercise = exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT;
         }
+
+        if (changes.comparison && this.isProgrammingOrTextExercise) {
+            this.parseTextMatches(changes.comparison.currentValue as PlagiarismComparison<TextSubmissionElement>);
+        }
+    }
+
+    parseTextMatches({ submissionA, submissionB, matches }: PlagiarismComparison<TextSubmissionElement>) {
+        this.matchesA = new Map();
+        this.matchesB = new Map();
+
+        matches.forEach(({ startA, startB, length }) => {
+            const fileA = submissionA.elements[startA].file || 'none';
+            const fileB = submissionB.elements[startB].file || 'none';
+
+            if (!this.matchesA.has(fileA)) {
+                this.matchesA.set(fileA, []);
+            }
+
+            if (!this.matchesB.has(fileB)) {
+                this.matchesB.set(fileB, []);
+            }
+
+            const fileMatchesA = this.matchesA.get(fileA)!;
+            const fileMatchesB = this.matchesB.get(fileB)!;
+
+            fileMatchesA.push({
+                from: submissionA.elements[startA],
+                to: submissionA.elements[startA + length - 1],
+            });
+
+            fileMatchesB.push({
+                from: submissionB.elements[startB],
+                to: submissionB.elements[startB + length - 1],
+            });
+        });
     }
 
     getModelingSubmissionA() {

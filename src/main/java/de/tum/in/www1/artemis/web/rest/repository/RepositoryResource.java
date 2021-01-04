@@ -6,7 +6,6 @@ import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -28,10 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
-import de.tum.in.www1.artemis.domain.File;
-import de.tum.in.www1.artemis.domain.FileType;
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.RepositoryService;
@@ -98,7 +94,7 @@ public abstract class RepositoryResource {
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @return the repositoryUrl.
      */
-    abstract URL getRepositoryUrl(Long domainId);
+    abstract VcsRepositoryUrl getRepositoryUrl(Long domainId);
 
     /**
      * Check if the current user can access the given repository.
@@ -280,7 +276,7 @@ public abstract class RepositoryResource {
         }
 
         RepositoryStatusDTO repositoryStatus = new RepositoryStatusDTO();
-        URL repositoryUrl = getRepositoryUrl(domainId);
+        var repositoryUrl = getRepositoryUrl(domainId);
 
         try {
             boolean isClean = repositoryService.isClean(repositoryUrl);

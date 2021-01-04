@@ -261,14 +261,12 @@ export class CourseManagementService {
                 tap((res) =>
                     res.body!.forEach((submission: Submission) => {
                         // reconnect some associations
-                        if (submission) {
-                            const latestResult = getLatestSubmissionResult(submission);
+                        const latestResult = getLatestSubmissionResult(submission);
+                        if (latestResult) {
+                            latestResult.submission = submission;
+                            latestResult.participation = submission.participation;
+                            submission.participation!.results = [latestResult!];
                             setLatestSubmissionResult(submission, latestResult);
-                            if (latestResult) {
-                                latestResult.submission = submission;
-                                latestResult.participation = submission.participation;
-                                submission.participation!.results = [latestResult];
-                            }
                         }
                     }),
                 ),

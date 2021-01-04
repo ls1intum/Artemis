@@ -10,7 +10,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -156,7 +156,7 @@ public class ProgrammingExerciseResource {
                     HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID, "The Template Build Plan ID seems to be invalid."))
                     .body(null);
         }
-        if (exercise.getTemplateRepositoryUrlAsUrl() == null || !versionControlService.get().repositoryUrlIsValid(exercise.getTemplateRepositoryUrlAsUrl())) {
+        if (exercise.getVcsTemplateRepositoryUrl() == null || !versionControlService.get().repositoryUrlIsValid(exercise.getVcsTemplateRepositoryUrl())) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL, "The Template Repository URL seems to be invalid."))
                     .body(null);
@@ -166,7 +166,8 @@ public class ProgrammingExerciseResource {
                     HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID, "The Solution Build Plan ID seems to be invalid."))
                     .body(null);
         }
-        if (exercise.getSolutionRepositoryUrl() != null && !versionControlService.get().repositoryUrlIsValid(exercise.getSolutionRepositoryUrlAsUrl())) {
+        var solutionRepositoryUrl = exercise.getVcsSolutionRepositoryUrl();
+        if (solutionRepositoryUrl != null && !versionControlService.get().repositoryUrlIsValid(solutionRepositoryUrl)) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_SOLUTION_REPOSITORY_URL, "The Solution Repository URL seems to be invalid."))
                     .body(null);
@@ -274,10 +275,10 @@ public class ProgrammingExerciseResource {
                     .body(null));
         }
 
-        // Static code analysis is only supported for Java at the moment
+        // Static code analysis is only supported for Java and Swift at the moment
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.isStaticCodeAnalysis()) {
-            return Optional.of(ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "The static code analysis can only be enabled for Java", "staticCodeAnalysisOnlyAvailableForJava"))
+            return Optional.of(ResponseEntity.badRequest().headers(
+                    HeaderUtil.createAlert(applicationName, "The static code analysis can only be enabled for Java or Swift", "staticCodeAnalysisOnlyAvailableForJavaAndSwift"))
                     .body(null));
         }
 
@@ -863,7 +864,7 @@ public class ProgrammingExerciseResource {
         }
 
         try {
-            URL exerciseRepoURL = programmingExercise.getTemplateRepositoryUrlAsUrl();
+            var exerciseRepoURL = programmingExercise.getVcsTemplateRepositoryUrl();
             programmingExerciseService.combineAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
             return new ResponseEntity<>(HttpStatus.OK);
         }
@@ -1011,14 +1012,14 @@ public class ProgrammingExerciseResource {
                     "This is a linked exercise and generating the structure oracle for this exercise is not possible.", "couldNotGenerateStructureOracle")).body(null);
         }
 
-        URL solutionRepoURL = programmingExercise.getSolutionRepositoryUrlAsUrl();
-        URL exerciseRepoURL = programmingExercise.getTemplateRepositoryUrlAsUrl();
-        URL testRepoURL = programmingExercise.getTestRepositoryUrlAsUrl();
+        var solutionRepoURL = programmingExercise.getVcsSolutionRepositoryUrl();
+        var exerciseRepoURL = programmingExercise.getVcsTemplateRepositoryUrl();
+        var testRepoURL = programmingExercise.getVcsTestRepositoryUrl();
 
         try {
-            String testsPath = "test" + File.separator + programmingExercise.getPackageFolderName();
+            String testsPath = Paths.get("test", programmingExercise.getPackageFolderName()).toString();
             // Atm we only have one folder that can have structural tests, but this could change.
-            testsPath = programmingExercise.hasSequentialTestRuns() ? "structural" + File.separator + testsPath : testsPath;
+            testsPath = programmingExercise.hasSequentialTestRuns() ? Paths.get("structural", testsPath).toString() : testsPath;
             boolean didGenerateOracle = programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath, user);
 
             if (didGenerateOracle) {
