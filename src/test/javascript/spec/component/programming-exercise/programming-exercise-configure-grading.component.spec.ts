@@ -700,7 +700,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         expect(percentageCharts[0].tooltip).to.equal('40% passed, 60% failed of 5 students.');
         expect(percentageCharts[1].tooltip).to.equal('20% passed, 80% failed of 5 students.');
-      
+
         tick();
         fixture.destroy();
         flush();
