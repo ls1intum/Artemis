@@ -5,6 +5,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
@@ -136,8 +137,12 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         }
 
         exam = examRepository.save(exam);
+        exerciseGroup.setExam(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
+        exam.setExerciseGroups(List.of(exerciseGroup));
+        quizExercise.setExerciseGroup(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
+        exerciseGroup.setExercises(Set.of(quizExercise));
 
         assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
         assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
@@ -179,8 +184,12 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         }
 
         exam = examRepository.save(exam);
+        exerciseGroup.setExam(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
+        exam.setExerciseGroups(List.of(exerciseGroup));
+        quizExercise.setExerciseGroup(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
+        exerciseGroup.setExercises(Set.of(quizExercise));
 
         assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
         assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
