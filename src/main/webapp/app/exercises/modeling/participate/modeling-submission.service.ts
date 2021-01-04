@@ -74,7 +74,6 @@ export class ModelingSubmissionService {
         if (lock) {
             url += '?lock=true';
         }
-        console.log('url', url);
         return this.http.get<ModelingSubmission>(url).pipe(map((res: ModelingSubmission) => ModelingSubmissionService.convertItemFromServer(res)));
     }
 
