@@ -1,10 +1,13 @@
-import { group } from 'k6';
+import { group, sleep } from 'k6';
 import http from 'k6/http';
 import ws from 'k6/ws';
+import { Trend } from 'k6/metrics';
 
-// Version: 1.1
-// Creator: Firefox
-// Browser: Firefox
+/*****************
+ * TODO: Note: this file seems to be outdated
+ *****************/
+
+var rest_call_metrics = new Trend('rest_call_metrics');
 
 export let options = {
     maxRedirects: 0,
@@ -19,37 +22,61 @@ export let options = {
         },
     },
     stages: [
-        {
-            duration: '5s',
-            target: 30,
-        },
-        {
-            duration: '5s',
-            target: 50,
-        },
-        {
-            duration: '5s',
-            target: 80,
-        },
+        /*{
+          "duration": "15s",
+          "target": 10
+      },
+      {
+          "duration": "15s",
+          "target": 20
+      },
+      {
+          "duration": "15s",
+          "target": 30
+      },
+      {
+          "duration": "15s",
+          "target": 40
+      },
+      {
+          "duration": "15s",
+          "target": 50
+      },
+      {
+          "duration": "15s",
+          "target": 60
+      },
+      {
+          "duration": "15s",
+          "target": 70
+      },
+      {
+          "duration": "15s",
+          "target": 80
+      },
+      {
+          "duration": "15s",
+          "target": 90
+      },*/
         {
             duration: '300s',
             target: 100,
         },
     ],
-    vus: 100,
+    vus: 70,
 };
 
 export default function () {
     let defaultXSRFToken = '42d141b5-9e1c-4390-ae06-5143753b4459';
-    let protocol = 'https'; // https or http
-    let websocketProtocol = 'wss'; // wss if https is used; ws if http is used
-    let host = 'artemis.ase.in.tum.de'; // host including port if differing from 80 (http) or 443 (https)
+    let protocol = 'http'; // https or http
+    let websocketProtocol = 'ws'; // wss if https is used; ws if http is used
+    let host = 'nginx:80'; // host including port if differing from 80 (http) or 443 (https)
     let baseUrl = protocol + '://' + host;
 
     let maxTestUser = 100; // the userId will be an integer between 1 and this number
 
     let delayBeforeLogin = 1; // Time in seconds the simulated user needs to enter username/password
-    let websocketConnectionTime = 300; // Time in seconds the websocket is kept open, if set to 0 no websocket connection is established
+    let websocketConnectionTime = 100; // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
 
     let userAgent = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0';
     let acceptLanguage = 'en-CA,en-US;q=0.7,en;q=0.3';
@@ -126,47 +153,43 @@ export default function () {
         // A new XSRF Token is needed now, we have to extract it from the cookies
         let xsrftoken = res[0].headers['Set-Cookie'].match('XSRF-TOKEN=(.*); path=/(; secure)?')[1];
 
-        // Initiate websocket connection if connection time is set to value greater than 0
-        if (websocketConnectionTime > 0) {
-            let websocketEndpoint = websocketProtocol + '://' + host + '/websocket/tracker/websocket';
-            let websocketUrl = websocketEndpoint + '?access_token=' + authToken;
+        // Extract user as we need it for some websocket information
+        let user = JSON.parse(res[0].body);
 
-            ws.connect(websocketUrl, { tags: { name: websocketEndpoint } }, function (socket) {
-                socket.on('open', function open() {
-                    socket.send('CONNECT\nX-XSRF-TOKEN:' + xsrftoken + '\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000');
-                });
-
-                socket.on('error', function (e) {
-                    if (e.error() !== 'websocket: close sent') {
-                        console.log('Websocket error occurred: ', e.error());
-                    }
-                });
-
-                function getSubscriptionId() {
-                    return Math.random()
-                        .toString(36)
-                        .replace(/[^a-z]+/g, '')
-                        .substr(0, 12);
-                }
-
-                function subscribeCourse(courseId, role) {
-                    socket.send('SUBSCRIBE\nid:sub-' + getSubscriptionId() + '\ndestination:/topic/course/' + courseId + '/' + role + '\n\n\u0000');
-                }
-
-                socket.setInterval(function timeout() {
-                    socket.ping();
-                    // console.log("Pinging every 10sec (setInterval test)");
-                }, 10000);
-
-                // Send destination and subscription after 1 second
-                socket.setTimeout(function () {
-                    socket.send('SEND\ndestination:/topic/activity\ncontent-length:20\n\n{"page":"/overview"}\u0000');
-                }, 1 * 1000);
-
-                socket.setTimeout(function () {
-                    socket.close();
-                }, websocketConnectionTime * 1000);
-            });
+        // Some more calls (dashboard, notification, courses to register) are made
+        var i;
+        for (i = 0; i < 5; i++) {
+            req = [
+                {
+                    method: 'get',
+                    url: baseUrl + '/api/courses/for-dashboard',
+                    params: {
+                        cookies: {
+                            'XSRF-TOKEN': xsrftoken,
+                        },
+                        headers: {
+                            Host: host,
+                            'User-Agent': userAgent,
+                            Accept: 'application/json, text/plain, */*',
+                            'Accept-Language': acceptLanguage,
+                            'Accept-Encoding': acceptEncoding,
+                            Referer: baseUrl + '/',
+                            Authorization: 'Bearer ' + authToken,
+                            Connection: 'keep-alive',
+                            TE: 'Trailers',
+                        },
+                        tags: { name: baseUrl + '/api/courses/for-dashboard' },
+                    },
+                },
+            ];
+            res = http.batch(req);
+            rest_call_metrics.add(res[0].timings.waiting);
         }
+        sleep(Math.random() * 30);
+        // sleep(5000);
     });
+}
+
+export function teardown() {
+    console.log(rest_call_metrics.avg);
 }

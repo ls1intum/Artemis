@@ -1,10 +1,13 @@
 import { group, sleep } from 'k6';
 import http from 'k6/http';
 import ws from 'k6/ws';
+import { Trend } from 'k6/metrics';
 
-// Version: 1.1
-// Creator: Firefox
-// Browser: Firefox
+/*****************
+ * TODO: Note: this file seems to be outdated
+ *****************/
+
+var rest_call_metrics = new Trend('rest_call_metrics');
 
 export let options = {
     maxRedirects: 0,
@@ -20,19 +23,43 @@ export let options = {
     },
     stages: [
         {
-            duration: '5s',
+            duration: '15s',
+            target: 10,
+        },
+        {
+            duration: '15s',
+            target: 20,
+        },
+        {
+            duration: '15s',
             target: 30,
         },
         {
-            duration: '5s',
+            duration: '15s',
+            target: 40,
+        },
+        {
+            duration: '15s',
             target: 50,
         },
         {
-            duration: '5s',
+            duration: '15s',
+            target: 60,
+        },
+        {
+            duration: '15s',
+            target: 70,
+        },
+        {
+            duration: '15s',
             target: 80,
         },
         {
-            duration: '300s',
+            duration: '15s',
+            target: 90,
+        },
+        {
+            duration: '180s',
             target: 100,
         },
     ],
@@ -41,9 +68,9 @@ export let options = {
 
 export default function () {
     let defaultXSRFToken = '42d141b5-9e1c-4390-ae06-5143753b4459';
-    let protocol = 'https'; // https or http
-    let websocketProtocol = 'wss'; // wss if https is used; ws if http is used
-    let host = 'artemis.ase.in.tum.de'; // host including port if differing from 80 (http) or 443 (https)
+    let protocol = 'http'; // https or http
+    let websocketProtocol = 'ws'; // wss if https is used; ws if http is used
+    let host = 'nginx:80'; // host including port if differing from 80 (http) or 443 (https)
     let baseUrl = protocol + '://' + host;
 
     let maxTestUser = 100; // the userId will be an integer between 1 and this number
@@ -60,6 +87,7 @@ export default function () {
 
     group('Artemis Login', function () {
         let req, res;
+        var total_waiting_time = 0;
 
         // The website is loaded initialy
         req = [
@@ -83,9 +111,67 @@ export default function () {
             },
         ];
         res = http.batch(req);
+        for (var i = 0; i < req.length; i++) {
+            total_waiting_time += res[i].timings.waiting;
+        }
+
+        // The dynamically generated links to the .css and .js files get extracted from the first response and a request is sent to every of these files
+        req = [];
+        // Add css/js files dynamically
+        let regex = /(?:"([^"]*\.(css|js))")/g;
+        var matched;
+        while ((matched = regex.exec(res[0].body)) !== undefined) {
+            req.push({
+                method: 'get',
+                url: baseUrl + '/' + matched[1],
+                params: {
+                    cookies: {
+                        'XSRF-TOKEN': defaultXSRFToken,
+                    },
+                    headers: {
+                        Host: host,
+                        'User-Agent': userAgent,
+                        Accept: '*/*;q=0.1',
+                        'Accept-Language': acceptLanguage,
+                        'Accept-Encoding': acceptEncoding,
+                        Referer: baseUrl + '/',
+                        Connection: 'keep-alive',
+                        Pragma: 'no-cache',
+                        'Cache-Control': 'no-cache',
+                        TE: 'Trailers',
+                    },
+                    tags: { name: baseUrl + '/dynamic-files' },
+                },
+            });
+        }
+        res = http.batch(req);
+        for (var i = 0; i < req.length; i++) {
+            total_waiting_time += res[i].timings.waiting;
+        }
 
         // The favicon, the translations, some management information and the TUM logo is downloaded next
         req = [
+            {
+                method: 'get',
+                url: baseUrl + '/public/images/favicon.ico',
+                params: {
+                    cookies: {
+                        'XSRF-TOKEN': defaultXSRFToken,
+                    },
+                    headers: {
+                        Host: host,
+                        'User-Agent': userAgent,
+                        Accept: 'image/webp,*/*',
+                        'Accept-Language': acceptLanguage,
+                        'Accept-Encoding': acceptEncoding,
+                        Connection: 'keep-alive',
+                        Pragma: 'no-cache',
+                        'Cache-Control': 'no-cache',
+                        TE: 'Trailers',
+                    },
+                    tags: { name: baseUrl + '/favicon' },
+                },
+            },
             {
                 method: 'get',
                 url: baseUrl + '/i18n/en.json?buildTimestamp=1556135702468',
@@ -152,8 +238,33 @@ export default function () {
                     tags: { name: baseUrl + '/api/account' },
                 },
             },
+            {
+                method: 'get',
+                url: baseUrl + '/content/7c761975dc7a3abfc710400d4dd51933.png',
+                params: {
+                    cookies: {
+                        'XSRF-TOKEN': defaultXSRFToken,
+                    },
+                    headers: {
+                        Host: host,
+                        'User-Agent': userAgent,
+                        Accept: 'image/webp,*/*',
+                        'Accept-Language': acceptLanguage,
+                        'Accept-Encoding': acceptEncoding,
+                        Referer: baseUrl + '/',
+                        Connection: 'keep-alive',
+                        Pragma: 'no-cache',
+                        'Cache-Control': 'no-cache',
+                        TE: 'Trailers',
+                    },
+                    tags: { name: baseUrl + '/content' },
+                },
+            },
         ];
         res = http.batch(req);
+        for (var i = 0; i < req.length; i++) {
+            total_waiting_time += res[i].timings.waiting;
+        }
 
         // Now the user should type his login credentials, therefor we wait some time
         sleep(delayBeforeLogin);
@@ -191,6 +302,9 @@ export default function () {
             },
         ];
         res = http.batch(req);
+        for (var i = 0; i < req.length; i++) {
+            total_waiting_time += res[i].timings.waiting;
+        }
         let authToken = JSON.parse(res[0].body).id_token;
 
         // The user requests it own information of the account
@@ -219,6 +333,9 @@ export default function () {
         ];
 
         res = http.batch(req);
+        for (var i = 0; i < req.length; i++) {
+            total_waiting_time += res[i].timings.waiting;
+        }
 
         // A new XSRF Token is needed now, we have to extract it from the cookies
         let xsrftoken = res[0].headers['Set-Cookie'].match('XSRF-TOKEN=(.*); path=/(; secure)?')[1];
@@ -272,6 +389,10 @@ export default function () {
             },
         ];
         res = http.batch(req);
+        for (var i = 0; i < req.length; i++) {
+            total_waiting_time += res[i].timings.waiting;
+        }
+        rest_call_metrics.add(total_waiting_time);
 
         let courses = JSON.parse(res[1].body);
 
@@ -282,12 +403,21 @@ export default function () {
 
             ws.connect(websocketUrl, { tags: { name: websocketEndpoint } }, function (socket) {
                 socket.on('open', function open() {
-                    socket.send('CONNECT\nX-XSRF-TOKEN:' + xsrftoken + '\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000');
+                    socket.send('CONNECT\nX-XSRF-TOKEN:' + xsrftoken + '\naccept-version:1.2\nheart-beat:10000,10000\n\n\u0000');
+                    socket.setInterval(function timeout() {
+                        socket.ping();
+                        // Pinging every 10sec (setInterval)
+                    }, 10000);
+                    // TODO: is ping not the same as the heartbeat?
+                    // Send heartbeat to server so session is kept alive
+                    socket.setInterval(function timeout() {
+                        socket.send('\n');
+                    }, 10000);
                 });
 
                 socket.on('error', function (e) {
                     if (e.error() !== 'websocket: close sent') {
-                        console.log('Websocket error occurred: ', e.error());
+                        console.log('Websocket connection closed due to: ', e.error());
                     }
                 });
 
@@ -301,11 +431,6 @@ export default function () {
                 function subscribeCourse(courseId, role) {
                     socket.send('SUBSCRIBE\nid:sub-' + getSubscriptionId() + '\ndestination:/topic/course/' + courseId + '/' + role + '\n\n\u0000');
                 }
-
-                socket.setInterval(function timeout() {
-                    socket.ping();
-                    // console.log("Pinging every 10sec (setInterval test)");
-                }, 10000);
 
                 // Send destination and subscription after 1 second
                 socket.setTimeout(function () {

@@ -16,10 +16,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should be increase to 80%
-            statements: 56,
-            branches: 38,
-            functions: 45,
-            lines: 55,
+            statements: 57,
+            branches: 39,
+            functions: 46,
+            lines: 56,
         },
     },
     preset: 'jest-preset-angular',
