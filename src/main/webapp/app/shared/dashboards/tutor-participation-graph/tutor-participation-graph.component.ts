@@ -84,6 +84,8 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
      */
     calculatePercentageAssessmentProgress() {
         for (const [index, numberOfAssessments] of this.numberOfAssessmentsOfCorrectionRounds.entries()) {
+            this.percentageInTimeAssessmentProgressOfCorrectionRound[index] = 0;
+            this.percentageLateAssessmentProgressOfCorrectionRound[index] = 0;
             if (this.numberOfSubmissions?.inTime !== 0) {
                 this.percentageInTimeAssessmentProgressOfCorrectionRound[index] = Math.floor((numberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
             }

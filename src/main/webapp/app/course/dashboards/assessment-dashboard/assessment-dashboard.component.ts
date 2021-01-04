@@ -164,6 +164,9 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
             const [finishedExercises, unfinishedExercises] = partition(
                 exercises,
                 (exercise) =>
+                    exercise.numberOfAssessmentsOfCorrectionRounds
+                        ?.map((round) => round.inTime === exercise.numberOfSubmissions?.inTime)
+                        .reduce((acc, current) => acc && current) &&
                     exercise.totalNumberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime &&
                     exercise.numberOfOpenComplaints === 0 &&
                     exercise.numberOfOpenMoreFeedbackRequests === 0,
