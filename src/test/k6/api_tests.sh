@@ -121,10 +121,10 @@ result=$(docker run -i --rm --network=host --name api-tests-"$tests"-"$programmi
 
 echo "########## FINISHED testing - evaluating result ##########"
 echo "$result"
-if echo "$result" | grep -iqF error; then
-  echo "################### ERROR in API tests ###################"
+if echo "$result" | grep -iqF FAILTEST; then
+  echo "################### ERROR Server API tests failed ###################"
   exit 1
 fi
 
-echo "######### SUCCESS API tests finished without errors #########"
+echo "######### SUCCESS Server API tests finished #########"
 exit 0
