@@ -54,7 +54,7 @@ pipeline {
                 sh '''
                    rm -rf results
                    mkdir results
-                   cp tests.xml $WORKSPACE/results/ || true
+                   cp assignment/tests.xml $WORKSPACE/results/ || true
                    '''
                 sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
                 cleanWs()
