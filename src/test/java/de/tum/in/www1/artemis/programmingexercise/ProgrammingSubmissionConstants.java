@@ -14,10 +14,13 @@ public final class ProgrammingSubmissionConstants {
 
     public static final String BAMBOO_REQUEST;
 
+    public final static String GITLAB_REQUEST;
+
     static {
         try {
             BITBUCKET_REQUEST = IOUtils.toString(ProgrammingSubmissionConstants.class.getResource("bitbucketRequest.json"), StandardCharsets.UTF_8);
             BAMBOO_REQUEST = IOUtils.toString(ProgrammingSubmissionConstants.class.getResource("bambooRequest.json"), StandardCharsets.UTF_8);
+            GITLAB_REQUEST = IOUtils.toString(ProgrammingSubmissionConstants.class.getResource("gitlabRequest.json"), StandardCharsets.UTF_8);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
