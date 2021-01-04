@@ -203,6 +203,7 @@ describe('StudentExamsComponent', () => {
                 studentExamsComponentFixture = TestBed.createComponent(StudentExamsComponent);
                 studentExamsComponent = studentExamsComponentFixture.componentInstance;
                 modalService = TestBed.inject(NgbModal);
+                examManagementService = TestBed.inject(ExamManagementService);
             });
     });
 
@@ -212,9 +213,8 @@ describe('StudentExamsComponent', () => {
 
     it('should initialize', () => {
         const courseManagementService = TestBed.inject(CourseManagementService);
-        const examManagementService = TestBed.inject(ExamManagementService);
-        const studentExamService = TestBed.inject(StudentExamService);
 
+        const studentExamService = TestBed.inject(StudentExamService);
         const findCourseSpy = sinon.spy(courseManagementService, 'find');
         const findExamSpy = sinon.spy(examManagementService, 'find');
         const findAllStudentExamsSpy = sinon.spy(studentExamService, 'findAllForExam');
@@ -251,8 +251,6 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should automatically assess modeling and text exercises of unsubmitted student exams', () => {
-        const examManagementService = TestBed.inject(ExamManagementService);
-
         studentExamOne!.workingTime = 10;
         exam.startDate = moment().subtract(200, 'seconds');
         exam.endDate = moment().subtract(100, 'seconds');
@@ -271,7 +269,6 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should correctly catch HTTPError when assessing unsubmitted exams', () => {
-        const examManagementService = TestBed.inject(ExamManagementService);
         const alertService = TestBed.inject(JhiAlertService);
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         studentExamOne!.workingTime = 10;
@@ -295,7 +292,6 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should generate student exams if there are none', () => {
-        const examManagementService = TestBed.inject(ExamManagementService);
         course.isAtLeastInstructor = true;
         exam.startDate = moment().add(120, 'seconds');
 
@@ -343,14 +339,13 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should generate student exams after warning the user that the existing are deleted', () => {
-        const examManagementService = TestBed.inject(ExamManagementService);
         course.isAtLeastInstructor = true;
         exam.startDate = moment().add(120, 'seconds');
 
         studentExamsComponentFixture.detectChanges();
-        let componentInstance = { title: String, text: String };
+        const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        let modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
 
         expect(studentExamsComponent.isLoading).to.equal(false);
         expect(studentExamsComponent.isExamStarted).to.equal(false);
@@ -369,7 +364,6 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should generate missing student exams', () => {
-        const examManagementService = TestBed.inject(ExamManagementService);
         course.isAtLeastInstructor = true;
         exam.startDate = moment().add(120, 'seconds');
         studentExams = [studentExamOne!];
@@ -415,7 +409,6 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should start the exercises of students', () => {
-        const examManagementService = TestBed.inject(ExamManagementService);
         course.isAtLeastInstructor = true;
         exam.startDate = moment().add(120, 'seconds');
         studentExamsComponentFixture.detectChanges();
@@ -455,11 +448,10 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should unlock all repositories of the students', () => {
-        let componentInstance = { title: String, text: String };
+        const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        let modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
 
-        const examManagementService = TestBed.inject(ExamManagementService);
         course.isAtLeastInstructor = true;
 
         studentExamsComponentFixture.detectChanges();
@@ -478,11 +470,10 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should correctly catch HTTPError when unlocking all repositories', () => {
-        let componentInstance = { title: String, text: String };
+        const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
         const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
 
-        const examManagementService = TestBed.inject(ExamManagementService);
         const alertService = TestBed.inject(JhiAlertService);
         course.isAtLeastInstructor = true;
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
@@ -505,11 +496,10 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should lock all repositories of the students', () => {
-        let componentInstance = { title: String, text: String };
+        const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
-        let modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
 
-        const examManagementService = TestBed.inject(ExamManagementService);
         course.isAtLeastInstructor = true;
 
         studentExamsComponentFixture.detectChanges();
@@ -528,11 +518,10 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should correctly catch HTTPError when locking all repositories', () => {
-        let componentInstance = { title: String, text: String };
+        const componentInstance = { title: String, text: String };
         const result = new Promise((resolve) => resolve(true));
         const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
 
-        const examManagementService = TestBed.inject(ExamManagementService);
         const alertService = TestBed.inject(JhiAlertService);
         course.isAtLeastInstructor = true;
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
@@ -555,7 +544,6 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should evaluate Quiz exercises', () => {
-        const examManagementService = TestBed.inject(ExamManagementService);
         course.isAtLeastInstructor = true;
         exam.startDate = moment().subtract(200, 'seconds');
         exam.endDate = moment().subtract(100, 'seconds');
@@ -575,7 +563,6 @@ describe('StudentExamsComponent', () => {
     });
 
     it('should correctly catch HTTPError when evaluating quiz exercises', () => {
-        const examManagementService = TestBed.inject(ExamManagementService);
         course.isAtLeastInstructor = true;
         exam.startDate = moment().subtract(200, 'seconds');
         exam.endDate = moment().subtract(100, 'seconds');
