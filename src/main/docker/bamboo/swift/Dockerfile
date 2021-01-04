@@ -1,6 +1,6 @@
 FROM atlassian/bamboo-server:7.1.2
 
-LABEL description="Bamboo pre-configured for Artemis"
+LABEL description="Bamboo pre-configured for Artemis, pre-installed with Swift"
 
 USER root
 ENV DEBIAN_FRONTEND noninteractive
