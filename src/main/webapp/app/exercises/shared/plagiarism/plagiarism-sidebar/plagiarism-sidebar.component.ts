@@ -12,6 +12,9 @@ export class PlagiarismSidebarComponent implements OnChanges {
     @Input() activeIndex: number;
     @Input() comparisons?: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[];
 
+    @Input() showRunDetails: boolean;
+    @Output() showRunDetailsChange = new EventEmitter<boolean>();
+
     @Output() selectIndex = new EventEmitter<number>();
 
     /**
@@ -42,6 +45,10 @@ export class PlagiarismSidebarComponent implements OnChanges {
             this.numberOfPages = this.computeNumberOfPages(comparisons.length);
             this.pagedComparisons = this.getPagedComparisons();
         }
+    }
+
+    displayRunDetails() {
+        this.showRunDetailsChange.emit(true);
     }
 
     computeNumberOfPages(totalComparisons: number) {

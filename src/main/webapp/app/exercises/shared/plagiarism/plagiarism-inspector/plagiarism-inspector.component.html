@@ -26,12 +26,15 @@
 
     <div class="plagiarism-body" *ngIf="plagiarismResult">
         <jhi-plagiarism-sidebar
+            [(showRunDetails)]="showRunDetails"
             [comparisons]="plagiarismResult?.comparisons"
             (selectIndex)="selectComparisonAtIndex($event)"
             [activeIndex]="selectedComparisonIndex"
         ></jhi-plagiarism-sidebar>
 
-        <jhi-plagiarism-details [comparison]="plagiarismResult?.comparisons[selectedComparisonIndex]" [exercise]="exercise"></jhi-plagiarism-details>
+        <jhi-plagiarism-details [hidden]="showRunDetails" [comparison]="plagiarismResult?.comparisons[selectedComparisonIndex]" [exercise]="exercise"></jhi-plagiarism-details>
+
+        <jhi-plagiarism-run-details [hidden]="!showRunDetails"></jhi-plagiarism-run-details>
     </div>
 
     <div class="plagiarism-empty" *ngIf="!plagiarismResult">
