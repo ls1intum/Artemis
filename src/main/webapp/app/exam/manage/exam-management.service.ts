@@ -273,7 +273,7 @@ export class ExamManagementService {
         return this.http.put<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroupsOrder`, exerciseGroups, { observe: 'response' });
     }
 
-    private static convertDateFromClient(exam: Exam): Exam {
+    public static convertDateFromClient(exam: Exam): Exam {
         return Object.assign({}, exam, {
             startDate: exam.startDate && moment(exam.startDate).isValid() ? exam.startDate.toJSON() : undefined,
             endDate: exam.endDate && moment(exam.endDate).isValid() ? exam.endDate.toJSON() : undefined,

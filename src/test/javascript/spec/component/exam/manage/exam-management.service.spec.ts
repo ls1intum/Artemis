@@ -36,7 +36,7 @@ describe('Exam Management Service Tests', () => {
     it('should create an exam', () => {
         // GIVEN
         const mockExam: Exam = {};
-        const mockCopyExam = mockConvertDateFromClient(mockExam);
+        const mockCopyExam = ExamManagementService.convertDateFromClient(mockExam);
 
         // WHEN
         service.create(course.id!, mockExam).subscribe((res) => expect(res.body).to.eq(mockExam));
@@ -52,7 +52,7 @@ describe('Exam Management Service Tests', () => {
     it('should update an exam', () => {
         // GIVEN
         const mockExam: Exam = {};
-        const mockCopyExam = mockConvertDateFromClient(mockExam);
+        const mockCopyExam = ExamManagementService.convertDateFromClient(mockExam);
 
         // WHEN
         service.update(course.id!, mockExam).subscribe((res) => expect(res.body).to.eq(mockExam));
@@ -392,14 +392,3 @@ describe('Exam Management Service Tests', () => {
         });
     });
 });
-
-function mockConvertDateFromClient(exam: Exam): Exam {
-    return Object.assign({}, exam, {
-        startDate: exam.startDate && moment(exam.startDate).isValid() ? exam.startDate.toJSON() : undefined,
-        endDate: exam.endDate && moment(exam.endDate).isValid() ? exam.endDate.toJSON() : undefined,
-        visibleDate: exam.visibleDate && moment(exam.visibleDate).isValid() ? exam.visibleDate.toJSON() : undefined,
-        publishResultsDate: exam.publishResultsDate && moment(exam.publishResultsDate).isValid() ? exam.publishResultsDate.toJSON() : undefined,
-        examStudentReviewStart: exam.examStudentReviewStart && moment(exam.examStudentReviewStart).isValid() ? exam.examStudentReviewStart.toJSON() : undefined,
-        examStudentReviewEnd: exam.examStudentReviewEnd && moment(exam.examStudentReviewEnd).isValid() ? exam.examStudentReviewEnd.toJSON() : undefined,
-    });
-}
