@@ -358,11 +358,15 @@ Jenkins Server Setup
    In order to install and use Maven with Java in the Jenkins container,
    you have to first install maven, then download Java and finally
    configure Maven to use Java instead of the default version.
+   You also need to install Swift and SwiftLint if you want to be able to
+   create Swift programming exercises.
 
    To perform all these steps automatically, you can prepare a Docker
    image:
 
-   Create a dockerfile with the content found `here <src/main/docker/jenkins/Dockerfile>`.
+   Create a dockerfile with the content found `here <src/main/docker/jenkins/Dockerfile>`
+   or `here <src/main/docker/jenkins/swift/Dockerfile>` in case you want to additionally
+   install Swift/SwiftLint.
    Copy it in a file named ``Dockerfile``, e.g. in
    the folder ``/opt/jenkins/`` using ``vim Dockerfile``.
 
