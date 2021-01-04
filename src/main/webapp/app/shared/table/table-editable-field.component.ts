@@ -10,6 +10,7 @@ import { Component, ElementRef, Input, ViewChild } from '@angular/core';
         <div class="table-editable-field">
             <input
                 #editingInput
+                [id]="id"
                 class="table-editable-field__input form-control mr-2"
                 (blur)="sendValueUpdate($event)"
                 (keyup.enter)="sendValueUpdate($event)"
@@ -23,6 +24,7 @@ import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 export class TableEditableFieldComponent {
     @ViewChild('editingInput', { static: false }) editingInput: ElementRef;
 
+    @Input() id: string;
     @Input() set value(value: any) {
         this.inputValue = value;
     }
