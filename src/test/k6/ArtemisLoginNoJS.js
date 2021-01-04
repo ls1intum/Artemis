@@ -287,7 +287,7 @@ export default function () {
 
                 socket.on('error', function (e) {
                     if (e.error() !== 'websocket: close sent') {
-                        console.log('Websocket error occurred: ', e.error());
+                        console.log('Websocket connection closed due to: ', e.error());
                     }
                 });
 

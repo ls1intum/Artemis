@@ -82,7 +82,6 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.programmingExerciseService.checkPlagiarismJPlagReport(this.exercise.id!).subscribe(
             (response: HttpResponse<Blob>) => {
                 this.detectionInProgress = false;
-                console.log(response);
                 downloadZipFileFromResponse(response);
             },
             () => {
