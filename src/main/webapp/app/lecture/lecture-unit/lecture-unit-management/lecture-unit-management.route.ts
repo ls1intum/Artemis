@@ -17,11 +17,16 @@ export const lectureUnitRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.lectureUnit.home.title',
+            breadcrumbLabelVariable: '',
         },
         canActivate: [UserRouteAccessService],
     },
     {
         path: 'unit-management',
+        data: {
+            pageTitle: 'artemisApp.lectureUnit.home.title',
+            breadcrumbLabelVariable: '',
+        },
         children: [
             {
                 path: 'exercise-units/create',
