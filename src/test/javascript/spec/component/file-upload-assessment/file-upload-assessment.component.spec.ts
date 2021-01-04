@@ -276,15 +276,9 @@ describe('FileUploadAssessmentComponent', () => {
         stub(fileUploadAssessmentsService, 'updateAssessmentAfterComplaint').returns(of({ body: changedResult } as EntityResponseType));
         comp.submission = submission;
         setLatestSubmissionResult(comp.submission, initResult);
-        // create complaint response
-        const complaint = new Complaint();
-        complaint.id = 0;
-        complaint.complaintText = 'not fair';
-        const complaintResponse = new ComplaintResponse();
-        complaintResponse.responseText = 'accepted, it was not fair';
-        complaintResponse.complaint = complaint;
 
         fixture.detectChanges();
+        const complaintResponse = new ComplaintResponse();
         comp.onUpdateAssessmentAfterComplaint(complaintResponse);
         expect(comp.isLoading).to.be.false;
         expect(comp.result).to.equal(changedResult);
