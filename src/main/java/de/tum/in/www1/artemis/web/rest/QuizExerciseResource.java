@@ -411,7 +411,7 @@ public class QuizExerciseResource {
 
         if (originalQuizExercise.hasExerciseGroup()) {
             // Re-evaluation of an exam quiz is only possible if all students finished their exam
-            ZonedDateTime latestIndividualExamEndDate = examService.getLatestIndiviudalExamEndDate(originalQuizExercise.getExerciseGroup().getExam());
+            ZonedDateTime latestIndividualExamEndDate = examService.getLatestIndividualExamEndDate(originalQuizExercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "examOfQuizExerciseNotEnded",
                         "The exam of the quiz exercise has not ended yet. Re-evaluation is only allowed after an exam has ended.")).build();
