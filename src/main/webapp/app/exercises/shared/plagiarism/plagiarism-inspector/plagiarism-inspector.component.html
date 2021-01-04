@@ -34,7 +34,7 @@
 
         <jhi-plagiarism-details [hidden]="showRunDetails" [comparison]="plagiarismResult?.comparisons[selectedComparisonIndex]" [exercise]="exercise"></jhi-plagiarism-details>
 
-        <jhi-plagiarism-run-details [hidden]="!showRunDetails"></jhi-plagiarism-run-details>
+        <jhi-plagiarism-run-details [hidden]="!showRunDetails" [plagiarismResult]="plagiarismResult"></jhi-plagiarism-run-details>
     </div>
 
     <div class="plagiarism-empty" *ngIf="!plagiarismResult">

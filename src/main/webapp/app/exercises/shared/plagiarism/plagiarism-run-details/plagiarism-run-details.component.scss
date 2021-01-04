@@ -1,0 +1,25 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+.plagiarism-run-details {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+
+    &-item {
+        display: flex;
+        flex-direction: column;
+
+        &:not(:last-child) {
+            margin-bottom: 1rem;
+        }
+    }
+
+    &-label {
+        margin-bottom: 0.25rem;
+    }
+
+    &-info {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+}

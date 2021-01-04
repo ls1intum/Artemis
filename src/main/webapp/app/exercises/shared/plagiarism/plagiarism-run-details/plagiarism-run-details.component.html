@@ -1,1 +1,19 @@
-<p>plagiarism-run-details works!</p>
+<div class="plagiarism-run-details">
+    <div class="plagiarism-run-details-item">
+        <div class="plagiarism-run-details-label">
+            {{ 'artemisApp.plagiarism.duration' | translate }}
+        </div>
+        <div class="plagiarism-run-details-info">
+            {{ plagiarismResult.duration || ('artemisApp.plagiarism.no-info-available' | translate) }}
+        </div>
+    </div>
+
+    <div class="plagiarism-run-details-item">
+        <div class="plagiarism-run-details-label">
+            {{ 'artemisApp.plagiarism.similarity-distribution' | translate }}
+        </div>
+        <div class="plagiarism-run-details-info">
+            {{ plagiarismResult.similarityDistribution || ('artemisApp.plagiarism.no-info-available' | translate) }}
+        </div>
+    </div>
+</div>
