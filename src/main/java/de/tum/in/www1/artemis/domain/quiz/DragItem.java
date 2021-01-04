@@ -134,7 +134,7 @@ public class DragItem extends TempIdObject {
     @PrePersist
     public void beforeCreate() {
         // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        pictureFilePath = fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, FilePathService.getDragItemFilepath(), getId());
+        pictureFilePath = fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, FilePathService.getDragItemFilePath(), getId());
     }
 
     @PostPersist
@@ -148,13 +148,13 @@ public class DragItem extends TempIdObject {
     @PreUpdate
     public void onUpdate() {
         // move file and delete old file if necessary
-        pictureFilePath = fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, FilePathService.getDragItemFilepath(), getId());
+        pictureFilePath = fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, FilePathService.getDragItemFilePath(), getId());
     }
 
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
-        fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, null, FilePathService.getDragItemFilepath(), getId());
+        fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, null, FilePathService.getDragItemFilePath(), getId());
     }
 
     @Override
