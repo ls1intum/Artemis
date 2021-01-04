@@ -158,7 +158,7 @@ public class ProgrammingSubmissionResource {
      * @param lastGraded if true, will not use the most recent submission, but the most recent GRADED submission. This submission could e.g. be created before the deadline or after the deadline by the INSTRUCTOR.
      * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered, a result already exists or the build is running.
      */
-    // TODO: we should definitly change this URL, it does not make sense to use /programming-submissions/{participationId}
+    // TODO: we should definitely change this URL, it does not make sense to use /programming-submissions/{participationId}
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-failed-build")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
@@ -176,13 +176,16 @@ public class ProgrammingSubmissionResource {
             return badRequest();
         }
 
-        // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
-        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(programmingExerciseParticipation);
-        if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
-            // We inform the user through the websocket that the submission is still in progress (build is running/queued, result should arrive soon).
-            // This resets the pending submission timer in the client.
-            programmingSubmissionService.notifyUserAboutSubmission(submission.get());
-            return ResponseEntity.ok().build();
+        // if the build plan was not cleaned yet, we can try to access the current build state, as the build might still be running (because it was slow or queued)
+        if (programmingExerciseParticipation.getBuildPlanId() != null) {
+            // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
+            ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(programmingExerciseParticipation);
+            if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
+                // We inform the user through the websocket that the submission is still in progress (build is running/queued, result should arrive soon).
+                // This resets the pending submission timer in the client.
+                programmingSubmissionService.notifyUserAboutSubmission(submission.get());
+                return ResponseEntity.ok().build();
+            }
         }
         if (lastGraded && submission.get().getType() != SubmissionType.INSTRUCTOR && submission.get().getType() != SubmissionType.TEST
                 && submission.get().getParticipation().getExercise().getDueDate() != null

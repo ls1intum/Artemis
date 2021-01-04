@@ -31,6 +31,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 
 @Component
@@ -49,6 +50,10 @@ public class GitlabRequestMockProvider {
     private final RestTemplate restTemplate;
 
     private MockRestServiceServer mockServer;
+
+    private final RestTemplate shortTimeoutRestTemplate;
+
+    private MockRestServiceServer mockServerShortTimeout;
 
     @SpyBean
     @InjectMocks
@@ -69,12 +74,15 @@ public class GitlabRequestMockProvider {
     @Mock
     private ProtectedBranchesApi protectedBranchesApi;
 
-    public GitlabRequestMockProvider(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate) {
+    public GitlabRequestMockProvider(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate,
+            @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
     public void enableMockingOfRequests() {
         mockServer = MockRestServiceServer.createServer(restTemplate);
+        mockServerShortTimeout = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
         MockitoAnnotations.openMocks(this);
     }
 
@@ -95,7 +103,7 @@ public class GitlabRequestMockProvider {
     /**
      * Method to mock the getUser method to return mocked users with their id's
      *
-     * @throws GitLabApiException
+     * @throws GitLabApiException in case of git lab api errors
      */
     public void mockGetUserID() throws GitLabApiException {
         User instructor = new User();
@@ -192,7 +200,7 @@ public class GitlabRequestMockProvider {
 
     public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<de.tum.in.www1.artemis.domain.User> users, boolean ltiUserExists)
             throws GitLabApiException {
-        URL repositoryUrl = exercise.getTemplateRepositoryUrlAsUrl();
+        var repositoryUrl = exercise.getVcsTemplateRepositoryUrl();
         for (de.tum.in.www1.artemis.domain.User user : users) {
             String loginName = user.getLogin();
             if ((userPrefixEdx.isPresent() && loginName.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && loginName.startsWith((userPrefixU4I.get())))) {
@@ -219,7 +227,7 @@ public class GitlabRequestMockProvider {
         doReturn(new User()).when(userApi).createUser(any(), anyString(), anyBoolean());
     }
 
-    private void mockAddMemberToRepository(URL repositoryUrl, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
+    private void mockAddMemberToRepository(VcsRepositoryUrl repositoryUrl, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         mockAddMemberToRepository(repositoryId, user);
     }
@@ -230,13 +238,13 @@ public class GitlabRequestMockProvider {
         doReturn(new Member()).when(projectApi).addMember(repositoryId, mockedUserId, DEVELOPER);
     }
 
-    private void mockProtectBranch(String branch, URL repositoryUrl) throws GitLabApiException {
+    private void mockProtectBranch(String branch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         doReturn(new Branch()).when(repositoryApi).unprotectBranch(repositoryId, branch);
         doReturn(new ProtectedBranch()).when(protectedBranchesApi).protectBranch(repositoryId, branch);
     }
 
-    private String getPathIDFromRepositoryURL(URL repository) {
+    private String getPathIDFromRepositoryURL(VcsRepositoryUrl repository) {
         final var namespaces = repository.toString().split("/");
         final var last = namespaces.length - 1;
 
@@ -250,7 +258,7 @@ public class GitlabRequestMockProvider {
     public void mockHealth(String healthStatus, HttpStatus httpStatus) throws URISyntaxException, JsonProcessingException {
         final var uri = UriComponentsBuilder.fromUri(gitlabServerUrl.toURI()).path("/-/liveness").build().toUri();
         final var response = new ObjectMapper().writeValueAsString(Map.of("status", healthStatus));
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(httpStatus).contentType(MediaType.APPLICATION_JSON).body(response));
+        mockServerShortTimeout.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(httpStatus).contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
     public void mockRemoveMemberFromRepository(String repositoryId, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {

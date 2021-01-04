@@ -146,12 +146,12 @@ public class TeamService {
             // Users in the existing team that are no longer in the updated team need to be removed
             Set<User> usersToRemove = new HashSet<>(existingTeam.getStudents());
             usersToRemove.removeAll(updatedTeam.getStudents());
-            usersToRemove.forEach(user -> versionControlService.get().removeMemberFromRepository(participation.getRepositoryUrlAsUrl(), user));
+            usersToRemove.forEach(user -> versionControlService.get().removeMemberFromRepository(participation.getVcsRepositoryUrl(), user));
 
             // Users in the updated team that were not yet part of the existing team need to be added
             Set<User> usersToAdd = new HashSet<>(updatedTeam.getStudents());
             usersToAdd.removeAll(existingTeam.getStudents());
-            usersToAdd.forEach(user -> versionControlService.get().addMemberToRepository(participation.getRepositoryUrlAsUrl(), user));
+            usersToAdd.forEach(user -> versionControlService.get().addMemberToRepository(participation.getVcsRepositoryUrl(), user));
         });
     }
 

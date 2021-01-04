@@ -23,11 +23,11 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsD
 @RequestMapping("/api")
 public class ProgrammingExerciseGradingResource {
 
-    public final static String RESET = "/programming-exercise/{exerciseId}/grading/reset";
+    public static final String RESET = "/programming-exercise/{exerciseId}/grading/reset";
 
-    public final static String RE_EVALUATE = "/programming-exercise/{exerciseId}/grading/re-evaluate";
+    public static final String RE_EVALUATE = "/programming-exercise/{exerciseId}/grading/re-evaluate";
 
-    public final static String STATISTICS = "/programming-exercise/{exerciseId}/grading/statistics";
+    public static final String STATISTICS = "/programming-exercise/{exerciseId}/grading/statistics";
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
 

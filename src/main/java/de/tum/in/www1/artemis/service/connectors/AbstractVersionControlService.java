@@ -3,13 +3,12 @@ package de.tum.in.www1.artemis.service.connectors;
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH;
 
-import java.net.URL;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 
@@ -32,7 +31,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
      * @param notificationUrl The URL the hook should notify
      * @param webHookName Any arbitrary name for the webhook
      */
-    protected abstract void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName);
+    protected abstract void addWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName);
 
     /**
      * Adds an authenticated webhook for the specified repository to the given notification URL.
@@ -42,7 +41,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
      * @param webHookName Any arbitrary name for the webhook
      * @param secretToken A secret token that authenticates the webhook against the system behind the notification URL
      */
-    protected abstract void addAuthenticatedWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken);
+    protected abstract void addAuthenticatedWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName, String secretToken);
 
     protected ContinuousIntegrationService getContinuousIntegrationService() {
         // We need to get the CI service from the context, because Bamboo and Bitbucket would end up in a circular dependency otherwise
@@ -56,16 +55,16 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         final var artemisTestsHookPath = ARTEMIS_SERVER_URL + TEST_CASE_CHANGED_API_PATH + exercise.getId();
         // first add web hooks from the version control service to Artemis, so that Artemis is notified and can create ProgrammingSubmission when instructors push their template or
         // solution code
-        addWebHook(exercise.getTemplateRepositoryUrlAsUrl(), artemisTemplateHookPath, "Artemis WebHook");
-        addWebHook(exercise.getSolutionRepositoryUrlAsUrl(), artemisSolutionHookPath, "Artemis WebHook");
-        addWebHook(exercise.getTestRepositoryUrlAsUrl(), artemisTestsHookPath, "Artemis WebHook");
+        addWebHook(exercise.getVcsTemplateRepositoryUrl(), artemisTemplateHookPath, "Artemis WebHook");
+        addWebHook(exercise.getVcsSolutionRepositoryUrl(), artemisSolutionHookPath, "Artemis WebHook");
+        addWebHook(exercise.getVcsTestRepositoryUrl(), artemisTestsHookPath, "Artemis WebHook");
     }
 
     @Override
     public void addWebHookForParticipation(ProgrammingExerciseParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             // first add a web hook from the version control service to Artemis, so that Artemis is notified can create a ProgrammingSubmission when students push their code
-            addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), "Artemis WebHook");
+            addWebHook(participation.getVcsRepositoryUrl(), ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), "Artemis WebHook");
         }
     }
 }

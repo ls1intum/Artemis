@@ -177,7 +177,7 @@ class QuizParticipationSimulation extends Simulation {
             .connect("/websocket/tracker/websocket")).exitHereIfFailed
         .pause(5 seconds)
         .exec(ws("Connect STOMP")
-            .sendText("CONNECT\nX-XSRF-TOKEN:${xsrf_token}\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000")
+            .sendText("CONNECT\nX-XSRF-TOKEN:${xsrf_token}\naccept-version:1.2\nheart-beat:10000,10000\n\n\u0000")
             .await(10 seconds)())
         .exec(ws("Subscribe Submission")
             .sendText("SUBSCRIBE\nid:sub-1\ndestination:/user/topic/quizExercise/" + exerciseId + "/submission\n\n\u0000"))

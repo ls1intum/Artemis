@@ -10,9 +10,6 @@ import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -68,13 +64,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
-    private final Environment env;
-
     private final ObjectMapper objectMapper;
 
     private final TaskScheduler messageBrokerTaskScheduler;
-
-    private final TaskScheduler taskScheduler;
 
     private ParticipationService participationService;
 
@@ -83,8 +75,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private final UserService userService;
 
     private final ExerciseService exerciseService;
-
-    private static final int LOGGING_DELAY_SECONDS = 10;
 
     // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
@@ -96,12 +86,10 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Value("${spring.websocket.broker.password}")
     private String brokerPassword;
 
-    public WebsocketConfiguration(Environment env, MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler,
-            TaskScheduler taskScheduler, AuthorizationCheckService authorizationCheckService, @Lazy ExerciseService exerciseService, UserService userService) {
-        this.env = env;
+    public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler,
+            AuthorizationCheckService authorizationCheckService, @Lazy ExerciseService exerciseService, UserService userService) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
-        this.taskScheduler = taskScheduler;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseService = exerciseService;
         this.userService = userService;
@@ -113,29 +101,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         this.participationService = participationService;
     }
 
-    /**
-     * initialize the websocket configuration: activate logging when the profile websocketLog is active
-     */
-    @PostConstruct
-    public void init() {
-        // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
-        // later one, e.g. in the code editor. Therefore we call this method here directly to get a reference and adapt the logging period!
-        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        // Note: this mechanism prevents that this is logged during testing
-        if (activeProfiles.contains("websocketLog")) {
-            final var webSocketMessageBrokerStats = webSocketMessageBrokerStats();
-            webSocketMessageBrokerStats.setLoggingPeriod(LOGGING_DELAY_SECONDS * 1000);
-
-            taskScheduler.scheduleAtFixedRate(() -> {
-                final var subscriptionCount = userRegistry().getUsers().stream().flatMap(simpUser -> simpUser.getSessions().stream())
-                        .map(simpSession -> simpSession.getSubscriptions().size()).reduce(0, Integer::sum);
-                log.info("Currently active websocket subscriptions: " + subscriptionCount);
-            }, LOGGING_DELAY_SECONDS * 1000);
-        }
-    }
-
     @Override
-    public void configureMessageBroker(MessageBrokerRegistry config) {
+    protected void configureMessageBroker(MessageBrokerRegistry config) {
         // Try to create a TCP client that will connect to the message broker (or the message brokers if multiple exists).
         // If tcpClient is null, there is no valid address specified in the config. This could be due to a development setup or a mistake in the config.
         TcpOperations<byte[]> tcpClient = createTcpClient();
@@ -189,7 +156,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         // NOTE: by setting a WebSocketTransportHandler we disable http poll, http stream and other exotic workarounds and only support real websocket connections.
         // nowadays all modern browsers support websockets and workarounds are not necessary any more and might only lead to problems
         WebSocketTransportHandler webSocketTransportHandler = new WebSocketTransportHandler(handshakeHandler);
-        registry.addEndpoint("/websocket/tracker").setAllowedOrigins("*").withSockJS().setTransportHandlers(webSocketTransportHandler)
+        registry.addEndpoint("/websocket/tracker").setAllowedOriginPatterns("*").withSockJS().setTransportHandlers(webSocketTransportHandler)
                 .setInterceptors(httpSessionHandshakeInterceptor());
     }
 
@@ -198,7 +165,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         registration.interceptors(new TopicSubscriptionInterceptor());
     }
 
-    @NotNull
     @Override
     protected MappingJackson2MessageConverter createJacksonConverter() {
         // NOTE: We need to adapt the default messageConverter for WebSocket messages

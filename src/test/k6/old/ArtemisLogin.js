@@ -3,9 +3,9 @@ import http from 'k6/http';
 import ws from 'k6/ws';
 import { Trend } from 'k6/metrics';
 
-// Version: 1.1
-// Creator: Firefox
-// Browser: Firefox
+/*****************
+ * TODO: Note: this file seems to be outdated
+ *****************/
 
 var rest_call_metrics = new Trend('rest_call_metrics');
 
@@ -76,7 +76,7 @@ export default function () {
     let maxTestUser = 100; // the userId will be an integer between 1 and this number
 
     let delayBeforeLogin = 1; // Time in seconds the simulated user needs to enter username/password
-    let websocketConnectionTime = 100; // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
+    let websocketConnectionTime = 300; // Time in seconds the websocket is kept open, if set to 0 no websocket connection is established
 
     let userAgent = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0';
     let acceptLanguage = 'en-CA,en-US;q=0.7,en;q=0.3';
@@ -120,7 +120,7 @@ export default function () {
         // Add css/js files dynamically
         let regex = /(?:"([^"]*\.(css|js))")/g;
         var matched;
-        while ((matched = regex.exec(res[0].body)) != undefined) {
+        while ((matched = regex.exec(res[0].body)) !== undefined) {
             req.push({
                 method: 'get',
                 url: baseUrl + '/' + matched[1],
@@ -401,9 +401,24 @@ export default function () {
             let websocketEndpoint = websocketProtocol + '://' + host + '/websocket/tracker/websocket';
             let websocketUrl = websocketEndpoint + '?access_token=' + authToken;
 
-            var response = ws.connect(websocketUrl, { tags: { name: websocketEndpoint } }, function (socket) {
+            ws.connect(websocketUrl, { tags: { name: websocketEndpoint } }, function (socket) {
                 socket.on('open', function open() {
-                    socket.send('CONNECT\nX-XSRF-TOKEN:' + xsrftoken + '\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000');
+                    socket.send('CONNECT\nX-XSRF-TOKEN:' + xsrftoken + '\naccept-version:1.2\nheart-beat:10000,10000\n\n\u0000');
+                    socket.setInterval(function timeout() {
+                        socket.ping();
+                        // Pinging every 10sec (setInterval)
+                    }, 10000);
+                    // TODO: is ping not the same as the heartbeat?
+                    // Send heartbeat to server so session is kept alive
+                    socket.setInterval(function timeout() {
+                        socket.send('\n');
+                    }, 10000);
+                });
+
+                socket.on('error', function (e) {
+                    if (e.error() !== 'websocket: close sent') {
+                        console.log('Websocket connection closed due to: ', e.error());
+                    }
                 });
 
                 function getSubscriptionId() {
@@ -416,11 +431,6 @@ export default function () {
                 function subscribeCourse(courseId, role) {
                     socket.send('SUBSCRIBE\nid:sub-' + getSubscriptionId() + '\ndestination:/topic/course/' + courseId + '/' + role + '\n\n\u0000');
                 }
-
-                socket.setInterval(function timeout() {
-                    socket.ping();
-                    // console.log("Pinging every 10sec (setInterval test)");
-                }, 10000);
 
                 // Send destination and subscription after 1 second
                 socket.setTimeout(function () {

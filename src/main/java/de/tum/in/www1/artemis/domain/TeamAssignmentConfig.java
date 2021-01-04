@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.validation.constraints.TeamAssignmentConfigConstra
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TeamAssignmentConfig extends DomainObject {
 
-    @OneToOne(mappedBy = "teamAssignmentConfig", fetch = FetchType.LAZY, optional = false)
+    @OneToOne(mappedBy = "teamAssignmentConfig", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("teamAssignmentConfig")
     private Exercise exercise;
 

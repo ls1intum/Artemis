@@ -39,6 +39,7 @@ $footer-height: 31px;
         flex-grow: 1;
         padding-left: 240px;
         position: relative;
+        overflow: hidden;
 
         .plagiarism-content {
             display: flex;

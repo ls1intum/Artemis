@@ -6,7 +6,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class PetriNetPlace extends UMLElement {
 
-    public final static String PETRI_NET_PLACE_TYPE = "PetriNetPlace";
+    public static final String PETRI_NET_PLACE_TYPE = "PetriNetPlace";
 
     private final String name;
 
