@@ -132,8 +132,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             select distinct participation from StudentParticipation participation
             left join fetch participation.submissions submission
-            left join fetch submission.results results
-            left join fetch results.feedbacks feedbacks
+            left join fetch submission.results result
+            left join fetch result.feedbacks feedbacks
             where participation.exercise.id = :#{#exerciseId}
             and 0L = (SELECT COUNT(r2)
                              FROM Result r2 where r2.assessor IS NOT NULL
@@ -148,6 +148,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                                  AND r.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')
                                  AND (participation.exercise.dueDate IS NULL OR r.submission.submissionDate <= participation.exercise.dueDate))
             and not exists (select prs from participation.results prs where prs.assessor.id = participation.student.id)
+            and :#{#correctionRound} = (select COUNT(prs)
+                            from participation.results prs
+                            where prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
             and submission.submitted = true
             and submission.id = (select max(id) from participation.submissions)
             """)
