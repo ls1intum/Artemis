@@ -39,7 +39,7 @@ import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.servi
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
-import { CategoryIssuesMap, ProgrammingExerciseGradingStatistics, TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/grading/charts/category-issues-chart.component';
 import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
 
@@ -130,6 +130,18 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             maxPenalty: 0,
         },
     ] as StaticCodeAnalysisCategory[];
+    const gradingStatistics = {
+        numParticipations: 5,
+        testCaseStatsMap: {
+            testBubbleSort: { numPassed: 2, numFailed: 3 },
+            testMergeSort: { numPassed: 1, numFailed: 4 },
+            otherTest: { numPassed: 1, numFailed: 0 },
+        },
+        categoryIssuesMap: {
+            'Bad Practice': { 1: 2, 2: 2, 3: 1 },
+            Styling: { 0: 3, 2: 1, 5: 1 },
+        },
+    } as ProgrammingExerciseGradingStatistics;
 
     const getExerciseTestCasteStateDTO = (released: boolean, hasStudentResult: boolean, testCasesChanged: boolean, buildAndTestStudentSubmissionsAfterDueDate?: Moment) => ({
         body: {
@@ -215,6 +227,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 testCasesChangedStub.returns(testCasesChangedSubject);
                 getExerciseTestCaseStateStub.returns(getExerciseTestCaseStateSubject);
 
+                loadStatisticsStub.returns(of(gradingStatistics));
                 loadExerciseStub.returns(of({ body: exercise }));
             });
     }));
@@ -223,6 +236,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         notifyTestCasesSpy.restore();
         testCasesChangedStub.restore();
         getExerciseTestCaseStateStub.restore();
+        loadStatisticsStub.restore();
     });
 
     const initGradingComponent = ({
@@ -654,27 +668,14 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     }));
 
     it('should load and calculate grading statistics correctly', fakeAsync(() => {
-        const stats = {
-            numParticipations: 5,
-            testCaseStatsMap: {
-                testBubbleSort: { numPassed: 2, numFailed: 3 },
-                testMergeSort: { numPassed: 1, numFailed: 4 },
-                otherTest: { numPassed: 1, numFailed: 0 },
-            },
-            categoryIssuesMap: {
-                'Bad Practice': { 1: 2, 2: 2, 3: 1 },
-                Styling: { 0: 3, 2: 1, 5: 1 },
-            },
-        } as ProgrammingExerciseGradingStatistics;
-
-        loadStatisticsStub.returns(of(stats));
-
         initGradingComponent({ tab: 'code-analysis' });
 
         fixture.detectChanges();
 
+        expect(loadStatisticsStub).to.have.been.calledWithExactly(exerciseId);
+
         expect(comp.maxIssuesPerCategory).to.equal(5);
-        expect(comp.gradingStatistics).to.deep.equal(stats);
+        expect(comp.gradingStatistics).to.deep.equal(gradingStatistics);
 
         fixture.detectChanges();
         tick();
