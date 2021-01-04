@@ -1,6 +1,5 @@
-import { filter } from 'rxjs/operators';
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 
 @Component({
@@ -9,9 +8,8 @@ import { User } from 'app/core/user/user.model';
 })
 export class UserManagementDetailComponent implements OnInit {
     user: User;
-    isVisible: boolean;
 
-    constructor(private route: ActivatedRoute, private router: Router) {}
+    constructor(private route: ActivatedRoute) {}
 
     /**
      * Retrieve the user from the user management activated route data {@link UserMgmtResolve} subscription
@@ -21,7 +19,5 @@ export class UserManagementDetailComponent implements OnInit {
         this.route.data.subscribe(({ user }) => {
             this.user = user.body ? user.body : user;
         });
-        this.isVisible = this.route.children.length === 0;
-        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => (this.isVisible = this.route.children.length === 0));
     }
 }

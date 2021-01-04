@@ -59,7 +59,9 @@ export class LectureComponent implements OnInit, OnDestroy {
         this.isVisible = this.route.children.length === 0;
         this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
             this.isVisible = this.route.children.length === 0;
-            this.loadAll();
+            if (this.isVisible) {
+                this.loadAll();
+            }
         });
     }
 
