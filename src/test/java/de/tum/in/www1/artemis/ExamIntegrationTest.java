@@ -369,8 +369,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerateStudentExamsNoExerciseGroups_badRequest() throws Exception {
         Exam exam = database.addExamWithExerciseGroup(course1, true);
-        exam.setStartDate(ZonedDateTime.now());
-        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        exam.setStartDate(now());
+        exam.setEndDate(now().plusHours(2));
         exam = examRepository.save(exam);
 
         // invoke generate student exams
