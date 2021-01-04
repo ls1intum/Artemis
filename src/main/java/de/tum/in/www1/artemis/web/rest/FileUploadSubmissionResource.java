@@ -189,8 +189,8 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * GET /file-upload-submission-without-assessment : get one File Upload Submission without assessment.
      *
      * @param exerciseId the id of the exercise
-     * @param lockSubmission specifies if the submission should be locked for assessor
      * @param correctionRound the correctionround for which we want to find the submission
+     * @param lockSubmission specifies if the submission should be locked for assessor
      * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/round/{correctionRound}/file-upload-submission-without-assessment")
