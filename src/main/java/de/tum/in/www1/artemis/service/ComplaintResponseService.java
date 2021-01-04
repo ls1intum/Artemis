@@ -137,7 +137,6 @@ public class ComplaintResponseService {
         complaintResponseRepository.flush();
 
         ComplaintResponse refreshedEmptyComplaintResponse = new ComplaintResponse();
-        refreshedEmptyComplaintResponse.setCreatedTime(ZonedDateTime.now()); // start date and time of the lock
         refreshedEmptyComplaintResponse.setReviewer(user); // owner of the lock
         refreshedEmptyComplaintResponse.setComplaint(complaintFromDatabase);
         ComplaintResponse persistedComplaintResponse = complaintResponseRepository.save(refreshedEmptyComplaintResponse);
@@ -179,7 +178,6 @@ public class ComplaintResponseService {
         ComplaintResponse emptyComplaintResponse = new ComplaintResponse();
         emptyComplaintResponse.setReviewer(user); // owner of the lock
         emptyComplaintResponse.setComplaint(complaintFromDatabase);
-        emptyComplaintResponse.setCreatedTime(ZonedDateTime.now()); // start date and time of the lock
         ComplaintResponse persistedComplaintResponse = complaintResponseRepository.save(emptyComplaintResponse);
         log.debug("Created empty complaint and thus lock for complaint with id : {}", complaintId);
         return persistedComplaintResponse;

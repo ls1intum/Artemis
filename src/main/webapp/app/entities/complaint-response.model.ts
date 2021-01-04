@@ -8,7 +8,6 @@ export class ComplaintResponse implements BaseEntity {
 
     public responseText?: string;
     public submittedTime?: Moment;
-    public createdTime?: Moment;
     public complaint?: Complaint;
     public reviewer?: User;
     // transient property that will be calculated on the server

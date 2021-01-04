@@ -46,7 +46,6 @@ export class ComplaintService implements IComplaintService {
      * @param complaint complaint to check the lock status for
      */
     isComplaintLockedByLoggedInUser(complaint: Complaint) {
-        debugger;
         if (complaint.complaintResponse && complaint.accepted === undefined) {
             return this.complaintResponseService.isComplaintResponseLockedByLoggedInUser(complaint.complaintResponse);
         } else {

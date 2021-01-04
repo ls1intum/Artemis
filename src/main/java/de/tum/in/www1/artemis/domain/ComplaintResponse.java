@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_LOCK_DURATION_IN_MINUTES;
 
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 import javax.persistence.*;
@@ -21,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Table(name = "complaint_response")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ComplaintResponse extends DomainObject {
+public class ComplaintResponse extends AbstractAuditingEntity {
 
     @Column(name = "response_text")
     @Size(max = 2000)
@@ -32,12 +34,6 @@ public class ComplaintResponse extends DomainObject {
      */
     @Column(name = "submitted_time")
     private ZonedDateTime submittedTime;
-
-    /**
-     * will be set as soon as the evaluation of a complaint by a reviewer begins (possibly null for old complaint responses before this column was added)
-     */
-    @Column(name = "created_time")
-    private ZonedDateTime createdTime;
 
     @Transient
     private boolean isCurrentlyLocked;
@@ -59,22 +55,23 @@ public class ComplaintResponse extends DomainObject {
      */
     @JsonProperty("isCurrentlyLocked")
     public boolean isCurrentlyLocked() {
-        if (createdTime == null) {
+        if (getCreatedDate() == null) {
             return false;
         }
+        ZonedDateTime createdDateInUTC = ZonedDateTime.ofInstant(getCreatedDate(), ZoneOffset.UTC);
 
-        ZonedDateTime lockedUntil = createdTime.plusMinutes(COMPLAINT_LOCK_DURATION_IN_MINUTES);
+        ZonedDateTime lockedUntil = createdDateInUTC.plusMinutes(COMPLAINT_LOCK_DURATION_IN_MINUTES);
 
-        return ZonedDateTime.now().isBefore(lockedUntil);
+        return ZonedDateTime.now(ZoneOffset.UTC).isBefore(lockedUntil);
     }
 
     @JsonProperty("lockEndDate")
     public ZonedDateTime lockEndDate() {
-        if (createdTime == null) {
+        if (getCreatedDate() == null) {
             return null;
         }
-
-        return createdTime.plusMinutes(COMPLAINT_LOCK_DURATION_IN_MINUTES);
+        ZonedDateTime createdDateInUTC = ZonedDateTime.ofInstant(getCreatedDate(), ZoneId.systemDefault());
+        return createdDateInUTC.plusMinutes(COMPLAINT_LOCK_DURATION_IN_MINUTES);
     }
 
     public String getResponseText() {
@@ -110,14 +107,6 @@ public class ComplaintResponse extends DomainObject {
     public ComplaintResponse complaint(Complaint complaint) {
         this.complaint = complaint;
         return this;
-    }
-
-    public ZonedDateTime getCreatedTime() {
-        return createdTime;
-    }
-
-    public void setCreatedTime(ZonedDateTime createdTime) {
-        this.createdTime = createdTime;
     }
 
     public void setComplaint(Complaint complaint) {
