@@ -102,6 +102,18 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importExercise_sca_deactivated() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExercise_scaChange_deactivated();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importExercise_sca_activated() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExercise_scaChange_activated();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_validExercise_structureOracle() throws Exception {
         programmingExerciseTestService.createProgrammingExercise_validExercise_structureOracle();
     }

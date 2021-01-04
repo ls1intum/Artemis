@@ -64,7 +64,7 @@
             },
             "enableStaticCodeAnalysis": {
                 "title": "Aktiviere Statische Code Analyse",
-                "description": "Durch Aktivierung dieser Option werden Abgaben einer Statischen Code Analyse unterzogen. Sequentielle Testläufe werden nicht unterstützt. Zusätzliche Optionen stehen in der Bewertungssicht zur Verfügung. Diese Option kann nach der Erstellung der Aufgabe nicht mehr geändert werden."
+                "description": "Durch Aktivierung dieser Option werden Abgaben einer Statischen Code Analyse unterzogen. Sequentielle Testläufe werden nicht unterstützt. Zusätzliche Optionen stehen in der Bewertungssicht zur Verfügung. Diese Option kann bei erneutem Import der Aufgabe geändert werden, wenn die Build Pläne neu erstellt werden und das Template aktualisiert wird."
             },
             "maxStaticCodeAnalysisPenalty": {
                 "title": "Max Statische Code Analyse Strafe",
