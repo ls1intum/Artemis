@@ -295,7 +295,7 @@ e.g.:
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling
 
 Please read :doc:`../setup` for more details.
 
