@@ -129,8 +129,8 @@ describe('ModelingEditorComponent Component', () => {
         expect(fixture.componentInstance['apollonEditor']).toBeTruthy();
 
         // test
-        const model = fixture.componentInstance.getCurrentModel();
-        // TODO: uncomment after deserialization bugfix in Apollon libary
+        // const model = fixture.componentInstance.getCurrentModel();
+        // TODO: uncomment after deserialization bugfix in Apollon library, see https://github.com/ls1intum/Apollon/issues/146
         // expect(model).toEqual(testClassDiagram);
     });
 
