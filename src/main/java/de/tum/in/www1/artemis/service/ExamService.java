@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -384,61 +383,21 @@ public class ExamService {
     /**
      * Generates the student exams randomly based on the exam configuration and the exercise groups
      *
-     * @param examWithExistingStudentExams the exam with student exams loaded for orphan removal
+     * @param examWithRegisteredUsersAndExerciseGroupsAndExercises the exam with registered users, exerciseGroups and exercises loaded
      * @return the list of student exams with their corresponding users
      */
-    public List<StudentExam> generateStudentExams(final Exam examWithExistingStudentExams) {
+    public List<StudentExam> generateStudentExams(final Exam examWithRegisteredUsersAndExerciseGroupsAndExercises) {
+        final var examWithExistingStudentExams = findWithStudentExams(examWithRegisteredUsersAndExerciseGroupsAndExercises.getId());
         // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
         studentExamRepository.deleteAll(examWithExistingStudentExams.getStudentExams());
 
-        // now fetch the exam with additional information
-        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examWithExistingStudentExams.getId()).get();
-
-        List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
-        long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
+        List<ExerciseGroup> exerciseGroups = examWithRegisteredUsersAndExerciseGroupsAndExercises.getExerciseGroups();
+        long numberOfOptionalExercises = examWithRegisteredUsersAndExerciseGroupsAndExercises.getNumberOfExercisesInExam()
+                - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
 
         // StudentExams are saved in the called method
-        List<StudentExam> studentExams = createRandomStudentExams(exam, exam.getRegisteredUsers(), numberOfOptionalExercises);
-        return studentExams;
-    }
-
-    /**
-     * Validates exercise settings.
-     *
-     * @param exam exam which is validated
-     * @throws BadRequestAlertException
-     */
-    public void validateForStudentExamGeneration(Exam exam) throws BadRequestAlertException {
-        List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
-        long numberOfExercises = exam.getNumberOfExercisesInExam() != null ? exam.getNumberOfExercisesInExam() : 0;
-        long numberOfOptionalExercises = numberOfExercises - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
-
-        // Check that the start and end date of the exam is set
-        if (exam.getStartDate() == null || exam.getEndDate() == null) {
-            throw new BadRequestAlertException("The start and end date must be set for the exam", "Exam", "artemisApp.exam.validation.startAndEndMustBeSet");
-        }
-
-        // Ensure that all exercise groups have at least one exercise
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            if (exerciseGroup.getExercises().isEmpty()) {
-                throw new BadRequestAlertException("All exercise groups must have at least one exercise", "Exam", "artemisApp.exam.validation.atLeastOneExercisePerExerciseGroup");
-            }
-        }
-
-        // Check that numberOfExercisesInExam is set
-        if (exam.getNumberOfExercisesInExam() == null) {
-            throw new BadRequestAlertException("The number of exercises in the exam is not set.", "Exam", "artemisApp.exam.validation.numberOfExercisesInExamNotSet");
-        }
-
-        // Check that there are enough exercise groups
-        if (exam.getExerciseGroups().size() < exam.getNumberOfExercisesInExam()) {
-            throw new BadRequestAlertException("The number of exercise groups is too small", "Exam", "artemisApp.exam.validation.tooFewExerciseGroups");
-        }
-
-        // Check that there are not too much mandatory exercise groups
-        if (numberOfOptionalExercises < 0) {
-            throw new BadRequestAlertException("The number of mandatory exercise groups is too large", "Exam", "artemisApp.exam.validation.tooManyMandatoryExerciseGroups");
-        }
+        return createRandomStudentExams(examWithRegisteredUsersAndExerciseGroupsAndExercises, examWithRegisteredUsersAndExerciseGroupsAndExercises.getRegisteredUsers(),
+                numberOfOptionalExercises);
     }
 
     /**
@@ -446,30 +405,25 @@ public class ExamService {
      * The difference between all registered users and the users who already have an individual exam
      * is the set of users for which student exams will be created.
      *
-     * @param examId        the id of the exam
+     * @param examWithRegisteredUsersAndExerciseGroupsAndExercises exam with registered users, exerciseGroups, and Exercises loaded
      * @return the list of student exams with their corresponding users
      */
-    public List<StudentExam> generateMissingStudentExams(Long examId) {
-        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).get();
-
-        long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
+    public List<StudentExam> generateMissingStudentExams(Exam examWithRegisteredUsersAndExerciseGroupsAndExercises) {
+        long numberOfOptionalExercises = examWithRegisteredUsersAndExerciseGroupsAndExercises.getNumberOfExercisesInExam()
+                - examWithRegisteredUsersAndExerciseGroupsAndExercises.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
 
         // Get all users who already have an individual exam
-        Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(examId);
+        Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(examWithRegisteredUsersAndExerciseGroupsAndExercises.getId());
 
         // Get all registered users
-        Set<User> allRegisteredUsers = exam.getRegisteredUsers();
+        Set<User> allRegisteredUsers = examWithRegisteredUsersAndExerciseGroupsAndExercises.getRegisteredUsers();
 
         // Get all students who don't have an exam yet
         Set<User> missingUsers = new HashSet<>(allRegisteredUsers);
         missingUsers.removeAll(usersWithStudentExam);
 
         // StudentExams are saved in the called method
-        List<StudentExam> missingStudentExams = createRandomStudentExams(exam, missingUsers, numberOfOptionalExercises);
-
-        // TODO: make sure the student exams still contain non proxy users
-
-        return missingStudentExams;
+        return createRandomStudentExams(examWithRegisteredUsersAndExerciseGroupsAndExercises, missingUsers, numberOfOptionalExercises);
     }
 
     /**
@@ -597,9 +551,8 @@ public class ExamService {
      * @param examId the id of the exam
      * @return the exam with student exams loaded
      */
-    public Exam findWithStudentExamsAndExerciseGroupsAndExercisesById(long examId) {
-        Exam exam = examRepository.findWithStudentExamsAndExerciseGroupsAndExercisesById(examId)
-                .orElseThrow(() -> new EntityNotFoundException("Exam with id " + examId + " does not exist"));
+    public Exam findWithStudentExams(long examId) {
+        Exam exam = examRepository.findWithStudentExamsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id " + examId + " does not exist"));
         // drop all test runs and set the remaining student exams to the exam
         exam.setStudentExams(exam.getStudentExams().stream().dropWhile(StudentExam::getTestRun).collect(Collectors.toSet()));
         return exam;

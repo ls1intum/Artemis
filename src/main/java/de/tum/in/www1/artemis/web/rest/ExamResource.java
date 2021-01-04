@@ -440,7 +440,7 @@ public class ExamResource {
     public ResponseEntity<List<StudentExam>> generateStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to generate student exams for exam {}", examId);
 
-        final var exam = examService.findWithStudentExamsAndExerciseGroupsAndExercisesById(examId);
+        final var exam = examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId);
 
         Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, exam);
         if (courseAndExamAccessFailure.isPresent()) {
@@ -448,7 +448,7 @@ public class ExamResource {
         }
 
         // Validate settings of the exam
-        examService.validateForStudentExamGeneration(exam);
+        validateForStudentExamGeneration(exam);
 
         List<StudentExam> studentExams = examService.generateStudentExams(exam);
 
@@ -477,7 +477,7 @@ public class ExamResource {
     public ResponseEntity<List<StudentExam>> generateMissingStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to generate missing student exams for exam {}", examId);
 
-        final var exam = examService.findWithStudentExamsAndExerciseGroupsAndExercisesById(examId);
+        final var exam = examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId);
 
         Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
@@ -485,9 +485,9 @@ public class ExamResource {
         }
 
         // Validate settings of the exam
-        examService.validateForStudentExamGeneration(exam);
+        validateForStudentExamGeneration(exam);
 
-        List<StudentExam> studentExams = examService.generateMissingStudentExams(exam.getId());
+        List<StudentExam> studentExams = examService.generateMissingStudentExams(exam);
 
         // we need to break a cycle for the serialization
         for (StudentExam studentExam : studentExams) {
@@ -773,6 +773,45 @@ public class ExamResource {
             ExamInformationDTO examInformationDTO = new ExamInformationDTO();
             examInformationDTO.latestIndividualEndDate = latestIndividualEndDateOfExam;
             return ResponseEntity.ok().body(examInformationDTO);
+        }
+    }
+
+    /**
+     * Validates exercise settings.
+     *
+     * @param exam exam which is validated
+     * @throws BadRequestAlertException
+     */
+    private void validateForStudentExamGeneration(Exam exam) throws BadRequestAlertException {
+        List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
+        long numberOfExercises = exam.getNumberOfExercisesInExam() != null ? exam.getNumberOfExercisesInExam() : 0;
+        long numberOfOptionalExercises = numberOfExercises - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
+
+        // Check that the start and end date of the exam is set
+        if (exam.getStartDate() == null || exam.getEndDate() == null) {
+            throw new BadRequestAlertException("The start and end date must be set for the exam", "Exam", "artemisApp.exam.validation.startAndEndMustBeSet");
+        }
+
+        // Ensure that all exercise groups have at least one exercise
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            if (exerciseGroup.getExercises().isEmpty()) {
+                throw new BadRequestAlertException("All exercise groups must have at least one exercise", "Exam", "artemisApp.exam.validation.atLeastOneExercisePerExerciseGroup");
+            }
+        }
+
+        // Check that numberOfExercisesInExam is set
+        if (exam.getNumberOfExercisesInExam() == null) {
+            throw new BadRequestAlertException("The number of exercises in the exam is not set.", "Exam", "artemisApp.exam.validation.numberOfExercisesInExamNotSet");
+        }
+
+        // Check that there are enough exercise groups
+        if (exam.getExerciseGroups().size() < exam.getNumberOfExercisesInExam()) {
+            throw new BadRequestAlertException("The number of exercise groups is too small", "Exam", "artemisApp.exam.validation.tooFewExerciseGroups");
+        }
+
+        // Check that there are not too much mandatory exercise groups
+        if (numberOfOptionalExercises < 0) {
+            throw new BadRequestAlertException("The number of mandatory exercise groups is too large", "Exam", "artemisApp.exam.validation.tooManyMandatoryExerciseGroups");
         }
     }
 
