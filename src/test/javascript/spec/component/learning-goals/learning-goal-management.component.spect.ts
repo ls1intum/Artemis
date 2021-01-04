@@ -11,7 +11,6 @@ import { LearningGoalManagementComponent } from 'app/course/learning-goals/learn
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ActivatedRoute } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
-import { LearningGoalProgress, LectureUnitProgress } from 'app/course/learning-goals/learning-goal-progress-dtos.model';
 import { Component, Input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -20,6 +19,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
+import { CourseLearningGoalProgress, CourseLectureUnitProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -27,7 +27,7 @@ const expect = chai.expect;
 @Component({ selector: 'jhi-learning-goal-card', template: '<div><ng-content></ng-content></div>' })
 class LearningGoalCardStubComponent {
     @Input() learningGoal: LearningGoal;
-    @Input() learningGoalProgress: LearningGoalProgress;
+    @Input() learningGoalProgress: CourseLearningGoalProgress;
 }
 
 describe('LearningGoalManagementComponent', () => {
@@ -85,27 +85,28 @@ describe('LearningGoalManagementComponent', () => {
         learningGoal.id = 1;
         learningGoal.description = 'test';
         learningGoal.lectureUnits = [textUnit];
-        const learningUnitProgress = new LectureUnitProgress();
-        learningUnitProgress.lectureUnitId = 1;
-        learningUnitProgress.totalPointsAchievableByStudentsInLectureUnit = 10;
-        const learningGoalProgress = new LearningGoalProgress();
-        learningGoalProgress.learningGoalId = 1;
-        learningGoalProgress.learningGoalTitle = 'test';
-        learningGoalProgress.pointsAchievedByStudentInLearningGoal = 5;
-        learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = 10;
-        learningGoalProgress.progressInLectureUnits = [learningUnitProgress];
+        const courseLectureUnitProgress = new CourseLectureUnitProgress();
+        courseLectureUnitProgress.lectureUnitId = 1;
+        courseLectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit = 10;
+        const courseLearningGoalProgress = new CourseLearningGoalProgress();
+        courseLearningGoalProgress.courseId = 1;
+        courseLearningGoalProgress.learningGoalId = 1;
+        courseLearningGoalProgress.learningGoalTitle = 'test';
+        courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal = 5;
+        courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = 10;
+        courseLearningGoalProgress.progressInLectureUnits = [courseLectureUnitProgress];
 
         const learningGoalsOfCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
             body: [learningGoal, new LearningGoal()],
             status: 200,
         });
-        const learningGoalProgressResponse: HttpResponse<LearningGoalProgress> = new HttpResponse({
-            body: learningGoalProgress,
+        const learningGoalProgressResponse: HttpResponse<CourseLearningGoalProgress> = new HttpResponse({
+            body: courseLearningGoalProgress,
             status: 200,
         });
 
         const getAllForCourseStub = sinon.stub(learningGoalService, 'getAllForCourse').returns(of(learningGoalsOfCourseResponse));
-        const getProgressStub = sinon.stub(learningGoalService, 'getProgress').returns(of(learningGoalProgressResponse));
+        const getProgressStub = sinon.stub(learningGoalService, 'getCourseProgress').returns(of(learningGoalProgressResponse));
 
         learningGoalManagementComponentFixture.detectChanges();
 

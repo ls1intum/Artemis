@@ -17,7 +17,7 @@
             },
             "view": "View assessment",
             "model": "Model",
-            "explanationText": "Explanation Text",
+            "explanationText": "Explanation",
             "modelingEditor": "Modeling Editor",
             "problemStatement": "<strong>Problem statement:</strong>",
             "maxScore": "<strong>Max. Score: {{maxScore}}</strong>",

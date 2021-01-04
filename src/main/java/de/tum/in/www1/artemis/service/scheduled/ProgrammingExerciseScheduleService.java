@@ -233,7 +233,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 // We sent a notification to the instructor about the success of the repository locking and stashing operations.
                 long numberOfFailedLockOperations = failedLockOperations.size();
                 long numberOfFailedStashOperations = failedStashOperations.size();
-                Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+                Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
+                        .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
                 if (programmingExercise.isEmpty()) {
                     throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
                 }
@@ -287,7 +288,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
                 // We sent a notification to the instructor about the success of the repository unlocking operation.
                 long numberOfFailedUnlockOperations = failedUnlockOperations.size();
-                Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+                Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
+                        .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
                 if (programmingExercise.isEmpty()) {
                     throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
                 }
