@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -342,7 +341,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         Long participationId = getParticipationIdByType(participationType, 0);
         final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).get();
         bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
-        URL repositoryUrl = (programmingParticipation).getRepositoryUrlAsUrl();
+        var repositoryUrl = (programmingParticipation).getVcsRepositoryUrl();
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(repositoryUrl);
         triggerBuild(participationType, 0);
 
@@ -381,7 +380,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         Long participationId = getParticipationIdByType(participationType, 0);
         final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).get();
         bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
-        URL repositoryUrl = programmingParticipation.getRepositoryUrlAsUrl();
+        var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
         ObjectId objectId = COMMIT_HASH_OBJECT_ID;
         doReturn(objectId).when(gitService).getLastCommitHash(repositoryUrl);
         triggerInstructorBuild(participationType, 0);

@@ -1,4 +1,4 @@
-import { group, sleep } from 'k6';
+import { group } from 'k6';
 import http from 'k6/http';
 import ws from 'k6/ws';
 
@@ -49,7 +49,7 @@ export default function () {
     let maxTestUser = 100; // the userId will be an integer between 1 and this number
 
     let delayBeforeLogin = 1; // Time in seconds the simulated user needs to enter username/password
-    let websocketConnectionTime = 300; // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
+    let websocketConnectionTime = 300; // Time in seconds the websocket is kept open, if set to 0 no websocket connection is established
 
     let userAgent = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0';
     let acceptLanguage = 'en-CA,en-US;q=0.7,en;q=0.3';
@@ -131,9 +131,15 @@ export default function () {
             let websocketEndpoint = websocketProtocol + '://' + host + '/websocket/tracker/websocket';
             let websocketUrl = websocketEndpoint + '?access_token=' + authToken;
 
-            var response = ws.connect(websocketUrl, { tags: { name: websocketEndpoint } }, function (socket) {
+            ws.connect(websocketUrl, { tags: { name: websocketEndpoint } }, function (socket) {
                 socket.on('open', function open() {
                     socket.send('CONNECT\nX-XSRF-TOKEN:' + xsrftoken + '\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000');
+                });
+
+                socket.on('error', function (e) {
+                    if (e.error() !== 'websocket: close sent') {
+                        console.log('Websocket connection closed due to: ', e.error());
+                    }
                 });
 
                 function getSubscriptionId() {
