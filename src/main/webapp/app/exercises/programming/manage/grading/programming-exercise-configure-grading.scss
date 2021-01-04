@@ -48,6 +48,17 @@ $border-color: #979797;
     }
 }
 
+.datatable-header-cell-wrapper {
+    display: flex;
+    align-items: center;
+
+    .datatable-header-cell-label {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-right: 2px;
+    }
+}
+
 @media screen and (max-width: 1200px) {
     .grading-table-layout {
         flex-flow: column;
