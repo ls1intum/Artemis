@@ -316,15 +316,7 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
-        // Load the logs from the database
-        List<BuildLogEntry> buildLogsFromDatabase = retrieveLatestBuildLogsFromDatabase(programmingSubmission);
-
-        // If there are logs present in the database, return them (they were already filtered when inserted)
-        if (!buildLogsFromDatabase.isEmpty()) {
-            return buildLogsFromDatabase;
-        }
-
-        // Otherwise return the logs from Bamboo (and filter them now)
+        // Return the logs from Bamboo (and filter them now)
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
 
         var buildLogEntries = filterBuildLogs(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()));
@@ -823,15 +815,6 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         return null;
-    }
-
-    private List<BuildLogEntry> retrieveLatestBuildLogsFromDatabase(ProgrammingSubmission programmingSubmission) {
-        Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId());
-        if (optionalProgrammingSubmission.isPresent()) {
-            return optionalProgrammingSubmission.get().getBuildLogEntries();
-        }
-
-        return List.of();
     }
 
     /**

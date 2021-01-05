@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -8,14 +9,18 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 
 @Service
 public class BuildLogEntryService {
 
     private BuildLogEntryRepository buildLogEntryRepository;
 
-    public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository) {
+    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.buildLogEntryRepository = buildLogEntryRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -37,5 +42,19 @@ public class BuildLogEntryService {
             updatedBuildLogEntry.setProgrammingSubmission(programmingSubmission);
             return updatedBuildLogEntry;
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * Retrieves the latest build logs for a given programming submission.
+     *
+     * @param programmingSubmission submission for which to retrieve the build logs
+     * @return the build log entries
+     */
+    public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
+        Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId());
+        if (optionalProgrammingSubmission.isPresent()) {
+            return optionalProgrammingSubmission.get().getBuildLogEntries();
+        }
+        return List.of();
     }
 }

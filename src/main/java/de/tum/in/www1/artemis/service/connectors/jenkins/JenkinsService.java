@@ -50,6 +50,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -89,12 +90,14 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final FeedbackService feedbackService;
 
+    private final BuildLogEntryService buildLogService;
+
     // Pattern of the DateTime that is included in the logs received from Jenkins
     private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
     public JenkinsService(JenkinsBuildPlanCreator jenkinsBuildPlanCreator, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, FeedbackService feedbackService,
-            ResultRepository resultRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate) {
+            ResultRepository resultRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService) {
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.restTemplate = restTemplate;
@@ -103,6 +106,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.feedbackService = feedbackService;
         this.resultRepository = resultRepository;
+        this.buildLogService = buildLogService;
     }
 
     @Override
@@ -556,6 +560,11 @@ public class JenkinsService implements ContinuousIntegrationService {
                     prunedBuildLog.add(entry);
                 }
             }
+
+            // Save build logs
+            var savedBuildLogs = buildLogService.saveBuildLogs(prunedBuildLog, programmingSubmission);
+            programmingSubmission.setBuildLogEntries(savedBuildLogs);
+            programmingSubmissionRepository.save(programmingSubmission);
 
             return prunedBuildLog;
         }
