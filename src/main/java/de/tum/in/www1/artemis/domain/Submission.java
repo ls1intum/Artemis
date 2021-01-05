@@ -67,6 +67,7 @@ public abstract class Submission extends DomainObject {
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
     @JsonIgnoreProperties({ "submission", "participation" })
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<Result> results = new ArrayList<>();
 
     @Column(name = "submission_date")
@@ -88,10 +89,10 @@ public abstract class Submission extends DomainObject {
             return null;
         }
 
-        ZonedDateTime initilizationDate = this.participation.getInitializationDate();
+        ZonedDateTime initializationDate = this.participation.getInitializationDate();
         ZonedDateTime submissionDate = this.getSubmissionDate();
 
-        return Duration.between(initilizationDate, submissionDate).toMinutes();
+        return Duration.between(initializationDate, submissionDate).toMinutes();
     }
 
     /**
