@@ -46,44 +46,46 @@ describe('StudentExamDetailComponent', () => {
     let student: User;
     let studentExam: StudentExam;
     let exercise: Exercise;
-    let exerciseGroup: ExerciseGroup;
     let exam: Exam;
     let studentParticipation: StudentParticipation;
     let result: Result;
 
+    let courseManagementService: any;
+    let studentExamService: any;
+
     beforeEach(() => {
-        course = new Course();
-        course.id = 1;
+        course = { id: 1 };
 
-        student = new User();
-        student.name = 'name';
-        student.login = 'login';
-        student.email = 'email';
-        student.visibleRegistrationNumber = 'visibleRegistrationNumber';
+        student = {
+            guidedTourSettings: [],
+            name: 'name',
+            login: 'login',
+            email: 'email',
+            visibleRegistrationNumber: 'visibleRegistrationNumber',
+        };
 
-        exam = new Exam();
-        exam.course = course;
-        exam.id = 1;
-        exam.registeredUsers = [student];
-        exam.visibleDate = moment().add(120, 'seconds');
+        exam = {
+            course,
+            id: 1,
+            registeredUsers: [student],
+            visibleDate: moment().add(120, 'seconds'),
+        };
 
+        result = { score: 40 };
         studentParticipation = new StudentParticipation(ParticipationType.STUDENT);
-        result = new Result();
-        result.score = 40;
         studentParticipation.results = [result];
 
-        exerciseGroup = new ExerciseGroup();
-
-        exercise = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, exerciseGroup);
+        exercise = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, new ExerciseGroup());
         exercise.maxScore = 100;
         exercise.studentParticipations = [studentParticipation];
 
-        studentExam = new StudentExam();
-        studentExam.id = 1;
-        studentExam.workingTime = 3600;
-        studentExam.exam = exam;
-        studentExam.user = student;
-        studentExam.exercises = [exercise];
+        studentExam = {
+            id: 1,
+            workingTime: 3600,
+            exam,
+            user: student,
+            exercises: [exercise],
+        };
 
         return TestBed.configureTestingModule({
             imports: [
@@ -154,6 +156,8 @@ describe('StudentExamDetailComponent', () => {
             .then(() => {
                 studentExamDetailComponentFixture = TestBed.createComponent(StudentExamDetailComponent);
                 studentExamDetailComponent = studentExamDetailComponentFixture.componentInstance;
+                courseManagementService = TestBed.inject(CourseManagementService);
+                studentExamService = TestBed.inject(StudentExamService);
             });
     });
     afterEach(() => {
@@ -161,8 +165,6 @@ describe('StudentExamDetailComponent', () => {
     });
 
     it('initialize', () => {
-        const courseManagementService = TestBed.inject(CourseManagementService);
-
         const findCourseSpy = sinon.spy(courseManagementService, 'find');
         studentExamDetailComponentFixture.detectChanges();
 
@@ -173,22 +175,20 @@ describe('StudentExamDetailComponent', () => {
     });
 
     it('should return the right icon based on exercise type', () => {
-        exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, exerciseGroup);
+        exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, new ExerciseGroup());
         expect(studentExamDetailComponent.exerciseIcon(exercise)).to.equal('project-diagram');
 
-        exercise = new ProgrammingExercise(course, exerciseGroup);
+        exercise = new ProgrammingExercise(course, new ExerciseGroup());
         expect(studentExamDetailComponent.exerciseIcon(exercise)).to.equal('keyboard');
 
-        exercise = new QuizExercise(course, exerciseGroup);
+        exercise = new QuizExercise(course, new ExerciseGroup());
         expect(studentExamDetailComponent.exerciseIcon(exercise)).to.equal('check-double');
 
-        exercise = new FileUploadExercise(course, exerciseGroup);
+        exercise = new FileUploadExercise(course, new ExerciseGroup());
         expect(studentExamDetailComponent.exerciseIcon(exercise)).to.equal('file-upload');
     });
 
     it('should save working time', () => {
-        const studentExamService = TestBed.inject(StudentExamService);
-
         const studentExamSpy = sinon.spy(studentExamService, 'updateWorkingTime');
         studentExamDetailComponentFixture.detectChanges();
 
