@@ -1,4 +1,5 @@
-export const programmingExerciseProblemStatementC = '# Hello World\n' +
+export const programmingExerciseProblemStatementC =
+    '# Hello World\n' +
     '\n' +
     'In dieser Aufgabe werden Sie Ihr erstes C Programm erstellen.\n' +
     'Die Aufgabenstellung entnehmen Sie bitte [https://gbs.cm.in.tum.de](https://gbs.cm.in.tum.de).\n' +
