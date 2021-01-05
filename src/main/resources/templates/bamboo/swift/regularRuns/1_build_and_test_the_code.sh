@@ -12,10 +12,10 @@ cp Package.swift assignment
 
 echo "---------- swift build ----------"
 cd assignment
-swift build
-result="$?"
+swift build || error=true
 
-if [ "$result" -ne 1 ]; then
+if [ ! $error ]
+then
     echo "---------- swift test ----------"
     swift test || true
 fi

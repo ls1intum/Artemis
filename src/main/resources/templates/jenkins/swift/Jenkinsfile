@@ -33,10 +33,10 @@ pipeline {
 
                             echo "---------- swift build ----------"
                             cd assignment
-                            swift build
-                            result="$?"
+                            swift build || error=true
 
-                            if [ "$result" -ne 1 ]; then
+                            if [ ! $error ]
+                            then
                                 echo "---------- swift test ----------"
                                 swift test || true
                             fi
@@ -48,11 +48,14 @@ pipeline {
         post {
             cleanup {
                 sh '''
-                   rm -rf results
-                   mkdir results
-                   sed -i 's/<testsuites>//g ; s/<\/testsuites>//g' assignment/tests.xml
-                   cp assignment/tests.xml $WORKSPACE/results/ || true
-                   '''
+                    rm -rf results
+                    mkdir results
+                    if [ -e assignment/tests.xml ]
+                    then
+                        sed -i 's/<testsuites>//g ; s/<\\/testsuites>//g' assignment/tests.xml
+                        cp assignment/tests.xml $WORKSPACE/results/ || true
+                    fi
+                    '''
                 sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
                 cleanWs()
             }

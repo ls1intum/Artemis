@@ -159,7 +159,8 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     private String createStaticCodeAnalysisScript(ProgrammingLanguage programmingLanguage) {
         StringBuilder script = new StringBuilder();
         String lineEnding = "&#xd;";
-        // Make directory for generated static code analysis reports
+        // Delete a possible old directory for generated static code analysis reports and create a new one
+        script.append("rm -rf ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
         script.append("mkdir ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             script.append("mvn ");
