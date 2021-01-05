@@ -110,7 +110,7 @@ describe('Participation Service', () => {
         ['f="abc"', 'artifact'],
     ])('%# should download artifact and extract file name: %p', async (headerVal: string, expectedFileName: string, done: jest.DoneCallback) => {
         const expectedBlob = new Blob(['abc', 'cfe'], { type: 'application/java-archive' });
-        let headers = new HttpHeaders({ 'content-disposition': headerVal, 'content-type': 'application/java-archive' });
+        const headers = new HttpHeaders({ 'content-disposition': headerVal, 'content-type': 'application/java-archive' });
         const response = { body: expectedBlob, headers, status: 200 };
 
         service.downloadArtifact(123).subscribe((resp) => {
