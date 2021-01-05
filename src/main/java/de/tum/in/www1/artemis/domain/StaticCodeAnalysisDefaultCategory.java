@@ -67,4 +67,9 @@ public class StaticCodeAnalysisDefaultCategory {
             return category;
         }
     }
+
+    @Override
+    public String toString() {
+        return "StaticCodeAnalysisDefaultCategory{" + "name='" + name + '\'' + ", penalty=" + penalty + ", maxPenalty=" + maxPenalty + ", state=" + state + '}';
+    }
 }

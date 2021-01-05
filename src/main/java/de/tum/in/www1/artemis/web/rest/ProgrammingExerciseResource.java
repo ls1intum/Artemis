@@ -275,10 +275,10 @@ public class ProgrammingExerciseResource {
                     .body(null));
         }
 
-        // Static code analysis is only supported for Java and Swift at the moment
+        // Check if the programming language supports static code analysis
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.isStaticCodeAnalysis()) {
             return Optional.of(ResponseEntity.badRequest().headers(
-                    HeaderUtil.createAlert(applicationName, "The static code analysis can only be enabled for Java or Swift", "staticCodeAnalysisOnlyAvailableForJavaAndSwift"))
+                    HeaderUtil.createAlert(applicationName, "The static code analysis is not supported for this programming language", "staticCodeAnalysisNotSupportedForLanguage"))
                     .body(null));
         }
 
@@ -542,9 +542,10 @@ public class ProgrammingExerciseResource {
         }
         final var originalProgrammingExercise = optionalOriginalProgrammingExercise.get();
 
-        // As the build plans are copied from the original exercise, the static code analysis flag must not change
-        if (newExercise.isStaticCodeAnalysisEnabled() != originalProgrammingExercise.isStaticCodeAnalysisEnabled()) {
-            throw new BadRequestAlertException("Static code analysis enabled flag must not be changed on import", ENTITY_NAME, "staticCodeAnalysisCannotChange");
+        // The static code analysis flag can only change, if the build plans are recreated and the template is upgraded
+        if (newExercise.isStaticCodeAnalysisEnabled() != originalProgrammingExercise.isStaticCodeAnalysisEnabled() && !(recreateBuildPlans && updateTemplate)) {
+            throw new BadRequestAlertException("Static code analysis can only change, if the recreation of build plans and update of template files is activated", ENTITY_NAME,
+                    "staticCodeAnalysisCannotChange");
         }
 
         // Check if the user has the rights to access the original programming exercise

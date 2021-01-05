@@ -10,8 +10,8 @@ import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-s
     template: `
         <div>
             <div>
-                <h4>Category Distribution</h4>
-                <p>The distribution of categories across the metrices 'Penalty', 'Issues' and 'Points'. Hover over a colored block to see the category details.</p>
+                <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.title' | translate }}</h4>
+                <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.description' | translate"></p>
             </div>
             <div class="bg-light">
                 <jhi-chart [preset]="chartPreset" [datasets]="chartDatasets"></jhi-chart>
