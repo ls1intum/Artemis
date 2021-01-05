@@ -129,6 +129,10 @@ public class GitService {
 
     private void configureSsh() {
 
+        // Note: this is an important statement, because otherwise the git operations over ssh might block, because the native random secure number generator is too slow, see e.g.
+        // https://mattnworb.com/post/the-dangers-of-java-security-securerandom
+        // Security.insertProviderAt(new BouncyCastleProvider(), 1); // 1 inserts this provider as the default one
+
         var credentialsProvider = new CredentialsProvider() {
 
             @Override
