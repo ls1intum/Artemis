@@ -123,9 +123,9 @@ describe('StudentExamDetailComponent', () => {
                         );
                     },
                 }),
+                MockPipe(ArtemisDurationFromSecondsPipe),
                 MockProvider(JhiAlertService),
                 MockDirective(JhiTranslateDirective),
-                MockPipe(ArtemisDurationFromSecondsPipe),
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -135,16 +135,16 @@ describe('StudentExamDetailComponent', () => {
                                     courseId: 1,
                                 }),
                         },
-                        snapshot: {
-                            paramMap: convertToParamMap({
-                                courseId: '1',
-                            }),
-                        },
                         data: {
                             subscribe: (fn: (value: any) => void) =>
                                 fn({
                                     studentExam,
                                 }),
+                        },
+                        snapshot: {
+                            paramMap: convertToParamMap({
+                                courseId: '1',
+                            }),
                         },
                     },
                 },
@@ -160,7 +160,7 @@ describe('StudentExamDetailComponent', () => {
         sinon.restore();
     });
 
-    it('should initialize', () => {
+    it('initialize', () => {
         const courseManagementService = TestBed.inject(CourseManagementService);
 
         const findCourseSpy = sinon.spy(courseManagementService, 'find');
