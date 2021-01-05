@@ -27,8 +27,9 @@ public class BuildLogEntryService {
      * Saves the build log entries in the database. The association to the programming submission is first removed and
      * after the saving restored as the relation submission->result uses an order column.
      *
-     * @param buildLogs Build logs to save
-     * @param programmingSubmission Submission of the build logs
+     * @param buildLogs build logs to save
+     * @param programmingSubmission submission of the build logs
+     * @return the saved build logs
      */
     public List<BuildLogEntry> saveBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission) {
         return buildLogs.stream().map(buildLogEntry -> {
