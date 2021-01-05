@@ -159,11 +159,18 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
         }
     }
 
+    /**
+     * devides exercises into finished and unfinished exercises.
+     *
+     * @param exercises - the exercises that should get filtered
+     * @private
+     */
     private extractExercises(exercises?: Exercise[]) {
         if (exercises && exercises.length > 0) {
             const [finishedExercises, unfinishedExercises] = partition(
                 exercises,
                 (exercise) =>
+                    // finds if all assessments for all correctionRounds are finished
                     exercise.numberOfAssessmentsOfCorrectionRounds
                         ?.map((round) => round.inTime === exercise.numberOfSubmissions?.inTime)
                         .reduce((acc, current) => acc && current) &&
