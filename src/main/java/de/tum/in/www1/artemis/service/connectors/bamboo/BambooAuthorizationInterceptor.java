@@ -38,7 +38,8 @@ public class BambooAuthorizationInterceptor implements ClientHttpRequestIntercep
         }
 
         // certain Bamboo requests do not support token based authentication, we have to use basic auth then or we need to use cookie authentication
-        if (request.getURI().toString().contains(".action")) {
+        String uri = request.getURI().toString();
+        if (uri.contains(".action") || uri.contains("/artifact/")) {
             request.getHeaders().setBasicAuth(bambooUser, bambooPassword);
         }
         else {
