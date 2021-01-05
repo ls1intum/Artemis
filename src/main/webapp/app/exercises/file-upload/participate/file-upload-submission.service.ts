@@ -49,14 +49,13 @@ export class FileUploadSubmissionService {
      * Returns File Upload submissions for exercise from the server
      * @param exerciseId the id of the exercise
      * @param req request parameters
-     * @correctionRound correctionRound for which to get the Submissions
+     * @param correctionRound for which to get the Submissions
      */
     getFileUploadSubmissionsForExerciseByCorrectionRound(
         exerciseId: number,
         req: { submittedOnly?: boolean; assessedByTutor?: boolean },
-        correctionRound?: number,
+        correctionRound = 0,
     ): Observable<HttpResponse<FileUploadSubmission[]>> {
-        correctionRound = correctionRound ?? 0;
         const options = createRequestOption(req);
         return this.http
             .get<FileUploadSubmission[]>(`api/exercises/${exerciseId}/round/${correctionRound}/file-upload-submissions`, {

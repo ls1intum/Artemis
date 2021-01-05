@@ -534,13 +534,13 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * Returns programming submissions for exercise from the server
      * @param exerciseId the id of the exercise
      * @param req request parameters
+     * @param correctionRound for which to get the Submissions
      */
     getProgrammingSubmissionsForExerciseByCorrectionRound(
         exerciseId: number,
         req: { submittedOnly?: boolean; assessedByTutor?: boolean },
-        correctionRound?: number,
+        correctionRound = 0,
     ): Observable<HttpResponse<ProgrammingSubmission[]>> {
-        correctionRound = correctionRound ?? 0;
         const options = createRequestOption(req);
         return this.http
             .get<ProgrammingSubmission[]>(`api/exercises/${exerciseId}/round/${correctionRound}/programming-submissions`, {
@@ -553,9 +553,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     /**
      * Returns next programming submission without assessment from the server
      * @param exerciseId the id of the exercise
+     * @param lock
+     * @param correctionRound for which to get the Submissions
      */
-    getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, lock = false, correctionRound?: number): Observable<ProgrammingSubmission> {
-        correctionRound = correctionRound ?? 0;
+    getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, lock = false, correctionRound = 0): Observable<ProgrammingSubmission> {
         let url = `api/exercises/${exerciseId}/round/${correctionRound}/programming-submission-without-assessment`;
         if (lock) {
             url += '?lock=true';

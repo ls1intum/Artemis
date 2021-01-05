@@ -37,8 +37,6 @@ public class ResultService {
 
     private final FeedbackRepository feedbackRepository;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final WebsocketMessagingService websocketMessagingService;
 
     private final ComplaintResponseRepository complaintResponseRepository;
@@ -58,7 +56,6 @@ public class ResultService {
         this.ltiService = ltiService;
         this.objectMapper = objectMapper;
         this.feedbackRepository = feedbackRepository;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.complaintResponseRepository = complaintResponseRepository;
         this.submissionRepository = submissionRepository;
@@ -276,7 +273,7 @@ public class ResultService {
 
         }
 
-        // todo NR, SE: Will be removed in followup PR
+        // TODO NR, SE: Will be removed in followup PR
         if (correctionRounds > 1) {
             correctionRoundsDataStats[(int) (correctionRounds - 1)] = new DueDateStat(0L, 0L);
         }

@@ -51,9 +51,9 @@ export class ModelingSubmissionService {
      * Get all submissions for an exercise
      * @param {number} exerciseId - Id of the exercise
      * @param {any?} req - Request option
+     * @param correctionRound correctionRound for which to get the Submissions
      */
-    getModelingSubmissionsForExerciseByCorrectionRound(exerciseId: number, req?: any, correctionRound?: number): Observable<HttpResponse<ModelingSubmission[]>> {
-        correctionRound = correctionRound ?? 0;
+    getModelingSubmissionsForExerciseByCorrectionRound(exerciseId: number, req?: any, correctionRound = 0): Observable<HttpResponse<ModelingSubmission[]>> {
         const options = createRequestOption(req);
         return this.http
             .get<ModelingSubmission[]>(`${this.resourceUrl}/exercises/${exerciseId}/round/${correctionRound}/modeling-submissions`, {
@@ -67,9 +67,9 @@ export class ModelingSubmissionService {
      * Get an unassessed modeling exercise for an exercise
      * @param {number} exerciseId - Id of the exercise
      * @param {boolean?} lock - True if assessment is locked
+     * @param correctionRound correctionRound for which to get the Submissions
      */
-    getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound?: number): Observable<ModelingSubmission> {
-        correctionRound = correctionRound ?? 0;
+    getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound = 0): Observable<ModelingSubmission> {
         let url = `api/exercises/${exerciseId}/round/${correctionRound}/modeling-submission-without-assessment`;
         if (lock) {
             url += '?lock=true';

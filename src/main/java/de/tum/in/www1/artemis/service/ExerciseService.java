@@ -355,7 +355,7 @@ public class ExerciseService {
 
         }
         else {
-            log.warn("Exercise with exerciseId {} is not an instance of ProgrammingExercise. " + "Ignoring the request to cleanup repositories and build plan", exerciseId);
+            log.warn("Exercise with exerciseId {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", exerciseId);
         }
     }
 

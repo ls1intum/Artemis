@@ -660,7 +660,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param submissionId the id of the programming submission
      * @return the locked programming submission
-     * //todo NR: used to start assessemt via score view specific to a submission
      */
     public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId) {
         ProgrammingSubmission programmingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
@@ -677,7 +676,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param exercise the exercise the submission should belong to
      * @param correctionRound - the correction round we want our submission to have results for
      * @return a locked programming submission that needs an assessment
-     * //todo NR: used to start assessemt via dashboard
      */
     public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise, long correctionRound) {
         ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.hasExerciseGroup(), correctionRound)

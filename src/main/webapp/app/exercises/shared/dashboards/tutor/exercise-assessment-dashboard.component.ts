@@ -283,7 +283,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
     /**
      * get all submissions for all correction rounds which the tutor has assessed.
-     * If not in examMode, correctionrounds defaults to 1, as more than 1 is currently not supported.
+     * If not in examMode, correctionrounds defaults to 0, as more than 1 is currently not supported.
      * @private
      */
     private getAllTutorAssessedSubmissionsForAllCorrectionRounds(): void {
@@ -371,7 +371,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
     /**
      * Get all submissions that dont have an assessment for all correctionrounds
-     * If not in examMode correctionrounds defaults to 1.
+     * If not in examMode correctionrounds defaults to 0.
      * @private
      */
     private getSubmissionWithoutAssessmentForAllCorrectionrounds(): void {

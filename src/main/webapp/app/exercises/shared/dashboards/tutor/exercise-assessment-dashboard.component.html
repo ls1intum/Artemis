@@ -286,7 +286,7 @@
                                             </button>
                                             <ng-template #continueButton>
                                                 <button
-                                                    *ngIf="submission && submission.latestResult && correctionRound === 0"
+                                                    *ngIf="submission?.latestResult && correctionRound === 0"
                                                     (click)="openAssessmentEditor(submission)"
                                                     class="btn btn-primary btn-sm"
                                                 >
