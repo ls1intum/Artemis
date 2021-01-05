@@ -77,8 +77,7 @@ public class ComplaintResponseService {
             throw new AccessForbiddenException("Insufficient permission for removing the lock on the complaint");
         }
         // only instructors and the original reviewer can remove the lock while it is still running
-        if (complaintFromDatabase.getComplaintResponse().isCurrentlyLocked() && !(authorizationCheckService.isAtLeastInstructorForExercise(studentParticipation.getExercise())
-                || complaintFromDatabase.getComplaintResponse().getReviewer().equals(user))) {
+        if (blockedByLock(complaintFromDatabase.getComplaintResponse(), user, studentParticipation)) {
             throw new ComplaintResponseLockedException(complaintFromDatabase.getComplaintResponse());
         }
         complaintResponseRepository.deleteById(complaintFromDatabase.getComplaintResponse().getId());
@@ -127,8 +126,8 @@ public class ComplaintResponseService {
             throw new AccessForbiddenException("Insufficient permission for refreshing the empty complaint response");
         }
         // only instructors and the original reviewer can refresh the lock while it is still running
-        if (complaintFromDatabase.getComplaintResponse().isCurrentlyLocked() && !(authorizationCheckService.isAtLeastInstructorForExercise(studentParticipation.getExercise())
-                || complaintFromDatabase.getComplaintResponse().getReviewer().equals(user))) {
+
+        if (blockedByLock(complaintFromDatabase.getComplaintResponse(), user, studentParticipation)) {
             throw new ComplaintResponseLockedException(complaintFromDatabase.getComplaintResponse());
         }
 
@@ -213,17 +212,19 @@ public class ComplaintResponseService {
         if (originalComplaint.isAccepted() != null) {
             throw new IllegalArgumentException("You can not update the response to an already answered complaint");
         }
+        if (updatedComplaintResponse.getComplaint().isAccepted() == null) {
+            throw new IllegalArgumentException("You need to either accept or reject a complaint");
+        }
 
         Result originalResult = originalComplaint.getResult();
         User assessor = originalResult.getAssessor();
         User user = this.userService.getUser();
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
         if (!isUserAuthorizedToRespondToComplaint(studentParticipation, originalComplaint, assessor, user)) {
-            throw new AccessForbiddenException("Insufficient permission for resolving the complaing");
+            throw new AccessForbiddenException("Insufficient permission for resolving the complaint");
         }
         // only instructors and the original reviewer can ignore the lock on a complaint response
-        if (emptyComplaintResponseFromDatabase.isCurrentlyLocked() && !(authorizationCheckService.isAtLeastInstructorForExercise(studentParticipation.getExercise())
-                || emptyComplaintResponseFromDatabase.getReviewer().equals(user))) {
+        if (blockedByLock(emptyComplaintResponseFromDatabase, user, studentParticipation)) {
             throw new ComplaintResponseLockedException(emptyComplaintResponseFromDatabase);
         }
 
@@ -235,6 +236,18 @@ public class ComplaintResponseService {
         emptyComplaintResponseFromDatabase.setComplaint(originalComplaint);
         emptyComplaintResponseFromDatabase.setReviewer(user);
         return complaintResponseRepository.save(emptyComplaintResponseFromDatabase);
+    }
+
+    /**
+     * Checks if a user is blocked by a lock
+     * @param emptyComplaintResponseFromDatabase the lock
+     * @param user user to check
+     * @param studentParticipation used to find out if user is instructor of exercise
+     * @return true if blocked by lock, false otherwise
+     */
+    public boolean blockedByLock(ComplaintResponse emptyComplaintResponseFromDatabase, User user, StudentParticipation studentParticipation) {
+        return emptyComplaintResponseFromDatabase.isCurrentlyLocked()
+                && !(authorizationCheckService.isAtLeastInstructorForExercise(studentParticipation.getExercise()) || emptyComplaintResponseFromDatabase.getReviewer().equals(user));
     }
 
     /**
@@ -259,7 +272,7 @@ public class ComplaintResponseService {
             return false;
         }
         if (participation.getParticipant() instanceof Team) {
-            return assessor.equals(reviewer);
+            return assessor.getLogin().equals(reviewer.getLogin());
         }
         else if (complaint.getComplaintType() == null || complaint.getComplaintType().equals(ComplaintType.COMPLAINT)) {
             // if test run complaint
@@ -267,10 +280,10 @@ public class ComplaintResponseService {
                     && authorizationCheckService.isAtLeastInstructorForExercise(participation.getExercise())) {
                 return true;
             }
-            return !assessor.equals(reviewer);
+            return !assessor.getLogin().equals(reviewer.getLogin());
         }
         else if (complaint.getComplaintType() != null && complaint.getComplaintType().equals(ComplaintType.MORE_FEEDBACK)) {
-            return assessor.equals(reviewer);
+            return assessor.getLogin().equals(reviewer.getLogin());
         }
         return false;
     }

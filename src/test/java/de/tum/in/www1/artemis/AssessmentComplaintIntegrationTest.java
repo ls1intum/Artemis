@@ -172,30 +172,14 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void createInitialEmptyComplaintResponse() throws Exception {
-        complaint = complaintRepo.save(complaint);
-        // creating the initial complaintResponse
-        ComplaintResponse complaintResponse = new ComplaintResponse();
-        complaintResponse.setComplaint(complaint);
-        request.post("/api/complaint-responses", complaintResponse, HttpStatus.CREATED);
-        ComplaintResponse savedComplaintResponse = complaintResponseRepo.findByComplaint_Id(complaint.getId()).get();
-        assertThat(savedComplaintResponse.getId()).isNotNull();
-        assertThat(savedComplaintResponse.getComplaint().isAccepted()).isNull(); // complaint not handled yet
-
-    }
-
-    @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
     public void submitComplaintResponse_rejectComplaint() throws Exception {
         complaint = complaintRepo.save(complaint);
         // creating the initial complaintResponse
-        ComplaintResponse complaintResponse = new ComplaintResponse();
-        complaintResponse.setComplaint(complaint);
-        complaintResponse = complaintResponseRepo.save(complaintResponse);
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("Rejected");
 
-        request.put("/api/complaint-responses", complaintResponse, HttpStatus.OK);
+        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", complaintResponse, HttpStatus.OK);
 
         Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
@@ -209,9 +193,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     public void submitComplaintResponse_updateAssessment() throws Exception {
         complaint = complaintRepo.save(complaint);
         // creating the initial complaintResponse
-        ComplaintResponse complaintResponse = new ComplaintResponse();
-        complaintResponse.setComplaint(complaint);
-        complaintResponse = complaintResponseRepo.save(complaintResponse);
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(true);
         complaintResponse.setResponseText("Accepted");
 
@@ -231,23 +213,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
         checkFeedbackCorrectlyStored(feedback, storedResult.getFeedbacks());
         assertThat(storedResult.getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void submitComplaintResponse_asAssessor_forbidden() throws Exception {
-        complaint = complaintRepo.save(complaint);
-        // creating the initial complaintResponse
-        ComplaintResponse complaintResponse = new ComplaintResponse();
-        complaintResponse.setComplaint(complaint);
-        complaintResponse = complaintResponseRepo.save(complaintResponse);
-        complaintResponse.getComplaint().setAccepted(false);
-        complaintResponse.setResponseText("rejected");
-
-        request.put("/api/complaint-responses", complaintResponse, HttpStatus.FORBIDDEN);
-
-        Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
-        assertThat(storedComplaint.isAccepted()).as("accepted flag of complaint is not set").isNull();
     }
 
     @Test

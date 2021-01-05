@@ -15,7 +15,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.FileUploadSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -120,10 +122,13 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         Result fileUploadAssessment = fileUploadSubmission.getLatestResult();
         Complaint complaint = new Complaint().result(fileUploadAssessment).complaintText("This is not fair");
 
-        complaintRepo.save(complaint);
+        complaint = complaintRepo.save(complaint);
         complaint.getResult().setParticipation(null); // Break infinite reference chain
 
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(false);
+        complaintResponse.setResponseText("rejected");
+
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
 

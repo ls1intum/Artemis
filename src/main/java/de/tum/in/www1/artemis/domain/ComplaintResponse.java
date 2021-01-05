@@ -36,10 +36,10 @@ public class ComplaintResponse extends AbstractAuditingEntity {
     private ZonedDateTime submittedTime;
 
     @Transient
-    private boolean isCurrentlyLocked;
+    public boolean isCurrentlyLocked;
 
     @Transient
-    private ZonedDateTime lockEndDate;
+    public ZonedDateTime lockEndDate;
 
     @OneToOne
     @JoinColumn(unique = true)
@@ -70,8 +70,8 @@ public class ComplaintResponse extends AbstractAuditingEntity {
         if (getCreatedDate() == null) {
             return null;
         }
-        ZonedDateTime createdDateInUTC = ZonedDateTime.ofInstant(getCreatedDate(), ZoneId.systemDefault());
-        return createdDateInUTC.plusMinutes(COMPLAINT_LOCK_DURATION_IN_MINUTES);
+        ZonedDateTime createdDateInLocalTime = ZonedDateTime.ofInstant(getCreatedDate(), ZoneId.systemDefault());
+        return createdDateInLocalTime.plusMinutes(COMPLAINT_LOCK_DURATION_IN_MINUTES);
     }
 
     public String getResponseText() {
