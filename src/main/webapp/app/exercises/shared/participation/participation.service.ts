@@ -89,9 +89,9 @@ export class ParticipationService {
     }
 
     downloadArtifact(participationId: number): Observable<BuildArtifact> {
-        return this.http.get(`${this.resourceUrl}/${participationId}/buildArtifact`, { observe: 'response' }).pipe(
+        return this.http.get(`${this.resourceUrl}/${participationId}/buildArtifact`, { observe: 'response', responseType: 'blob' }).pipe(
             map((res: EntityBlobResponseType) => {
-                const fileNameCandidate = (res.headers.get('Content-disposition') || '').split('fileName=')[1];
+                const fileNameCandidate = (res.headers.get('content-disposition') || '').split('filename=')[1];
                 const fileName = fileNameCandidate ? fileNameCandidate.replace(/"/g, '') : 'artifact';
                 return { fileName, fileContent: res.body } as BuildArtifact;
             }),
