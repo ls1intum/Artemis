@@ -24,6 +24,20 @@ export class AlertComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.alerts = this.alertService.get();
+        this.alerts.forEach((alert) => {
+            // This is a workaround to avoid translation not found issues.
+            if (alert?.msg?.startsWith('translation-not-found')) {
+                // In case a translation key is not found, remove the 'translation-not-found[...]' annotation
+                const alertMessageMatch = alert.msg.match(/translation-not-found\[(.*?)\]$/);
+                if (alertMessageMatch && alertMessageMatch.length > 1) {
+                    alert.msg = alertMessageMatch[1];
+                } else {
+                    // Fallback, in case the bracket is missing
+                    alert.msg = alert.msg.replace('translation-not-found', '');
+                }
+                // TODO: sent a sentry warning with the translation key
+            }
+        });
     }
 
     /**

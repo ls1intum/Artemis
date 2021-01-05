@@ -393,10 +393,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     onError(error: string) {
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-        const jhiAlert = this.jhiAlertService.error(error);
-        if (jhiAlert?.msg.startsWith('translation-not-found')) {
-            jhiAlert.msg = error;
-        }
+        this.jhiAlertService.error(error);
         this.saveBusy = this.cancelBusy = this.submitBusy = this.nextSubmissionBusy = false;
     }
 
