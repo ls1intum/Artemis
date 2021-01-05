@@ -261,10 +261,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
         var secondUserRemoteConfig = userRemoteConfigs.item(1).getChildNodes();
         urlElement = findUrlElement(secondUserRemoteConfig, repoNameInCI);
-        if (urlElement != null) {
-            return urlElement;
-        }
-        return null;
+        return urlElement;
     }
 
     private org.w3c.dom.Node findUrlElement(NodeList nodeList, String repoNameInCI) {
@@ -530,11 +527,8 @@ public class JenkinsService implements ContinuousIntegrationService {
             }
 
             // Jenkins logs all steps of the build pipeline. We remove those as they are irrelevant to the students
-            LinkedList<BuildLogEntry> prunedBuildLog = new LinkedList<>();
-            final Iterator<BuildLogEntry> buildlogIterator = buildLog.iterator();
-            while (buildlogIterator.hasNext()) {
-                BuildLogEntry entry = buildlogIterator.next();
-
+            List<BuildLogEntry> prunedBuildLogs = new ArrayList<>();
+            for (BuildLogEntry entry : buildLog) {
                 if (entry.getLog().contains("Compilation failure")) {
                     break;
                 }
@@ -553,11 +547,11 @@ public class JenkinsService implements ContinuousIntegrationService {
                     path = "/home/jenkins/remote_agent/workspace/" + projectKey + "/" + buildPlanId + "/";
                     entry.setLog(entry.getLog().replace(path, ""));
 
-                    prunedBuildLog.add(entry);
+                    prunedBuildLogs.add(entry);
                 }
             }
 
-            return prunedBuildLog;
+            return prunedBuildLogs;
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -632,7 +626,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private String stripLogEndOfLine(String log) {
-        return log.replaceAll("\\r|\\n", "");
+        return log.replaceAll("[\\r\\n]", "");
     }
 
     private String reduceToText(Node node) {
