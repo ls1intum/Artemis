@@ -134,7 +134,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     this.onError('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                     return;
                 } else if (response?.error) {
-                    this.onError(response?.error);
+                    this.onError(response?.error?.detail || 'Not Found');
                     return;
                 }
                 participationId = Number(response);
@@ -392,7 +392,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * The error must already be provided translated by the emitting component.
      */
     onError(error: string) {
-        this.jhiAlertService.error(error);
+        // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
+        const jhiAlert = this.jhiAlertService.error(error);
+        if (jhiAlert?.msg.startsWith('translation-not-found')) {
+            jhiAlert.msg = error;
+        }
         this.saveBusy = this.cancelBusy = this.submitBusy = this.nextSubmissionBusy = false;
     }
 
