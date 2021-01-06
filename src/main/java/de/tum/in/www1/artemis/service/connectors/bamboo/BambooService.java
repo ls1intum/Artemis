@@ -51,7 +51,6 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
-import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
@@ -81,8 +80,6 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final ResultRepository resultRepository;
 
-    private final BuildLogEntryRepository buildLogEntryRepository;
-
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
@@ -104,7 +101,7 @@ public class BambooService implements ContinuousIntegrationService {
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackService feedbackService,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
-            UrlService urlService, ResultRepository resultRepository, BuildLogEntryRepository buildLogEntryRepository, BuildLogEntryService buildLogService) {
+            UrlService urlService, ResultRepository resultRepository, BuildLogEntryService buildLogService) {
         this.gitService = gitService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
@@ -116,7 +113,6 @@ public class BambooService implements ContinuousIntegrationService {
         this.mapper = mapper;
         this.urlService = urlService;
         this.resultRepository = resultRepository;
-        this.buildLogEntryRepository = buildLogEntryRepository;
         this.buildLogService = buildLogService;
     }
 
