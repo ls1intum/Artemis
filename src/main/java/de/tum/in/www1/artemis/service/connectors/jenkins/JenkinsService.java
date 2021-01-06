@@ -556,7 +556,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             }
 
             // Save build logs
-            var savedBuildLogs = buildLogService.saveBuildLogs(prunedBuildLog, programmingSubmission);
+            var savedBuildLogs = buildLogService.saveBuildLogs(prunedBuildLogs, programmingSubmission);
             programmingSubmission.setBuildLogEntries(savedBuildLogs);
             programmingSubmissionRepository.save(programmingSubmission);
 
