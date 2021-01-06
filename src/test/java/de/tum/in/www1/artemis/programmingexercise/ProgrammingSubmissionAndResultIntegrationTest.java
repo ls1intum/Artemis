@@ -30,10 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -471,9 +468,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     @ParameterizedTest
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldSaveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
-        // database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
 
         // Precondition: Database has participation without result and a programming submission.
@@ -506,12 +503,19 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         var savedLogs = buildLogEntryRepository.findAll();
         assertThat(savedLogs.size()).isGreaterThan(0);
         assertThat(savedLogs.get(0).getProgrammingSubmission().getId()).isEqualTo(submission.getId());
+
+        // TODO: This doesn't work because of this exception: java.lang.IllegalArgumentException: userAuthorities cannot be null
+        /*
+         * var receivedLogs = request.get("/api/repository/" + participation.getId() + "/buildlogs", HttpStatus.OK, List.class); assertThat(receivedLogs.size()).isGreaterThan(0);
+         * receivedLogs.forEach(receivedLog -> { BuildLogEntry receivedBuildLogEntry = (BuildLogEntry) receivedLog;
+         * assertThat(receivedBuildLogEntry.getProgrammingSubmission().getId()).isEqualTo(submission.getId()); });
+         */
     }
 
     @ParameterizedTest
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
-    void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult() throws Exception {
-        database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
+    void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
+        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
 
         // Precondition: Database has participation without result and a programming submission.
