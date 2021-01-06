@@ -1,13 +1,13 @@
 {
     "artemisApp": {
         "locks": {
-            "acquired": "Du hast jetzt den Lock auf dieses Complaint für 24 Stunden!",
-            "removeButton": "Entferne Lock",
-            "lockRemoved": "Lock von complaint entfernt",
-            "lockInformation": "Gelocked von {{user}} bis {{endDate}}",
-            "lockInformationYou": "Gelocked von DIR bis {{endDate}}",
-            "notUnlocked": "Nicht gelocked",
-            "lockStatus": "Lock Status"
+            "acquired": "Du hast jetzt die Sperre auf diese Anfrage für 24 Stunden!",
+            "removeButton": "Entferne Sperre",
+            "lockRemoved": "Sperre von Anfrage entfernt",
+            "lockInformation": "Gesperrt von {{user}} bis {{endDate}}",
+            "lockInformationYou": "Gesperrt von DIR bis {{endDate}}",
+            "notUnlocked": "Nicht gesperrt",
+            "lockStatus": "Status der Sperre"
         },
         "complaintResponse": {
             "title": "Antwort auf die Beschwerde",
