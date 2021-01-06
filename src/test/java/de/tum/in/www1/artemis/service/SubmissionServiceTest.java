@@ -58,8 +58,6 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     private ProgrammingExercise examProgrammingExercise;
 
-    private Exam exam;
-
     private Submission submission1;
 
     private Submission submission2;
@@ -78,6 +76,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void init() {
+        Exam exam;
         List<User> users = database.addUsers(2, 2, 1);
         student1 = users.get(0);
         tutor1 = users.get(2);
@@ -149,7 +148,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     }
 
-    private void getQueryResults(Exercise exercise) {
+    private void loadQueryResults(Exercise exercise) {
         unassessedSubmissionCorrectionRound0 = submissionService.getRandomSubmissionEligibleForNewAssessment(exercise, true, 0L);
         unassessedSubmissionCorrectionRound1 = submissionService.getRandomSubmissionEligibleForNewAssessment(exercise, true, 1L);
 
@@ -170,7 +169,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         // setup
         queryTestingBasics(this.examProgrammingExercise);
 
-        getQueryResults(this.examProgrammingExercise);
+        loadQueryResults(this.examProgrammingExercise);
 
         assertThat(examProgrammingExercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam()).isEqualTo(2L);
 
@@ -192,7 +191,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         // setup
         queryTestingBasics(this.examTextExercise);
 
-        getQueryResults(this.examTextExercise);
+        loadQueryResults(this.examTextExercise);
 
         assertThat(examTextExercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam()).isEqualTo(2L);
 
@@ -217,7 +216,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10L, true);
 
         // checks
-        getQueryResults(examTextExercise);
+        loadQueryResults(examTextExercise);
 
         assertThat(examTextExercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam()).isEqualTo(2L);
 
@@ -250,7 +249,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         resultRepository.save(resultWithLock);
 
         // checks
-        getQueryResults(examTextExercise);
+        loadQueryResults(examTextExercise);
 
         assertThat(examTextExercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam()).isEqualTo(2L);
 
@@ -278,7 +277,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor2, 20L, true);
 
         // checks
-        getQueryResults(examTextExercise);
+        loadQueryResults(examTextExercise);
 
         assertThat(submission1.getResults().size()).isEqualTo(2L);
 
@@ -315,7 +314,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         resultRepository.save(resultForSecondCorrectionWithLock);
 
         // checks
-        getQueryResults(examTextExercise);
+        loadQueryResults(examTextExercise);
 
         assertThat(submission1.getResults().size()).isEqualTo(2L);
 
@@ -342,7 +341,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         queryTestingBasics(this.examModelingExercise);
 
         // checks
-        getQueryResults(examModelingExercise);
+        loadQueryResults(examModelingExercise);
 
         assertThat(examModelingExercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam()).isEqualTo(2L);
 
@@ -367,7 +366,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10L, true);
 
         // checks
-        getQueryResults(examModelingExercise);
+        loadQueryResults(examModelingExercise);
 
         assertThat(examModelingExercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam()).isEqualTo(2L);
 
@@ -400,7 +399,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         resultRepository.save(resultWithLock);
 
         // checks
-        getQueryResults(examModelingExercise);
+        loadQueryResults(examModelingExercise);
 
         assertThat(examModelingExercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam()).isEqualTo(2L);
 
@@ -428,7 +427,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor2, 20L, true);
 
         // checks
-        getQueryResults(examModelingExercise);
+        loadQueryResults(examModelingExercise);
 
         assertThat(submission1.getResults().size()).isEqualTo(2L);
 
@@ -463,7 +462,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         resultRepository.save(resultForSecondCorrectionWithLock);
 
         // checks
-        getQueryResults(examModelingExercise);
+        loadQueryResults(examModelingExercise);
 
         assertThat(submission1.getResults().size()).isEqualTo(2L);
 
