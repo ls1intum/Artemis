@@ -64,6 +64,10 @@ public class ComplaintResponse extends AbstractAuditingEntity {
         return ZonedDateTime.now(ZoneOffset.UTC).isBefore(lockedUntil);
     }
 
+    /**
+     * Provides the client with information about the date when the lock is ending
+     * @return date of lock end in UTC
+     */
     @JsonProperty("lockEndDate")
     public ZonedDateTime lockEndDate() {
         if (getCreatedDate() == null) {

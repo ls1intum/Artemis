@@ -190,6 +190,7 @@ public class ComplaintResponseService {
      * or denies the associated complaint, thus resolving the complaint
      *
      * @param updatedComplaintResponse complaint response containing the information necessary for resolving the complaint
+     * @return complaintResponse of resolved complaint
      */
     @Transactional // ok because of modifying query
     public ComplaintResponse resolveComplaint(ComplaintResponse updatedComplaintResponse) {
