@@ -13,7 +13,7 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { cloneDeep } from 'lodash';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
 
 type EntityResponseType = HttpResponse<Result>;
 type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
@@ -98,7 +98,7 @@ export class TextAssessmentsService {
      * Get all feedback items for a submission.
      * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
      */
-    public getFeedbackDataForExerciseSubmission(submissionId: number): Observable<StudentParticipation> {
+    public getFeedbackDataForExerciseSubmission(submissionId: number, correctionRound = 0): Observable<StudentParticipation> {
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`, { observe: 'response' })
             .pipe(
@@ -108,7 +108,7 @@ export class TextAssessmentsService {
                     const submission = participation.submissions![0];
                     submission.participation = participation;
                     submission.results = participation.results!;
-                    const result = getLatestSubmissionResult(submission)!;
+                    const result = getSubmissionResultByCorrectionRound(submission, correctionRound)!;
                     result.submission = submission;
                     result.participation = participation;
                     // Make sure Feedbacks Array is initialized

@@ -63,6 +63,18 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
 }
 
 /**
+ * Used to access a submissions result for a specific correctionRound
+ *
+ * @param submission
+ * @returns the results or undefined if submission or the result for the requested correctionRound is undefined
+ */
+export function getSubmissionResultByCorrectionRound(submission: Submission | undefined, correctionRound: number): Result | undefined {
+    if (submission?.results) {
+        return submission.results[correctionRound];
+    }
+}
+
+/**
  * Used to set / override the latest result in the results list, and set / override the
  * var latestResult
  *

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Routes, Resolve, ActivatedRouteSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
@@ -21,9 +21,10 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
      */
     resolve(route: ActivatedRouteSnapshot) {
         const submissionId = Number(route.paramMap.get('submissionId'));
+        const correctionRound = Number(route.paramMap.get('correctionRound'));
 
         if (submissionId) {
-            return this.textAssessmentsService.getFeedbackDataForExerciseSubmission(submissionId).catch(() => Observable.of(undefined));
+            return this.textAssessmentsService.getFeedbackDataForExerciseSubmission(submissionId, correctionRound).catch(() => Observable.of(undefined));
         }
         return Observable.of(undefined);
     }
@@ -39,10 +40,10 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
      */
     resolve(route: ActivatedRouteSnapshot) {
         const exerciseId = Number(route.paramMap.get('exerciseId'));
-
+        const correctionRound = Number(route.paramMap.get('correctionRound'));
         if (exerciseId) {
             return this.textSubmissionService
-                .getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, 'lock')
+                .getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, 'lock', correctionRound)
                 .map((submission) => <StudentParticipation>submission.participation)
                 .catch(() => Observable.of(undefined));
         }
@@ -68,7 +69,7 @@ export class FeedbackConflictResolver implements Resolve<TextSubmission[] | unde
     }
 }
 
-export const NEW_ASSESSMENT_PATH = 'new/assessment';
+export const NEW_ASSESSMENT_PATH = ':correctionRound/new/assessment';
 export const textSubmissionAssessmentRoutes: Routes = [
     {
         path: NEW_ASSESSMENT_PATH,
@@ -85,7 +86,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':submissionId/assessment',
+        path: ':correctionRound/:submissionId/assessment',
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
