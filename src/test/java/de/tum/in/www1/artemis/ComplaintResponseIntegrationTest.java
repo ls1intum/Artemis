@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -110,6 +111,7 @@ public class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationB
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+        Constants.COMPLAINT_LOCK_DURATION_IN_MINUTES = 5;
     }
 
     // === TESTING SECURITY ===
@@ -179,6 +181,7 @@ public class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationB
         ComplaintResponse initialLock = createLockOnComplaint("tutor2", true);
         assertThat(initialLock.isCurrentlyLocked()).isFalse();
         request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.CREATED, null);
+        Constants.COMPLAINT_LOCK_DURATION_IN_MINUTES = 5;
         assertThatLockWasReplaced(initialLock, "tutor3");
     }
 
@@ -540,9 +543,7 @@ public class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationB
 
         // manually modifying the created date set by entity listener
         if (runOut) {
-            String sql = "UPDATE COMPLAINT_RESPONSE SET CREATED_DATE = DATEADD('DAY', -" + 2 + ", NOW()) WHERE id='" + complaintResponse.getId() + "'";
-            jdbcTemplate.execute(sql);
-            complaintResponse = complaintResponseRepository.findById(complaintResponse.getId()).get();
+            Constants.COMPLAINT_LOCK_DURATION_IN_MINUTES = -5;
         }
         return complaintResponse;
     }
