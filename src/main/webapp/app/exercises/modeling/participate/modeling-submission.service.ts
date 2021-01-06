@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import { map } from 'rxjs/operators';
@@ -54,10 +54,14 @@ export class ModelingSubmissionService {
      * @param correctionRound correctionRound for which to get the Submissions
      */
     getModelingSubmissionsForExerciseByCorrectionRound(exerciseId: number, req?: any, correctionRound = 0): Observable<HttpResponse<ModelingSubmission[]>> {
-        const options = createRequestOption(req);
+        const url = `${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions`;
+        let params = createRequestOption(req);
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
+        }
         return this.http
-            .get<ModelingSubmission[]>(`${this.resourceUrl}/exercises/${exerciseId}/round/${correctionRound}/modeling-submissions`, {
-                params: options,
+            .get<ModelingSubmission[]>(url, {
+                params,
                 observe: 'response',
             })
             .pipe(map((res: HttpResponse<ModelingSubmission[]>) => this.convertArrayResponse(res)));
@@ -70,11 +74,17 @@ export class ModelingSubmissionService {
      * @param correctionRound correctionRound for which to get the Submissions
      */
     getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound = 0): Observable<ModelingSubmission> {
-        let url = `api/exercises/${exerciseId}/round/${correctionRound}/modeling-submission-without-assessment`;
-        if (lock) {
-            url += '?lock=true';
+        const url = `api/exercises/${exerciseId}/modeling-submission-without-assessment`;
+        let params = new HttpParams();
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
         }
-        return this.http.get<ModelingSubmission>(url).pipe(map((res: ModelingSubmission) => ModelingSubmissionService.convertItemFromServer(res)));
+        if (lock) {
+            params = params.set('lock', 'true');
+        }
+        return this.http
+            .get<ModelingSubmission>(url, { params })
+            .pipe(map((res: ModelingSubmission) => ModelingSubmissionService.convertItemFromServer(res)));
     }
 
     /**

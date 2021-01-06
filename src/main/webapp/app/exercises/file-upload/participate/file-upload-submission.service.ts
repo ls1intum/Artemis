@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
 
@@ -56,10 +56,14 @@ export class FileUploadSubmissionService {
         req: { submittedOnly?: boolean; assessedByTutor?: boolean },
         correctionRound = 0,
     ): Observable<HttpResponse<FileUploadSubmission[]>> {
-        const options = createRequestOption(req);
+        const url = `api/exercises/${exerciseId}/file-upload-submissions`;
+        let params = createRequestOption(req);
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
+        }
         return this.http
-            .get<FileUploadSubmission[]>(`api/exercises/${exerciseId}/round/${correctionRound}/file-upload-submissions`, {
-                params: options,
+            .get<FileUploadSubmission[]>(url, {
+                params,
                 observe: 'response',
             })
             .pipe(map((res: HttpResponse<FileUploadSubmission[]>) => this.convertArrayResponse(res)));
@@ -72,11 +76,18 @@ export class FileUploadSubmissionService {
      * @param correctionRound for which to get the Submissions
      */
     getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound = 0): Observable<FileUploadSubmission> {
-        let url = `api/exercises/${exerciseId}/round/${correctionRound}/file-upload-submission-without-assessment`;
-        if (lock) {
-            url += '?lock=true';
+        const url = `api/exercises/${exerciseId}/file-upload-submission-without-assessment`;
+        let params = new HttpParams();
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
         }
-        return this.http.get<FileUploadSubmission>(url).pipe(map((res: FileUploadSubmission) => FileUploadSubmissionService.convertItemFromServer(res)));
+        if (lock) {
+            params = params.set('lock', 'true');
+        }
+
+        return this.http
+            .get<FileUploadSubmission>(url, { params })
+            .pipe(map((res: FileUploadSubmission) => FileUploadSubmissionService.convertItemFromServer(res)));
     }
 
     /**
