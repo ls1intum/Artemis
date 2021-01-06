@@ -176,11 +176,11 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @param assessedByTutor if the submission was assessed by calling tutor
      * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
      */
-    @GetMapping("/exercises/{exerciseId}/round/{correctionRound}/file-upload-submissions")
+    @GetMapping("/exercises/{exerciseId}/file-upload-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
-    public ResponseEntity<List<Submission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @PathVariable Long correctionRound,
-            @RequestParam(defaultValue = "false") boolean submittedOnly, @RequestParam(defaultValue = "false") boolean assessedByTutor) {
+    public ResponseEntity<List<Submission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
         log.debug("REST request to get all file upload submissions");
         return super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor, correctionRound);
     }
@@ -193,10 +193,10 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @param lockSubmission specifies if the submission should be locked for assessor
      * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/round/{correctionRound}/file-upload-submission-without-assessment")
+    @GetMapping(value = "/exercises/{exerciseId}/file-upload-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId, @PathVariable Long correctionRound,
-            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
+    public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
         log.debug("REST request to get a file upload submission without assessment");
         final Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);

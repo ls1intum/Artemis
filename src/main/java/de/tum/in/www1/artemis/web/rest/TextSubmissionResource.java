@@ -184,11 +184,11 @@ public class TextSubmissionResource {
      * @param assessedByTutor mark if only assessed Submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/round/{correctionRound}/text-submissions")
+    @GetMapping(value = "/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
-    public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @PathVariable Long correctionRound,
-            @RequestParam(defaultValue = "false") boolean submittedOnly, @RequestParam(defaultValue = "false") boolean assessedByTutor) {
+    public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
         log.debug("REST request to get all TextSubmissions");
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = textExerciseService.findOne(exerciseId);
@@ -235,11 +235,11 @@ public class TextSubmissionResource {
      * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/round/{correctionRound}/text-submission-without-assessment")
+    @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId, @PathVariable Long correctionRound,
+    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "head", defaultValue = "false") boolean skipAssessmentOrderOptimization,
-            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
 

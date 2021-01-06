@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -45,13 +45,17 @@ export class TextSubmissionService {
         req: { submittedOnly?: boolean; assessedByTutor?: boolean },
         correctionRound = 0,
     ): Observable<HttpResponse<TextSubmission[]>> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<TextSubmission[]>(`api/exercises/${exerciseId}/round/${correctionRound}/text-submissions`, {
-                params: options,
-                observe: 'response',
-            })
+        const url = `api/exercises/${exerciseId}/text-submissions`;
+        let params = createRequestOption(req);
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
+        }
+
+        const returvalue = this.http
+            .get<TextSubmission[]>(url, { observe: 'response', params })
             .pipe(map((res: HttpResponse<TextSubmission[]>) => TextSubmissionService.convertArrayResponse(res)));
+        console.log(returvalue);
+        return returvalue;
     }
 
     /**
@@ -61,12 +65,17 @@ export class TextSubmissionService {
      * @param correctionRound: The correction round for which we want to get a new assessment
      */
     getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, option?: 'lock' | 'head', correctionRound = 0): Observable<TextSubmission> {
-        let url = `api/exercises/${exerciseId}/round/${correctionRound}/text-submission-without-assessment`;
-        if (option) {
-            url += `?${option}=true`;
+        const url = `api/exercises/${exerciseId}/text-submission-without-assessment`;
+        let params = new HttpParams();
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
         }
+        if (option) {
+            params = params.set(option, 'true');
+        }
+
         return this.http
-            .get<TextSubmission>(url, { observe: 'response' })
+            .get<TextSubmission>(url, { observe: 'response', params })
             .pipe(
                 map((response) => {
                     const submission = response.body!;
