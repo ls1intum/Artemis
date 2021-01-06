@@ -108,7 +108,10 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
                 endDate = moment().subtract(-this.currentPeriod, 'months');
                 const daysInMonth = endDate.diff(startDate, 'days');
                 this.barChartLabels = this.getLabelsForMonth(daysInMonth);
-                this.chartTime = now.add(this.currentPeriod, 'months').format('MMMM YYYY');
+                this.chartTime = now
+                    .add(this.currentPeriod, 'months')
+                    .subtract(Math.floor(this.barChartLabels.length / 2.0) - 1, 'days')
+                    .format('MMMM YYYY');
                 break;
             case SpanType.QUARTER:
                 const prefix = this.translateService.instant('calendar_week');
@@ -126,7 +129,7 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
                 break;
             case SpanType.YEAR:
                 this.barChartLabels = this.getMonths();
-                this.chartTime = now.add(this.currentPeriod, 'years').format('YYYY');
+                this.chartTime = now.add(this.currentPeriod, 'years').subtract(5, 'months').format('YYYY');
                 break;
         }
     }
