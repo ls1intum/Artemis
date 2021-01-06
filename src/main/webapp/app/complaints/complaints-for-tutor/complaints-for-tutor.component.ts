@@ -18,8 +18,8 @@ import { Submission } from 'app/entities/submission.model';
 })
 export class ComplaintsForTutorComponent implements OnInit {
     @Input() complaint: Complaint;
-    @Input() isAllowedToRespond: boolean;
-    @Input() isTestRun = true;
+    @Input() isTestRun = false;
+    @Input() isAssessor = false;
     @Input() zeroIndent = true;
     @Input() exercise: Exercise | undefined;
     @Input() submission: Submission | undefined;
@@ -45,17 +45,22 @@ export class ComplaintsForTutorComponent implements OnInit {
 
     ngOnInit(): void {
         if (this.complaint) {
-            this.handled = this.complaint.accepted !== undefined;
             this.complaintText = this.complaint.complaintText;
+            this.handled = this.complaint.accepted !== undefined;
+
             if (this.handled) {
                 this.complaintResponse = this.complaint.complaintResponse!;
                 this.showRemoveLockButton = false;
                 this.showLockDuration = false;
             } else {
-                if (this.complaint.complaintResponse) {
-                    this.refreshLock();
+                if (this.isAllowedToRespond) {
+                    if (this.complaint.complaintResponse) {
+                        this.refreshLock();
+                    } else {
+                        this.createLock();
+                    }
                 } else {
-                    this.createLock();
+                    this.jhiAlertService.error('artemisApp.locks.notAllowedToRespond');
                 }
             }
         }
@@ -193,6 +198,22 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.jhiAlertService.error('error.unexpectedError', {
                 error: httpErrorResponse.message,
             });
+        }
+    }
+
+    /**
+     * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests himself
+     * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor himself
+     * For exam test runs, the original assessor is allowed to respond to complaints.
+     */
+    get isAllowedToRespond(): boolean {
+        if (this.complaint!.team) {
+            return this.isAssessor;
+        } else {
+            if (this.isTestRun) {
+                return this.isAssessor;
+            }
+            return this.complaint!.complaintType === ComplaintType.COMPLAINT ? !this.isAssessor : this.isAssessor;
         }
     }
 }

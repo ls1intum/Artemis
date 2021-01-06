@@ -1,7 +1,7 @@
 import { Component, EventEmitter, HostBinding, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { Complaint } from 'app/entities/complaint.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 
@@ -45,20 +45,4 @@ export class AssessmentLayoutComponent {
     @Output() cancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
-
-    /**
-     * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests himself
-     * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor himself
-     * For exam test runs, the original assessor is allowed to respond to complaints.
-     */
-    get isAllowedToRespond(): boolean {
-        if (this.complaint!.team) {
-            return this.isAssessor;
-        } else {
-            if (this.isTestRun) {
-                return this.isAssessor;
-            }
-            return this.complaint!.complaintType === ComplaintType.COMPLAINT ? !this.isAssessor : this.isAssessor;
-        }
-    }
 }

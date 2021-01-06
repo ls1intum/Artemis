@@ -332,7 +332,11 @@ public class AssessmentService {
             result = submissionService.saveNewEmptyResult(submission);
         }
 
-        result.setHasComplaint(false);
+        // important to not lose complaint information when overriding an assessment
+        if (result.getHasComplaint().isEmpty()) {
+            result.setHasComplaint(false);
+        }
+
         result.setExampleResult(submission.isExampleSubmission());
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();

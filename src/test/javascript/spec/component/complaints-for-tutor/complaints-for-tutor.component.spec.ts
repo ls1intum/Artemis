@@ -56,7 +56,8 @@ describe('ComplaintsForTutorComponent', () => {
         handledComplaint.complaintResponse = new ComplaintResponse();
         handledComplaint.complaintResponse.id = 1;
         handledComplaint.complaintResponse.responseText = 'gj';
-
+        handledComplaint.complaintType = ComplaintType.COMPLAINT;
+        complaintsForTutorComponent.isAssessor = false;
         complaintsForTutorComponent.complaint = handledComplaint;
         complaintForTutorComponentFixture.detectChanges();
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
@@ -77,6 +78,7 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.accepted = undefined;
         unhandledComplaint.complaintText = 'please check again';
         unhandledComplaint.complaintResponse = undefined;
+        unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
 
         const freshlyCreatedComplaintResponse = new ComplaintResponse();
         freshlyCreatedComplaintResponse.id = 1;
@@ -93,6 +95,7 @@ describe('ComplaintsForTutorComponent', () => {
         );
 
         complaintsForTutorComponent.complaint = unhandledComplaint;
+        complaintsForTutorComponent.isAssessor = false;
         complaintForTutorComponentFixture.detectChanges();
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
@@ -120,7 +123,7 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.complaintResponse = undefined;
         unhandledComplaint.complaintResponse = new ComplaintResponse();
         unhandledComplaint.complaintResponse.id = 1;
-
+        unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
         sinon.stub(injectedComplaintResponseService, 'isComplaintResponseLockedForLoggedInUser').returns(false);
 
         const freshlyCreatedComplaintResponse = new ComplaintResponse();
@@ -137,6 +140,7 @@ describe('ComplaintsForTutorComponent', () => {
             ),
         );
 
+        complaintsForTutorComponent.isAssessor = false;
         complaintsForTutorComponent.complaint = unhandledComplaint;
         complaintForTutorComponentFixture.detectChanges();
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
@@ -160,7 +164,6 @@ describe('ComplaintsForTutorComponent', () => {
     it('should send event when accepting a complaint', () => {
         complaintForTutorComponentFixture.detectChanges();
         complaintsForTutorComponent.isLockedForLoggedInUser = false;
-        complaintsForTutorComponent.isAllowedToRespond = true;
 
         const unhandledComplaint = new Complaint();
         unhandledComplaint.id = 1;
@@ -188,7 +191,6 @@ describe('ComplaintsForTutorComponent', () => {
     it('should directly resolve when rejecting a complaint', () => {
         complaintForTutorComponentFixture.detectChanges();
         complaintsForTutorComponent.isLockedForLoggedInUser = false;
-        complaintsForTutorComponent.isAllowedToRespond = true;
 
         const unhandledComplaint = new Complaint();
         unhandledComplaint.id = 1;
