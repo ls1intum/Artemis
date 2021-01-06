@@ -5,7 +5,9 @@
             "removeButton": "Entferne Lock",
             "lockRemoved": "Lock von complaint entfernt",
             "lockInformation": "Gelocked von {{user}} bis {{endDate}}",
-            "lockInformationYou": "Gelocked von DIR bis {{endDate}}"
+            "lockInformationYou": "Gelocked von DIR bis {{endDate}}",
+            "notUnlocked": "Nicht gelocked",
+            "lockStatus": "Lock Status"
         },
         "complaintResponse": {
             "title": "Antwort auf die Beschwerde",

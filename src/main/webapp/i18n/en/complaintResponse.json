@@ -5,7 +5,9 @@
             "removeButton": "Remove lock",
             "lockRemoved": "Removed lock from complaint",
             "lockInformation": "Locked by {{user}} until {{endDate}}",
-            "lockInformationYou": "Locked by YOU until {{endDate}}"
+            "lockInformationYou": "Locked by YOU until {{endDate}}",
+            "notUnlocked": "Not Locked",
+            "lockStatus": "Lock Status"
         },
         "complaintResponse": {
             "title": "Complaint's response",
