@@ -34,12 +34,6 @@ public class ComplaintResponse extends AbstractAuditingEntity {
     @Column(name = "submitted_time")
     private ZonedDateTime submittedTime;
 
-    @Transient
-    public boolean isCurrentlyLocked;
-
-    @Transient
-    public ZonedDateTime lockEndDate;
-
     @OneToOne
     @JoinColumn(unique = true)
     @JsonIgnoreProperties(value = "complaintResponse", allowSetters = true)
