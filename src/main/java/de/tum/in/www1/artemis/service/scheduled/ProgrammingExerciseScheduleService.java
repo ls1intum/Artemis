@@ -178,7 +178,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             // Use the custom date from the exam rather than the of the exercise's lifecycle
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(releaseDate, unlockAllStudentRepositoriesForExam(exercise))));
         }
-        else if (examService.getLatestIndiviudalExamEndDate(exam).isBefore(ZonedDateTime.now())) {
+        else if (examService.getLatestIndividualExamEndDate(exam).isBefore(ZonedDateTime.now())) {
             // This is only a backup (e.g. a crash of this node and restart during the exam)
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE,
                     Set.of(new Tuple<>(ZonedDateTime.now().plusSeconds(5), unlockAllStudentRepositoriesForExam(exercise))));

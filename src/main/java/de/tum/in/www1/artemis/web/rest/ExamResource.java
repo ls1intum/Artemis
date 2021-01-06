@@ -440,12 +440,17 @@ public class ExamResource {
     public ResponseEntity<List<StudentExam>> generateStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to generate student exams for exam {}", examId);
 
-        Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        final var exam = examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId);
+
+        Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, exam);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
 
-        List<StudentExam> studentExams = examService.generateStudentExams(examId);
+        // Validate settings of the exam
+        examService.validateForStudentExamGeneration(exam);
+
+        List<StudentExam> studentExams = examService.generateStudentExams(exam);
 
         // we need to break a cycle for the serialization
         for (StudentExam studentExam : studentExams) {
@@ -472,12 +477,17 @@ public class ExamResource {
     public ResponseEntity<List<StudentExam>> generateMissingStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to generate missing student exams for exam {}", examId);
 
+        final var exam = examService.findOneWithRegisteredUsersAndExerciseGroupsAndExercises(examId);
+
         Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
 
-        List<StudentExam> studentExams = examService.generateMissingStudentExams(examId);
+        // Validate settings of the exam
+        examService.validateForStudentExamGeneration(exam);
+
+        List<StudentExam> studentExams = examService.generateMissingStudentExams(exam);
 
         // we need to break a cycle for the serialization
         for (StudentExam studentExam : studentExams) {
@@ -531,7 +541,7 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent())
             return courseAndExamAccessFailure.get();
 
-        if (examService.getLatestIndiviudalExamEndDate(examId).isAfter(ZonedDateTime.now())) {
+        if (examService.getLatestIndividualExamEndDate(examId).isAfter(ZonedDateTime.now())) {
             // Quizzes should only be evaluated if no exams are running
             return forbidden(applicationName, ENTITY_NAME, "quizevaluationPendingExams",
                     "There are still exams running, quizzes can only be evaluated once all exams are finished.");
@@ -754,7 +764,7 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        ZonedDateTime latestIndividualEndDateOfExam = examService.getLatestIndiviudalExamEndDate(examId);
+        ZonedDateTime latestIndividualEndDateOfExam = examService.getLatestIndividualExamEndDate(examId);
 
         if (latestIndividualEndDateOfExam == null) {
             return ResponseEntity.notFound().build();

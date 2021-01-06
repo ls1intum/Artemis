@@ -33,6 +33,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -884,20 +885,33 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", String.valueOf(id)), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    @Test
+    @ParameterizedTest
+    @CsvSource({ "false, false", "true, false", "false, true", })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importProgrammingExercise_staticCodeAnalysisMustNotChange_badRequest() throws Exception {
-        programmingExercise.setTitle("NewTitle");
-        programmingExercise.setShortName("NewShortname");
+    public void importProgrammingExercise_scaChanged_badRequest(boolean recreateBuildPlan, boolean updateTemplate) throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("recreateBuildPlans", String.valueOf(recreateBuildPlan));
+        params.add("updateTemplate", String.valueOf(updateTemplate));
+
         // false -> true
-        programmingExercise.setStaticCodeAnalysisEnabled(true);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", String.valueOf(programmingExercise.getId())), programmingExercise, HttpStatus.BAD_REQUEST);
-        // true -> false
-        programmingExerciseRepository.save(programmingExercise);
+        var sourceId = programmingExercise.getId();
+        programmingExercise.setId(null);
         programmingExercise.setTitle("NewTitle1");
         programmingExercise.setShortName("NewShortname1");
-        programmingExercise.setStaticCodeAnalysisEnabled(false);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", String.valueOf(programmingExercise.getId())), programmingExercise, HttpStatus.BAD_REQUEST);
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", String.valueOf(sourceId)), programmingExercise, ProgrammingExercise.class, params,
+                HttpStatus.BAD_REQUEST);
+
+        // true -> false
+        var programmingExerciseSca = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        sourceId = programmingExerciseSca.getId();
+        programmingExerciseSca.setId(null);
+        programmingExerciseSca.setStaticCodeAnalysisEnabled(false);
+        programmingExerciseSca.setMaxStaticCodeAnalysisPenalty(null);
+        programmingExerciseSca.setTitle("NewTitle2");
+        programmingExerciseSca.setShortName("NewShortname2");
+        request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", String.valueOf(sourceId)), programmingExerciseSca, ProgrammingExercise.class, params,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
