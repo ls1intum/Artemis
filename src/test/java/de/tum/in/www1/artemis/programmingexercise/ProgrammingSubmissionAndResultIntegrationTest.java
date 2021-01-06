@@ -466,8 +466,6 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "student1", roles = "STUDENT")
     void shouldSaveBuildLogsOnStudentParticipationWithoutResult() throws Exception {
-        buildLogEntryRepository.deleteAll();
-
         database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
 
@@ -499,9 +497,6 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult() throws Exception {
-        resultRepository.deleteAll();
-        buildLogEntryRepository.deleteAll();
-
         database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
 
@@ -509,7 +504,11 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
 
         // Call programming-exercises/new-result which includes build log entries
-        postResult(participation.getBuildPlanId(), HttpStatus.OK, true);
+        var buildLog = new BambooBuildLogDTO();
+        buildLog.setLog("COMPILATION ERROR missing something");
+        buildLog.setDate(ZonedDateTime.now().minusMinutes(1));
+        buildLog.setUnstyledLog("COMPILATION ERROR missing something");
+        postResultWithBuildLogs(participation.getBuildPlanId(), List.of(buildLog), HttpStatus.OK, true);
 
         // Assert that result linked to the participation
         var result = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
@@ -517,13 +516,14 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         assertThat(result.get(0).getParticipation().getId()).isEqualTo(participation.getId());
 
         // Assert that the submission linked to the participation
-        var submission = submissionRepository.findByResultId(result.get(0).getId());
-        assertThat(submission).isPresent();
-        assertThat(submission.get().getParticipation().getId()).isEqualTo(participation.getId());
+        var submissions = submissionRepository.findAll();
+        assertThat(submissions.size()).isEqualTo(1);
+        assertThat(submissions.get(0).getParticipation().getId()).isEqualTo(participation.getId());
 
         // Assert that build logs have been saved in the build log repository.
         var savedLogs = buildLogEntryRepository.findAll();
         assertThat(savedLogs.size()).isGreaterThan(0);
+        assertThat(savedLogs.get(0).getProgrammingSubmission().getId()).isEqualTo(submissions.get(0).getId());
     }
 
     /**
@@ -604,11 +604,6 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     private void postResult(String participationId, BambooBuildResultNotificationDTO requestBodyMap, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
         requestBodyMap.getPlan().setKey(participationId.toUpperCase());
-        var log = new BambooBuildLogDTO();
-        log.setLog("COMPILATION ERROR blah");
-        log.setDate(ZonedDateTime.now());
-        requestBodyMap.getBuild().getJobs().get(0).setLogs(List.of(log));
-
         if (additionalCommit) {
             var newCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO();
             newCommit.setComment("Some commit that occurred before");
