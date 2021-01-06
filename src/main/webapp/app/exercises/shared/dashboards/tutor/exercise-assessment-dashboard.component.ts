@@ -504,8 +504,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     /**
      * Uses the router to navigate to the assessment editor for a given/new submission
      * @param submission Either submission or 'new'.
+     * @param correctionround
      */
-    async openAssessmentEditor(submission: Submission | 'new', correctionRound = 0): Promise<void> {
+    async openAssessmentEditor(submission: Submission | 'new', correctionround = 0): Promise<void> {
         if (!this.exercise || !this.exercise.type || !submission) {
             return;
         }
@@ -515,9 +516,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         let route;
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             const participationURLParameter: number | 'new' = submission === 'new' ? 'new' : submission.participation?.id!;
-            route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationURLParameter}/assessment`;
+            route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationURLParameter}/assessment/correctionround/${correctionround}`;
         } else {
-            route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/correctionround/${correctionRound}/${submissionUrlParameter}/assessment`;
+            if (submission === 'new') {
+                route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment/correctionround/${correctionround}`;
+            } else {
+                route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment/correctionround/${correctionround}`;
+            }
         }
         if (this.isTestRun) {
             await this.router.navigate([route], { queryParams: { testRun: this.isTestRun } });

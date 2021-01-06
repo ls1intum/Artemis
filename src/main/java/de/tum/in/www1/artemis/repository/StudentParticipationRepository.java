@@ -134,6 +134,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH participation.submissions submission
             LEFT JOIN FETCH submission.results result
             LEFT JOIN FETCH result.feedbacks feedbacks
+            LEFT JOIN FETCH result.assessor
             WHERE participation.exercise.id = :#{#exerciseId}
             AND 0L = (SELECT COUNT(r2)
                              FROM Result r2 where r2.assessor IS NOT NULL
