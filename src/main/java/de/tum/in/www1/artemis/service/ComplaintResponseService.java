@@ -59,15 +59,7 @@ public class ComplaintResponseService {
             throw new IllegalArgumentException("Complaint was not found in database");
         }
         Complaint complaintFromDatabase = complaintFromDatabaseOptional.get();
-        if (complaintFromDatabase.isAccepted() != null) {
-            throw new IllegalArgumentException("Complaint is already handled");
-        }
-        if (complaintFromDatabase.getComplaintResponse() == null) {
-            throw new IllegalArgumentException("Complaint response does not exists for given complaint");
-        }
-        if (complaintFromDatabase.getComplaintResponse().getSubmittedTime() != null) {
-            throw new IllegalArgumentException("Complaint response is already submitted");
-        }
+        ComplaintResponse unfinishedComplaintResponse = getUnfinishedComplaintResponse(complaintFromDatabase);
 
         Result originalResult = complaintFromDatabase.getResult();
         User assessor = originalResult.getAssessor();
@@ -77,11 +69,25 @@ public class ComplaintResponseService {
             throw new AccessForbiddenException("Insufficient permission for removing the lock on the complaint");
         }
         // only instructors and the original reviewer can remove the lock while it is still running
-        if (blockedByLock(complaintFromDatabase.getComplaintResponse(), user, studentParticipation)) {
-            throw new ComplaintResponseLockedException(complaintFromDatabase.getComplaintResponse());
+        if (blockedByLock(unfinishedComplaintResponse, user, studentParticipation)) {
+            throw new ComplaintResponseLockedException(unfinishedComplaintResponse);
         }
-        complaintResponseRepository.deleteById(complaintFromDatabase.getComplaintResponse().getId());
+        complaintResponseRepository.deleteById(unfinishedComplaintResponse.getId());
         log.debug("Removed empty complaint and thus lock for complaint with id : {}", complaintId);
+    }
+
+    private ComplaintResponse getUnfinishedComplaintResponse(Complaint complaintFromDatabase) {
+        if (complaintFromDatabase.isAccepted() != null) {
+            throw new IllegalArgumentException("Complaint is already handled");
+        }
+        if (complaintFromDatabase.getComplaintResponse() == null) {
+            throw new IllegalArgumentException("Complaint response does not exists for given complaint");
+        }
+        if (complaintFromDatabase.getComplaintResponse().getSubmittedTime() != null) {
+            throw new IllegalArgumentException("Complaint response is already submitted");
+        }
+        ComplaintResponse unfinishedComplaintResponse = complaintFromDatabase.getComplaintResponse();
+        return unfinishedComplaintResponse;
     }
 
     /**
@@ -109,15 +115,8 @@ public class ComplaintResponseService {
             throw new IllegalArgumentException("Complaint was not found in database");
         }
         Complaint complaintFromDatabase = complaintFromDatabaseOptional.get();
-        if (complaintFromDatabase.isAccepted() != null) {
-            throw new IllegalArgumentException("Complaint is already handled");
-        }
-        if (complaintFromDatabase.getComplaintResponse() == null) {
-            throw new IllegalArgumentException("Complaint response does not exists for given complaint");
-        }
-        if (complaintFromDatabase.getComplaintResponse().getSubmittedTime() != null) {
-            throw new IllegalArgumentException("Complaint response is already submitted");
-        }
+        ComplaintResponse unfinishedComplaintResponse = getUnfinishedComplaintResponse(complaintFromDatabase);
+
         Result originalResult = complaintFromDatabase.getResult();
         User assessor = originalResult.getAssessor();
         User user = this.userService.getUser();
