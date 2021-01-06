@@ -538,7 +538,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      */
     getProgrammingSubmissionsForExerciseByCorrectionRound(
         exerciseId: number,
-        req: { submittedOnly?: boolean; assesgsedByTutor?: boolean },
+        req: { submittedOnly?: boolean; assessedByTutor?: boolean },
         correctionRound = 0,
     ): Observable<HttpResponse<ProgrammingSubmission[]>> {
         const url = `api/exercises/${exerciseId}/programming-submissions`;
