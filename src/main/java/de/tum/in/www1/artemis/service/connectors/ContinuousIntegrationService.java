@@ -289,8 +289,7 @@ public interface ContinuousIntegrationService {
         return switch (language) {
             case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-4";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
-            case C -> "com8/artemis-gbs:latest_user"; // Should be changed as soon the artemis c container has been
-                                                      // updated to: "ls1tum/artemis-c-docker:latest";
+            case C -> "ls1tum/artemis-c-docker:latest";
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";
             case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
             case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
