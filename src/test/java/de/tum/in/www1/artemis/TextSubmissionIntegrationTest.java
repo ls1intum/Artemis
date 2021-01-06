@@ -104,7 +104,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     public void getAllTextSubmissions_studentHiddenForTutor() throws Exception {
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, textSubmission, "student1", "tutor1");
 
-        List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + finishedTextExercise.getId() + "/round/0/text-submissions?assessedByTutor=true", HttpStatus.OK,
+        List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.OK,
                 TextSubmission.class);
 
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
@@ -117,7 +117,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     public void getAllTextSubmissions_studentVisibleForInstructor() throws Exception {
         textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
 
-        List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + finishedTextExercise.getId() + "/round/0/text-submissions", HttpStatus.OK, TextSubmission.class);
+        List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class);
 
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
         assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
@@ -128,21 +128,21 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = "student1", roles = "USER")
     public void getAllTextSubmissions_assessedByTutorForStudent() throws Exception {
         textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
-        request.getList("/api/exercises/" + finishedTextExercise.getId() + "/round/0/text-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN, TextSubmission.class);
+        request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getAllTextSubmissions_notAssessedByTutorForTutor() throws Exception {
         textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
-        request.getList("/api/exercises/" + finishedTextExercise.getId() + "/round/0/text-submissions", HttpStatus.FORBIDDEN, TextSubmission.class);
+        request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
     public void getAllTextSubmission_notTutorInExercise() throws Exception {
         textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
-        request.getList("/api/exercises/" + finishedTextExercise.getId() + "/round/0/text-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN, TextSubmission.class);
+        request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
@@ -150,8 +150,8 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     public void getTextSubmissionWithoutAssessment_studentHidden() throws Exception {
         textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
 
-        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + finishedTextExercise.getId() + "/round/0/text-submission-without-assessment",
-                HttpStatus.OK, TextSubmission.class);
+        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class);
 
         assertThat(textSubmissionWithoutAssessment).as("text submission without assessment was found").isNotNull();
         assertThat(textSubmissionWithoutAssessment.getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
@@ -164,7 +164,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         User user = database.getUserByLogin("tutor1");
         textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
 
-        TextSubmission storedSubmission = request.get("/api/exercises/" + finishedTextExercise.getId() + "/round/0/text-submission-without-assessment?lock=true", HttpStatus.OK,
+        TextSubmission storedSubmission = request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment?lock=true", HttpStatus.OK,
                 TextSubmission.class);
 
         // set dates to UTC and round to milliseconds for comparison
@@ -186,7 +186,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(textSubmission.getSubmissionDate()).as("first submission is in-time").isBefore(finishedTextExercise.getDueDate());
         assertThat(lateTextSubmission.getSubmissionDate()).as("second submission is late").isAfter(finishedTextExercise.getDueDate());
 
-        TextSubmission storedSubmission = request.get("/api/exercises/" + finishedTextExercise.getId() + "/round/0/text-submission-without-assessment", HttpStatus.OK,
+        TextSubmission storedSubmission = request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class);
 
         assertThat(storedSubmission).as("text submission without assessment was found").isNotNull();
@@ -199,14 +199,14 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         TextSubmission submission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, false);
         database.saveTextSubmission(finishedTextExercise, submission, "student1");
 
-        request.get("/api/exercises/" + finishedTextExercise.getId() + "/round/0/text-submission-without-assessment", HttpStatus.NOT_FOUND, TextSubmission.class);
+        request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.NOT_FOUND, TextSubmission.class);
     }
 
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
     public void getTextSubmissionWithoutAssessment_notTutorInExercise() throws Exception {
         textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
-        request.get("/api/exercises/" + finishedTextExercise.getId() + "/round/0/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
+        request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
@@ -214,7 +214,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     public void getTextSubmissionWithoutAssessment_dueDateNotOver() throws Exception {
         textSubmission = database.saveTextSubmission(releasedTextExercise, textSubmission, "student1");
 
-        request.get("/api/exercises/" + releasedTextExercise.getId() + "/round/0/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
+        request.get("/api/exercises/" + releasedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
@@ -222,7 +222,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     public void getTextSubmissionWithoutAssessment_asStudent_forbidden() throws Exception {
         textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
 
-        request.get("/api/exercises/" + finishedTextExercise.getId() + "/round/0/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
+        request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
