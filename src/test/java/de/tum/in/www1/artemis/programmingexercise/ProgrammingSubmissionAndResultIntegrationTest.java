@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
 import de.tum.in.www1.artemis.web.rest.ResultResource;
 
@@ -82,6 +83,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @Autowired
     ResultRepository resultRepository;
 
+    @Autowired
+    BuildLogEntryRepository buildLogEntryRepository;
+
     private Long exerciseId;
 
     private Long templateParticipationId;
@@ -122,7 +126,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     *
+     * <p>
      * However the participation id provided by the VCS on the request is invalid.
      */
     @Test
@@ -171,9 +175,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     *
+     * <p>
      * Here the participation provided does exist so Artemis can create the submission.
-     *
+     * <p>
      * After that the CI builds the code submission and notifies Artemis so it can create the result.
      */
     @Test
@@ -205,9 +209,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     *
+     * <p>
      * Here the participation provided does exist so Artemis can create the submission.
-     *
+     * <p>
      * After that the CI builds the code submission and notifies Artemis so it can create the result.
      *
      * @param additionalCommit Whether an additional commit in the Assignment repo should be added to the payload
@@ -242,9 +246,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     *
+     * <p>
      * After that the CI builds the code submission and notifies Artemis so it can create the result - however for an unknown reason this request is sent twice!
-     *
+     * <p>
      * Only the last result should be linked to the created submission.
      */
     @ParameterizedTest
@@ -277,7 +281,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission - however for an unknown reason this request is sent twice!
-     *
+     * <p>
      * This should not create two identical submissions.
      */
     @ParameterizedTest
@@ -455,6 +459,62 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
             // Submissions with type TEST and no buildAndTestAfterDueDate should be rated.
             assertThat(participationResult.isRated()).isTrue();
         }
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "STUDENT")
+    void shouldSaveBuildLogsOnStudentParticipationWithoutResult() throws Exception {
+        buildLogEntryRepository.deleteAll();
+
+        database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
+
+        // Precondition: Database has participation without result and a programming submission.
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        var submission = ModelFactory.generateProgrammingSubmission(true);
+        database.addProgrammingSubmission(exercise, submission, "student1");
+
+        // Call programming-exercises/new-result which includes build log entries
+        postResult(participation.getBuildPlanId(), HttpStatus.OK, true);
+
+        // Assert that result has been created and is linked to the participation and submission
+        var result = resultRepository.findDistinctBySubmissionId(submission.getId());
+        assertThat(result).isPresent();
+        assertThat(result.get().getParticipation().getId()).isEqualTo(participation.getId());
+
+        // Assert that build logs have been saved in the build log repository.
+        var savedLogs = buildLogEntryRepository.findAll();
+        assertThat(savedLogs.size()).isGreaterThan(0);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult() throws Exception {
+        resultRepository.deleteAll();
+        buildLogEntryRepository.deleteAll();
+
+        database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
+
+        // Precondition: Database has participation without result and a programming submission.
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+
+        // Call programming-exercises/new-result which includes build log entries
+        postResult(participation.getBuildPlanId(), HttpStatus.OK, true);
+
+        // Assert that result linked to the participation
+        var result = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get(0).getParticipation().getId()).isEqualTo(participation.getId());
+
+        // Assert that the submission linked to the participation
+        var submission = submissionRepository.findByResultId(result.get(0).getId());
+        assertThat(submission).isPresent();
+        assertThat(submission.get().getParticipation().getId()).isEqualTo(participation.getId());
+
+        // Assert that build logs have been saved in the build log repository.
+        var savedLogs = buildLogEntryRepository.findAll();
+        assertThat(savedLogs.size()).isGreaterThan(0);
     }
 
     /**
