@@ -505,7 +505,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      * Uses the router to navigate to the assessment editor for a given/new submission
      * @param submission Either submission or 'new'.
      */
-    async openAssessmentEditor(submission: Submission | 'new'): Promise<void> {
+    async openAssessmentEditor(submission: Submission | 'new', correctionRound = 0): Promise<void> {
         if (!this.exercise || !this.exercise.type || !submission) {
             return;
         }
@@ -517,7 +517,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             const participationURLParameter: number | 'new' = submission === 'new' ? 'new' : submission.participation?.id!;
             route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationURLParameter}/assessment`;
         } else {
-            route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment`;
+            route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/correctionround/${correctionRound}/${submissionUrlParameter}/assessment`;
         }
         if (this.isTestRun) {
             await this.router.navigate([route], { queryParams: { testRun: this.isTestRun } });
@@ -535,6 +535,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         const submission: Submission = complaint.result?.submission!;
         // For programming exercises we need the participationId
         submission.participation = complaint.result?.participation;
+        // TODO: NR, SE: change to depend on correctionround
         this.openAssessmentEditor(submission);
     }
 

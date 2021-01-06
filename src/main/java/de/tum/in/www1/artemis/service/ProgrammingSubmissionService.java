@@ -689,8 +689,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
         Result automaticResult = submission.getLatestResult();
         List<Feedback> automaticFeedbacks = automaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
         // Create a new result (manual result) and a new submission for it and set assessor and type to manual
-        ProgrammingSubmission newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
-                SubmissionType.MANUAL);
+        ProgrammingSubmission newSubmission;
+        if (submission.getLatestResult().getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)
+                || submission.getLatestResult().getAssessmentType().equals(AssessmentType.MANUAL)) {
+            newSubmission = (ProgrammingSubmission) submission;
+        }
+        else {
+            newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(), SubmissionType.MANUAL);
+        }
 
         Result newResult = saveNewEmptyResult(newSubmission);
         newResult.setAssessor(userService.getUser());
