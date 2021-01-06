@@ -51,9 +51,9 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
-import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
@@ -80,8 +80,6 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final ResultRepository resultRepository;
 
-    private final BuildLogEntryRepository buildLogEntryRepository;
-
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
@@ -98,10 +96,12 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final UrlService urlService;
 
+    private final BuildLogEntryService buildLogService;
+
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackService feedbackService,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
-            UrlService urlService, ResultRepository resultRepository, BuildLogEntryRepository buildLogEntryRepository) {
+            UrlService urlService, ResultRepository resultRepository, BuildLogEntryService buildLogService) {
         this.gitService = gitService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
@@ -113,7 +113,7 @@ public class BambooService implements ContinuousIntegrationService {
         this.mapper = mapper;
         this.urlService = urlService;
         this.resultRepository = resultRepository;
-        this.buildLogEntryRepository = buildLogEntryRepository;
+        this.buildLogService = buildLogService;
     }
 
     @Override
@@ -312,27 +312,14 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
-        // Load the logs from the database
-        List<BuildLogEntry> buildLogsFromDatabase = retrieveLatestBuildLogsFromDatabase(programmingSubmission);
-
-        // If there are logs present in the database, return them (they were already filtered when inserted)
-        if (!buildLogsFromDatabase.isEmpty()) {
-            return buildLogsFromDatabase;
-        }
-
-        // Otherwise return the logs from Bamboo (and filter them now)
+        // Return the logs from Bamboo (and filter them now)
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
 
         var buildLogEntries = filterBuildLogs(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()));
-
-        // Truncate the logs so that they fit into the database
-        buildLogEntries.forEach(BuildLogEntry::truncateLogToMaxLength);
-
-        // Add reference to ProgrammingSubmission
-        buildLogEntries.forEach(buildLogEntry -> buildLogEntry.setProgrammingSubmission(programmingSubmission));
+        var savedBuildLogs = buildLogService.saveBuildLogs(buildLogEntries, programmingSubmission);
 
         // Set the received logs in order to avoid duplicate entries (this removes existing logs) & save them into the database
-        programmingSubmission.setBuildLogEntries(buildLogEntries);
+        programmingSubmission.setBuildLogEntries(savedBuildLogs);
         programmingSubmissionRepository.save(programmingSubmission);
 
         return buildLogEntries;
@@ -585,23 +572,14 @@ public class BambooService implements ContinuousIntegrationService {
             // save result to create entry in DB before establishing relation with submission for ordering
             result = resultRepository.save(result);
 
-            var buildLogs = extractAndPrepareBuildLogs(buildResult, programmingSubmission);
-            for (int i = 0; i < buildLogs.size(); i++) {
-                var buildLogEntry = buildLogs.get(i);
-                // Cut association to parent object
-                buildLogEntry.setProgrammingSubmission(null);
-                // persist the BuildLogEntry object without an association to the parent object.
-                var updatedBuildLogEntry = buildLogEntryRepository.save(buildLogEntry);
-                // restore the association to the parent object
-                updatedBuildLogEntry.setProgrammingSubmission(programmingSubmission);
-                buildLogs.set(i, updatedBuildLogEntry);
-            }
+            var buildLogs = extractAndFilterBuildLogs(buildResult);
+            var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, programmingSubmission);
 
             programmingSubmission = programmingSubmissionRepository.findWithEagerResultsAndBuildLogEntriesById(programmingSubmission.getId()).get();
             result.setSubmission(programmingSubmission);
             programmingSubmission.addResult(result);
             // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-            programmingSubmission.setBuildLogEntries(buildLogs);
+            programmingSubmission.setBuildLogEntries(savedBuildLogs);
 
             programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
             result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
@@ -615,14 +593,14 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
-    private List<BuildLogEntry> extractAndPrepareBuildLogs(BambooBuildResultNotificationDTO buildResult, ProgrammingSubmission submission) {
+    private List<BuildLogEntry> extractAndFilterBuildLogs(BambooBuildResultNotificationDTO buildResult) {
         List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
         // Store logs into database. Append logs of multiple jobs.
         for (var job : buildResult.getBuild().getJobs()) {
             for (var bambooLog : job.getLogs()) {
                 // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
-                buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog()), submission));
+                buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog())));
             }
         }
 
@@ -632,8 +610,6 @@ public class BambooService implements ContinuousIntegrationService {
 
         // Filter unwanted logs
         var filteredLogs = filterBuildLogs(buildLogEntries);
-        // Truncate the logs so that they fit into the database
-        filteredLogs.forEach(BuildLogEntry::truncateLogToMaxLength);
 
         return filteredLogs;
     }
@@ -835,15 +811,6 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         return null;
-    }
-
-    private List<BuildLogEntry> retrieveLatestBuildLogsFromDatabase(ProgrammingSubmission programmingSubmission) {
-        Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId());
-        if (optionalProgrammingSubmission.isPresent()) {
-            return optionalProgrammingSubmission.get().getBuildLogEntries();
-        }
-
-        return List.of();
     }
 
     /**
