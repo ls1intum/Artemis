@@ -64,7 +64,7 @@
             },
             "enableStaticCodeAnalysis": {
                 "title": "Enable Static Code Analysis",
-                "description": "This option enables the execution of static code analysis. Sequential test runs are not supported. Additional options are available on the grading page. This option can't be changed after the creation of the exercise."
+                "description": "This option enables the execution of static code analysis. Sequential test runs are not supported. Additional options are available on the grading page. This option can be changed on import if the recreate build plans and update template files option is active."
             },
             "maxStaticCodeAnalysisPenalty": {
                 "title": "Max Static Code Analysis Penalty",

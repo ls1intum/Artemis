@@ -39,6 +39,9 @@ import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.servi
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
+import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/grading/charts/category-issues-chart.component';
+import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -59,6 +62,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let testCasesChangedStub: SinonStub;
     let getExerciseTestCaseStateStub: SinonStub;
     let loadExerciseStub: SinonStub;
+    let loadStatisticsStub: SinonStub;
     let programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService;
 
     let routeSubject: Subject<Params>;
@@ -82,9 +86,33 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         staticCodeAnalysisEnabled: true,
     } as ProgrammingExercise;
     const testCases1 = [
-        { id: 1, testName: 'testBubbleSort', active: true, weight: 1, bonusMultiplier: 1, bonusPoints: 0, afterDueDate: false },
-        { id: 2, testName: 'testMergeSort', active: true, weight: 1, bonusMultiplier: 1, bonusPoints: 0, afterDueDate: true },
-        { id: 3, testName: 'otherTest', active: false, weight: 1, bonusMultiplier: 1, bonusPoints: 0, afterDueDate: false },
+        {
+            id: 1,
+            testName: 'testBubbleSort',
+            active: true,
+            weight: 1,
+            bonusMultiplier: 1,
+            bonusPoints: 0,
+            afterDueDate: false,
+        },
+        {
+            id: 2,
+            testName: 'testMergeSort',
+            active: true,
+            weight: 1,
+            bonusMultiplier: 1,
+            bonusPoints: 0,
+            afterDueDate: true,
+        },
+        {
+            id: 3,
+            testName: 'otherTest',
+            active: false,
+            weight: 1,
+            bonusMultiplier: 1,
+            bonusPoints: 0,
+            afterDueDate: false,
+        },
     ] as ProgrammingExerciseTestCase[];
     const codeAnalysisCategories1 = [
         {
@@ -102,6 +130,18 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             maxPenalty: 0,
         },
     ] as StaticCodeAnalysisCategory[];
+    const gradingStatistics = {
+        numParticipations: 5,
+        testCaseStatsMap: {
+            testBubbleSort: { numPassed: 2, numFailed: 3 },
+            testMergeSort: { numPassed: 1, numFailed: 4 },
+            otherTest: { numPassed: 1, numFailed: 0 },
+        },
+        categoryIssuesMap: {
+            'Bad Practice': { 1: 2, 2: 2, 3: 1 },
+            Styling: { 0: 3, 2: 1, 5: 1 },
+        },
+    } as ProgrammingExerciseGradingStatistics;
 
     const getExerciseTestCasteStateDTO = (released: boolean, hasStudentResult: boolean, testCasesChanged: boolean, buildAndTestStudentSubmissionsAfterDueDate?: Moment) => ({
         body: {
@@ -169,6 +209,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 updateCategoriesStub = stub(gradingService, 'updateCodeAnalysisCategories');
                 notifyTestCasesSpy = spy(gradingService, 'notifyTestCases');
                 resetTestCasesStub = stub(gradingService, 'reset');
+                loadStatisticsStub = stub(gradingService, 'getGradingStatistics');
 
                 // @ts-ignore
                 (router as MockRouter).setUrl('/');
@@ -186,6 +227,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 testCasesChangedStub.returns(testCasesChangedSubject);
                 getExerciseTestCaseStateStub.returns(getExerciseTestCaseStateSubject);
 
+                loadStatisticsStub.returns(of(gradingStatistics));
                 loadExerciseStub.returns(of({ body: exercise }));
             });
     }));
@@ -194,6 +236,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         notifyTestCasesSpy.restore();
         testCasesChangedStub.restore();
         getExerciseTestCaseStateStub.restore();
+        loadStatisticsStub.restore();
     });
 
     const initGradingComponent = ({
@@ -618,6 +661,45 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(comp.hasUpdatedGradingConfig).to.be.true;
 
         fixture.detectChanges();
+
+        tick();
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should load and calculate grading statistics correctly', fakeAsync(() => {
+        initGradingComponent({ tab: 'code-analysis' });
+
+        fixture.detectChanges();
+
+        expect(loadStatisticsStub).to.have.been.calledWithExactly(exerciseId);
+
+        expect(comp.maxIssuesPerCategory).to.equal(5);
+        expect(comp.gradingStatistics).to.deep.equal(gradingStatistics);
+
+        fixture.detectChanges();
+        tick();
+
+        const issueCharts = debugElement.queryAll(By.directive(CategoryIssuesChartComponent)).map((d) => d.componentInstance);
+
+        expect(issueCharts[0].columns).to.have.lengthOf(11);
+        expect(issueCharts[0].columns[0].tooltip).to.equal('2 students have 1 issue.');
+        expect(issueCharts[0].columns[1].tooltip).to.equal('2 students have 2 issues.');
+        expect(issueCharts[0].columns[2].tooltip).to.equal('1 student has 3 issues.');
+
+        expect(issueCharts[1].columns).to.have.lengthOf(11);
+        expect(issueCharts[1].columns[1].tooltip).to.equal('1 student has 2 issues.');
+        expect(issueCharts[1].columns[4].tooltip).to.equal('1 student has 5 issues.');
+
+        comp.selectTab('test-cases');
+
+        fixture.detectChanges();
+        tick();
+
+        const percentageCharts = debugElement.queryAll(By.directive(TestCasePassedBuildsChartComponent)).map((d) => d.componentInstance);
+
+        expect(percentageCharts[0].tooltip).to.equal('40% passed, 60% failed of 5 students.');
+        expect(percentageCharts[1].tooltip).to.equal('20% passed, 80% failed of 5 students.');
 
         tick();
         fixture.destroy();

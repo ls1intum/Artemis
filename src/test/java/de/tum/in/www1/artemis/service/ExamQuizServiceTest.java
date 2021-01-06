@@ -5,6 +5,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
@@ -17,13 +18,17 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
+import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -43,6 +48,12 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     ExamRepository examRepository;
+
+    @Autowired
+    StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    QuizSubmissionRepository quizSubmissionRepository;
 
     @Autowired
     ExerciseGroupRepository exerciseGroupRepository;
@@ -136,10 +147,14 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         }
 
         exam = examRepository.save(exam);
+        exerciseGroup.setExam(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
+        exam.setExerciseGroups(List.of(exerciseGroup));
+        quizExercise.setExerciseGroup(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
+        exerciseGroup.setExercises(Set.of(quizExercise));
 
-        assertThat(examService.generateStudentExams(exam.getId()).size()).isEqualTo(numberOfParticipants);
+        assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
         assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
         assertThat(examService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 
@@ -173,16 +188,123 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void evaluateQuizWithNoSubmissions() throws Exception {
+        for (int i = 0; i < numberOfParticipants; i++) {
+            exam.addRegisteredUser(users.get(i));
+        }
+
+        exam = examRepository.save(exam);
+        exerciseGroup.setExam(exam);
+        exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
+        exam.setExerciseGroups(List.of(exerciseGroup));
+        quizExercise.setExerciseGroup(exerciseGroup);
+        quizExercise = quizExerciseService.save(quizExercise);
+        exerciseGroup.setExercises(Set.of(quizExercise));
+
+        assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
+        assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
+
+        // add participations with no submissions
+        for (int i = 0; i < numberOfParticipants; i++) {
+            final var user = database.getUserByLogin("student" + (i + 1));
+            var participation = new StudentParticipation();
+            participation.setExercise(quizExercise);
+            participation.setParticipant(user);
+            participation.setInitializationDate(ZonedDateTime.now());
+            participation.setInitializationState(InitializationState.INITIALIZED);
+            studentParticipationRepository.save(participation);
+        }
+
+        database.changeUser("instructor1");
+        // All exams should be over before evaluation
+        for (StudentExam studentExam : studentExamService.findAllByExamId(exam.getId())) {
+            studentExam.setWorkingTime(0);
+            studentExamRepository.save(studentExam);
+        }
+
+        Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
+                Optional.empty(), Integer.class, HttpStatus.OK);
+
+        assertThat(numberOfEvaluatedExercises).isEqualTo(1);
+
+        studentExamRepository.deleteAll();
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+
+        userRepository.deleteAll();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void evaluateQuizWithMultipleSubmissions() throws Exception {
+        for (int i = 0; i < numberOfParticipants; i++) {
+            exam.addRegisteredUser(users.get(i));
+        }
+
+        exam = examRepository.save(exam);
+        exerciseGroup.setExam(exam);
+        exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
+        exam.setExerciseGroups(List.of(exerciseGroup));
+        quizExercise.setExerciseGroup(exerciseGroup);
+        quizExercise = quizExerciseService.save(quizExercise);
+        exerciseGroup.setExercises(Set.of(quizExercise));
+
+        assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
+        assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
+        assertThat(examService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
+
+        for (int i = 0; i < numberOfParticipants; i++) {
+            final var user = database.getUserByLogin("student" + (i + 1));
+            database.changeUser(user.getLogin());
+            QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
+            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+
+            // add another submission manually to trigger multiple submission branch of evaluateQuizSubmission
+            final var studentParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(quizExercise.getId(), user.getLogin()).get();
+            QuizSubmission quizSubmission2 = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
+            quizSubmission2.setParticipation(studentParticipation);
+            quizSubmissionRepository.save(quizSubmission2);
+        }
+
+        database.changeUser("instructor1");
+        // All exams should be over before evaluation
+        for (StudentExam studentExam : studentExamService.findAllByExamId(exam.getId())) {
+            studentExam.setWorkingTime(0);
+            studentExamRepository.save(studentExam);
+        }
+
+        Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
+                Optional.empty(), Integer.class, HttpStatus.OK);
+
+        assertThat(numberOfEvaluatedExercises).isEqualTo(1);
+
+        checkStatistics(quizExercise);
+
+        studentExamRepository.deleteAll();
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+
+        userRepository.deleteAll();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void evaluateQuiz_twice() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
             exam.addRegisteredUser(users.get(i));
         }
 
         exam = examRepository.save(exam);
+        exerciseGroup.setExam(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
+        exam.setExerciseGroups(List.of(exerciseGroup));
+        quizExercise.setExerciseGroup(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
+        exerciseGroup.setExercises(Set.of(quizExercise));
 
-        assertThat(examService.generateStudentExams(exam.getId()).size()).isEqualTo(numberOfParticipants);
+        assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
         assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
         assertThat(examService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 

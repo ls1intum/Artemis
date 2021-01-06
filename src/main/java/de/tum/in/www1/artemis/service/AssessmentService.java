@@ -173,7 +173,7 @@ public class AssessmentService {
             // Tutors can assess exam exercises only after the last student has finished the exam and before the publish result date
             if (isExamMode && !isAtLeastInstructor) {
                 final Exam exam = exercise.getExerciseGroup().getExam();
-                ZonedDateTime latestExamDueDate = examService.getLatestIndiviudalExamEndDate(exam.getId());
+                ZonedDateTime latestExamDueDate = examService.getLatestIndividualExamEndDate(exam.getId());
                 if (latestExamDueDate.isAfter(ZonedDateTime.now()) || (exam.getPublishResultsDate() != null && exam.getPublishResultsDate().isBefore(ZonedDateTime.now()))) {
                     return false;
                 }

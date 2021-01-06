@@ -384,33 +384,21 @@ public class ExamService {
     /**
      * Generates the student exams randomly based on the exam configuration and the exercise groups
      *
-     * @param examId the id of the exam
+     * @param examWithRegisteredUsersAndExerciseGroupsAndExercises the exam with registered users, exerciseGroups and exercises loaded
      * @return the list of student exams with their corresponding users
      */
-    public List<StudentExam> generateStudentExams(Long examId) {
-        // Delete all existing student exams via orphan removal (ignore test runs)
-        Exam examWithExistingStudentExams = findWithStudentExamsById(examId);
-
-        // TODO: the validation checks should happen in the resource, before this method is even being called!
-        if (examWithExistingStudentExams.getNumberOfExercisesInExam() == null) {
-            throw new BadRequestAlertException("The number of exercises must be set for the exam", "Exam", "artemisApp.exam.validation.numberOfExercisesMustBeSet");
-        }
-
+    public List<StudentExam> generateStudentExams(final Exam examWithRegisteredUsersAndExerciseGroupsAndExercises) {
+        final var examWithExistingStudentExams = findWithStudentExams(examWithRegisteredUsersAndExerciseGroupsAndExercises.getId());
         // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
         studentExamRepository.deleteAll(examWithExistingStudentExams.getStudentExams());
 
-        // now fetch the exam with additional information
-        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).get();
-
-        List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
-        long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
-
-        // Validate settings of the exam
-        validateStudentExamGeneration(exam, numberOfOptionalExercises);
+        List<ExerciseGroup> exerciseGroups = examWithRegisteredUsersAndExerciseGroupsAndExercises.getExerciseGroups();
+        long numberOfOptionalExercises = examWithRegisteredUsersAndExerciseGroupsAndExercises.getNumberOfExercisesInExam()
+                - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
 
         // StudentExams are saved in the called method
-        List<StudentExam> studentExams = createRandomStudentExams(exam, exam.getRegisteredUsers(), numberOfOptionalExercises);
-        return studentExams;
+        return createRandomStudentExams(examWithRegisteredUsersAndExerciseGroupsAndExercises, examWithRegisteredUsersAndExerciseGroupsAndExercises.getRegisteredUsers(),
+                numberOfOptionalExercises);
     }
 
     /**
@@ -418,48 +406,38 @@ public class ExamService {
      * The difference between all registered users and the users who already have an individual exam
      * is the set of users for which student exams will be created.
      *
-     * @param examId        the id of the exam
+     * @param examWithRegisteredUsersAndExerciseGroupsAndExercises exam with registered users, exerciseGroups, and Exercises loaded
      * @return the list of student exams with their corresponding users
      */
-    public List<StudentExam> generateMissingStudentExams(Long examId) {
-        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).get();
-
-        // TODO: the validation checks should happen in the resource, before this method is even being called!
-        if (exam.getNumberOfExercisesInExam() == null) {
-            throw new BadRequestAlertException("The number of exercises must be set for the exam", "Exam", "artemisApp.exam.validation.numberOfExercisesMustBeSet");
-        }
-
-        long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
-
-        // Validate settings of the exam
-        validateStudentExamGeneration(exam, numberOfOptionalExercises);
+    public List<StudentExam> generateMissingStudentExams(Exam examWithRegisteredUsersAndExerciseGroupsAndExercises) {
+        long numberOfOptionalExercises = examWithRegisteredUsersAndExerciseGroupsAndExercises.getNumberOfExercisesInExam()
+                - examWithRegisteredUsersAndExerciseGroupsAndExercises.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
 
         // Get all users who already have an individual exam
-        Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(examId);
+        Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(examWithRegisteredUsersAndExerciseGroupsAndExercises.getId());
 
         // Get all registered users
-        Set<User> allRegisteredUsers = exam.getRegisteredUsers();
+        Set<User> allRegisteredUsers = examWithRegisteredUsersAndExerciseGroupsAndExercises.getRegisteredUsers();
 
         // Get all students who don't have an exam yet
         Set<User> missingUsers = new HashSet<>(allRegisteredUsers);
         missingUsers.removeAll(usersWithStudentExam);
 
         // StudentExams are saved in the called method
-        List<StudentExam> missingStudentExams = createRandomStudentExams(exam, missingUsers, numberOfOptionalExercises);
-
-        // TODO: make sure the student exams still contain non proxy users
-
-        return missingStudentExams;
+        return createRandomStudentExams(examWithRegisteredUsersAndExerciseGroupsAndExercises, missingUsers, numberOfOptionalExercises);
     }
 
     /**
      * Validates exercise settings.
      *
      * @param exam exam which is validated
-     * @param numberOfOptionalExercises number of optional exercises in the exam
      * @throws BadRequestAlertException
      */
-    private void validateStudentExamGeneration(Exam exam, long numberOfOptionalExercises) throws BadRequestAlertException {
+    public void validateForStudentExamGeneration(Exam exam) throws BadRequestAlertException {
+        List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
+        long numberOfExercises = exam.getNumberOfExercisesInExam() != null ? exam.getNumberOfExercisesInExam() : 0;
+        long numberOfOptionalExercises = numberOfExercises - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
+
         // Check that the start and end date of the exam is set
         if (exam.getStartDate() == null || exam.getEndDate() == null) {
             throw new BadRequestAlertException("The start and end date must be set for the exam", "Exam", "artemisApp.exam.validation.startAndEndMustBeSet");
@@ -613,7 +591,7 @@ public class ExamService {
      * @param examId the id of the exam
      * @return the exam with student exams loaded
      */
-    private Exam findWithStudentExamsById(long examId) {
+    public Exam findWithStudentExams(long examId) {
         Exam exam = examRepository.findWithStudentExamsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id " + examId + " does not exist"));
         // drop all test runs and set the remaining student exams to the exam
         exam.setStudentExams(exam.getStudentExams().stream().dropWhile(StudentExam::getTestRun).collect(Collectors.toSet()));
@@ -806,7 +784,7 @@ public class ExamService {
 
     /**
      * Returns if the exam is over by checking if the latest individual exam end date plus grace period has passed.
-     * See {@link ExamService#getLatestIndiviudalExamEndDate}
+     * See {@link ExamService#getLatestIndividualExamEndDate}
      * <p>
      *
      * @param examId the id of the exam
@@ -819,7 +797,7 @@ public class ExamService {
 
     /**
      * Returns if the exam is over by checking if the latest individual exam end date plus grace period has passed.
-     * See {@link ExamService#getLatestIndiviudalExamEndDate}
+     * See {@link ExamService#getLatestIndividualExamEndDate}
      * <p>
      *
      * @param exam the exam
@@ -828,7 +806,7 @@ public class ExamService {
      */
     public boolean isExamOver(Exam exam) {
         var now = ZonedDateTime.now();
-        return getLatestIndiviudalExamEndDate(exam).plusSeconds(exam.getGracePeriod()).isBefore(now);
+        return getLatestIndividualExamEndDate(exam).plusSeconds(exam.getGracePeriod()).isBefore(now);
     }
 
     /**
@@ -840,8 +818,8 @@ public class ExamService {
      * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
      * @throws EntityNotFoundException if no exam with the given examId can be found
      */
-    public ZonedDateTime getLatestIndiviudalExamEndDate(Long examId) {
-        return getLatestIndiviudalExamEndDate(findOne(examId));
+    public ZonedDateTime getLatestIndividualExamEndDate(Long examId) {
+        return getLatestIndividualExamEndDate(findOne(examId));
     }
 
     /**
@@ -852,7 +830,7 @@ public class ExamService {
      * @param exam the exam
      * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
      */
-    public ZonedDateTime getLatestIndiviudalExamEndDate(Exam exam) {
+    public ZonedDateTime getLatestIndividualExamEndDate(Exam exam) {
         if (exam.getStartDate() == null) {
             return null;
         }
@@ -869,8 +847,8 @@ public class ExamService {
      * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
      * @throws EntityNotFoundException if no exam with the given examId can be found
      */
-    public Set<ZonedDateTime> getAllIndiviudalExamEndDates(Long examId) {
-        return getAllIndiviudalExamEndDates(findOne(examId));
+    public Set<ZonedDateTime> getAllIndividualExamEndDates(Long examId) {
+        return getAllIndividualExamEndDates(findOne(examId));
     }
 
     /**
@@ -881,7 +859,7 @@ public class ExamService {
      * @param exam the exam
      * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
      */
-    public Set<ZonedDateTime> getAllIndiviudalExamEndDates(Exam exam) {
+    public Set<ZonedDateTime> getAllIndividualExamEndDates(Exam exam) {
         if (exam.getStartDate() == null) {
             return null;
         }
