@@ -155,8 +155,7 @@ public class Result extends DomainObject {
             return formatter.format(totalScore) + " points";
         }
         if (exercise != null && exercise.isZeroPointExercise()) {
-            totalScore = 0.0;
-            maxScore = 0.0;
+            return "0 points";
         }
         return formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points";
     }

@@ -497,12 +497,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private createResultString(totalScore: number): string {
-        let relevantMaxPoints = getMaxPointsRespectingZeroPointExercises(this.exercise);
+        const relevantMaxPoints = getMaxPointsRespectingZeroPointExercises(this.exercise);
+        // When no maxScore or bonus points are set, then show only the achieved score in the beginning but 0 points
         if (!this.exercise.maxScore && !this.exercise.bonusPoints) {
-            totalScore = 0;
-            relevantMaxPoints = 0;
+            return '0 points';
         }
-        // When no maxScore or bonus points are set, then show only the achieved score in the beginning but 0 of 0 points
         return `${totalScore} of ${relevantMaxPoints} points`;
     }
 

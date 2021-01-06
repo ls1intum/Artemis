@@ -372,10 +372,11 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(response.getScore()).isEqualTo(expectedScore);
         double totalPoints = programmingExercise.getMaxScoreRespectingZeroPointExercises();
         if (programmingExercise.isZeroPointExercise()) {
-            points = 0;
-            totalPoints = 0;
+            assertThat(response.getResultString()).isEqualTo("0 points");
         }
-        assertThat(response.getResultString()).isEqualTo((int) points + " of " + (int) totalPoints + " points");
+        else {
+            assertThat(response.getResultString()).isEqualTo((int) points + " of " + (int) totalPoints + " points");
+        }
     }
 
     @Test
