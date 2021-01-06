@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_LOCK_DURATION_IN_MINUTES;
 
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
@@ -70,8 +69,8 @@ public class ComplaintResponse extends AbstractAuditingEntity {
         if (getCreatedDate() == null) {
             return null;
         }
-        ZonedDateTime createdDateInLocalTime = ZonedDateTime.ofInstant(getCreatedDate(), ZoneId.systemDefault());
-        return createdDateInLocalTime.plusMinutes(COMPLAINT_LOCK_DURATION_IN_MINUTES);
+        ZonedDateTime createdDateInUTC = ZonedDateTime.ofInstant(getCreatedDate(), ZoneOffset.UTC);
+        return createdDateInUTC.plusMinutes(COMPLAINT_LOCK_DURATION_IN_MINUTES);
     }
 
     public String getResponseText() {
