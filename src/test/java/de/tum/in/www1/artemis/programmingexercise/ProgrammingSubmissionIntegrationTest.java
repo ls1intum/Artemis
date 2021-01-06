@@ -265,7 +265,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getAllProgrammingSubmissions_asUser_forbidden() throws Exception {
-        request.get("/api/exercises/" + exercise.getId() + "/round/0/programming-submissions", HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -278,7 +278,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
             database.addProgrammingSubmission(exercise, submission, "student" + i);
         }
 
-        final var responseSubmissions = request.getList("/api/exercises/" + exercise.getId() + "/round/0/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class);
+        final var responseSubmissions = request.getList("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class);
 
         assertThat(responseSubmissions).containsExactly(submissions.toArray(new ProgrammingSubmission[0]));
     }
@@ -294,8 +294,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
         final var paramMap = new LinkedMultiValueMap<String, String>();
         paramMap.add("assessedByTutor", "true");
-        final var responseSubmissions = request.getList("/api/exercises/" + exercise.getId() + "/round/0/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
-                paramMap);
+        final var responseSubmissions = request.getList("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class, paramMap);
 
         assertThat(responseSubmissions).containsExactly(assessedSubmission);
     }
@@ -309,8 +308,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         final var submission = database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), "student1");
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
 
-        final var responseSubmission = request.get("/api/exercises/" + exercise.getId() + "/round/0/programming-submission-without-assessment", HttpStatus.OK,
-                ProgrammingSubmission.class);
+        final var responseSubmission = request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK, ProgrammingSubmission.class);
 
         assertThat(responseSubmission).isEqualTo(submission);
     }
@@ -346,7 +344,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         submission = database.addProgrammingSubmission(exercise, submission, "student1");
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 
-        ProgrammingSubmission storedSubmission = request.get("/api/exercises/" + exercise.getId() + "/round/0/programming-submission-without-assessment", HttpStatus.OK,
+        ProgrammingSubmission storedSubmission = request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK,
                 ProgrammingSubmission.class);
 
         // set dates to UTC and round to milliseconds for comparison
@@ -369,7 +367,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 
-        ProgrammingSubmission storedSubmission = request.get("/api/exercises/" + exercise.getId() + "/round/0/programming-submission-without-assessment?lock=true", HttpStatus.OK,
+        ProgrammingSubmission storedSubmission = request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=true", HttpStatus.OK,
                 ProgrammingSubmission.class);
 
         assertThat(storedSubmission.getSubmissionDate().isAfter(submission.getSubmissionDate())).isEqualTo(true);
@@ -388,7 +386,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         createTenLockedSubmissionsForExercise("tutor1");
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 
-        request.get("/api/exercises/" + exercise.getId() + "/round/0/programming-submission-without-assessment", HttpStatus.BAD_REQUEST, ProgrammingSubmission.class);
+        request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.BAD_REQUEST, ProgrammingSubmission.class);
     }
 
     @Test
@@ -399,7 +397,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         final var submission = database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), "student1");
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
 
-        request.get("/api/exercises/" + exercise.getId() + "/round/0/programming-submission-without-assessment", HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -413,7 +411,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         final var tutor = database.getUserByLogin("tutor1");
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, tutor);
 
-        request.get("/api/exercises/" + exercise.getId() + "/round/0/programming-submission-without-assessment", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.NOT_FOUND, String.class);
     }
 
     private void createTenLockedSubmissionsForExercise(String assessor) {

@@ -190,7 +190,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/round/0/text-submission-without-assessment", HttpStatus.OK,
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
@@ -213,7 +213,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/round/0/text-submission-without-assessment", HttpStatus.OK,
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
@@ -250,7 +250,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/round/0/text-submission-without-assessment", HttpStatus.OK,
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
         final Result result = submissionWithoutAssessment.getLatestResult();
         assertThat(result).as("saved result found").isNotNull();
@@ -268,7 +268,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         database.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, "student1", "tutor1", new ArrayList<>());
 
-        final Participation participation = request.get("/api/exercises/" + fileUploadExercise.getId() + "/round/0/text-submission-without-assessment", HttpStatus.BAD_REQUEST,
+        final Participation participation = request.get("/api/exercises/" + fileUploadExercise.getId() + "/text-submission-without-assessment", HttpStatus.BAD_REQUEST,
                 Participation.class);
 
         assertThat(participation).as("no result should be returned when exercise is not a text exercise").isNull();
@@ -531,7 +531,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/round/0/text-submission-without-assessment", HttpStatus.OK,
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
@@ -596,8 +596,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        TextSubmission submission1stRequest = request.get("/api/exercises/" + textExercise.getId() + "/round/0/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, params);
+        TextSubmission submission1stRequest = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class,
+                params);
 
         var blocksFrom1stRequest = submission1stRequest.getBlocks();
         assertThat(blocksFrom1stRequest.toArray()).containsExactlyInAnyOrder(blocks.toArray());
@@ -622,7 +622,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("lock", "true");
-        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/round/0/text-submission-without-assessment", HttpStatus.OK,
+        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, parameters);
 
         request.put("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/" + textSubmissions.get(0).getId() + "/cancel-assessment", null, HttpStatus.OK);
@@ -682,7 +682,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("lock", "true");
-        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/round/0/text-submission-without-assessment", HttpStatus.OK,
+        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, parameters);
 
         textSubmissionWithoutAssessment.getBlocks()
@@ -721,8 +721,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("lock", "true");
 
-        request.getWithHeaders("/api/exercises/" + textExercise.getId() + "/round/0/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class, parameters,
-                new HttpHeaders(), new String[] { "X-Athene-Tracking-Authorization" });
+        request.getWithHeaders("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class, parameters, new HttpHeaders(),
+                new String[] { "X-Athene-Tracking-Authorization" });
 
     }
 

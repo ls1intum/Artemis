@@ -48,9 +48,8 @@ public class ResultService {
     private final ComplaintRepository complaintRepository;
 
     public ResultService(UserService userService, ResultRepository resultRepository, LtiService ltiService, ObjectMapper objectMapper, FeedbackRepository feedbackRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, WebsocketMessagingService websocketMessagingService,
-            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
-            RatingRepository ratingRepository) {
+            WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
+            ComplaintRepository complaintRepository, RatingRepository ratingRepository) {
         this.userService = userService;
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
