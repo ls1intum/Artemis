@@ -1,13 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
-import { ComplaintService } from 'app/complaints/complaint.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { finalize } from 'rxjs/operators';
 import { Exercise } from 'app/entities/exercise.model';
-import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Location } from '@angular/common';
@@ -38,10 +36,8 @@ export class ComplaintsForTutorComponent implements OnInit {
     isLockedForLoggedInUser = false;
 
     constructor(
-        private complaintService: ComplaintService,
         private jhiAlertService: JhiAlertService,
         private complaintResponseService: ComplaintResponseService,
-        private accountService: AccountService,
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private location: Location,
@@ -49,20 +45,17 @@ export class ComplaintsForTutorComponent implements OnInit {
 
     ngOnInit(): void {
         if (this.complaint) {
-            // a complaint is handled if it is either accepted or denied and a complaint response exists
-            this.handled = this.complaint.accepted !== undefined && this.complaint.complaintResponse !== undefined;
+            this.handled = this.complaint.accepted !== undefined;
             this.complaintText = this.complaint.complaintText;
             if (this.handled) {
-                // handled complaint --> just display response
                 this.complaintResponse = this.complaint.complaintResponse!;
                 this.showRemoveLockButton = false;
                 this.showLockDuration = false;
             } else {
                 if (this.complaint.complaintResponse) {
-                    // unhandled complaint where no complaint response exists --> create a new initial complaint response
                     this.refreshLock();
                 } else {
-                    this.createLock(); // unhandled complaint where a complaint response exists --> update lock if allowed
+                    this.createLock();
                 }
             }
         }

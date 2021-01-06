@@ -73,17 +73,24 @@ export class ComplaintResponseService {
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    private convertDateFromClient(complaintResponse: ComplaintResponse): ComplaintResponse {
+    public convertDateFromClient(complaintResponse: ComplaintResponse): ComplaintResponse {
         return Object.assign({}, complaintResponse, {
             submittedTime: complaintResponse.submittedTime != undefined && moment(complaintResponse.submittedTime).isValid ? complaintResponse.submittedTime.toJSON() : undefined,
         });
     }
 
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    public convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.submittedTime = res.body.submittedTime != undefined ? moment(res.body.submittedTime) : undefined;
-            res.body.lockEndDate = res.body.lockEndDate != undefined ? moment(res.body.lockEndDate) : undefined;
+            this.convertDatesToMoment(res.body);
         }
         return res;
+    }
+
+    public convertDatesToMoment(complaintResponse: ComplaintResponse): ComplaintResponse {
+        if (complaintResponse) {
+            complaintResponse.submittedTime = complaintResponse.submittedTime != undefined ? moment(complaintResponse.submittedTime) : undefined;
+            complaintResponse.lockEndDate = complaintResponse.lockEndDate != undefined ? moment(complaintResponse.lockEndDate) : undefined;
+        }
+        return complaintResponse;
     }
 }

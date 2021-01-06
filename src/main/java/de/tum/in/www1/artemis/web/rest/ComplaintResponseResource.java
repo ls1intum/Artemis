@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
@@ -25,7 +24,6 @@ import de.tum.in.www1.artemis.service.ComplaintResponseService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
 /**
@@ -118,12 +116,9 @@ public class ComplaintResponseResource {
     public ResponseEntity<ComplaintResponse> resolveComplaint(@RequestBody ComplaintResponse complaintResponse, @PathVariable long complaintId) {
         log.debug("REST request to resolve the complaint with id: {}", complaintId);
         ComplaintResponse updatedComplaintResponse = complaintResponseService.resolveComplaint(complaintResponse);
-        // To build correct creation alert on the client we must check which type is the complaint to apply correct i18n key.
-        String entityName = updatedComplaintResponse.getComplaint().getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_RESPONSE_ENITY_NAME : ENTITY_NAME;
         // always remove the student from the complaint as we don't need it in the corresponding client use case
         updatedComplaintResponse.getComplaint().filterSensitiveInformation();
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, entityName, updatedComplaintResponse.getId().toString()))
-                .body(updatedComplaintResponse);
+        return ResponseEntity.ok().body(updatedComplaintResponse);
     }
 
     /**

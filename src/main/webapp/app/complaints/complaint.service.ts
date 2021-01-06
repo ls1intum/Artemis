@@ -188,6 +188,9 @@ export class ComplaintService implements IComplaintService {
     private convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.submittedTime = res.body.submittedTime ? moment(res.body.submittedTime) : undefined;
+            if (res.body?.complaintResponse) {
+                this.complaintResponseService.convertDatesToMoment(res.body.complaintResponse);
+            }
         }
         return res;
     }
@@ -196,6 +199,9 @@ export class ComplaintService implements IComplaintService {
         if (res.body) {
             res.body.forEach((complaint) => {
                 complaint.submittedTime = complaint.submittedTime ? moment(complaint.submittedTime) : undefined;
+                if (complaint.complaintResponse) {
+                    this.complaintResponseService.convertDatesToMoment(complaint.complaintResponse);
+                }
             });
         }
 

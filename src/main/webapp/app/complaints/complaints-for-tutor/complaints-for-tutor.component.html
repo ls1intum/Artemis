@@ -4,11 +4,11 @@
     </div>
 </div>
 
-<h3 *ngIf="!isLoading">
+<h3 *ngIf="!isLoading && complaint">
     {{ complaint.complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.review' | translate) : ('artemisApp.complaint.review' | translate) }}
 </h3>
 
-<div class="col-12 mt-2" [class.px-0]="zeroIndent" *ngIf="!isLoading">
+<div class="col-12 mt-2" [class.px-0]="zeroIndent" *ngIf="!isLoading && complaint">
     <div class="alert alert-info" *ngIf="handled">
         {{
             complaint.complaintType === ComplaintType.MORE_FEEDBACK
@@ -17,10 +17,10 @@
         }}
     </div>
     <div class="mt-3 mb-3">
-        <div class="alert alert-info" *ngIf="showLockDuration">
+        <div id="lockDuration" class="alert alert-info" *ngIf="showLockDuration">
             {{ 'artemisApp.locks.lockInformation' | translate: { user: this.complaintResponse?.reviewer?.login, endDate: this.complaintResponse.lockEndDate | artemisDate } }}
         </div>
-        <button class="btn btn-secondary" *ngIf="showRemoveLockButton" (click)="removeLock()">
+        <button id="lockButton" class="btn btn-secondary" *ngIf="showRemoveLockButton" (click)="removeLock()">
             {{ 'artemisApp.locks.removeButton' | translate }}
         </button>
     </div>
@@ -41,7 +41,7 @@
                     <span *ngIf="!complaint?.accepted" class="text-light bg-danger small"> &nbsp;{{ 'artemisApp.complaint.rejected' | translate }}&nbsp; </span>
                 </small>
             </h4>
-            <textarea class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readonly]="true" [disabled]="true"></textarea>
+            <textarea id="complaintTextArea" class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readonly]="true" [disabled]="true"></textarea>
         </div>
 
         <div *ngIf="handled || isAllowedToRespond" class="col-12 col-md-6">
@@ -53,6 +53,7 @@
                 }}
             </h3>
             <textarea
+                id="responseTextArea"
                 class="col-12 px-1"
                 rows="4"
                 maxlength="2000"
@@ -63,6 +64,7 @@
             <div *ngIf="!handled && complaint.complaintType === ComplaintType.COMPLAINT" class="row justify-content-end">
                 <div class="col-12 col-lg-6">
                     <button
+                        id="acceptComplaintButton"
                         type="button"
                         class="btn btn-success btn-block"
                         (click)="respondToComplaint(true)"
@@ -74,6 +76,7 @@
                 </div>
                 <div class="col-12 col-lg-6">
                     <button
+                        id="rejectComplaintButton"
                         type="button"
                         class="btn btn-danger btn-block"
                         (click)="respondToComplaint(false)"
@@ -88,6 +91,7 @@
             <div *ngIf="!complaint.accepted && complaint.complaintType === ComplaintType.MORE_FEEDBACK" class="row justify-content-end">
                 <div class="col-12">
                     <button
+                        id="respondToMoreFeedbackButton"
                         type="button"
                         class="btn btn-success btn-block"
                         [disabled]="isLockedForLoggedInUser"
