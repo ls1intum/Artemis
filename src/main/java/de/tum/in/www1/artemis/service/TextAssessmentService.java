@@ -47,7 +47,7 @@ public class TextAssessmentService extends AssessmentService {
      *
      * @param textSubmission Text Submission to be assessed
      */
-    public void prepareSubmissionForAssessment(TextSubmission textSubmission) {
+    public void prepareSubmissionForAssessment(TextSubmission textSubmission, Long correctionRound) {
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
         Result result = textSubmission.getLatestResult();

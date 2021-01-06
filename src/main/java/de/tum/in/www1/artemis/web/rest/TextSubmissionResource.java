@@ -267,7 +267,7 @@ public class TextSubmissionResource {
         final TextSubmission textSubmission;
         if (lockSubmission) {
             textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise, exercise.hasExerciseGroup(), correctionRound);
-            textAssessmentService.prepareSubmissionForAssessment(textSubmission);
+            textAssessmentService.prepareSubmissionForAssessment(textSubmission, correctionRound);
         }
         else {
             Optional<TextSubmission> optionalTextSubmission;
