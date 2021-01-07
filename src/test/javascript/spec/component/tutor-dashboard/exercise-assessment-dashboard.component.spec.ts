@@ -92,54 +92,54 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let tutorParticipationServiceCreateStub: SinonStub;
 
     let guidedTourService: GuidedTourService;
-    const result1 = { id: 40 } as Result;
-    const result2 = { id: 50 } as Result;
-    const exam = { id: 90, numberOfCorrectionRoundsInExam: 2 } as Exam;
-    const exerciseGroup = { id: 80, exam } as ExerciseGroup;
+    const result1 = { id: 11 } as Result;
+    const result2 = { id: 12 } as Result;
+    const exam = { id: 13, numberOfCorrectionRoundsInExam: 2 } as Exam;
+    const exerciseGroup = { id: 14, exam } as ExerciseGroup;
     const exercise = {
-        id: 20,
+        id: 15,
         exerciseGroup,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
     } as ProgrammingExercise;
     const programmingExercise = {
-        id: 20,
+        id: 16,
         exerciseGroup,
         type: ExerciseType.PROGRAMMING,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
     } as ProgrammingExercise;
     const modelingExercise = {
-        id: 20,
+        id: 17,
         exerciseGroup,
         type: ExerciseType.MODELING,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
     } as ModelingExercise;
-    const textExercise = { id: 20, exerciseGroup, type: ExerciseType.TEXT, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as TextExercise;
+    const textExercise = { id: 18, exerciseGroup, type: ExerciseType.TEXT, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as TextExercise;
     const fileUploadExercise = {
-        id: 20,
+        id: 19,
         exerciseGroup,
         type: ExerciseType.FILE_UPLOAD,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
     } as FileUploadExercise;
 
-    const participation = { id: 70, submissions: [] } as Participation;
+    const participation = { id: 20, submissions: [] } as Participation;
 
-    const modelingSubmission = { id: 30 } as ModelingSubmission;
-    const fileUploadSubmission = { id: 30 } as FileUploadSubmission;
-    const textSubmission = { id: 30 } as TextSubmission;
-    const programmingSubmission = { id: 30 } as ProgrammingSubmission;
+    const modelingSubmission = { id: 21 } as ModelingSubmission;
+    const fileUploadSubmission = { id: 22 } as FileUploadSubmission;
+    const textSubmission = { id: 23 } as TextSubmission;
+    const programmingSubmission = { id: 24 } as ProgrammingSubmission;
 
-    const modelingSubmissionAssessed = { id: 30, results: [result1, result2], participation } as ModelingSubmission;
-    const fileUploadSubmissionAssessed = { id: 30, results: [result1, result2], participation } as FileUploadSubmission;
+    const modelingSubmissionAssessed = { id: 25, results: [result1, result2], participation } as ModelingSubmission;
+    const fileUploadSubmissionAssessed = { id: 26, results: [result1, result2], participation } as FileUploadSubmission;
     const textSubmissionAssessed = {
-        id: 30,
+        id: 27,
         submissionExerciseType: SubmissionExerciseType.TEXT,
         language: Language.GERMAN,
         results: [result1, result2],
         participation,
     } as TextSubmission;
-    const programmingSubmissionAssessed = { id: 30, results: [result1, result2], participation } as ProgrammingSubmission;
+    const programmingSubmissionAssessed = { id: 28, results: [result1, result2], participation } as ProgrammingSubmission;
 
-    const complaint = { id: 33, result: { id: 44, submission: textSubmission } } as Complaint;
+    const complaint = { id: 29, result: { id: 30, submission: textSubmission } } as Complaint;
 
     const numberOfAssessmentsOfCorrectionRounds = [
         { inTime: 1, late: 1 },
@@ -212,17 +212,17 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
                 comp.exerciseId = modelingExercise.id!;
 
-                modelingSubmissionStubWithoutAssessment = stub(modelingSubmissionService, 'getModelingSubmissionForExerciseWithoutAssessment');
-                modelingSubmissionStubWithAssessment = stub(modelingSubmissionService, 'getModelingSubmissionsForExercise');
+                modelingSubmissionStubWithoutAssessment = stub(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment');
+                modelingSubmissionStubWithAssessment = stub(modelingSubmissionService, 'getModelingSubmissionsForExerciseByCorrectionRound');
 
-                textSubmissionStubWithoutAssessment = stub(textSubmissionService, 'getTextSubmissionForExerciseWithoutAssessment');
-                textSubmissionStubWithAssessment = stub(textSubmissionService, 'getTextSubmissionsForExercise');
+                textSubmissionStubWithoutAssessment = stub(textSubmissionService, 'getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment');
+                textSubmissionStubWithAssessment = stub(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound');
 
-                fileUploadSubmissionStubWithAssessment = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExercise');
-                fileUploadSubmissionStubWithoutAssessment = stub(fileUploadSubmissionService, 'getFileUploadSubmissionForExerciseWithoutAssessment');
+                fileUploadSubmissionStubWithAssessment = stub(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+                fileUploadSubmissionStubWithoutAssessment = stub(fileUploadSubmissionService, 'getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment');
 
-                programmingSubmissionStubWithoutAssessment = stub(programmingSubmissionService, 'getProgrammingSubmissionForExerciseWithoutAssessment');
-                programmingSubmissionStubWithAssessment = stub(programmingSubmissionService, 'getProgrammingSubmissionsForExercise');
+                programmingSubmissionStubWithoutAssessment = stub(programmingSubmissionService, 'getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment');
+                programmingSubmissionStubWithAssessment = stub(programmingSubmissionService, 'getProgrammingSubmissionsForExerciseByCorrectionRound');
 
                 textSubmissionStubWithoutAssessment.returns(of(textSubmission));
                 textSubmissionStubWithAssessment.returns(of(textSubmissionAssessed));
@@ -263,11 +263,14 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.loadAll();
 
-        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(modelingExercise.id);
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).to.equal(modelingSubmission);
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)?.latestResult).to.equal(undefined);
+        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledTwice;
+        sinon.assert.calledWith(modelingSubmissionStubWithoutAssessment.getCall(0), modelingExercise.id, undefined, 0);
+        sinon.assert.calledWith(modelingSubmissionStubWithoutAssessment.getCall(1), modelingExercise.id, undefined, 1);
+
+        expect(comp.unassessedSubmissionByCorrectionRound?.get(0)).to.equal(modelingSubmission);
+        expect(comp.unassessedSubmissionByCorrectionRound?.get(0)?.latestResult).to.equal(undefined);
         expect(comp.submissionLockLimitReached).to.be.false;
-        expect(comp.submissionsByCorrectionRound?.get(1)!.length).to.equal(0);
+        expect(comp.submissionsByCorrectionRound?.get(0)!.length).to.equal(0);
     });
 
     it('should not set unassessedSubmission if lock limit is reached', () => {
@@ -276,7 +279,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.loadAll();
 
-        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(modelingExercise.id);
+        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledTwice;
+        sinon.assert.calledWith(modelingSubmissionStubWithoutAssessment.getCall(0), modelingExercise.id, undefined, 0);
+        sinon.assert.calledWith(modelingSubmissionStubWithoutAssessment.getCall(1), modelingExercise.id, undefined, 1);
         expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).to.be.undefined;
         expect(comp.submissionLockLimitReached).to.be.true;
         expect(comp.submissionsByCorrectionRound?.get(1)!.length).to.equal(0);
@@ -287,7 +292,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.loadAll();
 
-        expect(modelingSubmissionStubWithoutAssessment).to.have.been.calledOnceWithExactly(modelingExercise.id);
+        sinon.assert.calledWith(modelingSubmissionStubWithoutAssessment.getCall(0), modelingExercise.id, undefined, 0);
+        sinon.assert.calledWith(modelingSubmissionStubWithoutAssessment.getCall(1), modelingExercise.id, undefined, 1);
         expect(comp.numberOfAssessmentsOfCorrectionRounds[0].inTime).to.equal(1);
         expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).to.equal(8);
         expect(comp.totalAssessmentPercentage.inTime).to.equal(75);

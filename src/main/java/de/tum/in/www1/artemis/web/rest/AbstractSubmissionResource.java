@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -49,7 +48,7 @@ public abstract class AbstractSubmissionResource {
      * @param assessedByTutor if the submission was assessed by calling tutor
      * @return the ResponseEntity with status 200 (OK) and the list of submissions in body
      */
-    protected ResponseEntity<List<Submission>> getAllSubmissions(Long exerciseId, boolean submittedOnly, boolean assessedByTutor) {
+    protected ResponseEntity<List<Submission>> getAllSubmissions(Long exerciseId, boolean submittedOnly, boolean assessedByTutor, Long correctionRound) {
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);
 
@@ -65,7 +64,7 @@ public abstract class AbstractSubmissionResource {
         final boolean examMode = exercise.hasExerciseGroup();
         List<Submission> submissions;
         if (assessedByTutor) {
-            submissions = submissionService.getAllSubmissionsAssessedByTutorForExercise(exerciseId, user, examMode);
+            submissions = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user, examMode, correctionRound);
         }
         else {
             submissions = submissionService.getAllSubmissionsForExercise(exerciseId, submittedOnly, examMode);

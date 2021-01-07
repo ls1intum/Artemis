@@ -125,7 +125,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private loadOptimalSubmission(exerciseId: number): void {
-        this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(exerciseId, true).subscribe(
+        this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
 
