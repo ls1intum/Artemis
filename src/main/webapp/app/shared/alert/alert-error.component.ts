@@ -117,7 +117,7 @@ export class AlertErrorComponent implements OnDestroy {
      * @param {any} data?
      */
     addErrorAlert(message: string, key?: string, data?: any): void {
-        message = key && key !== null ? key : message;
+        message = key || message;
 
         const newAlert: JhiAlert = {
             type: 'danger',

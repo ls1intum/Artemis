@@ -138,6 +138,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.isTestRun = this.route.snapshot.url[3]?.toString() === 'test-run-tutor-dashboard';
+        this.unassessedSubmissionByCorrectionRound = new Map<number, Submission>();
 
         this.loadAll();
 
@@ -204,13 +205,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     this.isExamMode = true;
                     this.exam = this.exercise?.exerciseGroup?.exam;
                 }
-
-                this.getAllTutorAssessedSubmissions();
+                // TODO write loop over all correctionRounds
+                this.getAllTutorAssessedSubmissionsForAllCorrectionRounds();
 
                 // 1. We don't want to assess submissions before the exercise due date
                 // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
                 if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
-                    this.getSubmissionWithoutAssessment();
+                    this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
                 }
             },
             (response: string) => this.onError(response),
@@ -281,10 +282,26 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     }
 
     /**
-     * Get all the submissions from the server for which the current user is the assessor, which is the case for started or completed assessments. All these submissions get listed
+     * get all submissions for all correction rounds which the tutor has assessed.
+     * If not in examMode, correctionrounds defaults to 0, as more than 1 is currently not supported.
+     * @private
+     */
+    private getAllTutorAssessedSubmissionsForAllCorrectionRounds(): void {
+        if (this.isExamMode) {
+            for (let i = 0; i < this.exam!.numberOfCorrectionRoundsInExam!; i++) {
+                this.getAllTutorAssessedSubmissionsForCorrectionRound(i);
+            }
+        } else {
+            this.getAllTutorAssessedSubmissionsForCorrectionRound(0);
+        }
+    }
+
+    /**
+     * Get all the submissions from the server for which the current user is the assessor for the specified correctionround,
+     * which is the case for started or completed assessments. All these submissions get listed
      * in the exercise dashboard.
      */
-    private getAllTutorAssessedSubmissions(): void {
+    private getAllTutorAssessedSubmissionsForCorrectionRound(correctionRound: number): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
         if (this.isTestRun) {
             submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId);
@@ -292,16 +309,28 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             // TODO: This could be one generic endpoint.
             switch (this.exercise.type) {
                 case ExerciseType.TEXT:
-                    submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                    submissionsObservable = this.textSubmissionService.getTextSubmissionsForExerciseByCorrectionRound(this.exerciseId, { assessedByTutor: true }, correctionRound);
                     break;
                 case ExerciseType.MODELING:
-                    submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                    submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExerciseByCorrectionRound(
+                        this.exerciseId,
+                        { assessedByTutor: true },
+                        correctionRound,
+                    );
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                    submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExerciseByCorrectionRound(
+                        this.exerciseId,
+                        { assessedByTutor: true },
+                        correctionRound,
+                    );
                     break;
                 case ExerciseType.PROGRAMMING:
-                    submissionsObservable = this.programmingSubmissionService.getProgrammingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                    submissionsObservable = this.programmingSubmissionService.getProgrammingSubmissionsForExerciseByCorrectionRound(
+                        this.exerciseId,
+                        { assessedByTutor: true },
+                        correctionRound,
+                    );
                     break;
             }
         }
@@ -318,7 +347,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     return submission;
                 });
-                this.submissionsByCorrectionRound!.set(1, sub); // todo NR
+
+                this.submissionsByCorrectionRound!.set(correctionRound, sub); // todo NR
             });
     }
 
@@ -340,24 +370,53 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     };
 
     /**
-     * Get a submission from the server that does not have an assessment yet (if there is one). The submission gets added to the end of the list of submissions in the exercise
-     * dashboard and the user can start the assessment. Note, that the number of started but unfinished assessments is limited per user and course. If the user reached this limit,
+     * Get all submissions that dont have an assessment for all correctionrounds
+     * If not in examMode correctionrounds defaults to 0.
+     * @private
+     */
+    private getSubmissionWithoutAssessmentForAllCorrectionrounds(): void {
+        if (this.isExamMode) {
+            for (let i = 0; i < this.exam!.numberOfCorrectionRoundsInExam!; i++) {
+                this.getSubmissionWithoutAssessmentForCorrectionround(i);
+            }
+        } else {
+            this.getSubmissionWithoutAssessmentForCorrectionround(0);
+        }
+    }
+
+    /**
+     * Get a submission from the server that does not have an assessment for the given correctionround yet (if there is one).
+     * The submission gets added to the end of the list of submissions in the exercise
+     * dashboard and the user can start the assessment. Note, that the number of started but unfinished assessments is limited per user and course.
+     * If the user reached this limit,
      * the server will respond with a BAD REQUEST response here.
      */
-    private getSubmissionWithoutAssessment(): void {
+    private getSubmissionWithoutAssessmentForCorrectionround(correctionRound: number): void {
         let submissionObservable: Observable<Submission> = of();
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
-                submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId, 'head');
+                submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exerciseId, 'head', correctionRound);
                 break;
             case ExerciseType.MODELING:
-                submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId);
+                submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(
+                    this.exerciseId,
+                    undefined,
+                    correctionRound,
+                );
                 break;
             case ExerciseType.FILE_UPLOAD:
-                submissionObservable = this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exerciseId);
+                submissionObservable = this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(
+                    this.exerciseId,
+                    undefined,
+                    correctionRound,
+                );
                 break;
             case ExerciseType.PROGRAMMING:
-                submissionObservable = this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exerciseId);
+                submissionObservable = this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(
+                    this.exerciseId,
+                    undefined,
+                    correctionRound,
+                );
                 break;
         }
 
@@ -365,14 +424,16 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             (submission: Submission) => {
                 if (submission) {
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-                    this.unassessedSubmissionByCorrectionRound!.set(1, submission);
+                    this.unassessedSubmissionByCorrectionRound!.set(correctionRound, submission);
                 }
                 this.submissionLockLimitReached = false;
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    this.unassessedSubmissionByCorrectionRound = new Map<number, Submission>();
+                    if (this.unassessedSubmissionByCorrectionRound) {
+                        this.unassessedSubmissionByCorrectionRound.delete(correctionRound);
+                    }
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.submissionLockLimitReached = true;
                 } else {
