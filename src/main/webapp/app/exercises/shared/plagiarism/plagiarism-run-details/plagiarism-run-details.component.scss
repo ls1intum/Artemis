@@ -1,5 +1,10 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
 
+:host {
+    display: block;
+    overflow-y: auto;
+}
+
 .plagiarism-run-details {
     display: flex;
     flex-direction: column;
@@ -21,5 +26,10 @@
     &-info {
         font-size: 2rem;
         font-weight: bold;
+
+        canvas {
+            margin-top: 0.5rem;
+            max-width: 800px;
+        }
     }
 }
