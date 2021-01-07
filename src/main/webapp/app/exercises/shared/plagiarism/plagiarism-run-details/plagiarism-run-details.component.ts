@@ -62,7 +62,7 @@ export class PlagiarismRunDetailsComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.plagiarismResult) {
-            this.updateChartSetData(changes.plagiarismResult.currentValue.similarityDistribution || []);
+            this.updateChartDataSet(changes.plagiarismResult.currentValue.similarityDistribution || []);
         }
     }
 
@@ -72,7 +72,7 @@ export class PlagiarismRunDetailsComponent implements OnChanges {
      * @param data  - the updated data array
      * @param index - index of the dataset to update (default: 0)
      */
-    updateChartSetData(data: number[], index = 0) {
+    updateChartDataSet(data: number[], index = 0) {
         if (!this.chartDataSets.length || index >= this.chartDataSets.length) {
             return;
         }
