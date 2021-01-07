@@ -1,9 +1,10 @@
 
-Started by GitLab push by Administrator
+Started by user <a href='/user/ga65niv' class='model-link'>Ivan Chimeno</a>
+Replayed <a href='/job/CS1PE2/job/CS1PE2-ARTEMISADMINBACKUP/12/' class='model-link'>#12</a>
 Running in Durability level: MAX_SURVIVABILITY
 <span class="pipeline-new-node" nodeId="2" startId="2">[Pipeline] Start of Pipeline
 </span><span class="pipeline-new-node" nodeId="3" startId="3" enclosingId="2">[Pipeline] node
-</span><span class="pipeline-node-3">Running on <a href='/computer/(master)/' class='model-link'>Jenkins</a> in /var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP
+</span><span class="pipeline-node-3">Running on <a href='/computer/(master)/' class='model-link'>Jenkins</a> in /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP
 </span><span class="pipeline-new-node" nodeId="4" startId="4" enclosingId="3">[Pipeline] {
     </span><span class="pipeline-new-node" nodeId="5" enclosingId="4">[Pipeline] isUnix
     </span><span class="pipeline-new-node" nodeId="6" enclosingId="4">[Pipeline] sh
@@ -11,8 +12,8 @@ Running in Durability level: MAX_SURVIVABILITY
     .
     </span><span class="pipeline-new-node" nodeId="7" startId="7" enclosingId="4">[Pipeline] withDockerContainer
     </span><span class="pipeline-node-7">Jenkins seems to be running inside container 646509beb288ccd372d6212100c3cc4bfc197d1b9f74ff4c4181e66b262c99a8
-    $ docker run -t -d -u 0:0 -w /var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP --volumes-from 646509beb288ccd372d6212100c3cc4bfc197d1b9f74ff4c4181e66b262c99a8 -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** ls1tum/artemis-maven-template:java15-4 cat
-    $ docker top 3068af53ab1ecc1fa611e143817471bcf0611cdb7b78d231fd0fedeff0e19771 -eo pid,comm
+    $ docker run -t -d -u 0:0 -w /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP --volumes-from 646509beb288ccd372d6212100c3cc4bfc197d1b9f74ff4c4181e66b262c99a8 -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** -e ******** ls1tum/artemis-maven-template:java15-4 cat
+    $ docker top 20d9ad9aa70f915d5ae65b40f26ef9d09ce791487244b21de45ace935f309b81 -eo pid,comm
     </span><span class="pipeline-new-node" nodeId="8" startId="8" enclosingId="7">[Pipeline] {
 </span><span class="pipeline-new-node" nodeId="9" startId="9" enclosingId="8">[Pipeline] timeout
 </span><span class="pipeline-node-9">Timeout set to expire in 30 min
@@ -22,50 +23,48 @@ Running in Durability level: MAX_SURVIVABILITY
 </span><span class="pipeline-new-node" nodeId="13" enclosingId="12">[Pipeline] checkout
 </span><span class="pipeline-node-13">The recommended git tool is: NONE
 using credential 477444bc-083e-478c-90fd-ce3037063361
-Warning: JENKINS-30600: special launcher org.jenkinsci.plugins.docker.workflow.WithContainerStep$Decorator$1@be808ab; decorates hudson.Launcher$LocalLauncher@52ff7a6 will be ignored (a typical symptom is the Git executable not being run inside a designated container)
+Warning: JENKINS-30600: special launcher org.jenkinsci.plugins.docker.workflow.WithContainerStep$Decorator$1@53c12ddc; decorates hudson.Launcher$LocalLauncher@5d06c9d4 will be ignored (a typical symptom is the Git executable not being run inside a designated container)
 Cloning the remote Git repository
-Cloning repository <a href='http://172.18.0.1:80/CS1PE1/cs1pe1-tests.git'>http://172.18.0.1:80/CS1PE1/cs1pe1-tests.git</a>
- &gt; git init /var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP # timeout=10
-Fetching upstream changes from <a href='http://172.18.0.1:80/CS1PE1/cs1pe1-tests.git'>http://172.18.0.1:80/CS1PE1/cs1pe1-tests.git</a>
+Cloning repository <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git</a>
+ &gt; git init /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP # timeout=10
+Fetching upstream changes from <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git</a>
  &gt; git --version # timeout=10
  &gt; git --version # 'git version 2.11.0'
 using GIT_ASKPASS to set credentials
- &gt; git fetch --tags --progress -- <a href='http://172.18.0.1:80/CS1PE1/cs1pe1-tests.git'>http://172.18.0.1:80/CS1PE1/cs1pe1-tests.git</a> +refs/heads/*:refs/remotes/tests/* # timeout=10
- &gt; git config remote.tests.url <a href='http://172.18.0.1:80/CS1PE1/cs1pe1-tests.git'>http://172.18.0.1:80/CS1PE1/cs1pe1-tests.git</a> # timeout=10
+ &gt; git fetch --tags --progress -- <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git</a> +refs/heads/*:refs/remotes/tests/* # timeout=10
+ &gt; git config remote.tests.url <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-tests.git</a> # timeout=10
  &gt; git config --add remote.tests.fetch +refs/heads/*:refs/remotes/tests/* # timeout=10
 Avoid second fetch
-skipping resolution of commit remotes/tests/master, since it originates from another repository
  &gt; git rev-parse refs/remotes/tests/master^{commit} # timeout=10
-Checking out Revision 61cecf32aed48a647e9a7d03d9874174d8cfb37f (refs/remotes/tests/master)
+Checking out Revision 935345ef1eaf73177e68881eb5f4d53c92c094ac (refs/remotes/tests/master)
  &gt; git config core.sparsecheckout # timeout=10
- &gt; git checkout -f 61cecf32aed48a647e9a7d03d9874174d8cfb37f # timeout=10
+ &gt; git checkout -f 935345ef1eaf73177e68881eb5f4d53c92c094ac # timeout=10
 Commit message: "Test-Template pushed by Artemis"
- &gt; git rev-list --no-walk 61cecf32aed48a647e9a7d03d9874174d8cfb37f # timeout=10
+ &gt; git rev-list --no-walk 935345ef1eaf73177e68881eb5f4d53c92c094ac # timeout=10
 </span><span class="pipeline-new-node" nodeId="14" startId="14" enclosingId="12">[Pipeline] dir
-</span><span class="pipeline-node-14">Running in /var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP/assignment
+</span><span class="pipeline-node-14">Running in /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/assignment
 </span><span class="pipeline-new-node" nodeId="15" startId="15" enclosingId="14">[Pipeline] {
     </span><span class="pipeline-new-node" nodeId="16" enclosingId="15">[Pipeline] checkout
     </span><span class="pipeline-node-16">The recommended git tool is: NONE
     using credential 477444bc-083e-478c-90fd-ce3037063361
-    Warning: JENKINS-30600: special launcher org.jenkinsci.plugins.docker.workflow.WithContainerStep$Decorator$1@65b3ff66; decorates hudson.Launcher$LocalLauncher@762da3ba will be ignored (a typical symptom is the Git executable not being run inside a designated container)
+    Warning: JENKINS-30600: special launcher org.jenkinsci.plugins.docker.workflow.WithContainerStep$Decorator$1@74491c7e; decorates hudson.Launcher$LocalLauncher@56bad9c6 will be ignored (a typical symptom is the Git executable not being run inside a designated container)
     Cloning the remote Git repository
-    Cloning repository <a href='http://172.18.0.1:80/CS1PE1/cs1pe1-artemis_admin_backup.git'>http://172.18.0.1:80/CS1PE1/cs1pe1-artemis_admin_backup.git</a>
- &gt; git init /var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP/assignment # timeout=10
-Fetching upstream changes from <a href='http://172.18.0.1:80/CS1PE1/cs1pe1-artemis_admin_backup.git'>http://172.18.0.1:80/CS1PE1/cs1pe1-artemis_admin_backup.git</a>
+    Cloning repository <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git</a>
+ &gt; git init /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/assignment # timeout=10
+Fetching upstream changes from <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git</a>
  &gt; git --version # timeout=10
  &gt; git --version # 'git version 2.11.0'
 using GIT_ASKPASS to set credentials
- &gt; git fetch --tags --progress -- <a href='http://172.18.0.1:80/CS1PE1/cs1pe1-artemis_admin_backup.git'>http://172.18.0.1:80/CS1PE1/cs1pe1-artemis_admin_backup.git</a> +refs/heads/*:refs/remotes/assignment/* # timeout=10
- &gt; git config remote.assignment.url <a href='http://172.18.0.1:80/CS1PE1/cs1pe1-artemis_admin_backup.git'>http://172.18.0.1:80/CS1PE1/cs1pe1-artemis_admin_backup.git</a> # timeout=10
+ &gt; git fetch --tags --progress -- <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git</a> +refs/heads/*:refs/remotes/assignment/* # timeout=10
+ &gt; git config remote.assignment.url <a href='http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git'>http://172.18.0.1:80/CS1PE2/cs1pe2-artemis_admin_backup.git</a> # timeout=10
  &gt; git config --add remote.assignment.fetch +refs/heads/*:refs/remotes/assignment/* # timeout=10
 Avoid second fetch
-skipping resolution of commit remotes/tests/master, since it originates from another repository
  &gt; git rev-parse refs/remotes/assignment/master^{commit} # timeout=10
-Checking out Revision 11028e4104243d8cbae9175f2bc938cb8c2d7924 (refs/remotes/assignment/master)
+Checking out Revision 5dd053fd43b1616309749439e3a8ebed14c6cb63 (refs/remotes/assignment/master)
  &gt; git config core.sparsecheckout # timeout=10
- &gt; git checkout -f 11028e4104243d8cbae9175f2bc938cb8c2d7924 # timeout=10
+ &gt; git checkout -f 5dd053fd43b1616309749439e3a8ebed14c6cb63 # timeout=10
 Commit message: "Changes by Online Editor"
- &gt; git rev-list --no-walk 11028e4104243d8cbae9175f2bc938cb8c2d7924 # timeout=10
+ &gt; git rev-list --no-walk 5dd053fd43b1616309749439e3a8ebed14c6cb63 # timeout=10
 </span><span class="pipeline-new-node" nodeId="17" startId="15">[Pipeline] }
 </span><span class="pipeline-new-node" nodeId="18" startId="14">[Pipeline] // dir
 </span><span class="pipeline-new-node" nodeId="19" startId="12">[Pipeline] }
@@ -75,521 +74,99 @@ Commit message: "Changes by Online Editor"
 </span><span class="pipeline-new-node" nodeId="23" startId="23" enclosingId="22">[Pipeline] timestamps
 </span><span class="pipeline-new-node" nodeId="24" startId="24" enclosingId="23">[Pipeline] {
     </span><span class="pipeline-new-node" nodeId="25" startId="25" enclosingId="24">[Pipeline] withMaven
-    </span><span class="pipeline-node-25"><span class="timestamp"><b>2021-01-02T10:50:24&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:24.695Z]</span> [withMaven] Options: []
-<span class="timestamp"><b>2021-01-02T10:50:24&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:24.696Z]</span> [withMaven] Available options:
-<span class="timestamp"><b>2021-01-02T10:50:24&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:24.696Z]</span> [withMaven] IMPORTANT "withMaven(){...}" step running within a Docker container. See <a href='https://github.com/jenkinsci/pipeline-maven-plugin/FAQ.adoc'>Pipeline Maven Plugin FAQ</a> in case of problem.
-<span class="timestamp"><b>2021-01-02T10:50:24&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:24.696Z]</span> [withMaven] using JDK installation provided by the build agent
-<span class="timestamp"><b>2021-01-02T10:50:24&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:24.700Z]</span> $ docker exec 3068af53ab1ecc1fa611e143817471bcf0611cdb7b78d231fd0fedeff0e19771 printenv MAVEN_HOME
-<span class="timestamp"><b>2021-01-02T10:50:24&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:24.831Z]</span> $ docker exec 3068af53ab1ecc1fa611e143817471bcf0611cdb7b78d231fd0fedeff0e19771 printenv M2_HOME
-<span class="timestamp"><b>2021-01-02T10:50:24&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:24.895Z]</span> [withMaven] using Maven installation provided by the build agent with the environment variable M2_HOME=/usr/share/maven
+    </span><span class="pipeline-node-25"><span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.102Z]</span> [withMaven] Options: []
+    <span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.103Z]</span> [withMaven] Available options:
+    <span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.104Z]</span> [withMaven] IMPORTANT "withMaven(){...}" step running within a Docker container. See <a href='https://github.com/jenkinsci/pipeline-maven-plugin/FAQ.adoc'>Pipeline Maven Plugin FAQ</a> in case of problem.
+<span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.104Z]</span> [withMaven] using JDK installation provided by the build agent
+<span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.114Z]</span> $ docker exec 20d9ad9aa70f915d5ae65b40f26ef9d09ce791487244b21de45ace935f309b81 printenv MAVEN_HOME
+<span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.401Z]</span> $ docker exec 20d9ad9aa70f915d5ae65b40f26ef9d09ce791487244b21de45ace935f309b81 printenv M2_HOME
+<span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.476Z]</span> [withMaven] using Maven installation provided by the build agent with the environment variable M2_HOME=/usr/share/maven
 </span><span class="pipeline-new-node" nodeId="26" startId="26" enclosingId="25">[Pipeline] {
 </span><span class="pipeline-new-node" nodeId="27" enclosingId="26">[Pipeline] sh
-</span><span class="pipeline-node-27"><span class="timestamp"><b>2021-01-02T10:50:25&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:25.191Z]</span> + mvn clean test
-<span class="timestamp"><b>2021-01-02T10:50:25&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:25.191Z]</span> Picked up JAVA_TOOL_OPTIONS: -Dmaven.ext.class.path="/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP@tmp/withMaven6744e786/pipeline-maven-spy.jar" -Dorg.jenkinsci.plugins.pipeline.maven.reportsFolder="/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP@tmp/withMaven6744e786"
-<span class="timestamp"><b>2021-01-02T10:50:26&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:26.103Z]</span> WARNING: An illegal reflective access operation has occurred
-<span class="timestamp"><b>2021-01-02T10:50:26&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:26.103Z]</span> WARNING: Illegal reflective access by com.google.inject.internal.cglib.core.$ReflectUtils$1 (file:/usr/share/maven/lib/guice.jar) to method java.lang.ClassLoader.defineClass(java.lang.String,byte[],int,int,java.security.ProtectionDomain)
-<span class="timestamp"><b>2021-01-02T10:50:26&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:26.103Z]</span> WARNING: Please consider reporting this to the maintainers of com.google.inject.internal.cglib.core.$ReflectUtils$1
-<span class="timestamp"><b>2021-01-02T10:50:26&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:26.103Z]</span> WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
-<span class="timestamp"><b>2021-01-02T10:50:26&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:26.103Z]</span> WARNING: All illegal access operations will be denied in a future release
-<span class="timestamp"><b>2021-01-02T10:50:26&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:26.354Z]</span> [[1;34mINFO[m] [jenkins-event-spy] Generate /var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP@tmp/withMaven6744e786/maven-spy-20210102-095026-12011110173780244782543.log.tmp ...
-<span class="timestamp"><b>2021-01-02T10:50:26&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:26.354Z]</span> [[1;34mINFO[m] Scanning for projects...
-<span class="timestamp"><b>2021-01-02T10:50:26&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:26.354Z]</span> [[1;34mINFO[m]
-<span class="timestamp"><b>2021-01-02T10:50:26&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:26.354Z]</span> [[1;34mINFO[m] [1m----------------&lt; [0;36mcom.pe1:Programming-Exercise-1-Tests[0;1m &gt;----------------[m
-<span class="timestamp"><b>2021-01-02T10:50:26&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:26.354Z]</span> [[1;34mINFO[m] [1mBuilding Programming Exercise 1 Tests 1.0[m
-<span class="timestamp"><b>2021-01-02T10:50:26&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:26.354Z]</span> [[1;34mINFO[m] [1m--------------------------------[ jar ]---------------------------------[m
-<span class="timestamp"><b>2021-01-02T10:50:26&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:26.604Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.pom'>https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.pom</a>
-<span class="timestamp"><b>2021-01-02T10:50:26&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:26.855Z]</span> Progress (1): 2.7/8.1 kB
-Progress (1): 5.5/8.1 kB
-Progress (1): 8.1 kB
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.pom'>https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.pom</a> (8.1 kB at 29 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:26&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:26.855Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.jar'>https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.jar</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.106Z]</span> Progress (1): 2.7/30 kB
-Progress (1): 5.5/30 kB
-Progress (1): 8.2/30 kB
-Progress (1): 11/30 kB
-Progress (1): 14/30 kB
-Progress (1): 16/30 kB
-Progress (1): 19/30 kB
-Progress (1): 22/30 kB
-Progress (1): 25/30 kB
-Progress (1): 27/30 kB
-Progress (1): 30 kB
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.jar'>https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.jar</a> (30 kB at 615 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.106Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar'>https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.106Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/json/json/20201115/json-20201115.jar'>https://repo.maven.apache.org/maven2/org/json/json/20201115/json-20201115.jar</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.106Z]</span> Progress (1): 2.7/41 kB
-Progress (1): 5.5/41 kB
-Progress (1): 8.2/41 kB
-Progress (1): 11/41 kB
-Progress (1): 14/41 kB
-Progress (1): 16/41 kB
-Progress (1): 19/41 kB
-Progress (1): 22/41 kB
-Progress (1): 25/41 kB
-Progress (1): 27/41 kB
-Progress (1): 30/41 kB
-Progress (1): 33/41 kB
-Progress (1): 36/41 kB
-Progress (1): 38/41 kB
-Progress (1): 41/41 kB
-Progress (1): 41 kB
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar'>https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar</a> (41 kB at 936 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.106Z]</span> Progress (1): 2.7/69 kB
-Progress (1): 5.5/69 kB
-Progress (1): 8.2/69 kB
-Progress (1): 11/69 kB
-Progress (1): 14/69 kB
-Progress (1): 16/69 kB
-Progress (1): 19/69 kB
-Progress (1): 22/69 kB
-Progress (1): 25/69 kB
-Progress (1): 27/69 kB
-Progress (1): 30/69 kB
-Progress (1): 33/69 kB
-Progress (1): 36/69 kB
-Progress (1): 38/69 kB
-Progress (1): 41/69 kB
-Progress (1): 44/69 kB
-Progress (1): 47/69 kB
-Progress (1): 49/69 kB
-Progress (1): 52/69 kB
-Progress (1): 55/69 kB
-Progress (1): 58/69 kB
-Progress (1): 60/69 kB
-Progress (1): 63/69 kB
-Progress (1): 66/69 kB
-Progress (1): 69/69 kB
-Progress (1): 69 kB
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/json/json/20201115/json-20201115.jar'>https://repo.maven.apache.org/maven2/org/json/json/20201115/json-20201115.jar</a> (69 kB at 680 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.356Z]</span> [[1;34mINFO[m]
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.356Z]</span> [[1;34mINFO[m] [1m--- [0;32mmaven-clean-plugin:2.5:clean[m [1m(default-clean)[m @ [36mProgramming-Exercise-1-Tests[0;1m ---[m
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.356Z]</span> [[1;34mINFO[m]
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.356Z]</span> [[1;34mINFO[m] [1m--- [0;32mmaven-resources-plugin:2.6:resources[m [1m(default-resources)[m @ [36mProgramming-Exercise-1-Tests[0;1m ---[m
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.356Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.pom'>https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.pom</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.356Z]</span> Progress (1): 2.7/5.8 kB
-Progress (1): 5.5/5.8 kB
-Progress (1): 5.8 kB
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.pom'>https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.pom</a> (5.8 kB at 170 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.356Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.12/plexus-interpolation-1.12.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.12/plexus-interpolation-1.12.pom</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.356Z]</span> Progress (1): 889 B
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.12/plexus-interpolation-1.12.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.12/plexus-interpolation-1.12.pom</a> (889 B at 25 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.357Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.pom'>https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.pom</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Progress (1): 2.7/2.9 kB
-Progress (1): 2.9 kB
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.pom'>https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.pom</a> (2.9 kB at 80 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/spice/spice-parent/10/spice-parent-10.pom'>https://repo.maven.apache.org/maven2/org/sonatype/spice/spice-parent/10/spice-parent-10.pom</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Progress (1): 2.7/3.0 kB
-Progress (1): 3.0 kB
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/spice/spice-parent/10/spice-parent-10.pom'>https://repo.maven.apache.org/maven2/org/sonatype/spice/spice-parent/10/spice-parent-10.pom</a> (3.0 kB at 55 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/forge/forge-parent/3/forge-parent-3.pom'>https://repo.maven.apache.org/maven2/org/sonatype/forge/forge-parent/3/forge-parent-3.pom</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Progress (1): 2.7/5.0 kB
-Progress (1): 5.0 kB
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/forge/forge-parent/3/forge-parent-3.pom'>https://repo.maven.apache.org/maven2/org/sonatype/forge/forge-parent/3/forge-parent-3.pom</a> (5.0 kB at 144 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.pom</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Progress (1): 890 B
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.pom</a> (890 B at 17 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-components/1.1.15/plexus-components-1.1.15.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-components/1.1.15/plexus-components-1.1.15.pom</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Progress (1): 2.7/2.8 kB
-Progress (1): 2.8 kB
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-components/1.1.15/plexus-components-1.1.15.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-components/1.1.15/plexus-components-1.1.15.pom</a> (2.8 kB at 84 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/2.0.3/plexus-2.0.3.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/2.0.3/plexus-2.0.3.pom</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Progress (1): 2.7/15 kB
-Progress (1): 5.5/15 kB
-Progress (1): 8.2/15 kB
-Progress (1): 11/15 kB
-Progress (1): 14/15 kB
-Progress (1): 15 kB
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/2.0.3/plexus-2.0.3.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/2.0.3/plexus-2.0.3.pom</a> (15 kB at 442 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1/classworlds-1.1.jar'>https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1/classworlds-1.1.jar</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.5/plexus-utils-2.0.5.jar'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.5/plexus-utils-2.0.5.jar</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.jar'>https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.jar</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.jar'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.jar</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.607Z]</span> Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.jar'>https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.jar</a>
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.858Z]</span> Progress (1): 2.7/223 kB
-Progress (2): 2.7/223 kB | 2.7/38 kB
-Progress (2): 5.5/223 kB | 2.7/38 kB
-Progress (2): 5.5/223 kB | 5.5/38 kB
-Progress (2): 8.2/223 kB | 5.5/38 kB
-Progress (2): 8.2/223 kB | 8.2/38 kB
-Progress (2): 11/223 kB | 8.2/38 kB
-Progress (2): 11/223 kB | 11/38 kB
-Progress (2): 14/223 kB | 11/38 kB
-Progress (2): 14/223 kB | 14/38 kB
-Progress (2): 16/223 kB | 14/38 kB
-Progress (2): 16/223 kB | 16/38 kB
-Progress (2): 19/223 kB | 16/38 kB
-Progress (2): 19/223 kB | 19/38 kB
-Progress (2): 22/223 kB | 19/38 kB
-Progress (2): 22/223 kB | 22/38 kB
-Progress (2): 25/223 kB | 22/38 kB
-Progress (2): 25/223 kB | 25/38 kB
-Progress (2): 27/223 kB | 25/38 kB
-Progress (2): 27/223 kB | 27/38 kB
-Progress (2): 30/223 kB | 27/38 kB
-Progress (2): 30/223 kB | 30/38 kB
-Progress (2): 33/223 kB | 30/38 kB
-Progress (2): 33/223 kB | 33/38 kB
-Progress (2): 36/223 kB | 33/38 kB
-Progress (2): 36/223 kB | 36/38 kB
-Progress (2): 38/223 kB | 36/38 kB
-Progress (2): 38/223 kB | 38 kB
-Progress (2): 41/223 kB | 38 kB
-Progress (2): 44/223 kB | 38 kB
-Progress (2): 47/223 kB | 38 kB
-Progress (2): 49/223 kB | 38 kB
-Progress (2): 52/223 kB | 38 kB
-Progress (2): 55/223 kB | 38 kB
-Progress (2): 58/223 kB | 38 kB
-Progress (2): 60/223 kB | 38 kB
-Progress (2): 63/223 kB | 38 kB
-Progress (2): 66/223 kB | 38 kB
-Progress (2): 69/223 kB | 38 kB
-Progress (2): 71/223 kB | 38 kB
-Progress (2): 74/223 kB | 38 kB
-Progress (2): 77/223 kB | 38 kB
-Progress (2): 80/223 kB | 38 kB
-Progress (2): 82/223 kB | 38 kB
-Progress (2): 85/223 kB | 38 kB
-Progress (2): 88/223 kB | 38 kB
-Progress (2): 90/223 kB | 38 kB
-Progress (2): 93/223 kB | 38 kB
-Progress (2): 96/223 kB | 38 kB
-Progress (2): 99/223 kB | 38 kB
-Progress (2): 101/223 kB | 38 kB
-Progress (2): 104/223 kB | 38 kB
-Progress (2): 107/223 kB | 38 kB
-Progress (2): 110/223 kB | 38 kB
-Progress (2): 112/223 kB | 38 kB
-Progress (2): 115/223 kB | 38 kB
-Progress (2): 118/223 kB | 38 kB
-Progress (2): 121/223 kB | 38 kB
-Progress (2): 123/223 kB | 38 kB
-Progress (2): 126/223 kB | 38 kB
-Progress (2): 129/223 kB | 38 kB
-Progress (2): 132/223 kB | 38 kB
-Progress (2): 134/223 kB | 38 kB
-Progress (2): 137/223 kB | 38 kB
-Progress (2): 140/223 kB | 38 kB
-Progress (2): 143/223 kB | 38 kB
-Progress (2): 145/223 kB | 38 kB
-Progress (2): 148/223 kB | 38 kB
-Progress (2): 151/223 kB | 38 kB
-Progress (2): 154/223 kB | 38 kB
-Progress (2): 156/223 kB | 38 kB
-Progress (2): 159/223 kB | 38 kB
-Progress (2): 162/223 kB | 38 kB
-Progress (2): 165/223 kB | 38 kB
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1/classworlds-1.1.jar'>https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1/classworlds-1.1.jar</a> (38 kB at 574 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.858Z]</span> Progress (1): 167/223 kB
-Progress (1): 170/223 kB
-Progress (1): 173/223 kB
-Progress (1): 175/223 kB
-Progress (1): 178/223 kB
-Progress (1): 181/223 kB
-Progress (1): 184/223 kB
-Progress (1): 186/223 kB
-Progress (1): 189/223 kB
-Progress (1): 192/223 kB
-Progress (1): 195/223 kB
-Progress (1): 197/223 kB
-Progress (1): 200/223 kB
-Progress (1): 203/223 kB
-Progress (1): 206/223 kB
-Progress (1): 208/223 kB
-Progress (1): 211/223 kB
-Progress (1): 214/223 kB
-Progress (1): 217/223 kB
-Progress (1): 219/223 kB
-Progress (1): 222/223 kB
-Progress (1): 223 kB
-Progress (2): 223 kB | 2.7/43 kB
-Progress (2): 223 kB | 5.5/43 kB
-Progress (2): 223 kB | 8.2/43 kB
-Progress (2): 223 kB | 11/43 kB
-Progress (2): 223 kB | 14/43 kB
-Progress (2): 223 kB | 16/43 kB
-Progress (2): 223 kB | 19/43 kB
-Progress (2): 223 kB | 22/43 kB
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.5/plexus-utils-2.0.5.jar'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.5/plexus-utils-2.0.5.jar</a> (223 kB at 2.4 MB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.858Z]</span> Progress (1): 25/43 kB
-Progress (1): 27/43 kB
-Progress (1): 30/43 kB
-Progress (1): 33/43 kB
-Progress (1): 36/43 kB
-Progress (1): 38/43 kB
-Progress (1): 41/43 kB
-Progress (1): 43 kB
-Progress (2): 43 kB | 2.7/6.8 kB
-Progress (2): 43 kB | 5.5/6.8 kB
-Progress (2): 43 kB | 6.8 kB
-Progress (3): 43 kB | 6.8 kB | 2.7/61 kB
-Progress (3): 43 kB | 6.8 kB | 5.5/61 kB
-Progress (3): 43 kB | 6.8 kB | 8.2/61 kB
-Progress (3): 43 kB | 6.8 kB | 11/61 kB
-Progress (3): 43 kB | 6.8 kB | 14/61 kB
-Progress (3): 43 kB | 6.8 kB | 16/61 kB
-Progress (3): 43 kB | 6.8 kB | 19/61 kB
-Progress (3): 43 kB | 6.8 kB | 22/61 kB
-Progress (3): 43 kB | 6.8 kB | 25/61 kB
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.jar'>https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.jar</a> (43 kB at 365 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.858Z]</span> Progress (2): 6.8 kB | 27/61 kB
-Progress (2): 6.8 kB | 30/61 kB
-Progress (2): 6.8 kB | 33/61 kB
-Progress (2): 6.8 kB | 36/61 kB
-Progress (2): 6.8 kB | 38/61 kB
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.jar'>https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.jar</a> (6.8 kB at 54 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.858Z]</span> Progress (1): 41/61 kB
-Progress (1): 44/61 kB
-Progress (1): 47/61 kB
-Progress (1): 49/61 kB
-Progress (1): 52/61 kB
-Progress (1): 55/61 kB
-Progress (1): 58/61 kB
-Progress (1): 60/61 kB
-Progress (1): 61 kB
-
-Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.jar'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.jar</a> (61 kB at 424 kB/s)
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.858Z]</span> [[1;34mINFO[m] Using 'UTF-8' encoding to copy filtered resources.
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.858Z]</span> [[1;34mINFO[m] skip non existing resourceDirectory /var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP/src/main/resources
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.858Z]</span> [[1;34mINFO[m]
-<span class="timestamp"><b>2021-01-02T10:50:27&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:27.858Z]</span> [[1;34mINFO[m] [1m--- [0;32mmaven-compiler-plugin:3.8.1:compile[m [1m(default-compile)[m @ [36mProgramming-Exercise-1-Tests[0;1m ---[m
-<span class="timestamp"><b>2021-01-02T10:50:28&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:28.108Z]</span> [[1;34mINFO[m] Changes detected - recompiling the module!
-<span class="timestamp"><b>2021-01-02T10:50:28&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:28.108Z]</span> [[1;34mINFO[m] Compiling 3 source files to /var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP/target/classes
-<span class="timestamp"><b>2021-01-02T10:50:28&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:28.659Z]</span> [[1;34mINFO[m]
-<span class="timestamp"><b>2021-01-02T10:50:28&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:28.659Z]</span> [[1;34mINFO[m] [1m--- [0;32mmaven-resources-plugin:2.6:testResources[m [1m(default-testResources)[m @ [36mProgramming-Exercise-1-Tests[0;1m ---[m
-<span class="timestamp"><b>2021-01-02T10:50:28&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:28.659Z]</span> [[1;34mINFO[m] Using 'UTF-8' encoding to copy filtered resources.
-<span class="timestamp"><b>2021-01-02T10:50:28&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:28.659Z]</span> [[1;34mINFO[m] Copying 6 resources
-<span class="timestamp"><b>2021-01-02T10:50:28&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:28.659Z]</span> [[1;34mINFO[m]
-<span class="timestamp"><b>2021-01-02T10:50:28&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:28.659Z]</span> [[1;34mINFO[m] [1m--- [0;32mmaven-compiler-plugin:3.8.1:testCompile[m [1m(default-testCompile)[m @ [36mProgramming-Exercise-1-Tests[0;1m ---[m
-<span class="timestamp"><b>2021-01-02T10:50:28&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:28.659Z]</span> [[1;34mINFO[m] Changes detected - recompiling the module!
-<span class="timestamp"><b>2021-01-02T10:50:28&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:28.659Z]</span> [[1;34mINFO[m] Compiling 5 source files to /var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP/target/test-classes
-<span class="timestamp"><b>2021-01-02T10:50:28&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:28.659Z]</span> [[1;34mINFO[m]
-<span class="timestamp"><b>2021-01-02T10:50:28&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:28.659Z]</span> [[1;34mINFO[m] [1m--- [0;32mmaven-surefire-plugin:3.0.0-M5:test[m [1m(default-test)[m @ [36mProgramming-Exercise-1-Tests[0;1m ---[m
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.210Z]</span> [[1;34mINFO[m]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.210Z]</span> [[1;34mINFO[m] -------------------------------------------------------
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.210Z]</span> [[1;34mINFO[m]  T E S T S
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.210Z]</span> [[1;34mINFO[m] -------------------------------------------------------
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.210Z]</span> [[1;31mERROR[m] Picked up JAVA_TOOL_OPTIONS: -Dmaven.ext.class.path="/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP@tmp/withMaven6744e786/pipeline-maven-spy.jar" -Dorg.jenkinsci.plugins.pipeline.maven.reportsFolder="/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP@tmp/withMaven6744e786"
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.461Z]</span> [[1;34mINFO[m] Running com.pe1.[1mConstructorTest[m
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.711Z]</span> [[1;31mERROR[m] WARNING: An illegal reflective access operation has occurred
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.711Z]</span> [[1;31mERROR[m] WARNING: Illegal reflective access using Lookup on de.tum.in.test.api.internal.sanitization.ExceptionInInitializerErrorSanitizer (file:/root/.m2/repository/de/tum/in/ase/artemis-java-test-sandbox/1.4.4/artemis-java-test-sandbox-1.4.4.jar) to class java.lang.ExceptionInInitializerError
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.711Z]</span> [[1;31mERROR[m] WARNING: Please consider reporting this to the maintainers of de.tum.in.test.api.internal.sanitization.ExceptionInInitializerErrorSanitizer
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.711Z]</span> [[1;31mERROR[m] WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.711Z]</span> [[1;31mERROR[m] WARNING: All illegal access operations will be denied in a future release
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.711Z]</span> LOGBACK: No context given for de.tum.in.test.api.security.FixSystemErrAppender[null]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.711Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional.empty, executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.711Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.711Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public org.junit.jupiter.api.DynamicContainer com.pe1.ConstructorTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.711Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-1,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.711Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-1,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.711Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.711Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public org.junit.jupiter.api.DynamicContainer com.pe1.ConstructorTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.712Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-2,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.712Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-2,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.712Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.712Z]</span> [[1;31mERROR[m] [1;31mTests [0;1mrun: [0;1m1[m, [1;31mFailures: [0;1;31m1[m, Errors: 0, Skipped: 0, Time elapsed: 0.328 s[1;31m &lt;&lt;&lt; FAILURE![m - in com.pe1.[1mConstructorTest[m
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.712Z]</span> [[1;31mERROR[m] com.pe1.ConstructorTest.testConstructors[Policy]  Time elapsed: 0.053 s  &lt;&lt;&lt; FAILURE!
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.712Z]</span> org.opentest4j.AssertionFailedError: The exercise expects a class with the name Policy in the package com.pe1. You did not implement the class in the exercise.
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.712Z]</span>
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.712Z]</span> [[1;34mINFO[m] Running com.pe1.[1mSortingExampleBehaviorTest[m
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional.empty, executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public void com.pe1.SortingExampleBehaviorTest.testMergeSort()], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-3,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-3,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public void com.pe1.SortingExampleBehaviorTest.testMergeSort()], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-4,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-4,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional.empty, executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public void com.pe1.SortingExampleBehaviorTest.testUseBubbleSortForSmallList() throws java.lang.IllegalAccessException,java.lang.IllegalArgumentException,java.lang.reflect.InvocationTargetException,java.lang.NoSuchMethodException,java.lang.SecurityException,java.lang.InstantiationException,java.lang.ClassNotFoundException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-5,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-5,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public void com.pe1.SortingExampleBehaviorTest.testUseBubbleSortForSmallList() throws java.lang.IllegalAccessException,java.lang.IllegalArgumentException,java.lang.reflect.InvocationTargetException,java.lang.NoSuchMethodException,java.lang.SecurityException,java.lang.InstantiationException,java.lang.ClassNotFoundException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-6,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-6,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional.empty, executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public void com.pe1.SortingExampleBehaviorTest.testBubbleSort()], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-7,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-7,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public void com.pe1.SortingExampleBehaviorTest.testBubbleSort()], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-8,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-8,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional.empty, executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public void com.pe1.SortingExampleBehaviorTest.testUseMergeSortForBigList() throws java.lang.IllegalAccessException,java.lang.IllegalArgumentException,java.lang.reflect.InvocationTargetException,java.lang.NoSuchMethodException,java.lang.SecurityException,java.lang.InstantiationException,java.lang.ClassNotFoundException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-9,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-9,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.962Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public void com.pe1.SortingExampleBehaviorTest.testUseMergeSortForBigList() throws java.lang.IllegalAccessException,java.lang.IllegalArgumentException,java.lang.reflect.InvocationTargetException,java.lang.NoSuchMethodException,java.lang.SecurityException,java.lang.InstantiationException,java.lang.ClassNotFoundException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-10,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-10,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [[1;31mERROR[m] [1;31mTests [0;1mrun: [0;1m4[m, [1;31mFailures: [0;1;31m4[m, Errors: 0, Skipped: 0, Time elapsed: 0.194 s[1;31m &lt;&lt;&lt; FAILURE![m - in com.pe1.[1mSortingExampleBehaviorTest[m
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [[1;31mERROR[m] com.pe1.SortingExampleBehaviorTest.testMergeSort  Time elapsed: 0.039 s  &lt;&lt;&lt; FAILURE!
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> org.opentest4j.AssertionFailedError: MergeSort does not sort correctly
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> 	at com.pe1.SortingExampleBehaviorTest.testMergeSort(SortingExampleBehaviorTest.java:58)
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span>
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [[1;31mERROR[m] com.pe1.SortingExampleBehaviorTest.testUseBubbleSortForSmallList  Time elapsed: 0.031 s  &lt;&lt;&lt; FAILURE!
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> org.opentest4j.AssertionFailedError: The class 'Context' was not found within the submission. Make sure to implement it properly.
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> 	at com.pe1.SortingExampleBehaviorTest.configurePolicyAndContext(SortingExampleBehaviorTest.java:90)
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> 	at com.pe1.SortingExampleBehaviorTest.testUseBubbleSortForSmallList(SortingExampleBehaviorTest.java:82)
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span>
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [[1;31mERROR[m] com.pe1.SortingExampleBehaviorTest.testBubbleSort  Time elapsed: 0.032 s  &lt;&lt;&lt; FAILURE!
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> org.opentest4j.AssertionFailedError: BubbleSort does not sort correctly
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> 	at com.pe1.SortingExampleBehaviorTest.testBubbleSort(SortingExampleBehaviorTest.java:48)
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span>
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [[1;31mERROR[m] com.pe1.SortingExampleBehaviorTest.testUseMergeSortForBigList  Time elapsed: 0.03 s  &lt;&lt;&lt; FAILURE!
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> org.opentest4j.AssertionFailedError: The class 'Context' was not found within the submission. Make sure to implement it properly.
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> 	at com.pe1.SortingExampleBehaviorTest.configurePolicyAndContext(SortingExampleBehaviorTest.java:90)
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> 	at com.pe1.SortingExampleBehaviorTest.testUseMergeSortForBigList(SortingExampleBehaviorTest.java:69)
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span>
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [[1;34mINFO[m] Running com.pe1.[1mMethodTest[m
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional.empty, executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public org.junit.jupiter.api.DynamicContainer com.pe1.MethodTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-11,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-11,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public org.junit.jupiter.api.DynamicContainer com.pe1.MethodTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-12,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-12,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public org.junit.jupiter.api.DynamicContainer com.pe1.MethodTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-13,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-13,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:29&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:29.963Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.213Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public org.junit.jupiter.api.DynamicContainer com.pe1.MethodTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.213Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-14,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.213Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-14,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.213Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.213Z]</span> [[1;31mERROR[m] [1;31mTests [0;1mrun: [0;1m3[m, [1;31mFailures: [0;1;31m3[m, Errors: 0, Skipped: 0, Time elapsed: 0.091 s[1;31m &lt;&lt;&lt; FAILURE![m - in com.pe1.[1mMethodTest[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.213Z]</span> [[1;31mERROR[m] com.pe1.MethodTest.testMethods[Context]  Time elapsed: 0.02 s  &lt;&lt;&lt; FAILURE!
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.213Z]</span> org.opentest4j.AssertionFailedError: The exercise expects a class with the name Context in the package com.pe1. You did not implement the class in the exercise.
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.213Z]</span>
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.213Z]</span> [[1;31mERROR[m] com.pe1.MethodTest.testMethods[Policy]  Time elapsed: 0.019 s  &lt;&lt;&lt; FAILURE!
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.213Z]</span> org.opentest4j.AssertionFailedError: The exercise expects a class with the name Policy in the package com.pe1. You did not implement the class in the exercise.
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.213Z]</span>
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.213Z]</span> [[1;31mERROR[m] com.pe1.MethodTest.testMethods[SortStrategy]  Time elapsed: 0.02 s  &lt;&lt;&lt; FAILURE!
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.213Z]</span> org.opentest4j.AssertionFailedError: The exercise expects a class with the name SortStrategy in the package com.pe1. You did not implement the class in the exercise.
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.213Z]</span>
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.213Z]</span> [[1;34mINFO[m] Running com.pe1.[1mClassTest[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional.empty, executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public org.junit.jupiter.api.DynamicContainer com.pe1.ClassTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-15,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-15,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public org.junit.jupiter.api.DynamicContainer com.pe1.ClassTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-16,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-16,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public org.junit.jupiter.api.DynamicContainer com.pe1.ClassTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-17,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-17,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public org.junit.jupiter.api.DynamicContainer com.pe1.ClassTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-18,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-18,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] [1;31mTests [0;1mrun: [0;1m3[m, [1;31mFailures: [0;1;31m3[m, Errors: 0, Skipped: 0, Time elapsed: 0.096 s[1;31m &lt;&lt;&lt; FAILURE![m - in com.pe1.[1mClassTest[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] com.pe1.ClassTest.testClass[MergeSort]  Time elapsed: 0.021 s  &lt;&lt;&lt; FAILURE!
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> org.opentest4j.AssertionFailedError: The class 'MergeSort' does not implement the interface 'SortStrategy' as expected. Implement the interface and its methods.
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span>
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] com.pe1.ClassTest.testClass[SortStrategy]  Time elapsed: 0.02 s  &lt;&lt;&lt; FAILURE!
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> org.opentest4j.AssertionFailedError: The exercise expects a class with the name SortStrategy in the package com.pe1. You did not implement the class in the exercise.
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span>
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] com.pe1.ClassTest.testClass[BubbleSort]  Time elapsed: 0.019 s  &lt;&lt;&lt; FAILURE!
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> org.opentest4j.AssertionFailedError: The class 'BubbleSort' does not implement the interface 'SortStrategy' as expected. Implement the interface and its methods.
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span>
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;34mINFO[m] Running com.pe1.[1mAttributeTest[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional.empty, executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public org.junit.jupiter.api.DynamicContainer com.pe1.AttributeTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-19,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-19,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public org.junit.jupiter.api.DynamicContainer com.pe1.AttributeTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-20,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-20,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request install with ASC-Impl [testMethod=Optional[public org.junit.jupiter.api.DynamicContainer com.pe1.AttributeTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["**Test*.{java,class}" (GLOB) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request whitelisting: Thread[ajts-to-21,5,Test-Threadgroup] []
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Thread whitelisted: Thread[ajts-to-21,5,Test-Threadgroup]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [INFO] [main] Request uninstall
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] [1;31mTests [0;1mrun: [0;1m2[m, [1;31mFailures: [0;1;31m2[m, Errors: 0, Skipped: 0, Time elapsed: 0.073 s[1;31m &lt;&lt;&lt; FAILURE![m - in com.pe1.[1mAttributeTest[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] com.pe1.AttributeTest.testAttributes[Context]  Time elapsed: 0.02 s  &lt;&lt;&lt; FAILURE!
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> org.opentest4j.AssertionFailedError: The exercise expects a class with the name Context in the package com.pe1. You did not implement the class in the exercise.
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span>
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] com.pe1.AttributeTest.testAttributes[Policy]  Time elapsed: 0.019 s  &lt;&lt;&lt; FAILURE!
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> org.opentest4j.AssertionFailedError: The exercise expects a class with the name Policy in the package com.pe1. You did not implement the class in the exercise.
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span>
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;34mINFO[m]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;34mINFO[m] Results:
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;34mINFO[m]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] [1;31mFailures: [m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] [1;31m  AttributeTest&gt;AttributeTestProvider.lambda$generateTestsForAllClasses$0:55-&gt;AttributeTestProvider.testAttributes:78-&gt;StructuralTestProvider.findClassForTestType:112 The exercise expects a class with the name Context in the package com.pe1. You did not implement the class in the exercise.[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] [1;31m  AttributeTest&gt;AttributeTestProvider.lambda$generateTestsForAllClasses$0:55-&gt;AttributeTestProvider.testAttributes:78-&gt;StructuralTestProvider.findClassForTestType:112 The exercise expects a class with the name Policy in the package com.pe1. You did not implement the class in the exercise.[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] [1;31m  ClassTest&gt;ClassTestProvider.lambda$generateTestsForAllClasses$0:60-&gt;ClassTestProvider.testClass:98-&gt;ClassTestProvider.checkInterfaces:156 The class 'BubbleSort' does not implement the interface 'SortStrategy' as expected. Implement the interface and its methods.[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] [1;31m  ClassTest&gt;ClassTestProvider.lambda$generateTestsForAllClasses$0:60-&gt;ClassTestProvider.testClass:98-&gt;ClassTestProvider.checkInterfaces:156 The class 'MergeSort' does not implement the interface 'SortStrategy' as expected. Implement the interface and its methods.[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] [1;31m  ClassTest&gt;ClassTestProvider.lambda$generateTestsForAllClasses$0:60-&gt;ClassTestProvider.testClass:90-&gt;StructuralTestProvider.findClassForTestType:112 The exercise expects a class with the name SortStrategy in the package com.pe1. You did not implement the class in the exercise.[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] [1;31m  ConstructorTest&gt;ConstructorTestProvider.lambda$generateTestsForAllClasses$0:58-&gt;ConstructorTestProvider.testConstructors:81-&gt;StructuralTestProvider.findClassForTestType:112 The exercise expects a class with the name Policy in the package com.pe1. You did not implement the class in the exercise.[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] [1;31m  MethodTest&gt;MethodTestProvider.lambda$generateTestsForAllClasses$0:59-&gt;MethodTestProvider.testMethods:82-&gt;StructuralTestProvider.findClassForTestType:112 The exercise expects a class with the name Context in the package com.pe1. You did not implement the class in the exercise.[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.214Z]</span> [[1;31mERROR[m] [1;31m  MethodTest&gt;MethodTestProvider.lambda$generateTestsForAllClasses$0:59-&gt;MethodTestProvider.testMethods:82-&gt;StructuralTestProvider.findClassForTestType:112 The exercise expects a class with the name Policy in the package com.pe1. You did not implement the class in the exercise.[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m] [1;31m  MethodTest&gt;MethodTestProvider.lambda$generateTestsForAllClasses$0:59-&gt;MethodTestProvider.testMethods:82-&gt;StructuralTestProvider.findClassForTestType:112 The exercise expects a class with the name SortStrategy in the package com.pe1. You did not implement the class in the exercise.[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m] [1;31m  SortingExampleBehaviorTest.testBubbleSort:48 BubbleSort does not sort correctly[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m] [1;31m  SortingExampleBehaviorTest.testMergeSort:58 MergeSort does not sort correctly[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m] [1;31m  SortingExampleBehaviorTest.testUseBubbleSortForSmallList:82-&gt;configurePolicyAndContext:90 The class 'Context' was not found within the submission. Make sure to implement it properly.[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m] [1;31m  SortingExampleBehaviorTest.testUseMergeSortForBigList:69-&gt;configurePolicyAndContext:90 The class 'Context' was not found within the submission. Make sure to implement it properly.[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;34mINFO[m]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m] [1;31mTests run: 13, Failures: 13, Errors: 0, Skipped: 0[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;34mINFO[m]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;34mINFO[m] [1m------------------------------------------------------------------------[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;34mINFO[m] [1;31mBUILD FAILURE[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;34mINFO[m] [1m------------------------------------------------------------------------[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;34mINFO[m] Total time:  3.963 s
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;34mINFO[m] Finished at: 2021-01-02T09:50:30Z
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;34mINFO[m] [1m------------------------------------------------------------------------[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;34mINFO[m] [jenkins-event-spy] Generated /var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP@tmp/withMaven6744e786/maven-spy-20210102-095026-12011110173780244782543.log
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m] Failed to execute goal [32morg.apache.maven.plugins:maven-surefire-plugin:3.0.0-M5:test[m [1m(default-test)[m on project [36mProgramming-Exercise-1-Tests[m: [1;31mThere are test failures.[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m] [1;31m[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m] [1;31mPlease refer to /var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP/target/surefire-reports for the individual test results.[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m] [1;31mPlease refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.[m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m] -&gt; [1m[Help 1][m
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m] To see the full stack trace of the errors, re-run Maven with the [1m-e[m switch.
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m] Re-run Maven using the [1m-X[m switch to enable full debug logging.
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m]
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m] For more information about the errors and possible solutions, please read the following articles:
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.215Z]</span> [[1;31mERROR[m] [1m[Help 1][m <a href='http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException'>http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException</a>
-</span><span class="pipeline-new-node" nodeId="28" startId="26">[Pipeline] }
-</span><span class="pipeline-node-28"><span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.519Z]</span> [withMaven] junitPublisher - Archive test results for Maven artifact com.pe1:Programming-Exercise-1-Tests:jar:1.0 generated by maven-surefire-plugin:test (default-test): target/surefire-reports/*.xml
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.522Z]</span> [withMaven] junitPublisher - Jenkins <a href='https://wiki.jenkins-ci.org/display/JENKINS/JUnit+Attachments+Plugin'>JUnit Attachments Plugin</a> not found, can't publish test attachments.Recording test results
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.564Z]</span> [withMaven] Jenkins <a href='https://wiki.jenkins-ci.org/display/JENKINS/Task+Scanner+Plugin'>Task Scanner Plugin</a> not found, don't display results of source code scanning for 'TODO' and 'FIXME' in pipeline screen.
-<span class="timestamp"><b>2021-01-02T10:50:30&#43;01</b> </span><span style="display: none">[2021-01-02T09:50:30.564Z]</span> [withMaven] Publishers: Pipeline Graph Publisher: 2 ms, Junit Publisher: 44 ms
+</span><span class="pipeline-node-27"><span class="timestamp"><b>2021-01-07T17:36:20Z</b> </span><span style="display: none">[2021-01-07T17:36:20.779Z]</span> + mvn clean test -B
+<span class="timestamp"><b>2021-01-07T17:36:21Z</b> </span><span style="display: none">[2021-01-07T17:36:21.032Z]</span> Picked up JAVA_TOOL_OPTIONS: -Dmaven.ext.class.path="/var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP@tmp/withMaven61809989/pipeline-maven-spy.jar" -Dorg.jenkinsci.plugins.pipeline.maven.reportsFolder="/var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP@tmp/withMaven61809989"
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.375Z]</span> WARNING: An illegal reflective access operation has occurred
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.375Z]</span> WARNING: Illegal reflective access by com.google.inject.internal.cglib.core.$ReflectUtils$1 (file:/usr/share/maven/lib/guice.jar) to method java.lang.ClassLoader.defineClass(java.lang.String,byte[],int,int,java.security.ProtectionDomain)
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.375Z]</span> WARNING: Please consider reporting this to the maintainers of com.google.inject.internal.cglib.core.$ReflectUtils$1
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.375Z]</span> WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.375Z]</span> WARNING: All illegal access operations will be denied in a future release
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.375Z]</span> [INFO] [jenkins-event-spy] Generate /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP@tmp/withMaven61809989/maven-spy-20210107-173622-242365886583382781618.log.tmp ...
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.625Z]</span> [INFO] Scanning for projects...
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.625Z]</span> [INFO]
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.625Z]</span> [INFO] ----------------&lt; com.pe2:Programming-Exercise-2-Tests &gt;----------------
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.625Z]</span> [INFO] Building Programming Exercise 2 Tests 1.0
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.625Z]</span> [INFO] --------------------------------[ jar ]---------------------------------
+<span class="timestamp"><b>2021-01-07T17:36:22Z</b> </span><span style="display: none">[2021-01-07T17:36:22.876Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.pom'>https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.426Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.pom'>https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.pom</a> (8.1 kB at 22 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.426Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.jar'>https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.426Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.jar'>https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.jar</a> (30 kB at 339 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.677Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar'>https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.677Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/json/json/20201115/json-20201115.jar'>https://repo.maven.apache.org/maven2/org/json/json/20201115/json-20201115.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.677Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar'>https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar</a> (41 kB at 749 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.677Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/json/json/20201115/json-20201115.jar'>https://repo.maven.apache.org/maven2/org/json/json/20201115/json-20201115.jar</a> (69 kB at 667 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.677Z]</span> [INFO]
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-0<b class=maven-mojo>1-07T17:36:23.677Z]</span> [INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ Programming-Exercise-2-Tests ---
+    </b><span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.677Z]</span> [INFO]
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-0<b class=maven-mojo>1-07T17:36:23.677Z]</span> [INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ Programming-Exercise-2-Tests ---
+    </b><span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.677Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.pom'>https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.pom'>https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.pom</a> (5.8 kB at 156 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.12/plexus-interpolation-1.12.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.12/plexus-interpolation-1.12.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.12/plexus-interpolation-1.12.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.12/plexus-interpolation-1.12.pom</a> (889 B at 25 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.pom'>https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.pom'>https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.pom</a> (2.9 kB at 87 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/spice/spice-parent/10/spice-parent-10.pom'>https://repo.maven.apache.org/maven2/org/sonatype/spice/spice-parent/10/spice-parent-10.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/spice/spice-parent/10/spice-parent-10.pom'>https://repo.maven.apache.org/maven2/org/sonatype/spice/spice-parent/10/spice-parent-10.pom</a> (3.0 kB at 79 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/forge/forge-parent/3/forge-parent-3.pom'>https://repo.maven.apache.org/maven2/org/sonatype/forge/forge-parent/3/forge-parent-3.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/forge/forge-parent/3/forge-parent-3.pom'>https://repo.maven.apache.org/maven2/org/sonatype/forge/forge-parent/3/forge-parent-3.pom</a> (5.0 kB at 140 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.pom</a> (890 B at 26 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:23Z</b> </span><span style="display: none">[2021-01-07T17:36:23.927Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-components/1.1.15/plexus-components-1.1.15.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-components/1.1.15/plexus-components-1.1.15.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-components/1.1.15/plexus-components-1.1.15.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-components/1.1.15/plexus-components-1.1.15.pom</a> (2.8 kB at 66 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/2.0.3/plexus-2.0.3.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/2.0.3/plexus-2.0.3.pom</a>
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/2.0.3/plexus-2.0.3.pom'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/2.0.3/plexus-2.0.3.pom</a> (15 kB at 387 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1/classworlds-1.1.jar'>https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1/classworlds-1.1.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.jar'>https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.5/plexus-utils-2.0.5.jar'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.5/plexus-utils-2.0.5.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.jar'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloading from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.jar'>https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.jar</a>
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.jar'>https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/1.1/maven-filtering-1.1.jar</a> (43 kB at 798 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.jar'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interpolation/1.13/plexus-interpolation-1.13.jar</a> (61 kB at 1.0 MB/s)
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.jar'>https://repo.maven.apache.org/maven2/org/sonatype/plexus/plexus-build-api/0.0.4/plexus-build-api-0.0.4.jar</a> (6.8 kB at 48 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1/classworlds-1.1.jar'>https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1/classworlds-1.1.jar</a> (38 kB at 267 kB/s)
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.178Z]</span> [INFO] Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.5/plexus-utils-2.0.5.jar'>https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/2.0.5/plexus-utils-2.0.5.jar</a> (223 kB at 1.3 MB/s)
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.428Z]</span> [INFO] Using 'UTF-8' encoding to copy filtered resources.
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.428Z]</span> [INFO] skip non existing resourceDirectory /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/src/main/resources
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.428Z]</span> [INFO]
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-0<b class=maven-mojo>1-07T17:36:24.428Z]</span> [INFO] --- maven-compiler-plugin:3.8.1:compile (default-compile) @ Programming-Exercise-2-Tests ---
+    </b><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.428Z]</span> [INFO] Changes detected - recompiling the module!
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.429Z]</span> [INFO] Compiling 3 source files to /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/target/classes
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] -------------------------------------------------------------
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] COMPILATION ERROR :
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] -------------------------------------------------------------
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/assignment/src/com/pe2/BubbleSort.java:[15,18] ';' expected
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/assignment/src/com/pe2/BubbleSort.java:[15,33] ';' expected
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] 2 errors
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] -------------------------------------------------------------
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] ------------------------------------------------------------------------
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] BUILD FAILURE
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] ------------------------------------------------------------------------
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] Total time:  2.335 s
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] Finished at: 2021-01-07T17:36:24Z
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] ------------------------------------------------------------------------
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [INFO] [jenkins-event-spy] Generated /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP@tmp/withMaven61809989/maven-spy-20210107-173622-242365886583382781618.log
+<span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.8.1:compile (default-compile) on project Programming-Exercise-2-Tests: Compilation failure: Compilation failure:
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/assignment/src/com/pe2/BubbleSort.java:[15,18] ';' expected
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/assignment/src/com/pe2/BubbleSort.java:[15,33] ';' expected
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] -&gt; [Help 1]
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR]
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR] Re-run Maven using the -X switch to enable full debug logging.
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.979Z]</span> [ERROR]
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.980Z]</span> [ERROR] For more information about the errors and possible solutions, please read the following articles:
+</span><span class="timestamp"><b>2021-01-07T17:36:24Z</b> </span><span class=error-inline><span style="display: none">[2021-01-07T17:36:24.980Z]</span> [ERROR] [Help 1] <a href='http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException'>http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException</a>
+</span></span><span class="pipeline-new-node" nodeId="28" startId="26">[Pipeline] }
+</span><span class="pipeline-node-28"><span class="timestamp"><b>2021-01-07T17:36:25Z</b> </span><span style="display: none">[2021-01-07T17:36:25.038Z]</span> [withMaven] Jenkins <a href='https://wiki.jenkins-ci.org/display/JENKINS/Task+Scanner+Plugin'>Task Scanner Plugin</a> not found, don't display results of source code scanning for 'TODO' and 'FIXME' in pipeline screen.
+<span class="timestamp"><b>2021-01-07T17:36:25Z</b> </span><span style="display: none">[2021-01-07T17:36:25.038Z]</span> [withMaven] Publishers: Pipeline Graph Publisher: 2 ms, Generated Artifacts Publisher: 1 ms
 </span><span class="pipeline-new-node" nodeId="29" startId="25">[Pipeline] // withMaven
 </span><span class="pipeline-new-node" nodeId="30" startId="24">[Pipeline] }
 </span><span class="pipeline-new-node" nodeId="31" startId="23">[Pipeline] // timestamps
@@ -602,23 +179,55 @@ Downloaded from central: <a href='https://repo.maven.apache.org/maven2/org/codeh
 </span><span class="pipeline-new-node" nodeId="37" enclosingId="35">[Pipeline] sh
 </span><span class="pipeline-node-37">+ mkdir results
 </span><span class="pipeline-new-node" nodeId="38" enclosingId="35">[Pipeline] sh
-</span><span class="pipeline-node-38">+ cp target/surefire-reports/TEST-com.pe1.AttributeTest.xml target/surefire-reports/TEST-com.pe1.ClassTest.xml target/surefire-reports/TEST-com.pe1.ConstructorTest.xml target/surefire-reports/TEST-com.pe1.MethodTest.xml target/surefire-reports/TEST-com.pe1.SortingExampleBehaviorTest.xml /var/jenkins_home/workspace/CS1PE1/CS1PE1-ARTEMISADMINBACKUP/results/
+</span><span class="pipeline-node-38">+ cp target/surefire-reports/*.xml /var/jenkins_home/workspace/CS1PE2/CS1PE2-ARTEMISADMINBACKUP/results/
+cp: cannot stat 'target/surefire-reports/*.xml': No such file or directory
++ true
 </span><span class="pipeline-new-node" nodeId="39" enclosingId="35">[Pipeline] sendTestResults
-</span><span class="pipeline-node-39">ERROR: Sending test results failed (404) with response: {"status":404,"error":"Not Found"}
-</span><span class="pipeline-new-node" nodeId="40" enclosingId="35">[Pipeline] cleanWs
-</span><span class="pipeline-node-40">[WS-CLEANUP] Deleting project workspace...
-[WS-CLEANUP] Deferred wipeout is used...
-[WS-CLEANUP] done
-</span><span class="pipeline-new-node" nodeId="41" startId="35">[Pipeline] }
-</span><span class="pipeline-new-node" nodeId="42" startId="34">[Pipeline] // stage
-</span><span class="pipeline-new-node" nodeId="43" startId="10">[Pipeline] }
-</span><span class="pipeline-new-node" nodeId="44" startId="9">[Pipeline] // timeout
-</span><span class="pipeline-new-node" nodeId="45" startId="8">[Pipeline] }
-</span><span class="pipeline-node-45">$ docker stop --time=1 3068af53ab1ecc1fa611e143817471bcf0611cdb7b78d231fd0fedeff0e19771
-$ docker rm -f 3068af53ab1ecc1fa611e143817471bcf0611cdb7b78d231fd0fedeff0e19771
-</span><span class="pipeline-new-node" nodeId="46" startId="7">[Pipeline] // withDockerContainer
-</span><span class="pipeline-new-node" nodeId="47" startId="4">[Pipeline] }
-</span><span class="pipeline-new-node" nodeId="48" startId="3">[Pipeline] // node
-</span><span class="pipeline-new-node" nodeId="49" startId="2">[Pipeline] End of Pipeline
+</span>Error when executing cleanup post condition:
+java.net.ConnectException: Connection refused (Connection refused)
+at java.net.PlainSocketImpl.socketConnect(Native Method)
+at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:350)
+at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:206)
+at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:188)
+at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+at java.net.Socket.connect(Socket.java:607)
+at org.apache.http.conn.socket.PlainConnectionSocketFactory.connectSocket(PlainConnectionSocketFactory.java:75)
+at org.apache.http.impl.conn.DefaultHttpClientConnectionOperator.connect(DefaultHttpClientConnectionOperator.java:142)
+Caused: org.apache.http.conn.HttpHostConnectException: Connect to 172.17.0.1:8081 [/172.17.0.1] failed: Connection refused (Connection refused)
+at org.apache.http.impl.conn.DefaultHttpClientConnectionOperator.connect(DefaultHttpClientConnectionOperator.java:156)
+at org.apache.http.impl.conn.PoolingHttpClientConnectionManager.connect(PoolingHttpClientConnectionManager.java:374)
+at org.apache.http.impl.execchain.MainClientExec.establishRoute(MainClientExec.java:393)
+at org.apache.http.impl.execchain.MainClientExec.execute(MainClientExec.java:236)
+at org.apache.http.impl.execchain.ProtocolExec.execute(ProtocolExec.java:186)
+at org.apache.http.impl.execchain.RetryExec.execute(RetryExec.java:89)
+at org.apache.http.impl.execchain.RedirectExec.execute(RedirectExec.java:110)
+at org.apache.http.impl.client.InternalHttpClient.doExecute(InternalHttpClient.java:185)
+at org.apache.http.impl.client.CloseableHttpClient.execute(CloseableHttpClient.java:83)
+at org.apache.http.impl.client.CloseableHttpClient.execute(CloseableHttpClient.java:56)
+at org.apache.http.client.fluent.Request.internalExecute(Request.java:173)
+at org.apache.http.client.fluent.Request.execute(Request.java:177)
+at de.tum.in.www1.jenkins.notifications.HttpHelper.postTestResults(HttpHelper.java:23)
+at de.tum.in.www1.jenkins.notifications.SendTestResultsNotificationPostBuildTask.perform(SendTestResultsNotificationPostBuildTask.java:81)
+at jenkins.tasks.SimpleBuildStep.perform(SimpleBuildStep.java:123)
+at org.jenkinsci.plugins.workflow.steps.CoreStep$Execution.run(CoreStep.java:116)
+at org.jenkinsci.plugins.workflow.steps.CoreStep$Execution.run(CoreStep.java:71)
+at org.jenkinsci.plugins.workflow.steps.SynchronousNonBlockingStepExecution.lambda$start$0(SynchronousNonBlockingStepExecution.java:47)
+at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+at java.lang.Thread.run(Thread.java:748)
+
+<span class="pipeline-new-node" nodeId="40" startId="35">[Pipeline] }
+</span><span class="pipeline-new-node" nodeId="41" startId="34">[Pipeline] // stage
+</span><span class="pipeline-new-node" nodeId="42" startId="10">[Pipeline] }
+</span><span class="pipeline-new-node" nodeId="43" startId="9">[Pipeline] // timeout
+</span><span class="pipeline-new-node" nodeId="44" startId="8">[Pipeline] }
+</span><span class="pipeline-node-44">$ docker stop --time=1 20d9ad9aa70f915d5ae65b40f26ef9d09ce791487244b21de45ace935f309b81
+$ docker rm -f 20d9ad9aa70f915d5ae65b40f26ef9d09ce791487244b21de45ace935f309b81
+</span><span class="pipeline-new-node" nodeId="45" startId="7">[Pipeline] // withDockerContainer
+</span><span class="pipeline-new-node" nodeId="46" startId="4">[Pipeline] }
+</span><span class="pipeline-new-node" nodeId="47" startId="3">[Pipeline] // node
+</span><span class="pipeline-new-node" nodeId="48" startId="2">[Pipeline] End of Pipeline
 </span>ERROR: script returned exit code 1
 Finished: FAILURE

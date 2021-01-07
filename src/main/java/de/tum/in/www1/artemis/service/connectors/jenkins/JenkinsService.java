@@ -596,11 +596,6 @@ public class JenkinsService implements ContinuousIntegrationService {
                             }
                             log = reduceToText(contentCandidate);
 
-                            // There are color codes in the logs that need to be filtered out.
-                            // For example:[[1;34mINFO[m] is changed to [INFO]
-                            log = log.replace("\u001B[1;34m", "");
-                            log = log.replace("\u001B[m", "");
-                            log = log.replace("\u001B[1;31m", "");
                             buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log).trim()));
                         }
                         else {
