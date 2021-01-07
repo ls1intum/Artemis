@@ -392,8 +392,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * The error must already be provided translated by the emitting component.
      */
     onError(error: string) {
-        // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-        this.jhiAlertService.error(error);
+        this.jhiAlertService.error('xx test error' + error);
         this.saveBusy = this.cancelBusy = this.submitBusy = this.nextSubmissionBusy = false;
     }
 
