@@ -39,7 +39,6 @@ export class AlertComponent implements OnInit, OnDestroy {
                     }
                     // Sent a sentry warning with the translation key
                     Sentry.captureException(new Error('Unknown translation key: ' + alert.msg));
-                    Sentry.captureMessage('Unknown translation key: ' + alert.msg);
                 }
             });
         }
