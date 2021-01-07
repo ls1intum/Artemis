@@ -20,7 +20,7 @@ export class NewStudentParticipationResolver implements Resolve<number | undefin
         const exerciseId = Number(route.paramMap.get('exerciseId'));
 
         if (exerciseId) {
-            return this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(exerciseId, true).pipe(
+            return this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true).pipe(
                 map((submission) => submission.participation!.id!),
                 catchError((error) => {
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {

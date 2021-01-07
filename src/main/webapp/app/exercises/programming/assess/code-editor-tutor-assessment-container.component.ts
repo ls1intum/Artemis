@@ -296,7 +296,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
-        this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exercise.id!, true).subscribe(
+        this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true).subscribe(
             (response: ProgrammingSubmission) => {
                 const unassessedSubmission = response;
                 this.router.onSameUrlNavigation = 'reload';
