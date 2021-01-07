@@ -149,7 +149,7 @@ public class ProgrammingExerciseResultTestService {
 
     public void shouldSaveBuildLogsInBuildLogRepository(Object resultNotification) {
         buildLogEntryRepository.deleteAll();
-        final var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 
         var savedBuildLogs = buildLogEntryRepository.findAll();
         var expectedBuildLogs = getNumberOfBuildLogs(resultNotification);

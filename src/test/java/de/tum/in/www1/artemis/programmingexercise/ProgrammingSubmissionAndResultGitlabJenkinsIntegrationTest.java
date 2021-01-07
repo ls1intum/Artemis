@@ -73,8 +73,6 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     @Autowired
     BuildLogEntryRepository buildLogEntryRepository;
 
-    private Long exerciseId;
-
     private ProgrammingExercise exercise;
 
     @BeforeEach
@@ -89,7 +87,6 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         database.addStudentParticipationForProgrammingExercise(exercise, "student2");
 
-        exerciseId = exercise.getId();
         exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
     }
 
@@ -117,7 +114,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         // Call programming-exercises/new-result which do not include build log entries yet
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage);
-        postResult(participation.getBuildPlanId(), notification, HttpStatus.OK, false);
+        postResult(notification, HttpStatus.OK, false);
 
         var result = assertBuildError(participation.getId(), userLogin);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
@@ -134,7 +131,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         // Call programming-exercises/new-result which do not include build log entries yet
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage);
-        postResult(participation.getBuildPlanId(), notification, HttpStatus.OK, false);
+        postResult(notification, HttpStatus.OK, false);
 
         assertBuildError(participation.getId(), userLogin);
     }
@@ -182,7 +179,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         return result;
     }
 
-    private void postResult(String loginName, TestResultsDTO requestBodyMap, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
+    private void postResult(TestResultsDTO requestBodyMap, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
         if (additionalCommit) {
             var newCommit = new CommitDTO();
             newCommit.setHash("90b6af5650c30d35a0836fd58c677f8980e1df27");
