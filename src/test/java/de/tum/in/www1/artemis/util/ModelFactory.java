@@ -772,7 +772,8 @@ public class ModelFactory {
      * @param programmingLanguage programming language to use
      * @return TestResultDTO with dummy data
      */
-    public static TestResultsDTO generateTestResultDTO(String repoName, List<String> successfulTestNames, List<String> failedTestNames, ProgrammingLanguage programmingLanguage) {
+    public static TestResultsDTO generateTestResultDTO(String repoName, List<String> successfulTestNames, List<String> failedTestNames, ProgrammingLanguage programmingLanguage,
+            boolean enableStaticAnalysisReports) {
         var notification = new TestResultsDTO();
 
         var testSuite = new TestsuiteDTO();
@@ -802,11 +803,13 @@ public class ModelFactory {
         commitDTO.setHash(TestConstants.COMMIT_HASH_STRING);
         commitDTO.setRepositorySlug(repoName);
 
-        var reports = generateStaticCodeAnalysisReports(programmingLanguage);
+        if (enableStaticAnalysisReports) {
+            var reports = generateStaticCodeAnalysisReports(programmingLanguage);
+            notification.setStaticCodeAnalysisReports(reports);
+        }
 
         notification.setCommits(List.of(commitDTO));
         notification.setResults(List.of(testSuite));
-        notification.setStaticCodeAnalysisReports(reports);
         notification.setSuccessful(successfulTestNames.size());
         notification.setFailures(failedTestNames.size());
         notification.setRunDate(ZonedDateTime.now());
