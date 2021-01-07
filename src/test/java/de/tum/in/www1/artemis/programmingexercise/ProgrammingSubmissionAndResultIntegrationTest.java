@@ -469,10 +469,11 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @ParameterizedTest
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
     void shouldSaveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
-        // Precondition: Database has participation and a programming submission.
+        // Precondition: Database has participation and a programming submission but no result.
+        String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         var submission = database.createProgrammingSubmission(participation, false);
 
         // Call programming-exercises/new-result which include build log entries
@@ -482,47 +483,53 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         buildLog.setUnstyledLog("[ERROR] COMPILATION ERROR missing something");
         postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
 
-        var result = assertBuildError(participation.getId());
+        var result = assertBuildError(participation.getId(), userLogin);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
     }
 
     @ParameterizedTest
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
     void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
+        // Precondition: Database has participation without result and a programming submission.
+        String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
-
-        // Precondition: Database has participation without result and a programming submission.
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which includes build log entries
         postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
 
-        assertBuildError(participation.getId());
+        assertBuildError(participation.getId(), userLogin);
     }
 
-    private Result assertBuildError(Long participationId) {
+    private Result assertBuildError(Long participationId, String userLogin) throws Exception {
         SecurityUtils.setAuthorizationObject();
 
         // Assert that result linked to the participation
         var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results.size()).isEqualTo(1);
         var result = results.get(0);
-        assertThat(!result.getHasFeedback());
-        assertThat(!result.isSuccessful());
+        assertThat(result.getHasFeedback()).isFalse();
+        assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getScore()).isEqualTo(0);
         assertThat(result.getResultString()).isEqualTo("No tests found");
 
         // Assert that the submission linked to the participation
         var submission = (ProgrammingSubmission) result.getSubmission();
         assertThat(submission).isNotNull();
-        assertThat(submission.isBuildFailed());
+        assertThat(submission.isBuildFailed()).isTrue();
         var submissionWithLogsOptional = submissionRepository.findWithEagerBuildLogEntriesById(submission.getId());
 
         // Assert that build logs have been saved in the build log repository.
         assertThat(submissionWithLogsOptional).isPresent();
         var submissionWithLogs = submissionWithLogsOptional.get();
         assertThat(submissionWithLogs.getBuildLogEntries()).hasSize(4);
+
+        // Assert that the build logs can be retrieved from the REST API
+        database.changeUser(userLogin);
+        var receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
+        assertThat(receivedLogs).isNotNull();
+        assertThat(receivedLogs.size()).isEqualTo(submissionWithLogs.getBuildLogEntries().size());
 
         return result;
     }
