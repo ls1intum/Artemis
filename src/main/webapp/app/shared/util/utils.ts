@@ -87,9 +87,10 @@ export const findLatestResult = (results?: Result[]) => {
 };
 
 /**
- * Checks if the alert message could not be translated and removes the translation-not-found annotation
- * Sending an alert to Sentry with the missing translation key
- * @param alert alert which is sent to the jhiAlertService
+ * This is a workaround to avoid translation not found issues.
+ * Checks if the alert message could not be translated and removes the translation-not-found annotation.
+ * Sending an alert to Sentry with the missing translation key.
+ * @param alert which was sent to the jhiAlertService
  */
 export const checkForMissingTranslationKey = (alert: JhiAlert) => {
     if (alert?.msg?.startsWith('translation-not-found')) {
