@@ -57,7 +57,7 @@ describe('FileUploadSubmission Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         service
-            .getFileUploadSubmissionsForExercise(1, { submittedOnly: true })
+            .getFileUploadSubmissionsForExerciseByCorrectionRound(1, { submittedOnly: true })
             .pipe(
                 take(1),
                 map((resp) => resp.body),

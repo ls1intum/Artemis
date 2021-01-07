@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { SimpleChange } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
@@ -13,6 +14,10 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
+
+import * as sinon from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -22,12 +27,19 @@ describe('TutorParticipationGraphComponent', () => {
     let fixture: ComponentFixture<TutorParticipationGraphComponent>;
     let calculatePercentageAssessmentProgressStub: SinonStub;
     let calculatePercentageComplaintsProgressStub: SinonStub;
+    const router = new MockRouter();
+    const navigateSpy = sinon.spy(router, 'navigate');
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, TranslateModule.forRoot()],
             declarations: [TutorParticipationGraphComponent, ProgressBarComponent],
-            providers: [JhiLanguageHelper, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
+            providers: [
+                JhiLanguageHelper,
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: Router, useValue: router },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+            ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
@@ -131,6 +143,7 @@ describe('TutorParticipationGraphComponent', () => {
             comp.numberOfSubmissions.inTime = 4;
             comp.numberOfSubmissions.late = 2;
             comp.totalNumberOfAssessments = new DueDateStat();
+            comp.numberOfAssessmentsOfCorrectionRounds = [comp.totalNumberOfAssessments];
             comp.totalNumberOfAssessments.inTime = 3;
             comp.totalNumberOfAssessments.late = 1;
             comp.numberOfOpenComplaints = 1;
@@ -138,8 +151,19 @@ describe('TutorParticipationGraphComponent', () => {
 
             comp.calculatePercentageAssessmentProgress();
 
-            expect(comp.percentageInTimeAssessmentProgress).to.equal(75);
-            expect(comp.percentageLateAssessmentProgress).to.equal(50);
+            expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound[0]).to.equal(75);
+            expect(comp.percentageLateAssessmentProgressOfCorrectionRound[0]).to.equal(50);
+
+            const secondCorrectionDueDateStat = new DueDateStat();
+            secondCorrectionDueDateStat.inTime = 2;
+            secondCorrectionDueDateStat.late = 1;
+            comp.numberOfAssessmentsOfCorrectionRounds = [comp.totalNumberOfAssessments, secondCorrectionDueDateStat];
+
+            comp.calculatePercentageAssessmentProgress();
+            expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound[0]).to.equal(75);
+            expect(comp.percentageLateAssessmentProgressOfCorrectionRound[0]).to.equal(50);
+            expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound[1]).to.equal(50);
+            expect(comp.percentageLateAssessmentProgressOfCorrectionRound[1]).to.equal(50);
         });
     });
 
@@ -148,7 +172,7 @@ describe('TutorParticipationGraphComponent', () => {
         calculatePercentageComplaintsProgressStub = stub(comp, 'calculatePercentageComplaintsProgress');
         comp.tutorParticipation = {
             id: 1,
-            trainedExampleSubmissions: [{ id: 1, usedForTutorial: false }],
+            trainedExampleSubmissions: [{ id: 1, usedForTutorial: false, exercise: { id: 1, course: { id: 3 } } }],
         } as TutorParticipation;
 
         comp.ngOnInit();
@@ -178,5 +202,45 @@ describe('TutorParticipationGraphComponent', () => {
         const result = comp.calculateComplaintsDenominator();
 
         expect(result).to.equal(7);
+    });
+    it('should update changes', () => {
+        calculatePercentageAssessmentProgressStub = stub(comp, 'calculatePercentageAssessmentProgress');
+        calculatePercentageComplaintsProgressStub = stub(comp, 'calculatePercentageComplaintsProgress');
+
+        const tutorParticipationStatus = { status: 'COMPLETED' as TutorParticipationStatus };
+        const unchangedParticipation = { id: 1, trainedExampleSubmissions: [{ id: 1, usedForTutorial: true }], tutorParticipationStatus } as TutorParticipation;
+        const changedParticipation = { id: 3, trainedExampleSubmissions: [{ id: 1, usedForTutorial: true }], tutorParticipationStatus } as TutorParticipation;
+        comp.tutorParticipation = unchangedParticipation;
+        comp.ngOnInit();
+
+        expect(comp.tutorParticipation.id).to.not.equal(3);
+
+        const changes = { tutorParticipation: { currentValue: changedParticipation } as SimpleChange };
+        comp.ngOnChanges(changes);
+
+        expect(comp.tutorParticipation.id).to.equal(3);
+        expect(calculatePercentageAssessmentProgressStub).to.have.been.calledTwice;
+        expect(calculatePercentageComplaintsProgressStub).to.have.been.calledTwice;
+
+        calculatePercentageAssessmentProgressStub.restore();
+        calculatePercentageComplaintsProgressStub.restore();
+    });
+
+    it('should calculatePercentageComplaintsProgress', () => {
+        comp.tutorParticipationStatus = TutorParticipationStatus.TRAINED;
+        comp.numberOfComplaints = 10;
+        comp.numberOfOpenComplaints = 5;
+        comp.numberOfMoreFeedbackRequests = 2;
+        comp.numberOfOpenMoreFeedbackRequests = 1;
+
+        comp.calculatePercentageComplaintsProgress();
+
+        expect(comp.percentageComplaintsProgress).to.equal(50);
+    });
+
+    it('should navigate', () => {
+        comp.routerLink = `url`;
+        comp.navigate();
+        expect(navigateSpy).to.have.been.calledWith([`url`]);
     });
 });

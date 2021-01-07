@@ -580,4 +580,52 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(assessments).isEqualTo(1);
     }
 
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAssessmentCountByCorrectionRoundForProgrammingExercise() throws Exception {
+        // exercise
+        Course course = database.createCourse();
+        ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
+        programmingExercise.setDueDate(null);
+        programmingExerciseRepository.save(programmingExercise);
+
+        // participation
+        ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
+        programmingExerciseStudentParticipation.setExercise(programmingExercise);
+        programmingExerciseStudentParticipationRepository.save(programmingExerciseStudentParticipation);
+
+        // submission
+        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+        programmingSubmission.setParticipation(programmingExerciseStudentParticipation);
+        programmingSubmission.setSubmitted(true);
+        programmingSubmission.setBuildArtifact(true);
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        // result 1
+        Result r1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, "text result string 1", "instructor1",
+                new ArrayList<>());
+        r1.setRated(true);
+        r1 = database.addFeedbackToResults(r1);
+        r1.setSubmission(programmingSubmission);
+
+        // result 2
+        Result r2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, "text result string 2", "tutor1",
+                new ArrayList<>());
+        r2.setRated(true);
+        r2 = database.addFeedbackToResults(r2);
+        r2.setSubmission(programmingSubmission);
+
+        programmingSubmission.addResult(r1);
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        programmingSubmission.addResult(r2);
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        Long assessments = programmingExerciseRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(programmingExercise.getId(), (long) 1);
+        assertThat(assessments).isEqualTo(0);
+        assessments = programmingExerciseRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(programmingExercise.getId(), (long) 2);
+        assertThat(assessments).isEqualTo(1);
+
+    }
+
 }
