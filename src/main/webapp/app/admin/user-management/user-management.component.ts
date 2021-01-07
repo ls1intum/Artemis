@@ -85,7 +85,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.handleNavigation();
         });
         this.isVisible = this.activatedRoute.children.length === 0;
-        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => (this.isVisible = this.activatedRoute.children.length === 0));
+        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
+            this.isVisible = this.activatedRoute.children.length === 0;
+            if (this.isVisible) {
+                this.loadAll();
+            }
+        });
     }
 
     /**

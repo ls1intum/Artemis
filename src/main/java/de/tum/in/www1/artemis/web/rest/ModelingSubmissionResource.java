@@ -137,11 +137,13 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * GET /exercises/{exerciseId}/modeling-submissions: get all modeling submissions by exercise id. If the parameter assessedByTutor is true, this method will return
+     * GET /exercises/{exerciseId}/modeling-submissions: get all modeling submissions by exercise id and correction round.
+     * If the parameter assessedByTutor is true, this method will return
      * only return all the modeling submissions where the tutor has a result associated.
      * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId id of the exercise for which the modeling submission should be returned
+     * @param correctionRound - correctionRound for which the submissions' results should be fetched
      * @param submittedOnly if true, it returns only submission with submitted flag set to true
      * @param assessedByTutor if true, it returns only the submissions which are assessed by the current user as a tutor
      * @return a list of modeling submissions
@@ -153,9 +155,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<Submission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor) {
+            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
+
         log.debug("REST request to get all modeling upload submissions");
-        return super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor);
+        return super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor, correctionRound);
     }
 
     /**
@@ -193,17 +196,20 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      *
      * @param exerciseId id of the exercise for which the modeling submission should be returned
      * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
+     * @param correctionRound correctionRound for which submissions without a result should be returned
      * @return the ResponseEntity with status 200 (OK) and a modeling submission without assessment in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
-            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
+
         log.debug("REST request to get a modeling submission without assessment");
-        final Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        final Exercise exercise = exerciseService.findOne(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
         final User user = userService.getUserWithGroupsAndAuthorities();
+
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
@@ -222,11 +228,11 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         final ModelingSubmission modelingSubmission;
         if (lockSubmission) {
-            modelingSubmission = modelingSubmissionService.lockModelingSubmissionWithoutResult((ModelingExercise) exercise, exercise.hasExerciseGroup());
+            modelingSubmission = modelingSubmissionService.lockModelingSubmissionWithoutResult((ModelingExercise) exercise, exercise.hasExerciseGroup(), correctionRound);
         }
         else {
             final Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService
-                    .getRandomModelingSubmissionEligibleForNewAssessment((ModelingExercise) exercise, exercise.hasExerciseGroup());
+                    .getRandomModelingSubmissionEligibleForNewAssessment((ModelingExercise) exercise, exercise.hasExerciseGroup(), correctionRound);
             if (optionalModelingSubmission.isEmpty()) {
                 return notFound();
             }

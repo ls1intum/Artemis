@@ -324,6 +324,7 @@ public class ProgrammingSubmissionResource {
      * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId the id of the exercise.
+     * @param correctionRound the correctionRound for which all submissions should be fetched
      * @param submittedOnly if only submitted submissions should be returned.
      * @param assessedByTutor if the submission was assessed by calling tutor.
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body.
@@ -331,7 +332,7 @@ public class ProgrammingSubmissionResource {
     @GetMapping("/exercises/{exerciseId}/programming-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor) {
+            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
         log.debug("REST request to get all programming submissions");
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
@@ -343,10 +344,11 @@ public class ProgrammingSubmissionResource {
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
-            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForExercise(exerciseId, user.getId(), examMode);
+            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user.getId(), examMode,
+                    correctionRound);
         }
         else {
-            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode);
+            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode, correctionRound);
         }
 
         return ResponseEntity.ok().body(programmingSubmissions);
@@ -393,12 +395,13 @@ public class ProgrammingSubmissionResource {
      *
      * @param exerciseId the id of the exercise
      * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
+     * @param correctionRound the correctionround for which we want to find the submission
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/programming-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
-            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
         final ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
@@ -417,11 +420,11 @@ public class ProgrammingSubmissionResource {
 
         final ProgrammingSubmission programmingSubmission;
         if (lockSubmission) {
-            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmissionWithoutResult(programmingExercise);
+            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmissionWithoutResult(programmingExercise, correctionRound);
         }
         else {
             Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionService.getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise,
-                    programmingExercise.hasExerciseGroup());
+                    programmingExercise.hasExerciseGroup(), correctionRound);
             if (optionalProgrammingSubmission.isEmpty()) {
                 return notFound();
             }
