@@ -62,11 +62,13 @@ public class ProgrammingExerciseImportService {
 
     private final UserService userService;
 
+    private final StaticCodeAnalysisService staticCodeAnalysisService;
+
     public ProgrammingExerciseImportService(ExerciseHintService exerciseHintService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService,
-            UserService userService) {
+            UserService userService, StaticCodeAnalysisService staticCodeAnalysisService) {
         this.exerciseHintService = exerciseHintService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -78,6 +80,7 @@ public class ProgrammingExerciseImportService {
         this.gitService = gitService;
         this.fileService = fileService;
         this.userService = userService;
+        this.staticCodeAnalysisService = staticCodeAnalysisService;
     }
 
     /**
@@ -112,9 +115,15 @@ public class ProgrammingExerciseImportService {
         exerciseHintService.copyExerciseHints(templateExercise, newExercise);
         programmingExerciseRepository.save(newExercise);
         importTestCases(templateExercise, newExercise);
-        if (Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled())) {
+
+        // Copy or create SCA categories
+        if (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled()))) {
             importStaticCodeAnalysisCategories(templateExercise, newExercise);
         }
+        else if (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled())) {
+            staticCodeAnalysisService.createDefaultCategories(newExercise);
+        }
+
         // An exam exercise can only be in individual mode
         if (!newExercise.hasCourse()) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
