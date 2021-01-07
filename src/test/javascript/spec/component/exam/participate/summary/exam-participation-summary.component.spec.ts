@@ -1,7 +1,7 @@
 import * as sinon from 'sinon';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
 import { MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
@@ -9,7 +9,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
@@ -96,4 +96,16 @@ describe('ExamParticipationSummaryComponent', () => {
         const testRunRibbon = fixture.debugElement.query(By.css('#testRunRibbon'));
         expect(testRunRibbon).to.exist;
     });
+
+    it('should expand all exercises and call print when Export PDF is clicked', fakeAsync(() => {
+        const printWindowStub = sinon.stub(global.window, 'print').returns();
+        fixture.detectChanges();
+        const exportToPDFButton = fixture.debugElement.query(By.css('#exportToPDFButton'));
+        expect(exportToPDFButton).to.exist;
+        exportToPDFButton.nativeElement.click();
+        expect(component.collapsedExerciseIds).to.be.empty;
+        tick();
+        sinon.assert.called(printWindowStub);
+        printWindowStub.restore();
+    }));
 });

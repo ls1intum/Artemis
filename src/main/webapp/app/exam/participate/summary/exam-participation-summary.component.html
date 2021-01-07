@@ -7,7 +7,7 @@
         <ng-container *ngIf="instructorView">
             {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | translate: { examTitle: studentExam.exam!.title!, studentName: studentExam.user!.name! } }}
         </ng-container>
-        <button class="btn btn-primary float-right" (click)="printPDF()">
+        <button id="exportToPDFButton" class="btn btn-primary float-right" (click)="printPDF()">
             <fa-icon [icon]="'print'"></fa-icon>
             <span jhiTranslate="artemisApp.exam.examSummary.exportPDF">Export PDF</span>
         </button>
