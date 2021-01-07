@@ -51,6 +51,13 @@ export const systemNotificationManagementRoute: Route = {
                 pageTitle: 'artemisApp.systemNotification.systemNotifications',
                 breadcrumbLabelVariable: 'notification.body.id',
             },
+        },
+        {
+            // Create a new path without a component defined to prevent resolver caching and the SystemNotificationManagementDetailComponent from being always rendered
+            path: ':id',
+            resolve: {
+                notification: SystemNotificationManagementResolve,
+            },
             children: [
                 {
                     path: 'edit',

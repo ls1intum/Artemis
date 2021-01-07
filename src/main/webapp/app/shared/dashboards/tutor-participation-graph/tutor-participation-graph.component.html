@@ -12,11 +12,11 @@
         >
             <fa-icon [icon]="'chalkboard-teacher'"></fa-icon>
         </li>
-        <li *ngFor="let stat of numberOfAssessmentsOfCorrectionRounds" class="progress-bar-li stacked-li" [ngClass]="calculateClassProgressBar()">
+        <li *ngFor="let stat of numberOfAssessmentsOfCorrectionRounds; let i = index" class="progress-bar-li stacked-li" [ngClass]="calculateClassProgressBar()">
             <div class="stacked-item">
                 <jhi-progress-bar
                     [tooltip]="'artemisApp.assessmentDashboard.assessStudentsSubmissions' | translate"
-                    [percentage]="percentageInTimeAssessmentProgress"
+                    [percentage]="percentageInTimeAssessmentProgressOfCorrectionRound[i]"
                     [numerator]="stat.inTime"
                     [denominator]="numberOfSubmissions.inTime"
                 >
@@ -25,7 +25,7 @@
             <div class="stacked-item" *ngIf="numberOfSubmissions.late > 0">
                 <jhi-progress-bar
                     [tooltip]="'artemisApp.assessmentDashboard.assessStudentsLateSubmissions' | translate"
-                    [percentage]="percentageLateAssessmentProgress"
+                    [percentage]="percentageLateAssessmentProgressOfCorrectionRound[i]"
                     [numerator]="stat.late"
                     [denominator]="numberOfSubmissions.late"
                 >

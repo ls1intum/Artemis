@@ -578,14 +578,17 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * Given an exercise id and a tutor id, it returns all the programming submissions where the tutor has a result associated
      *
      * @param exerciseId - the id of the exercise we are looking for
+     * @param correctionRound - the correctionRound for which the submissions should be fetched for
      * @param tutorId    - the id of the tutor we are interested in
      * @param examMode - flag should be set to ignore the test run submissions
      * @return a list of programming submissions
      */
-    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForExercise(long exerciseId, long tutorId, boolean examMode) {
+    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(long exerciseId, long tutorId, boolean examMode,
+            Long correctionRound) {
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessorIgnoreTestRuns(exerciseId, tutorId);
+            participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutorId,
+                    correctionRound);
         }
         else {
             participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
@@ -599,14 +602,16 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * submissions
      *
      * @param exerciseId    - the id of the exercise we are interested into
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
      * @param examMode - set flag to ignore test run submissions for exam exercises
      * @return a list of programming submissions for the given exercise id
      */
-    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
+    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode, Long correctionRound) {
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdAndCorrectionRoundIgnoreTestRuns(exerciseId,
+                    correctionRound);
         }
         else {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
@@ -625,11 +630,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionEligibleForNewAssessment(ProgrammingExercise programmingExercise, boolean examMode) {
-        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(programmingExercise, examMode);
+    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionEligibleForNewAssessment(ProgrammingExercise programmingExercise, boolean examMode, long correctionRound) {
+        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(programmingExercise, examMode, correctionRound);
         if (submissionWithoutResult.isPresent()) {
             ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) submissionWithoutResult.get();
             return Optional.of(programmingSubmission);
@@ -668,10 +674,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * Get a programming submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
      *
      * @param exercise the exercise the submission should belong to
+     * @param correctionRound - the correction round we want our submission to have results for
      * @return a locked programming submission that needs an assessment
      */
-    public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise) {
-        ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.hasExerciseGroup())
+    public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise, long correctionRound) {
+        ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.hasExerciseGroup(), correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission for exercise " + exercise.getId() + " could not be found"));
         Result newManualResult = lockSubmission(programmingSubmission);
         return (ProgrammingSubmission) newManualResult.getSubmission();
