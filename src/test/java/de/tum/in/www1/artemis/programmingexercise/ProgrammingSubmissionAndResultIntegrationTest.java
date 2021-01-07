@@ -30,17 +30,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
 import de.tum.in.www1.artemis.web.rest.ResultResource;
 
@@ -461,60 +461,96 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         }
     }
 
-    @Test
-    @WithMockUser(username = "student1", roles = "STUDENT")
-    void shouldSaveBuildLogsOnStudentParticipationWithoutResult() throws Exception {
-        buildLogEntryRepository.deleteAll();
+    private static Stream<Arguments> shouldSavebuildLogsOnStudentParticipationArguments() {
+        return Arrays.stream(ProgrammingLanguage.values())
+                .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
+    }
 
-        database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
+    @ParameterizedTest
+    @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void shouldSaveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
+        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
 
         // Precondition: Database has participation without result and a programming submission.
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         var submission = ModelFactory.generateProgrammingSubmission(true);
+        submission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
+        submission.setType(SubmissionType.MANUAL);
         database.addProgrammingSubmission(exercise, submission, "student1");
 
-        // Call programming-exercises/new-result which includes build log entries
-        postResult(participation.getBuildPlanId(), HttpStatus.OK, true);
+        // Call programming-exercises/new-result which include build log entries
+        var buildLog = new BambooBuildLogDTO();
+        buildLog.setLog("COMPILATION ERROR missing something");
+        buildLog.setDate(ZonedDateTime.now().minusMinutes(1));
+        buildLog.setUnstyledLog("COMPILATION ERROR missing something");
+        postResultWithBuildLogs(participation.getBuildPlanId(), List.of(buildLog), HttpStatus.OK, true);
 
         // Assert that result has been created and is linked to the participation and submission
         var result = resultRepository.findDistinctBySubmissionId(submission.getId());
         assertThat(result).isPresent();
         assertThat(result.get().getParticipation().getId()).isEqualTo(participation.getId());
+        assertThat(result.get().getSubmission().getId()).isEqualTo(submission.getId());
+
+        // Assert that the submission in the database contains the build log entries
+        var updatedSubmission = submissionRepository.findWithEagerBuildLogEntriesById(submission.getId());
+        assertThat(updatedSubmission).isPresent();
+        assertThat(updatedSubmission.get().getBuildLogEntries().size()).isGreaterThan(0);
+        updatedSubmission.get().getBuildLogEntries().forEach(buildLogEntry -> assertThat(buildLogEntry.getLog()).isEqualTo(buildLog.getLog()));
 
         // Assert that build logs have been saved in the build log repository.
         var savedLogs = buildLogEntryRepository.findAll();
         assertThat(savedLogs.size()).isGreaterThan(0);
+        assertThat(savedLogs.get(0).getProgrammingSubmission().getId()).isEqualTo(submission.getId());
+
+        // TODO: This doesn't work because of this exception: java.lang.IllegalArgumentException: userAuthorities cannot be null
+        /*
+         * var receivedLogs = request.get("/api/repository/" + participation.getId() + "/buildlogs", HttpStatus.OK, List.class); assertThat(receivedLogs.size()).isGreaterThan(0);
+         * receivedLogs.forEach(receivedLog -> { BuildLogEntry receivedBuildLogEntry = (BuildLogEntry) receivedLog;
+         * assertThat(receivedBuildLogEntry.getProgrammingSubmission().getId()).isEqualTo(submission.getId()); });
+         */
     }
 
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult() throws Exception {
-        resultRepository.deleteAll();
-        buildLogEntryRepository.deleteAll();
-
-        database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
+    @ParameterizedTest
+    @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
+        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
 
         // Precondition: Database has participation without result and a programming submission.
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
 
         // Call programming-exercises/new-result which includes build log entries
-        postResult(participation.getBuildPlanId(), HttpStatus.OK, true);
+        var buildLog = new BambooBuildLogDTO();
+        buildLog.setLog("COMPILATION ERROR missing something");
+        buildLog.setDate(ZonedDateTime.now().minusMinutes(1));
+        buildLog.setUnstyledLog("COMPILATION ERROR missing something");
+        postResultWithBuildLogs(participation.getBuildPlanId(), List.of(buildLog), HttpStatus.OK, true);
 
         // Assert that result linked to the participation
         var result = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getParticipation().getId()).isEqualTo(participation.getId());
 
-        // Assert that the submission linked to the participation
-        var submission = submissionRepository.findByResultId(result.get(0).getId());
-        assertThat(submission).isPresent();
-        assertThat(submission.get().getParticipation().getId()).isEqualTo(participation.getId());
+        // Assert that the created submission linked to the participation
+        var submissions = submissionRepository.findAll();
+        assertThat(submissions.size()).isEqualTo(1);
+        assertThat(submissions.get(0).getParticipation().getId()).isEqualTo(participation.getId());
+
+        // Assert that created submission is linked to the result
+        assertThat(result.get(0).getSubmission().getId()).isEqualTo(submissions.get(0).getId());
+
+        // Assert that the submission in the database contains the build log entries
+        var submissionWithBuildLogEntries = submissionRepository.findWithEagerBuildLogEntriesById(submissions.get(0).getId());
+        assertThat(submissionWithBuildLogEntries).isPresent();
+        assertThat(submissionWithBuildLogEntries.get().getBuildLogEntries().size()).isGreaterThan(0);
+        submissionWithBuildLogEntries.get().getBuildLogEntries().forEach(buildLogEntry -> assertThat(buildLogEntry.getLog()).isEqualTo(buildLog.getLog()));
 
         // Assert that build logs have been saved in the build log repository.
         var savedLogs = buildLogEntryRepository.findAll();
         assertThat(savedLogs.size()).isGreaterThan(0);
+        assertThat(savedLogs.get(0).getProgrammingSubmission().getId()).isEqualTo(submissions.get(0).getId());
     }
 
     /**
@@ -582,15 +618,19 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         postResult(exercise.getProjectKey().toUpperCase() + "-" + buildPlanStudentId, expectedStatus, additionalCommit);
     }
 
+    private void postResultWithBuildLogs(String participationId, List<BambooBuildLogDTO> buildLogs, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
+        final var requestBodyMap = createBambooBuildResultNotificationDTO();
+        requestBodyMap.getBuild().getJobs().forEach(job -> job.setLogs(buildLogs));
+        postResult(participationId, requestBodyMap, expectedStatus, additionalCommit);
+    }
+
     private void postResult(String participationId, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
-        JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(BAMBOO_REQUEST);
+        final var requestBodyMap = createBambooBuildResultNotificationDTO();
+        postResult(participationId, requestBodyMap, expectedStatus, additionalCommit);
+    }
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        final var requestBodyMap = mapper.convertValue(obj, BambooBuildResultNotificationDTO.class);
+    private void postResult(String participationId, BambooBuildResultNotificationDTO requestBodyMap, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
         requestBodyMap.getPlan().setKey(participationId.toUpperCase());
-
         if (additionalCommit) {
             var newCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO();
             newCommit.setComment("Some commit that occurred before");
@@ -598,10 +638,22 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
             requestBodyMap.getBuild().getVcs().get(0).getCommits().add(newCommit);
         }
 
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
         final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
+
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
         request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, expectedStatus, httpHeaders);
+    }
+
+    private BambooBuildResultNotificationDTO createBambooBuildResultNotificationDTO() throws Exception {
+        JSONParser jsonParser = new JSONParser();
+        Object obj = jsonParser.parse(BAMBOO_REQUEST);
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        return mapper.convertValue(obj, BambooBuildResultNotificationDTO.class);
     }
 
     private String getStudentLoginFromParticipation(int participationNumber) {
