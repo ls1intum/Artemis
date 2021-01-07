@@ -537,6 +537,7 @@ public class JenkinsService implements ContinuousIntegrationService {
                 if (entry.getLog().contains("Compilation failure")) {
                     break;
                 }
+
                 // filter unnecessary logs
                 if (!((entry.getLog().startsWith("[INFO]") && !entry.getLog().contains("error")) || !entry.getLog().startsWith("[ERROR]") || entry.getLog().startsWith("[WARNING]")
                         || entry.getLog().startsWith("[ERROR] [Help 1]") || entry.getLog().startsWith("[ERROR] For more information about the errors and possible solutions")
@@ -583,7 +584,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
                     while (nodeIterator.hasNext()) {
                         Node node = nodeIterator.next();
-                        final String log;
+                        String log;
                         if (node.attributes().get("class").contains("timestamp")) {
                             final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
                             final var time = ZonedDateTime.parse(timeAsString, logDateTimeFormatter);
@@ -594,6 +595,12 @@ public class JenkinsService implements ContinuousIntegrationService {
                                 contentCandidate = nodeIterator.next();
                             }
                             log = reduceToText(contentCandidate);
+
+                            // There are color codes in the logs that need to be filtered out.
+                            // For example:[[1;34mINFO[m] is changed to [INFO]
+                            log = log.replace("\u001B[1;34m", "");
+                            log = log.replace("\u001B[m", "");
+                            log = log.replace("\u001B[1;31m", "");
                             buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log).trim()));
                         }
                         else {

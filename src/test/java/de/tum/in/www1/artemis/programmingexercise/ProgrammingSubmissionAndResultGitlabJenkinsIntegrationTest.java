@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.util.Arrays;
 import java.util.List;
@@ -107,16 +109,17 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         var submission = database.createProgrammingSubmission(participation, false);
 
         // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), "student1", programmingLanguage);
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage);
         postResult(participation.getBuildPlanId(), notification, HttpStatus.OK, false);
 
-        var result = assertBuildError(participation.getId());
+        var result = assertBuildError(participation.getId(), userLogin);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
     }
 
@@ -124,18 +127,19 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation without result and a programming
+        String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), "student1", programmingLanguage);
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage);
         postResult(participation.getBuildPlanId(), notification, HttpStatus.OK, false);
 
-        assertBuildError(participation.getId());
+        assertBuildError(participation.getId(), userLogin);
     }
 
-    private Result assertBuildError(Long participationId) {
+    private Result assertBuildError(Long participationId, String userLogin) throws Exception {
         SecurityUtils.setAuthorizationObject();
 
         // Assert that result is linked to the participation
@@ -158,6 +162,22 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         // Assert that the submission does not contain build log entries yet
         var submissionWithLogs = submissionWithLogsOptional.get();
         assertThat(submissionWithLogs.getBuildLogEntries()).hasSize(0);
+
+        // Assert that the build logs can be retrieved from the REST API
+        var buildWithDetails = jenkinsRequestMockProvider.mockGetLatestBuildLogs(studentParticipationRepository.findById(participationId).get());
+        database.changeUser(userLogin);
+        var receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
+        assertThat(receivedLogs).isNotNull();
+        assertThat(receivedLogs.size()).isGreaterThan(0);
+
+        verify(buildWithDetails, times(1)).getConsoleOutputHtml();
+
+        // Call again and it should not call Jenkins::getLatestBuildLogs() since the logs are cached.
+        receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
+        assertThat(receivedLogs).isNotNull();
+        assertThat(receivedLogs.size()).isGreaterThan(0);
+
+        verify(buildWithDetails, times(1)).getConsoleOutputHtml();
 
         return result;
     }
