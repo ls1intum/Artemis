@@ -54,6 +54,13 @@ export const userMgmtRoute: Route = {
                 pageTitle: 'userManagement.home.title',
                 breadcrumbLabelVariable: 'user.body.login',
             },
+        },
+        {
+            // Create a new path without a component defined to prevent resolver caching and the UserManagementDetailComponent from being always rendered
+            path: ':login',
+            resolve: {
+                user: UserMgmtResolve,
+            },
             children: [
                 {
                     path: 'edit',

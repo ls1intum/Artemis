@@ -14,6 +14,11 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
+export type EntityBlobResponseType = HttpResponse<Blob>;
+export type BuildArtifact = {
+    fileName: string;
+    fileContent: Blob;
+};
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationService {
@@ -83,10 +88,12 @@ export class ParticipationService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    downloadArtifact(participationId: number) {
-        return this.http.get(`${this.resourceUrl}/${participationId}/buildArtifact`, { responseType: 'blob' }).pipe(
-            map((artifact) => {
-                return artifact;
+    downloadArtifact(participationId: number): Observable<BuildArtifact> {
+        return this.http.get(`${this.resourceUrl}/${participationId}/buildArtifact`, { observe: 'response', responseType: 'blob' }).pipe(
+            map((res: EntityBlobResponseType) => {
+                const fileNameCandidate = (res.headers.get('content-disposition') || '').split('filename=')[1];
+                const fileName = fileNameCandidate ? fileNameCandidate.replace(/"/g, '') : 'artifact';
+                return { fileName, fileContent: res.body } as BuildArtifact;
             }),
         );
     }

@@ -134,7 +134,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     this.onError('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                     return;
                 } else if (response?.error) {
-                    this.onError(response?.error);
+                    this.onError(response?.error?.detail || 'Not Found');
                     return;
                 }
                 participationId = Number(response);
@@ -296,7 +296,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
-        this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exercise.id!, true).subscribe(
+        this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true).subscribe(
             (response: ProgrammingSubmission) => {
                 const unassessedSubmission = response;
                 this.router.onSameUrlNavigation = 'reload';
