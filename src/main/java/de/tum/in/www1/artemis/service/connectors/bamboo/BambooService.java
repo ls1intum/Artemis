@@ -728,20 +728,16 @@ public class BambooService implements ContinuousIntegrationService {
                 }
 
                 // 3) process static code analysis feedback
-                boolean hasStaticCodeAnalysisFeedback = false;
                 if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled)) {
                     var reports = job.getStaticCodeAnalysisReports();
                     if (reports != null) {
                         var feedbackList = feedbackService.createFeedbackFromStaticCodeAnalysisReports(reports);
                         result.addFeedbacks(feedbackList);
-                        hasStaticCodeAnalysisFeedback = feedbackList.size() > 0;
                     }
                 }
 
-                // Relevant feedback exists if tests failed or static code analysis found issues
-                if (!job.getFailedTests().isEmpty() || hasStaticCodeAnalysisFeedback) {
-                    result.setHasFeedback(true);
-                }
+                // Relevant feedback is negative
+                result.setHasFeedback(result.getFeedbacks().stream().anyMatch(fb -> !fb.isPositive()));
             }
 
         }

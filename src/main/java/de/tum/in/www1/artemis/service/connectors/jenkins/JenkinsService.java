@@ -509,7 +509,8 @@ public class JenkinsService implements ContinuousIntegrationService {
             result.addFeedbacks(scaFeedback);
         }
 
-        result.setHasFeedback(!result.getFeedbacks().isEmpty());
+        // Relevant feedback is negative
+        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(fb -> !fb.isPositive()));
     }
 
     @Override
