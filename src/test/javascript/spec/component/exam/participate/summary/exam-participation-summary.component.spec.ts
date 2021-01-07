@@ -9,7 +9,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
-import { NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
