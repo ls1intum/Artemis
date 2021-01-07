@@ -1,6 +1,13 @@
 <div class="plagiarism-inspector">
     <div class="plagiarism-header">
-        <h3 class="plagiarism-page-title">{{ 'artemisApp.plagiarism.plagiarism-detection' | translate }}</h3>
+        <div class="plagiarism-header-top">
+            <h3 class="plagiarism-page-title">{{ 'artemisApp.plagiarism.plagiarism-detection' | translate }}</h3>
+
+            <div class="plagiarism-warning">
+                <fa-icon [icon]="'exclamation-triangle'" id="plagiarismCaution"></fa-icon>
+                <span>{{ 'artemisApp.plagiarism.caution' | translate }}</span>
+            </div>
+        </div>
 
         <div class="plagiarism-buttons">
             <button class="check-plagiarism btn btn-primary" (click)="checkPlagiarism()" [disabled]="detectionInProgress">
@@ -26,12 +33,15 @@
 
     <div class="plagiarism-body" *ngIf="plagiarismResult">
         <jhi-plagiarism-sidebar
+            [(showRunDetails)]="showRunDetails"
             [comparisons]="plagiarismResult?.comparisons"
             (selectIndex)="selectComparisonAtIndex($event)"
             [activeIndex]="selectedComparisonIndex"
         ></jhi-plagiarism-sidebar>
 
-        <jhi-plagiarism-details [comparison]="plagiarismResult?.comparisons[selectedComparisonIndex]" [exercise]="exercise"></jhi-plagiarism-details>
+        <jhi-plagiarism-details [hidden]="showRunDetails" [comparison]="plagiarismResult?.comparisons[selectedComparisonIndex]" [exercise]="exercise"></jhi-plagiarism-details>
+
+        <jhi-plagiarism-run-details [hidden]="!showRunDetails" [plagiarismResult]="plagiarismResult"></jhi-plagiarism-run-details>
     </div>
 
     <div class="plagiarism-empty" *ngIf="!plagiarismResult">
