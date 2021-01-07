@@ -27,6 +27,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { EventEmitter } from '@angular/core';
+import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
+import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
+import { MockDirective } from 'ng-mocks/dist/lib/mock-directive/mock-directive';
+import { JhiTranslateDirective } from 'ng-jhipster';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,16 +52,22 @@ describe('ExamParticipationCoverComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientModule, FormsModule],
-            declarations: [ExamParticipationCoverComponent, MockPipe(TranslatePipe), MockComponent(FaIconComponent), MockComponent(AlertErrorComponent)],
+            declarations: [
+                ExamParticipationCoverComponent,
+                MockPipe(TranslatePipe),
+                MockComponent(FaIconComponent),
+                MockComponent(AlertErrorComponent),
+                MockComponent(ExamTimerComponent),
+                MockComponent(ExamInformationComponent),
+                MockDirective(JhiTranslateDirective),
+            ],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useValue: MockRouter },
             ],
-        })
-            .overrideTemplate(ExamParticipationCoverComponent, '')
-            .compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(ExamParticipationCoverComponent);
         component = fixture.componentInstance;
         examParticipationService = TestBed.inject(ExamParticipationService);
@@ -76,6 +86,7 @@ describe('ExamParticipationCoverComponent', () => {
     afterEach(function () {
         component.ngOnDestroy();
         sinon.restore();
+        jest.clearAllMocks();
     });
 
     it('should initialize with ngOnInit', fakeAsync(() => {
@@ -110,24 +121,14 @@ describe('ExamParticipationCoverComponent', () => {
 
     it('should update confirmation', () => {
         fixture.detectChanges();
-        component.startView = true;
 
+        component.startView = true;
         component.updateConfirmation();
         expect(component.startEnabled).to.be.false;
 
         component.startView = false;
-
         component.updateConfirmation();
         expect(component.endEnabled).to.be.false;
-    });
-
-    it('should invoke ngOnDestroy', () => {
-        fixture.detectChanges();
-        component.interval = 1;
-
-        component.ngOnDestroy();
-
-        expect(component).to.be.ok;
     });
 
     it('should start exam', fakeAsync(() => {
@@ -194,14 +195,14 @@ describe('ExamParticipationCoverComponent', () => {
     it('should submit exam', () => {
         component.onExamEnded = new EventEmitter<StudentExam>();
         const saveStudentExamSpy = spy(component.onExamEnded, 'emit');
-        component.submitExam(); // html
+        component.submitExam();
         expect(saveStudentExamSpy).to.be.calledOnce;
     });
 
     it('should continue after handing in early', () => {
         component.onExamContinueAfterHandInEarly = new EventEmitter<void>();
         const saveStudentExamSpy = spy(component.onExamContinueAfterHandInEarly, 'emit');
-        component.continueAfterHandInEarly(); // html
+        component.continueAfterHandInEarly();
         expect(saveStudentExamSpy).to.be.calledOnce;
     });
 
