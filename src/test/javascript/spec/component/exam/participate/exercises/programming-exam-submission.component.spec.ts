@@ -6,12 +6,10 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
-import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
@@ -26,7 +24,7 @@ import { CommitState } from 'app/exercises/programming/shared/code-editor/model/
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('ProgrammingExamSumbissionComponent', () => {
+describe('ProgrammingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ProgrammingExamSubmissionComponent>;
     let component: ProgrammingExamSubmissionComponent;
 
@@ -43,20 +41,13 @@ describe('ProgrammingExamSumbissionComponent', () => {
 
         return TestBed.configureTestingModule({
             imports: [
-                RouterTestingModule.withRoutes([]),
                 MockModule(ArtemisProgrammingExerciseActionsModule),
                 MockModule(OrionModule),
                 MockModule(ArtemisCoursesModule),
                 MockModule(ArtemisResultModule),
                 MockModule(ArtemisProgrammingExerciseInstructionsRenderModule),
             ],
-            declarations: [
-                ProgrammingExamSubmissionComponent,
-                MockComponent(ModelingEditorComponent),
-                MockComponent(CodeEditorContainerComponent),
-                MockComponent(FullscreenComponent),
-                MockPipe(TranslatePipe),
-            ],
+            declarations: [ProgrammingExamSubmissionComponent, MockComponent(ModelingEditorComponent), MockComponent(CodeEditorContainerComponent), MockPipe(TranslatePipe)],
             providers: [MockProvider(DomainService)],
         })
             .compileComponents()
@@ -114,13 +105,20 @@ describe('ProgrammingExamSumbissionComponent', () => {
         }
     });
 
-    it('should unsync on file change', () => {
+    it('should desync on file change', () => {
         component.studentParticipation = studentParticipation;
         if (component.studentParticipation.submissions) {
             component.studentParticipation.submissions[0].isSynced = true;
             component.onFileChanged();
 
             expect(component.studentParticipation.submissions[0].isSynced).to.equal(false);
+        }
+    });
+
+    it('should get submission', () => {
+        component.studentParticipation = studentParticipation;
+        if (studentParticipation.submissions) {
+            expect(component.getSubmission()).to.equal(studentParticipation.submissions[0]);
         }
     });
 });
