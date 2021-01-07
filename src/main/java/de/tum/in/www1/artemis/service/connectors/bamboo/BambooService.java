@@ -212,6 +212,7 @@ public class BambooService implements ContinuousIntegrationService {
 
     /**
      * NOTE: the REST call in this method fails silently with a 404 in case all build plans have already been deleted before
+     *
      * @param projectKey the project which build plans should be retrieved
      * @return a list of build plans
      */
@@ -327,8 +328,9 @@ public class BambooService implements ContinuousIntegrationService {
 
     /**
      * get the build plan for the given planKey
+     *
      * @param planKey the unique Bamboo build plan identifier
-     * @param expand whether the expanded version of the build plan is needed
+     * @param expand  whether the expanded version of the build plan is needed
      * @return the build plan
      */
     private BambooBuildPlanDTO getBuildPlan(String planKey, boolean expand, boolean logNotFound) {
@@ -650,7 +652,7 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Generate an Artemis result object from the CI build result. Will use the test case feedback as result feedback.
      *
-     * @param buildResult Build result data provided by build notification.
+     * @param buildResult   Build result data provided by build notification.
      * @param participation to attach result to.
      * @return the created result (is not persisted in this method, only constructed!)
      */
@@ -679,7 +681,7 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Get the commit hash from the build map, the commit hash will be different for submission types or null.
      *
-     * @param buildResult Build result data provided by build notification.
+     * @param buildResult    Build result data provided by build notification.
      * @param submissionType describes why the build was started.
      * @return if the commit hash for the given submission type was found, otherwise null.
      */
@@ -703,8 +705,8 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Converts build result details into feedback and stores it in the result object
      *
-     * @param result the result for which the feedback should be added
-     * @param jobs   the jobs list of the requestBody
+     * @param result                      the result for which the feedback should be added
+     * @param jobs                        the jobs list of the requestBody
      * @param isStaticCodeAnalysisEnabled flag determining whether static code analysis was enabled
      */
     private void addFeedbackToResult(Result result, List<BambooBuildResultNotificationDTO.BambooJobDTO> jobs, Boolean isStaticCodeAnalysisEnabled) {
@@ -846,6 +848,7 @@ public class BambooService implements ContinuousIntegrationService {
 
     /**
      * Filter the given list of unfiltered build log entries and return A NEW list only including the filtered build logs.
+     *
      * @param unfilteredBuildLogs the original, unfiltered list
      * @return the filtered list
      */
@@ -871,6 +874,14 @@ public class BambooService implements ContinuousIntegrationService {
                     || logString.startsWith("Unable to publish artifact") || logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")
                     || logString.startsWith("[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin") || logString.startsWith("[INFO] Downloading")
                     || logString.startsWith("[INFO] Downloaded")) {
+                continue;
+            }
+
+            // filter illegal reflection logs
+            if (logString.startsWith("WARNING") && (logString.contains("An illegal reflective access operation has occurred")
+                    || logString.contains("WARNING: Illegal reflective access by") || logString.contains("WARNING: Please consider reporting this to the maintainers of")
+                    || logString.contains("to enable warnings of further illegal reflective access operations")
+                    || logString.contains("All illegal access operations will be denied in a future release"))) {
                 continue;
             }
 
