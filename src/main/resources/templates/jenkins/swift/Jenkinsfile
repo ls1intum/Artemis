@@ -52,7 +52,7 @@ pipeline {
                     mkdir results
                     if [ -e assignment/tests.xml ]
                     then
-                        sed -i 's/<testsuites>//g ; s/<\\/testsuites>//g' assignment/tests.xml
+                        sed -i 's/<testsuites>//g ; s/<\/testsuites>//g' assignment/tests.xml
                         cp assignment/tests.xml $WORKSPACE/results/ || true
                     fi
                     '''
