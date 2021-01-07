@@ -112,7 +112,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         var submission = database.createProgrammingSubmission(participation, false);
 
-        // Call programming-exercises/new-result which include build log entries
+        // Call programming-exercises/new-result which do not include build log entries yet
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), "student1", programmingLanguage);
         postResult(participation.getBuildPlanId(), notification, HttpStatus.OK, false);
 
@@ -120,15 +120,20 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
     }
 
-    /*
-     * @ParameterizedTest
-     * @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments") void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage
-     * programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception { database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
-     * ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1); // Precondition: Database has participation without
-     * result and a programming submission. var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1"); // Call
-     * programming-exercises/new-result which includes build log entries postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
-     * assertBuildError(participation.getId()); }
-     */
+    @ParameterizedTest
+    @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    void shouldNotReceiveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
+        // Precondition: Database has participation without result and a programming
+        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+
+        // Call programming-exercises/new-result which do not include build log entries yet
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), "student1", programmingLanguage);
+        postResult(participation.getBuildPlanId(), notification, HttpStatus.OK, false);
+
+        assertBuildError(participation.getId());
+    }
 
     private Result assertBuildError(Long participationId) {
         SecurityUtils.setAuthorizationObject();
