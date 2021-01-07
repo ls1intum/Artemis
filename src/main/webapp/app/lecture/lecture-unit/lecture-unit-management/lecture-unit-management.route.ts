@@ -22,6 +22,7 @@ export const lectureUnitRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        // Create a new path without a component defined to prevent the LectureUnitManagementComponent from being always rendered
         path: 'unit-management',
         data: {
             pageTitle: 'artemisApp.lectureUnit.home.title',
