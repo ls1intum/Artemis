@@ -27,7 +27,7 @@
     <div class="row">
         <jhi-resizeable-container class="col-12">
             <!--region Left Panel-->
-            <jhi-score-display left-header [maxScore]="exercise?.maxScore" [score]="totalScore"></jhi-score-display>
+            <jhi-score-display left-header [maxScore]="exercise?.maxScore" [maxBonusPoints]="exercise?.bonusPoints" [score]="totalScore"></jhi-score-display>
             <jhi-text-assessment-area
                 left-body
                 [submission]="submission"

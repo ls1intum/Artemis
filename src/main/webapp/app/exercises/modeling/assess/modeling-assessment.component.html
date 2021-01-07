@@ -2,7 +2,7 @@
     <div *ngIf="title || displayPoints" class="card-header bg-primary text-white">
         <span *ngIf="title">{{ title }}</span>
         <span class="flex-fill"></span>
-        <jhi-score-display *ngIf="displayPoints" [score]="totalScore" [maxScore]="maxScore"></jhi-score-display>
+        <jhi-score-display *ngIf="displayPoints" [score]="totalScore" [maxScore]="maxScore" [maxBonusPoints]="maxBonusPoints"></jhi-score-display>
     </div>
     <div class="apollon-row">
         <div #editorContainer class="apollon-container"></div>

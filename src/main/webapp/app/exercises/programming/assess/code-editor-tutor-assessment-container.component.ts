@@ -34,6 +34,7 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 import { diff_match_patch } from 'diff-match-patch';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -495,6 +496,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
+    private createResultString(totalScore: number, maxScore: number | undefined): string {
+        // When no maxScore is set, then show only the achieved points (legacy)
+        if (!maxScore) {
+            return `${totalScore} points`;
+        }
+        return `${totalScore} of ${maxScore} points`;
+    }
+
     private setAttributesForManualResult(totalScore: number) {
         this.setFeedbacksForManualResult();
         // Manual result is always rated and has feedback
@@ -502,18 +511,18 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResult!.hasFeedback = true;
         // Append the automatic result string which the manual result holds with the score part, to create the manual result string
         if (this.isFirstAssessment) {
-            this.manualResult!.resultString += this.exercise.maxScore ? `, ${totalScore} of ${this.exercise.maxScore} points` : `, ${totalScore} points`;
+            this.manualResult!.resultString += ', ' + this.createResultString(totalScore, this.exercise.maxScore);
             this.isFirstAssessment = false;
         } else {
             /* Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated,
              * as the points the student has achieved have changed
              */
             const resultStringParts: string[] = this.manualResult!.resultString!.split(', ');
-            // When no maxScore is set, then show only the achieved points
-            resultStringParts[resultStringParts.length - 1] = this.exercise.maxScore ? `${totalScore} of ${this.exercise.maxScore} points` : `${totalScore} points`;
+            resultStringParts[resultStringParts.length - 1] = this.createResultString(totalScore, this.exercise.maxScore);
             this.manualResult!.resultString = resultStringParts.join(', ');
         }
 
+        // TODO: rene: remove 100
         this.manualResult!.score = this.exercise.maxScore ? Math.round((totalScore / this.exercise.maxScore!) * 100) : 100;
         // This is done to update the result string in result.component.ts
         this.manualResult = cloneDeep(this.manualResult);
@@ -553,16 +562,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             scoreAutomaticTests = maxPoints;
         }
         totalScore += scoreAutomaticTests;
-        // Do not allow negative score
-        if (totalScore < 0) {
-            totalScore = 0;
-        }
-        // Cap totalScore to maxPoints
-        if (totalScore > maxPoints) {
-            totalScore = maxPoints;
-        }
-
-        totalScore = +totalScore.toFixed(2);
+        totalScore = getPositiveAndCappedTotalScore(totalScore, maxPoints);
 
         // Set attributes of manual result
         this.setAttributesForManualResult(totalScore);

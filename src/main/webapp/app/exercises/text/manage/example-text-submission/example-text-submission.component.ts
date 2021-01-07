@@ -23,6 +23,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -334,7 +335,9 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             return;
         }
 
-        this.totalScore = credits.reduce((a, b) => a! + b!, 0)!;
+        const maxPoints = this.exercise.maxScore! + (this.exercise.bonusPoints! ?? 0.0);
+        const creditsTotalScore = credits.reduce((a, b) => a! + b!, 0)!;
+        this.totalScore = getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints);
         this.assessmentsAreValid = true;
         this.invalidError = undefined;
         if (this.guidedTourService.currentTour && this.toComplete) {
