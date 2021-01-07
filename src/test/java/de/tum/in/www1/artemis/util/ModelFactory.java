@@ -870,6 +870,7 @@ public class ModelFactory {
      */
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
         var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+        notification.getBuild().getTestSummary().setDescription("No tests found");
 
         String logWith254Chars = "a".repeat(254);
 
