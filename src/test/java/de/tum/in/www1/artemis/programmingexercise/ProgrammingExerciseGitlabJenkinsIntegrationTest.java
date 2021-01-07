@@ -61,9 +61,9 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseTestService.createProgrammingExercise_mode_validExercise_created(mode);
     }
 
-    // TODO: Add template for Swift, Kotlin, VHDL, Assembler for Jenkins, Simon Leiß reactivate C and Haskell here
+    // TODO: Add template for Kotlin, VHDL, Assembler for Jenkins, Simon Leiß reactivate C and Haskell here
     @ParameterizedTest
-    @EnumSource(value = ProgrammingLanguage.class, names = { "SWIFT", "KOTLIN", "VHDL", "ASSEMBLER", "C", "HASKELL" }, mode = EnumSource.Mode.EXCLUDE)
+    @EnumSource(value = ProgrammingLanguage.class, names = { "KOTLIN", "VHDL", "ASSEMBLER", "C", "HASKELL" }, mode = EnumSource.Mode.EXCLUDE)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language) throws Exception {
         programmingExerciseTestService.createProgrammingExercise_programmingLanguage_validExercise_created(language,
@@ -77,7 +77,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     }
 
     @ParameterizedTest
-    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA" }) // TODO: add Swift when available for Jenkins
+    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_validExercise_withStaticCodeAnalysis(ProgrammingLanguage language) throws Exception {
         programmingExerciseTestService.createProgrammingExercise_validExercise_withStaticCodeAnalysis(language,
