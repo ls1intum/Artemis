@@ -25,31 +25,22 @@ import { HttpClientModule } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { User } from 'app/core/user/user.model';
-import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { By } from '@angular/platform-browser';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('ExamParticipationSummaryComponent', () => {
-    let fixture: ComponentFixture<ExamParticipationSummaryComponent>;
-    let component: ExamParticipationSummaryComponent;
+let fixture: ComponentFixture<ExamParticipationSummaryComponent>;
+let component: ExamParticipationSummaryComponent;
 
-    const exam = { id: 1, title: 'Test Exam' } as Exam;
+const exam = { id: 1, title: 'Test Exam' } as Exam;
 
-    const user = { id: 1, name: 'Test User' } as User;
+const user = { id: 1, name: 'Test User' } as User;
 
-    const studentExam = { id: 1, exam: exam, user: user } as StudentExam;
+const studentExam = { id: 1, exam: exam, user: user } as StudentExam;
 
-    let route = {
-        snapshot: {
-            url: ['', 'test-runs'],
-            paramMap: convertToParamMap({
-                courseId: '1',
-            }),
-        },
-    };
-
+function sharedSetup(url: string[]) {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), FontAwesomeTestingModule, MockModule(NgbModule), HttpClientModule],
@@ -73,7 +64,14 @@ describe('ExamParticipationSummaryComponent', () => {
             providers: [
                 {
                     provide: ActivatedRoute,
-                    useValue: route,
+                    useValue: {
+                        snapshot: {
+                            url: url,
+                            paramMap: convertToParamMap({
+                                courseId: '1',
+                            }),
+                        },
+                    },
                 },
             ],
         })
@@ -88,6 +86,10 @@ describe('ExamParticipationSummaryComponent', () => {
     afterEach(() => {
         sinon.restore();
     });
+}
+
+describe('ExamParticipationSummaryComponent for TestRuns', () => {
+    sharedSetup(['', 'test-runs']);
 
     it('should initialize and display test run ribbon', function () {
         fixture.detectChanges();
@@ -95,6 +97,18 @@ describe('ExamParticipationSummaryComponent', () => {
         expect(component.isTestRun).to.be.true;
         const testRunRibbon = fixture.debugElement.query(By.css('#testRunRibbon'));
         expect(testRunRibbon).to.exist;
+    });
+});
+
+describe('ExamParticipationSummaryComponent', () => {
+    sharedSetup(['', '']);
+
+    it('should initialize and not display test run ribbon', function () {
+        fixture.detectChanges();
+        expect(fixture).to.be.ok;
+        expect(component.isTestRun).to.be.false;
+        const testRunRibbon = fixture.debugElement.query(By.css('#testRunRibbon'));
+        expect(testRunRibbon).to.not.exist;
     });
 
     it('should expand all exercises and call print when Export PDF is clicked', fakeAsync(() => {
