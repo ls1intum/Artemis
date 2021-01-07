@@ -17,7 +17,8 @@
             "no-files-found": "No files found",
             "duration": "Duration",
             "similarity-distribution": "Similarity Distribution",
-            "no-info-available": "No information available"
+            "no-info-available": "No information available",
+            "caution": "Plagiarism detection can take a long time for large courses."
         }
     }
 }
