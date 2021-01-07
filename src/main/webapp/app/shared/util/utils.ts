@@ -1,4 +1,6 @@
 import { omit } from 'lodash';
+import { JhiAlert } from 'ng-jhipster';
+import * as Sentry from '@sentry/browser';
 import { Result } from 'app/entities/result.model';
 
 // Cartesian product helper function
@@ -82,4 +84,25 @@ export const round = (value: any, exp?: number) => {
  */
 export const findLatestResult = (results?: Result[]) => {
     return results && results.length > 0 ? results.reduce((current, result) => (current.id! > result.id! ? current : result)) : undefined;
+};
+
+/**
+ * This is a workaround to avoid translation not found issues.
+ * Checks if the alert message could not be translated and removes the translation-not-found annotation.
+ * Sending an alert to Sentry with the missing translation key.
+ * @param alert which was sent to the jhiAlertService
+ */
+export const checkForMissingTranslationKey = (alert: JhiAlert) => {
+    if (alert?.msg?.startsWith('translation-not-found')) {
+        // In case a translation key is not found, remove the 'translation-not-found[...]' annotation
+        const alertMessageMatch = alert.msg.match(/translation-not-found\[(.*?)\]$/);
+        if (alertMessageMatch && alertMessageMatch.length > 1) {
+            alert.msg = alertMessageMatch[1];
+        } else {
+            // Fallback, in case the bracket is missing
+            alert.msg = alert.msg.replace('translation-not-found', '');
+        }
+        // Sent a sentry warning with the translation key
+        Sentry.captureException(new Error('Unknown translation key: ' + alert.msg));
+    }
 };
