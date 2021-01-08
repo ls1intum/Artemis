@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toSet;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -239,6 +242,7 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
         }
 
+        // TODO SE, NR: add correctionRound parameter
         textAssessmentService.prepareSubmissionForAssessment(textSubmission, 0L);
 
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());

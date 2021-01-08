@@ -94,6 +94,17 @@ export function setLatestSubmissionResult(submission: Submission | undefined, re
     submission.latestResult = result;
 }
 
+export function setSubmissionResultByCorrectionRound(submission: Submission, result: Result, correctionRound: number) {
+    if (!submission || !result || !submission.results) {
+        return;
+    }
+    submission.results[correctionRound] = result;
+
+    if (submission.results.length === correctionRound + 1) {
+        submission.latestResult = result;
+    }
+}
+
 export function getFirstResult(submission: Submission | undefined): Result | undefined {
     if (submission?.results) {
         const length = submission.results.length;

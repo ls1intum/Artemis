@@ -24,7 +24,7 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submissi
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess-new/text-assessment-base.component';
-import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -58,7 +58,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
     hasAssessmentDueDatePassed: boolean;
-    correctionround: number; // TODO: NR, SE + is latestResult set correctly?
+    correctionRound: number; // TODO: NR, SE + is latestResult set correctly?
 
     /*
      * Non-resetted properties:
@@ -118,6 +118,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.unusedTextBlockRefs = [];
         this.complaint = undefined;
         this.totalScore = 0;
+        this.correctionRound = 0;
 
         this.isLoading = true;
         this.saveBusy = false;
@@ -139,6 +140,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             this.isTestRun = queryParams.get('testRun') === 'true';
         });
 
+        this.activatedRoute.paramMap.subscribe((paramMap) => (this.correctionRound = Number(paramMap.get('correctionRound'))));
         this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
@@ -204,7 +206,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.assessmentsService.trackAssessment(this.submission, 'save');
 
         this.saveBusy = true;
-        this.assessmentsService.save(this.exercise!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe(
+        this.assessmentsService.save(this.exercise!.id!, this.submission?.latestResult!.id!, this.assessments, this.textBlocksWithFeedback).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
         );
@@ -214,7 +216,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Submit the assessment
      */
     submit(): void {
-        if (!this.result?.id) {
+        if (!this.submission?.latestResult?.id) {
             return; // We need to have saved the result before
         }
 
@@ -240,7 +242,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             newFeedback.conflictingTextAssessments = this.result?.feedbacks?.find((feedback) => feedback.id === newFeedback.id)?.conflictingTextAssessments;
         });
         this.result = response.body!;
-        setLatestSubmissionResult(this.submission, this.result);
+        setSubmissionResultByCorrectionRound(this.submission!, this.result, this.correctionRound);
         this.saveBusy = this.submitBusy = false;
     }
 
@@ -379,8 +381,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     get canOverride(): boolean {
         if (this.exercise) {
-            if (this.isAtLeastInstructor) {
-                // Instructors can override any assessment at any time.
+            if (this.isAtLeastInstructor && this.submission?.latestResult === this.result) {
+                // Instructors can override any latest assessment at any time.
                 return true;
             }
             if (this.complaint && this.isAssessor) {
