@@ -483,7 +483,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         // a complaint is handled if it is either accepted or denied and a complaint response exists
         const handled = complaint.accepted !== undefined && complaint.complaintResponse !== undefined;
         if (handled) {
-            // handled
             return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.complaintEvaluated');
         } else {
             if (this.complaintService.isComplaintLocked(complaint)) {
