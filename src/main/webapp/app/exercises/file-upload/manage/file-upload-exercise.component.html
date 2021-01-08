@@ -49,7 +49,7 @@
                     <td>{{ fileUploadExercise.assessmentDueDate | artemisDate }}</td>
                     <td>{{ fileUploadExercise.maxScore }}</td>
                     <td>{{ fileUploadExercise.bonusPoints }}</td>
-                    <td>{{ exerciseService.getTranslationForIncludedInOverallScore(modelingExercise) }}</td>
+                    <td>{{ exerciseService.getTranslationForIncludedInOverallScore(fileUploadExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ fileUploadExercise.presentationScoreEnabled }}</td>
                     <td>{{ fileUploadExercise.filePattern }}</td>
                     <td class="text-right">
