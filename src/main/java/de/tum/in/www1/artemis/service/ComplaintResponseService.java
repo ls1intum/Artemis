@@ -115,6 +115,7 @@ public class ComplaintResponseService {
             throw new IllegalArgumentException("Complaint was not found in database");
         }
         Complaint complaintFromDatabase = complaintFromDatabaseOptional.get();
+        ComplaintResponse unfinishedComplaintResponse = getUnfinishedComplaintResponse(complaintFromDatabase);
 
         Result originalResult = complaintFromDatabase.getResult();
         User assessor = originalResult.getAssessor();
@@ -125,11 +126,11 @@ public class ComplaintResponseService {
         }
         // only instructors and the original reviewer can refresh the lock while it is still running
 
-        if (blockedByLock(complaintFromDatabase.getComplaintResponse(), user, studentParticipation)) {
-            throw new ComplaintResponseLockedException(complaintFromDatabase.getComplaintResponse());
+        if (blockedByLock(unfinishedComplaintResponse, user, studentParticipation)) {
+            throw new ComplaintResponseLockedException(unfinishedComplaintResponse);
         }
 
-        complaintResponseRepository.deleteById(complaintFromDatabase.getComplaintResponse().getId());
+        complaintResponseRepository.deleteById(unfinishedComplaintResponse.getId());
         complaintFromDatabase.setComplaintResponse(null);
         complaintResponseRepository.flush();
 
