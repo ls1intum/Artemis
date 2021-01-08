@@ -533,27 +533,35 @@ public class JenkinsService implements ContinuousIntegrationService {
             // Jenkins logs all steps of the build pipeline. We remove those as they are irrelevant to the students
             List<BuildLogEntry> prunedBuildLogs = new ArrayList<>();
             for (BuildLogEntry entry : buildLog) {
-                if (entry.getLog().contains("Compilation failure")) {
+                String logString = entry.getLog();
+                if (logString.contains("Compilation failure")) {
                     break;
                 }
 
                 // filter unnecessary logs
-                if (!((entry.getLog().startsWith("[INFO]") && !entry.getLog().contains("error")) || !entry.getLog().startsWith("[ERROR]") || entry.getLog().startsWith("[WARNING]")
-                        || entry.getLog().startsWith("[ERROR] [Help 1]") || entry.getLog().startsWith("[ERROR] For more information about the errors and possible solutions")
-                        || entry.getLog().startsWith("[ERROR] Re-run Maven using") || entry.getLog().startsWith("[ERROR] To see the full stack trace of the errors")
-                        || entry.getLog().startsWith("[ERROR] -> [Help 1]") || entry.getLog().equals("[ERROR] "))) {
-
-                    // Remove the path from the log entries
-                    // When using local agents, this is the path where the workspace should be located
-                    String path = "/var/jenkins_home/workspace/" + projectKey + "/" + buildPlanId + "/";
-                    entry.setLog(entry.getLog().replace(path, ""));
-
-                    // When using remote agents, this is the path where the workspace should be located
-                    path = "/home/jenkins/remote_agent/workspace/" + projectKey + "/" + buildPlanId + "/";
-                    entry.setLog(entry.getLog().replace(path, ""));
-
-                    prunedBuildLogs.add(entry);
+                if ((logString.startsWith("[INFO]") && !logString.contains("error")) || !logString.startsWith("[ERROR]") || logString.startsWith("[WARNING]")
+                        || logString.startsWith("[ERROR] [Help 1]") || logString.startsWith("[ERROR] For more information about the errors and possible solutions")
+                        || logString.startsWith("[ERROR] Re-run Maven using") || logString.startsWith("[ERROR] To see the full stack trace of the errors")
+                        || logString.startsWith("[ERROR] -> [Help 1]") || logString.equals("[ERROR] ")) {
+                    continue;
                 }
+
+                // filter unnecessary Swift logs
+                if (logString.contains("Unable to find image") || logString.contains(": Pull") || logString.contains(": Waiting") || logString.contains(": Verifying")
+                        || logString.contains(": Download") || logString.startsWith("Digest:") || logString.startsWith("Status:") || logString.contains("github.com")) {
+                    continue;
+                }
+
+                // Remove the path from the log entries
+                // When using local agents, this is the path where the workspace should be located
+                String path = "/var/jenkins_home/workspace/" + projectKey + "/" + buildPlanId + "/";
+                entry.setLog(entry.getLog().replace(path, ""));
+
+                // When using remote agents, this is the path where the workspace should be located
+                path = "/home/jenkins/remote_agent/workspace/" + projectKey + "/" + buildPlanId + "/";
+                entry.setLog(entry.getLog().replace(path, ""));
+
+                prunedBuildLogs.add(entry);
             }
 
             // Save build logs

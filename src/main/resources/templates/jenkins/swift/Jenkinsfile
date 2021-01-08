@@ -33,13 +33,10 @@ pipeline {
 
                             echo "---------- swift build ----------"
                             cd assignment
-                            swift build || error=true
+                            swift build
 
-                            if [ ! $error ]
-                            then
-                                echo "---------- swift test ----------"
-                                swift test || true
-                            fi
+                            echo "---------- swift test ----------"
+                            swift test || true
                             '''
                     }
                 }
