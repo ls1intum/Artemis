@@ -82,7 +82,8 @@ public class BuildLogEntryService {
     public boolean isUnnecessaryBuildLogForProgrammingLanguage(String logString, ProgrammingLanguage programmingLanguage) {
         boolean isInfoWarningOrErrorLog = isInfoLog(logString) || isWarningLog(logString) || isErrorLog(logString);
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            return isInfoWarningOrErrorLog || logString.startsWith("Unable to publish artifact") || logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS");
+            return isInfoWarningOrErrorLog || logString.startsWith("Unable to publish artifact") || logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")
+                    || logString.startsWith("Picked up JAVA_TOOL_OPTIONS") || logString.startsWith("[withMaven]") || logString.startsWith("$ docker");
         }
         else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             return isInfoWarningOrErrorLog || logString.contains("Unable to find image") || logString.contains(": Pull") || logString.contains(": Waiting")

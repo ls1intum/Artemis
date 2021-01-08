@@ -868,13 +868,8 @@ public class BambooService implements ContinuousIntegrationService {
                 break;
             }
 
-            // filter unnecessary logs
-            if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage)) {
-                continue;
-            }
-
-            // filter illegal reflection logs
-            if (buildLogService.isIllegalReflectionLog(logString)) {
+            // filter unnecessary logs and illegal reflection logs
+            if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage) || buildLogService.isIllegalReflectionLog(logString)) {
                 continue;
             }
 

@@ -538,8 +538,8 @@ public class JenkinsService implements ContinuousIntegrationService {
                     break;
                 }
 
-                // filter unnecessary logs
-                if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage)) {
+                // filter unnecessary logs and illegal reflection logs
+                if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage) || buildLogService.isIllegalReflectionLog(logString)) {
                     continue;
                 }
 
@@ -547,8 +547,6 @@ public class JenkinsService implements ContinuousIntegrationService {
                 if (logString.startsWith("+ ")) {
                     continue;
                 }
-
-                // TODO: filter reflection logs as in BambooService?
 
                 // Remove the path from the log entries
                 // TODO: use shortenedLogString from Bamboo?
