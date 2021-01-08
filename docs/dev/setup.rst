@@ -156,6 +156,58 @@ information about the setup for programming exercises provided:
 If you use a password, you need to adapt it in
 ``gradle/liquibase.gradle``.
 
+
+Run the server via a service configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This setup is recommended for production instances as it registers Artemis as a service and e.g. enables auto-restarting of Artemis after the VM running Artemis has been restarted.
+For development setups, see the other guides below.
+
+This is a service file that works on Debian/Ubuntu (using systemd):
+
+::
+
+   [Unit]
+   Description=ArTEMiS
+   After=syslog.target
+   [Service]
+   User=artemis
+   WorkingDirectory=/opt/artemis
+   ExecStart=/usr/bin/java \
+     -Djdk.tls.ephemeralDHKeySize=2048 \
+     -DLC_CTYPE=UTF-8 \
+     -Dfile.encoding=UTF-8 \
+     -Dsun.jnu.encoding=UTF-8 \
+     -Djava.security.egd=file:/dev/./urandom \
+     -Xmx2048m \
+     --add-modules java.se \
+     --add-exports java.base/jdk.internal.ref=ALL-UNNAMED \
+     --add-opens java.base/java.lang=ALL-UNNAMED \
+     --add-opens java.base/java.nio=ALL-UNNAMED \
+     --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
+     --add-opens java.management/sun.management=ALL-UNNAMED \
+     --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
+     -jar artemis.war \
+     --spring.profiles.active=prod,bamboo,bitbucket,jira,ldap,scheduling,openapi
+   SuccessExitStatus=143
+   StandardOutput=/opt/artemis/artemis.log
+   StandardError=inherit
+   [Install]
+   WantedBy=multi-user.target
+
+
+The following parts might also be useful for other (production) setups, even if this service file is not used:
+
+- ``-Djava.security.egd=file:/dev/./urandom``: This is required if repositories are cloned via SSH from the VCS.
+   The default (pseudo-)random-generator ``/dev/random`` is blocking which results in very bad performance when using SSH due to lack of entropy.
+
+
+The file should be placed at ``/etc/systemd/system/artemis.service`` and after running ``sudo systemctl daemon-reload``, you can start the service using ``sudo service artemis start``.
+
+You can stop the service using ``sudo service artemis stop`` and restart it using ``sudo service artemis restart``.
+
+Logs can be fetched using ``sudo journalctl -u artemis -f -n 200``.
+
 Run the server via a run configuration in IntelliJ
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -56,6 +56,18 @@ public class ModelingPlagiarismDetectionService {
     }
 
     /**
+     * Calculate the similarity distribution of the given comparisons.
+     */
+    private int[] calculateSimilarityDistribution(List<PlagiarismComparison<ModelingSubmissionElement>> comparisons) {
+        int[] similarityDistribution = new int[10];
+
+        comparisons.stream().map(PlagiarismComparison::getSimilarity).map(percent -> percent / 10).map(Double::intValue).map(index -> index == 10 ? 9 : index)
+                .forEach(index -> similarityDistribution[index]++);
+
+        return similarityDistribution;
+    }
+
+    /**
      * Pairwise comparison of text submissions using a TextComparisonStrategy
      *
      * @param modelingSubmissions List of modeling submissions
@@ -90,8 +102,9 @@ public class ModelingPlagiarismDetectionService {
         log.info(String.format("Found %d modeling submissions with at least %d elements to compare", models.size(), minimumModelSize));
 
         List<PlagiarismComparison<ModelingSubmissionElement>> comparisons = new ArrayList<>();
-
         List<UMLDiagram> nonEmptyDiagrams = new ArrayList<>(models.keySet());
+
+        long timeBeforeStartInMillis = System.currentTimeMillis();
 
         // It is intended to use the classic for loop here, because we only want to check
         // similarity between two different submissions once
@@ -142,7 +155,12 @@ public class ModelingPlagiarismDetectionService {
 
         log.info(String.format("Found %d similar modeling submission combinations (>%f)", comparisons.size(), minimumSimilarity));
 
+        long durationInMillis = System.currentTimeMillis() - timeBeforeStartInMillis;
+        int[] similarityDistribution = calculateSimilarityDistribution(comparisons);
+
         result.setComparisons(comparisons);
+        result.setDuration(durationInMillis);
+        result.setSimilarityDistribution(similarityDistribution);
 
         return result;
     }
