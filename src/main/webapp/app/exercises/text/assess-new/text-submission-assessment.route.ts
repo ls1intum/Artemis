@@ -23,6 +23,7 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
         const submissionId = Number(route.paramMap.get('submissionId'));
         console.log('router: resolve:');
         const correctionRound = Number(route.paramMap.get('correctionRound'));
+        console.log('correctionRound: ', correctionRound);
 
         if (submissionId) {
             return this.textAssessmentsService.getFeedbackDataForExerciseSubmission(submissionId, correctionRound).catch(() => Observable.of(undefined));
@@ -43,6 +44,7 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
         const exerciseId = Number(route.paramMap.get('exerciseId'));
         console.log('router: resolve:');
         const correctionRound = Number(route.paramMap.get('correctionRound'));
+        console.log('correctionRound: ', correctionRound);
         if (exerciseId) {
             return this.textSubmissionService
                 .getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, 'lock', correctionRound)

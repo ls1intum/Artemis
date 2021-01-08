@@ -118,7 +118,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.unusedTextBlockRefs = [];
         this.complaint = undefined;
         this.totalScore = 0;
-        this.correctionRound = 0;
 
         this.isLoading = true;
         this.saveBusy = false;
@@ -141,6 +140,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         });
 
         this.activatedRoute.paramMap.subscribe((paramMap) => (this.correctionRound = Number(paramMap.get('correctionRound'))));
+        console.log('SUBSCIBED croer: ', this.correctionRound);
         this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
@@ -157,8 +157,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.participation = studentParticipation;
         this.submission = this.participation!.submissions![0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
-        this.result = getSubmissionResultByCorrectionRound(this.submission, 0);
-        console.log('');
+        this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
+        console.log('SUBSCIBED II croer: ', this.correctionRound);
+
         this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 
         this.prepareTextBlocksAndFeedbacks();
