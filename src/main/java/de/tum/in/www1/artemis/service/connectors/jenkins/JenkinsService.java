@@ -517,6 +517,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
         String projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
         String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
+        ProgrammingLanguage programmingLanguage = programmingExerciseParticipation.getProgrammingExercise().getProgrammingLanguage();
 
         try {
             final var build = getJob(projectKey, buildPlanId).getLastBuild();
@@ -532,34 +533,18 @@ public class JenkinsService implements ContinuousIntegrationService {
 
             // Jenkins logs all steps of the build pipeline. We remove those as they are irrelevant to the students
             List<BuildLogEntry> prunedBuildLogs = new ArrayList<>();
-            BuildLogEntry testentry = new BuildLogEntry();
-            testentry.setLog("buildLog.size(): " + buildLog.size());
-            prunedBuildLogs.add(testentry);
-
-            BuildLogEntry testentry3 = new BuildLogEntry();
-            testentry3.setLog("build: " + build.details().getConsoleOutputHtml());
-            prunedBuildLogs.add(testentry3);
-
             for (BuildLogEntry entry : buildLog) {
                 String logString = entry.getLog();
-                prunedBuildLogs.add(entry);
                 if (logString.contains("Compilation failure")) {
                     break;
                 }
 
                 // filter unnecessary logs
-                if ((logString.startsWith("[INFO]") && !logString.contains("error")) || !logString.startsWith("[ERROR]") || logString.startsWith("[WARNING]")
-                        || logString.startsWith("[ERROR] [Help 1]") || logString.startsWith("[ERROR] For more information about the errors and possible solutions")
-                        || logString.startsWith("[ERROR] Re-run Maven using") || logString.startsWith("[ERROR] To see the full stack trace of the errors")
-                        || logString.startsWith("[ERROR] -> [Help 1]") || logString.equals("[ERROR] ")) {
+                if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage)) {
                     continue;
                 }
 
-                // filter unnecessary Swift logs
-                if (logString.contains("Unable to find image") || logString.contains(": Pull") || logString.contains(": Waiting") || logString.contains(": Verifying")
-                        || logString.contains(": Download") || logString.startsWith("Digest:") || logString.startsWith("Status:") || logString.contains("github.com")) {
-                    continue;
-                }
+                // TODO: filter reflection logs as in BambooService?
 
                 // Remove the path from the log entries
                 // When using local agents, this is the path where the workspace should be located
