@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.config;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 
 import javax.annotation.PreDestroy;
@@ -30,7 +28,6 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
-import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.config.JHipsterProperties;
 import io.github.jhipster.config.cache.PrefixedKeyGenerator;
 
@@ -111,15 +108,11 @@ public class CacheConfiguration {
         config.setInstanceName(instanceName);
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
 
-        final Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_TEST)) {
-            // disable auto detection config explicitly for tests
-            config.getNetworkConfig().getJoin().getAutoDetectionConfig().setEnabled(false);
-            log.info("Disable Hazelcast auto detection config for tests");
-            // Always enable TcpIp config: There has to be at least one join-config and we can not use multicast as this creates unwanted clusters
-            // If registration == null -> this will never connect to any instance as no other ip addresses are added
-            config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
-        }
+        config.getNetworkConfig().getJoin().getAutoDetectionConfig().setEnabled(false);
+
+        // Always enable TcpIp config: There has to be at least one join-config and we can not use multicast as this creates unwanted clusters
+        // If registration == null -> this will never connect to any instance as no other ip addresses are added
+        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
 
         // Allows using @SpringAware and therefore Spring Services in distributed tasks
         config.setManagedContext(new SpringManagedContext(applicationContext));
