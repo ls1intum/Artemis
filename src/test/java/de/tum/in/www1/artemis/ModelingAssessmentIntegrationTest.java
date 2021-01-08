@@ -6,7 +6,9 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -15,6 +17,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -274,6 +277,101 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
         assertThat(storedResult.getParticipation()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testManualAssessmentSubmit_IncludedCompletelyWithBonusPointsExercise() throws Exception {
+        // setting up exercise
+        useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        useCaseExercise.setMaxScore(10.0);
+        useCaseExercise.setBonusPoints(10.0);
+        exerciseRepo.save(useCaseExercise);
+
+        // setting up student submission
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
+        List<Feedback> feedbacks = new ArrayList<>();
+
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 150L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 200L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 200L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testManualAssessmentSubmit_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
+        // setting up exercise
+        useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        useCaseExercise.setMaxScore(10.0);
+        useCaseExercise.setBonusPoints(0.0);
+        exerciseRepo.save(useCaseExercise);
+
+        // setting up student submission
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
+        List<Feedback> feedbacks = new ArrayList<>();
+
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testManualAssessmentSubmit_IncludedAsBonusExercise() throws Exception {
+        // setting up exercise
+        useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        useCaseExercise.setMaxScore(10.0);
+        useCaseExercise.setBonusPoints(0.0);
+        exerciseRepo.save(useCaseExercise);
+
+        // setting up student submission
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
+        List<Feedback> feedbacks = new ArrayList<>();
+
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testManualAssessmentSubmit_NotIncludedExercise() throws Exception {
+        // setting up exercise
+        useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        useCaseExercise.setMaxScore(10.0);
+        useCaseExercise.setBonusPoints(0.0);
+        exerciseRepo.save(useCaseExercise);
+
+        // setting up student submission
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
+        List<Feedback> feedbacks = new ArrayList<>();
+
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100L);
+        // TODO: check for isRated() == false ?
+    }
+
+    public void addAssessmentFeedbackAndCheckScore(ModelingSubmission submission, List<Feedback> feedbacks, double pointsAwarded, Long expectedScore) throws Exception {
+        feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj"));
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment?submit=true", feedbacks, HttpStatus.OK);
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
+        assertThat(storedResult.getScore()).isEqualTo(expectedScore);
     }
 
     @Test

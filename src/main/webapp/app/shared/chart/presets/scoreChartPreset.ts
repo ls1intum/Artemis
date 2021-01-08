@@ -91,6 +91,7 @@ export class ScoreChartPreset implements ChartPreset {
         }
     }
 
+    // TODO: rene: use same round function
     private roundToDecimals(i: number, n: number) {
         const f = 10 ** n;
         return Math.round(i * f) / f;
