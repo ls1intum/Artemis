@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toSet;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -253,6 +255,9 @@ public class TextAssessmentResource extends AssessmentResource {
         // participation.setResults(Set.of(result));
 
         textSubmission.getResults().forEach(r -> r.setSubmission(null));
+
+        // set result again as it was changed
+        result = textSubmission.getResultByCorrectionRound(correctionRound);
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
         final Result finalResult = result;
