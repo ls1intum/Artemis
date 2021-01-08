@@ -21,25 +21,17 @@ let component: ExamInformationComponent;
 
 const user = { id: 1, name: 'Test User' } as User;
 
-const visibleDate = moment().subtract(6, 'hours');
 const startDate = moment().subtract(5, 'hours');
 const endDate = moment().subtract(4, 'hours');
-const publishResultsDate = moment().subtract(3, 'hours');
-const reviewStartDate = moment().subtract(2, 'hours');
-const reviewEndDate = moment().add(1, 'hours');
 
 const exam = {
     id: 1,
     title: 'Test Exam',
-    visibleDate: visibleDate,
     startDate: startDate,
     endDate: endDate,
-    publishResultsDate: publishResultsDate,
-    examStudentReviewStart: reviewStartDate,
-    examStudentReviewEnd: reviewEndDate,
 } as Exam;
 
-const studentExam = { id: 1, exam: exam, user: user } as StudentExam;
+const studentExam = { id: 1, exam: exam, user: user, workingTime: 60 } as StudentExam;
 
 describe('ExamInformationComponent', function () {
     beforeEach(() => {
@@ -52,8 +44,6 @@ describe('ExamInformationComponent', function () {
             .then(() => {
                 fixture = TestBed.createComponent(ExamInformationComponent);
                 component = fixture.componentInstance;
-                component.studentExam = studentExam;
-                component.exam = exam;
             });
     });
 
@@ -62,7 +52,23 @@ describe('ExamInformationComponent', function () {
     });
 
     it('should initialize', function () {
+        component.exam = exam;
         fixture.detectChanges();
         expect(fixture).to.be.ok;
+        expect(component.endTime()).to.equal(exam.endDate);
+    });
+
+    it('should return undefined if the exam is not set', function () {
+        fixture.detectChanges();
+        expect(fixture).to.be.ok;
+        expect(component.endTime()).to.not.exist;
+    });
+
+    it('should return the start date plus the working time as the student exam end date', function () {
+        component.exam = exam;
+        component.studentExam = studentExam;
+        fixture.detectChanges();
+        expect(fixture).to.be.ok;
+        expect(component.endTime()?.isSame(moment(exam.startDate).add(studentExam.workingTime, 'seconds'))).to.equal(true);
     });
 });
