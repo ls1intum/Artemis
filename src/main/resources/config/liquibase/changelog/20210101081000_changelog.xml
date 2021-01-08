@@ -1,0 +1,48 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<!-- TODO ADD TO MASTER_XML WHEN FEATURE IS FINISHED. FIRST GET OK FROM @STEPHAN KRUSCHE-->
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <changeSet author="swaldhauser" id="20210101081000-1">
+        <sql>
+            UPDATE exercise SET
+            max_score = 0
+            WHERE max_score IS NULL
+        </sql>
+    </changeSet>
+
+    <changeSet id="20210101081000-2" author="swaldhauser">
+        <addNotNullConstraint tableName="exercise" columnName="max_score" columnDataType="double"/>
+    </changeSet>
+
+    <changeSet author="swaldhauser" id="20210101081000-3">
+        <sql>
+            UPDATE exercise SET
+            bonus_points = 0
+            WHERE bonus_points IS NULL
+        </sql>
+    </changeSet>
+
+    <changeSet id="20210101081000-4" author="swaldhauser">
+        <addNotNullConstraint tableName="exercise" columnName="bonus_points" columnDataType="double"/>
+    </changeSet>
+
+    <changeSet author="swaldhauser" id="20210101081000-5">
+        <sql>
+            UPDATE exercise SET
+            included_in_overall_score = 'INCLUDED_AS_BONUS',
+            max_score = bonus_points
+            bonus_points = 0
+            WHERE COALESCE(max_score,0) = 0 AND COALESCE(bonus_points,0) > 0
+        </sql>
+    </changeSet>
+    <changeSet author="swaldhauser" id="20210101081000-6">
+        <sql>
+            UPDATE exercise SET
+            included_in_overall_score = 'NOT_INCLUDED',
+            max_score = 100
+            bonus_points = 0
+            WHERE COALESCE(max_score,0) = 0 AND COALESCE(bonus_points,0) = 0
+        </sql>
+    </changeSet>
+</databaseChangeLog>
