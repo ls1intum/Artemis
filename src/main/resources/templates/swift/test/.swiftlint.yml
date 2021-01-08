@@ -234,8 +234,6 @@ only_rules:
     # Case statements should vertically align with their enclosing switch statement, or indented if configured otherwise.
   - syntactic_sugar
     # Shorthand syntactic sugar should be used, i.e. [Int] instead of Array.
-  - todo
-    # TODOs and FIXMEs should be resolved.
   - toggle_bool
     # Prefer someBool.toggle() over someBool = !someBool.
   - trailing_closure

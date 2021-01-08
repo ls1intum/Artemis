@@ -142,16 +142,18 @@ public class SubmissionService {
      * Given an exercise id and a tutor id, it returns all the submissions where the tutor has a result associated.
      *
      * @param exerciseId - the id of the exercise we are looking for
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param tutor - the tutor we are interested in
      * @param examMode - flag should be set to ignore the test run submissions
      * @param <T> the submission type
      * @return a list of Submissions
      */
-    public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor, boolean examMode) {
+    public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(Long exerciseId, User tutor, boolean examMode, Long correctionRound) {
         List<T> submissions;
         if (examMode) {
-            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
+            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
+                    .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound.intValue()) != null)
                     .collect(toList());
         }
         else {
@@ -168,15 +170,16 @@ public class SubmissionService {
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param exercise the exercise for which we want to retrieve a submission without manual result
+     * @param correctionRound - the correction round we want our submission to have results for
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise exercise, boolean examMode) {
+    public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise exercise, boolean examMode, long correctionRound) {
         Random random = new Random();
         List<StudentParticipation> participations;
 
         if (examMode) {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(exercise.getId());
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(exercise.getId(), correctionRound);
         }
         else {
             participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId());
