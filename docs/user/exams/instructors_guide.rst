@@ -62,7 +62,7 @@ During the exam creation and configuration, you can create your exam and configu
 - You can distinguish between mandatory exercise groups and non-mandatory exercise groups. 
 - Artemis always includes mandatory exercise groups in the individual exam of a student. 
 - non-mandatory exercise groups can be left out, if there are more exercise groups than the ``number of exercises`` defined in the :ref:`exam configuration <exam_creation_and_configuration>`.
-- By default, every exercise group is mandatory. You can set the ``mandetory`` flag when you add an exercise group initially, or later by clicking |edit| on the exercise group.
+- By default, every exercise group is mandatory. You can set the ``mandatory`` flag when you add an exercise group initially, or later by clicking |edit| on the exercise group.
 
 .. figure:: instructor/exercise_variants.png
    :alt: Exercise Groups with different Exercise Variants
