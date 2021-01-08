@@ -22,9 +22,25 @@ pipeline {
             stage('Build') {
                 steps {
                     timestamps {
-                        withMaven {
-                            sh 'mvn clean test -B'
-                        }
+                        sh '''
+                            rm -rf Sources
+                            mv assignment/Sources .
+                            rm -rf assignment
+                            mkdir assignment
+                            cp -R Sources assignment
+                            cp -R Tests assignment
+                            cp Package.swift assignment
+
+                            echo "---------- swift build ----------"
+                            cd assignment
+                            swift build || error=true
+
+                            if [ ! $error ]
+                            then
+                                echo "---------- swift test ----------"
+                                swift test || true
+                            fi
+                            '''
                     }
                 }
             }
@@ -32,13 +48,19 @@ pipeline {
         post {
             always {
                 sh '''
-                #staticCodeAnalysisScript
-                '''
+                    #staticCodeAnalysisScript
+                    '''
             }
             cleanup {
-                sh 'rm -rf results'
-                sh 'mkdir results'
-                sh 'cp target/surefire-reports/*.xml $WORKSPACE/results/ || true'
+                sh '''
+                    rm -rf results
+                    mkdir results
+                    if [ -e assignment/tests.xml ]
+                    then
+                        sed -i 's/<testsuites>//g ; s/<\/testsuites>//g' assignment/tests.xml
+                        cp assignment/tests.xml $WORKSPACE/results/ || true
+                    fi
+                    '''
                 sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
                 cleanWs()
             }

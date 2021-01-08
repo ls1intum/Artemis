@@ -50,6 +50,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -89,12 +90,14 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final FeedbackService feedbackService;
 
+    private final BuildLogEntryService buildLogService;
+
     // Pattern of the DateTime that is included in the logs received from Jenkins
     private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
     public JenkinsService(JenkinsBuildPlanCreator jenkinsBuildPlanCreator, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, FeedbackService feedbackService,
-            ResultRepository resultRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate) {
+            ResultRepository resultRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService) {
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.restTemplate = restTemplate;
@@ -103,6 +106,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.feedbackService = feedbackService;
         this.resultRepository = resultRepository;
+        this.buildLogService = buildLogService;
     }
 
     @Override
@@ -133,10 +137,9 @@ public class JenkinsService implements ContinuousIntegrationService {
      */
     private JenkinsXmlConfigBuilder builderFor(ProgrammingLanguage programmingLanguage) {
         return switch (programmingLanguage) {
-            case JAVA, KOTLIN, PYTHON, C, HASKELL -> jenkinsBuildPlanCreator;
+            case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT -> jenkinsBuildPlanCreator;
             case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
             case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
-            case SWIFT -> throw new UnsupportedOperationException("Swift templates are not available for Jenkins.");
         };
     }
 
@@ -261,10 +264,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
         var secondUserRemoteConfig = userRemoteConfigs.item(1).getChildNodes();
         urlElement = findUrlElement(secondUserRemoteConfig, repoNameInCI);
-        if (urlElement != null) {
-            return urlElement;
-        }
-        return null;
+        return urlElement;
     }
 
     private org.w3c.dom.Node findUrlElement(NodeList nodeList, String repoNameInCI) {
@@ -508,7 +508,8 @@ public class JenkinsService implements ContinuousIntegrationService {
             result.addFeedbacks(scaFeedback);
         }
 
-        result.setHasFeedback(!result.getFeedbacks().isEmpty());
+        // Relevant feedback is negative
+        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(fb -> !fb.isPositive()));
     }
 
     @Override
@@ -530,14 +531,12 @@ public class JenkinsService implements ContinuousIntegrationService {
             }
 
             // Jenkins logs all steps of the build pipeline. We remove those as they are irrelevant to the students
-            LinkedList<BuildLogEntry> prunedBuildLog = new LinkedList<>();
-            final Iterator<BuildLogEntry> buildlogIterator = buildLog.iterator();
-            while (buildlogIterator.hasNext()) {
-                BuildLogEntry entry = buildlogIterator.next();
-
+            List<BuildLogEntry> prunedBuildLogs = new ArrayList<>();
+            for (BuildLogEntry entry : buildLog) {
                 if (entry.getLog().contains("Compilation failure")) {
                     break;
                 }
+
                 // filter unnecessary logs
                 if (!((entry.getLog().startsWith("[INFO]") && !entry.getLog().contains("error")) || !entry.getLog().startsWith("[ERROR]") || entry.getLog().startsWith("[WARNING]")
                         || entry.getLog().startsWith("[ERROR] [Help 1]") || entry.getLog().startsWith("[ERROR] For more information about the errors and possible solutions")
@@ -553,11 +552,16 @@ public class JenkinsService implements ContinuousIntegrationService {
                     path = "/home/jenkins/remote_agent/workspace/" + projectKey + "/" + buildPlanId + "/";
                     entry.setLog(entry.getLog().replace(path, ""));
 
-                    prunedBuildLog.add(entry);
+                    prunedBuildLogs.add(entry);
                 }
             }
 
-            return prunedBuildLog;
+            // Save build logs
+            var savedBuildLogs = buildLogService.saveBuildLogs(prunedBuildLogs, programmingSubmission);
+            programmingSubmission.setBuildLogEntries(savedBuildLogs);
+            programmingSubmissionRepository.save(programmingSubmission);
+
+            return prunedBuildLogs;
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -579,7 +583,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
                     while (nodeIterator.hasNext()) {
                         Node node = nodeIterator.next();
-                        final String log;
+                        String log;
                         if (node.attributes().get("class").contains("timestamp")) {
                             final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
                             final var time = ZonedDateTime.parse(timeAsString, logDateTimeFormatter);
@@ -590,6 +594,13 @@ public class JenkinsService implements ContinuousIntegrationService {
                                 contentCandidate = nodeIterator.next();
                             }
                             log = reduceToText(contentCandidate);
+
+                            // There are color codes in the logs that need to be filtered out.
+                            // This is needed for old programming exercises
+                            // For example:[[1;34mINFO[m] is changed to [INFO]
+                            log = log.replace("\u001B[1;34m", "");
+                            log = log.replace("\u001B[m", "");
+                            log = log.replace("\u001B[1;31m", "");
                             buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log).trim()));
                         }
                         else {
@@ -632,7 +643,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private String stripLogEndOfLine(String log) {
-        return log.replaceAll("\\r|\\n", "");
+        return log.replaceAll("[\\r\\n]", "");
     }
 
     private String reduceToText(Node node) {
