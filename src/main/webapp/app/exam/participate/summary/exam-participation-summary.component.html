@@ -29,6 +29,7 @@
                 <jhi-result [participation]="exercise.studentParticipations![0]"></jhi-result>
             </div>
             <button
+                id="{{ 'toggleCollapseExerciseButton-' + i }}"
                 class="btn btn-light question-collapse"
                 (click)="toggleCollapseExercise(exercise.id)"
                 [attr.aria-expanded]="!isCollapsed(exercise.id)"
