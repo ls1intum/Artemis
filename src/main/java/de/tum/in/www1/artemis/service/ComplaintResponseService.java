@@ -115,7 +115,6 @@ public class ComplaintResponseService {
             throw new IllegalArgumentException("Complaint was not found in database");
         }
         Complaint complaintFromDatabase = complaintFromDatabaseOptional.get();
-        ComplaintResponse unfinishedComplaintResponse = getUnfinishedComplaintResponse(complaintFromDatabase);
 
         Result originalResult = complaintFromDatabase.getResult();
         User assessor = originalResult.getAssessor();
