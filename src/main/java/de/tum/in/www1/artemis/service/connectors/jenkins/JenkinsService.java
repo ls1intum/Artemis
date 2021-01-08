@@ -532,6 +532,20 @@ public class JenkinsService implements ContinuousIntegrationService {
 
             // Jenkins logs all steps of the build pipeline. We remove those as they are irrelevant to the students
             List<BuildLogEntry> prunedBuildLogs = new ArrayList<>();
+            BuildLogEntry testentry = new BuildLogEntry();
+            testentry.setLog("buildLog.size(): " + buildLog.size());
+            prunedBuildLogs.add(testentry);
+
+            if (logHtml.childNodes().stream().noneMatch(child -> child.attr("class").contains("pipeline"))) {
+                BuildLogEntry testentry2 = new BuildLogEntry();
+                testentry2.setLog("Log is not pipeline log");
+                prunedBuildLogs.add(testentry2);
+            }
+
+            BuildLogEntry testentry3 = new BuildLogEntry();
+            testentry3.setLog("build: " + build.details().getConsoleOutputHtml());
+            prunedBuildLogs.add(testentry3);
+
             for (BuildLogEntry entry : buildLog) {
                 String logString = entry.getLog();
                 if (logString.contains("Compilation failure")) {
