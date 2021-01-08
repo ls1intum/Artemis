@@ -38,13 +38,10 @@ export class LectureUpdateComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
-        // Create a new lecture to use unless we fetch an existing lecture
-        this.lecture = new Lecture();
         this.activatedRoute.parent!.data.subscribe((data) => {
+            // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'];
-            if (lecture) {
-                this.lecture = lecture;
-            }
+            this.lecture = lecture ?? new Lecture();
 
             const course = data['course'];
             if (course) {
