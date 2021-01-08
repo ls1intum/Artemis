@@ -343,7 +343,11 @@ export class ExerciseService {
         return exercise;
     }
 
-    getTranslationForIncludedInOverallScore(exercise: Exercise) {
+    getTranslationForIncludedInOverallScore(exercise: Exercise | undefined) {
+        if (!exercise?.includedInOverallScore) {
+            return '';
+        }
+
         switch (exercise.includedInOverallScore) {
             case IncludedInOverallScore.INCLUDED_AS_BONUS:
                 return this.translateService.instant('artemisApp.exercise.includedAsBonus');

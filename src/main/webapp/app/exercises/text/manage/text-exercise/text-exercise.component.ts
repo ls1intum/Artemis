@@ -22,7 +22,7 @@ export class TextExerciseComponent extends ExerciseComponent {
     @Input() textExercises: TextExercise[];
 
     constructor(
-        private exerciseService: ExerciseService,
+        public exerciseService: ExerciseService,
         private textExerciseService: TextExerciseService,
         private courseExerciseService: CourseExerciseService,
         private modalService: NgbModal,
@@ -71,14 +71,6 @@ export class TextExerciseComponent extends ExerciseComponent {
 
     sortRows() {
         this.sortService.sortByProperty(this.textExercises, this.predicate, this.reverse);
-    }
-
-    getIncludedInOverallScoreTranslation(textExercise: TextExercise) {
-        if (this.textExercises) {
-            return this.exerciseService.getTranslationForIncludedInOverallScore(textExercise);
-        } else {
-            return '';
-        }
     }
 
     /**
