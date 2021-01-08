@@ -2,17 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { JhiEventManager } from 'ng-jhipster';
-import { UMLDiagramType, ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise, ExerciseCategory, ExerciseMode } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { JhiAlertService } from 'ng-jhipster';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -23,6 +22,8 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
     styleUrls: ['./modeling-exercise-update.scss'],
 })
 export class ModelingExerciseUpdateComponent implements OnInit {
+    readonly IncludedInOverallScore = IncludedInOverallScore;
+
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
     UMLDiagramType = UMLDiagramType;
