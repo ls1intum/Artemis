@@ -13,7 +13,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exercise, ExerciseCategory } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -27,6 +27,8 @@ import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/sha
     styleUrls: ['../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
+    readonly IncludedInOverallScore = IncludedInOverallScore;
+
     FeatureToggle = FeatureToggle;
     ProgrammingLanguage = ProgrammingLanguage;
     ProjectType = ProjectType;

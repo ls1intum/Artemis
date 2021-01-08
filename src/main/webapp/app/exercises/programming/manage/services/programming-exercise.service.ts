@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as moment from 'moment';
+import { Moment } from 'moment';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
@@ -11,7 +12,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { Moment } from 'moment';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
@@ -36,6 +36,7 @@ export class ProgrammingExerciseService {
      */
     automaticSetup(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
         const copy = this.convertDataFromClient(programmingExercise);
+        this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
@@ -94,6 +95,7 @@ export class ProgrammingExerciseService {
      */
     importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise, recreateBuildPlans: boolean, updateTemplate: boolean): Observable<EntityResponseType> {
         const options = createRequestOption({ recreateBuildPlans, updateTemplate });
+        this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceProgrammingExercise);
         return this.http
             .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, adaptedSourceProgrammingExercise, {
                 params: options,
@@ -110,6 +112,7 @@ export class ProgrammingExerciseService {
     update(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = this.convertDataFromClient(programmingExercise);
+        this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .put<ProgrammingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
