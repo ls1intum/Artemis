@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
@@ -64,9 +63,6 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 public class BambooService implements ContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
-
-    // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
-    private static final Pattern ASSIGNMENT_PATH = Pattern.compile("(/[^\0]+)*" + ASSIGNMENT_DIRECTORY);
 
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;

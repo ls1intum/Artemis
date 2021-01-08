@@ -549,16 +549,26 @@ public class JenkinsService implements ContinuousIntegrationService {
                 }
 
                 // Remove the path from the log entries
-                // TODO: use shortenedLogString from Bamboo?
                 // When using local agents, this is the path where the workspace should be located
-                String path = "/var/jenkins_home/workspace/" + projectKey + "/" + buildPlanId + ASSIGNMENT_DIRECTORY;
-                entry.setLog(entry.getLog().replace(path, ""));
+                // String path = "/var/jenkins_home/workspace/" + projectKey + "/" + buildPlanId + ASSIGNMENT_DIRECTORY;
+                // entry.setLog(entry.getLog().replace(path, ""));
+                //
+                // // When using remote agents, this is the path where the workspace should be located
+                // path = "/home/jenkins/remote_agent/workspace/" + projectKey + "/" + buildPlanId + ASSIGNMENT_DIRECTORY;
+                // entry.setLog(entry.getLog().replace(path, ""));
+                //
+                // prunedBuildLogs.add(entry);
 
-                // When using remote agents, this is the path where the workspace should be located
-                path = "/home/jenkins/remote_agent/workspace/" + projectKey + "/" + buildPlanId + ASSIGNMENT_DIRECTORY;
-                entry.setLog(entry.getLog().replace(path, ""));
+                // TODO: use shortenedLogString from Bamboo?
+                // Replace some unnecessary information and hide complex details to make it easier to read the important information
+                final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
 
-                prunedBuildLogs.add(entry);
+                // Avoid duplicate log entries
+                var existingLog = prunedBuildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
+                if (existingLog.isEmpty()) {
+                    entry.setLog(shortenedLogString);
+                    prunedBuildLogs.add(entry);
+                }
             }
 
             // Save build logs
