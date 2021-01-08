@@ -252,12 +252,13 @@ public class TextAssessmentResource extends AssessmentResource {
 
         // Prepare for Response: Set Submissions and Results of Participation to include requested only.
         participation.setSubmissions(Set.of(textSubmission));
-        // participation.setResults(Set.of(result));
-
         textSubmission.getResults().forEach(r -> r.setSubmission(null));
 
         // set result again as it was changed
         result = textSubmission.getResultByCorrectionRound(correctionRound);
+
+        // sets results for participation as legacy requires it, will change in follow up NR SE
+        participation.setResults(Set.copyOf(textSubmission.getResults()));
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
         final Result finalResult = result;
