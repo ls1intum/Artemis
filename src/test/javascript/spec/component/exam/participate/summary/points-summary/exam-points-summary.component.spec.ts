@@ -68,7 +68,7 @@ const programmingExercise = {
 } as ProgrammingExercise;
 const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise];
 
-describe('ExamInformationComponent', function () {
+describe('ExamPointsSummaryComponent', function () {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), HttpClientTestingModule],
