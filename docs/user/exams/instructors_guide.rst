@@ -122,7 +122,7 @@ During the exam creation and configuration, you can create your exam and configu
 ^^^^^^^^^^^^^^^^^^^^^
 - To register students to the exam, navigate from the exam management to the *Students* page. Artemis offers two options to register students. You can: 
 
-    1. Add students manually my searching via the search bar.
+    1. Add students manually by searching via the search bar.
     2. Bulk import students using a ``CSV`` file. You can do this by pressing the ``Import students`` button.
 
     .. note::    
