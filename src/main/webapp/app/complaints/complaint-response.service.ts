@@ -63,7 +63,7 @@ export class ComplaintResponseService {
     resolveComplaint(complaintResponse: ComplaintResponse): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(complaintResponse);
         return this.http
-            .put<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintResponse.complaint?.id}/resolve`, copy, { observe: 'response' })
+            .put<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintResponse.complaint!.id}/resolve`, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
