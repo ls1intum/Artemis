@@ -64,6 +64,12 @@
                     ></jhi-date-time-picker>
                     <span *ngIf="fileUploadExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | translate }}</span>
                 </div>
+                <div class="form-group">
+                    <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | translate }}</label>
+                    <div>
+                        <jhi-included-in-overall-score-picker [(includedInOverallScore)]="fileUploadExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
+                    </div>
+                </div>
                 <div class="row">
                     <div class="col">
                         <div class="form-group">
@@ -82,10 +88,9 @@
                         </div>
                     </div>
                     <div class="col">
-                        <div class="form-group">
+                        <div class="form-group" [hidden]="fileUploadExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
                             <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints">Bonus Points</label>
                             <input
-                                required
                                 type="number"
                                 class="form-control"
                                 [pattern]="maxScorePattern"
