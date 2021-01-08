@@ -874,7 +874,7 @@ public class BambooService implements ContinuousIntegrationService {
 
             // Avoid duplicate log entries
             var existingLog = filteredBuildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
-            if (existingLog.isEmpty()) {
+            if (existingLog.isEmpty() || shortenedLogString.trim().isEmpty()) {
                 filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), shortenedLogString, unfilteredBuildLog.getProgrammingSubmission()));
             }
         }

@@ -565,7 +565,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
                 // Avoid duplicate log entries
                 var existingLog = prunedBuildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
-                if (existingLog.isEmpty()) {
+                if (existingLog.isEmpty() || shortenedLogString.trim().isEmpty()) {
                     entry.setLog(shortenedLogString);
                     prunedBuildLogs.add(entry);
                 }
