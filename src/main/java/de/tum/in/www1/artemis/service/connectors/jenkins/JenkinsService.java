@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -544,15 +543,21 @@ public class JenkinsService implements ContinuousIntegrationService {
                     continue;
                 }
 
+                // Jenkins outputs each executed shell command with '+ <shell command>'
+                if (logString.startsWith("+ ")) {
+                    continue;
+                }
+
                 // TODO: filter reflection logs as in BambooService?
 
                 // Remove the path from the log entries
+                // TODO: use shortenedLogString from Bamboo?
                 // When using local agents, this is the path where the workspace should be located
-                String path = "/var/jenkins_home/workspace/" + projectKey + "/" + buildPlanId + "/";
+                String path = "/var/jenkins_home/workspace/" + projectKey + "/" + buildPlanId + ASSIGNMENT_DIRECTORY;
                 entry.setLog(entry.getLog().replace(path, ""));
 
                 // When using remote agents, this is the path where the workspace should be located
-                path = "/home/jenkins/remote_agent/workspace/" + projectKey + "/" + buildPlanId + "/";
+                path = "/home/jenkins/remote_agent/workspace/" + projectKey + "/" + buildPlanId + ASSIGNMENT_DIRECTORY;
                 entry.setLog(entry.getLog().replace(path, ""));
 
                 prunedBuildLogs.add(entry);
