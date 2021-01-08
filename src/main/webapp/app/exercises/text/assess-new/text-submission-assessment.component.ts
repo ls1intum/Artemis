@@ -24,7 +24,7 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submissi
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess-new/text-assessment-base.component';
-import { getLatestSubmissionResult, setSubmissionResultByCorrectionRound, Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setSubmissionResultByCorrectionRound, getSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -157,8 +157,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.participation = studentParticipation;
         this.submission = this.participation!.submissions![0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
-        this.result = getLatestSubmissionResult(this.submission);
-
+        this.result = getSubmissionResultByCorrectionRound(this.submission, 0);
+        console.log('');
         this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 
         this.prepareTextBlocksAndFeedbacks();
