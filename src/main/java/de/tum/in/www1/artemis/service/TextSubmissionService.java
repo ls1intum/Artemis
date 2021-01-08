@@ -282,7 +282,7 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmission findAndLockTextSubmissionToBeAssessed(TextExercise textExercise, boolean removeTestRunParticipations, long correctionRound) {
         TextSubmission textSubmission = getRandomTextSubmissionEligibleForNewAssessment(textExercise, removeTestRunParticipations, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission for exercise " + textExercise.getId() + " could not be found"));
-        lockSubmission(textSubmission);
+        lockSubmission(textSubmission, correctionRound);
         return textSubmission;
     }
 

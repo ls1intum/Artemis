@@ -362,13 +362,13 @@ public class SubmissionService {
     }
 
     /**
-     * Soft lock the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
+     * Soft the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
      * tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
      *
      * @param submission the submission to lock
      */
-    protected Result lockSubmission(Submission submission) {
-        Result result = submission.getLatestResult();
+    protected Result lockSubmission(Submission submission, Long correctionRound) {
+        Result result = submission.getResultById(correctionRound);
         if (result == null) {
             result = saveNewEmptyResult(submission);
         }

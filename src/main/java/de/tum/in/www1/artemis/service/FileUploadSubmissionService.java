@@ -203,7 +203,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         }
 
-        lockSubmission(fileUploadSubmission);
+        lockSubmission(fileUploadSubmission, 0L);
         return fileUploadSubmission;
     }
 
@@ -218,7 +218,7 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmission lockAndGetFileUploadSubmissionWithoutResult(FileUploadExercise fileUploadExercise, boolean removeTestRunParticipations, long correctionRound) {
         FileUploadSubmission fileUploadSubmission = getRandomFileUploadSubmissionEligibleForNewAssessment(fileUploadExercise, removeTestRunParticipations, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("File upload submission for exercise " + fileUploadExercise.getId() + " could not be found"));
-        lockSubmission(fileUploadSubmission);
+        lockSubmission(fileUploadSubmission, correctionRound);
         return fileUploadSubmission;
     }
 

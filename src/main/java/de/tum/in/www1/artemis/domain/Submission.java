@@ -109,6 +109,15 @@ public abstract class Submission extends DomainObject {
     }
 
     @Nullable
+    @JsonIgnore
+    public Result getResultById(Long id) {
+        if (results != null && results.size() > id) {
+            return results.get(id.intValue());
+        }
+        return null;
+    }
+
+    @Nullable
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
     public List<Result> getResults() {
         return results;

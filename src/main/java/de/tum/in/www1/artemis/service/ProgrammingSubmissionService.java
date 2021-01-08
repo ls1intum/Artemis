@@ -664,7 +664,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId) {
         ProgrammingSubmission programmingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
-        var manualResult = lockSubmission(programmingSubmission);
+        var manualResult = lockSubmission(programmingSubmission, 0L);
         programmingSubmission = (ProgrammingSubmission) manualResult.getSubmission();
 
         return programmingSubmission;
@@ -680,12 +680,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise, long correctionRound) {
         ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.hasExerciseGroup(), correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission for exercise " + exercise.getId() + " could not be found"));
-        Result newManualResult = lockSubmission(programmingSubmission);
+        Result newManualResult = lockSubmission(programmingSubmission, correctionRound);
         return (ProgrammingSubmission) newManualResult.getSubmission();
     }
 
+    // TODO
     @Override
-    protected Result lockSubmission(Submission submission) {
+    protected Result lockSubmission(Submission submission, Long correctionRound) {
         Result automaticResult = submission.getLatestResult();
         List<Feedback> automaticFeedbacks = automaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
         // Create a new result (manual result) and a new submission for it and set assessor and type to manual

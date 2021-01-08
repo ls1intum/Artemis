@@ -239,7 +239,7 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
         }
 
-        textAssessmentService.prepareSubmissionForAssessment(textSubmission);
+        textAssessmentService.prepareSubmissionForAssessment(textSubmission, 0L);
 
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
         exercise.setGradingCriteria(gradingCriteria);

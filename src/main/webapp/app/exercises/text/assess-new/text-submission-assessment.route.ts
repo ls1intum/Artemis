@@ -20,10 +20,10 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
      * @param route
      */
     resolve(route: ActivatedRouteSnapshot) {
-        console.log('route: ', route);
         const submissionId = Number(route.paramMap.get('submissionId'));
-        const correctionRound = Number(route.paramMap.get('correctionround'));
-        console.log('route called 1', correctionRound);
+        console.log('router: resolve:');
+        const correctionRound = Number(route.paramMap.get('correctionRound'));
+
         if (submissionId) {
             return this.textAssessmentsService.getFeedbackDataForExerciseSubmission(submissionId, correctionRound).catch(() => Observable.of(undefined));
         }
@@ -40,10 +40,9 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
      * @param route
      */
     resolve(route: ActivatedRouteSnapshot) {
-        console.log('route: ', route);
         const exerciseId = Number(route.paramMap.get('exerciseId'));
-        const correctionRound = Number(route.paramMap.get('correctionround'));
-        console.log('route called 2', correctionRound);
+        console.log('router: resolve:');
+        const correctionRound = Number(route.paramMap.get('correctionRound'));
         if (exerciseId) {
             return this.textSubmissionService
                 .getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, 'lock', correctionRound)
@@ -72,7 +71,7 @@ export class FeedbackConflictResolver implements Resolve<TextSubmission[] | unde
     }
 }
 
-export const NEW_ASSESSMENT_PATH = 'new/assessment/correctionround/:correctionround';
+export const NEW_ASSESSMENT_PATH = 'new/assessment/round/:correctionRound';
 export const textSubmissionAssessmentRoutes: Routes = [
     {
         path: NEW_ASSESSMENT_PATH,
@@ -89,7 +88,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':submissionId/assessment/correctionround/:correctionround',
+        path: ':submissionId/assessment/round/:correctionRound',
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
