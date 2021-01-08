@@ -20,11 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -59,7 +55,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param modelingExercise the corresponding exercise
      * @return the locked modeling submission
      */
-    public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
+    public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise, Long correctionRound) {
         ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
         if (modelingSubmission.getLatestResult() == null || modelingSubmission.getLatestResult().getAssessor() == null) {
@@ -67,7 +63,7 @@ public class ModelingSubmissionService extends SubmissionService {
             modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
         }
 
-        lockSubmission(modelingSubmission, modelingExercise);
+        lockSubmission(modelingSubmission, modelingExercise, correctionRound);
         return modelingSubmission;
     }
 
@@ -83,7 +79,7 @@ public class ModelingSubmissionService extends SubmissionService {
         ModelingSubmission modelingSubmission = getRandomModelingSubmissionEligibleForNewAssessment(modelingExercise, removeTestRunParticipations, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
         modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
-        lockSubmission(modelingSubmission, modelingExercise);
+        lockSubmission(modelingSubmission, modelingExercise, correctionRound);
         return modelingSubmission;
     }
 
@@ -202,8 +198,8 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param modelingSubmission the submission to lock
      * @param modelingExercise   the exercise to which the submission belongs to (needed for Compass)
      */
-    private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        var result = lockSubmission(modelingSubmission, 0L);
+    private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, Long correctionRound) {
+        var result = super.lockSubmission(modelingSubmission, correctionRound);
         if (result.getAssessor() == null && compassService.isSupported(modelingExercise)) {
             compassService.removeModelWaitingForAssessment(modelingExercise.getId(), modelingSubmission.getId());
         }

@@ -135,6 +135,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server
      */
     ngOnInit(): void {
+        console.log('in exercise assessment dashboard component');
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.isTestRun = this.route.snapshot.url[3]?.toString() === 'test-run-tutor-dashboard';
@@ -516,12 +517,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             const participationURLParameter: number | 'new' = submission === 'new' ? 'new' : submission.participation?.id!;
             route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationURLParameter}/assessment`;
         } else {
-            route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment/round/${correctionRound}`;
+            route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment/`;
         }
         if (this.isTestRun) {
-            await this.router.navigate([route], { queryParams: { testRun: this.isTestRun } });
+            await this.router.navigate([route], { queryParams: { testRun: this.isTestRun, correctionRound } });
         } else {
-            await this.router.navigate([route]);
+            await this.router.navigate([route], { queryParams: { correctionRound } });
         }
         this.openingAssessmentEditorForNewSubmission = false;
     }
@@ -535,7 +536,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         // For programming exercises we need the participationId
         submission.participation = complaint.result?.participation;
         // TODO: NR, SE: change to depend on correctionround
-        this.openAssessmentEditor(submission);
+        this.openAssessmentEditor(submission, submission.results?.length);
     }
 
     /**

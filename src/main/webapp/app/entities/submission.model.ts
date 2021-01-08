@@ -69,7 +69,7 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
  * @returns the results or undefined if submission or the result for the requested correctionRound is undefined
  */
 export function getSubmissionResultByCorrectionRound(submission: Submission | undefined, correctionRound: number): Result | undefined {
-    console.log('getSubmissoinResultByCorrectionRound ', submission?.results);
+    console.log('getSubmissoinResultByCorrectionRound ', submission?.results, correctionRound);
     if (submission?.results) {
         console.log(submission.results[correctionRound]);
         return submission.results[correctionRound];

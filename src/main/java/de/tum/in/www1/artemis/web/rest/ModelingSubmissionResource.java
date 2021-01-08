@@ -171,7 +171,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping("/modeling-submissions/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId) {
+    public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId,
+            @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
         var modelingSubmission = modelingSubmissionService.findOne(submissionId);
@@ -183,7 +184,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user)) {
             return forbidden();
         }
-        modelingSubmission = modelingSubmissionService.lockAndGetModelingSubmission(submissionId, modelingExercise);
+        modelingSubmission = modelingSubmissionService.lockAndGetModelingSubmission(submissionId, modelingExercise, correctionRound);
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(modelingExercise);
         modelingSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
@@ -257,12 +258,15 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping("/exercises/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
+    public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId,
+            @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
         final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+
+        // TODO NR, SE use correctionRound and correction Exam mode queries!
 
         if (compassService.isSupported(modelingExercise)) {
             // ask Compass for optimal submission to assess if diagram type is supported

@@ -43,7 +43,7 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
     resolve(route: ActivatedRouteSnapshot) {
         const exerciseId = Number(route.paramMap.get('exerciseId'));
         console.log('router: resolve:');
-        const correctionRound = Number(route.paramMap.get('correctionRound'));
+        const correctionRound = Number(route.queryParamMap.get('correctionRound'));
         console.log('correctionRound: ', correctionRound);
         if (exerciseId) {
             return this.textSubmissionService
@@ -73,7 +73,7 @@ export class FeedbackConflictResolver implements Resolve<TextSubmission[] | unde
     }
 }
 
-export const NEW_ASSESSMENT_PATH = 'new/assessment/round/:correctionRound';
+export const NEW_ASSESSMENT_PATH = 'new/assessment';
 export const textSubmissionAssessmentRoutes: Routes = [
     {
         path: NEW_ASSESSMENT_PATH,
@@ -90,7 +90,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':submissionId/assessment/round/:correctionRound',
+        path: ':submissionId/assessment',
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],

@@ -43,6 +43,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
      * If No Submissions are found, also get exercise. Otherwise, we get it from the first participation.
      */
     public async ngOnInit(): Promise<void> {
+        console.log('in file-uplaod-assessmentdashboard');
         this.busy = true;
         const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
 

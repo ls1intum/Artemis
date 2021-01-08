@@ -24,7 +24,7 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submissi
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess-new/text-assessment-base.component';
-import { getLatestSubmissionResult, setSubmissionResultByCorrectionRound, getSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -100,6 +100,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     ) {
         super(jhiAlertService, accountService, assessmentsService, translateService, structuredGradingCriterionService);
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+        this.correctionRound = 0;
         this.resetComponent();
     }
 
@@ -137,9 +138,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         await super.ngOnInit();
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
+            this.correctionRound = Number(queryParams.get('correctionRound'));
         });
 
-        this.activatedRoute.paramMap.subscribe((paramMap) => (this.correctionRound = Number(paramMap.get('correctionRound'))));
         console.log('SUBSCIBED croer: ', this.correctionRound);
         this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
@@ -158,7 +159,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.submission = this.participation!.submissions![0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
-        console.log('SUBSCIBED II croer: ', this.correctionRound);
 
         this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 
@@ -382,7 +382,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     get canOverride(): boolean {
         if (this.exercise) {
-            if (this.isAtLeastInstructor && this.submission?.latestResult === this.result) {
+            if (this.isAtLeastInstructor) {
                 // Instructors can override any latest assessment at any time.
                 return true;
             }

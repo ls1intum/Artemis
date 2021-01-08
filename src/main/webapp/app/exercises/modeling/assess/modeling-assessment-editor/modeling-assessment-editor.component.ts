@@ -8,6 +8,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
+import { now } from 'moment';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { filter } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
@@ -23,9 +24,8 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { now } from 'moment';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -57,6 +57,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     isTestRun = false;
     hasAutomaticFeedback = false;
     hasAssessmentDueDatePassed: boolean;
+    correctionRound = 0;
 
     private cancelConfirmationText: string;
 
@@ -93,6 +94,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
 
+        this.route.queryParamMap.subscribe((queryParams) => {
+            this.hideBackButton = queryParams.get('hideBackButton') === 'true';
+            this.isTestRun = queryParams.get('testRun') === 'true';
+            this.correctionRound = Number(queryParams.get('correctionRound'));
+        });
+
         this.route.paramMap.subscribe((params) => {
             this.courseId = Number(params.get('courseId'));
             const exerciseId = Number(params.get('exerciseId'));
@@ -102,10 +109,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             } else {
                 this.loadSubmission(Number(submissionId));
             }
-        });
-        this.route.queryParamMap.subscribe((queryParams) => {
-            this.hideBackButton = queryParams.get('hideBackButton') === 'true';
-            this.isTestRun = queryParams.get('testRun') === 'true';
         });
     }
 
@@ -125,7 +128,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private loadOptimalSubmission(exerciseId: number): void {
-        this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true).subscribe(
+        this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
 
@@ -149,9 +152,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
         this.submission = submission;
+        setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
-        this.result = getLatestSubmissionResult(this.submission);
+        this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
         this.hasAssessmentDueDatePassed = !!this.modelingExercise!.assessmentDueDate && moment(this.modelingExercise!.assessmentDueDate).isBefore(now());
         if (this.result?.hasComplaint) {
             this.getComplaint(this.result.id);

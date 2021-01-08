@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { JhiEventManager } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Subscription } from 'rxjs';
@@ -16,7 +16,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { JhiAlertService } from 'ng-jhipster';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Authority } from 'app/shared/constants/authority.constants';
@@ -80,6 +79,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        console.log('in modeling assessment dashboard');
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
