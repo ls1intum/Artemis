@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { JhiEventManager } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -10,12 +10,12 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exercise, ExerciseCategory, ExerciseMode } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { JhiAlertService } from 'ng-jhipster';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { NgForm } from '@angular/forms';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -23,6 +23,10 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
     styleUrls: ['./text-exercise-update.scss'],
 })
 export class TextExerciseUpdateComponent implements OnInit {
+    readonly IncludedInOverallScore = IncludedInOverallScore;
+
+    @ViewChild('editForm') editForm: NgForm;
+
     examCourseId?: number;
     checkedFlag: boolean;
     isExamMode: boolean;
@@ -199,6 +203,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
     }
+
     /**
      * gets the flag of the structured grading instructions slide toggle
      */

@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiEventManager } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseExerciseService, CourseManagementService } from '../../../../course/manage/course-management.service';
@@ -10,9 +10,9 @@ import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.compon
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiAlertService } from 'ng-jhipster';
 import { SortService } from 'app/shared/service/sort.service';
 import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-text-exercise',
@@ -22,6 +22,7 @@ export class TextExerciseComponent extends ExerciseComponent {
     @Input() textExercises: TextExercise[];
 
     constructor(
+        private exerciseService: ExerciseService,
         private textExerciseService: TextExerciseService,
         private courseExerciseService: CourseExerciseService,
         private modalService: NgbModal,
@@ -70,6 +71,14 @@ export class TextExerciseComponent extends ExerciseComponent {
 
     sortRows() {
         this.sortService.sortByProperty(this.textExercises, this.predicate, this.reverse);
+    }
+
+    getIncludedInOverallScoreTranslation(textExercise: TextExercise) {
+        if (this.textExercises) {
+            return this.exerciseService.getTranslationForIncludedInOverallScore(textExercise);
+        } else {
+            return '';
+        }
     }
 
     /**

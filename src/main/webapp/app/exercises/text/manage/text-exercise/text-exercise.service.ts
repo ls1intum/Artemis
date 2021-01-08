@@ -29,6 +29,7 @@ export class TextExerciseService {
      */
     create(textExercise: TextExercise): Observable<EntityResponseType> {
         const copy = this.exerciseService.convertDateFromClient(textExercise);
+        this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .post<TextExercise>(this.resourceUrl, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
@@ -55,6 +56,7 @@ export class TextExerciseService {
     update(textExercise: TextExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = this.exerciseService.convertDateFromClient(textExercise);
+        this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .put<TextExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
