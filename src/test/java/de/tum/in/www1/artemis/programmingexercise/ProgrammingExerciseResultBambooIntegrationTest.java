@@ -74,6 +74,20 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
+    public void shouldSaveBuildLogsForSuccessfulBuildInBuildLogRepository() {
+        var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
+        programmingExerciseResultTestService.shouldSaveBuildLogsInBuildLogRepository(resultNotification);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldSaveBuildLogsForFailedBuildInBuildLogRepository() {
+        var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of("test2"));
+        programmingExerciseResultTestService.shouldSaveBuildLogsInBuildLogRepository(resultNotification);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void shouldGenerateNewManualResultIfManualAssessmentExists() {
         var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of());
         programmingExerciseResultTestService.shouldGenerateNewManualResultIfManualAssessmentExists(notification);

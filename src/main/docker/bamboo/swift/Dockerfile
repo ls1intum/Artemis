@@ -1,6 +1,6 @@
 FROM atlassian/bamboo-server:7.1.2
 
-LABEL description="Bamboo pre-configured for Artemis"
+LABEL description="Bamboo pre-configured for Artemis, pre-installed with Swift"
 
 USER root
 ENV DEBIAN_FRONTEND noninteractive
@@ -17,11 +17,10 @@ RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/jav
 # Add file in /artemis/bin/mvn that uses the correct java version and passes all arguments to mvn
 RUN mkdir /artemis && mkdir /artemis/bin && printf '#!/bin/bash\nJAVA_HOME=/usr/lib/jvm/java-15-oracle /usr/bin/mvn "$@"\n' > /artemis/bin/mvn && chmod 777 /artemis/bin/mvn
 
-# Adapted from norionomura/swift and norionomura/swiftlint
+# Install Swift and SwiftLint (Adapted from norionomura/swift and norionomura/swiftlint)
 ENV SWIFT_BRANCH swift-5.3.1-release
 ENV SWIFT_PLATFORM ubuntu18.04
 ENV SWIFT_VERSION 5.3.1-RELEASE
-# install Swift and SwiftLint
 RUN apt-get install -y --no-install-recommends \
     gnupg2 \
     libcurl4-openssl-dev \

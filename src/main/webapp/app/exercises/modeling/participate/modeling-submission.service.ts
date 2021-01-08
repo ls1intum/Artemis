@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import { map } from 'rxjs/operators';
@@ -51,12 +51,17 @@ export class ModelingSubmissionService {
      * Get all submissions for an exercise
      * @param {number} exerciseId - Id of the exercise
      * @param {any?} req - Request option
+     * @param correctionRound correctionRound for which to get the Submissions
      */
-    getModelingSubmissionsForExercise(exerciseId: number, req?: any): Observable<HttpResponse<ModelingSubmission[]>> {
-        const options = createRequestOption(req);
+    getModelingSubmissionsForExerciseByCorrectionRound(exerciseId: number, req?: any, correctionRound = 0): Observable<HttpResponse<ModelingSubmission[]>> {
+        const url = `${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions`;
+        let params = createRequestOption(req);
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
+        }
         return this.http
-            .get<ModelingSubmission[]>(`${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions`, {
-                params: options,
+            .get<ModelingSubmission[]>(url, {
+                params,
                 observe: 'response',
             })
             .pipe(map((res: HttpResponse<ModelingSubmission[]>) => this.convertArrayResponse(res)));
@@ -66,13 +71,20 @@ export class ModelingSubmissionService {
      * Get an unassessed modeling exercise for an exercise
      * @param {number} exerciseId - Id of the exercise
      * @param {boolean?} lock - True if assessment is locked
+     * @param correctionRound correctionRound for which to get the Submissions
      */
-    getModelingSubmissionForExerciseWithoutAssessment(exerciseId: number, lock?: boolean): Observable<ModelingSubmission> {
-        let url = `api/exercises/${exerciseId}/modeling-submission-without-assessment`;
-        if (lock) {
-            url += '?lock=true';
+    getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound = 0): Observable<ModelingSubmission> {
+        const url = `api/exercises/${exerciseId}/modeling-submission-without-assessment`;
+        let params = new HttpParams();
+        if (correctionRound !== 0) {
+            params = params.set('correction-round', correctionRound.toString());
         }
-        return this.http.get<ModelingSubmission>(url).pipe(map((res: ModelingSubmission) => ModelingSubmissionService.convertItemFromServer(res)));
+        if (lock) {
+            params = params.set('lock', 'true');
+        }
+        return this.http
+            .get<ModelingSubmission>(url, { params })
+            .pipe(map((res: ModelingSubmission) => ModelingSubmissionService.convertItemFromServer(res)));
     }
 
     /**

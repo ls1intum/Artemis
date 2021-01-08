@@ -4,6 +4,7 @@ import { JhiAlert, JhiEventManager, JhiEventWithContent } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService } from 'ng-jhipster';
 import { AlertError } from 'app/shared/alert/alert-error.model';
+import { checkForMissingTranslationKey } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-alert-error',
@@ -117,7 +118,7 @@ export class AlertErrorComponent implements OnDestroy {
      * @param {any} data?
      */
     addErrorAlert(message: string, key?: string, data?: any): void {
-        message = key && key !== null ? key : message;
+        message = key || message;
 
         const newAlert: JhiAlert = {
             type: 'danger',
@@ -128,6 +129,8 @@ export class AlertErrorComponent implements OnDestroy {
             scoped: true,
         };
 
-        this.alerts.push(this.alertService.addAlert(newAlert, this.alerts));
+        const alert = this.alertService.addAlert(newAlert, this.alerts);
+        checkForMissingTranslationKey(alert);
+        this.alerts.push(alert);
     }
 }

@@ -14,7 +14,11 @@
             "unknown-student": "Unbekannt",
             "generate-jplag-report": "JPlag Report generieren",
             "no-file-selected": "Keine Datei ausgewählt",
-            "no-files-found": "Keine Dateien gefunden"
+            "no-files-found": "Keine Dateien gefunden",
+            "duration": "Dauer",
+            "similarity-distribution": "Ähnlichkeitsverteilung",
+            "no-info-available": "Keine Information verfügbar",
+            "caution": "Die Plagiatskontrolle kann für große Kurse sehr lange dauern."
         }
     }
 }
