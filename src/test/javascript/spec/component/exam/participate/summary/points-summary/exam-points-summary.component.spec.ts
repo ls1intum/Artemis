@@ -3,7 +3,6 @@ import * as chai from 'chai';
 import * as moment from 'moment';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -55,6 +54,7 @@ const textParticipation = { id: 1, student: user, results: [textResult] } as Stu
 const quizParticipation = { id: 2, student: user, results: [quizResult] } as StudentParticipation;
 const modelingParticipation = { id: 3, student: user, results: [modelingResult] } as StudentParticipation;
 const programmingParticipation = { id: 4, student: user, results: [programmingResult] } as StudentParticipation;
+const programmingParticipationTwo = { id: 5, student: user } as StudentParticipation;
 
 const textExercise = { id: 1, title: 'Text Exercise', type: ExerciseType.TEXT, studentParticipations: [textParticipation], maxScore: 10 } as TextExercise;
 const quizExercise = { id: 2, title: 'Quiz Exercise', type: ExerciseType.QUIZ, studentParticipations: [quizParticipation], maxScore: 10 } as QuizExercise;
@@ -66,7 +66,13 @@ const programmingExercise = {
     studentParticipations: [programmingParticipation],
     maxScore: 10,
 } as ProgrammingExercise;
-const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise];
+const programmingExerciseTwo = {
+    id: 5,
+    title: 'Programming Exercise',
+    type: ExerciseType.PROGRAMMING,
+    studentParticipations: [programmingParticipationTwo],
+} as ProgrammingExercise;
+let exercises = [textExercise, quizExercise, modelingExercise, programmingExercise, programmingExerciseTwo];
 
 describe('ExamPointsSummaryComponent', function () {
     beforeEach(() => {
@@ -91,6 +97,7 @@ describe('ExamPointsSummaryComponent', function () {
     it('should initialize and calculate scores correctly', function () {
         fixture.detectChanges();
         expect(fixture).to.be.ok;
+        expect(component.calculateAchievedPoints(programmingExerciseTwo)).to.equal(0);
         expect(component.calculateAchievedPoints(textExercise)).to.equal(5);
         expect(component.calculateAchievedPoints(quizExercise)).to.equal(2);
         expect(component.calculateAchievedPoints(modelingExercise)).to.equal(3.3);
@@ -99,5 +106,14 @@ describe('ExamPointsSummaryComponent', function () {
         expect(component.calculatePointsSum()).to.equal(10.3);
 
         expect(component.calculateMaxPointsSum()).to.equal(40);
+    });
+
+    it('should display 0 if no exercises are present', function () {
+        component.exercises = [];
+        fixture.detectChanges();
+        expect(fixture).to.be.ok;
+
+        expect(component.calculatePointsSum()).to.equal(0);
+        expect(component.calculateMaxPointsSum()).to.equal(0);
     });
 });
