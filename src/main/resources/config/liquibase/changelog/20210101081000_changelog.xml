@@ -33,7 +33,7 @@
             included_in_overall_score = 'INCLUDED_AS_BONUS',
             max_score = bonus_points
             bonus_points = 0
-            WHERE COALESCE(max_score,0) == 0 AND COALESCE(bonus_points,0) > 0
+            WHERE COALESCE(max_score,0) = 0 AND COALESCE(bonus_points,0) > 0
         </sql>
     </changeSet>
     <changeSet author="swaldhauser" id="20210101081000-6">
@@ -42,7 +42,7 @@
             included_in_overall_score = 'NOT_INCLUDED',
             max_score = 100
             bonus_points = 0
-            WHERE COALESCE(max_score,0) == 0 AND COALESCE(bonus_points,0) == 0
+            WHERE COALESCE(max_score,0) = 0 AND COALESCE(bonus_points,0) = 0
         </sql>
     </changeSet>
 </databaseChangeLog>
