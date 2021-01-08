@@ -368,7 +368,7 @@ public class SubmissionService {
      * @param submission the submission to lock
      */
     protected Result lockSubmission(Submission submission, Long correctionRound) {
-        Result result = submission.getResultById(correctionRound);
+        Result result = submission.getResultByCorrectionRound(correctionRound);
         if (result == null) {
             result = saveNewEmptyResult(submission);
         }

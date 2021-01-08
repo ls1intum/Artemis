@@ -110,7 +110,7 @@ public abstract class Submission extends DomainObject {
 
     @Nullable
     @JsonIgnore
-    public Result getResultById(Long id) {
+    public Result getResultByCorrectionRound(Long id) {
         if (results != null && results.size() > id) {
             return results.get(id.intValue());
         }

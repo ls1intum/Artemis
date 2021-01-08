@@ -52,6 +52,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge = false;
     @Input() showTestDetails = false;
+    @Input() correctionRound = 0;
 
     ParticipationType = ParticipationType;
 
@@ -96,7 +97,7 @@ export class ResultComponent implements OnInit, OnChanges {
                     });
                 }
                 // Make sure result and participation are connected
-                this.result = this.participation.results[0];
+                this.result = this.participation.results[this.correctionRound];
                 this.result.participation = this.participation;
             }
         }

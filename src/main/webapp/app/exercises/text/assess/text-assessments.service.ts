@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
@@ -107,7 +107,7 @@ export class TextAssessmentsService {
                     const participation = response.body!;
                     const submission = participation.submissions![0];
                     submission.participation = participation;
-                    submission.results = participation.results!;
+                    participation.results = submission.results!;
                     const result = getSubmissionResultByCorrectionRound(submission, correctionRound)!;
                     result.submission = submission;
                     result.participation = participation;

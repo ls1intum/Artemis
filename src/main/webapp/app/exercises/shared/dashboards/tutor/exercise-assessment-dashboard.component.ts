@@ -14,7 +14,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
-import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -205,7 +205,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     this.isExamMode = true;
                     this.exam = this.exercise?.exerciseGroup?.exam;
                 }
-                // TODO write loop over all correctionRounds
                 this.getAllTutorAssessedSubmissionsForAllCorrectionRounds();
 
                 // 1. We don't want to assess submissions before the exercise due date
@@ -344,10 +343,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
                 const sub = submissions.map((submission) => {
                     submission.participation!.submissions = [submission];
+                    submission.participation!.results = submission.results;
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                     return submission;
                 });
-
                 this.submissionsByCorrectionRound!.set(correctionRound, sub); // todo NR
             });
     }
@@ -470,8 +469,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      * Calculates the status of a submission by inspecting the result
      * @param submission Submission which to check
      */
-    calculateStatus(submission: Submission) {
-        const tmpResult = submission.latestResult;
+    calculateStatus(submission: Submission, correctionRound = 0) {
+        const tmpResult = submission.results![correctionRound];
         if (tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!)) {
             return 'DONE';
         }

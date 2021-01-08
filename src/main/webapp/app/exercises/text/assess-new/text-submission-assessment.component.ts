@@ -24,7 +24,7 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submissi
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess-new/text-assessment-base.component';
-import { getLatestSubmissionResult, setSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setSubmissionResultByCorrectionRound, Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',

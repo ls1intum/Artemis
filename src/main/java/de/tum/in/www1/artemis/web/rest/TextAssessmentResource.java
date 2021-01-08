@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toSet;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.Nullable;
 
@@ -217,7 +214,8 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @GetMapping("/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId) {
+    public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId,
+            @RequestParam(value = "correction-round", defaultValue = "0") Long correctionRound) {
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
 
         final Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findByIdWithEagerParticipationExerciseResultAssessor(submissionId);
@@ -230,7 +228,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final TextSubmission textSubmission = optionalTextSubmission.get();
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        Result result = textSubmission.getLatestResult();
+        Result result = textSubmission.getResultByCorrectionRound(correctionRound);
 
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
@@ -243,23 +241,18 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         // TODO SE, NR: add correctionRound parameter
-        textAssessmentService.prepareSubmissionForAssessment(textSubmission, 0L);
+        textAssessmentService.prepareSubmissionForAssessment(textSubmission, correctionRound);
 
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
         exercise.setGradingCriteria(gradingCriteria);
         // Remove sensitive information of submission depending on user
         textSubmissionService.hideDetails(textSubmission, user);
-        result = textSubmission.getLatestResult();
 
         // Prepare for Response: Set Submissions and Results of Participation to include requested only.
         participation.setSubmissions(Set.of(textSubmission));
-        participation.setResults(Set.of(result));
+        // participation.setResults(Set.of(result));
 
-        // Remove Result from Submission, as it is send in participation.results[0]
-        textSubmission.setResults(new ArrayList<Result>());
-
-        // Remove Submission from Result
-        result.setSubmission(null);
+        textSubmission.getResults().forEach(r -> r.setSubmission(null));
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
         final Result finalResult = result;
