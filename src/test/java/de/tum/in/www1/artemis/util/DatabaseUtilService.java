@@ -1225,6 +1225,7 @@ public class DatabaseUtilService {
     }
 
     public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         exercise.setMaxScore(100.0);
         exercise.setBonusPoints(10.0);
         return exerciseRepo.save(exercise);

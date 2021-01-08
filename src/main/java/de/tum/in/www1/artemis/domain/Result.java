@@ -236,6 +236,7 @@ public class Result extends DomainObject {
      * @param maxScore   maximum score reachable at corresponding exercise
      */
     public void setScore(Double totalScore, @Nullable Double maxScore) {
+        // TODO: rene: remove 100
         Long score = (maxScore == null) ? 100L : Math.round(totalScore / maxScore * 100);
         setScore(score);
     }
