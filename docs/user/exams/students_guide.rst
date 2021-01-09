@@ -35,7 +35,7 @@ Prerequisites
 Offline Mode
 ^^^^^^^^^^^^
 - The exam mode in Artemis tolerates issues with the Internet connection.
-- If you loose your connection, you can continue working on text-, quiz- and modeling exercises, but you might get warnings that your solutions cannot be saved.
+- If you lose your connection, you can continue working on text-, quiz- and modeling exercises, but you might get warnings that your solutions cannot be saved.
 - If your Internet connection recovers, Artemis will save your solution.
 - Artemis tries to save your solution every 30 seconds, when you navigate between exercises, and when you click |save| or |save_continue|.
 - Programming exercises have 2 modes.
