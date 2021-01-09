@@ -23,53 +23,66 @@ export class UserMgmtResolve implements Resolve<any> {
     }
 }
 
-export const userMgmtRoute: Route = {
-    path: 'user-management',
-    component: UserManagementComponent,
-    resolve: {
-        pagingParams: JhiResolvePagingParams,
-    },
-    data: {
-        pageTitle: 'userManagement.home.title',
-        defaultSort: 'id,asc',
-    },
-    children: [
-        {
-            path: 'new',
-            component: UserManagementUpdateComponent,
-            resolve: {
-                user: UserMgmtResolve,
-            },
-            data: {
-                pageTitle: 'userManagement.home.createLabel',
-            },
+export const userMgmtRoute: Route[] = [
+    {
+        path: 'user-management',
+        component: UserManagementComponent,
+        resolve: {
+            pagingParams: JhiResolvePagingParams,
         },
-        {
-            path: ':login',
-            component: UserManagementDetailComponent,
-            resolve: {
-                user: UserMgmtResolve,
-            },
-            data: {
-                pageTitle: 'userManagement.home.title',
-                breadcrumbLabelVariable: 'user.body.login',
-            },
+        data: {
+            pageTitle: 'userManagement.home.title',
+            defaultSort: 'id,asc',
         },
-        {
-            // Create a new path without a component defined to prevent resolver caching and the UserManagementDetailComponent from being always rendered
-            path: ':login',
-            resolve: {
-                user: UserMgmtResolve,
-            },
-            children: [
-                {
-                    path: 'edit',
-                    component: UserManagementUpdateComponent,
-                    data: {
-                        pageTitle: 'userManagement.home.createOrEditLabel',
-                    },
+    },
+    {
+        // Create a new path without a component defined to prevent resolver the UserManagementComponent from being always rendered
+        path: 'user-management',
+        data: {
+            pageTitle: 'userManagement.home.title',
+        },
+        children: [
+            {
+                path: 'new',
+                component: UserManagementUpdateComponent,
+                resolve: {
+                    user: UserMgmtResolve,
                 },
-            ],
-        },
-    ],
-};
+                data: {
+                    pageTitle: 'userManagement.home.createLabel',
+                },
+            },
+            {
+                path: ':login',
+                component: UserManagementDetailComponent,
+                resolve: {
+                    user: UserMgmtResolve,
+                },
+                data: {
+                    pageTitle: 'userManagement.home.title',
+                    breadcrumbLabelVariable: 'user.body.login',
+                },
+            },
+            {
+                // Create a new path without a component defined to prevent resolver caching and the UserManagementDetailComponent from being always rendered
+                path: ':login',
+                resolve: {
+                    user: UserMgmtResolve,
+                },
+                data: {
+                    breadcrumbLabelVariable: 'user.body.login',
+                },
+                children: [
+                    {
+                        path: 'edit',
+                        component: UserManagementUpdateComponent,
+                        data: {
+                            pageTitle: 'userManagement.home.createOrEditLabel',
+                            breadcrumbLabelVariable: '',
+                        },
+                    },
+                ],
+            },
+        ],
+    },
+];
