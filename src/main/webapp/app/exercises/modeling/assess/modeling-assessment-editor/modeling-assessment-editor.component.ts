@@ -97,7 +97,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.route.queryParamMap.subscribe((queryParams) => {
             this.hideBackButton = queryParams.get('hideBackButton') === 'true';
             this.isTestRun = queryParams.get('testRun') === 'true';
-            this.correctionRound = Number(queryParams.get('correctionRound'));
+            this.correctionRound = Number(queryParams.get('correction-round'));
         });
 
         this.route.paramMap.subscribe((params) => {

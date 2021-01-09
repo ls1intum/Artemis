@@ -43,7 +43,7 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
     resolve(route: ActivatedRouteSnapshot) {
         const exerciseId = Number(route.paramMap.get('exerciseId'));
         console.log('router: resolve:');
-        const correctionRound = Number(route.queryParamMap.get('correctionRound'));
+        const correctionRound = Number(route.queryParamMap.get('correction-round'));
         console.log('correctionRound: ', correctionRound);
         if (exerciseId) {
             return this.textSubmissionService

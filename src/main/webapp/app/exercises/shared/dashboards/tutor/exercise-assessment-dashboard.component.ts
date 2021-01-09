@@ -504,6 +504,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     /**
      * Uses the router to navigate to the assessment editor for a given/new submission
      * @param submission Either submission or 'new'.
+     * @param correctionRound
      */
     async openAssessmentEditor(submission: Submission | 'new', correctionRound = 0): Promise<void> {
         if (!this.exercise || !this.exercise.type || !submission) {
@@ -520,9 +521,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment/`;
         }
         if (this.isTestRun) {
-            await this.router.navigate([route], { queryParams: { testRun: this.isTestRun, correctionRound } });
+            await this.router.navigate([route], { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
         } else {
-            await this.router.navigate([route], { queryParams: { correctionRound } });
+            await this.router.navigate([route], { queryParams: { 'correction-round': correctionRound } });
         }
         this.openingAssessmentEditorForNewSubmission = false;
     }

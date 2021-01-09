@@ -24,7 +24,7 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submissi
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess-new/text-assessment-base.component';
-import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, setSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -138,7 +138,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         await super.ngOnInit();
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
-            this.correctionRound = Number(queryParams.get('correctionRound'));
+            this.correctionRound = Number(queryParams.get('correction-round'));
         });
 
         console.log('SUBSCIBED croer: ', this.correctionRound);
@@ -158,6 +158,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.participation = studentParticipation;
         this.submission = this.participation!.submissions![0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
+        setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
         this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
 
         this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
@@ -263,7 +264,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     async nextSubmission(): Promise<void> {
         this.nextSubmissionBusy = true;
-        await this.router.navigate(['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
+        console.log('coR', this.correctionRound);
+        await this.router.navigate(['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment'], {
+            queryParams: { 'correction-round': this.correctionRound },
+        });
     }
 
     /**
