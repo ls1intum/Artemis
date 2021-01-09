@@ -552,7 +552,7 @@ public class JenkinsService implements ContinuousIntegrationService {
                 final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
 
                 // Avoid duplicate log entries
-                if (buildLogService.checkIfBuildLogIsNotADuplicate(programmingLanguage, prunedBuildLogs, shortenedLogString)) {
+                if (buildLogService.checkIfBuildLogIsNotADuplicate(prunedBuildLogs, shortenedLogString)) {
                     entry.setLog(shortenedLogString);
                     prunedBuildLogs.add(entry);
                 }

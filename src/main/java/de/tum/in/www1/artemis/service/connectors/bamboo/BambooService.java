@@ -873,7 +873,7 @@ public class BambooService implements ContinuousIntegrationService {
             final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
 
             // Avoid duplicate log entries
-            if (buildLogService.checkIfBuildLogIsNotADuplicate(programmingLanguage, filteredBuildLogs, shortenedLogString)) {
+            if (buildLogService.checkIfBuildLogIsNotADuplicate(filteredBuildLogs, shortenedLogString)) {
                 filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), shortenedLogString, unfilteredBuildLog.getProgrammingSubmission()));
             }
         }

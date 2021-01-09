@@ -104,21 +104,20 @@ public class BuildLogEntryService {
     private boolean isErrorLog(String log) {
         return log.startsWith("[ERROR] [Help 1]") || log.startsWith("[ERROR] For more information about the errors and possible solutions")
                 || log.startsWith("[ERROR] Re-run Maven using") || log.startsWith("[ERROR] To see the full stack trace of the errors") || log.startsWith("[ERROR] -> [Help 1]")
-                || log.startsWith("[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin") || log.equals("[ERROR] ");
+                || log.startsWith("[ERROR] Failed to execute goal org.apache.maven.plugins") || log.equals("[ERROR] ");
     }
 
     /**
      * Determines if a given build log string shall be added to the build logs which are shown to the user.
      * It avoids duplicate entries and only allows not more than one empty log.
      *
-     * @param programmingLanguage programming language of the exercise
      * @param buildLogs accumulated build logs
      * @param shortenedLogString current build log string
      * @return boolean indicating a build log should be added to the overall build logs
      */
-    public boolean checkIfBuildLogIsNotADuplicate(ProgrammingLanguage programmingLanguage, List<BuildLogEntry> buildLogs, String shortenedLogString) {
-        // Swift produces a lot of duplicate build logs when a build fails
-        if (programmingLanguage == ProgrammingLanguage.SWIFT && buildLogs.size() > 0) {
+    public boolean checkIfBuildLogIsNotADuplicate(List<BuildLogEntry> buildLogs, String shortenedLogString) {
+        // E.g. Swift produces a lot of duplicate build logs when a build fails
+        if (buildLogs.size() > 0) {
             var existingLog = buildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
             String lastLog = buildLogs.get(buildLogs.size() - 1).getLog();
             // If the log does not exist already or if the log is a single empty log add it to the build logs (avoid more than one empty log in a row)
