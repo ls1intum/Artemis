@@ -27,18 +27,18 @@
                 </dd>
             </dl>
 
-            <button type="button" [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'edit']" class="btn btn-primary">
+            <a type="button" [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'edit']" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                 <span jhiTranslate="entity.action.edit"> Edit</span>
-            </button>
-            <button type="submit" [routerLink]="['attachments']" class="btn btn-primary">
+            </a>
+            <a type="submit" [routerLink]="['attachments']" class="btn btn-primary">
                 <fa-icon [icon]="'file'"></fa-icon>
                 <span jhiTranslate="entity.action.attachments">Attachment</span>
-            </button>
-            <button type="submit" [routerLink]="['unit-management']" class="btn btn-primary">
+            </a>
+            <a type="submit" [routerLink]="['unit-management']" class="btn btn-primary">
                 <fa-icon [icon]="'puzzle-piece'"></fa-icon>
                 <span jhiTranslate="entity.action.units">Units</span>
-            </button>
+            </a>
         </div>
     </div>
 </div>

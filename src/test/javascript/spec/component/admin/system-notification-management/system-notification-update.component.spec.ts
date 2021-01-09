@@ -7,7 +7,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslatePipe } from '@ngx-translate/core';
 import { of } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { spy } from 'sinon';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
@@ -30,6 +29,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
             data: of({ notification: { id: 1, title: 'test' } as SystemNotification }),
         },
     } as any) as ActivatedRoute;
+    const router = { navigate: function () {} };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -37,7 +37,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
             declarations: [SystemNotificationManagementUpdateComponent, MockPipe(TranslatePipe), MockDirective(AlertErrorComponent), MockDirective(FormDateTimePickerComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
-                { provide: Router, useValue: MockRouter },
+                { provide: Router, useValue: router },
             ],
             schemas: [],
         })
@@ -46,6 +46,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
                 updateComponentFixture = TestBed.createComponent(SystemNotificationManagementUpdateComponent);
                 updateComponent = updateComponentFixture.componentInstance;
                 service = updateComponentFixture.debugElement.injector.get(SystemNotificationService);
+                sinon.stub(router, 'navigate');
             });
     });
 

@@ -1,4 +1,4 @@
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
@@ -104,6 +104,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
         private exerciseGroupService: ExerciseGroupService,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
+        private router: Router,
     ) {}
 
     /**
@@ -277,10 +278,19 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * If an user clicks on the back button the previous page should be loaded
+     * Revert to the previous state, equivalent with pressing the back button on your browser
+     * Returns to the detail page if there is no previous state and we edited an existing exercise
+     * Returns to the overview page if there is no previous state and we created a new exercise
+     * Returns to the exercise group page if we are in exam mode
      */
     previousState() {
-        window.history.back();
+        if (window.history.length > 1) {
+            window.history.back();
+        } else if (this.isExamMode) {
+            this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
+        } else {
+            this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        }
     }
 
     /**

@@ -124,11 +124,15 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * @function back
-     * @desc Navigate back to course
+     * Revert to the previous state, equivalent with pressing the back button on your browser
+     * Returns to the overview page if there is no previous state
      */
     back(): void {
-        this.location.back();
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            this.router.navigate(['../../'], { relativeTo: this.route });
+        }
     }
 
     /**

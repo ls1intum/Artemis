@@ -26,11 +26,11 @@
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
                 </button>
 
-                <button type="button" [routerLink]="getEditRoute()" class="btn btn-primary btn-sm mr-1">
+                <a type="button" [routerLink]="getEditRoute()" class="btn btn-primary btn-sm mr-1">
                     <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-                </button>
+                </a>
 
-                <button
+                <a
                     *ngIf="programmingExercise.course !== undefined"
                     type="submit"
                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
@@ -38,9 +38,9 @@
                 >
                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
-                </button>
+                </a>
 
-                <button
+                <a
                     *ngIf="programmingExercise.course !== undefined"
                     type="submit"
                     [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'scores']"
@@ -48,9 +48,9 @@
                 >
                     <fa-icon [icon]="'eye'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-                </button>
+                </a>
 
-                <button
+                <a
                     *ngIf="programmingExercise.course !== undefined"
                     type="submit"
                     [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'participations']"
@@ -58,11 +58,11 @@
                 >
                     <fa-icon [icon]="'list-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-                </button>
+                </a>
 
                 <jhi-external-submission class="mr-1" [exercise]="programmingExercise"></jhi-external-submission>
                 <jhi-programming-assessment-repo-export [exerciseId]="programmingExercise.id" class="mr-1"></jhi-programming-assessment-repo-export>
-                <button
+                <a
                     type="submit"
                     *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.course !== undefined"
                     [routerLink]="['/course-management', programmingExercise.course?.id, 'exercises', programmingExercise.id, 'hints']"
@@ -70,7 +70,7 @@
                 >
                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.manageHints">Manage Hints</span>
-                </button>
+                </a>
 
                 <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" class="btn btn-primary btn-sm mr-1" routerLink="plagiarism">
                     <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism">Check Plagiarism</span>

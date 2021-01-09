@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
@@ -51,6 +51,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         private eventManager: JhiEventManager,
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
+        private router: Router,
     ) {}
 
     /**
@@ -184,10 +185,18 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Returns to previous state, which is always exercise page
+     * Revert to the previous state, equivalent with pressing the back button on your browser
+     * Returns to the detail page if there is no previous state
+     * Returns to the exercise group page if we are in exam mode
      */
-    previousState(): void {
-        window.history.back();
+    previousState() {
+        if (window.history.length > 1) {
+            window.history.back();
+        } else if (this.isExamMode) {
+            this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
+        } else {
+            this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        }
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>): void {

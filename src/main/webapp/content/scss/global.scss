@@ -20,9 +20,15 @@ h4 {
 
 /* Increase contrast of links to get 100% on Lighthouse Accessability Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
 a,
-a:hover {
+a:not(.btn):hover {
     color: $primary;
     font-weight: bold;
+    /* make sure browsers use the pointer cursor for anchors, even with no href */
+    cursor: pointer;
+}
+a.disabled {
+    pointer-events: none;
+    cursor: default;
 }
 
 .clickable {
@@ -77,13 +83,6 @@ a:hover {
         padding-left: 12px;
         padding-right: 12px;
     }
-}
-
-a:not(.btn):hover {
-    color: $primary;
-    font-weight: bold;
-    /* make sure browsers use the pointer cursor for anchors, even with no href */
-    cursor: pointer;
 }
 
 .popover {

@@ -1242,7 +1242,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     cancel(): void {
         if (!this.isExamMode) {
-            this.router.navigate(['/course-management', this.quizExercise.course!.id, 'quiz-exercise']);
+            this.router.navigate(['/course-management', this.quizExercise.course!.id, 'quiz-exercises']);
         } else {
             this.router.navigate(['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups']);
         }
@@ -1254,13 +1254,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     get hasSavedQuizStarted(): boolean {
         return !!(this.savedEntity && this.savedEntity.isPlannedToStart && moment(this.savedEntity.releaseDate!).isBefore(moment()));
-    }
-
-    /**
-     * Navigate back
-     */
-    back(): void {
-        this.location.back();
     }
 
     /**

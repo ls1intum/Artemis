@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
@@ -31,6 +31,7 @@ export class LectureUpdateComponent implements OnInit {
         protected lectureService: LectureService,
         protected courseService: CourseManagementService,
         protected activatedRoute: ActivatedRoute,
+        private router: Router,
     ) {}
 
     /**
@@ -52,9 +53,15 @@ export class LectureUpdateComponent implements OnInit {
 
     /**
      * Revert to the previous state, equivalent with pressing the back button on your browser
+     * Returns to the detail page if there is no previous state and we edited an existing lecture
+     * Returns to the overview page if there is no previous state and we created a new lecture
      */
     previousState() {
-        window.history.back();
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        }
     }
 
     /**

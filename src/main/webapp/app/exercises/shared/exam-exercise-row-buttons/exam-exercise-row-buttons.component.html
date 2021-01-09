@@ -1,10 +1,10 @@
 <div class="btn-group flex-btn-group-container">
-    <button *ngIf="course.isAtLeastInstructor" type="submit" [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'scores']" class="btn btn-info btn-sm mr-1">
+    <a *ngIf="course.isAtLeastInstructor" type="submit" [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'scores']" class="btn btn-info btn-sm mr-1">
         <fa-icon [icon]="'eye'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-    </button>
+    </a>
 
-    <button
+    <a
         type="submit"
         *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.PROGRAMMING && exercise.type !== exerciseType.QUIZ"
         [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'assessment']"
@@ -12,9 +12,9 @@
     >
         <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
-    </button>
+    </a>
 
-    <button
+    <a
         *ngIf="course.isAtLeastInstructor"
         type="submit"
         [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'participations']"
@@ -22,9 +22,9 @@
     >
         <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-    </button>
+    </a>
 
-    <button
+    <a
         *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ"
         type="submit"
         [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'quiz-point-statistic']"
@@ -32,9 +32,9 @@
     >
         <fa-icon [icon]="'signal'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.statistics">Statistics</span>
-    </button>
+    </a>
 
-    <button
+    <a
         type="submit"
         *ngIf="course.isAtLeastInstructor && exercise.teamMode"
         [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'teams']"
@@ -42,9 +42,9 @@
     >
         <fa-icon [icon]="'users'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
-    </button>
+    </a>
 
-    <button
+    <a
         type="submit"
         *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING"
         [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'grading', 'test-cases']"
@@ -52,12 +52,12 @@
     >
         <fa-icon [icon]="'pencil-alt'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
-    </button>
+    </a>
 
     <!-- The route expects a preferred participationId. As we only have Exercises and not ProgrammingExercises with
     participations, we pass a hardcoded number. The code editor component will load the proper ProgrammingExercise, choose
     a participation and update the url displayed in the browser -->
-    <button
+    <a
         type="submit"
         *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING"
         [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'code-editor', -1]"
@@ -65,9 +65,9 @@
     >
         <fa-icon [icon]="'pencil-alt'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
-    </button>
+    </a>
 
-    <button
+    <a
         *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.QUIZ"
         type="submit"
         [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id]"
@@ -75,9 +75,9 @@
     >
         <fa-icon [icon]="'eye'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-    </button>
+    </a>
 
-    <button
+    <a
         *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ"
         type="submit"
         [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'preview']"
@@ -85,9 +85,9 @@
     >
         <fa-icon [icon]="'eye'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview">Preview</span>
-    </button>
+    </a>
 
-    <button
+    <a
         *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ"
         type="submit"
         [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'solution']"
@@ -95,34 +95,29 @@
     >
         <fa-icon [icon]="'eye'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
-    </button>
+    </a>
 
     <!-- Edit or re-evaluate for quizzes -->
     <ng-container *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ">
         <!-- Only show the re-evaluate button after the exam has ended -->
-        <button
-            *ngIf="isExamOver()"
-            type="submit"
-            [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 're-evaluate']"
-            class="btn btn-primary btn-sm mr-1"
-        >
+        <a *ngIf="isExamOver()" type="submit" [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 're-evaluate']" class="btn btn-primary btn-sm mr-1">
             <fa-icon [icon]="'pencil-alt'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
-        </button>
+        </a>
         <!-- Only show the the edit button if the exam has not ended. Disable the button if the exam is running -->
-        <button
+        <a
             *ngIf="!isExamOver()"
-            [disabled]="hasExamStarted()"
+            [class.disabled]="hasExamStarted()"
             type="submit"
             [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
             class="btn btn-primary btn-sm mr-1"
         >
             <fa-icon [icon]="'pencil-alt'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-        </button>
+        </a>
     </ng-container>
 
-    <button
+    <a
         *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.QUIZ"
         type="submit"
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
@@ -130,7 +125,7 @@
     >
         <fa-icon [icon]="'pencil-alt'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-    </button>
+    </a>
 
     <button
         *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.PROGRAMMING"

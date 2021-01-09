@@ -66,10 +66,19 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Returns to previous state, which should be always the page of selected course
+     * Revert to the previous state, equivalent with pressing the back button on your browser
+     * Returns to the detail page if there is no previous state and we edited an existing exercise
+     * Returns to the overview page if there is no previous state and we created a new exercise
+     * Returns to the exercise group page if we are in exam mode
      */
     previousState() {
-        window.history.back();
+        if (window.history.length > 1) {
+            window.history.back();
+        } else if (this.isExamMode) {
+            this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
+        } else {
+            this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        }
     }
 
     /**

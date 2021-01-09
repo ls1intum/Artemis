@@ -1,9 +1,9 @@
 <div>
     <h2>
         <span id="system-notification-management-page-heading" jhiTranslate="artemisApp.systemNotification.systemNotifications">System notifications</span>
-        <button class="btn btn-primary float-right jh-create-entity" [routerLink]="['./new']">
+        <a class="btn btn-primary float-right jh-create-entity" [routerLink]="['./new']">
             <fa-icon [icon]="'plus'"></fa-icon> <span jhiTranslate="artemisApp.systemNotification.createLabel">Create a new system notification</span>
-        </button>
+        </a>
     </h2>
     <jhi-alert></jhi-alert>
     <div class="table-responsive" *ngIf="notifications">
@@ -36,14 +36,14 @@
                     <td>{{ notification.expireDate | artemisDate }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
-                            <button id="viewButton" type="submit" [routerLink]="['./', notification.id]" class="btn btn-info btn-sm">
+                            <a id="viewButton" type="submit" [routerLink]="['./', notification.id]" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="'eye'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                            </button>
-                            <button id="editButton" type="submit" [routerLink]="['./', notification.id, 'edit']" queryParamsHandling="merge" class="btn btn-primary btn-sm">
+                            </a>
+                            <a id="editButton" type="submit" [routerLink]="['./', notification.id, 'edit']" queryParamsHandling="merge" class="btn btn-primary btn-sm">
                                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                            </button>
+                            </a>
                             <button
                                 jhiDeleteButton
                                 [entityTitle]="notification.title"

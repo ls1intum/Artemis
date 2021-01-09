@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Observable } from 'rxjs';
@@ -23,6 +23,7 @@ export class ExamUpdateComponent implements OnInit {
         private examManagementService: ExamManagementService,
         private jhiAlertService: JhiAlertService,
         private courseManagementService: CourseManagementService,
+        private router: Router,
     ) {}
 
     ngOnInit(): void {
@@ -44,8 +45,17 @@ export class ExamUpdateComponent implements OnInit {
         });
     }
 
+    /**
+     * Revert to the previous state, equivalent with pressing the back button on your browser
+     * Returns to the detail page if there is no previous state and we edited an existing exam
+     * Returns to the overview page if there is no previous state and we created a new exam
+     */
     previousState() {
-        window.history.back();
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            this.router.navigate(['../'], { relativeTo: this.route });
+        }
     }
 
     save() {

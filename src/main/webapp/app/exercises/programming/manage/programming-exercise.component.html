@@ -205,7 +205,7 @@
                     <td jhiOrionFilter [showInOrionWindow]="false" class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">
-                                <button
+                                <a
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'scores']"
@@ -213,8 +213,8 @@
                                 >
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-                                </button>
-                                <button
+                                </a>
+                                <a
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'participations']"
@@ -222,8 +222,8 @@
                                 >
                                     <fa-icon [icon]="'list-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-                                </button>
-                                <button
+                                </a>
+                                <a
                                     type="submit"
                                     *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'teams']"
@@ -231,7 +231,7 @@
                                 >
                                     <fa-icon [icon]="'users'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
-                                </button>
+                                </a>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
@@ -265,7 +265,7 @@
                                 </button>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
-                                <button
+                                <a
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id]"
@@ -273,8 +273,8 @@
                                 >
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                                </button>
-                                <button
+                                </a>
+                                <a
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'edit']"
@@ -282,7 +282,7 @@
                                 >
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                                </button>
+                                </a>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button

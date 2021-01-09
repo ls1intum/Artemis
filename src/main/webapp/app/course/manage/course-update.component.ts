@@ -1,4 +1,4 @@
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -46,6 +46,7 @@ export class CourseUpdateComponent implements OnInit {
     constructor(
         private courseService: CourseManagementService,
         private activatedRoute: ActivatedRoute,
+        private router: Router,
         private fileUploaderService: FileUploaderService,
         private jhiAlertService: JhiAlertService,
         private profileService: ProfileService,
@@ -138,8 +139,17 @@ export class CourseUpdateComponent implements OnInit {
         this.presentationScoreEnabled = this.course.presentationScore !== 0;
     }
 
+    /**
+     * Returns to previous state (same as back button in the browser)
+     * Returns to the detail page if there is no previous state and we edited an existing course
+     * Returns to the overview page if there is no previous state and we created a new course
+     */
     previousState() {
-        window.history.back();
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        }
     }
 
     /**
