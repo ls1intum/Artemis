@@ -19,6 +19,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     lectures: Lecture[];
     currentAccount: any;
     eventSubscriber: Subscription;
+    routerEventSubscription?: Subscription;
     courseId: number;
     isVisible: boolean;
 
@@ -57,7 +58,7 @@ export class LectureComponent implements OnInit, OnDestroy {
         });
         this.registerChangeInLectures();
         this.isVisible = this.route.children.length === 0;
-        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
+        this.routerEventSubscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
             this.isVisible = this.route.children.length === 0;
             if (this.isVisible) {
                 this.loadAll();
@@ -68,6 +69,9 @@ export class LectureComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.eventManager.destroy(this.eventSubscriber);
         this.dialogErrorSource.unsubscribe();
+        if (this.routerEventSubscription) {
+            this.eventManager.destroy(this.routerEventSubscription);
+        }
     }
 
     trackId(index: number, item: Lecture) {
