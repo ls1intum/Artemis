@@ -47,7 +47,7 @@ Offline Mode
 
     2. **Local IDE:** you only need to be online when you clone the repository and when you push your commits (i.e. submit your solution).
 
-- At the end of the online exercise, you must be online within a given ``grace period`` and submit your exam, otherwise it will not be graded.
+- At the end of the online exam, you must be online within a given ``grace period`` and submit your exam, otherwise it will not be graded.
 
 Suggestions
 ^^^^^^^^^^^
@@ -91,7 +91,7 @@ Welcome Screen
 ^^^^^^^^^^^^^^
 - The welcome screen gives you an overview of all the important information you need about the exam. 
 - Carefully read through the instructions.
-- Once you have read them, confirm that you will follow the rule, sign with your full name and click |start|.
+- Once you have read them, confirm that you will follow the rules, sign with your full name and click |start|.
 
     .. note::
         Your full name represents your signature. You can find your full name as registered on Artemis below the input field.
