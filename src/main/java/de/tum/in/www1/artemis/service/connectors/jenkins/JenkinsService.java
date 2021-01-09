@@ -563,9 +563,18 @@ public class JenkinsService implements ContinuousIntegrationService {
                 // Replace some unnecessary information and hide complex details to make it easier to read the important information
                 final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
 
-                // Avoid duplicate log entries
-                var existingLog = prunedBuildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
-                if (existingLog.isEmpty() || shortenedLogString.trim().isEmpty()) {
+                // Avoid duplicate log entries for Swift
+                if (programmingLanguage == ProgrammingLanguage.SWIFT && prunedBuildLogs.size() > 0) {
+                    var existingLog = prunedBuildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
+                    var lastLog = prunedBuildLogs.get(prunedBuildLogs.size() - 1).getLog();
+                    // If the log does not exist already or if the log is a single empty log add it to the build logs (avoid more than one empty log in a row)
+                    var isSingleEmptyLog = shortenedLogString.trim().isEmpty() && !lastLog.trim().isEmpty();
+                    if (existingLog.isEmpty() || isSingleEmptyLog) {
+                        entry.setLog(shortenedLogString);
+                        prunedBuildLogs.add(entry);
+                    }
+                }
+                else {
                     entry.setLog(shortenedLogString);
                     prunedBuildLogs.add(entry);
                 }
