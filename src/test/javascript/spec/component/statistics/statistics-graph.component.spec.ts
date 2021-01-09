@@ -81,11 +81,12 @@ describe('StatisticsGraphComponent', () => {
                 graphData[i] = i + 1;
             }
             spy.and.returnValue(of(graphData));
-
-            component.ngOnInit();
+            const changes = { currentSpan: { currentValue: span } as SimpleChange };
+            component.ngOnChanges(changes);
 
             expect(component.dataForSpanType).to.equal(graphData);
             expect(component.chartData[0].data).to.equal(graphData);
+            expect(component.currentSpan).to.equal(span);
         }
     });
 
