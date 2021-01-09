@@ -549,32 +549,10 @@ public class JenkinsService implements ContinuousIntegrationService {
                 }
 
                 // Remove the path from the log entries
-                // When using local agents, this is the path where the workspace should be located
-                // String path = "/var/jenkins_home/workspace/" + projectKey + "/" + buildPlanId + ASSIGNMENT_DIRECTORY;
-                // entry.setLog(entry.getLog().replace(path, ""));
-                //
-                // // When using remote agents, this is the path where the workspace should be located
-                // path = "/home/jenkins/remote_agent/workspace/" + projectKey + "/" + buildPlanId + ASSIGNMENT_DIRECTORY;
-                // entry.setLog(entry.getLog().replace(path, ""));
-                //
-                // prunedBuildLogs.add(entry);
-
-                // TODO: use shortenedLogString from Bamboo?
-                // Replace some unnecessary information and hide complex details to make it easier to read the important information
                 final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
 
-                // Avoid duplicate log entries for Swift
-                if (programmingLanguage == ProgrammingLanguage.SWIFT && prunedBuildLogs.size() > 0) {
-                    var existingLog = prunedBuildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
-                    var lastLog = prunedBuildLogs.get(prunedBuildLogs.size() - 1).getLog();
-                    // If the log does not exist already or if the log is a single empty log add it to the build logs (avoid more than one empty log in a row)
-                    var isSingleEmptyLog = shortenedLogString.trim().isEmpty() && !lastLog.trim().isEmpty();
-                    if (existingLog.isEmpty() || isSingleEmptyLog) {
-                        entry.setLog(shortenedLogString);
-                        prunedBuildLogs.add(entry);
-                    }
-                }
-                else {
+                // Avoid duplicate log entries
+                if (buildLogService.checkIfBuildLogIsNotADuplicate(programmingLanguage, prunedBuildLogs, shortenedLogString)) {
                     entry.setLog(shortenedLogString);
                     prunedBuildLogs.add(entry);
                 }

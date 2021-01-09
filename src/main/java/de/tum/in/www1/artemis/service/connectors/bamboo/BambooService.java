@@ -872,23 +872,8 @@ public class BambooService implements ContinuousIntegrationService {
             // Replace some unnecessary information and hide complex details to make it easier to read the important information
             final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
 
-            // // Avoid duplicate log entries
-            // var existingLog = filteredBuildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
-            // if (existingLog.isEmpty() || shortenedLogString.trim().isEmpty()) {
-            // filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), shortenedLogString, unfilteredBuildLog.getProgrammingSubmission()));
-            // }
-
-            // Avoid duplicate log entries for Swift
-            if (programmingLanguage == ProgrammingLanguage.SWIFT && filteredBuildLogs.size() > 0) {
-                var existingLog = filteredBuildLogs.stream().filter(log -> log.getLog().equals(shortenedLogString)).findFirst();
-                var lastLog = filteredBuildLogs.get(filteredBuildLogs.size() - 1).getLog();
-                // If the log does not exist already or if the log is a single empty log add it to the build logs (avoid more than one empty log in a row
-                var isSingleEmptyLog = shortenedLogString.trim().isEmpty() && !lastLog.trim().isEmpty();
-                if (existingLog.isEmpty() || isSingleEmptyLog) {
-                    filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), shortenedLogString, unfilteredBuildLog.getProgrammingSubmission()));
-                }
-            }
-            else {
+            // Avoid duplicate log entries
+            if (buildLogService.checkIfBuildLogIsNotADuplicate(programmingLanguage, filteredBuildLogs, shortenedLogString)) {
                 filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), shortenedLogString, unfilteredBuildLog.getProgrammingSubmission()));
             }
         }
