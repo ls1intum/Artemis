@@ -36,7 +36,7 @@ export const systemNotificationManagementRoute: Route[] = [
         },
     },
     {
-        // Create a new path without a component defined to prevent resolver the SystemNotificationManagementComponent from being always rendered
+        // Create a new path without a component defined to prevent resolver caching and the SystemNotificationManagementComponent from being always rendered
         path: 'system-notification-management',
         data: {
             pageTitle: 'artemisApp.systemNotification.systemNotifications',

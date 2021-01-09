@@ -36,7 +36,7 @@ export const userMgmtRoute: Route[] = [
         },
     },
     {
-        // Create a new path without a component defined to prevent resolver the UserManagementComponent from being always rendered
+        // Create a new path without a component defined to prevent resolver caching and the UserManagementComponent from being always rendered
         path: 'user-management',
         data: {
             pageTitle: 'userManagement.home.title',
