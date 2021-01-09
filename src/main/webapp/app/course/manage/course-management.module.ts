@@ -42,6 +42,7 @@ import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementExerciseRowComponent } from './overview/course-management-exercise-row.component';
+import { CourseManagementStatisticsComponent } from './overview/course-management-statistics.component';
 
 @NgModule({
     imports: [
@@ -89,6 +90,7 @@ import { CourseManagementExerciseRowComponent } from './overview/course-manageme
         CourseGroupComponent,
         CourseManagementCardComponent,
         CourseManagementExerciseRowComponent,
+        CourseManagementStatisticsComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}
