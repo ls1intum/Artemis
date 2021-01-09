@@ -41,7 +41,7 @@ During the exam creation and configuration, you can create your exam and configu
 - When you click on |create_new_exam| you are presented with the *Create Exam* view. Here you can set the basic information such as ``title``, ``examiner`` etc. The :ref:`timeline of the exam <timeline>` is defined by the dates: ``visible from``, ``start of working time``, ``end of working time``, ``release date of results``, ``begin of student review``, ``end of student review``. 
 - The first three dates are mandatory when you create an exam. The rest can be set when required. 
 - The ``grace period`` defines the amount of time the students have at their disposal to hand in their exam after the ``working time`` is over. This is set to 3 minutes by default. 
-- You can also define the ``number of exercises`` in the exam. You can leave this out initally, however it must be set before you can generate the :ref:`student exams <student_exams>`. For more information, see `1.3 Exercise Groups`_. 
+- You can also define the ``number of exercises`` in the exam. You can leave this out initially, however it must be set before you can generate the :ref:`student exams <student_exams>`. For more information, see `1.3 Exercise Groups`_. 
 - Artemis will randomize the order of the exercises for each student if you activate ``randomize order of exercise groups``.
 - Finally, you can fill out the exam ``start text`` and ``end text``. Artemis will present these texts to the students during the :ref:`exam conduction <exam_conduction>`, at the *Start-* and *End* page respectively.
 
@@ -289,10 +289,10 @@ You can specify the moment when Artemis publishes the results of the exam, see `
 - Additionally, you can choose to modify the dataset by selecting ``only include submitted exams`` or ``only include exercises with at least one non-empty submission``.
 
 .. note::
-        Unsubmitted exams are not eligable for the assessment process.
+        Unsubmitted exams are not eligible for the assessment process.
 
 - Review student performance using various metrics such as average, median and standard deviation.
-- Unsubmitted exams are not eligable for assessment and thereby appear as having no score. It can happen that an exercise is not part of any :ref:`student exam <student_exams>`. This is the case when Artemis selects a different exercise of the same exercise group for every :ref:`student exam <student_exams>`. Similarly to the unsubmitted exams, they can warp the results and statistics of the exam. By eliminating unsubmitted exams and exercises which were not part of the :ref:`exam conduction <exam_conduction>`, you can gain a more realistic overview of the performance of the students.
+- Unsubmitted exams are not eligible for assessment and thereby appear as having no score. It can happen that an exercise is not part of any :ref:`student exam <student_exams>`. This is the case when Artemis selects a different exercise of the same exercise group for every :ref:`student exam <student_exams>`. Similarly to the unsubmitted exams, they can warp the results and statistics of the exam. By eliminating unsubmitted exams and exercises which were not part of the :ref:`exam conduction <exam_conduction>`, you can gain a more realistic overview of the performance of the students.
 - Review the students perceived difficulty of every exercise to improve exams in the future.
 - The exam scores can also be exported via |export|. This is useful to upload the results into university systems like `TUM Online <https://campus.tum.de>`_ as a ``CSV`` file.
 
