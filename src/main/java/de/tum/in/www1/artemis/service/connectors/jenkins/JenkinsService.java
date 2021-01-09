@@ -533,6 +533,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             // Jenkins logs all steps of the build pipeline. We remove those as they are irrelevant to the students
             List<BuildLogEntry> prunedBuildLogs = new ArrayList<>();
             for (BuildLogEntry entry : buildLog) {
+                prunedBuildLogs.add(entry); // python test
                 String logString = entry.getLog();
                 if (logString.contains("Compilation failure")) {
                     break;
