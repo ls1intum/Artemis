@@ -190,7 +190,7 @@ public class ProgrammingExerciseExportService {
         log.info("Download repositories for JPlag programming comparison with " + numberOfParticipations + " participations");
 
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        List<Repository> repositories = downloadRepositories(programmingExercise, targetPath);
+        List<Repository> repositories = downloadRepositories(programmingExercise, targetPath, minimumScore, minimumSize);
         log.info("Downloading repositories done");
 
         final var projectKey = programmingExercise.getProjectKey();
@@ -239,7 +239,7 @@ public class ProgrammingExerciseExportService {
 
         log.info("Download repositories for JPlag programming comparison with " + numberOfParticipations + " participations");
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        List<Repository> repositories = downloadRepositories(programmingExercise, targetPath);
+        List<Repository> repositories = downloadRepositories(programmingExercise, targetPath, minimumScore, minimumSize);
         log.info("Downloading repositories done");
 
         final var output = "output";
@@ -337,24 +337,24 @@ public class ProgrammingExerciseExportService {
         }
     }
 
-    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, String targetPath) {
+    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, String targetPath, int minimumScore, int minimumSize) {
         List<Repository> downloadedRepositories = new ArrayList<>();
-        programmingExercise.getStudentParticipations().parallelStream().forEach(participation -> {
-            var programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
-            try {
-                if (programmingExerciseParticipation.getVcsRepositoryUrl() == null) {
-                    log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
-                    return;
-                }
-                Repository repo = gitService.getOrCheckoutRepositoryForJPlag(programmingExerciseParticipation, targetPath);
-                gitService.resetToOriginMaster(repo); // start with clean state
-                downloadedRepositories.add(repo);
-            }
-            catch (GitException | GitAPIException | InterruptedException ex) {
-                log.error("clone student repository " + programmingExerciseParticipation.getVcsRepositoryUrl() + " in exercise '" + programmingExercise.getTitle()
-                        + "' did not work as expected: " + ex.getMessage());
-            }
-        });
+
+        programmingExercise.getStudentParticipations().parallelStream().filter(participation -> participation instanceof ProgrammingExerciseParticipation)
+                .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUrl() != null)
+                // TODO: Filter participations by minimumSize and minimumScore
+                // .filter(...)
+                .forEach(participation -> {
+                    try {
+                        Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
+                        gitService.resetToOriginMaster(repo); // start with clean state
+                        downloadedRepositories.add(repo);
+                    }
+                    catch (GitException | GitAPIException | InterruptedException ex) {
+                        log.error("clone student repository " + participation.getVcsRepositoryUrl() + " in exercise '" + programmingExercise.getTitle()
+                                + "' did not work as expected: " + ex.getMessage());
+                    }
+                });
 
         // clone the template repo
         try {
