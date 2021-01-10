@@ -587,7 +587,7 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        final List<TextSubmission> textSubmissions = textPlagiarismDetectionService.textSubmissionsForComparison(textExercise);
+        final List<TextSubmission> textSubmissions = textPlagiarismDetectionService.textSubmissionsForComparison(textExercise, 0, 0);
         textSubmissions.forEach(submission -> {
             submission.getParticipation().setExercise(null);
             submission.setResults(new ArrayList<Result>());

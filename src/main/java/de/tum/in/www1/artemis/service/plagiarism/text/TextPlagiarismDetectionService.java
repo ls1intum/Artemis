@@ -39,21 +39,6 @@ public class TextPlagiarismDetectionService {
     }
 
     /**
-     * Convenience method to extract all latest submissions from a TextExercise and compute pair-wise distances.
-     *
-     * @param exerciseWithParticipationsAndSubmissions Text Exercise with fetched participations and submissions
-     * @param comparisonStrategy the chosen comparison strategy
-     * @param comparisonStrategyName the name of the strategy for logging purpose
-     * @param minimumSimilarity the minimum similarity (between 0 and 1) that should be reported in the response
-     * @return Map of text submission pairs and similarity score
-     */
-    public Map<Set<TextSubmission>, Double> compareSubmissionsForExerciseWithStrategy(TextExercise exerciseWithParticipationsAndSubmissions,
-            TextComparisonStrategy comparisonStrategy, String comparisonStrategyName, double minimumSimilarity) {
-        final List<TextSubmission> textSubmissions = textSubmissionsForComparison(exerciseWithParticipationsAndSubmissions);
-        return compareSubmissionsForExerciseWithStrategy(textSubmissions, comparisonStrategy, comparisonStrategyName, minimumSimilarity);
-    }
-
-    /**
      * Pairwise comparison of text submissions using a TextComparisonStrategy
      *
      * @param textSubmissions List of text submissions
@@ -91,11 +76,14 @@ public class TextPlagiarismDetectionService {
      * @param exerciseWithParticipationsAndSubmissions TextExercise with fetched participations and ssubmissions
      * @return List containing the latest text submission for every participation
      */
-    public List<TextSubmission> textSubmissionsForComparison(TextExercise exerciseWithParticipationsAndSubmissions) {
+    public List<TextSubmission> textSubmissionsForComparison(TextExercise exerciseWithParticipationsAndSubmissions, int minimumScore, int minimumSize) {
         var textSubmissions = exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().map(Participation::findLatestSubmission)
                 .filter(Optional::isPresent).map(Optional::get).filter(submission -> submission instanceof TextSubmission).map(submission -> (TextSubmission) submission)
-                .collect(toList());
+                .filter(submission -> minimumSize == 0 || (submission.getText() != null && submission.getText().length() >= minimumSize))
+                .filter(submission -> minimumScore == 0 || (submission.getLatestResult() != null && submission.getLatestResult().getScore() >= minimumScore)).collect(toList());
+
         log.info("Found " + textSubmissions.size() + " text submissions in exercise " + exerciseWithParticipationsAndSubmissions.getId());
+
         return textSubmissions.parallelStream().filter(textSubmission -> !textSubmission.isEmpty()).collect(toUnmodifiableList());
     }
 
@@ -114,7 +102,7 @@ public class TextPlagiarismDetectionService {
         final var submissionFolderFile = new File(submissionsFolderName);
         submissionFolderFile.mkdirs();
 
-        final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise);
+        final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise, minimumScore, minimumSize);
         final var submissionsSize = textSubmissions.size();
         log.info("Save text submissions for JPlag text comparison with " + submissionsSize + " submissions");
 
