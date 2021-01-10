@@ -186,8 +186,8 @@ public class ModelingSubmissionService extends SubmissionService {
     public ModelingSubmission findRandomSubmissionWithoutAssessment(boolean lockSubmission, long correctionRound, ModelingExercise modelingExercise, boolean isExamMode) {
         var modelingSubmission = getRandomModelingSubmissionEligibleForNewAssessment(modelingExercise, isExamMode, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
-        modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
         if (lockSubmission) {
+            modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
             lockSubmission(modelingSubmission, modelingExercise, correctionRound);
         }
         return modelingSubmission;
