@@ -68,22 +68,6 @@ public class ModelingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Get a modeling submission of the given exercise that still needs to be assessed, assign the automatic result of Compass to it and lock the submission to prevent other tutors from receiving and assessing it.
-     *
-     * @param modelingExercise the exercise the submission should belong to
-     * @param correctionRound - the correction round we want our submission to have results for
-     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
-     * @return a locked modeling submission that needs an assessment
-     */
-    public ModelingSubmission lockModelingSubmissionWithoutResult(ModelingExercise modelingExercise, boolean removeTestRunParticipations, long correctionRound) {
-        ModelingSubmission modelingSubmission = getRandomModelingSubmissionEligibleForNewAssessment(modelingExercise, removeTestRunParticipations, correctionRound)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
-        modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
-        lockSubmission(modelingSubmission, modelingExercise, correctionRound);
-        return modelingSubmission;
-    }
-
-    /**
      * Given an exercise, find a modeling submission for that exercise which still doesn't have a manual result. If the diagram type is supported by Compass we get the next optimal
      * submission from Compass, i.e. the submission for which an assessment means the most knowledge gain for the automatic assessment mechanism. If it's not supported by Compass
      * we just get a random submission without assessment. If there is no submission without manual result we return an empty optional. Note, that we cannot use a readonly
@@ -95,9 +79,10 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a modeling submission without any result
      */
-    public Optional<ModelingSubmission> getRandomModelingSubmissionEligibleForNewAssessment(ModelingExercise modelingExercise, boolean examMode, long correctionRound) {
+    private Optional<ModelingSubmission> getRandomModelingSubmissionEligibleForNewAssessment(ModelingExercise modelingExercise, boolean examMode, long correctionRound) {
         // if the diagram type is supported by Compass, ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess next
-        if (compassService.isSupported(modelingExercise)) {
+        // NOTE: compass only makes sense for the first correction round (i.e. correctionRound == 0)
+        if (compassService.isSupported(modelingExercise) && correctionRound == 0) {
             List<Long> modelsWaitingForAssessment = compassService.getModelsWaitingForAssessment(modelingExercise.getId());
 
             // shuffle the model list to prevent that the user gets the same submission again after canceling an assessment
@@ -187,6 +172,24 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         log.debug("return model: " + modelingSubmission.getModel());
+        return modelingSubmission;
+    }
+
+    /**
+     * retrieves a modeling submission without assessment for the specified correction round and potentially locks the submission
+     * @param lockSubmission whether the submission should be locked
+     * @param correctionRound the correction round (0 = first correction, 1 = second correction
+     * @param modelingExercise the modeling exercise for which a
+     * @param isExamMode whether the exercise belongs to an exam
+     * @return a random modeling submission (potentially based on compass)
+     */
+    public ModelingSubmission findRandomSubmissionWithoutAssessment(boolean lockSubmission, long correctionRound, ModelingExercise modelingExercise, boolean isExamMode) {
+        var modelingSubmission = getRandomModelingSubmissionEligibleForNewAssessment(modelingExercise, isExamMode, correctionRound)
+                .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
+        modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
+        if (lockSubmission) {
+            lockSubmission(modelingSubmission, modelingExercise, correctionRound);
+        }
         return modelingSubmission;
     }
 

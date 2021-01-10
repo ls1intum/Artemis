@@ -419,7 +419,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             sinon.replace(service, 'getOptimalSubmissions', fake);
             component.ngOnInit();
             tick(500);
-            component.assessNextOptimal();
+            component.assessNext();
             expect(fake).to.have.been.calledOnce;
         }));
 
@@ -434,7 +434,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             component.ngOnInit();
             tick(500);
-            component.assessNextOptimal();
+            component.assessNext();
             expect(fake).to.have.been.calledOnce;
         }));
     });

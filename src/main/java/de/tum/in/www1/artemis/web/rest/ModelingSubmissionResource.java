@@ -193,7 +193,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * GET /modeling-submission-without-assessment : get one modeling submission without assessment.
+     * GET /modeling-submission-without-assessment : get one modeling submission without assessment, for course exercises with first correction round and automatic
+     * assessment enabled, this will consult compass for an optimal modeling submission
      *
      * @param exerciseId id of the exercise for which the modeling submission should be returned
      * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
@@ -206,10 +207,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") long correctionRound) {
 
         log.debug("REST request to get a modeling submission without assessment");
-        final Exercise exercise = exerciseService.findOne(exerciseId);
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        exercise.setGradingCriteria(gradingCriteria);
-        final User user = userService.getUserWithGroupsAndAuthorities();
+        final var exercise = exerciseService.findOne(exerciseId);
+        final var user = userService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
@@ -217,6 +216,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         if (!(exercise instanceof ModelingExercise)) {
             return badRequest();
         }
+
+        final var modelingExercise = (ModelingExercise) exercise;
+        final var isExamMode = modelingExercise.hasExerciseGroup();
 
         // Check if tutors can start assessing the students submission
         boolean startAssessingSubmissions = this.modelingSubmissionService.checkIfExerciseDueDateIsReached(exercise);
@@ -227,23 +229,13 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
-        final ModelingSubmission modelingSubmission;
-        if (lockSubmission) {
-            modelingSubmission = modelingSubmissionService.lockModelingSubmissionWithoutResult((ModelingExercise) exercise, exercise.hasExerciseGroup(), correctionRound);
-        }
-        else {
-            final Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService
-                    .getRandomModelingSubmissionEligibleForNewAssessment((ModelingExercise) exercise, exercise.hasExerciseGroup(), correctionRound);
-            if (optionalModelingSubmission.isEmpty()) {
-                return notFound();
-            }
-            modelingSubmission = optionalModelingSubmission.get();
-        }
+        var modelingSubmission = modelingSubmissionService.findRandomSubmissionWithoutAssessment(lockSubmission, correctionRound, modelingExercise, isExamMode);
 
+        // needed to show the grading criteria in the assessment view
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        modelingExercise.setGradingCriteria(gradingCriteria);
         // Make sure the exercise is connected to the participation in the json response
-        final StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
-        studentParticipation.setExercise(exercise);
-        modelingSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
+        modelingSubmission.getParticipation().setExercise(modelingExercise);
         this.modelingSubmissionService.hideDetails(modelingSubmission, user);
         return ResponseEntity.ok(modelingSubmission);
     }
@@ -256,6 +248,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @param exerciseId the id of the modeling exercise for which we want to get a submission without manual result
      * @return an array of modeling submission id(s) without a manual result
      */
+    @Deprecated(since = "4.9.0", forRemoval = true)
     @GetMapping("/exercises/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId,
@@ -301,6 +294,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @param exerciseId id of the exercise
      * @return the response entity with status 200 (OK) if reset was performed successfully, otherwise appropriate error code
      */
+    @Deprecated(since = "4.9.0", forRemoval = true)
     @DeleteMapping("/exercises/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
