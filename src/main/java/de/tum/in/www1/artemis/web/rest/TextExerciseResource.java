@@ -617,7 +617,8 @@ public class TextExerciseResource {
      */
     @GetMapping(value = "/text-exercises/{exerciseId}/check-plagiarism", params = { "strategy=JPlag" })
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<TextPlagiarismResult> checkPlagiarismJPlag(@PathVariable long exerciseId) throws ExitException {
+    public ResponseEntity<TextPlagiarismResult> checkPlagiarismJPlag(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
+            @RequestParam int minimumSize) throws ExitException {
         Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissionsAndResults(exerciseId);
 
         if (optionalTextExercise.isEmpty()) {
@@ -630,7 +631,7 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise);
+        TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise, similarityThreshold, minimumScore, minimumSize);
 
         return ResponseEntity.ok(result);
     }

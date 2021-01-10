@@ -424,7 +424,8 @@ public class ModelingExerciseResource {
      */
     @GetMapping("/modeling-exercises/{exerciseId}/check-plagiarism")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId) {
+    public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
+            @RequestParam int minimumSize) {
         Optional<ModelingExercise> optionalModelingExercise = modelingExerciseService.findOneWithParticipationsSubmissionsResults(exerciseId);
 
         if (optionalModelingExercise.isEmpty()) {
@@ -437,12 +438,7 @@ public class ModelingExerciseResource {
             return forbidden();
         }
 
-        // TODO: let the user specify the minimum similarity in the client
-        var minimumSimilarity = 0.8;
-        var minimumModelSize = 5;
-        var minimumScore = 0;
-
-        ModelingPlagiarismResult result = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, minimumSimilarity, minimumModelSize, minimumScore);
+        ModelingPlagiarismResult result = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
 
         return ResponseEntity.ok(result);
     }

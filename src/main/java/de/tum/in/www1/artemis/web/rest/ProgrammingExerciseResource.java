@@ -1082,17 +1082,21 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism and returns the generated output as zip file
+     * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism
+     * and returns the generated output as zip file
      *
-     * @param exerciseId The ID of the programming exercise for which the plagiarism check should be executed
-     * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
+     * @param exerciseId The ID of the programming exercise for which the plagiarism check should be
+     *                   executed
+     * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the
+     * parameters are invalid
      * @throws ExitException is thrown if JPlag exits unexpectedly
-     * @throws IOException is thrown for file handling errors
+     * @throws IOException   is thrown for file handling errors
      */
     @GetMapping(Endpoints.CHECK_PLAGIARISM)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId) throws ExitException, IOException {
+    public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
+            @RequestParam int minimumSize) throws ExitException, IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         long start = System.nanoTime();
 
@@ -1106,12 +1110,13 @@ public class ProgrammingExerciseResource {
 
         var language = programmingExercise.get().getProgrammingLanguage();
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
+
         if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingLanguageNotSupported",
                     "Artemis does not support plagiarism checks for the programming language " + language)).body(null);
         }
 
-        TextPlagiarismResult result = programmingExerciseExportService.checkPlagiarism(exerciseId);
+        TextPlagiarismResult result = programmingExerciseExportService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore, minimumSize);
 
         log.info("Check plagiarism of programming exercise {} with title '{}' was successful in {}.", programmingExercise.get().getId(), programmingExercise.get().getTitle(),
                 formatDurationFrom(start));
@@ -1120,35 +1125,44 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism and returns the generated output as zip file
+     * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism
+     * and returns the generated output as zip file
      *
-     * @param exerciseId The ID of the programming exercise for which the plagiarism check should be executed
-     * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
+     * @param exerciseId The ID of the programming exercise for which the plagiarism check should be
+     *                   executed
+     * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the
+     * parameters are invalid
      * @throws ExitException is thrown if JPlag exits unexpectedly
-     * @throws IOException is thrown for file handling errors
+     * @throws IOException   is thrown for file handling errors
      */
     @GetMapping(value = Endpoints.CHECK_PLAGIARISM_JPLAG_REPORT, produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId) throws ExitException, IOException {
+    public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
+            @RequestParam int minimumSize) throws ExitException, IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         long start = System.nanoTime();
+
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
+
         if (programmingExercise.isEmpty()) {
             return notFound();
         }
+
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise.get())) {
             return forbidden();
         }
 
         var language = programmingExercise.get().getProgrammingLanguage();
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
+
         if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingLanguageNotSupported",
                     "Artemis does not support plagiarism checks for the programming language " + language)).body(null);
         }
 
-        File zipFile = programmingExerciseExportService.checkPlagiarismWithJPlagReport(exerciseId);
+        File zipFile = programmingExerciseExportService.checkPlagiarismWithJPlagReport(exerciseId, similarityThreshold, minimumScore, minimumSize);
+
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);

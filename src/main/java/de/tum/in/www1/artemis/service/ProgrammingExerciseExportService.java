@@ -179,17 +179,16 @@ public class ProgrammingExerciseExportService {
      * @param programmingExerciseId the id of the programming exercises which should be checked
      * @return a zip file that can be returned to the client
      * @throws ExitException is thrown if JPlag exits unexpectedly
-     * @throws IOException is thrown for file handling errors
+     * @throws IOException   is thrown for file handling errors
      */
-    public TextPlagiarismResult checkPlagiarism(long programmingExerciseId) throws ExitException, IOException {
+    public TextPlagiarismResult checkPlagiarism(long programmingExerciseId, float similarityThreshold, int minimumScore, int minimumSize) throws ExitException, IOException {
         long start = System.nanoTime();
-        // TODO: offer the following options in the client
-        // 1) filter empty submissions, i.e. repositories with no student commits
-        // 2) filter submissions with a result score of 0%
+
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
 
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
         log.info("Download repositories for JPlag programming comparison with " + numberOfParticipations + " participations");
+
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
         List<Repository> repositories = downloadRepositories(programmingExercise, targetPath);
         log.info("Downloading repositories done");
@@ -205,11 +204,13 @@ public class ProgrammingExerciseExportService {
 
         // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
         // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
-        options.setSimilarityThreshold(50f);
+        options.setSimilarityThreshold(similarityThreshold);
 
         log.info("Start JPlag programming comparison");
+
         JPlag jplag = new JPlag(options);
         JPlagResult result = jplag.run();
+
         log.info("JPlag programming comparison finished with " + result.getComparisons().size() + " comparisons");
 
         cleanupResourcesAsync(programmingExercise, repositories, targetPath);
@@ -230,11 +231,8 @@ public class ProgrammingExerciseExportService {
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException is thrown for file handling errors
      */
-    public File checkPlagiarismWithJPlagReport(long programmingExerciseId) throws ExitException, IOException {
+    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore, int minimumSize) throws ExitException, IOException {
         long start = System.nanoTime();
-        // TODO: offer the following options in the client
-        // 1) filter empty submissions, i.e. repositories with no student commits
-        // 2) filter submissions with a result score of 0%
 
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
@@ -261,7 +259,7 @@ public class ProgrammingExerciseExportService {
 
         // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
         // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
-        options.setSimilarityThreshold(50f);
+        options.setSimilarityThreshold(similarityThreshold);
 
         log.info("Start JPlag programming comparison");
         JPlag jplag = new JPlag(options);

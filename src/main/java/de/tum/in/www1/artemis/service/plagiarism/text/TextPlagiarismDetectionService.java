@@ -106,11 +106,8 @@ public class TextPlagiarismDetectionService {
      * @return a zip file that can be returned to the client
      * @throws ExitException is thrown if JPlag exits unexpectedly
      */
-    public TextPlagiarismResult checkPlagiarism(TextExercise textExercise) throws ExitException {
+    public TextPlagiarismResult checkPlagiarism(TextExercise textExercise, float similarityThreshold, int minimumScore, int minimumSize) throws ExitException {
         long start = System.nanoTime();
-        // TODO: offer the following options in the client
-        // 1) filter empty submissions, i.e. repositories with no student commits
-        // 2) filter submissions with a result score of 0%
 
         // TODO: why do we have such a strange folder name?
         final var submissionsFolderName = "./tmp/submissions";
@@ -144,7 +141,7 @@ public class TextPlagiarismDetectionService {
 
         // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
         // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
-        options.setSimilarityThreshold(50f);
+        options.setSimilarityThreshold(similarityThreshold);
 
         log.info("Start JPlag Text comparison");
         JPlag jplag = new JPlag(options);
