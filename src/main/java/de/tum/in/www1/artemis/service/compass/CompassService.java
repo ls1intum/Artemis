@@ -235,7 +235,7 @@ public class CompassService {
      * @param exerciseId the exercise the given submission belongs to
      * @return the automatic result for the submission with the given id
      */
-    public Result getAutomaticResultForSubmission(long submissionId, long exerciseId) {
+    public Result getResultWithFeedbackSuggestionsForSubmission(long submissionId, long exerciseId) {
         if (!automaticResultMaps.containsKey(exerciseId)) {
             return null;
         }

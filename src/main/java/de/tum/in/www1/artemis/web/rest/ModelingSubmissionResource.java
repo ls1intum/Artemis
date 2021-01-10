@@ -229,7 +229,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
-        var modelingSubmission = modelingSubmissionService.findRandomSubmissionWithoutAssessment(lockSubmission, correctionRound, modelingExercise, isExamMode);
+        var modelingSubmission = modelingSubmissionService.findRandomSubmissionWithoutExistingAssessment(lockSubmission, correctionRound, modelingExercise, isExamMode);
 
         // needed to show the grading criteria in the assessment view
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);

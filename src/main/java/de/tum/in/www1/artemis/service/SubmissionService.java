@@ -315,7 +315,7 @@ public class SubmissionService {
     }
 
     /**
-     * This method is used to create a copy of an result, used in the exam mode with correctionRound > 1,
+     * This method is used to create a copy of a result, used in the exam mode with correctionRound > 1,
      * because an assessment with current correctionRound > 1 contains all previous work,
      * which the tutor can then edit. Assigns the newly created Result to the submission
      *
@@ -323,6 +323,7 @@ public class SubmissionService {
      * @param oldResult result to copy from
      * @return the newly created copy of the oldResult
      */
+    // TODO: this method name is not good, I would rather say copyResultFromPreviousRoundAndSave
     public Result saveNewCopyResult(Submission submission, Result oldResult) {
         if (oldResult == null) {
             return saveNewEmptyResult(submission);
@@ -408,6 +409,7 @@ public class SubmissionService {
     protected Result lockSubmission(Submission submission, Long correctionRound) {
         Result result = submission.getResultByCorrectionRound(correctionRound);
         if (result == null && correctionRound > 0L) {
+            // copy the result of the previous correction round
             result = saveNewCopyResult(submission, submission.getResultByCorrectionRound(correctionRound - 1));
         }
         else if (result == null) {
