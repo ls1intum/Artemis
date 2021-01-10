@@ -86,7 +86,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     }
 
     checkPlagiarism() {
-        const options = this.getPlagiarismOptions();
+        const options = new PlagiarismOptions(this.similarityThreshold, this.minimumScore, this.minimumSize);
 
         if (this.exercise.type === ExerciseType.MODELING) {
             this.checkPlagiarismModeling(options);
@@ -140,13 +140,6 @@ export class PlagiarismInspectorComponent implements OnInit {
                 () => (this.detectionInProgress = false),
             );
         }
-    }
-
-    /**
-     * Create a new instance of `PlagiarismOptions` with the options configured by the user.
-     */
-    getPlagiarismOptions() {
-        return new PlagiarismOptions(this.similarityThreshold, this.minimumScore, this.minimumSize);
     }
 
     handleTextPlagiarismResult(result: TextPlagiarismResult) {
