@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -57,8 +58,10 @@ public class ProgrammingSubmissionResource {
 
     private final UserService userService;
 
-    public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
-            ProgrammingExerciseService programmingExerciseService, AuthorizationCheckService authCheckService,
+    private StudentParticipationRepository studentParticipationRepository;
+
+    public ProgrammingSubmissionResource(StudentParticipationRepository studentParticipationRepository, ProgrammingSubmissionService programmingSubmissionService,
+            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService, UserService userService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService) {
         this.programmingSubmissionService = programmingSubmissionService;
@@ -70,6 +73,7 @@ public class ProgrammingSubmissionResource {
         this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.participationService = participationService;
+        // use later? this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -363,7 +367,8 @@ public class ProgrammingSubmissionResource {
      */
     @GetMapping("/programming-submissions/{participationId}/lock")
     @PreAuthorize("hasAnyRole('TA','INSTRUCTOR','ADMIN')")
-    public ResponseEntity<Participation> lockAndGetProgrammingSubmissionParticipation(@PathVariable Long participationId) {
+    public ResponseEntity<Participation> lockAndGetProgrammingSubmissionParticipation(@PathVariable Long participationId,
+            @RequestParam(value = "correction-round", defaultValue = "0") Long correctionRound) {
         log.debug("REST request to get ProgrammingSubmission of Participation with id: {}", participationId);
         final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
         final var exercise = participation.getExercise();

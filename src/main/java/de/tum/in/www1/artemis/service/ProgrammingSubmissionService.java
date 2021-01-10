@@ -579,7 +579,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param exerciseId - the id of the exercise we are looking for
      * @param correctionRound - the correctionRound for which the submissions should be fetched for
-     * @param tutorId    - the id of the tutor we are interested in
+     * @param tutorId    - the the tutor we are interested in
      * @param examMode - flag should be set to ignore the test run submissions
      * @return a list of programming submissions
      */
@@ -684,20 +684,34 @@ public class ProgrammingSubmissionService extends SubmissionService {
         return (ProgrammingSubmission) newManualResult.getSubmission();
     }
 
-    // TODO
+    // TODO explain in what context this method is even called
     @Override
     protected Result lockSubmission(Submission submission, Long correctionRound) {
-        Result automaticResult = submission.getLatestResult();
-        List<Feedback> automaticFeedbacks = automaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
-        // Create a new result (manual result) and a new submission for it and set assessor and type to manual
+        Result automaticResult;
+        // TODO write explanaiton
         ProgrammingSubmission newSubmission;
-        if (submission.getLatestResult().getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)
-                || submission.getLatestResult().getAssessmentType().equals(AssessmentType.MANUAL)) {
+
+        if (correctionRound > 0) {
+            automaticResult = submission.getResultByCorrectionRound(correctionRound - 1);
+
+            // Create a new result (manual result) and a new submission for it and set assessor and type to manua
             newSubmission = (ProgrammingSubmission) submission;
+
         }
         else {
-            newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(), SubmissionType.MANUAL);
+            automaticResult = submission.getResultByCorrectionRound(correctionRound);
+
+            // Create a new result (manual result) and a new submission for it and set assessor and type to manual
+            if (submission.getResultByCorrectionRound(correctionRound).getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)
+                    || submission.getResultByCorrectionRound(correctionRound).getAssessmentType().equals(AssessmentType.MANUAL)) {
+                newSubmission = (ProgrammingSubmission) submission;
+            }
+            else {
+                newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(), SubmissionType.MANUAL);
+            }
         }
+
+        List<Feedback> automaticFeedbacks = automaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
 
         Result newResult = saveNewEmptyResult(newSubmission);
         newResult.setAssessor(userService.getUser());

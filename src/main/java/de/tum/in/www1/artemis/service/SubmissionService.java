@@ -345,22 +345,33 @@ public class SubmissionService {
 
     /**
      * used to assign and save results to submissions
+     * Make sure submission.results is loaded
      *
      * @param submission the parent submission of the result
      * @param result the result which we want to save and order
      * @return the result with correctly persisted relationship to its submission
      */
-    public Result saveNewResult(final Submission submission, final Result result) {
+    public Result saveNewResult(final Submission submission, final Result result, Long correctionRound) {
         result.setSubmission(null);
-        submission.setResults(new ArrayList<>());
-        if (result.getParticipation() == null) {
+        studentParticipationRepository.save((StudentParticipation) submission.getParticipation());
+        List<Result> submissionResults = submission.getResults();
+
+        if (submission.getParticipation() == null) {
             result.setParticipation(submission.getParticipation());
         }
+        studentParticipationRepository.save((StudentParticipation) submission.getParticipation());
         var savedResult = resultRepository.save(result);
+        submissionResults.set(correctionRound.intValue(), result);
+        studentParticipationRepository.save((StudentParticipation) submission.getParticipation());
+
         savedResult.setSubmission(submission);
-        submission.addResult(savedResult);
+
         submissionRepository.save(submission);
-        return savedResult;
+        return submission.getResultByCorrectionRound(correctionRound);
+    }
+
+    public Result saveNewResult(final Submission submission, final Result result) {
+        return saveNewResult(submission, result, 0L);
     }
 
     /**

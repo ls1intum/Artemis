@@ -7,6 +7,7 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Injectable({ providedIn: 'root' })
 export class NewStudentParticipationResolver implements Resolve<number | undefined> {
@@ -18,9 +19,11 @@ export class NewStudentParticipationResolver implements Resolve<number | undefin
      */
     resolve(route: ActivatedRouteSnapshot) {
         const exerciseId = Number(route.paramMap.get('exerciseId'));
+        const correctionRound = Number(route.queryParamMap.get('correction-round'));
 
         if (exerciseId) {
-            return this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true).pipe(
+            console.log('resovle New:');
+            const returnValue = this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, correctionRound).pipe(
                 map((submission) => submission.participation!.id!),
                 catchError((error) => {
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
@@ -29,6 +32,8 @@ export class NewStudentParticipationResolver implements Resolve<number | undefin
                     return Observable.of(error);
                 }),
             );
+            console.log(returnValue);
+            return returnValue;
         }
         return Observable.of(undefined);
     }
@@ -39,6 +44,8 @@ export class StudentParticipationResolver implements Resolve<number | undefined>
     constructor(private programmingSubmissionService: ProgrammingSubmissionService, private jhiAlertService: JhiAlertService) {}
 
     /**
+     *
+     * TODO: SHOULD: Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentsService
      * Locks the latest submission of a programming exercises participation, if it is not already locked
      * @param route
      */

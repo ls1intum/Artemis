@@ -564,19 +564,22 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, lock = false, correctionRound = 0): Observable<ProgrammingSubmission> {
         const url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
         let params = new HttpParams();
+        console.log('corrround: ', correctionRound);
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());
         }
         if (lock) {
             params = params.set('lock', 'true');
         }
-
-        return this.http.get<ProgrammingSubmission>(url, { params });
+        const returnValue = this.http.get<ProgrammingSubmission>(url, { params });
+        console.log(returnValue);
+        return returnValue;
     }
 
     /**
      * Locks the submission of the participation for the user
      * @param participationId
+     * @param correctionRound
      */
     lockAndGetProgrammingSubmissionParticipation(participationId: number): Observable<Participation> {
         return this.http.get<Participation>(`api/programming-submissions/${participationId}/lock`);

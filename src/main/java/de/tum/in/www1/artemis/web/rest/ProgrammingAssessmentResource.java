@@ -111,18 +111,23 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     @PutMapping("/participations/{participationId}/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
-            @RequestBody Result newManualResult) {
+            @RequestParam(value = "correction-round", defaultValue = "0") Long correctionRound, @RequestBody Result newManualResult) {
         log.debug("REST request to save a new result : {}", newManualResult);
-        final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
+        final var participation = participationService.findOneWithEagerResultsAndCourseAndSubmissionAndResults(participationId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
         // based on the locking mechanism we take the most recent manual result
         Result existingManualResult = participation.getResults().stream().filter(Result::isManualResult).max(Comparator.comparing(Result::getId))
                 .orElseThrow(() -> new EntityNotFoundException("Manual result for participation with id " + participationId + " does not exist"));
+
+        Submission submission1 = participation.getSubmissions().stream().max(Comparator.comparing(Submission::getId)).get();
+        Result result1 = submission1.getResultByCorrectionRound(correctionRound);
+
         // prevent that tutors create multiple manual results
         newManualResult.setId(existingManualResult.getId());
         // load assessor
+        result1 = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(result1.getId()).get();
         existingManualResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(existingManualResult.getId()).get();
 
         // make sure that the participation and submission cannot be manipulated on the client side
@@ -174,7 +179,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
 
-        newManualResult = submissionService.saveNewResult(submission, newManualResult);
+        newManualResult = submissionService.saveNewResult(submission, newManualResult, correctionRound);
 
         if (submit) {
             newManualResult = programmingAssessmentService.submitManualAssessment(newManualResult.getId());

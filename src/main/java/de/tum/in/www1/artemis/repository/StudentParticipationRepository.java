@@ -234,6 +234,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.results LEFT JOIN FETCH participation.exercise e LEFT JOIN FETCH e.course WHERE participation.id = :#{#participationId}")
     StudentParticipation findOneByIdWithEagerResultsAndExerciseAndEagerCourse(@Param("participationId") Long participationId);
 
+    @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.results LEFT JOIN FETCH participation.exercise e LEFT JOIN FETCH e.course LEFT JOIN FETCH participation.submissions s LEFT JOIN FETCH s.results rs WHERE participation.id = :#{#participationId}")
+    StudentParticipation findOneByIdWithEagerResultsAndExerciseAndEagerCourseAndEagerSubmissionAndResults(@Param("participationId") Long participationId);
+
     @Query("select distinct p from StudentParticipation p where p.student.id = :#{#studentId} and p.exercise in :#{#exercises}")
     List<StudentParticipation> findByStudentIdAndIndividualExercises(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises);
 
@@ -259,7 +262,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)
                 """)
     List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessorAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
-            @Param("assessorId") Long assessorId, @Param("correctionRound") Long correcctionRound);
+            @Param("assessorId") Long assessorId, @Param("correctionRound") Long correctionRound);
 
     /**
      * Count the number of submissions for each participation in a given exercise.
