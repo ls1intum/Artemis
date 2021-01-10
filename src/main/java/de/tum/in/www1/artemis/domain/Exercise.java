@@ -385,6 +385,7 @@ public abstract class Exercise extends DomainObject {
     }
 
     @JsonIgnore
+    // TODO: refactor to "isCourseExercise"
     public boolean hasCourse() {
         return this.course != null;
     }
@@ -398,6 +399,7 @@ public abstract class Exercise extends DomainObject {
     }
 
     @JsonIgnore
+    // TODO: refactor to "isExamExercise"
     public boolean hasExerciseGroup() {
         return this.exerciseGroup != null;
     }

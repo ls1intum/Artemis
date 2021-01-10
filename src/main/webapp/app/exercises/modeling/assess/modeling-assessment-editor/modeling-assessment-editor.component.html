@@ -14,7 +14,7 @@
     (save)="onSaveAssessment()"
     (submit)="onSubmitAssessment()"
     (cancel)="onCancelAssessment()"
-    (nextSubmission)="assessNextOptimal()"
+    (nextSubmission)="assessNext()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
 >
     <div class="alert alert-info" *ngIf="hasAutomaticFeedback && isAssessor && !result?.completionDate" jhiTranslate="modelingAssessmentEditor.automaticAssessmentAvailable">

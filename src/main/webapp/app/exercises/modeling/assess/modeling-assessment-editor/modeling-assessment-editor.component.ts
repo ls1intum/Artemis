@@ -105,7 +105,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             const exerciseId = Number(params.get('exerciseId'));
             const submissionId = params.get('submissionId');
             if (submissionId === 'new') {
-                this.loadOptimalSubmission(exerciseId);
+                this.loadRandomSubmission(exerciseId);
             } else {
                 this.loadSubmission(Number(submissionId));
             }
@@ -127,7 +127,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         );
     }
 
-    private loadOptimalSubmission(exerciseId: number): void {
+    private loadRandomSubmission(exerciseId: number): void {
         this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
@@ -389,34 +389,23 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.validateFeedback();
     }
 
-    assessNextOptimal() {
+    assessNext() {
         this.nextSubmissionBusy = true;
-        this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise!.id!).subscribe(
-            (optimal: number[]) => {
+        this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe(
+            (unassessedSubmission: ModelingSubmission) => {
                 this.nextSubmissionBusy = false;
-                if (optimal.length === 0) {
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
-                } else {
-                    this.jhiAlertService.clear();
-                    this.router.onSameUrlNavigation = 'reload';
-                    // navigate to root and then to new assessment page to trigger re-initialization of the components
-                    this.router
-                        .navigateByUrl('/', { skipLocationChange: true })
-                        .then(() =>
-                            this.router.navigateByUrl(
-                                `/course-management/${this.courseId}/modeling-exercises/${this.modelingExercise!.id}/submissions/${optimal.pop()}/assessment`,
-                            ),
-                        );
-                }
+                this.router.onSameUrlNavigation = 'reload';
+                this.router.navigateByUrl(`/course-management/${this.courseId}/modeling-exercises/${this.modelingExercise!.id}/submissions/${unassessedSubmission.id}/assessment`);
             },
             (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy = false;
-                if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                if (error.status === 404) {
+                    // there is no submission waiting for assessment at the moment
+                    this.jhiAlertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
+                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
                 } else {
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+                    this.onError();
                 }
             },
         );
