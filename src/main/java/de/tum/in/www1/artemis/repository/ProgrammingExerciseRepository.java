@@ -190,7 +190,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                                 AND r.completionDate IS NOT NULL
                                 AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
                                 AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)
-                            ) = :correctionRound
+                            ) >= (:correctionRound + 1L)
             """)
     long countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("correctionRound") Long correctionRound);
 
