@@ -47,7 +47,7 @@
                 <input required type="number" class="form-control" min="0" max="100" id="plagiarism-minimum-score" [(ngModel)]="minimumScore" />
             </div>
 
-            <div class="plagiarism-option">
+            <div class="plagiarism-option" *ngIf="!isProgrammingExercise()">
                 <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.minimum-size">Minimum Size</div>
                 <fa-icon [icon]="'question-circle'" placement="top" [ngbTooltip]="'artemisApp.plagiarism.minimum-size-tooltip' | translate" container="body"></fa-icon>
                 <input required type="number" class="form-control" min="0" max="100" id="plagiarism-minimum-size" [(ngModel)]="minimumSize" />

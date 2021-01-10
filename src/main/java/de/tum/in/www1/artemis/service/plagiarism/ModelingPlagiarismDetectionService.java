@@ -84,20 +84,22 @@ public class ModelingPlagiarismDetectionService {
         Map<UMLDiagram, ModelingSubmission> models = new HashMap<>();
         ObjectMapper objectMapper = new ObjectMapper();
 
-        modelingSubmissions.stream().filter(modelingSubmission -> !modelingSubmission.isEmpty(objectMapper)).forEach(modelingSubmission -> {
-            try {
-                log.debug("Build UML diagram from json");
+        modelingSubmissions.stream().filter(modelingSubmission -> !modelingSubmission.isEmpty(objectMapper))
+                .filter(modelingSubmission -> minimumScore == 0 || (modelingSubmission.getLatestResult() != null && modelingSubmission.getLatestResult().getScore() != null
+                        && modelingSubmission.getLatestResult().getScore() >= minimumScore))
+                .forEach(modelingSubmission -> {
+                    try {
+                        log.debug("Build UML diagram from json");
+                        UMLDiagram model = UMLModelParser.buildModelFromJSON(parseString(modelingSubmission.getModel()).getAsJsonObject(), modelingSubmission.getId());
 
-                UMLDiagram model = UMLModelParser.buildModelFromJSON(parseString(modelingSubmission.getModel()).getAsJsonObject(), modelingSubmission.getId());
-
-                if (model.getAllModelElements().size() >= minimumModelSize) {
-                    models.put(model, modelingSubmission);
-                }
-            }
-            catch (IOException e) {
-                log.error("Parsing the modeling submission " + modelingSubmission.getId() + " did throw an exception:", e);
-            }
-        });
+                        if (model.getAllModelElements().size() >= minimumModelSize) {
+                            models.put(model, modelingSubmission);
+                        }
+                    }
+                    catch (IOException e) {
+                        log.error("Parsing the modeling submission " + modelingSubmission.getId() + " did throw an exception:", e);
+                    }
+                });
 
         log.info(String.format("Found %d modeling submissions with at least %d elements to compare", models.size(), minimumModelSize));
 
@@ -123,13 +125,6 @@ public class ModelingPlagiarismDetectionService {
 
                 ModelingSubmission modelingSubmissionA = models.get(model1);
                 ModelingSubmission modelingSubmissionB = models.get(model2);
-
-                if (modelingSubmissionA.getLatestResult() != null && modelingSubmissionA.getLatestResult().getScore() != null
-                        && modelingSubmissionA.getLatestResult().getScore() < minimumScore && modelingSubmissionB.getLatestResult() != null
-                        && modelingSubmissionB.getLatestResult().getScore() != null && modelingSubmissionB.getLatestResult().getScore() < minimumScore) {
-                    // ignore comparison results with too small scores
-                    continue;
-                }
 
                 log.info("Found similar models " + i + " with " + j + ": " + similarity);
 
