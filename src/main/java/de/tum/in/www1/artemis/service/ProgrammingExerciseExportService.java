@@ -338,13 +338,17 @@ public class ProgrammingExerciseExportService {
     }
 
     private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, String targetPath, int minimumScore, int minimumSize) {
+        // TODO: We ignore `minimumSize` for now until we decide how to calculate the size of a programming submission
+
         List<Repository> downloadedRepositories = new ArrayList<>();
 
         programmingExercise.getStudentParticipations().parallelStream().filter(participation -> participation instanceof ProgrammingExerciseParticipation)
                 .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUrl() != null)
-                // TODO: Filter participations by minimumSize and minimumScore
-                // .filter(...)
-                .forEach(participation -> {
+                .filter(participation -> {
+                    Submission submission = ((StudentParticipation) participation).findLatestSubmission().orElse(null);
+                    return minimumScore == 0 || (submission != null && submission.getLatestResult() != null && submission.getLatestResult().getScore() != null
+                            && submission.getLatestResult().getScore() >= minimumScore);
+                }).forEach(participation -> {
                     try {
                         Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
                         gitService.resetToOriginMaster(repo); // start with clean state
