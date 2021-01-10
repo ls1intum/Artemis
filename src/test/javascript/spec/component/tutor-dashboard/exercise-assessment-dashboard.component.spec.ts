@@ -96,6 +96,12 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     const result2 = { id: 12 } as Result;
     const exam = { id: 13, numberOfCorrectionRoundsInExam: 2 } as Exam;
     const exerciseGroup = { id: 14, exam } as ExerciseGroup;
+
+    const exerciseWithoutExamMode = {
+        id: 10,
+        tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+    };
+
     const exercise = {
         id: 15,
         exerciseGroup,

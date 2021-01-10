@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -321,10 +324,12 @@ public class AssessmentService {
      *
      * @param submission the file upload submission to which the feedback belongs to
      * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
+     * @param resultId resultId of the submission we what to save the @feedbackList to
      * @return result that was saved in the database
      */
-    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList) {
-        Result result = submission.getLatestResult();
+    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId) {
+        Result result = submission.getResults().stream().filter(tmp -> tmp.getId().equals(resultId)).findAny().orElse(null);
+        ;
         if (result == null) {
             result = submissionService.saveNewEmptyResult(submission);
         }
@@ -347,6 +352,11 @@ public class AssessmentService {
             submissionRepository.save(submission);
         }
         return resultRepository.save(result);
+    }
+
+    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList) {
+        // as parameter resultId is not set, we use the latest Result
+        return saveManualAssessment(submission, feedbackList, submission.getLatestResult().getId());
     }
 
     private List<Feedback> saveFeedbacks(List<Feedback> feedbackList) {

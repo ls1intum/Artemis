@@ -208,7 +208,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.assessmentsService.trackAssessment(this.submission, 'save');
 
         this.saveBusy = true;
-        this.assessmentsService.save(this.exercise!.id!, this.submission?.latestResult!.id!, this.assessments, this.textBlocksWithFeedback).subscribe(
+        this.assessmentsService.save(this.exercise!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
         );
@@ -218,7 +218,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Submit the assessment
      */
     submit(): void {
-        if (!this.submission?.latestResult?.id) {
+        if (!this.result!.id) {
             return; // We need to have saved the result before
         }
 
@@ -264,7 +264,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     async nextSubmission(): Promise<void> {
         this.nextSubmissionBusy = true;
-        console.log('coR', this.correctionRound);
         await this.router.navigate(['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment'], {
             queryParams: { 'correction-round': this.correctionRound },
         });

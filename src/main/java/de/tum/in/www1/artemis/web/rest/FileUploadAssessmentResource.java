@@ -64,7 +64,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> saveFileUploadAssessment(@PathVariable Long submissionId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestBody List<Feedback> feedbacks) {
         Submission submission = submissionService.findOneWithEagerResultAndFeedback(submissionId);
-        return super.saveAssessment(submission, submit, feedbacks);
+        return super.saveAssessment(submission, submit, feedbacks, submission.getLatestResult().getId());
     }
 
     /**

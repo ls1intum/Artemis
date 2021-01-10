@@ -98,7 +98,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             @RequestBody List<Feedback> feedbacks) {
         Submission submission = submissionService.findOneWithEagerResultAndFeedback(submissionId);
         ModelingExercise exercise = (ModelingExercise) submission.getParticipation().getExercise();
-        ResponseEntity<Result> response = super.saveAssessment(submission, submit, feedbacks);
+        ResponseEntity<Result> response = super.saveAssessment(submission, submit, feedbacks, submission.getLatestResult().getId());
 
         if (response.getStatusCode().is2xxSuccessful() && submit && compassService.isSupported(exercise)) {
             compassService.addAssessment(exercise.getId(), submissionId, Objects.requireNonNull(response.getBody()).getFeedbacks());
