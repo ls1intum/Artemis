@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.connector.jenkins;
 
+import static de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -30,10 +31,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.client.JenkinsHttpClient;
-import com.offbytwo.jenkins.model.ExtractHeader;
-import com.offbytwo.jenkins.model.FolderJob;
-import com.offbytwo.jenkins.model.JobWithDetails;
-import com.offbytwo.jenkins.model.QueueReference;
+import com.offbytwo.jenkins.model.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -183,6 +181,26 @@ public class JenkinsRequestMockProvider {
         final var mockResponse = Map.of("building", false);
         final var body = new ObjectMapper().writeValueAsString(mockResponse);
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(body).contentType(MediaType.APPLICATION_JSON));
+
+    }
+
+    public BuildWithDetails mockGetLatestBuildLogs(ProgrammingExerciseStudentParticipation participation) throws IOException {
+        String projectKey = participation.getProgrammingExercise().getProjectKey();
+        String buildPlanId = participation.getBuildPlanId();
+
+        final var job = mock(JobWithDetails.class);
+        mockGetJob(projectKey, buildPlanId, job);
+
+        final var buildLogResponse = loadFileFromResources("test-data/jenkins-response/failed-build-log.html");
+
+        final var build = mock(Build.class);
+        doReturn(build).when(job).getLastBuild();
+
+        final var buildWithDetails = mock(BuildWithDetails.class);
+        doReturn(buildWithDetails).when(build).details();
+
+        doReturn(buildLogResponse).when(buildWithDetails).getConsoleOutputHtml();
+        return buildWithDetails;
 
     }
 }

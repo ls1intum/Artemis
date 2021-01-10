@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { JhiAlert } from 'ng-jhipster';
 import { JhiAlertService } from 'ng-jhipster';
+import { checkForMissingTranslationKey } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-alert',
@@ -24,6 +25,12 @@ export class AlertComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.alerts = this.alertService.get();
+        // This is a workaround to avoid translation not found issues.
+        if (this.alerts && Array.isArray(this.alerts)) {
+            this.alerts.forEach((alert) => {
+                checkForMissingTranslationKey(alert);
+            });
+        }
     }
 
     /**

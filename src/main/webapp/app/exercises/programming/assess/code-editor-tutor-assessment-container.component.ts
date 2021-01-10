@@ -134,7 +134,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     this.onError('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                     return;
                 } else if (response?.error) {
-                    this.onError(response?.error);
+                    this.onError(response?.error?.detail || 'Not Found');
                     return;
                 }
                 participationId = Number(response);

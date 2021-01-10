@@ -6,14 +6,10 @@ buildscript {
         mavenLocal()
         mavenCentral()
         maven { url "https://repo.spring.io/plugins-release" }
-        maven { url "https://plugins.gradle.org/m2/" }
         jcenter()
     }
     dependencies {
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
-        // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-        classpath "com.github.ben-manes:gradle-versions-plugin:0.35.0"
     }
 }
 
@@ -23,13 +19,15 @@ plugins {
     id "maven-publish"
     id "idea"
     id "jacoco"
-    id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "2.7.0"
+    id "org.springframework.boot" version "${spring_boot_version}"
+    id "com.google.cloud.tools.jib" version "2.7.1"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
-    id "com.diffplug.spotless" version "5.8.2"
+    id "com.diffplug.spotless" version "5.9.0"
+    // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
+    id "com.github.ben-manes.versions" version "0.35.0"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -38,8 +36,6 @@ description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
 targetCompatibility=15
-
-apply plugin: "com.github.ben-manes.versions"
 
 apply from: "gradle/docker.gradle"
 //this enables us to invoke ./gradlew liquibaseDiffChangelog
@@ -190,7 +186,7 @@ dependencies {
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
     implementation "io.micrometer:micrometer-registry-prometheus:1.6.2"
-    implementation "net.logstash.logback:logstash-logback-encoder:6.5"
+    implementation "net.logstash.logback:logstash-logback-encoder:6.6"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:${fasterxml_version}"

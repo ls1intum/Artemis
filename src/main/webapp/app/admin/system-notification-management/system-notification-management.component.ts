@@ -27,6 +27,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     error: string;
     success: string;
     routeData: Subscription;
+    routerEventSubscription?: Subscription;
     links: any;
     totalItems: string;
     itemsPerPage: number;
@@ -68,7 +69,12 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
             this.registerChangeInUsers();
         });
         this.isVisible = this.activatedRoute.children.length === 0;
-        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => (this.isVisible = this.activatedRoute.children.length === 0));
+        this.routerEventSubscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
+            this.isVisible = this.activatedRoute.children.length === 0;
+            if (this.isVisible) {
+                this.loadAll();
+            }
+        });
     }
 
     /**
@@ -77,6 +83,9 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     ngOnDestroy() {
         this.routeData.unsubscribe();
         this.dialogErrorSource.unsubscribe();
+        if (this.routerEventSubscription) {
+            this.eventManager.destroy(this.routerEventSubscription);
+        }
     }
 
     /**

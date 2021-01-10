@@ -822,7 +822,7 @@ public abstract class Exercise extends DomainObject {
      */
     public enum ExerciseSearchColumn {
 
-        ID("id"), TITLE("title"), COURSE_TITLE("course.title");
+        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
 
         private String mappedColumnName;
 

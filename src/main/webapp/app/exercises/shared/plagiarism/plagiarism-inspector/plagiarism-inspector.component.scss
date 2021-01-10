@@ -18,8 +18,15 @@ $footer-height: 31px;
         flex-shrink: 0;
         padding: 1.5rem;
 
-        .plagiarism-page-title {
+        &-top {
+            align-items: center;
+            display: flex;
             margin-bottom: 1rem;
+        }
+
+        .plagiarism-page-title {
+            margin-bottom: 0;
+            margin-right: 1rem;
         }
 
         .plagiarism-buttons {
@@ -39,11 +46,23 @@ $footer-height: 31px;
         flex-grow: 1;
         padding-left: 240px;
         position: relative;
+        overflow: hidden;
 
         .plagiarism-content {
             display: flex;
             flex-direction: column;
             height: 100%;
+        }
+    }
+
+    .plagiarism-warning {
+        align-items: center;
+        display: flex;
+        color: darken($body-bg, 20);
+        padding-top: 1px;
+
+        #plagiarismCaution {
+            margin-right: 0.5rem;
         }
     }
 

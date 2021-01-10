@@ -2,7 +2,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
 import { NgModule } from '@angular/core';
-import { lectureUnitRoute } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.route';
 import { RouterModule } from '@angular/router';
 import { UnitCreationCardComponent } from './unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from './create-exercise-unit/create-exercise-unit.component';
@@ -22,15 +21,13 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { LectureUnitLayoutComponent } from './lecture-unit-layout/lecture-unit-layout.component';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 
-const ENTITY_STATES = [...lectureUnitRoute];
-
 @NgModule({
     imports: [
         ArtemisMarkdownEditorModule,
         ArtemisSharedModule,
         ReactiveFormsModule,
         ArtemisSharedComponentModule,
-        RouterModule.forChild(ENTITY_STATES),
+        RouterModule.forChild([]),
         ArtemisCoursesModule,
         FormDateTimePickerModule,
         ArtemisLearningGoalsModule,

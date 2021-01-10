@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
+import static io.github.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -47,7 +48,7 @@ import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 
-@ActiveProfiles({ "artemis", "gitlab", "jenkins", "athene" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlab", "jenkins", "athene" })
 @TestPropertySource(properties = { "info.guided-tour.course-group-tutors=", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
         "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors", "artemis.user-management.use-external=false" })
 

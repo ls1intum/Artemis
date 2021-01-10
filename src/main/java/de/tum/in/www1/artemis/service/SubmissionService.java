@@ -476,7 +476,7 @@ public class SubmissionService {
         final boolean isExamMode = exercise.hasExerciseGroup();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (isExamMode) {
-            ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndiviudalExamEndDate(exercise.getExerciseGroup().getExam());
+            ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                 return false;
             }

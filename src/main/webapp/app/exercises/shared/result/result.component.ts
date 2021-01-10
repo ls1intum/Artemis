@@ -299,11 +299,11 @@ export class ResultComponent implements OnInit, OnChanges {
     downloadBuildResult(participationId?: number) {
         if (participationId) {
             this.participationService.downloadArtifact(participationId).subscribe((artifact) => {
-                const fileURL = URL.createObjectURL(artifact);
+                const fileURL = URL.createObjectURL(artifact.fileContent);
                 const link = document.createElement('a');
                 link.href = fileURL;
                 link.target = '_blank';
-                link.download = 'artifact';
+                link.download = artifact.fileName;
                 document.body.appendChild(link);
                 link.click();
             });

@@ -45,6 +45,11 @@ export class PlagiarismInspectorComponent implements OnInit {
      */
     generateJPlagReport = false;
 
+    /**
+     * True, if the plagiarism details tab is active.
+     */
+    showRunDetails = false;
+
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -71,6 +76,7 @@ export class PlagiarismInspectorComponent implements OnInit {
 
     selectComparisonAtIndex(index: number) {
         this.selectedComparisonIndex = index;
+        this.showRunDetails = false;
     }
 
     /**
@@ -82,7 +88,6 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.programmingExerciseService.checkPlagiarismJPlagReport(this.exercise.id!).subscribe(
             (response: HttpResponse<Blob>) => {
                 this.detectionInProgress = false;
-                console.log(response);
                 downloadZipFileFromResponse(response);
             },
             () => {

@@ -35,11 +35,28 @@ Docker-Compose
 Before you start the docker-compose, check if the bamboo version in the
 ``build.gradle`` (search for ``com.atlassian.bamboo:bamboo-specs``) is
 equal to the bamboo version number in the Dockerfile of bamboo stored in
-``src/main/docker/bamboo/Dockerfile``. If the version number is not
-equal adjust the version number in the Dockerfile.
+``src/main/docker/bamboo/Dockerfile`` or ``src/main/docker/bamboo/swift/Dockerfile``.
+If the version number is not equal adjust the version number in the Dockerfile.
 
-Execute the docker-compose file ``atlassian.yml`` stored in
-``src/main/docker`` e.g. with
+In case you want to enable Swift programming exercises, you need to change
+the specified Dockerfile in the docker-compose file ``atlassian.yml`` stored in ``src/main/docker``.
+To use the Swift Dockerfile, change the following:
+
+    ::
+
+       bamboo:
+               container_name: artemis_bamboo
+               build: bamboo
+
+to:
+
+    ::
+
+       bamboo:
+               container_name: artemis_bamboo
+               build: bamboo/swift
+
+Execute the docker-compose file e.g. with
 ``docker-compose -f src/main/docker/atlassian.yml up -d``
 
 Error Handling: It can happen that there is an overload with other
@@ -295,7 +312,7 @@ e.g.:
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling
 
 Please read :doc:`../setup` for more details.
 

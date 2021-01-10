@@ -104,11 +104,18 @@ public class CacheConfiguration {
         config.setInstanceName(instanceName);
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
 
+        config.getNetworkConfig().getJoin().getAutoDetectionConfig().setEnabled(false);
+
+        // Always enable TcpIp config: There has to be at least one join-config and we can not use multicast as this creates unwanted clusters
+        // If registration == null -> this will never connect to any instance as no other ip addresses are added
+        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
+
         // Allows using @SpringAware and therefore Spring Services in distributed tasks
         config.setManagedContext(new SpringManagedContext(applicationContext));
         config.setClassLoader(applicationContext.getClassLoader());
         if (registration == null) {
             log.warn("No discovery service is set up, Hazelcast cannot create a cluster.");
+            hazelcastBindOnlyOnInterface("127.0.0.1", config);
         }
         else {
             // The serviceId is by default the application's name,
@@ -120,21 +127,11 @@ public class CacheConfiguration {
             if (hazelcastInterface != null && !hazelcastInterface.isEmpty()) {
                 // We should not prefer IPv4, this will ensure that both IPv4 and IPv6 work as none is preferred
                 System.setProperty("hazelcast.prefer.ipv4.stack", "false");
-
-                // Hazelcast should bind to the interface and use it as local and public address
-                log.info("Binding Hazelcast to interface " + hazelcastInterface);
-                System.setProperty("hazelcast.local.localAddress", hazelcastInterface);
-                System.setProperty("hazelcast.local.publicAddress", hazelcastInterface);
-                config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Collections.singleton(hazelcastInterface));
-
-                // Hazelcast should only bind to the interface provided, not to any interface
-                config.setProperty("hazelcast.socket.bind.any", "false");
-                config.setProperty("hazelcast.socket.server.bind.any", "false");
-                config.setProperty("hazelcast.socket.client.bind.any", "false");
+                hazelcastBindOnlyOnInterface(hazelcastInterface, config);
             }
             else {
                 log.info("Binding Hazelcast to default interface");
-                System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
+                hazelcastBindOnlyOnInterface("127.0.0.1", config);
             }
 
             // In the local setting (e.g. for development), everything goes through 127.0.0.1, with a different port
@@ -166,6 +163,19 @@ public class CacheConfiguration {
         QuizScheduleService.configureHazelcast(config);
 
         return Hazelcast.newHazelcastInstance(config);
+    }
+
+    private void hazelcastBindOnlyOnInterface(String hazelcastInterface, Config config) {
+        // Hazelcast should bind to the interface and use it as local and public address
+        log.info("Binding Hazelcast to interface " + hazelcastInterface);
+        System.setProperty("hazelcast.local.localAddress", hazelcastInterface);
+        System.setProperty("hazelcast.local.publicAddress", hazelcastInterface);
+        config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Collections.singleton(hazelcastInterface));
+
+        // Hazelcast should only bind to the interface provided, not to any interface
+        config.setProperty("hazelcast.socket.bind.any", "false");
+        config.setProperty("hazelcast.socket.server.bind.any", "false");
+        config.setProperty("hazelcast.socket.client.bind.any", "false");
     }
 
     @Autowired(required = false)

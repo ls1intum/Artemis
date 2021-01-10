@@ -121,7 +121,7 @@ public class ExerciseResource {
             }
             else if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                 // tutors should only be able to see exam exercises when the exercise has finished
-                ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndiviudalExamEndDate(exam);
+                ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndividualExamEndDate(exam);
                 if (latestIndiviudalExamEndDate == null || latestIndiviudalExamEndDate.isAfter(ZonedDateTime.now())) {
                     // When there is no due date or the due date is in the future, we return forbidden here
                     return forbidden();

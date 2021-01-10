@@ -25,7 +25,8 @@
             "continuousIntegrationServer": "Kontinuierlicher Integrationsserver",
             "versionControlServer": "Versionskontrollserver",
             "userManagement": "Nutzerverwaltung",
-            "hazelcast": "Hazelcast"
+            "hazelcast": "Hazelcast",
+            "websocketBroker": "Websocket Broker (Server -> Broker)"
         },
         "table": {
             "service": "Dienst Name",
