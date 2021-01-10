@@ -17,6 +17,12 @@
             "no-files-found": "No files found",
             "duration": "Duration",
             "similarity-distribution": "Similarity Distribution",
+            "similarity-threshold": "Similarity Threshold",
+            "similarity-threshold-tooltip": "Ignore comparisons whose similarity is below this threshold (%)",
+            "minimum-score": "Minimum Score",
+            "minimum-score-tooltip": "Consider only submissions whose score is greater or equal to this value",
+            "minimum-size": "Minimum Size",
+            "minimum-size-tooltip": "Consider only submissions whose size is greater or equal to this value",
             "no-info-available": "No information available",
             "caution": "Plagiarism detection can take a long time for large courses."
         }

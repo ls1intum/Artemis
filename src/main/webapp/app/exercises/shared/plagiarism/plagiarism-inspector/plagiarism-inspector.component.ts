@@ -41,14 +41,34 @@ export class PlagiarismInspectorComponent implements OnInit {
     selectedComparisonIndex: number;
 
     /**
+     * True, if the plagiarism details tab is active.
+     */
+    showRunDetails = false;
+
+    /**
+     * True, if the plagiarism options should be displayed.
+     */
+    showOptions = false;
+
+    /**
      * If true, the plagiarism detection will return the generated jplag report.
      */
     generateJPlagReport = false;
 
     /**
-     * True, if the plagiarism details tab is active.
+     * Minimum similarity (%) of the comparisons to return.
      */
-    showRunDetails = false;
+    similarityThreshold = 50;
+
+    /**
+     * Ignore submissions with a score less than `minimumScore` in plagiarism detection.
+     */
+    minimumScore = 0;
+
+    /**
+     * Ignore submissions with a size less than `minimumSize` in plagiarism detection.
+     */
+    minimumSize = 0;
 
     constructor(
         private route: ActivatedRoute,

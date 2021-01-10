@@ -17,6 +17,12 @@
             "no-files-found": "Keine Dateien gefunden",
             "duration": "Dauer",
             "similarity-distribution": "Ähnlichkeitsverteilung",
+            "similarity-threshold": "Ähnlichkeitsschwelle",
+            "similarity-threshold-tooltip": "Ignoriere Vergleiche, deren Ähnlichkeit unter dieser Schwelle liegt (%)",
+            "minimum-score": "Minimale Bewertung",
+            "minimum-score-tooltip": "Berücksichtige nur Einreichungen, deren Bewertung mindestens diesem Wert entspricht",
+            "minimum-size": "Minimale Größe",
+            "minimum-size-tooltip": "Berücksichtige nur Einreichungen, deren Größe mindestens diesem Wert entspricht",
             "no-info-available": "Keine Information verfügbar",
             "caution": "Die Plagiatskontrolle kann für große Kurse sehr lange dauern."
         }
