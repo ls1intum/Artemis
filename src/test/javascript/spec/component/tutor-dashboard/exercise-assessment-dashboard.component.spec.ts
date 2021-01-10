@@ -466,7 +466,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             const submission = { id: 8 };
             comp.openAssessmentEditor(submission);
 
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submission.id}/assessment`]);
+            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submission.id}/assessment`], {
+                queryParams: { 'correction-round': 0 },
+            });
         });
 
         it('should openExampleSubmission with programmingExercise', () => {

@@ -518,7 +518,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             const participationURLParameter: number | 'new' = submission === 'new' ? 'new' : submission.participation?.id!;
             route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationURLParameter}/assessment`;
         } else {
-            route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment/`;
+            route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment`;
         }
         if (this.isTestRun) {
             await this.router.navigate([route], { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });

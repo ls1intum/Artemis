@@ -1,6 +1,7 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
+import { SinonStub, stub } from 'sinon';
 
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -30,7 +31,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { SinonStub, stub } from 'sinon';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -408,7 +408,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(component.totalScore).to.be.equal(3);
     }));
 
-    describe('test assessNextOptimal', () => {
+    describe('test assessNext', () => {
         it('no submissions left', fakeAsync(() => {
             const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
@@ -416,21 +416,21 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             const numbers: number[] = [];
             const fake = sinon.fake.returns(of(numbers));
-            sinon.replace(service, 'getOptimalSubmissions', fake);
+            sinon.replace(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment', fake);
             component.ngOnInit();
             tick(500);
             component.assessNext();
             expect(fake).to.have.been.calledOnce;
         }));
 
-        it('throw error while assessNextOptimal', fakeAsync(() => {
+        it('throw error while assessNext', fakeAsync(() => {
             const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.id = 1;
 
             const response = new HttpErrorResponse({ status: 403 });
             const fake = sinon.fake.returns(throwError(response));
-            sinon.replace(service, 'getOptimalSubmissions', fake);
+            sinon.replace(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment', fake);
 
             component.ngOnInit();
             tick(500);
