@@ -1,0 +1,17 @@
+{
+    "courseStatistics": {
+        "amountOfStudents": "# an Studenten",
+        "active_students": "Aktive Studenten",
+        "courseScore": "Kurs Score"
+    },
+    "calendar_week": "KW",
+    "weekdays": {
+        "monday": "Montag",
+        "tuesday": "Dienstag",
+        "wednesday": "Mittwoch",
+        "thursday": "Donnerstag",
+        "friday": "Freitag",
+        "saturday": "Samstag",
+        "sunday": "Sonntag"
+    }
+}
