@@ -1,0 +1,17 @@
+{
+    "courseStatistics": {
+        "amountOfStudents": "# of students",
+        "active_students": "Active students",
+        "courseScore": "Course Score"
+    },
+    "calendar_week": "CW",
+    "weekdays": {
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday"
+    }
+}

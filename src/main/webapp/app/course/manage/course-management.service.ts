@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import * as moment from 'moment';
 import { filter, map, tap } from 'rxjs/operators';
@@ -325,6 +325,20 @@ export class CourseManagementService {
             }
         }, 500);
         return this.coursesForNotifications;
+    }
+
+    getStatisticsData(courseId: number, periodIndex: number): Observable<number[]> {
+        /*return of([
+            Math.floor(Math.random() * 100),
+            Math.floor(Math.random() * 100),
+            Math.floor(Math.random() * 100),
+            Math.floor(Math.random() * 100),
+            Math.floor(Math.random() * 100),
+            Math.floor(Math.random() * 100),
+            Math.floor(Math.random() * 100),
+        ]);*/
+        const params = new HttpParams().set('periodIndex', '' + periodIndex);
+        return this.http.get<number[]>(`${this.resourceUrl}/${courseId}/statistics`, { params });
     }
 
     private setCoursesForNotifications(res: EntityArrayResponseType): EntityArrayResponseType {

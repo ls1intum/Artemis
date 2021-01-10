@@ -3,8 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -358,5 +357,71 @@ public class CourseService {
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
+    }
+
+    /**
+     * Get the active students for this particular course
+     *
+     * @param courseId         the id of the course
+     * @param periodIndex      an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
+     */
+    public Integer[] getCourseStatistics(Long courseId, Integer periodIndex) {
+        Integer[] result = new Integer[7];
+        Arrays.fill(result, 0);
+        ZonedDateTime now = ZonedDateTime.now();
+
+        ZonedDateTime startDate = now.minusWeeks(-periodIndex).minusDays(6).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime endDate = now.minusWeeks(-periodIndex).withHour(23).withMinute(59).withSecond(59);
+        List<Map<String, Object>> outcome = courseRepository.getCourseStatistics(courseId, startDate, endDate);
+        List<Map<String, Object>> distinctOutcome = convertMapList(outcome, startDate);
+        return createResultArrayForWeek(distinctOutcome, result, endDate);
+    }
+
+    /**
+     * XXXXXX
+     *
+     * @param result the result given by the Repository call
+     * @param startDate the startDate of the period
+     * @return A List<Map<String, Object>> analogue to other database calls
+     */
+    private List<Map<String, Object>> convertMapList(List<Map<String, Object>> result, ZonedDateTime startDate) {
+        Map<Object, List<String>> users = new HashMap<>();
+        for (Map<String, Object> listElement : result) {
+            ZonedDateTime date = (ZonedDateTime) listElement.get("day");
+            int index = date.getDayOfMonth();
+            String username = listElement.get("username").toString();
+            List<String> usersInSameSlot = users.get(index);
+            // if this index is not yet existing in users
+            if (usersInSameSlot == null) {
+                usersInSameSlot = new ArrayList<>();
+                usersInSameSlot.add(username);
+                users.put(index, usersInSameSlot);
+            }   // if the value of the map for this index does not contain this username
+            else if (!usersInSameSlot.contains(username)) {
+                usersInSameSlot.add(username);
+            }
+        }
+        List<Map<String, Object>> returnList = new ArrayList<>();
+        users.forEach((k, v) -> {
+            ZonedDateTime start = startDate.withDayOfMonth((Integer) k);
+            Map<String, Object> listElement = new HashMap<>();
+            listElement.put("day", start);
+            listElement.put("amount", (long) v.size());
+            returnList.add(listElement);
+        });
+        return returnList;
+    }
+
+    private Integer[] createResultArrayForWeek(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
+        for (Map<String, Object> map : outcome) {
+            ZonedDateTime date = (ZonedDateTime) map.get("day");
+            int amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : 0;
+            for (int i = 0; i < 7; i++) {
+                if (date.getDayOfMonth() == endDate.minusDays(i).getDayOfMonth()) {
+                    result[6 - i] += amount;
+                }
+            }
+        }
+        return result;
     }
 }
