@@ -59,7 +59,9 @@
             "assessmentDueDateError": "Assessment Due Date must be after Release and Due Date. Please check your selection again",
             "dateNotSet": "No date set",
             "points": "Points",
+            "pointsError": "Must be a number between 1 and 9999",
             "bonusPoints": "Bonus points",
+            "bonusPointsError": "Must be a number between 0 and 9999",
             "includedInOverallScoreLabel": "How should this exercise be treated when calculating the final score of the course or exam?",
             "includedInOverallScore": "Importance for Score Calculation",
             "includedCompletely": "Normal Exercise",
@@ -148,10 +150,14 @@
                     }
                 },
                 "points": {
-                    "pattern": "The points must be between 1 and 9999!"
+                    "pattern": "The points must be between 1 and 9999!",
+                    "customMin": "The points must be at least 1",
+                    "customMax": "The points must be at max 9999"
                 },
                 "bonusPoints": {
-                    "pattern": "The bonus points must be between 1 and 9999!"
+                    "pattern": "The bonus points must be between 0 and 9999!",
+                    "customMin": "The points must be at least 0",
+                    "customMax": "The points must be at max 9999"
                 },
                 "maxPenalty": {
                     "pattern": "The maximum penalty must be between 0 and 100 percent!"
