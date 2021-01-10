@@ -304,6 +304,44 @@ public class SubmissionService {
         return result;
     }
 
+    private List<Feedback> copyFeedbacktoNewResult(Result newResult, Result oldResult) {
+        List<Feedback> oldFeedback = oldResult.getFeedbacks();
+        oldFeedback.forEach(feedback -> {
+            Feedback newFeedback = feedback.copyFeedback();
+            newResult.addFeedback(newFeedback);
+        });
+        resultRepository.save(newResult);
+        return newResult.getFeedbacks();
+    }
+
+    /**
+     * This method is used to create a copy of an result, used in the exam mode with correctionRound > 1,
+     * because an assessment with current correctionRound > 1 contains all previous work,
+     * which the tutor can then edit. Assigns the newly created Result to the submission
+     *
+     * @param submission submission to which the new Result is assigned
+     * @param oldResult result to copy from
+     * @return the newly created copy of the oldResult
+     */
+    public Result saveNewCopyResult(Submission submission, Result oldResult) {
+        if (oldResult == null) {
+            return saveNewEmptyResult(submission);
+        }
+        Result newResult = new Result();
+        newResult.setParticipation(submission.getParticipation());
+        copyFeedbacktoNewResult(newResult, oldResult);
+
+        newResult.setResultString(oldResult.getResultString());
+        newResult.setScore(oldResult.getScore());
+        newResult.setHasFeedback(oldResult.getHasFeedback());
+        newResult.setRated(oldResult.isRated());
+        newResult = resultRepository.save(newResult);
+        newResult.setSubmission(submission);
+        submission.addResult(newResult);
+        submissionRepository.save(submission);
+        return newResult;
+    }
+
     /**
      * used to assign and save results to submissions
      *
@@ -369,7 +407,10 @@ public class SubmissionService {
      */
     protected Result lockSubmission(Submission submission, Long correctionRound) {
         Result result = submission.getResultByCorrectionRound(correctionRound);
-        if (result == null) {
+        if (result == null && correctionRound > 0L) {
+            result = saveNewCopyResult(submission, submission.getResultByCorrectionRound(correctionRound - 1));
+        }
+        else if (result == null) {
             result = saveNewEmptyResult(submission);
         }
 
