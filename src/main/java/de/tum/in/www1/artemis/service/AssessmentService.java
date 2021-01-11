@@ -201,13 +201,15 @@ public class AssessmentService {
     public void cancelAssessmentOfSubmission(Submission submission) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerResults(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
+        // cancel is only possible for the latest result.
         Result result = submission.getLatestResult();
 
         /*
-         * For programming exercises we need to delete the submission of the manual result as well, as for each new manual result a new submission will be generated. The
-         * CascadeType.REMOVE of {@link Submission#result} will delete also the result and the corresponding feedbacks {@link Result#feedbacks}.
+         * For programming exercises we need to delete the submission of the manual result as well, as for the first new manual result a new submission will be generated. For the
+         * following manual results this submission will be reused. The CascadeType.REMOVE of {@link Submission#result} will delete also the result and the corresponding feedbacks
+         * {@link Result#feedbacks}.
          */
-        if (participation instanceof ProgrammingExerciseStudentParticipation && submission.getResults().size() == 0) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation && submission.getResults().size() == 1) {
             participation.removeSubmissions(submission);
             participation.removeResult(result);
             submissionRepository.deleteById(submission.getId());

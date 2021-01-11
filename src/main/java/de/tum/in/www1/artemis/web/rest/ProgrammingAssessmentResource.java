@@ -176,7 +176,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         // make sure that the submission cannot be manipulated on the client side
         var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
         // newManualResult.setSubmission(submission);
-        // newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
+        newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
 
         // newManualResult = submissionService.saveNewResultByCorrectionRound(submission, newManualResult, correctionRound);
 

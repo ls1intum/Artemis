@@ -361,12 +361,6 @@ public class SubmissionService {
         }
         studentParticipationRepository.save((StudentParticipation) submission.getParticipation());
         var savedResult = resultRepository.save(result);
-        if (submissionResults.size() > 0) {
-            submissionResults.set(correctionRound.intValue(), savedResult);
-        }
-        else {
-            submissionResults.add(correctionRound.intValue(), savedResult);
-        }
 
         savedResult.setSubmission(submission);
         submission = submissionRepository.save(submission);

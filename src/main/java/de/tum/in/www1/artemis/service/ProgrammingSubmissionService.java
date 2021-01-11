@@ -687,31 +687,28 @@ public class ProgrammingSubmissionService extends SubmissionService {
     // TODO explain in what context this method is even called
     @Override
     protected Result lockSubmission(Submission submission, Long correctionRound) {
-        Result automaticResult;
+        Result existingResult;
         // TODO write explanaiton
         ProgrammingSubmission newSubmission;
 
-        if (correctionRound > 0) {
-            automaticResult = submission.getResultByCorrectionRound(correctionRound - 1);
-
-            // Create a new result (manual result) and a new submission for it and set assessor and type to manua
-            newSubmission = (ProgrammingSubmission) submission;
-
-        }
-        else {
-            automaticResult = submission.getResultByCorrectionRound(correctionRound);
-
-            // Create a new result (manual result) and a new submission for it and set assessor and type to manual
-            if (submission.getResultByCorrectionRound(correctionRound).getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)
-                    || submission.getResultByCorrectionRound(correctionRound).getAssessmentType().equals(AssessmentType.MANUAL)) {
+        if (correctionRound == 0) {
+            existingResult = submission.getFirstResult();
+            // Create a new result (manual result) and a new submission for it and set assessor and type to manual/semi-automatic
+            if (submission.getFirstResult().getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)
+                    || submission.getFirstResult().getAssessmentType().equals(AssessmentType.MANUAL)) {
                 newSubmission = (ProgrammingSubmission) submission;
             }
             else {
                 newSubmission = createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(), SubmissionType.MANUAL);
             }
         }
+        else {
+            existingResult = submission.getResultByCorrectionRound(correctionRound - 1);
+            // Create a new result (manual result) and a new submission for it and set assessor and type to manua
+            newSubmission = (ProgrammingSubmission) submission;
+        }
 
-        List<Feedback> automaticFeedbacks = automaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+        List<Feedback> automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
 
         Result newResult = saveNewEmptyResult(newSubmission);
         newResult.setAssessor(userService.getUser());
@@ -722,7 +719,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             feedback.setResult(newResult);
         }
         newResult.setFeedbacks(automaticFeedbacks);
-        newResult.setResultString(automaticResult.getResultString());
+        newResult.setResultString(existingResult.getResultString());
         // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
         newResult = resultRepository.save(newResult);
         log.debug("Assessment locked with result id: " + newResult.getId() + " for assessor: " + newResult.getAssessor().getName());

@@ -183,7 +183,7 @@ public abstract class AssessmentResource {
         }
     }
 
-    protected ResponseEntity<Void> cancelAssessment(long submissionId) {
+    protected ResponseEntity<Void> cancelAssessment(long submissionId) { // TODO: Add correction round !
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
         Submission submission = submissionService.findOneWithEagerResults(submissionId);
         if (submission.getLatestResult() == null) {

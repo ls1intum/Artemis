@@ -70,6 +70,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     showEditorInstructions = true;
     hasAssessmentDueDatePassed: boolean;
     adjustedRepositoryURL: string;
+    correctionRound: number;
 
     private get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
@@ -116,6 +117,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         });
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
+            this.correctionRound = Number(queryParams.get('correction-round'));
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.paramSub = this.route.params.subscribe((params) => {
@@ -153,10 +155,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                             // Set domain to make file editor work properly
                             this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResult]);
                             this.participation = participationWithResult;
+                            console.log(participationWithResult);
                             this.manualResult = this.participation.results![0];
 
                             // Either submission from latest manual or automatic result
                             this.submission = this.manualResult.submission as ProgrammingSubmission;
+                            console.log(this.submission);
                             this.submission.participation = this.participation;
                             this.exercise = this.participation.exercise as ProgrammingExercise;
                             this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
@@ -262,7 +266,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     save(): void {
         this.saveBusy = true;
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!).subscribe(
+        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, undefined, this.correctionRound).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );
@@ -274,7 +278,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     submit(): void {
         this.submitBusy = true;
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, true).subscribe(
+        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, true, this.correctionRound).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );
@@ -296,6 +300,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
+        console.log('NextSubmission:');
         this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true).subscribe(
             (response: ProgrammingSubmission) => {
                 const unassessedSubmission = response;
@@ -429,6 +434,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
+        console.log('handleSaveOrSubmitSuccess');
         this.participation.results![0] = this.manualResult = response.body!;
         this.jhiAlertService.clear();
         this.jhiAlertService.success(translationKey);

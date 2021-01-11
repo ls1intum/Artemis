@@ -45,12 +45,14 @@ export class StudentParticipationResolver implements Resolve<number | undefined>
 
     /**
      *
-     * TODO: SHOULD: Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentsService
      * Locks the latest submission of a programming exercises participation, if it is not already locked
      * @param route
      */
     resolve(route: ActivatedRouteSnapshot) {
         const participationId = Number(route.paramMap.get('participationId'));
+        const correctionRound = Number(route.queryParamMap.get('correction-round'));
+        console.log('progAssmRoute: lockAndGetProgrammingSubmissionParticipation', correctionRound);
+
         if (participationId) {
             return this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(participationId).pipe(
                 map((participation) => participation.id),
