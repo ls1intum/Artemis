@@ -28,7 +28,6 @@ const expect = chai.expect;
 describe('StudentExamImportDialogComponent', () => {
     let fixture: ComponentFixture<StudentsExamImportDialogComponent>;
     let component: StudentsExamImportDialogComponent;
-    let debugElement: DebugElement;
     let examManagementService: ExamManagementService;
 
     const studentCsvColumns = 'REGISTRATION_NUMBER,FIRST_NAME_OF_STUDENT,FAMILY_NAME_OF_STUDENT';
@@ -54,7 +53,6 @@ describe('StudentExamImportDialogComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(StudentsExamImportDialogComponent);
                 component = fixture.componentInstance;
-                debugElement = fixture.debugElement;
                 examManagementService = TestBed.inject(ExamManagementService);
 
                 component.courseId = course.id!;
@@ -72,9 +70,6 @@ describe('StudentExamImportDialogComponent', () => {
     });
 
     it('should reset dialog when selecting csv file', async () => {
-        const inputElement = debugElement.query(By.css('[accept=".csv"]'));
-        expect(inputElement).to.be.ok;
-
         component.studentsToImport = [{ registrationNumber: '1', lastName: 'lastName', firstName: 'firstName' }];
         component.notFoundStudents = [{ registrationNumber: '2', lastName: 'lastName', firstName: 'firstName' }];
         component.hasImported = true;
