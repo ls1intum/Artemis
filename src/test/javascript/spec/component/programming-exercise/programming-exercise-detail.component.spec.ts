@@ -8,6 +8,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -17,7 +19,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ProgrammingExerciseDetailComponent],
-            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
+            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }, MockProvider(TranslateService)],
         })
             .overrideTemplate(ProgrammingExerciseDetailComponent, '')
             .compileComponents();
