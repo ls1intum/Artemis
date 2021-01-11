@@ -23,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -90,6 +91,12 @@ public class FileUploadExerciseResource {
         log.debug("REST request to save FileUploadExercise : {}", fileUploadExercise);
         if (fileUploadExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new fileUploadExercise cannot already have an ID", "idexists")).body(null);
+        }
+
+        // Validate score settings
+        Optional<ResponseEntity<FileUploadExercise>> optionalScoreSettingsError = validateScoreSettings(fileUploadExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
         }
 
         // Validate the new file upload exercise
@@ -164,6 +171,12 @@ public class FileUploadExerciseResource {
 
         // Validate the updated file upload exercise
         validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
+
+        // Validate score settings
+        Optional<ResponseEntity<FileUploadExercise>> optionalScoreSettingsError = validateScoreSettings(fileUploadExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
+        }
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
@@ -332,5 +345,33 @@ public class FileUploadExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
+    }
+
+    /**
+     * Validates score settings
+     * 1. The maxScore needs to be greater than 0
+     * 2. If the IncludedInOverallScore enum is either INCLUDED_AS_BONUS or NOT_INCLUDED, no bonus points are allowed
+     *
+     * @param fileUploadExercise exercise to validate
+     * @return Optional validation error response
+     */
+    private Optional<ResponseEntity<FileUploadExercise>> validateScoreSettings(FileUploadExercise fileUploadExercise) {
+        // Check if max score is set
+        if (fileUploadExercise.getMaxScore() == null || fileUploadExercise.getMaxScore() == 0) {
+            return Optional
+                    .of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score needs to be greater than 0", "maxscoreInvalid")).body(null));
+        }
+
+        // Check IncludedInOverallScore
+        if ((fileUploadExercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_AS_BONUS
+                || fileUploadExercise.getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) && fileUploadExercise.getBonusPoints() > 0) {
+            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "Bonus points are not allowed", "bonusPointsInvalid")).body(null));
+        }
+
+        if (fileUploadExercise.getBonusPoints() == null) {
+            // make sure the default value is set properly
+            fileUploadExercise.setBonusPoints(0.0);
+        }
+        return Optional.empty();
     }
 }

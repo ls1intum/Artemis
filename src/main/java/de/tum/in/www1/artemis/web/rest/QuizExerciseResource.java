@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -96,6 +97,12 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
+        // Validate score settings
+        Optional<ResponseEntity<QuizExercise>> optionalScoreSettingsError = validateScoreSettings(quizExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
+        }
+
         // Valid exercises have set either a course or an exerciseGroup
         exerciseService.checkCourseAndExerciseGroupExclusivity(quizExercise, ENTITY_NAME);
 
@@ -143,6 +150,12 @@ public class QuizExerciseResource {
         if (!quizExercise.isValid()) {
             // TODO: improve error message and tell the client why the quiz is invalid (also see above in create Quiz)
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
+        }
+
+        // Validate score settings
+        Optional<ResponseEntity<QuizExercise>> optionalScoreSettingsError = validateScoreSettings(quizExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
         }
 
         // Valid exercises have set either a course or an exerciseGroup
@@ -428,7 +441,41 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise);
 
+        // Validate score settings
+        Optional<ResponseEntity<QuizExercise>> optionalScoreSettingsError = validateScoreSettings(quizExercise);
+        if (optionalScoreSettingsError.isPresent()) {
+            return optionalScoreSettingsError.get();
+        }
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
+    }
+
+    /**
+     * Validates score settings
+     * 1. The maxScore needs to be greater than 0
+     * 2. If the IncludedInOverallScore enum is either INCLUDED_AS_BONUS or NOT_INCLUDED, no bonus points are allowed
+     *
+     * @param quizExercise exercise to validate
+     * @return Optional validation error response
+     */
+    private Optional<ResponseEntity<QuizExercise>> validateScoreSettings(QuizExercise quizExercise) {
+        // Check if max score is set
+        if (quizExercise.getMaxScore() == null || quizExercise.getMaxScore() == 0) {
+            return Optional
+                    .of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score needs to be greater than 0", "maxscoreInvalid")).body(null));
+        }
+
+        // Check IncludedInOverallScore
+        if ((quizExercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_AS_BONUS
+                || quizExercise.getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) && quizExercise.getBonusPoints() > 0) {
+            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "Bonus points are not allowed", "bonusPointsInvalid")).body(null));
+        }
+
+        if (quizExercise.getBonusPoints() == null) {
+            // make sure the default value is set properly
+            quizExercise.setBonusPoints(0.0);
+        }
+        return Optional.empty();
     }
 
 }
