@@ -2,7 +2,7 @@
     "courseStatistics": {
         "amountOfStudents": "# an Studenten",
         "active_students": "Aktive Studenten",
-        "courseScore": "Kurs Score"
+        "courseScore": "Insgesamter Score"
     },
     "calendar_week": "KW",
     "weekdays": {

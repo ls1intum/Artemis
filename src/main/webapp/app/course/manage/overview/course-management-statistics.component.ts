@@ -27,7 +27,7 @@ export class CourseManagementStatisticsComponent implements OnInit {
     // Chart
     // chartName: string;
     chartName = 'ACTIVE STUDENTS';
-    chartTime: any = 'Woche X';
+    chartTime: any;
 
     // Histogram related properties
     barChartOptions: ChartOptions = {};
@@ -71,10 +71,18 @@ export class CourseManagementStatisticsComponent implements OnInit {
     }
 
     private createLabels() {
-        this.barChartLabels = this.getWeekdays();
-        const startDate = moment().add(this.currentPeriod, 'weeks').subtract(6, 'days').format('DD.MM.YYYY');
-        const endDate = moment().add(this.currentPeriod, 'weeks').format('DD.MM.YYYY');
-        this.chartTime = startDate + ' - ' + endDate;
+        const prefix = this.translateService.instant('calendar_week');
+        const startDate = moment().subtract(11 + 12 * -this.currentPeriod, 'weeks');
+        const endDate = this.currentPeriod !== 0 ? moment().subtract(12 * -this.currentPeriod, 'weeks') : moment();
+        let currentWeek;
+        for (let i = 0; i < 12; i++) {
+            currentWeek = moment()
+                .subtract(11 + 12 * -this.currentPeriod - i, 'weeks')
+                .isoWeekday(1)
+                .isoWeek();
+            this.barChartLabels[i] = prefix + ' ' + currentWeek;
+        }
+        this.chartTime = startDate.isoWeekday(1).format('DD.MM.YYYY') + ' - ' + endDate.isoWeekday(7).format('DD.MM.YYYY');
     }
 
     switchTimeSpan(index: boolean): void {
@@ -122,21 +130,5 @@ export class CourseManagementStatisticsComponent implements OnInit {
                 ],
             },
         };
-    }
-
-    private getWeekdays(): string[] {
-        const currentDay = moment().day();
-        const days = [
-            this.translateService.instant('weekdays.monday'),
-            this.translateService.instant('weekdays.tuesday'),
-            this.translateService.instant('weekdays.wednesday'),
-            this.translateService.instant('weekdays.thursday'),
-            this.translateService.instant('weekdays.friday'),
-            this.translateService.instant('weekdays.saturday'),
-            this.translateService.instant('weekdays.sunday'),
-        ];
-        const back = days.slice(currentDay, days.length);
-        const front = days.slice(0, currentDay);
-        return back.concat(front);
     }
 }
