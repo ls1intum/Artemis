@@ -47,6 +47,19 @@ export const lectureRoute: Routes = [
             pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
+    },
+    {
+        // Create a new path without a component defined to prevent the LectureComponent from being always rendered
+        path: ':courseId/lectures',
+        resolve: {
+            course: CourseResolve,
+        },
+        data: {
+            breadcrumbs: [
+                { variable: 'course.title', path: 'course.id' },
+                { label: 'artemisApp.lecture.home.title', path: 'lectures' },
+            ],
+        },
         children: [
             {
                 path: 'new',
@@ -54,6 +67,7 @@ export const lectureRoute: Routes = [
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'global.generic.create',
+                    breadcrumbs: [],
                 },
                 canActivate: [UserRouteAccessService],
             },
@@ -67,6 +81,7 @@ export const lectureRoute: Routes = [
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                     breadcrumbLabelVariable: 'lecture.title',
                     pageTitle: 'artemisApp.lecture.home.title',
+                    breadcrumbs: [],
                 },
                 canActivate: [UserRouteAccessService],
             },
