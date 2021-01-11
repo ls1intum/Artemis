@@ -93,7 +93,7 @@ public abstract class AssessmentResource {
      * @param submission the submission containing the assessment
      * @param feedbackList list of feedbacks
      * @param submit if true the assessment is submitted, else only saved
-     * @param resultId resultId of the result we save the feedbackList to
+     * @param resultId resultId of the result we save the feedbackList to, null of no results exists yet
      * @return result after saving/submitting modeling assessment
      */
     ResponseEntity<Result> saveAssessment(Submission submission, boolean submit, List<Feedback> feedbackList, Long resultId) {

@@ -318,18 +318,18 @@ public class AssessmentService {
 
     /**
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
-     * database.
+     * database. If a result with the given id exists, it will be overridden. if not, a new result will be created.
      *
      * For programming exercises we use a different approach see {@link ProgrammingAssessmentService#saveManualAssessment(Result)}
      *
      * @param submission the file upload submission to which the feedback belongs to
      * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
-     * @param resultId resultId of the submission we what to save the @feedbackList to
+     * @param resultId resultId of the submission we what to save the @feedbackList to, null if no result exists
      * @return result that was saved in the database
      */
     public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId) {
         Result result = submission.getResults().stream().filter(tmp -> tmp.getId().equals(resultId)).findAny().orElse(null);
-        ;
+
         if (result == null) {
             result = submissionService.saveNewEmptyResult(submission);
         }
@@ -354,9 +354,20 @@ public class AssessmentService {
         return resultRepository.save(result);
     }
 
+    /**
+     * Overloads saveManualAssessment method
+     * TODO: NR, SE, refactor into one call
+     * @param submission
+     * @param feedbackList
+     * @return
+     */
     public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList) {
-        // as parameter resultId is not set, we use the latest Result
-        return saveManualAssessment(submission, feedbackList, submission.getLatestResult().getId());
+        // as parameter resultId is not set, we use the latest Result, if no latest Result exists, we use null
+        if (submission.getLatestResult() == null) {
+            return saveManualAssessment(submission, feedbackList, null);
+        }
+        else
+            return saveManualAssessment(submission, feedbackList, submission.getLatestResult().getId());
     }
 
     private List<Feedback> saveFeedbacks(List<Feedback> feedbackList) {

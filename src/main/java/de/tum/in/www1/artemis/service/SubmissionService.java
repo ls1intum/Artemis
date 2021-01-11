@@ -351,7 +351,7 @@ public class SubmissionService {
      * @param result the result which we want to save and order
      * @return the result with correctly persisted relationship to its submission
      */
-    public Result saveNewResult(final Submission submission, final Result result, Long correctionRound) {
+    public Result saveNewResultByCorrectionRound(Submission submission, final Result result, Long correctionRound) {
         result.setSubmission(null);
         studentParticipationRepository.save((StudentParticipation) submission.getParticipation());
         List<Result> submissionResults = submission.getResults();
@@ -361,20 +361,21 @@ public class SubmissionService {
         }
         studentParticipationRepository.save((StudentParticipation) submission.getParticipation());
         var savedResult = resultRepository.save(result);
-        submissionResults.set(correctionRound.intValue(), result);
-        studentParticipationRepository.save((StudentParticipation) submission.getParticipation());
+        if (submissionResults.size() > 0) {
+            submissionResults.set(correctionRound.intValue(), savedResult);
+        }
+        else {
+            submissionResults.add(correctionRound.intValue(), savedResult);
+        }
 
         savedResult.setSubmission(submission);
-
-        submissionRepository.save(submission);
+        studentParticipationRepository.save((StudentParticipation) submission.getParticipation());
+        submission = submissionRepository.save(submission);
         return submission.getResultByCorrectionRound(correctionRound);
     }
 
-    public Result saveNewResult(final Submission submission, final Result result) {
-        return saveNewResult(submission, result, 0L);
-    }
-
     /**
+     * TODO: NR, SE: Used exclusively to add results to zero point submissions?
      * Add a result to the last {@link Submission} of a {@link StudentParticipation}, see {@link StudentParticipation#findLatestSubmission()}, with a feedback of type {@link FeedbackType#AUTOMATIC}.
      * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation}.
      * Sets the feedback text and result score.
@@ -397,7 +398,7 @@ public class SubmissionService {
             // we set the assessment type to semi automatic so that it does not appear to the tutors for manual assessment
             // if we would use AssessmentType.AUTOMATIC, it would be eligable for manual assessment
             result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-            result = saveNewResult(latestSubmission, result);
+            result = saveNewResultByCorrectionRound(latestSubmission, result, (long) latestSubmission.getResults().size());
 
             var feedback = new Feedback();
             feedback.setCredits(0.0);
