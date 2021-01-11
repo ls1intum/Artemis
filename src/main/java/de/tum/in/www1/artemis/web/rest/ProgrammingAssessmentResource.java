@@ -125,14 +125,14 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         Result result1 = submission1.getResultByCorrectionRound(correctionRound);
 
         // prevent that tutors create multiple manual results
-        // newManualResult.setId(existingManualResult.getId());
+        newManualResult.setId(existingManualResult.getId());
         // load assessor
         result1 = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(result1.getId()).get();
         existingManualResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(existingManualResult.getId()).get();
 
         // make sure that the participation and submission cannot be manipulated on the client side
-        // newManualResult.setParticipation(participation);
-        // newManualResult.setSubmission(existingManualResult.getSubmission());
+        newManualResult.setParticipation(participation);
+        newManualResult.setSubmission(existingManualResult.getSubmission());
 
         var programmingExercise = (ProgrammingExercise) participation.getExercise();
         checkAuthorization(programmingExercise, user);
@@ -175,22 +175,25 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         // make sure that the submission cannot be manipulated on the client side
         var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
-        // newManualResult.setSubmission(submission);
+        newManualResult.setSubmission(submission);
         newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
 
         // newManualResult = submissionService.saveNewResultByCorrectionRound(submission, newManualResult, correctionRound);
 
-        existingManualResult.setResultString(newManualResult.getResultString());
-        existingManualResult.setRated(newManualResult.isRated());
-        existingManualResult.setAssessmentType(newManualResult.getAssessmentType());
-        existingManualResult.setScore(newManualResult.getScore());
-        existingManualResult.setHasFeedback(newManualResult.getHasFeedback());
-        existingManualResult.setSuccessful(newManualResult.isSuccessful());
-        // submissionService.copyFeedbacktoNewResult(existingManualResult, newManualResult);
-        existingManualResult.setFeedbacks(newManualResult.getFeedbacks());
+        if (submission.getParticipation() == null) {
+            newManualResult.setParticipation(submission.getParticipation());
+        }
+        var savedResult = resultRepository.save(newManualResult);
+        savedResult.setSubmission(submission);
+        // newManualResult = submission.getResultByCorrectionRound(correctionRound);
 
-        newManualResult = existingManualResult;
-
+        /*
+         * existingManualResult.setResultString(newManualResult.getResultString()); existingManualResult.setRated(newManualResult.isRated());
+         * existingManualResult.setAssessmentType(newManualResult.getAssessmentType()); existingManualResult.setScore(newManualResult.getScore());
+         * existingManualResult.setHasFeedback(newManualResult.getHasFeedback()); existingManualResult.setSuccessful(newManualResult.isSuccessful()); //
+         * submissionService.copyFeedbacktoNewResult(existingManualResult, newManualResult); existingManualResult.setFeedbacks(newManualResult.getFeedbacks()); newManualResult =
+         * existingManualResult;
+         */
         if (submit) {
             newManualResult = programmingAssessmentService.submitManualAssessment(existingManualResult.getId());
         }

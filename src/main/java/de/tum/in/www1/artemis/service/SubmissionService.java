@@ -353,18 +353,15 @@ public class SubmissionService {
      */
     public Result saveNewResultByCorrectionRound(Submission submission, final Result result, Long correctionRound) {
         result.setSubmission(null);
-        studentParticipationRepository.save((StudentParticipation) submission.getParticipation());
-        List<Result> submissionResults = submission.getResults();
-
-        if (submission.getParticipation() == null) {
+        submission.setResults(new ArrayList<>());
+        if (result.getParticipation() == null) {
             result.setParticipation(submission.getParticipation());
         }
-        studentParticipationRepository.save((StudentParticipation) submission.getParticipation());
         var savedResult = resultRepository.save(result);
-
         savedResult.setSubmission(submission);
-        submission = submissionRepository.save(submission);
-        return submission.getResultByCorrectionRound(correctionRound);
+        submission.addResult(savedResult);
+        // submissionRepository.save(submission);
+        return savedResult;
     }
 
     /**
