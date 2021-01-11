@@ -13,7 +13,10 @@ done
 shift $((OPTIND-1))
 
 # check for unsafe OPTIONS and OPTIONS_GHC pragma as they allow to overwrite command line arguments
-$safe && grep -RqFm 1 "OPTIONS" assignment/* && echo "Cannot build with \"OPTIONS\" string in source" && exit 1
+$safe && grep -RqFm 1 "OPTIONS" assignment/* && echo "Cannot build with \"OPTIONS\" string in source." && exit 1
+
+# check for symlinks
+$safe && find assignment/ -type l | grep -q . && echo "Cannot build with symlinks in submission." && exit 1
 
 # build the libraries - do not forget to set the right compilation flag (Prod)
 stack build --allow-different-user --flag test:Prod && \
