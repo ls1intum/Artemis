@@ -333,7 +333,7 @@ export class ExerciseService {
     }
 
     /**
-     * Makes sure that bonus points are not zero and respect the constraint by includedInOverallScore
+     * Makes sure that bonus points are zero and respect the constraint by includedInOverallScore
      * @param exercise exercise for which to set the bonus points
      */
     setBonusPointsConstrainedByIncludedInOverallScore(exercise: Exercise) {

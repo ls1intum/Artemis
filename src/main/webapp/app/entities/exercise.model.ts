@@ -77,8 +77,8 @@ export abstract class Exercise implements BaseEntity {
     public bonusPoints?: number;
     public assessmentType?: AssessmentType;
     public difficulty?: DifficultyLevel;
-    public mode?: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
-    public includedInOverallScore?: IncludedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY; // default value
+    public mode = ExerciseMode.INDIVIDUAL; // default value
+    public includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY; // default value
     public teamAssignmentConfig?: TeamAssignmentConfig;
     public categories?: string[];
     public type?: ExerciseType;
@@ -128,7 +128,6 @@ export abstract class Exercise implements BaseEntity {
         this.assessmentDueDateError = false;
         this.dueDateError = false;
         this.presentationScoreEnabled = false; // default value;
-        this.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY; // default value
     }
 
     /**
