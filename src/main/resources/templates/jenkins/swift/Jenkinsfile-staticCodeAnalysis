@@ -22,7 +22,7 @@ pipeline {
             stage('Build') {
                 steps {
                     timestamps {
-                        sh '''
+                        sh  '''
                             rm -rf Sources
                             mv assignment/Sources .
                             rm -rf assignment
@@ -49,7 +49,7 @@ pipeline {
                     '''
             }
             cleanup {
-                sh '''
+                sh  '''
                     rm -rf results
                     mkdir results
                     if [ -e assignment/tests.xml ]
