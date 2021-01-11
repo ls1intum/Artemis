@@ -76,7 +76,8 @@ public class BuildLogEntryService {
     /**
      * Determines if a given build log string can be categorized as an unnecessary log which does not need to be shown to the student
      *
-     * @param logString current build log string
+     * @param logString           current build log string
+     * @param programmingLanguage programming language of exercise
      * @return boolean indicating an unnecessary build log or not
      */
     public boolean isUnnecessaryBuildLogForProgrammingLanguage(String logString, ProgrammingLanguage programmingLanguage) {
