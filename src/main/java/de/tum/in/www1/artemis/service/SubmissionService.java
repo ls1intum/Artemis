@@ -304,7 +304,7 @@ public class SubmissionService {
         return result;
     }
 
-    private List<Feedback> copyFeedbacktoNewResult(Result newResult, Result oldResult) {
+    public List<Feedback> copyFeedbacktoNewResult(Result newResult, Result oldResult) {
         List<Feedback> oldFeedback = oldResult.getFeedbacks();
         oldFeedback.forEach(feedback -> {
             Feedback newFeedback = feedback.copyFeedback();
@@ -369,7 +369,6 @@ public class SubmissionService {
         }
 
         savedResult.setSubmission(submission);
-        studentParticipationRepository.save((StudentParticipation) submission.getParticipation());
         submission = submissionRepository.save(submission);
         return submission.getResultByCorrectionRound(correctionRound);
     }
