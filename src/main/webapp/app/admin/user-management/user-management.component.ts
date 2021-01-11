@@ -25,6 +25,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     currentAccount?: User;
     users: User[];
     userListSubscription?: Subscription;
+    routerEventSubscription?: Subscription;
     totalItems = 0;
     itemsPerPage = ITEMS_PER_PAGE;
     page!: number;
@@ -85,7 +86,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.handleNavigation();
         });
         this.isVisible = this.activatedRoute.children.length === 0;
-        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
+        this.routerEventSubscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
             this.isVisible = this.activatedRoute.children.length === 0;
             if (this.isVisible) {
                 this.loadAll();
@@ -99,6 +100,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         if (this.userListSubscription) {
             this.eventManager.destroy(this.userListSubscription);
+        }
+        if (this.routerEventSubscription) {
+            this.eventManager.destroy(this.routerEventSubscription);
         }
         this.dialogErrorSource.unsubscribe();
     }

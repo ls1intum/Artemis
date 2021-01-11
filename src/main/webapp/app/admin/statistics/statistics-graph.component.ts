@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { StatisticsService } from 'app/admin/statistics/statistics.service';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
@@ -11,13 +11,13 @@ import { Graphs, SpanType } from 'app/entities/statistics.model';
     selector: 'jhi-statistics-graph',
     templateUrl: './statistics-graph.component.html',
 })
-export class StatisticsGraphComponent implements OnInit, OnChanges {
+export class StatisticsGraphComponent implements OnChanges {
     @Input()
     graphType: Graphs;
     @Input()
     currentSpan: SpanType;
 
-    // html properties
+    // Html properties
     LEFT = false;
     RIGHT = true;
     SpanType = SpanType;
@@ -36,7 +36,7 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
     chartData: ChartDataSets[] = [];
     dataForSpanType: number[];
 
-    // left arrow -> decrease, right arrow -> increase
+    // Left arrow -> decrease, right arrow -> increase
     private currentPeriod = 0;
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
@@ -51,10 +51,6 @@ export class StatisticsGraphComponent implements OnInit, OnChanges {
         this.currentSpan = changes.currentSpan?.currentValue;
         this.barChartLabels = [];
         this.currentPeriod = 0;
-        this.initializeChart();
-    }
-
-    ngOnInit() {
         this.amountOfStudents = this.translateService.instant('statistics.amountOfStudents');
         this.chartName = this.translateService.instant(`statistics.${this.graphType.toString().toLowerCase()}`);
         this.initializeChart();
