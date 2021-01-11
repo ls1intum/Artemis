@@ -612,21 +612,39 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         paramsSecondCorrection.add("lock", "true");
         paramsSecondCorrection.add("correction-round", "1");
 
-        final var submissionWithoutSecondCorrection = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submission-without-assessment",
+        final var submissionWithoutSecondAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submission-without-assessment",
                 HttpStatus.OK, ProgrammingSubmission.class, paramsSecondCorrection);
 
         // verify that the submission is not new
-        assertThat(submissionWithoutSecondCorrection).isNotEqualTo(firstSubmission);
-        assertThat(submissionWithoutSecondCorrection).isNotEqualTo(secondSubmission);
-        assertThat(submissionWithoutSecondCorrection).isNotEqualTo(thirdSubmission);
-        assertThat(submissionWithoutSecondCorrection).isEqualTo(submissionWithoutFirstAssessment);
+        assertThat(submissionWithoutSecondAssessment).isNotEqualTo(firstSubmission);
+        assertThat(submissionWithoutSecondAssessment).isNotEqualTo(secondSubmission);
+        assertThat(submissionWithoutSecondAssessment).isNotEqualTo(thirdSubmission);
+        assertThat(submissionWithoutSecondAssessment).isEqualTo(submissionWithoutFirstAssessment);
         // verify that the lock has been set
-        assertThat(submissionWithoutSecondCorrection.getLatestResult()).isNotNull();
-        assertThat(submissionWithoutSecondCorrection.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor1");
-        assertThat(submissionWithoutSecondCorrection.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        assertThat(submissionWithoutSecondAssessment.getLatestResult()).isNotNull();
+        assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor1");
+        assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+
+        // verify that the relationship between student participation,
+        databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
+        assertThat(databaseRelationshipStateOfResultsOverParticipation.isPresent()).isTrue();
+        fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
+
+        assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(4);
+        assertThat(fetchedParticipation.findLatestSubmission().isPresent()).isTrue();
+        assertThat(fetchedParticipation.findLatestSubmission().get()).isEqualTo(submissionWithoutSecondAssessment);
+        assertThat(fetchedParticipation.findLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
+
+        databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
+        assertThat(databaseRelationshipStateOfResultsOverSubmission.size()).isEqualTo(1);
+        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
+        assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(4);
+        assertThat(fetchedParticipation.findLatestSubmission().isPresent()).isTrue();
+        assertThat(fetchedParticipation.findLatestSubmission().get().getResults().size()).isEqualTo(2);
+        assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
 
         // assess submission and submit
-        final var manualResultLockedSecondRound = submissionWithoutSecondCorrection.getLatestResult();
+        final var manualResultLockedSecondRound = submissionWithoutSecondAssessment.getLatestResult();
         assertThat(manualResultLockedFirstRound).isNotEqualTo(manualResultLockedSecondRound);
         manualResultLockedSecondRound.setFeedbacks(feedbacks);
         manualResultLockedSecondRound.setHasFeedback(true);
