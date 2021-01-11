@@ -185,7 +185,7 @@ public class ProgrammingExerciseExportService {
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException   is thrown for file handling errors
      */
-    public TextPlagiarismResult checkPlagiarism(long programmingExerciseId, float similarityThreshold, int minimumScore, int minimumSize) throws ExitException, IOException {
+    public TextPlagiarismResult checkPlagiarism(long programmingExerciseId, float similarityThreshold, int minimumScore) throws ExitException, IOException {
         long start = System.nanoTime();
 
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
@@ -194,7 +194,7 @@ public class ProgrammingExerciseExportService {
         log.info("Download repositories for JPlag programming comparison with " + numberOfParticipations + " participations");
 
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        List<Repository> repositories = downloadRepositories(programmingExercise, targetPath, minimumScore, minimumSize);
+        List<Repository> repositories = downloadRepositories(programmingExercise, targetPath, minimumScore);
         log.info("Downloading repositories done");
 
         final var projectKey = programmingExercise.getProjectKey();
@@ -235,7 +235,7 @@ public class ProgrammingExerciseExportService {
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException is thrown for file handling errors
      */
-    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore, int minimumSize) throws ExitException, IOException {
+    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore) throws ExitException, IOException {
         long start = System.nanoTime();
 
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
@@ -243,7 +243,7 @@ public class ProgrammingExerciseExportService {
 
         log.info("Download repositories for JPlag programming comparison with " + numberOfParticipations + " participations");
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        List<Repository> repositories = downloadRepositories(programmingExercise, targetPath, minimumScore, minimumSize);
+        List<Repository> repositories = downloadRepositories(programmingExercise, targetPath, minimumScore);
         log.info("Downloading repositories done");
 
         final var output = "output";
@@ -341,9 +341,7 @@ public class ProgrammingExerciseExportService {
         }
     }
 
-    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, String targetPath, int minimumScore, int minimumSize) {
-        // TODO: We ignore `minimumSize` for now until we decide how to calculate the size of a programming submission
-
+    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, String targetPath, int minimumScore) {
         List<Repository> downloadedRepositories = new ArrayList<>();
 
         var studentParticipations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(programmingExercise.getId());

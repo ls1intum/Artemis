@@ -1095,8 +1095,8 @@ public class ProgrammingExerciseResource {
     @GetMapping(Endpoints.CHECK_PLAGIARISM)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
-            @RequestParam int minimumSize) throws ExitException, IOException {
+    public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore)
+            throws ExitException, IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         long start = System.nanoTime();
 
@@ -1116,7 +1116,7 @@ public class ProgrammingExerciseResource {
                     "Artemis does not support plagiarism checks for the programming language " + language)).body(null);
         }
 
-        TextPlagiarismResult result = programmingExerciseExportService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore, minimumSize);
+        TextPlagiarismResult result = programmingExerciseExportService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore);
 
         log.info("Check plagiarism of programming exercise {} with title '{}' was successful in {}.", programmingExercise.get().getId(), programmingExercise.get().getTitle(),
                 formatDurationFrom(start));
@@ -1138,8 +1138,8 @@ public class ProgrammingExerciseResource {
     @GetMapping(value = Endpoints.CHECK_PLAGIARISM_JPLAG_REPORT, produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
-            @RequestParam int minimumSize) throws ExitException, IOException {
+    public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore)
+            throws ExitException, IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         long start = System.nanoTime();
 
@@ -1161,7 +1161,7 @@ public class ProgrammingExerciseResource {
                     "Artemis does not support plagiarism checks for the programming language " + language)).body(null);
         }
 
-        File zipFile = programmingExerciseExportService.checkPlagiarismWithJPlagReport(exerciseId, similarityThreshold, minimumScore, minimumSize);
+        File zipFile = programmingExerciseExportService.checkPlagiarismWithJPlagReport(exerciseId, similarityThreshold, minimumScore);
 
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
