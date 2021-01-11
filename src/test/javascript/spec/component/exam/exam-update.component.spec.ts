@@ -8,6 +8,8 @@ import { Exam } from 'app/entities/exam.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 
 describe('Exam Update Component', function () {
     let component: ExamUpdateComponent;
@@ -18,10 +20,7 @@ describe('Exam Update Component', function () {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ExamUpdateComponent],
-            providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-            ],
+            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
         })
             .overrideTemplate(ExamUpdateComponent, '')
             .compileComponents();
