@@ -64,7 +64,9 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> saveFileUploadAssessment(@PathVariable Long submissionId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestBody List<Feedback> feedbacks) {
         Submission submission = submissionService.findOneWithEagerResultAndFeedback(submissionId);
-        return super.saveAssessment(submission, submit, feedbacks, submission.getLatestResult().getId());
+        // if a result exists, we want to override it, otherwise create a new one
+        var resultId = submission.getLatestResult() != null ? submission.getLatestResult().getId() : null;
+        return super.saveAssessment(submission, submit, feedbacks, resultId);
     }
 
     /**
