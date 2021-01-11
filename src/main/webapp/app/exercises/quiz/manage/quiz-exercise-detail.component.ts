@@ -16,7 +16,7 @@ import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
-import { Exercise, ExerciseCategory } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -544,7 +544,16 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (!this.quizExercise || !this.savedEntity) {
             return false;
         }
-        const keysToCompare = ['title', 'difficulty', 'duration', 'isPlannedToStart', 'isVisibleBeforeStart', 'isOpenForPractice', 'randomizeQuestionOrder'];
+        const keysToCompare = [
+            'title',
+            'difficulty',
+            'duration',
+            'isPlannedToStart',
+            'isVisibleBeforeStart',
+            'isOpenForPractice',
+            'randomizeQuestionOrder',
+            'includedInOverallScore',
+        ];
 
         // Unsaved changes if any of the stated object key values are not equal or the questions/release dates differ
         return (
@@ -610,6 +619,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.quizExercise.quizQuestions !== undefined &&
             !!this.quizExercise.quizQuestions.length;
         const areAllQuestionsValid = this.quizExercise.quizQuestions?.every(function (question) {
+            if (question.score === undefined || question.score === null) {
+                return false;
+            }
             if (question.score && question.score < 0) {
                 return false;
             }
@@ -649,7 +661,25 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             }
         }, this);
 
-        return isGenerallyValid && areAllQuestionsValid === true && this.isEmpty(this.invalidFlaggedQuestions);
+        const maxPointsReachableInQuiz = this.quizExercise.quizQuestions
+            ?.map((quizQuestion) => {
+                if (quizQuestion.score === undefined || quizQuestion.score === null) {
+                    return 0;
+                } else {
+                    return quizQuestion.score;
+                }
+            })
+            .reduce(function (a, b) {
+                return a + b;
+            }, 0);
+
+        return (
+            isGenerallyValid &&
+            areAllQuestionsValid === true &&
+            this.isEmpty(this.invalidFlaggedQuestions) &&
+            maxPointsReachableInQuiz !== undefined &&
+            maxPointsReachableInQuiz > 0
+        );
     }
 
     /**
@@ -783,6 +813,25 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 translateValues: {},
             });
         }
+        const maxPointsReachableInQuiz = this.quizExercise.quizQuestions
+            ?.map((quizQuestion) => {
+                if (quizQuestion.score === undefined || quizQuestion.score === null) {
+                    return 0;
+                } else {
+                    return quizQuestion.score;
+                }
+            })
+            .reduce(function (a, b) {
+                return a + b;
+            }, 0);
+
+        if (maxPointsReachableInQuiz === undefined || maxPointsReachableInQuiz === 0) {
+            invalidReasons.push({
+                translateKey: 'artemisApp.quizExercise.invalidReasons.quizZeroPoints',
+                translateValues: {},
+            });
+        }
+
         /** We only verify the releaseDate if the checkbox is activated **/
         if (this.quizExercise.isPlannedToStart) {
             if (!this.quizExercise.releaseDate || !moment(this.quizExercise.releaseDate).isValid()) {
@@ -808,7 +857,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     translateValues: { index: index + 1 },
                 });
             }
-            if (question.score && question.score < 0) {
+            if (question.score === undefined || question.score === null || question.score < 0) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionScore',
                     translateValues: { index: index + 1 },
@@ -1269,5 +1318,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     private isEmpty(obj: {}) {
         return Object.keys(obj).length === 0;
+    }
+
+    includedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore) {
+        this.quizExercise.includedInOverallScore = includedInOverallScore;
+        this.cacheValidation();
     }
 }
