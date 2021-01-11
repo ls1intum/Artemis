@@ -2,10 +2,10 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -172,7 +172,7 @@ describe('CourseScoresComponent', () => {
                 MockDirective(JhiTranslateDirective),
                 MockTranslateValuesDirective,
             ],
-            providers: [{ provide: ActivatedRoute, useValue: { params: of({ courseId: 1 }) } }],
+            providers: [{ provide: ActivatedRoute, useValue: { params: of({ courseId: 1 }) } }, MockProvider(TranslateService)],
         })
             .compileComponents()
             .then(() => {
