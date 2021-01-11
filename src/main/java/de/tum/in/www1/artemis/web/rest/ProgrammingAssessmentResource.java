@@ -186,7 +186,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         existingManualResult.setScore(newManualResult.getScore());
         existingManualResult.setHasFeedback(newManualResult.getHasFeedback());
         existingManualResult.setSuccessful(newManualResult.isSuccessful());
-        submissionService.copyFeedbacktoNewResult(existingManualResult, newManualResult);
+        // submissionService.copyFeedbacktoNewResult(existingManualResult, newManualResult);
+        existingManualResult.setFeedbacks(newManualResult.getFeedbacks());
 
         newManualResult = existingManualResult;
 
