@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC;
 
-import java.time.ZonedDateTime;
+import java.time.*;
+import java.time.temporal.TemporalField;
+import java.time.temporal.WeekFields;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -366,15 +368,19 @@ public class CourseService {
      * @param periodIndex      an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      */
     public Integer[] getCourseStatistics(Long courseId, Integer periodIndex) {
-        Integer[] result = new Integer[7];
+        Integer[] result = new Integer[12];
         Arrays.fill(result, 0);
         ZonedDateTime now = ZonedDateTime.now();
 
-        ZonedDateTime startDate = now.minusWeeks(-periodIndex).minusDays(6).withHour(0).withMinute(0).withSecond(0).withNano(0);
-        ZonedDateTime endDate = now.minusWeeks(-periodIndex).withHour(23).withMinute(59).withSecond(59);
+        LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
+        LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
+        ZoneId zone = now.getZone();
+        ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks(11 + (12 * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(12 * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
+                : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
         List<Map<String, Object>> outcome = courseRepository.getCourseStatistics(courseId, startDate, endDate);
         List<Map<String, Object>> distinctOutcome = convertMapList(outcome, startDate);
-        return createResultArrayForWeek(distinctOutcome, result, endDate);
+        return createResultArrayForQuarter(distinctOutcome, result, endDate);
     }
 
     /**
@@ -388,7 +394,7 @@ public class CourseService {
         Map<Object, List<String>> users = new HashMap<>();
         for (Map<String, Object> listElement : result) {
             ZonedDateTime date = (ZonedDateTime) listElement.get("day");
-            int index = date.getDayOfMonth();
+            int index = getWeekOfDate(date);
             String username = listElement.get("username").toString();
             List<String> usersInSameSlot = users.get(index);
             // if this index is not yet existing in users
@@ -403,7 +409,9 @@ public class CourseService {
         }
         List<Map<String, Object>> returnList = new ArrayList<>();
         users.forEach((k, v) -> {
-            ZonedDateTime start = startDate.withDayOfMonth((Integer) k);
+            int year = (Integer) k < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
+            ZonedDateTime firstDateOfYear = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone());
+            ZonedDateTime start = getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(((Integer) k) - 1) : firstDateOfYear.plusWeeks((Integer) k);
             Map<String, Object> listElement = new HashMap<>();
             listElement.put("day", start);
             listElement.put("amount", (long) v.size());
@@ -412,16 +420,33 @@ public class CourseService {
         return returnList;
     }
 
-    private Integer[] createResultArrayForWeek(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
+    /**
+     * Gets a list of maps, each map describing an entry in the database. The map has the two keys "day" and "amount",
+     * which map to the date and the amount of the findings. This method handles the spanType WEEKS_ORDERED
+     *
+     * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
+     * @param result the array in which the converted outcome should be inserted
+     * @param endDate the endDate
+     * @return an array, containing the values for each bar in the graph
+     */
+    private Integer[] createResultArrayForQuarter(List<Map<String, Object>> outcome, Integer[] result, ZonedDateTime endDate) {
+        int week;
         for (Map<String, Object> map : outcome) {
             ZonedDateTime date = (ZonedDateTime) map.get("day");
             int amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : 0;
-            for (int i = 0; i < 7; i++) {
-                if (date.getDayOfMonth() == endDate.minusDays(i).getDayOfMonth()) {
-                    result[6 - i] += amount;
+            week = getWeekOfDate(date);
+            for (int i = 0; i < result.length; i++) {
+                if (week == getWeekOfDate(endDate.minusWeeks(i))) {
+                    result[result.length - 1 - i] += amount;
                 }
             }
         }
         return result;
+    }
+
+    private Integer getWeekOfDate(ZonedDateTime date) {
+        LocalDate localDate = date.toLocalDate();
+        TemporalField woy = WeekFields.of(DayOfWeek.MONDAY, 4).weekOfWeekBasedYear();
+        return localDate.get(woy);
     }
 }

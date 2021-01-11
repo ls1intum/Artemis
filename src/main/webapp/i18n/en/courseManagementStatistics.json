@@ -2,7 +2,7 @@
     "courseStatistics": {
         "amountOfStudents": "# of students",
         "active_students": "Active students",
-        "courseScore": "Course Score"
+        "courseScore": "Overall Score"
     },
     "calendar_week": "CW",
     "weekdays": {
