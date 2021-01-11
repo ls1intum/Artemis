@@ -55,6 +55,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -71,6 +72,8 @@ public class ProgrammingExerciseExportService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     private final FileService fileService;
 
     private final GitService gitService;
@@ -81,9 +84,10 @@ public class ProgrammingExerciseExportService {
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
-    public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
-            ZipFileService zipFileService, UrlService urlService) {
+    public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
+            FileService fileService, GitService gitService, ZipFileService zipFileService, UrlService urlService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.fileService = fileService;
         this.gitService = gitService;
         this.zipFileService = zipFileService;
@@ -342,7 +346,9 @@ public class ProgrammingExerciseExportService {
 
         List<Repository> downloadedRepositories = new ArrayList<>();
 
-        programmingExercise.getStudentParticipations().parallelStream().filter(participation -> participation instanceof ProgrammingExerciseParticipation)
+        var studentParticipations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(programmingExercise.getId());
+
+        studentParticipations.parallelStream().filter(participation -> participation instanceof ProgrammingExerciseParticipation)
                 .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUrl() != null)
                 .filter(participation -> {
                     Submission submission = ((StudentParticipation) participation).findLatestSubmission().orElse(null);
