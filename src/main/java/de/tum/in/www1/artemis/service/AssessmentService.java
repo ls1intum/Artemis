@@ -207,7 +207,7 @@ public class AssessmentService {
          * For programming exercises we need to delete the submission of the manual result as well, as for each new manual result a new submission will be generated. The
          * CascadeType.REMOVE of {@link Submission#result} will delete also the result and the corresponding feedbacks {@link Result#feedbacks}.
          */
-        if (participation instanceof ProgrammingExerciseStudentParticipation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation && submission.getResults().size() == 0) {
             participation.removeSubmissions(submission);
             participation.removeResult(result);
             submissionRepository.deleteById(submission.getId());
