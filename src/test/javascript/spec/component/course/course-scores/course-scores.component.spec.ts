@@ -19,7 +19,7 @@ import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { HttpResponse } from '@angular/common/http';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { User } from 'app/core/user/user.model';
 import { Result } from 'app/entities/result.model';
@@ -50,6 +50,7 @@ describe('CourseScoresComponent', () => {
         id: 1,
         dueDate: moment().add(5, 'minutes'),
         type: ExerciseType.QUIZ,
+        includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
         maxScore: 2,
     } as Exercise;
     const sharedDueDate = moment().add(4, 'minutes');
@@ -58,6 +59,7 @@ describe('CourseScoresComponent', () => {
         id: 2,
         dueDate: sharedDueDate,
         type: ExerciseType.QUIZ,
+        includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
         maxScore: 3,
     } as Exercise;
     const exerciseThree = {
@@ -65,14 +67,16 @@ describe('CourseScoresComponent', () => {
         id: 3,
         dueDate: sharedDueDate,
         type: ExerciseType.FILE_UPLOAD,
-        maxScore: 0,
-        bonusPoints: 1,
+        includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS,
+        maxScore: 1,
+        bonusPoints: 0,
     } as Exercise;
     const exerciseFour = {
         title: 'exercise four',
         id: 4,
         dueDate: moment().add(2, 'minutes'),
         type: ExerciseType.MODELING,
+        includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
         maxScore: 4,
     } as Exercise;
 
@@ -141,7 +145,7 @@ describe('CourseScoresComponent', () => {
 
     beforeEach(() => {
         exerciseMaxPointsPerType.set(ExerciseType.QUIZ, [3, 2]);
-        exerciseMaxPointsPerType.set(ExerciseType.FILE_UPLOAD, [0]);
+        exerciseMaxPointsPerType.set(ExerciseType.FILE_UPLOAD, []);
         exerciseMaxPointsPerType.set(ExerciseType.MODELING, [4]);
         exerciseMaxPointsPerType.set(ExerciseType.PROGRAMMING, []);
         exerciseMaxPointsPerType.set(ExerciseType.TEXT, []);
@@ -196,7 +200,7 @@ describe('CourseScoresComponent', () => {
         fixture.detectChanges();
 
         expect(component.course).to.equal(course);
-        expect(component.exercises).to.deep.equal([exerciseFour, exerciseThree, exerciseTwo, exerciseOne]);
+        expect(component.exercisesOfCourseThatAreIncludedInScoreCalculation).to.deep.equal([exerciseFour, exerciseThree, exerciseTwo, exerciseOne]);
     });
 
     it('should group exercises and calculate exercise max score', () => {
@@ -204,7 +208,7 @@ describe('CourseScoresComponent', () => {
         spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
         fixture.detectChanges();
 
-        expect(component.participations).to.equal(participations);
+        expect(component.allParticipationsOfCourse).to.equal(participations);
         expect(component.maxNumberOfOverallPoints).to.deep.equal(overallPoints);
         expect(component.exerciseMaxPointsPerType).to.deep.equal(exerciseMaxPointsPerType);
     });
