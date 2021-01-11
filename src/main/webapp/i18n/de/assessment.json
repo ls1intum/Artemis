@@ -59,7 +59,7 @@
                     "showAll": "Alle anzeigen",
                     "showLocked": "Nur gesperrte anzeigen"
                 },
-                "bonusPointExplanation": "In dieser Aufgabe gibt es {{maxScore}} Punkte und {{maxBonusPoints}} Bonuspunkte, somit können Studierende maximal {{maxPointsWithBonus}} Punkte erreichen, was einem Score von {{maxPercentage}}% entsprechen würde."
+                "bonusPointExplanation": "In dieser Aufgabe gibt es {{maxPoints}} Punkte und {{maxBonusPoints}} Bonuspunkte, somit können Studierende maximal {{maxPointsWithBonus}} Punkte erreichen, was einem Score von {{maxPercentage}}% entsprechen würde."
             },
             "locks": {
                 "home": {

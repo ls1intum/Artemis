@@ -7,9 +7,9 @@ import { Component, Input, OnInit, OnChanges } from '@angular/core';
 })
 export class ScoreDisplayComponent implements OnInit, OnChanges {
     @Input() maxBonusPoints = 0;
-    @Input() maxScore: number;
+    @Input() maxPoints: number;
     @Input() score: number;
-    bonusScore?: number | undefined;
+    bonusPoints?: number | undefined;
     maxPointsWithBonus?: number | undefined;
     maxPercentage?: number | undefined;
     constructor() {}
@@ -23,13 +23,14 @@ export class ScoreDisplayComponent implements OnInit, OnChanges {
      * Calculate the bonus points just for display reasons
      */
     ngOnChanges() {
-        if (this.maxScore != undefined && this.score > this.maxScore) {
-            // TODO: rene: check for onlyBonus tag
-            this.bonusScore = this.score - this.maxScore;
-            this.maxPointsWithBonus = this.maxScore + this.maxBonusPoints;
-            this.maxPercentage = (this.maxPointsWithBonus / this.maxScore) * 100;
+        if (this.maxPoints != undefined && this.maxBonusPoints > 0) {
+            if (this.score > this.maxPoints) {
+                this.bonusPoints = this.score - this.maxPoints;
+            }
+            this.maxPointsWithBonus = this.maxPoints + this.maxBonusPoints;
+            this.maxPercentage = (this.maxPointsWithBonus / this.maxPoints) * 100;
         } else {
-            this.bonusScore = undefined;
+            this.bonusPoints = undefined;
             this.maxPointsWithBonus = undefined;
             this.maxPercentage = undefined;
         }
