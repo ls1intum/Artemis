@@ -125,7 +125,7 @@ describe('ModelingAssessmentComponent', () => {
             const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
             expect(scoreDisplay).to.exist;
             expect(scoreDisplay.componentInstance.score).to.equal(totalScore);
-            expect(scoreDisplay.componentInstance.maxScore).to.equal(maxScore);
+            expect(scoreDisplay.componentInstance.maxPoints).to.equal(maxScore);
         });
 
         it('should not display score if displayPoints wrong', () => {

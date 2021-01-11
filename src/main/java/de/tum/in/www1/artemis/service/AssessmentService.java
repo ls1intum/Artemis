@@ -72,7 +72,6 @@ public class AssessmentService {
         double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
         // Exam results and manual results of programming exercises are always to rated
-        // TODO: set rated to false if IncludedInOverallScore.NOT_INCLUDED ?
         if (exercise.hasExerciseGroup() || exercise instanceof ProgrammingExercise) {
             result.setRated(true);
         }
