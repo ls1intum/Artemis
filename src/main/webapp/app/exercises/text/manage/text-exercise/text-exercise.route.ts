@@ -1,7 +1,5 @@
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
-
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { TextExerciseComponent } from './text-exercise.component';
 import { TextExerciseDetailComponent } from './text-exercise-detail.component';
 import { TextExerciseUpdateComponent } from './text-exercise-update.component';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -113,12 +111,6 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: ':courseId/text-exercises',
-        component: TextExerciseComponent,
-        data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
-            pageTitle: 'artemisApp.textExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
+        redirectTo: ':courseId/exercises',
     },
 ];
