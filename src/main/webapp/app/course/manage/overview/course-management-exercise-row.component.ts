@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exercise-statistics-dto.model';
@@ -9,12 +9,15 @@ export enum ExerciseRowType {
     PAST = 'past',
 }
 
+// Title and the category list will be trimmed to this length
+const TITLE_LENGTH = 30;
+
 @Component({
     selector: 'jhi-course-management-exercise-row',
     templateUrl: './course-management-exercise-row.component.html',
     styleUrls: ['course-management-exercise-row.scss'],
 })
-export class CourseManagementExerciseRowComponent {
+export class CourseManagementExerciseRowComponent implements OnInit {
     @Input() course: Course;
     @Input() exercise: Exercise;
     @Input() statistic: CourseExerciseStatisticsDTO;
@@ -56,5 +59,25 @@ export class CourseManagementExerciseRowComponent {
         }
     }
 
+    displayCategories = false;
+    categories: string;
+    displayTitle: string;
+
     constructor() {}
+
+    ngOnInit() {
+        this.displayTitle = this.exercise.title ?? '';
+        if (this.displayTitle.length > TITLE_LENGTH) {
+            this.displayTitle = this.displayTitle.substring(0, TITLE_LENGTH - 3) + '...';
+        }
+
+        this.displayCategories = !!this.exercise.categories && this.exercise.categories.length > 0;
+        if (this.displayCategories) {
+            const parsedCategories = this.exercise.categories!.map((c) => JSON.parse(c));
+            this.categories = parsedCategories.map((p) => p['category']).join(', ');
+            if (this.categories.length > TITLE_LENGTH) {
+                this.categories = this.categories.substring(0, TITLE_LENGTH - 3) + '...';
+            }
+        }
+    }
 }

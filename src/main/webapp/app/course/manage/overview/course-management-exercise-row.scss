@@ -14,6 +14,10 @@
         margin-top: 10px;
         margin-left: 15px;
     }
+    .item-category {
+        color: gray;
+        margin-left: 15px;
+    }
     .btn {
         margin-top: 5px;
         float: right;
@@ -27,5 +31,11 @@
     .exercise-date {
         padding-left: 15px;
         padding-top: 10px;
+    }
+    .exercise-score {
+        padding-left: 15px;
+        padding-top: 5px;
+        width: 250px;
+        text-align: center;
     }
 }

@@ -39,7 +39,7 @@
                     <h5 class="text-white text-center">{{ 'entity.action.exercise' | translate }}</h5>
                 </div>
                 <div class="section-content">
-                    <div *ngIf="futureExercises && futureExercises.length > 0">
+                    <div *ngIf="futureExercises?.length > 0">
                         <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
                             <fa-icon class="control-icon" [icon]="showFutureExercises ? 'angle-down' : 'angle-up'"></fa-icon>
                             <strong>{{ 'artemisApp.course.futureExercises' | translate }}</strong>
@@ -55,7 +55,7 @@
                         </div>
                         <div *ngIf="!showFutureExercises" class="collapsed"></div>
                     </div>
-                    <div *ngIf="currentExercises && currentExercises.length > 0">
+                    <div *ngIf="currentExercises?.length > 0">
                         <div class="control-label" (click)="showCurrentExercises = !showCurrentExercises">
                             <fa-icon class="control-icon" [icon]="showCurrentExercises ? 'angle-down' : 'angle-up'"></fa-icon>
                             <strong>{{ 'artemisApp.course.currentExercises' | translate }}</strong>
@@ -71,7 +71,7 @@
                         </div>
                         <div *ngIf="!showCurrentExercises" class="collapsed"></div>
                     </div>
-                    <div *ngIf="pastExercises && pastExercises.length > 0">
+                    <div *ngIf="pastExercises?.length > 0">
                         <div class="control-label" (click)="showPastExercises = !showPastExercises">
                             <fa-icon class="control-icon" [icon]="showPastExercises ? 'angle-down' : 'angle-up'"></fa-icon>
                             <strong>{{ 'artemisApp.course.pastExercises' | translate }}</strong>
@@ -86,6 +86,9 @@
                             ></jhi-course-management-exercise-row>
                         </div>
                         <div *ngIf="!showPastExercises" class="collapsed"></div>
+                    </div>
+                    <div *ngIf="futureExercises?.length + currentExercises?.length + pastExercises?.length == 0">
+                        <h4 class="text-center">{{ 'artemisApp.course.noExercises' | translate }}</h4>
                     </div>
                 </div>
             </div>

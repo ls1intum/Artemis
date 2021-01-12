@@ -121,7 +121,8 @@
             "averageScore": "Punkte im Schnitt",
             "futureExercises": "Kommende Übungen",
             "currentExercises": "Derzeitige Übungen",
-            "pastExercises": "Vergangene Übungen"
+            "pastExercises": "Vergangene Übungen",
+            "noExercises": "Keine Übungen vorhanden"
         }
     }
 }

@@ -121,7 +121,8 @@
             "averageScore": "Average Score",
             "futureExercises": "Future Exercises",
             "currentExercises": "Current Exercises",
-            "pastExercises": "Past Exercises"
+            "pastExercises": "Past Exercises",
+            "noExercises": "No exercises to display"
         }
     }
 }

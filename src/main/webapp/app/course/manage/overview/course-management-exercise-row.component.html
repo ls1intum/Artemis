@@ -1,67 +1,82 @@
 <div class="course-item">
     <div class="container">
         <div class="row justify-content-between">
-            <div class="col-3 col-md-auto row-flex">
+            <div class="col-3 row-flex" style="cursor: pointer">
                 <div class="exercise-icon">
                     <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | translate" container="body"></fa-icon>
                 </div>
                 <p class="item-title" [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id]">{{ exercise.title }}</p>
+                <p class="item-category" *ngIf="exercise.categories && exercise.categories.length > 0">{{ this.categories }}</p>
             </div>
 
-            <div class="col-4 col-md-auto row-flex">
+            <div class="col-3 row-flex">
                 <div class="exercise-date" *ngIf="rowType == exerciseRowType.FUTURE && exercise.releaseDate">
                     <span class="bold">{{ 'artemisApp.exercise.releaseDate' | translate }}: </span>
-                    <span>{{ exercise.releaseDate | artemisDate }}</span>
+                    <span>{{ exercise.releaseDate | amTimeAgo }}</span>
                 </div>
                 <div class="exercise-date" *ngIf="rowType == exerciseRowType.CURRENT && exercise.dueDate">
                     <span class="bold">{{ 'artemisApp.exercise.dueDate' | translate }}: </span>
-                    <span>{{ exercise.dueDate | artemisDate }}</span>
+                    <span>{{ exercise.dueDate | amTimeAgo }}</span>
                 </div>
                 <div class="exercise-date" *ngIf="rowType == exerciseRowType.PAST && exercise.assessmentDueDate">
                     <span class="bold">{{ 'artemisApp.exercise.assessmentDueDate' | translate }}: </span>
-                    <span>{{ exercise.assessmentDueDate | artemisDate }}</span>
+                    <span>{{ exercise.assessmentDueDate | amTimeAgo }}</span>
                 </div>
             </div>
 
-            <div class="col-3 col-md-auto row-flex">
-                <div class="exercise-date" *ngIf="rowType == exerciseRowType.CURRENT || rowType == exerciseRowType.PAST">
-                    <span class="bold">{{ 'artemisApp.course.students' | translate }}: </span>
-                    <span>{{ statistic?.noOfParticipatingStudentsOrTeams }} ({{ statistic?.participationRateInPercent }}%)</span>
+            <div class="col-3 row-flex">
+                <div class="exercise-score" *ngIf="statistic && (rowType == exerciseRowType.CURRENT || rowType == exerciseRowType.PAST)">
+                    <span class="bold">{{ 'artemisApp.course.students' | translate }}</span>
+                    <jhi-progress-bar
+                        [tooltip]="'artemisApp.course.students' | translate"
+                        [percentage]="statistic.participationRateInPercent"
+                        [numerator]="statistic.noOfParticipatingStudentsOrTeams"
+                        [denominator]="statistic.participationRateInPercent! * statistic.noOfParticipatingStudentsOrTeams!"
+                    >
+                    </jhi-progress-bar>
                 </div>
-                <div class="exercise-date" *ngIf="rowType == exerciseRowType.CURRENT || rowType == exerciseRowType.PAST">
-                    <span class="bold">{{ 'artemisApp.course.averageScore' | translate }}: </span>
-                    <span>{{ statistic?.averageScoreInPercent }}%</span>
+                <div class="exercise-score" *ngIf="statistic && (rowType == exerciseRowType.CURRENT || rowType == exerciseRowType.PAST)">
+                    <span class="bold">{{ 'artemisApp.course.averageScore' | translate }}</span>
+                    <jhi-progress-bar
+                        [tooltip]="'artemisApp.course.averageScore' | translate"
+                        [percentage]="statistic.averageScoreInPercent"
+                        [numerator]="statistic.averageScoreInPercent! * statistic.exerciseMaxPoints!"
+                        [denominator]="statistic.exerciseMaxPoints"
+                    >
+                    </jhi-progress-bar>
                 </div>
             </div>
 
-            <div class="col-2 col-md-auto">
-                <button type="button" [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'edit']" class="btn btn-warning mr-1 mb-1">
-                    <fa-icon [icon]="'wrench'"></fa-icon>
-                </button>
-                <button
-                    *ngIf="course.isAtLeastInstructor"
-                    type="submit"
-                    [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'scores']"
-                    class="btn btn-info mr-1 mb-1"
-                >
-                    <fa-icon [icon]="'chart-bar'"></fa-icon>
-                </button>
-                <button
-                    type="submit"
-                    *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.PROGRAMMING && exercise.type !== exerciseType.QUIZ"
-                    [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'assessment']"
-                    class="btn btn-success mr-1 mb-1"
-                >
-                    <fa-icon [icon]="'file-contract'"></fa-icon>
-                </button>
-                <button
-                    type="submit"
-                    *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING"
-                    [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'grading', 'test-cases']"
-                    class="btn btn-success mr-1 mb-1"
-                >
-                    <fa-icon [icon]="'file-contract'"></fa-icon>
-                </button>
+            <div class="col-2 row-flex">
+                <div style="margin-left: auto">
+                    <button type="button" [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'edit']" class="btn btn-warning mr-1 mb-1">
+                        <fa-icon [icon]="'wrench'"></fa-icon>
+                    </button>
+                    <button
+                        *ngIf="course.isAtLeastInstructor"
+                        type="submit"
+                        [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'scores']"
+                        class="btn btn-info mr-1 mb-1"
+                    >
+                        <fa-icon [icon]="'chart-bar'"></fa-icon>
+                    </button>
+                    <button
+                        type="submit"
+                        *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.PROGRAMMING && exercise.type !== exerciseType.QUIZ"
+                        [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'assessment']"
+                        class="btn btn-success mr-1 mb-1"
+                    >
+                        <fa-icon [icon]="'file-contract'"></fa-icon>
+                    </button>
+                    <button
+                        type="submit"
+                        *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING"
+                        [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'grading', 'test-cases']"
+                        class="btn btn-success mr-1 mb-1"
+                    >
+                        <fa-icon [icon]="'file-contract'"></fa-icon>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

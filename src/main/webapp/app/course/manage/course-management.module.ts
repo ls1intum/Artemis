@@ -43,6 +43,7 @@ import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-g
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementExerciseRowComponent } from './overview/course-management-exercise-row.component';
 import { CourseManagementStatisticsComponent } from './overview/course-management-statistics.component';
+import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 
 @NgModule({
     imports: [
@@ -80,6 +81,7 @@ import { CourseManagementStatisticsComponent } from './overview/course-managemen
         ArtemisAssessmentSharedModule,
         ArtemisCourseQuestionsModule,
         ArtemisSharedPipesModule,
+        ArtemisTutorParticipationGraphModule,
     ],
     declarations: [
         CourseManagementComponent,
