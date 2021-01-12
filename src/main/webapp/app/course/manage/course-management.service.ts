@@ -328,15 +328,6 @@ export class CourseManagementService {
     }
 
     getStatisticsData(courseId: number, periodIndex: number): Observable<number[]> {
-        /*return of([
-            Math.floor(Math.random() * 100),
-            Math.floor(Math.random() * 100),
-            Math.floor(Math.random() * 100),
-            Math.floor(Math.random() * 100),
-            Math.floor(Math.random() * 100),
-            Math.floor(Math.random() * 100),
-            Math.floor(Math.random() * 100),
-        ]);*/
         const params = new HttpParams().set('periodIndex', '' + periodIndex);
         return this.http.get<number[]>(`${this.resourceUrl}/${courseId}/statistics`, { params });
     }
