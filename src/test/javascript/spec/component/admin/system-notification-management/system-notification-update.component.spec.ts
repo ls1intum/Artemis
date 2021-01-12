@@ -29,7 +29,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
             data: of({ notification: { id: 1, title: 'test' } as SystemNotification }),
         },
     } as any) as ActivatedRoute;
-    const router = { navigate: function () {} };
+    const router = { navigate() {} };
 
     beforeEach(() => {
         TestBed.configureTestingModule({

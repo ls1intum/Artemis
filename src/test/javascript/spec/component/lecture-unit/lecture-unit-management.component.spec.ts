@@ -30,6 +30,7 @@ import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
+import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,18 +39,6 @@ const expect = chai.expect;
 @Directive({ selector: '[routerLink]' })
 export class MockRouterLinkDirective {
     @Input('routerLink') data: any;
-}
-
-@Component({ selector: 'jhi-unit-creation-card', template: '' })
-class UnitCreationCardStubComponent {
-    @Output()
-    createTextUnit: EventEmitter<any> = new EventEmitter<any>();
-    @Output()
-    createExerciseUnit: EventEmitter<any> = new EventEmitter<any>();
-    @Output()
-    createVideoUnit: EventEmitter<any> = new EventEmitter<any>();
-    @Output()
-    createAttachmentUnit: EventEmitter<any> = new EventEmitter<any>();
 }
 
 @Component({ selector: 'jhi-learning-goals-popover', template: '' })
@@ -64,7 +53,6 @@ class LearningGoalsPopoverStubComponent {
 describe('LectureUnitManagementComponent', () => {
     let lectureUnitManagementComponent: LectureUnitManagementComponent;
     let lectureUnitManagementComponentFixture: ComponentFixture<LectureUnitManagementComponent>;
-    let unitCreationCardStubComponent: UnitCreationCardStubComponent;
 
     let lectureService: LectureService;
     let lectureUnitService: LectureUnitService;
@@ -82,7 +70,7 @@ describe('LectureUnitManagementComponent', () => {
             imports: [],
             declarations: [
                 LectureUnitManagementComponent,
-                UnitCreationCardStubComponent,
+                MockComponent(UnitCreationCardComponent),
                 LearningGoalsPopoverStubComponent,
                 MockPipe(TranslatePipe),
                 MockComponent(ExerciseUnitComponent),
@@ -159,7 +147,6 @@ describe('LectureUnitManagementComponent', () => {
                 );
 
                 lectureUnitManagementComponentFixture.detectChanges();
-                unitCreationCardStubComponent = lectureUnitManagementComponentFixture.debugElement.query(By.directive(UnitCreationCardStubComponent)).componentInstance;
             });
     });
     it('should initialize', () => {

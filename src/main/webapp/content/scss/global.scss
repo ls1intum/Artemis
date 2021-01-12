@@ -26,6 +26,7 @@ a:not(.btn):hover {
     /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
 }
+
 a.disabled {
     pointer-events: none;
     cursor: default;
