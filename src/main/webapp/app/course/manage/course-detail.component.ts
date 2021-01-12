@@ -1,6 +1,5 @@
-import { filter } from 'rxjs/operators';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
@@ -17,7 +16,6 @@ import { JhiAlertService } from 'ng-jhipster';
 export class CourseDetailComponent implements OnInit, OnDestroy {
     CachingStrategy = CachingStrategy;
     course: Course;
-    isVisible: boolean;
     private eventSubscriber: Subscription;
 
     constructor(
@@ -36,8 +34,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             this.course = course;
         });
         this.registerChangeInCourses();
-        this.isVisible = this.route.children.length === 0;
-        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => (this.isVisible = this.route.children.length === 0));
     }
 
     /**

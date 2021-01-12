@@ -34,6 +34,9 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     percentageLateAssessmentProgress = 0;
     percentageComplaintsProgress = 0;
 
+    percentageInTimeAssessmentProgressOfCorrectionRound: number[] = [];
+    percentageLateAssessmentProgressOfCorrectionRound: number[] = [];
+
     routerLink: string;
 
     constructor(private router: Router) {}
@@ -80,11 +83,15 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
      * Function to calculate the percentage of the number of assessments divided by the number of participations
      */
     calculatePercentageAssessmentProgress() {
-        if (this.numberOfSubmissions?.inTime !== 0) {
-            this.percentageInTimeAssessmentProgress = Math.floor((this.totalNumberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
-        }
-        if (this.numberOfSubmissions?.late !== 0) {
-            this.percentageLateAssessmentProgress = Math.floor((this.totalNumberOfAssessments.late / this.numberOfSubmissions.late) * 100);
+        for (const [index, numberOfAssessments] of this.numberOfAssessmentsOfCorrectionRounds.entries()) {
+            this.percentageInTimeAssessmentProgressOfCorrectionRound[index] = 0;
+            this.percentageLateAssessmentProgressOfCorrectionRound[index] = 0;
+            if (this.numberOfSubmissions?.inTime !== 0) {
+                this.percentageInTimeAssessmentProgressOfCorrectionRound[index] = Math.floor((numberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
+            }
+            if (this.numberOfSubmissions?.late !== 0) {
+                this.percentageLateAssessmentProgressOfCorrectionRound[index] = Math.floor((numberOfAssessments.late / this.numberOfSubmissions.late) * 100);
+            }
         }
     }
 

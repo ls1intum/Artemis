@@ -129,14 +129,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     startExam() {
         if (this.testRun) {
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, this.studentExam);
-            if (this.hasStarted()) {
-                this.onExamStarted.emit(this.studentExam);
-            } else {
-                this.waitingForExamStart = true;
-                this.interval = window.setInterval(() => {
-                    this.updateDisplayedTimes(this.studentExam);
-                }, 100);
-            }
+            this.onExamStarted.emit(this.studentExam);
         } else {
             this.examParticipationService.loadStudentExamWithExercisesForConduction(this.exam.course!.id!, this.exam.id!).subscribe((studentExam: StudentExam) => {
                 this.studentExam = studentExam;
@@ -209,7 +202,6 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     get endButtonEnabled(): boolean {
-        // TODO: add logic when confirm can be clicked
         return this.nameIsCorrect && this.confirmed && this.exam && this.handInPossible;
     }
 
