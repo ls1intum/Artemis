@@ -132,7 +132,12 @@ export class TextExerciseUpdateComponent implements OnInit {
         if (window.history.length > 1) {
             window.history.back();
         } else if (this.isExamMode) {
-            this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
+            // If we're editing we need to go an extra step back since there is no detail page for exercise groups
+            if (this.textExercise.id) {
+                this.router.navigate(['../../../../'], { relativeTo: this.activatedRoute });
+            } else {
+                this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
+            }
         } else {
             this.router.navigate(['../'], { relativeTo: this.activatedRoute });
         }
