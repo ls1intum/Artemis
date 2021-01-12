@@ -1168,8 +1168,9 @@ public class ProgrammingExerciseResource {
         File zipFile = programmingExerciseExportService.checkPlagiarismWithJPlagReport(exerciseId, similarityThreshold, minimumScore);
 
         if (zipFile == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError", "Insufficient amount of comparisons available for comparison."))
+                    .body(null);
         }
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));

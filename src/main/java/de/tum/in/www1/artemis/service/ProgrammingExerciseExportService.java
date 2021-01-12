@@ -196,7 +196,14 @@ public class ProgrammingExerciseExportService {
         log.info("Download repositories for JPlag programming comparison with " + numberOfParticipations + " participations");
 
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        List<Repository> repositories = downloadRepositories(programmingExercise, targetPath, minimumScore);
+        List<ProgrammingExerciseParticipation> participations = studentParticipationsForComparison(programmingExercise, minimumScore);
+
+        if (participations.size() < 2) {
+            log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
+            return new TextPlagiarismResult();
+        }
+
+        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath);
         log.info("Downloading repositories done");
 
         final var projectKey = programmingExercise.getProjectKey();
@@ -248,7 +255,14 @@ public class ProgrammingExerciseExportService {
 
         log.info("Download repositories for JPlag programming comparison with " + numberOfParticipations + " participations");
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        List<Repository> repositories = downloadRepositories(programmingExercise, targetPath, minimumScore);
+        List<ProgrammingExerciseParticipation> participations = studentParticipationsForComparison(programmingExercise, minimumScore);
+
+        if (participations.size() < 2) {
+            log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
+            return null;
+        }
+
+        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath);
         log.info("Downloading repositories done");
 
         final var output = "output";
@@ -346,28 +360,20 @@ public class ProgrammingExerciseExportService {
         }
     }
 
-    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, String targetPath, int minimumScore) {
+    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, List<ProgrammingExerciseParticipation> participations, String targetPath) {
         List<Repository> downloadedRepositories = new ArrayList<>();
 
-        var studentParticipations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(programmingExercise.getId());
-
-        studentParticipations.parallelStream().filter(participation -> participation instanceof ProgrammingExerciseParticipation)
-                .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUrl() != null)
-                .filter(participation -> {
-                    Submission submission = ((StudentParticipation) participation).findLatestSubmission().orElse(null);
-                    return minimumScore == 0 || submission != null && submission.getLatestResult() != null && submission.getLatestResult().getScore() != null
-                            && submission.getLatestResult().getScore() >= minimumScore;
-                }).forEach(participation -> {
-                    try {
-                        Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
-                        gitService.resetToOriginMaster(repo); // start with clean state
-                        downloadedRepositories.add(repo);
-                    }
-                    catch (GitException | GitAPIException | InterruptedException ex) {
-                        log.error("clone student repository " + participation.getVcsRepositoryUrl() + " in exercise '" + programmingExercise.getTitle()
-                                + "' did not work as expected: " + ex.getMessage());
-                    }
-                });
+        participations.forEach(participation -> {
+            try {
+                Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
+                gitService.resetToOriginMaster(repo); // start with clean state
+                downloadedRepositories.add(repo);
+            }
+            catch (GitException | GitAPIException | InterruptedException ex) {
+                log.error("clone student repository " + participation.getVcsRepositoryUrl() + " in exercise '" + programmingExercise.getTitle() + "' did not work as expected: "
+                        + ex.getMessage());
+            }
+        });
 
         // clone the template repo
         try {
@@ -381,6 +387,25 @@ public class ProgrammingExerciseExportService {
         }
 
         return downloadedRepositories;
+    }
+
+    /**
+     * Find all studentParticipations of the given exercise for plagiarism comparison.
+     *
+     * @param programmingExercise ProgrammingExercise to fetcch the participations for
+     * @param minimumScore consider only submissions whose score is greater or equal to this value
+     * @return List containing the latest text submission for every participation
+     */
+    public List<ProgrammingExerciseParticipation> studentParticipationsForComparison(ProgrammingExercise programmingExercise, int minimumScore) {
+        var studentParticipations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(programmingExercise.getId());
+
+        return studentParticipations.parallelStream().filter(participation -> participation instanceof ProgrammingExerciseParticipation)
+                .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUrl() != null)
+                .filter(participation -> {
+                    Submission submission = ((StudentParticipation) participation).findLatestSubmission().orElse(null);
+                    return minimumScore == 0 || submission != null && submission.getLatestResult() != null && submission.getLatestResult().getScore() != null
+                            && submission.getLatestResult().getScore() >= minimumScore;
+                }).collect(Collectors.toList());
     }
 
     /**

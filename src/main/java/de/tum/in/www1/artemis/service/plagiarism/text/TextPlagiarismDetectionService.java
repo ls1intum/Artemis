@@ -111,6 +111,11 @@ public class TextPlagiarismDetectionService {
         final var submissionsSize = textSubmissions.size();
         log.info("Save text submissions for JPlag text comparison with " + submissionsSize + " submissions");
 
+        if (textSubmissions.size() < 2) {
+            log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
+            return new TextPlagiarismResult();
+        }
+
         textSubmissions.forEach(submission -> {
             submission.setResults(new ArrayList<>());
 
