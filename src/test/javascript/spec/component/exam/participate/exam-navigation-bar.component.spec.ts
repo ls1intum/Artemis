@@ -131,4 +131,91 @@ describe('Exam Navigation Bar Component', () => {
         expect(comp.saveExercise).toHaveBeenCalled();
         expect(comp.onExamHandInEarly.emit).toHaveBeenCalled();
     });
+
+    it('should set the exercise button status for undefined submission', () => {
+        spyOn(comp, 'getSubmissionForExercise');
+
+        const result = comp.setExerciseButtonStatus(0);
+
+        expect(result).toEqual('synced');
+    });
+
+    it('should set the exercise button status for submitted submission', () => {
+        const submission = { submitted: true };
+
+        spyOn(comp, 'getSubmissionForExercise').and.returnValue(submission);
+
+        const result = comp.setExerciseButtonStatus(0);
+
+        expect(comp.icon).toEqual('edit');
+        expect(result).toEqual('notSynced');
+    });
+
+    it('should set the exercise button status for submitted and synced submission active', () => {
+        const submission = { submitted: true, isSynced: true };
+
+        spyOn(comp, 'getSubmissionForExercise').and.returnValue(submission);
+
+        const result = comp.setExerciseButtonStatus(0);
+
+        expect(result).toEqual('synced active');
+    });
+
+    it('should set the exercise button status for submitted and synced submission not active', () => {
+        const submission = { submitted: true, isSynced: true };
+
+        spyOn(comp, 'getSubmissionForExercise').and.returnValue(submission);
+
+        const result = comp.setExerciseButtonStatus(1);
+
+        expect(result).toEqual('synced');
+    });
+
+    it('should get the exercise button tooltip without submission', () => {
+        spyOn(comp, 'getSubmissionForExercise');
+
+        const result = comp.getExerciseButtonTooltip(0);
+
+        expect(result).toEqual('synced');
+    });
+
+    it('should get the exercise button tooltip with submitted and synced submission', () => {
+        const submission = { submitted: true, isSynced: true };
+
+        spyOn(comp, 'getSubmissionForExercise').and.returnValue(submission);
+
+        const result = comp.getExerciseButtonTooltip(0);
+
+        expect(result).toEqual('submitted');
+    });
+
+    it('should get the exercise button tooltip with submitted submission', () => {
+        const submission = { submitted: true };
+
+        spyOn(comp, 'getSubmissionForExercise').and.returnValue(submission);
+
+        const result = comp.getExerciseButtonTooltip(0);
+
+        expect(result).toEqual('notSavedOrSubmitted');
+    });
+
+    it('should get the exercise button tooltip with submission', () => {
+        const submission = {};
+
+        spyOn(comp, 'getSubmissionForExercise').and.returnValue(submission);
+
+        const result = comp.getExerciseButtonTooltip(0);
+
+        expect(result).toEqual('notSavedOrSubmitted');
+    });
+
+    it('should get the exercise button tooltip with synced submission', () => {
+        const submission = { isSynced: true };
+
+        spyOn(comp, 'getSubmissionForExercise').and.returnValue(submission);
+
+        const result = comp.getExerciseButtonTooltip(0);
+
+        expect(result).toEqual('notSubmitted');
+    });
 });
