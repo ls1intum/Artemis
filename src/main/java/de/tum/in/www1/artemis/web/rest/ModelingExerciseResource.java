@@ -419,6 +419,9 @@ public class ModelingExerciseResource {
      * submissions which might be a sign for plagiarism.
      *
      * @param exerciseId for which all submission should be checked
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
+     * @param minimumScore consider only submissions whose score is greater or equal to this value
+     * @param minimumSize consider only submissions whose size is greater or equal to this value
      * @return the ResponseEntity with status 200 (OK) and the list of pair-wise submission
      * similarities above a threshold of 80%.
      */

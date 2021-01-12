@@ -181,6 +181,8 @@ public class ProgrammingExerciseExportService {
      * downloads all repos of the exercise and runs JPlag
      *
      * @param programmingExerciseId the id of the programming exercises which should be checked
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
+     * @param minimumScore consider only submissions whose score is greater or equal to this value
      * @return a zip file that can be returned to the client
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException   is thrown for file handling errors
@@ -231,6 +233,9 @@ public class ProgrammingExerciseExportService {
      * downloads all repos of the exercise and runs JPlag
      *
      * @param programmingExerciseId the id of the programming exercises which should be checked
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
+     * @param minimumScore consider only submissions whose score is greater or equal to this value
+     *
      * @return a zip file that can be returned to the client
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException is thrown for file handling errors
@@ -350,8 +355,8 @@ public class ProgrammingExerciseExportService {
                 .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUrl() != null)
                 .filter(participation -> {
                     Submission submission = ((StudentParticipation) participation).findLatestSubmission().orElse(null);
-                    return minimumScore == 0 || (submission != null && submission.getLatestResult() != null && submission.getLatestResult().getScore() != null
-                            && submission.getLatestResult().getScore() >= minimumScore);
+                    return minimumScore == 0 || submission != null && submission.getLatestResult() != null && submission.getLatestResult().getScore() != null
+                            && submission.getLatestResult().getScore() >= minimumScore;
                 }).forEach(participation -> {
                     try {
                         Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);

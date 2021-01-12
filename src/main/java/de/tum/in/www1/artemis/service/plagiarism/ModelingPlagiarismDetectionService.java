@@ -85,8 +85,8 @@ public class ModelingPlagiarismDetectionService {
         ObjectMapper objectMapper = new ObjectMapper();
 
         modelingSubmissions.stream().filter(modelingSubmission -> !modelingSubmission.isEmpty(objectMapper))
-                .filter(modelingSubmission -> minimumScore == 0 || (modelingSubmission.getLatestResult() != null && modelingSubmission.getLatestResult().getScore() != null
-                        && modelingSubmission.getLatestResult().getScore() >= minimumScore))
+                .filter(modelingSubmission -> minimumScore == 0 || modelingSubmission.getLatestResult() != null && modelingSubmission.getLatestResult().getScore() != null
+                        && modelingSubmission.getLatestResult().getScore() >= minimumScore)
                 .forEach(modelingSubmission -> {
                     try {
                         log.debug("Build UML diagram from json");
