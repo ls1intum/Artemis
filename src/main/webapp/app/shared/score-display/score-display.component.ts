@@ -9,9 +9,10 @@ export class ScoreDisplayComponent implements OnInit, OnChanges {
     @Input() maxBonusPoints = 0;
     @Input() maxPoints: number;
     @Input() score: number;
-    bonusPoints?: number | undefined;
-    maxPointsWithBonus?: number | undefined;
-    maxPercentage?: number | undefined;
+    bonusPoints?: number;
+    maxPointsWithBonus?: number;
+    maxPercentage?: number;
+
     constructor() {}
 
     /**
