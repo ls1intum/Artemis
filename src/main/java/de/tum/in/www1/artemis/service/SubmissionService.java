@@ -351,7 +351,7 @@ public class SubmissionService {
      * @param result the result which we want to save and order
      * @return the result with correctly persisted relationship to its submission
      */
-    public Result saveNewResultByCorrectionRound(Submission submission, final Result result, Long correctionRound) {
+    public Result saveNewResult(Submission submission, final Result result) {
         result.setSubmission(null);
         submission.setResults(new ArrayList<>());
         if (result.getParticipation() == null) {
@@ -388,7 +388,7 @@ public class SubmissionService {
             // we set the assessment type to semi automatic so that it does not appear to the tutors for manual assessment
             // if we would use AssessmentType.AUTOMATIC, it would be eligable for manual assessment
             result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-            result = saveNewResultByCorrectionRound(latestSubmission, result, (long) latestSubmission.getResults().size());
+            result = saveNewResult(latestSubmission, result);
 
             var feedback = new Feedback();
             feedback.setCredits(0.0);
