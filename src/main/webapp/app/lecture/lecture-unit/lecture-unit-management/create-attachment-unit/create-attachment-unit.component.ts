@@ -11,6 +11,7 @@ import { finalize } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { JhiAlertService } from 'ng-jhipster';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
+import { combineLatest } from 'rxjs';
 
 @Component({
     selector: 'jhi-create-attachment-unit',
@@ -37,9 +38,10 @@ export class CreateAttachmentUnitComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.activatedRoute.paramMap.subscribe((params) => {
+        const lectureRoute = this.activatedRoute.parent!.parent!;
+        combineLatest(lectureRoute.paramMap, lectureRoute.parent!.paramMap).subscribe(([params, parentParams]) => {
             this.lectureId = Number(params.get('lectureId'));
-            this.courseId = Number(params.get('courseId'));
+            this.courseId = Number(parentParams.get('courseId'));
         });
         this.attachmentUnitToCreate = new AttachmentUnit();
         this.attachmentToCreate = new Attachment();
