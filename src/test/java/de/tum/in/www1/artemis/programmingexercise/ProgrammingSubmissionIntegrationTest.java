@@ -332,7 +332,8 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 
         Participation response = request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.OK, Participation.class);
-        var participation = programmingExerciseStudentParticipationRepository.findByIdWithLatestManualResultAndFeedbacksAndRelatedSubmissionAndAssessor(response.getId());
+        var participation = programmingExerciseStudentParticipationRepository
+                .findByIdWithLatestManualOrSemiAutomaticResultAndFeedbacksAndRelatedSubmissionAndAssessor(response.getId());
         var newManualResult = participation.get().getResults().stream().filter(Result::isManualResult).collect(Collectors.toList()).get(0);
         assertThat(newManualResult.getAssessor().getLogin()).isEqualTo("tutor1");
     }

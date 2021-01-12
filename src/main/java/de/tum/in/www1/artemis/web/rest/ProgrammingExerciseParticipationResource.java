@@ -91,7 +91,7 @@ public class ProgrammingExerciseParticipationResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getParticipationWithLatestManualResultForStudentParticipation(@PathVariable Long participationId) {
         Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
-                .findStudentParticipationWithLatestManualResultAndFeedbacksAndRelatedSubmissionAndAssessor(participationId);
+                .findStudentParticipationWithLatestManualOrSemiAutomaticResultAndFeedbacksAndRelatedSubmissionAndAssessor(participationId);
         if (participation.isEmpty()) {
             return notFound();
         }

@@ -88,16 +88,16 @@ public class ProgrammingExerciseGradingService {
     public Optional<Result> processNewProgrammingExerciseResult(@NotNull ProgrammingExerciseParticipation participation, @NotNull Object requestBody) {
         log.debug("Received new build result (NEW) for participation " + participation.getId());
 
-        Result result;
+        Result newResult;
         try {
-            result = continuousIntegrationService.get().onBuildCompleted(participation, requestBody);
+            newResult = continuousIntegrationService.get().onBuildCompleted(participation, requestBody);
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Result for participation " + participation.getId() + " could not be created due to the following exception: " + ex);
             return Optional.empty();
         }
 
-        if (result != null) {
+        if (newResult != null) {
             ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
             boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
             boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
@@ -105,73 +105,76 @@ public class ProgrammingExerciseGradingService {
             // This needs to be done as some test cases might not have been executed.
             // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
             if (isSolutionParticipation) {
-                extractTestCasesFromResult(programmingExercise, result);
+                extractTestCasesFromResult(programmingExercise, newResult);
             }
-            result = updateResult(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
+            newResult = updateResult(newResult, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
 
             // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
-            Submission tmpSubmission = result.getSubmission();
-            result = resultRepository.save(result);
-            result.setSubmission(tmpSubmission);
+            Submission tmpSubmission = newResult.getSubmission();
+            newResult = resultRepository.save(newResult);
+            newResult.setSubmission(tmpSubmission);
 
             // If the solution participation was updated, also trigger the template participation build.
             if (isSolutionParticipation) {
                 // This method will return without triggering the build if the submission is not of type TEST.
-                triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), result.getId());
+                triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), newResult.getId());
             }
 
             if (!isSolutionParticipation && !isTemplateParticipation) {
 
                 // check if a manual result exists, if so we want to clone and update this with the new updated test-case and sca feedback
                 Optional<ProgrammingExerciseStudentParticipation> studentParticipation = programmingExerciseParticipationService
-                        .findStudentParticipationWithLatestManualResultAndFeedbacksAndRelatedSubmissionAndAssessor(participation.getId());
+                        .findStudentParticipationWithLatestManualOrSemiAutomaticResultAndFeedbacksAndRelatedSubmissionAndAssessor(participation.getId());
 
-                Optional<Result> latestManualResult = studentParticipation.flatMap(p -> p.getResults().stream().findFirst());
+                Optional<Result> latestManualOrSemiAutomaticResult = studentParticipation.flatMap(p -> p.getResults().stream().findFirst());
 
-                if (latestManualResult.isPresent()) {
-                    Result newManualResult = getNewManualResultFromResults(result, latestManualResult.get(), programmingExercise);
+                if (latestManualOrSemiAutomaticResult.isPresent()) {
+                    Result newManualResult = createNewSemiAutomaticResult(newResult, latestManualOrSemiAutomaticResult.get(), programmingExercise);
                     return Optional.of(newManualResult);
                 }
 
             }
         }
-        return Optional.ofNullable(result);
+        return Optional.ofNullable(newResult);
     }
 
     /**
-     * Combines a new automatic result and an existing manual result into a new manual result
-     * @param automaticResult The new automatic result
-     * @param manualResult The latest manual result for the same submission
+     * Combines a new automatic result and an existing semi automatic result (with manual feedback) into a new semi automatic result
+     *
+     * Note: for the second correction it is important that we do not create additional semi automatic results
+     *
+     * @param newAutomaticResult The new automatic result
+     * @param semiAutomaticResult The latest manual result for the same submission
      * @param programmingExercise The programming exercise
      * @return A new manual result
      */
-    private Result getNewManualResultFromResults(Result automaticResult, Result manualResult, ProgrammingExercise programmingExercise) {
+    private Result createNewSemiAutomaticResult(Result newAutomaticResult, Result semiAutomaticResult, ProgrammingExercise programmingExercise) {
 
         // create a new manual result for the same submission as the automatic result
-        Result newResult = programmingSubmissionService.saveNewEmptyResult(automaticResult.getSubmission());
+        Result newResult = programmingSubmissionService.saveNewEmptyResult(newAutomaticResult.getSubmission());
 
-        newResult.setAssessor(manualResult.getAssessor());
+        newResult.setAssessor(semiAutomaticResult.getAssessor());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         // this makes it the most recent result, but optionally keeps the draft state of an unfinished manual result
-        newResult.setCompletionDate(manualResult.getCompletionDate() != null ? automaticResult.getCompletionDate().plusSeconds(1) : null);
-        newResult.setHasFeedback(manualResult.getHasFeedback());
-        newResult.setRated(manualResult.isRated());
+        newResult.setCompletionDate(semiAutomaticResult.getCompletionDate() != null ? newAutomaticResult.getCompletionDate().plusSeconds(1) : null);
+        newResult.setHasFeedback(semiAutomaticResult.getHasFeedback());
+        newResult.setRated(semiAutomaticResult.isRated());
 
         // copy all feedback from the automatic result
-        for (Feedback feedback : automaticResult.getFeedbacks()) {
+        for (Feedback feedback : newAutomaticResult.getFeedbacks()) {
             Feedback newFeedback = feedback.copyFeedback();
             newResult.addFeedback(newFeedback);
         }
 
         // copy only the non-automatic feedback from the manual result
-        for (Feedback feedback : manualResult.getFeedbacks()) {
+        for (Feedback feedback : semiAutomaticResult.getFeedbacks()) {
             if (feedback != null && feedback.getType() != FeedbackType.AUTOMATIC) {
                 Feedback newFeedback = feedback.copyFeedback();
                 newResult.addFeedback(newFeedback);
             }
         }
 
-        String resultString = updateManualResultString(automaticResult.getResultString(), newResult, programmingExercise);
+        String resultString = updateManualResultString(newAutomaticResult.getResultString(), newResult, programmingExercise);
         newResult.setResultString(resultString);
 
         // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
