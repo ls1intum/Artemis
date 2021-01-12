@@ -317,9 +317,14 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testLockAndGetProgrammingSubmission_withManualResult() throws Exception {
         ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
-        database.addProgrammingSubmission(exercise, submission, "student1");
+        submission = database.addProgrammingSubmission(exercise, submission, "student1");
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
-        database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), programmingExerciseStudentParticipation);
+        Result result = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
+                programmingExerciseStudentParticipation);
+        result.setSubmission(submission);
+        submission.addResult(result);
+        submission.setParticipation(programmingExerciseStudentParticipation);
+        submissionRepository.save(submission);
 
         request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.OK, Participation.class);
     }
